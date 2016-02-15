@@ -1,0 +1,3780 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8"></meta>
+  <meta name="AppleTitle" content="com.googlecode.iterm2.help"></meta>
+
+  <title></title>
+  <style type="text/css">
+meta.foundation-mq-small {
+font-family:"/only screen and (max-width: 40em)/";width:0em;
+}
+meta.foundation-mq-medium {
+font-family:"/only screen and (min-width:40.063em)/";width:40.063em;
+}
+meta.foundation-mq-large {
+font-family:"/only screen and (min-width:64.063em)/";width:64.063em;
+}
+meta.foundation-mq-xlarge {
+font-family:"/only screen and (min-width:90.063em)/";width:90.063em;
+}
+meta.foundation-mq-xxlarge {
+font-family:"/only screen and (min-width:120.063em)/";width:120.063em;
+}
+* ,*:before ,*:after {
+-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box;
+}
+html ,body {
+font-size:100%;
+}
+body {
+background:#000000;color:#222222;padding:0;margin:0;font-family:"Helvetica Neue","Helvetica",Helvetica,Arial,sans-serif;font-weight:normal;font-style:normal;line-height:1;position:relative;cursor:default;
+}
+a:hover {
+cursor:pointer;
+}
+img ,object ,embed {
+max-width:100%;height:auto;
+}
+object ,embed {
+height:100%;
+}
+img {
+-ms-interpolation-mode:bicubic;
+}
+#map_canvas img ,#map_canvas embed ,#map_canvas object ,.map_canvas img ,.map_canvas embed ,.map_canvas object {
+max-width:none !important;
+}
+.left {
+float:left !important;
+}
+.right {
+float:right !important;
+}
+.clearfix {
+*zoom:1;
+}
+.clearfix:before ,.clearfix:after {
+content:" ";display:table;
+}
+.clearfix:after {
+clear:both;
+}
+.text-left {
+text-align:left !important;
+}
+.text-right {
+text-align:right !important;
+}
+.text-center {
+text-align:center !important;
+}
+.text-justify {
+text-align:justify !important;
+}
+.hide {
+display:none;
+}
+.start {
+float:left !important;
+}
+.end {
+float:right !important;
+}
+.text-start {
+text-align:left !important;
+}
+.text-end {
+text-align:right !important;
+}
+.antialiased {
+-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+img {
+display:inline-block;vertical-align:middle;
+}
+textarea {
+height:auto;min-height:50px;
+}
+select {
+width:100%;
+}
+@media only screen and (max-width: 40em){
+.f-dropdown {
+max-width:100%;left:0;
+}
+
+}
+.f-dropdown {
+position:absolute;left:-9999px;list-style:none;margin-left:0;width:100%;max-height:none;height:auto;background:#ffffff;border:solid 1px #cccccc;font-size:16px;z-index:99;margin-top:2px;max-width:200px;
+}
+.f-dropdown>*:first-child {
+margin-top:0;
+}
+.f-dropdown>*:last-child {
+margin-bottom:0;
+}
+.f-dropdown:before {
+content:"";display:block;width:0;height:0;border:inset 6px;border-color:transparent transparent #ffffff transparent;border-bottom-style:solid;position:absolute;top:-12px;left:10px;z-index:99;
+}
+.f-dropdown:after {
+content:"";display:block;width:0;height:0;border:inset 7px;border-color:transparent transparent #cccccc transparent;border-bottom-style:solid;position:absolute;top:-14px;left:9px;z-index:98;
+}
+.f-dropdown.right:before {
+left:auto;right:10px;
+}
+.f-dropdown.right:after {
+left:auto;right:9px;
+}
+.f-dropdown li {
+font-size:0.875rem;cursor:pointer;line-height:1.125rem;margin:0;
+}
+.f-dropdown li:hover ,.f-dropdown li:focus {
+background:#eeeeee;
+}
+.f-dropdown li a {
+display:block;padding:0.5rem;color:#555555;
+}
+.f-dropdown.content {
+position:absolute;left:-9999px;list-style:none;margin-left:0;padding:1.25rem;width:100%;height:auto;max-height:none;background:#ffffff;border:solid 1px #cccccc;font-size:16px;z-index:99;max-width:200px;
+}
+.f-dropdown.content>*:first-child {
+margin-top:0;
+}
+.f-dropdown.content>*:last-child {
+margin-bottom:0;
+}
+.f-dropdown.tiny {
+max-width:200px;
+}
+.f-dropdown.small {
+max-width:300px;
+}
+.f-dropdown.medium {
+max-width:500px;
+}
+.f-dropdown.large {
+max-width:800px;
+}
+.dropdown.button {
+position:relative;padding-right:3.5625rem;
+}
+.dropdown.button:before {
+position:absolute;content:"";width:0;height:0;display:block;border-style:solid;border-color:#ffffff transparent transparent transparent;top:50%;
+}
+.dropdown.button:before {
+border-width:0.375rem;right:1.40625rem;margin-top:-0.15625rem;
+}
+.dropdown.button:before {
+border-color:#ffffff transparent transparent transparent;
+}
+.dropdown.button.tiny {
+padding-right:2.625rem;
+}
+.dropdown.button.tiny:before {
+border-width:0.375rem;right:1.125rem;margin-top:-0.125rem;
+}
+.dropdown.button.tiny:before {
+border-color:#ffffff transparent transparent transparent;
+}
+.dropdown.button.small {
+padding-right:3.0625rem;
+}
+.dropdown.button.small:before {
+border-width:0.4375rem;right:1.3125rem;margin-top:-0.15625rem;
+}
+.dropdown.button.small:before {
+border-color:#ffffff transparent transparent transparent;
+}
+.dropdown.button.large {
+padding-right:3.625rem;
+}
+.dropdown.button.large:before {
+border-width:0.3125rem;right:1.71875rem;margin-top:-0.15625rem;
+}
+.dropdown.button.large:before {
+border-color:#ffffff transparent transparent transparent;
+}
+.dropdown.button.secondary:before {
+border-color:#333333 transparent transparent transparent;
+}
+.row {
+width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5rem;*zoom:1;
+}
+.row:before ,.row:after {
+content:" ";display:table;
+}
+.row:after {
+clear:both;
+}
+.row.collapse>.column ,.row.collapse>.columns {
+position:relative;padding-left:0;padding-right:0;float:left;
+}
+.row.collapse .row {
+margin-left:0;margin-right:0;
+}
+.row .row {
+width:auto;margin-left:-0.9375rem;margin-right:-0.9375rem;margin-top:0;margin-bottom:0;max-width:none;*zoom:1;
+}
+.row .row:before ,.row .row:after {
+content:" ";display:table;
+}
+.row .row:after {
+clear:both;
+}
+.row .row.collapse {
+width:auto;margin:0;max-width:none;*zoom:1;
+}
+.row .row.collapse:before ,.row .row.collapse:after {
+content:" ";display:table;
+}
+.row .row.collapse:after {
+clear:both;
+}
+.column ,.columns {
+position:relative;padding-left:0.9375rem;padding-right:0.9375rem;width:100%;float:left;
+}
+@media only screen{
+.column.small-centered ,.columns.small-centered {
+position:relative;margin-left:auto;margin-right:auto;float:none;
+}
+.column.small-uncentered ,.columns.small-uncentered {
+margin-left:0;margin-right:0;float:left;
+}
+.column.small-uncentered.opposite ,.columns.small-uncentered.opposite {
+float:right;
+}
+.small-push-1 {
+position:relative;left:8.33333%;right:auto;
+}
+.small-pull-1 {
+position:relative;right:8.33333%;left:auto;
+}
+.small-push-2 {
+position:relative;left:16.66667%;right:auto;
+}
+.small-pull-2 {
+position:relative;right:16.66667%;left:auto;
+}
+.small-push-3 {
+position:relative;left:25%;right:auto;
+}
+.small-pull-3 {
+position:relative;right:25%;left:auto;
+}
+.small-push-4 {
+position:relative;left:33.33333%;right:auto;
+}
+.small-pull-4 {
+position:relative;right:33.33333%;left:auto;
+}
+.small-push-5 {
+position:relative;left:41.66667%;right:auto;
+}
+.small-pull-5 {
+position:relative;right:41.66667%;left:auto;
+}
+.small-push-6 {
+position:relative;left:50%;right:auto;
+}
+.small-pull-6 {
+position:relative;right:50%;left:auto;
+}
+.small-push-7 {
+position:relative;left:58.33333%;right:auto;
+}
+.small-pull-7 {
+position:relative;right:58.33333%;left:auto;
+}
+.small-push-8 {
+position:relative;left:66.66667%;right:auto;
+}
+.small-pull-8 {
+position:relative;right:66.66667%;left:auto;
+}
+.small-push-9 {
+position:relative;left:75%;right:auto;
+}
+.small-pull-9 {
+position:relative;right:75%;left:auto;
+}
+.small-push-10 {
+position:relative;left:83.33333%;right:auto;
+}
+.small-pull-10 {
+position:relative;right:83.33333%;left:auto;
+}
+.small-push-11 {
+position:relative;left:91.66667%;right:auto;
+}
+.small-pull-11 {
+position:relative;right:91.66667%;left:auto;
+}
+.column ,.columns {
+position:relative;padding-left:0.9375rem;padding-right:0.9375rem;float:left;
+}
+.small-1 {
+position:relative;width:8.33333%;
+}
+.small-2 {
+position:relative;width:16.66667%;
+}
+.small-3 {
+position:relative;width:25%;
+}
+.small-4 {
+position:relative;width:33.33333%;
+}
+.small-5 {
+position:relative;width:41.66667%;
+}
+.small-6 {
+position:relative;width:50%;
+}
+.small-7 {
+position:relative;width:58.33333%;
+}
+.small-8 {
+position:relative;width:66.66667%;
+}
+.small-9 {
+position:relative;width:75%;
+}
+.small-10 {
+position:relative;width:83.33333%;
+}
+.small-11 {
+position:relative;width:91.66667%;
+}
+.small-12 {
+position:relative;width:100%;
+}
+[class*="column"]+[class*="column"]:last-child {
+float:right;
+}
+[class*="column"]+[class*="column"].end {
+float:left;
+}
+.small-offset-0 {
+position:relative;margin-left:0% !important;
+}
+.small-offset-1 {
+position:relative;margin-left:8.33333% !important;
+}
+.small-offset-2 {
+position:relative;margin-left:16.66667% !important;
+}
+.small-offset-3 {
+position:relative;margin-left:25% !important;
+}
+.small-offset-4 {
+position:relative;margin-left:33.33333% !important;
+}
+.small-offset-5 {
+position:relative;margin-left:41.66667% !important;
+}
+.small-offset-6 {
+position:relative;margin-left:50% !important;
+}
+.small-offset-7 {
+position:relative;margin-left:58.33333% !important;
+}
+.small-offset-8 {
+position:relative;margin-left:66.66667% !important;
+}
+.small-offset-9 {
+position:relative;margin-left:75% !important;
+}
+.small-offset-10 {
+position:relative;margin-left:83.33333% !important;
+}
+.column.small-reset-order ,.columns.small-reset-order {
+margin-left:0;margin-right:0;left:auto;right:auto;float:left;
+}
+
+}
+@media only screen and (min-width:40.063em){
+.column.medium-centered ,.columns.medium-centered {
+position:relative;margin-left:auto;margin-right:auto;float:none;
+}
+.column.medium-uncentered ,.columns.medium-uncentered {
+margin-left:0;margin-right:0;float:left;
+}
+.column.medium-uncentered.opposite ,.columns.medium-uncentered.opposite {
+float:right;
+}
+.medium-push-1 {
+position:relative;left:8.33333%;right:auto;
+}
+.medium-pull-1 {
+position:relative;right:8.33333%;left:auto;
+}
+.medium-push-2 {
+position:relative;left:16.66667%;right:auto;
+}
+.medium-pull-2 {
+position:relative;right:16.66667%;left:auto;
+}
+.medium-push-3 {
+position:relative;left:25%;right:auto;
+}
+.medium-pull-3 {
+position:relative;right:25%;left:auto;
+}
+.medium-push-4 {
+position:relative;left:33.33333%;right:auto;
+}
+.medium-pull-4 {
+position:relative;right:33.33333%;left:auto;
+}
+.medium-push-5 {
+position:relative;left:41.66667%;right:auto;
+}
+.medium-pull-5 {
+position:relative;right:41.66667%;left:auto;
+}
+.medium-push-6 {
+position:relative;left:50%;right:auto;
+}
+.medium-pull-6 {
+position:relative;right:50%;left:auto;
+}
+.medium-push-7 {
+position:relative;left:58.33333%;right:auto;
+}
+.medium-pull-7 {
+position:relative;right:58.33333%;left:auto;
+}
+.medium-push-8 {
+position:relative;left:66.66667%;right:auto;
+}
+.medium-pull-8 {
+position:relative;right:66.66667%;left:auto;
+}
+.medium-push-9 {
+position:relative;left:75%;right:auto;
+}
+.medium-pull-9 {
+position:relative;right:75%;left:auto;
+}
+.medium-push-10 {
+position:relative;left:83.33333%;right:auto;
+}
+.medium-pull-10 {
+position:relative;right:83.33333%;left:auto;
+}
+.medium-push-11 {
+position:relative;left:91.66667%;right:auto;
+}
+.medium-pull-11 {
+position:relative;right:91.66667%;left:auto;
+}
+.column ,.columns {
+position:relative;padding-left:0.9375rem;padding-right:0.9375rem;float:left;
+}
+.medium-1 {
+position:relative;width:8.33333%;
+}
+.medium-2 {
+position:relative;width:16.66667%;
+}
+.medium-3 {
+position:relative;width:25%;
+}
+.medium-4 {
+position:relative;width:33.33333%;
+}
+.medium-5 {
+position:relative;width:41.66667%;
+}
+.medium-6 {
+position:relative;width:50%;
+}
+.medium-7 {
+position:relative;width:58.33333%;
+}
+.medium-8 {
+position:relative;width:66.66667%;
+}
+.medium-9 {
+position:relative;width:75%;
+}
+.medium-10 {
+position:relative;width:83.33333%;
+}
+.medium-11 {
+position:relative;width:91.66667%;
+}
+.medium-12 {
+position:relative;width:100%;
+}
+[class*="column"]+[class*="column"]:last-child {
+float:right;
+}
+[class*="column"]+[class*="column"].end {
+float:left;
+}
+.medium-offset-0 {
+position:relative;margin-left:0% !important;
+}
+.medium-offset-1 {
+position:relative;margin-left:8.33333% !important;
+}
+.medium-offset-2 {
+position:relative;margin-left:16.66667% !important;
+}
+.medium-offset-3 {
+position:relative;margin-left:25% !important;
+}
+.medium-offset-4 {
+position:relative;margin-left:33.33333% !important;
+}
+.medium-offset-5 {
+position:relative;margin-left:41.66667% !important;
+}
+.medium-offset-6 {
+position:relative;margin-left:50% !important;
+}
+.medium-offset-7 {
+position:relative;margin-left:58.33333% !important;
+}
+.medium-offset-8 {
+position:relative;margin-left:66.66667% !important;
+}
+.medium-offset-9 {
+position:relative;margin-left:75% !important;
+}
+.medium-offset-10 {
+position:relative;margin-left:83.33333% !important;
+}
+.column.medium-reset-order ,.columns.medium-reset-order {
+margin-left:0;margin-right:0;left:auto;right:auto;float:left;
+}
+.push-1 {
+position:relative;left:8.33333%;right:auto;
+}
+.pull-1 {
+position:relative;right:8.33333%;left:auto;
+}
+.push-2 {
+position:relative;left:16.66667%;right:auto;
+}
+.pull-2 {
+position:relative;right:16.66667%;left:auto;
+}
+.push-3 {
+position:relative;left:25%;right:auto;
+}
+.pull-3 {
+position:relative;right:25%;left:auto;
+}
+.push-4 {
+position:relative;left:33.33333%;right:auto;
+}
+.pull-4 {
+position:relative;right:33.33333%;left:auto;
+}
+.push-5 {
+position:relative;left:41.66667%;right:auto;
+}
+.pull-5 {
+position:relative;right:41.66667%;left:auto;
+}
+.push-6 {
+position:relative;left:50%;right:auto;
+}
+.pull-6 {
+position:relative;right:50%;left:auto;
+}
+.push-7 {
+position:relative;left:58.33333%;right:auto;
+}
+.pull-7 {
+position:relative;right:58.33333%;left:auto;
+}
+.push-8 {
+position:relative;left:66.66667%;right:auto;
+}
+.pull-8 {
+position:relative;right:66.66667%;left:auto;
+}
+.push-9 {
+position:relative;left:75%;right:auto;
+}
+.pull-9 {
+position:relative;right:75%;left:auto;
+}
+.push-10 {
+position:relative;left:83.33333%;right:auto;
+}
+.pull-10 {
+position:relative;right:83.33333%;left:auto;
+}
+.push-11 {
+position:relative;left:91.66667%;right:auto;
+}
+.pull-11 {
+position:relative;right:91.66667%;left:auto;
+}
+
+}
+@media only screen and (min-width:64.063em){
+.column.large-centered ,.columns.large-centered {
+position:relative;margin-left:auto;margin-right:auto;float:none;
+}
+.column.large-uncentered ,.columns.large-uncentered {
+margin-left:0;margin-right:0;float:left;
+}
+.column.large-uncentered.opposite ,.columns.large-uncentered.opposite {
+float:right;
+}
+.large-push-1 {
+position:relative;left:8.33333%;right:auto;
+}
+.large-pull-1 {
+position:relative;right:8.33333%;left:auto;
+}
+.large-push-2 {
+position:relative;left:16.66667%;right:auto;
+}
+.large-pull-2 {
+position:relative;right:16.66667%;left:auto;
+}
+.large-push-3 {
+position:relative;left:25%;right:auto;
+}
+.large-pull-3 {
+position:relative;right:25%;left:auto;
+}
+.large-push-4 {
+position:relative;left:33.33333%;right:auto;
+}
+.large-pull-4 {
+position:relative;right:33.33333%;left:auto;
+}
+.large-push-5 {
+position:relative;left:41.66667%;right:auto;
+}
+.large-pull-5 {
+position:relative;right:41.66667%;left:auto;
+}
+.large-push-6 {
+position:relative;left:50%;right:auto;
+}
+.large-pull-6 {
+position:relative;right:50%;left:auto;
+}
+.large-push-7 {
+position:relative;left:58.33333%;right:auto;
+}
+.large-pull-7 {
+position:relative;right:58.33333%;left:auto;
+}
+.large-push-8 {
+position:relative;left:66.66667%;right:auto;
+}
+.large-pull-8 {
+position:relative;right:66.66667%;left:auto;
+}
+.large-push-9 {
+position:relative;left:75%;right:auto;
+}
+.large-pull-9 {
+position:relative;right:75%;left:auto;
+}
+.large-push-10 {
+position:relative;left:83.33333%;right:auto;
+}
+.large-pull-10 {
+position:relative;right:83.33333%;left:auto;
+}
+.large-push-11 {
+position:relative;left:91.66667%;right:auto;
+}
+.large-pull-11 {
+position:relative;right:91.66667%;left:auto;
+}
+.column ,.columns {
+position:relative;padding-left:0.9375rem;padding-right:0.9375rem;float:left;
+}
+.large-1 {
+position:relative;width:8.33333%;
+}
+.large-2 {
+position:relative;width:16.66667%;
+}
+.large-3 {
+position:relative;width:25%;
+}
+.large-4 {
+position:relative;width:33.33333%;
+}
+.large-5 {
+position:relative;width:41.66667%;
+}
+.large-6 {
+position:relative;width:50%;
+}
+.large-7 {
+position:relative;width:58.33333%;
+}
+.large-8 {
+position:relative;width:66.66667%;
+}
+.large-9 {
+position:relative;width:75%;
+}
+.large-10 {
+position:relative;width:83.33333%;
+}
+.large-11 {
+position:relative;width:91.66667%;
+}
+.large-12 {
+position:relative;width:100%;
+}
+[class*="column"]+[class*="column"]:last-child {
+float:right;
+}
+[class*="column"]+[class*="column"].end {
+float:left;
+}
+.large-offset-0 {
+position:relative;margin-left:0% !important;
+}
+.large-offset-1 {
+position:relative;margin-left:8.33333% !important;
+}
+.large-offset-2 {
+position:relative;margin-left:16.66667% !important;
+}
+.large-offset-3 {
+position:relative;margin-left:25% !important;
+}
+.large-offset-4 {
+position:relative;margin-left:33.33333% !important;
+}
+.large-offset-5 {
+position:relative;margin-left:41.66667% !important;
+}
+.large-offset-6 {
+position:relative;margin-left:50% !important;
+}
+.large-offset-7 {
+position:relative;margin-left:58.33333% !important;
+}
+.large-offset-8 {
+position:relative;margin-left:66.66667% !important;
+}
+.large-offset-9 {
+position:relative;margin-left:75% !important;
+}
+.large-offset-10 {
+position:relative;margin-left:83.33333% !important;
+}
+.column.large-reset-order ,.columns.large-reset-order {
+margin-left:0;margin-right:0;left:auto;right:auto;float:left;
+}
+.push-1 {
+position:relative;left:8.33333%;right:auto;
+}
+.pull-1 {
+position:relative;right:8.33333%;left:auto;
+}
+.push-2 {
+position:relative;left:16.66667%;right:auto;
+}
+.pull-2 {
+position:relative;right:16.66667%;left:auto;
+}
+.push-3 {
+position:relative;left:25%;right:auto;
+}
+.pull-3 {
+position:relative;right:25%;left:auto;
+}
+.push-4 {
+position:relative;left:33.33333%;right:auto;
+}
+.pull-4 {
+position:relative;right:33.33333%;left:auto;
+}
+.push-5 {
+position:relative;left:41.66667%;right:auto;
+}
+.pull-5 {
+position:relative;right:41.66667%;left:auto;
+}
+.push-6 {
+position:relative;left:50%;right:auto;
+}
+.pull-6 {
+position:relative;right:50%;left:auto;
+}
+.push-7 {
+position:relative;left:58.33333%;right:auto;
+}
+.pull-7 {
+position:relative;right:58.33333%;left:auto;
+}
+.push-8 {
+position:relative;left:66.66667%;right:auto;
+}
+.pull-8 {
+position:relative;right:66.66667%;left:auto;
+}
+.push-9 {
+position:relative;left:75%;right:auto;
+}
+.pull-9 {
+position:relative;right:75%;left:auto;
+}
+.push-10 {
+position:relative;left:83.33333%;right:auto;
+}
+.pull-10 {
+position:relative;right:83.33333%;left:auto;
+}
+.push-11 {
+position:relative;left:91.66667%;right:auto;
+}
+.pull-11 {
+position:relative;right:91.66667%;left:auto;
+}
+
+}
+.panel {
+border-style:solid;border-width:1px;border-color:#d7d7d7;margin-bottom:1.25rem;padding:1.25rem;background:#f2f2f2;
+}
+pre {
+border-style:solid;border-width:1px;border-color:#d7d7d7;margin-bottom:1.25rem;padding:1.25rem;background:#f2f2f2;
+}
+.panel>:first-child {
+margin-top:0;
+}
+.panel>:last-child {
+margin-bottom:0;
+}
+.panel h1 ,.panel h2 ,.panel h3 ,.panel h4 ,.panel h5 ,.panel h6 ,.panel p {
+color:#333333;
+}
+.panel h1 ,.panel h2 ,.panel h3 ,.panel h4 ,.panel h5 ,.panel h6 {
+line-height:1;margin-bottom:0.625rem;
+}
+.panel h1.subheader ,.panel h2.subheader ,.panel h3.subheader ,.panel h4.subheader ,.panel h5.subheader ,.panel h6.subheader {
+line-height:1.4;
+}
+.panel.callout {
+border-style:solid;border-width:1px;border-color:#b6edff;margin-bottom:1.25rem;padding:1.25rem;background:#ecfaff;
+}
+.panel.callout>:first-child {
+margin-top:0;
+}
+.panel.callout>:last-child {
+margin-bottom:0;
+}
+.panel.callout h1 ,.panel.callout h2 ,.panel.callout h3 ,.panel.callout h4 ,.panel.callout h5 ,.panel.callout h6 ,.panel.callout p {
+color:#333333;
+}
+.panel.callout h1 ,.panel.callout h2 ,.panel.callout h3 ,.panel.callout h4 ,.panel.callout h5 ,.panel.callout h6 {
+line-height:1;margin-bottom:0.625rem;
+}
+.panel.callout h1.subheader ,.panel.callout h2.subheader ,.panel.callout h3.subheader ,.panel.callout h4.subheader ,.panel.callout h5.subheader ,.panel.callout h6.subheader {
+line-height:1.4;
+}
+.panel.callout a {
+color:#008cba;
+}
+.panel.radius {
+-webkit-border-radius:3px;border-radius:3px;
+}
+.root-nav {
+display:block;width:auto;overflow:hidden;margin:-0.25rem 0 1.125rem;padding-top:0.25rem;margin-right:0;margin-left:2rem;font-size:0.875rem;
+}
+.sub-nav {
+display:block;width:auto;overflow:hidden;margin:-0.25rem 0 1.125rem;padding-top:0.25rem;margin-right:0;margin-left:-0.75rem;
+}
+.sub-nav dt {
+text-transform:uppercase;
+}
+.sub-nav dt ,.sub-nav dd ,.sub-nav li {
+float:left;display:inline;margin-left:1rem;margin-bottom:0.625rem;font-family:"Helvetica Neue","Helvetica",Helvetica,Arial,sans-serif;font-weight:normal;font-size:0.875rem;color:#999999;
+}
+.sub-nav dt a ,.sub-nav dd a ,.sub-nav li a {
+text-decoration:none;color:#999999;
+}
+.sub-nav dt a:hover ,.sub-nav dd a:hover ,.sub-nav li a:hover {
+color:#0087b1;
+}
+.sub-nav dt.active a ,.sub-nav dd.active a ,.sub-nav li.active a {
+-webkit-border-radius:3px;border-radius:3px;font-weight:normal;background:#008cba;padding:0.1875rem 1rem;cursor:default;color:#ffffff;
+}
+.sub-nav dt.active a:hover ,.sub-nav dd.active a:hover ,.sub-nav li.active a:hover {
+background:#0087b1;
+}
+table {
+background:#ffffff;margin-bottom:1.25rem;border:solid 1px #dddddd;
+}
+table thead ,table tfoot {
+background:#f5f5f5;
+}
+table thead tr th ,table thead tr td ,table tfoot tr th ,table tfoot tr td {
+padding:0.5rem 0.625rem 0.625rem;font-size:0.875rem;font-weight:bold;color:#222222;text-align:left;
+}
+table tr th ,table tr td {
+padding:0.5625rem 0.625rem;font-size:0.875rem;color:#222222;
+}
+table tr.even ,table tr.alt ,table tr:nth-of-type(even) {
+background:#f9f9f9;
+}
+table thead tr th ,table tfoot tr th ,table tbody tr td ,table tr td ,table tfoot tr td {
+display:table-cell;line-height:1.125rem;
+}
+meta.foundation-mq-topbar {
+font-family:"/only screen and (min-width:40.063em)/";width:40.063em;
+}
+.contain-to-grid {
+width:100%;background:#ffffff;
+}
+.contain-to-grid .top-bar {
+margin-bottom:0;
+}
+.fixed {
+width:100%;left:0;position:fixed;top:0;z-index:99;
+}
+.fixed.expanded:not(.top-bar) {
+overflow-y:auto;height:auto;width:100%;max-height:100%;
+}
+.fixed.expanded:not(.top-bar) .title-area {
+position:fixed;width:100%;z-index:99;
+}
+.fixed.expanded:not(.top-bar) .top-bar-section {
+z-index:98;margin-top:59px;
+}
+.top-bar {
+overflow:hidden;height:59px;line-height:59px;position:relative;background:#ffffff;margin-bottom:0;
+}
+.top-bar ul {
+margin-bottom:0;list-style:none;
+}
+.top-bar .row {
+max-width:none;
+}
+.top-bar form ,.top-bar input {
+margin-bottom:0;
+}
+.top-bar input {
+height:auto;padding-top:0.35rem;padding-bottom:0.35rem;font-size:0.75rem;
+}
+.top-bar .button {
+padding-top:0.45rem;padding-bottom:0.35rem;margin-bottom:0;font-size:0.75rem;
+}
+.top-bar .title-area {
+position:relative;margin:0;
+}
+.top-bar .name {
+height:59px;margin:0;font-size:16px;
+}
+.top-bar .name h1 {
+line-height:59px;font-size:1.0625rem;margin:0;
+}
+.top-bar .name h1 a {
+font-weight:normal;color:#607890;width:50%;display:block;padding:0 19.66667px;
+}
+.top-bar .toggle-topbar {
+position:absolute;right:0;top:0;
+}
+.top-bar .toggle-topbar a {
+color:#607890;text-transform:uppercase;font-size:0.8125rem;font-weight:bold;position:relative;display:block;padding:0 19.66667px;height:59px;line-height:59px;
+}
+.top-bar .toggle-topbar.menu-icon {
+right:19.66667px;top:50%;margin-top:-16px;padding-left:40px;
+}
+.top-bar .toggle-topbar.menu-icon a {
+height:34px;line-height:33px;padding:0;padding-right:25px;color:#000000;position:relative;
+}
+.top-bar .toggle-topbar.menu-icon a::after {
+content:"";position:absolute;right:0;display:block;width:16px;top:0;height:0;-webkit-box-shadow:0 10px 0 1px #000000,0 16px 0 1px #000000,0 22px 0 1px #000000;box-shadow:0 10px 0 1px #000000,0 16px 0 1px #000000,0 22px 0 1px #000000;
+}
+.top-bar.expanded {
+height:auto;background:transparent;
+}
+.top-bar.expanded .title-area {
+background:#ffffff;
+}
+.top-bar.expanded .toggle-topbar a {
+color:#888888;
+}
+.top-bar.expanded .toggle-topbar a span {
+-webkit-box-shadow:0 10px 0 1px #888888,0 16px 0 1px #888888,0 22px 0 1px #888888;box-shadow:0 10px 0 1px #888888,0 16px 0 1px #888888,0 22px 0 1px #888888;
+}
+.top-bar-section {
+left:0;position:relative;width:auto;-webkit-transition:left 300ms ease-out;-moz-transition:left 300ms ease-out;transition:left 300ms ease-out;
+}
+.top-bar-section ul {
+width:100%;height:auto;display:block;background:#ffffff;font-size:16px;margin:0;
+}
+.top-bar-section .divider ,.top-bar-section [role="separator"] {
+border-top:solid 1px #808080;clear:both;height:1px;width:100%;
+}
+.top-bar-section ul li>a {
+display:block;width:100%;color:#607890;padding:12px 0 12px 0;padding-left:19.66667px;font-family:"Helvetica Neue","Helvetica",Helvetica,Arial,sans-serif;font-size:1.1rem;font-weight:normal;background:#ffffff;
+}
+.top-bar-section ul li > a.button {
+background:#008cba;font-size:1rem;padding-right:19.66667px;padding-left:19.66667px;
+}
+.top-bar-section ul li > a.button:hover {
+background:#006888;
+}
+.top-bar-section ul li > a.button.secondary {
+background:#e7e7e7;
+}
+.top-bar-section ul li > a.button.secondary:hover {
+background:#cecece;
+}
+.top-bar-section ul li > a.button.success {
+background:#43ac6a;
+}
+.top-bar-section ul li > a.button.success:hover {
+background:#358853;
+}
+.top-bar-section ul li > a.button.alert {
+background:#f04124;
+}
+.top-bar-section ul li > a.button.alert:hover {
+background:#d4290f;
+}
+.top-bar-section ul li:hover>a {
+background:#ffffff;color:#000000;
+}
+.top-bar-section ul li.active>a {
+background:#008cba;color:#000000;
+}
+.top-bar-section ul li.active > a:hover {
+background:#007ba0;
+}
+.top-bar-section .has-form {
+padding:19.66667px;
+}
+.top-bar-section .has-dropdown {
+position:relative;
+}
+.top-bar-section .has-dropdown > a:after {
+content:"";display:block;width:0;height:0;border:inset 5px;border-color:transparent transparent transparent rgba(255, 255, 255, 0.4);border-left-style:solid;margin-right:19.66667px;margin-top:-4.5px;position:absolute;top:50%;right:0;
+}
+.top-bar-section .has-dropdown.moved {
+position:static;
+}
+.top-bar-section .has-dropdown.moved>.dropdown {
+display:block;
+}
+.top-bar-section .dropdown {
+position:absolute;left:100%;top:0;display:none;z-index:99;
+}
+.top-bar-section .dropdown li {
+width:100%;height:auto;
+}
+.top-bar-section .dropdown li a {
+font-weight:normal;padding:8px 19.66667px;
+}
+.top-bar-section .dropdown li a.parent-link {
+font-weight:normal;
+}
+.top-bar-section .dropdown li.title h5 {
+margin-bottom:0;
+}
+.top-bar-section .dropdown li.title h5 a {
+color:#607890;line-height:29.5px;display:block;
+}
+.top-bar-section .dropdown li.has-form {
+padding:8px 19.66667px;
+}
+.top-bar-section .dropdown li .button {
+top:auto;
+}
+.top-bar-section .dropdown label {
+padding:8px 19.66667px 2px;margin-bottom:0;text-transform:uppercase;color:#777777;font-weight:bold;font-size:0.625rem;
+}
+.js-generated {
+display:block;
+}
+@media only screen and (min-width:40.063em){
+.top-bar {
+background:#ffffff;*zoom:1;overflow:visible;
+}
+.top-bar:before ,.top-bar:after {
+content:" ";display:table;
+}
+.top-bar:after {
+clear:both;
+}
+.top-bar .toggle-topbar {
+display:none;
+}
+.top-bar .title-area {
+float:left;
+}
+.top-bar .name h1 a {
+width:auto;
+}
+.top-bar input ,.top-bar .button {
+font-size:0.875rem;position:relative;top:7px;
+}
+.top-bar.expanded {
+background:#ffffff;
+}
+.contain-to-grid .top-bar {
+max-width:62.5rem;margin:0 auto;margin-bottom:0;
+}
+.top-bar-section {
+-webkit-transition:none 0 0;-moz-transition:none 0 0;transition:none 0 0;left:0 !important;
+}
+.top-bar-section ul {
+width:auto;height:auto !important;display:inline;
+}
+.top-bar-section ul li {
+float:left;
+}
+.top-bar-section ul li .js-generated {
+display:none;
+}
+.top-bar-section li.hover>a:not(.button) {
+background:#ffffff;color:#000000;
+}
+.top-bar-section li:not(.has-form) a:not(.button) {
+padding:0 19.66667px;line-height:59px;background:#ffffff;
+}
+.top-bar-section li:not(.has-form) a:not(.button):hover {
+background:#ffffff;
+}
+.top-bar-section .has-dropdown>a {
+padding-right:39.66667px !important;
+}
+.top-bar-section .has-dropdown > a:after {
+content:"";display:block;width:0;height:0;border:inset 5px;border-color:rgba(255, 255, 255, 0.4) transparent transparent transparent;border-top-style:solid;margin-top:-2.5px;top:29.5px;
+}
+.top-bar-section .has-dropdown.moved {
+position:relative;
+}
+.top-bar-section .has-dropdown.moved>.dropdown {
+display:none;
+}
+.top-bar-section .has-dropdown.hover>.dropdown ,.top-bar-section .has-dropdown.not-click:hover>.dropdown {
+display:block;
+}
+.top-bar-section .has-dropdown .dropdown li.has-dropdown > a:after {
+border:none;content:"\00bb";top:1rem;margin-top:-2px;right:5px;line-height:1.2;
+}
+.top-bar-section .dropdown {
+left:0;top:auto;background:transparent;min-width:100%;
+}
+.top-bar-section .dropdown li a {
+color:#ffffff;line-height:1;white-space:nowrap;padding:12px 19.66667px;background:#333333;
+}
+.top-bar-section .dropdown li label {
+white-space:nowrap;background:#333333;
+}
+.top-bar-section .dropdown li .dropdown {
+left:100%;top:0;
+}
+.top-bar-section>ul>.divider ,.top-bar-section>ul>[role="separator"] {
+border-bottom:none;border-top:none;border-right:solid 1px #ffffff;clear:none;height:59px;width:0;
+}
+.top-bar-section .has-form {
+background:#ffffff;padding:0 19.66667px;height:59px;
+}
+.top-bar-section .right li .dropdown {
+left:auto;right:0;
+}
+.top-bar-section .right li .dropdown li .dropdown {
+right:100%;
+}
+.top-bar-section .left li .dropdown {
+right:auto;left:0;
+}
+.top-bar-section .left li .dropdown li .dropdown {
+left:100%;
+}
+.no-js .top-bar-section ul li:hover>a {
+background:#ffffff;color:#000000;
+}
+.no-js .top-bar-section ul li:active>a {
+background:#008cba;color:#000000;
+}
+.no-js .top-bar-section .has-dropdown:hover>.dropdown {
+display:block;
+}
+
+}
+div ,dl ,dt ,dd ,ul ,ol ,li ,h1 ,h2 ,h3 ,h4 ,h5 ,h6 ,pre ,form ,p ,blockquote ,th ,td {
+margin:0;padding:0;
+}
+a {
+color:#008cba;text-decoration:none;line-height:inherit;
+}
+a:hover ,a:focus {
+color:#007ba0;
+}
+a img {
+border:none;
+}
+p {
+font-family:inherit;font-weight:normal;font-size:1rem;line-height:1.3;margin-bottom:1.25rem;text-rendering:optimizeLegibility;
+}
+ol li p {
+margin-bottom: 0;
+}
+p.lead {
+font-size:1.21875rem;line-height:1.6;
+}
+p aside {
+font-size:0.875rem;line-height:1.35;font-style:italic;
+}
+h1 ,h2 ,h3 ,h4 ,h5 ,h6 {
+font-family:"Helvetica Neue","Helvetica",Helvetica,Arial,sans-serif;font-weight:300;font-style:normal;color:#222222;text-rendering:optimizeLegibility;margin-top:0.2rem;margin-bottom:0.5rem;line-height:1.4;
+}
+h1 small ,h2 small ,h3 small ,h4 small ,h5 small ,h6 small {
+font-size:60%;color:#6f6f6f;line-height:0;
+}
+h1 {
+font-size:1.6875rem;
+font-weight:bold;
+}
+h2 {
+font-size:1.375rem;
+font-weight:bold;
+}
+h3 {
+font-size:1.125rem;
+font-weight:bold;
+}
+h4 {
+font-size:1rem;
+font-weight:bold;
+}
+h5 {
+font-size:1rem;
+}
+h6 {
+font-size:1rem;
+}
+.subheader {
+line-height:1.4;color:#6f6f6f;font-weight:300;margin-top:0.2rem;margin-bottom:0.5rem;
+}
+hr {
+border:solid #dddddd;border-width:1px 0 0;clear:both;margin:1.25rem 0 1.1875rem;height:0;
+}
+em ,i {
+font-style:italic;line-height:inherit;
+}
+strong ,b {
+font-weight:bold;line-height:inherit;
+}
+small {
+font-size:60%;line-height:inherit;
+}
+ul ,ol ,dl {
+font-size:1rem;line-height:1;margin-bottom:1.25rem;list-style-position:outside;font-family:inherit;
+}
+ul {
+margin-left:1.1rem;
+}
+ul.no-bullet {
+margin-left:0;
+}
+ul.no-bullet li ul ,ul.no-bullet li ol {
+margin-left:1.25rem;margin-bottom:0;list-style:none;
+}
+ul li ul ,ul li ol {
+margin-left:1.25rem;margin-bottom:0;font-size:1rem;
+}
+ul.square li ul ,ul.circle li ul ,ul.disc li ul {
+list-style:inherit;
+}
+ul.square {
+list-style-type:square;margin-left:1.1rem;
+}
+ul.circle {
+list-style-type:circle;margin-left:1.1rem;
+}
+ul.disc {
+list-style-type:disc;margin-left:1.1rem;
+}
+ul.no-bullet {
+list-style:none;
+}
+ol {
+margin-left:1.4rem;
+}
+ol li ul ,ol li ol {
+margin-left:1.25rem;margin-bottom:0;
+}
+dl dt {
+margin-bottom:0.3rem;font-weight:bold;
+}
+dl dd {
+margin-bottom:0.75rem;
+}
+abbr ,acronym {
+text-transform:uppercase;font-size:90%;color:#222222;border-bottom:1px dotted #dddddd;cursor:help;
+}
+abbr {
+text-transform:none;
+}
+blockquote {
+margin:0 0 1.25rem;padding:0.5625rem 1.25rem 0 1.1875rem;border-left:1px solid #dddddd;
+}
+blockquote cite {
+display:block;font-size:0.8125rem;color:#555555;
+}
+blockquote cite:before {
+content:"\2014 \0020";
+}
+blockquote cite a ,blockquote cite a:visited {
+color:#555555;
+}
+blockquote ,blockquote p {
+line-height:1.6;color:#6f6f6f;
+}
+.vcard {
+display:inline-block;margin:0 0 1.25rem 0;border:1px solid #dddddd;padding:0.625rem 0.75rem;
+}
+.vcard li {
+margin:0;display:block;
+}
+.vcard .fn {
+font-weight:bold;font-size:0.9375rem;
+}
+.vevent .summary {
+font-weight:bold;
+}
+.vevent abbr {
+cursor:default;text-decoration:none;font-weight:bold;border:none;padding:0 0.0625rem;
+}
+@media only screen and (min-width:40.063em){
+h1 ,h2 ,h3 ,h4 ,h5 ,h6 {
+line-height:1.4;
+}
+h1 {
+font-size:2.35rem;
+font-weight:bold;
+}
+h2 {
+font-size:1.9125rem;
+font-weight:bold;
+}
+h3 {
+font-size:1.2875rem;
+font-weight:bold;
+}
+h4 {
+font-size:1.0375rem;
+font-weight:bold;
+}
+
+}
+.print-only {
+display:none !important;
+}
+@media print{
+@page{
+margin:0.5cm;
+}
+* {
+background:transparent !important;color:#000000 !important;box-shadow:none !important;text-shadow:none !important;
+}
+a ,a:visited {
+text-decoration:underline;
+}
+a[href]:after {
+content:" (" attr(href) ")";
+}
+abbr[title]:after {
+content:" (" attr(title) ")";
+}
+.ir a:after ,a[href^="javascript:"]:after ,a[href^="#"]:after {
+content:"";
+}
+pre ,blockquote {
+border:1px solid #999999;page-break-inside:avoid;
+}
+thead {
+display:table-header-group;
+}
+tr ,img {
+page-break-inside:avoid;
+}
+img {
+max-width:100% !important;
+}
+p ,h2 ,h3 {
+orphans:3;widows:3;
+}
+h2 ,h3 {
+page-break-after:avoid;
+}
+.hide-on-print {
+display:none !important;
+}
+.print-only {
+display:block !important;
+}
+.hide-for-print {
+display:none !important;
+}
+.show-for-print {
+display:inherit !important;
+}
+
+}
+.top-bar .toggle-topbar.menu-icon {
+padding-left:21px;left:0;right:0;
+}
+.top-bar .toggle-topbar.menu-icon a {
+position:absolute;padding-left:25px;
+}
+.top-bar .toggle-topbar.menu-icon a::after {
+left:0;
+}
+.small-screen-donate {
+position:absolute;right:0;top:8px;
+}
+.paypal-donate {
+background:#ffffff;padding:3px 19px 0 0;
+}
+@media only screen and (max-width: 64em){
+.wide-row {
+padding:0;
+}
+
+}
+@media only screen and (max-width: 40em){
+ul.right {
+display:none;
+}
+pre {
+margin:0 !important;
+}
+.contain-to-grid {
+position:fixed;z-index:999;top:0;
+}
+header {
+margin-top:59px;
+}
+
+}
+@media only screen and (min-width: 40.063em){
+.small-screen-donate {
+display:none;
+}
+
+}
+.top-bar-section ul li.active>a {
+background:#e4e4e4;
+}
+.main {
+background:#f0f0f0;
+}
+.question {
+font-weight:bold;
+}
+.answer {
+font-size:1.0rem;word-break:break-word;
+}
+footer p {
+color:#ffffff;font-size:0.8rem;
+}
+pre {
+background:white;border-color:black;border-radius:9px;padding:0.6rem;margin:8px 2em;
+}
+pre p {
+font-size:0.7rem;
+}
+pre pre {
+white-space:pre-wrap;white-space:-moz-pre-wrap;white-space:-pre-wrap;white-space:-o-pre-wrap;word-wrap:break-word;
+}
+.feature-block a {
+display:table;margin:0 auto;
+}
+.sub-nav li {
+float:none !important;display:block !important;
+}
+.doc-wrapper p ,.doc-wrapper ul li {
+font-size:1.0rem;
+}
+.doc-wrapper ul {
+line-height:normal;
+}
+.dl-dropdown.content {
+max-width:783px;
+}
+.download {
+background:url('../img/small-download.png') no-repeat 0 3px;padding-left:15px;
+}
+.contain-to-grid {
+background:none;
+}
+.top-bar {
+max-width:803px !important;
+}
+.f-dropdown .sub-nav li {
+margin-bottom:0 !important;
+}
+.f-topbar-fixed {
+padding-top:0 !important;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class=
+  "row small-12 medium-12 large-10 large-centered columns wide-row main panel doc-wrapper">
+  <div style="margin: 10px">
+  <p>iTerm2 should require little explanation for users accustomed to terminal emulators.
+  Even if you are an experienced user, take the time to read through the highlights
+  section of this document. It will familiarize you with some features of iTerm2 that you
+  may not have seen in other terminal emulators that can make a real difference in the
+  way you work.</p>
+
+    <h3>Table of Contents</h3>
+
+    <ul>
+      <li><a href="#documentation-highlights.html">Highlights for New Users</a></li>
+
+      <li><a href="#documentation-general-usage.html">General Usage</a></li>
+
+      <li><a href="#documentation-menu-items.html">Menu Items</a></li>
+
+      <li><a href="#documentation-preferences.html">Preferences</a></li>
+
+      <li><a href="#documentation-coprocesses.html">Coprocesses</a></li>
+
+      <li><a href="#documentation-smart-selection.html">Smart Selection</a></li>
+
+      <li><a href="#documentation-triggers.html">Triggers</a></li>
+
+      <li><a href="#documentation-escape-codes.html">Proprietary Escape Codes</a></li>
+
+      <li><a href="#documentation-fonts.html">Fonts</a></li>
+
+      <li><a href="#documentation-hidden-settings.html">Hidden Settings</a></li>
+
+      <li><a href="#documentation-scripting.html">Scripting</a></li>
+      <li><a href="#licenses">Licenses</a></li>
+
+    </ul>
+      <p><a name="documentation-highlights.html" id=
+      "documentation-highlights.html"></a></p>
+      <hr />
+
+      <h2>Highlights for new Users</h2>
+
+      <p>iTerm2 has many features that will change the way you interact with your
+      terminal. This section outlines them briefly.</p>
+
+      <h4>Text Selection</h4>
+
+      <p>There are two ways to select text to copy to the clipboard: you can use the
+      mouse, or you can use the find feature's "mouseless copy" feature. Text selection
+      by mouse is described above in General Usage section.</p>
+
+      <p>To select text without using the mouse, press cmd-f to open the find field.
+      Enter the beginning fo the text you wish to copy and the find feature will select
+      it in your window. Then press tab and the end of the selection will advance by a
+      word. To advance the beginning of the selection to the left, press shift-tab. At
+      most one line of text can be selected this way.</p>
+
+      <h4>Split Panes</h4>
+
+      <p>iTerm2 allows you to divide a tab into many rectangular "panes", each of which
+      is a different terminal session. The shortcuts cmd-d and cmd-shift-d divide an
+      existing session vertically or horizontally, respectively. You can navigate among
+      split panes with cmd-opt-arrow or cmd-[ and cmd-]. You can "maximize" the current
+      pane--hiding all others in that tab--with cmd-shift-enter. Pressing the shortcut
+      again restores the hidden panes.</p>
+
+      <h4>Hotkey Window</h4>
+
+      <p>iTerm2 offers a special terminal window that is always available with a single
+      keystroke. This window is called the "hotkey window" and is most commonly used
+      for occasional administrative tasks. To enable this feature, go to Preferences
+      &gt; Keys. Enable "Show/Hide iTerm2 with a system-wide hotkey". Click in the
+      field and enter the key combination you'd like to use. Then check "hotkey toggles
+      a dedicated window with profile:". A new profile will be created that is
+      optimized for the feature. Pressing the hotkey will drop a terminal window down
+      from the top of the screen, and pressing it again (or clicking in any other
+      window) causes it to disappear.</p>
+
+      <h4>Swap Cmd and Option</h4>
+
+      <p>iTerm2 allows you to remap modifiers. You have separate control over left and
+      right command and option keys. One common need is to exchange cmd and option. To
+      do this, go to Preferences &gt; Keys. Set Left option key to Left command key and
+      Left command key to Left option key (and do the same for Right command and Right
+      option if you please). You can add exceptions if you don't want certain
+      combinations to be remapped (for example, cmd-tab) by adding a new global
+      shortcut with the action "Do Not Remap" and the keystroke of the (unremapped) key
+      you wish to keep unaffected by modifier remapping.</p>
+
+      <h4>Save Mark/Jump to Mark</h4>
+
+      <p>You can mark a location in a session with cmd-shift-M and then jump back to it
+      with cmd-shift-J. This is useful, for instance, if you suspend your editor to
+      compile a program and it emits errors. You can save a mark at that point and then
+      return to your editor to fix the errors. As you work, you can jump back to the
+      compilation errors with cmd-shift-J.</p>
+
+      <h4>Regular Expression Search</h4>
+
+      <p>When you open the find field (cmd-f) there is a down-arrow on the left of the
+      field by the magnifying glass. Clicking it opens a menu of options in which you
+      can enable regular expression search. The <a href=
+      "http://userguide.icu-project.org/strings/regexp#TOC-Regular-Expression-Metacharacters">
+      ICU syntax</a> is used.</p>
+
+      <h4>Autocomplete</h4>
+
+      <p>Any text that exists in a tab or its scrollback buffer can be autocompleted in
+      that tab. To use autocomplete, type the beginning of a word and then press cmd-;.
+      An autocomplete window opens showing the top 20 choices for words beginning what
+      what you have entered. The list can be filtered by typing a subsequence. The
+      filter can be reset by pressing backspace. If you make a selection and press
+      return, it will be entered for you. If you make a selection and press tab, your
+      autocomplete will be extended with the selection.</p>
+
+      <h4>Paste History</h4>
+
+      <p>Whenever text is copied or pasted in iTerm2 it is added to the paste history.
+      You can access paste history with cmd-shift-H. It can be filtered by typing a
+      subsequence, and the filter can be cleared by pressing backspace. You can choose
+      to have your paste history saved to disk by turning that option on under
+      Preferences &gt; General &gt; Save copy/paste history to disk.</p>
+
+      <h4>Instant Replay</h4>
+
+      <p>Sometimes interactive programs will overwrite something of interest on the
+      screen (for example, top(1) does this all the time). Normally, this would be lost
+      forever. With Instant Replay, you can step back in time to see exactly what was
+      on your screen at some point in the recent past. To enable, press cmd-opt-B. Once
+      you are in instant replay mode, you can use the left and right arrow keys to
+      navigate back and forward through time. Esc exits instant replay mode. By
+      default, each session uses up to 4MB to save its instant replay history, and this
+      can be adjusted under Preferences &gt; General &gt; Instant Replay uses __ MB per
+      session.</p>
+
+      <p>Another benefit of Instant Replay is that it shows you the exact time that
+      something appeared on your screen down to the second. This is useful when trying
+      to figure out when an error occurred, for example.</p>
+
+      <h4>Full Screen</h4>
+
+      <p>You can press cmd-enter and iTerm2 will take up the entire screen. If you had
+      a transparent background configured, it will be turned off upon entering full
+      screen mode to reduce distractions. You can re-enable it with cmd-U.</p>
+
+      <h4>256 Color Mode</h4>
+
+      <p>iTerm2 supports 256 color mode. To enable this for csh shells, set your
+      terminal to xterm-256color (under Preferences &gt; Profiles &gt; Terminal &gt;
+      Report Terminal Type). Some applications may need to be configured to support
+      this mode. In vim, add this to your .vimrc:</p>
+      <pre>
+<code>set t_Co=256
+</code>
+</pre>
+
+      <h4>Focus Follows Mouse</h4>
+
+      <p>This option is off by default, but can be enabled under Preferences &gt;
+      General &gt; Focus follows mouse. It only affects iTerm2 windows.</p>
+
+      <h4>Middle Button Paste</h4>
+
+      <p>If you have a three-button mouse, by default the middle button performs
+      "paste".</p>
+
+      <h4>Smart Cursor Color</h4>
+
+      <p>When using a block cursor, it's hard to pick a cursor color that's visible
+      against every background color. If you enable Smart cursor color (under
+      Preferences &gt; Profiles &gt; Colors) then the cursor color will be dynamically
+      chosen to be visible against the text it is over and the adjacent cells.</p>
+
+      <h4>Minimum Contrast</h4>
+
+      <p>Sometimes an application will display text with a color combination that is
+      hard to read. Colorblind users in particular may find certain combinations hard
+      to see if the colors differ only in hue and not brightness. If you enable minimum
+      contrast (under Preferences &gt; Profiles &gt; Colors &gt; Minimum contrast, then
+      iTerm2 will guarantee a minimum level of brightness difference between the
+      foreground and background color of every character. If you set this to its
+      maximum value, then all text will be black or white.</p>
+
+      <h4>Growl Support</h4>
+
+      <p>If you enable Growl (Preferences &gt; Profiles &gt; Terminal &gt; Enable Growl
+      Notifications) and you have Growl installed then you'll receive messages when a
+      terminal beeps, has output after a period of silence, or terminates.</p>
+
+      <h4>Exposï¿½ Tabs</h4>
+
+      <p>If you have too many tabs and are unable to find the one you're looking for,
+      you can use the Exposï¿½ Tabs feature to find it. Press cmd-opt-E and all your tabs
+      will be shown at once. You can then perform a search over all tabs simultaneously
+      to find what you're looking for.</p>
+
+      <h4>Window Arrangements</h4>
+
+      <p>You can take a snapshot of your open windows, tabs, and panes with the menu
+      option Window &gt; Save Window Arrangement. You can restore this configuration
+      with Window &gt; Restore Window Arrangement, or you can choose to have it
+      automatically restored when you start iTerm2 with Preferences &gt; General &gt;
+      Open saved window arrangement.</p>
+
+      <h4>Smart Selection</h4>
+
+      <p>Performing a quad-click does a "smart selection," which selects text under the
+      pointer in a way appropriate to its content. For example, URLs, quoted strings,
+      and email addresses (among many other objects) are recognized and selected in
+      their entirety.</p>
+
+      <h4>Triggers</h4>
+
+      <p>Triggers are user-configurable regular expressions with associated actions
+      that run when text is received that matches the regex. Actions include
+      highlighting the matching text, showing an alert, sending text back, and
+      more.</p>
+
+      <h4>Tmux Integration</h4>
+
+      <p>iTerm2 is tightly integrated with tmux. The integration allows you to see tmux
+      windows as native iTerm2 windows or tabs. The tmux prefix key is not needed, as
+      native menu commands operate on tmux windows. For more information, please see
+      the <a href="https://code.google.com/p/iterm2/wiki/TmuxIntegration">iTerm2-tmux
+      Integration</a> document.</p>
+
+      <h4>Coprocesses</h4>
+
+      <p>Coprocesses are programs that run alongside iTerm2 and are bound to a single
+      session. All output bound for the session is also routed as input to the
+      coprocess. The coprocess's output acts like the user typing at the keyboard.
+      Coprocesses can be used to automate tasks. For more information, see the <a href=
+      "documentation-coprocesses.html">Coprocess</a> document.</p>
+
+      <p><a name="documentation-general-usage.html" id=
+      "documentation-general-usage.html"></a></p>
+      <hr />
+
+      <h2>General Usage</h2>
+
+      <h4>Tabs</h4>
+
+      <p>When you first start iTerm2, a window opens showing a terminal session. If you
+      want to open more that one session at a time, you have a few options: You can
+      create a new window (Shell &gt; New Window), you can create a new tab (Shell &gt;
+      New Tab), or you can split the current session into two panes (Shell &gt; Split
+      Horizontally, Shell &gt; Split Vertically), each of which is a separate
+      session.</p>
+
+      <p>Tabs in iTerm2 behave like tabs in other programs, most notably web browsers
+      like Safari, Firefox, and Google Chrome. Note that you can drag and drop tabs to
+      reorder them within a window. You can drag tabs from one window to another, and
+      you can drag a tab from a window into a new window by dropping it outside any
+      iTerm2 window's tab bar.</p>
+
+      <p>By default, the label of each tab is the name of the job that's running in
+      that session. Some systems are configured to augment this with additional
+      information such as the hostname you're logged in to or your current directory
+      (this is done by sending a special code of ESC]0;string ^G).</p>
+
+      <p>Tab labels are colored to indicate their status. When new output is received
+      in a tab other than the currently selected tab, its label changes color to
+      magenta. After a few seconds it becomes red to indicate not-so-fresh output. When
+      a tab's session terminates, the label turns gray. You can disable this coloring
+      in Preferences &gt; Appearance &gt; Color tab labels on activity.</p>
+
+      <h4>Toolbar</h4>
+
+      <p>The toolbar provides quick access to some commonly used features.</p>
+
+      <ul>
+        <li>The New button allows you to open a new tab. If you have configured
+        multiple profiles, it allows you to select one from a list.</li>
+
+        <li>The Info button allows you to change the appearance of the current
+        session.</li>
+
+        <li>The Close button closes the current session, and may close the current
+        window if it was the only session.</li>
+
+        <li>The Execute field lets you to type in a command locally before sending it
+        to the terminal. You can also type in a URL (including the scheme, such as
+        http://), in which case the URL will be opened by the appropriate application.
+        If you press TAB key instead of Enter after you type in the command, a new tab
+        will be launched with your command.</li>
+      </ul>
+
+      <h4>Info Panel</h4>
+
+      <p>Info Panel lets you modify the apperance of a single session. Note that after
+      you open this panel, your changes will not be reflected in the profile and
+      profile changes will not be reflected in this session.</p>
+
+      <h4>Pointer</h4>
+
+      <p>The primary use of the mouse in iTerm2 is to select text, and (by default)
+      text is copied to the clipboard immediately upon being selected. You can click
+      and drag to perform a normal selection. Double-clicking selects a whole word.
+      Triple-clicking selects an entire line. Quadruple-clicking performs a "smart
+      select", matching recognized strings such as URLs and email addresses.</p>
+
+      <p>If you hold shift while clicking the existing selection is extended.</p>
+
+      <p>If you hold cmd and click on a URL it will be opened. If you hold cmd and
+      click on a filename, it will be opened. There is special support for Macvim,
+      Textmate, and BBEdit when you cmd-click on a text file's name: if it is followed
+      by a colon and line number, the file will be opened at that line number. The
+      current directory is tracked if you have your shell prompt set the window title,
+      <a href="http://www.faqs.org/docs/Linux-mini/Xterm-Title.html#toc4">as described
+      here</a>.</p>
+
+      <p>If you hold cmd you can drag and drop selected text.</p>
+
+      <p>If you hold cmd and option while selecting, a rectangular selection will be
+      made.</p>
+
+      <p>If mouse reporting is enabled (in Preferences &gt; Profile &gt; Terminal) and
+      the currently running terminal application is using it, pressing option will
+      temporarily disable it so you can make a selection.</p>
+
+      <p>If you hold the control key and click, that simulates a right click. If you'd
+      prefer to send this combination to applications using mouse reporting, check
+      "Report ctrl-click to apps instead of opening menu" in Preferences &gt;
+      General.</p>
+
+      <p>Moving the mouse's scroll wheel scrolls up and down.</p>
+
+      <p>A three-finger swipe left or right on a trackpad (if configured to "navigate")
+      will select an adjacent tab.</p>
+
+      <h4>Keyboard</h4>
+
+      <p>Every aspect of the keyboard can be configured in iTerm2. These keystrokes may
+      be useful to remember:</p>
+
+      <ul>
+        <li>Cmd+left arrow, Cmd+right arrow navigates among tabs. So does Cmd-{ and
+        Cmd-}.</li>
+
+        <li>Cmd+number navigates directly to a tab.</li>
+
+        <li>Cmd+Option+Number navigates directly to a window.</li>
+
+        <li>Cmd+Option+Arrow keys navigate among split panes.</li>
+
+        <li>Cmd+] and Cmd+[ navigates among split panes in order of use.</li>
+      </ul>
+
+      <p>You can configure any key combination to perform any action in two places: in
+      Preferences &gt; Keys, you can define global key shortcuts that affect all
+      profiles. In Preferences &gt; Profiles &gt; Keys, you can define key shortcuts
+      that affect only a single profile.</p>
+
+      <p>You can remap modifiers like Option and Cmd within iTerm2. Some users find
+      that pressing Option frequently is uncomfortable, and configure iTerm2 to swap
+      the function of the Option and Cmd keys. This is done in Preferences &gt; Keys
+      under Remap Modifier Keys. If there is some key combination that you don't want
+      to be affected by this change (such as Cmd-tab) add a new global shortcut key
+      with the action Do Not Remap.</p>
+
+      <p>iTerm2 allows you to define a global hotkey. This is a single keystroke that
+      iTerm2 listens for even when another application has keyboard focus. When it is
+      pressed, iTerm2 comes to the front. Press it again, and iTerm2 goes away. You can
+      choose to bind the hotkey to a single dedicated window. This feature is similar
+      to other programs like Visor, Guake, and Yakuake.</p>
+
+      <h4>Context menus</h4>
+
+      <p>By right-clicking in a session a context menu opens. You can use it to open a
+      new session, perform various actions on selected text, or access frequently used
+      features to affect the clicked-on session.</p>
+
+      <h4>Profiles</h4>
+
+      <p>Many settings are stored in profiles. A profile is a named collection of
+      settings, and you can have as many of them as you like. Most users only have one
+      profile, but if you find that you often connect to different servers, they may be
+      useful for you. A key feature of a profile is that you can associate a command
+      with it that is run when it begins. For instance, if you often ssh to a
+      particular host, you could create a profile with the command "ssh example.com" to
+      automate that process.</p>
+
+      <p><a name="documentation-menu-items.html" id=
+      "documentation-menu-items.html"></a></p>
+      <hr />
+
+      <h2>Menu Items</h2>
+
+      <h4>iTerm &gt; Secure Keyboard Entry</h4>
+
+      <p>When this is enabled, the operating system will prevent other programs running
+      on your computer from being able to see what you are typing. If you're concerned
+      that untrusted programs might try to steal your passwords, you can turn this on,
+      but it may disable global hotkeys in other programs.</p>
+
+      <h4>Shell &gt; New Tab with Current Profile</h4>
+
+      <p>This creates a new tab using the same profile as the current session rather
+      than the default profile.</p>
+
+      <h4>Shell &gt; New Window/Tab</h4>
+
+      <p>This creates a new window or tab with the default profile. If the current
+      session is a tmux integration session, then the new window or tab will be a tmux
+      window.</p>
+
+      <h4>Shell &gt; Split Vertically/Horizontally</h4>
+
+      <p>These menu items allow you to divide a tab into two or more split panes. The
+      panes can be adjusted by dragging the line that divides them. They will use the
+      default profile.</p>
+
+      <h4>Shell &gt; Split Vertically/Horizontally with Current Profile</h4>
+
+      <p>These menu items allow you to divide a tab into two or more split panes. The
+      panes can be adjusted by dragging the line that divides them. They will use the
+      profile of the current session.</p>
+
+      <h4>Shell &gt; Broadcast Input &gt; ...</h4>
+
+      <p>These options allow you to send keyboard input to more than one session.</p>
+
+      <h4>Shell &gt; Run/Stop Coprocess</h4>
+
+      <p>Allows you to start and stop a coprocess linked to the current session. Learn
+      more about coprocesses.</p>
+
+      <h4>Shell &gt; tmux &gt; ...</h4>
+
+      <p>These commands let you interact with the tmux integration. The tmux dashboard
+      is a view that lets you see all your tmux sessions and windows at a glance,
+      adjust which are visible, rename them, and change the current tmux session.</p>
+
+      <h4>Shell &gt; Log &gt; Start/Stop</h4>
+
+      <p>Logging saves all input received in a session to a file on disk.</p>
+
+      <h4>Edit &gt; Paste Special &gt; Paste Escaping Special Characters</h4>
+
+      <p>"Paste Escaping Special Characters" pastes the current string in the
+      clipboard, but places a backslash before spaces and backslashes.</p>
+
+      <h4>Edit &gt; Paste Slowly</h4>
+
+      <p>"Paste Slowly" pastes the current string in the clipboard, but it doesn't send
+      the whole string at once. It is sent in batches of 16 bytes with a 125ms delay
+      between batches. These values can be tweaked with hidden settings. For
+      example:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 SlowPasteBytesPerCall -int 16
+defaults write com.googlecode.iterm2 SlowPasteDelayBetweenCalls -float 0.125
+</code>
+</pre>
+
+      <h4>Edit &gt; Open Paste History...</h4>
+
+      <p>"Open Paste History" opens a window showing up to the last 20 values that were
+      copied or pasted in iTerm2. You can search its contents by typing a
+      (non-necessarily-consecutive) subsequence of characters that appear in the value.
+      You can use arrow keys and enter to make a selection, or you can click on an item
+      to choose it, and it will be pasted. If you enable the Save copy/pate history to
+      disk preference then these values will persist across sessions of iTerm2.</p>
+
+      <h4>Edit &gt; Open Autocomplete...</h4>
+
+      <p>Shows the autocomplete window, which offers to finish typing a word that
+      you've begun. <a href="documentation-highlights.html">Learn more about
+      autocomplete on highlights page</a>.</p>
+
+      <h4>Edit &gt; Set Mark</h4>
+
+      <p>Records the current scroll position. Use Edit &gt; Jump to Mark to restore the
+      scroll position.</p>
+
+      <h4>View &gt; Show Tabs in Fullscreen</h4>
+
+      <p>If enabled, tabs are shown in fullscreen windows.</p>
+
+      <h4>View &gt; Use Transparency</h4>
+
+      <p>This toggles transparency. It only has an effect if you have configured your
+      session to be transparent under Preferences &gt; Profiles &gt; Window &gt;
+      Transparency. When Full Screen mode is entered, transparency is turned off by
+      default, but you can select this menu item to re-enable it.</p>
+
+      <h4>View &gt; Find Cursor</h4>
+
+      <p>Reveals the current cursor position.</p>
+
+      <h4>View &gt; Maximize Active Pane</h4>
+
+      <p>When there are split panes present, this toggles whether a given pane expands
+      to fill the tab. When a maximized pane is present, the tab will be inscribed with
+      a dotted outline.</p>
+
+      <h4>View &gt; Edit Current Session</h4>
+
+      <p>This opens a window that lets you change the settings of the current session
+      without affecting any other sessions. Once this has been done, changes to the
+      profile will not affect this session.</p>
+
+      <h4>View &gt; Step Back/Forward in Time</h4>
+
+      <p>Stepping through time allows you to see what was on the screen at a previous
+      time. This is different than going back through the scrollback buffer, as
+      interactive programs sometimes overwrite the screen contents without having them
+      scroll back. Once in this mode, you can use the left and right arrow keys to step
+      back and forward, respectively. The "esc" key exits this mode, as does clicking
+      the close button in the bar that appears on the bottom. You can adjust the amount
+      of memory dedicated to this feature in Preferences &gt; Instant Replay uses xx MB
+      per session. The more memory you assign, the further back in time you can
+      step.</p>
+
+      <h4>View &gt; Tab Color</h4>
+
+      <p>Allows you to select a tint color for the tab, to make it easier to
+      distinguish.</p>
+
+      <h4>Profiles &gt; Open Profiles...</h4>
+
+      <p>This opens the "Profiles Window" which allows you to create new windows, tabs,
+      or panes from one or more profiles. You can perform a search by entering text in
+      the search field. Profile names and tags are searched, and the listed profiles
+      are filtered as you type. You can use the up and down arrow keys to make a
+      selection. Pressing enter will open a new tab, while shift-enter will open a new
+      window. You can make multiple selections by holding down shift or cmd and
+      clicking on profiles. The "New Tabs in New Window" button is enabled only when
+      more than one profile is selected: it will open a new window and create a new tab
+      for each profile selected.</p>
+
+      <h4>Toolbelt &gt; Show Toolbelt</h4>
+
+      <p>This toggles the visibility of the Toolbelt on the right side of all
+      windows.</p>
+
+      <h4>Toolbelt &gt; Jobs</h4>
+
+      <p>This toggles the visibility of the Jobs tool, which shows the running jobs in
+      the current session, and allows you to send them signals.</p>
+
+      <h4>Toolbelt &gt; Notes</h4>
+
+      <p>This toggles the visibility of the Notes tool, which provides a freeform
+      scratchpad in the toolbelt.</p>
+
+      <h4>Toolbelt &gt; Paste History</h4>
+
+      <p>This toggles the visibility of the Paste History tool, which shows recently
+      pasted strings in the toolbelt.</p>
+
+      <h4>Toolbelt &gt; Profiles</h4>
+
+      <p>This toggles the visibility of the Profiles tool, which lets you select
+      profiles to open new windows, tabs, and split panes.</p>
+
+      <h4>Window &gt; Exposï¿½ All Tabs</h4>
+
+      <p>All iTerm2 tabs will be shown tiled on the main screen. You can mouse over a
+      tab to see it larger, and clicking on it will restore the windows and select that
+      tab and bring its window to the front. You can search the contents of all tabs by
+      typing in the search field that appears on the left. Making a selection from the
+      results below it will highlight the tab that contains that text. This is useful
+      when you have many tabs open and can't find the one you're looking for.</p>
+
+      <h4>Window &gt; Save/Restore Window Arrangement</h4>
+
+      <p>The current state and positions of windows, tabs, and spit panes is recorded
+      and saved to disk with Save Window Arrangement. Restore Window Arrangement opens
+      a new collection of windows having the saved state. You can automatically restore
+      the arrangement in Preferences &gt; General &gt; Open saved window
+      arrangement.</p>
+
+      <p><a name="documentation-preferences.html" id=
+      "documentation-preferences.html"></a></p>
+      <hr />
+
+      <h2>Preferences</h2>
+
+      <h3>General</h3>
+      <hr />
+
+      <h4>Open profiles window</h4>
+
+      <p>If selected, the Profiles Window will automatically open when iTerm2 is
+      started.</p>
+
+      <h4>Open default window arrangement</h4>
+
+      <p>If selected, the default saved window arrangement will be restored when iTerm2
+      starts. This is disabled if you haven't yet saved a window arrangement with
+      Window &gt; Save Window Arrangement. If you'd like iTerm2 to open without any
+      windows, create an empty default window arrangement and turn this option on.</p>
+
+      <h4>Quit when all windows are closed</h4>
+
+      <p>If selected, iTerm2 will automatically quit when its last terminal window is
+      closed.</p>
+
+      <h4>Confirm closing multiple sessions</h4>
+
+      <p>If selected, commands that close one session will not be confirmed, but
+      commands that close multiple sessions (such as clicking the red button on a
+      window with two or more tabs) will be confirmed with an alert box.</p>
+
+      <h4>Confirm Quit iTerm2 Command</h4>
+
+      <p>If selected, the Quit iTerm2 (cmd-Q) command will be confirmed if any terminal
+      windows are open.</p>
+
+      <h4>Only when multiple sessions close</h4>
+
+      <p>If selected, commands that close one session will not be confirmed, but
+      commands that close multiple sessions (such as clicking the red button on a
+      window with two or more tabs) will be confirmed with an alert box.</p>
+
+      <h4>Confirm Quit iTerm2 Command</h4>
+
+      <p>If selected, the Quit iTerm2 (cmd-Q) command will be confirmed if any terminal
+      windows are open.</p>
+
+      <h4>Instant Replay Uses X MB per Session</h4>
+
+      <p>This setting specifies the maximum amount of memory allocated to instant
+      replay for each tab or split pane. More memory means instant replay is able to go
+      farther back into the past. You can enter instant replay with View &gt; Step Back
+      in Time.</p>
+
+      <h4>Save copy/paste history to disk</h4>
+
+      <p>If selected, every time text is copied or pasted in iTerm2 it will be saved to
+      disk. The last 20 values are recorded. They can be accessed with Edit &gt; Open
+      Paste History....</p>
+
+      <h4>Add bonjour hosts to profiles</h4>
+
+      <p>If selected, all bonjour hosts on the local network have a profile created for
+      them as long as they're around.</p>
+
+      <h4>Check for updates automatically</h4>
+
+      <p>If enabled, iTerm2 will periodically check if a new version of iTerm2 exists,
+      and if so it will prompt you to download and upgrade.</p>
+
+      <h4>Prompt for test-release updates</h4>
+
+      <p>If enabled, iTerm2 will periodically check if a new unstable version of iTerm2
+      exists, and if so it will prompt you to download and upgrade.</p>
+
+      <h4>Load preferences from a custom folder or URL:</h4>
+
+      <p>If enabled, iTerm2 will load its preferences from the specified folder or URL.
+      After setting this, you'll be prompted when you quit iTerm2 if you'd like to save
+      changes to the folder.</p>
+
+      <h4>Copy to clipboard on selection</h4>
+
+      <p>If enabled, text is copied to the clipboard immediately upon selection. If not
+      selected, you must select Edit &gt; Copy to copy it.</p>
+
+      <h4>Copied text includes trailing newline</h4>
+
+      <p>If enabled, a terminal newline will be copied to the pasteboard when the
+      selection includes one; otherwise, no selection will ever include a terminal
+      newline.</p>
+
+      <h4>Allow clipboard access to terminal apps</h4>
+
+      <p>If enabled, clipboard access will be granted via escape code to programs
+      running in iTerm2. They will be able to retreive and set the contents of the
+      system pasteboard.</p>
+
+      <h4>Characters considered part of a word for selection</h4>
+
+      <p>When you double-click in the terminal window, a "word" is selected. A word is
+      defined as a string delimited by characters of a different class. The classes of
+      characters are whitespace, word characters, and non-word characters. The
+      characters in this field define the set of non-word characters.</p>
+
+      <h4>Smart window placement</h4>
+
+      <p>If enabled, new windows will be opened where they least overlap existing
+      windows.</p>
+
+      <h4>Adjust window when changing font size</h4>
+
+      <p>If enabled, a change to a session's font will cause the window to grow or
+      shrink.</p>
+
+      <h4>Zoom button maximizes vertically only</h4>
+
+      <p>If enabled, the green "Zoom" button expands a terminal window vertically but
+      does not affect its width. This can be overridden by holding down shift while
+      clicking the zoom button.</p>
+
+      <h4>Closing hotkey window restores focus to last window, but may switch
+      spaces.</h4>
+
+      <p>If enabled, the act of closing a hotkey window will restore focus to the
+      window that last had it. As a side effect, the current desktop/space may
+      change.</p>
+
+      <h4>Use Lion-style Fullscreen windows</h4>
+
+      <p>If enabled, fullscreen windows will animate into a special desktop, as is
+      typical in OS X 10.7 and later. If disabled, fullscreen windows will instantly go
+      fullscreen without changing desktops.</p>
+
+      <h4>When attaching, open unrecognized windows in...</h4>
+
+      <p>When attaching to a new tmux session with the tmux integration, tmux windows
+      not seen by iTerm2 before will open in either new windows or tabs, as specified
+      by this preference.</p>
+
+      <h4>Open dashboard if there are more than...tmux windows</h4>
+
+      <p>When attaching to a tmux session with the tmux integration, windows are
+      normally opened automaticaly. If there are too many of them, then the tmux
+      dashboard is opened instead.</p>
+
+      <h4>Automatically hide the tmux client session after connecting</h4>
+
+      <p>When the tmux integration is entered by running tmux -CC, the window in which
+      that command was run will miniaturize into the dock if this option is
+      enabled.</p>
+      <hr />
+
+      <h3>Appearance</h3>
+      <hr />
+
+      <h4>Tab Style</h4>
+
+      <p>Select from a list of tab looks.</p>
+
+      <h4>Tab Position</h4>
+
+      <p>Defines whether tabs appear at the top or bottom of a window.</p>
+
+      <h4>Hide tab bar when there is only one tab</h4>
+
+      <p>If selected, the tab bar will become invisible when a window contains exactly
+      one tab.</p>
+
+      <h4>Color tab labels on activity</h4>
+
+      <p>If selected, tab labels become purple when a non-selected tab has new output,
+      and red when a non-selected tab has output you haven't seen but that is not very
+      recent.</p>
+
+      <h4>Hide tab number and tab close button</h4>
+
+      <p>If selected, only the tab name appears in a tab.</p>
+
+      <h4>Hide tab activity indicator</h4>
+
+      <p>If selected, the progress indicator in each tab will not be displayed.</p>
+
+      <h4>Show tabs in fullscreen by holding cmd for</h4>
+
+      <p>When in fullscreen mode, holding down the cmd key will cause the tab bar to
+      show. This setting allows you to specify how long cmd must be held down before
+      the tab bar is shown.</p>
+
+      <h4>Show per-pane title bar with split panes</h4>
+
+      <p>When a tab has split panes, this option controls whether each split pane will
+      have its own title bar.</p>
+
+      <h4>Auto-hide menu bar in non-Lion fullscreen</h4>
+
+      <p>When Lion-style fullscreen is disabled, this option is in effect. If you'd
+      like the menu bar to remain visible when a fullscreen window is present on a
+      screen with a menu bar, turn this on.</p>
+
+      <h4>Show window number</h4>
+
+      <p>If selected, window titles include the window number. You can navigate to a
+      window by pressing cmd-opt-N where N is the window number.</p>
+
+      <h4>Show current job name</h4>
+
+      <p>If selected, tab and window titles will show the name of the foreground
+      job.</p>
+
+      <h4>Show profile name</h4>
+
+      <p>If selected, tab and window titles will show profile names.</p>
+
+      <h4>Dimming affects only text, not background</h4>
+
+      <p>When a window or pane is dimmed, this option controls whether the background
+      color is dimmed or only the text colors.</p>
+
+      <h4>Dimming amount</h4>
+
+      <p>This slider controls how much to dim inactive windows or panes.</p>
+
+      <h4>Dim inactive split panes</h4>
+
+      <p>If selected, split panes that do not have keyboard focus will be slightly
+      dimmed.</p>
+
+      <h4>Dim background windows</h4>
+
+      <p>If enabled, windows in the background (that is, those not receiving keyboard
+      input) are dimmed according to the above settings.</p>
+
+      <h4>Animate dimming</h4>
+
+      <p>If enabled, window dimming effects are animated.</p>
+
+      <h4>Show border around window</h4>
+
+      <p>If selected, a 1-pixel border will be shown around the edges of terminal
+      windows.</p>
+
+      <h4>Hide scrollbar and resize control</h4>
+
+      <p>If selected, the scrollbar and resize control (for OS 10.5 and 10.6) will not
+      be visible.</p>
+
+      <h4>Disable transparency for fullscreen windows by default</h4>
+
+      <p>If enabled, entering fullscreen mode will automatically turn off transparency
+      for that window.</p>
+      <hr />
+
+      <h3>Profiles &gt; General</h3>
+      <hr />
+
+      <h4>Name</h4>
+
+      <p>Gives the name of the profile which is shown in menus, preferences, and the
+      profiles window.</p>
+
+      <h4>Shortcut key</h4>
+
+      <p>This shortcut can be used to open a new window or tab. By default, it opens a
+      new tab, but if you hold down the option key while pressing the shortcut, a new
+      window will be opened instead.</p>
+
+      <h4>Tags</h4>
+
+      <p>Tags are a collection of words or phrases that annotate a profile. When you
+      search your profiles (for instance, in the profiles window), the tag names are
+      searched in addition to the profile name.</p>
+
+      <h4>Command</h4>
+
+      <p>This is the command that is executed when a new session with the profile is
+      created. If login shell is chosen, then your shell is run with '-' as the first
+      character of argv[0]. You can put special terms surrounded by $$ in this field
+      (example: $$USERNAME$$). When a new session is created, you will be prompted to
+      enter a value for each such term. See the description of URL Schemes below for
+      details about the special "$$" value that can go in this field.</p>
+
+      <h4>Working directory</h4>
+
+      <p>Normally, new sessions begin in your home directory. You can choose to open
+      new sessions in the same directory as the current session (but only when creating
+      a new tab), or you can specify a starting directory.</p>
+
+      <h4>URL Schemes</h4>
+
+      <p>You can configure a profile to handle a URL scheme, such as ssh. When a
+      hyperlink is clicked on with that scheme, a new tab is opened with the selected
+      profile. It is recommended that you set the command to "$$", in which case an ssh
+      command line will be auto-generated. For other schemes, you can uses these
+      variables in the Command field and they will be replaced with the appropriate
+      part of the URL:</p>
+
+      <ul>
+        <li>$$URL$$ The complete url</li>
+
+        <li>$$HOST$$ The host portion of a url like scheme://host/</li>
+
+        <li>$$USER$$ The username portion of a url like scheme://user@host/</li>
+
+        <li>$$PASSWORD$$ The password portion of a url like
+        scheme://user:password@host/</li>
+
+        <li>$$PORT$$ The port number of a url like scheme://host:port/</li>
+
+        <li>$$PATH$$ The path portion of a url like scheme://host/path</li>
+
+        <li>$$RES$$ The portion of a url following the scheme.</li>
+      </ul>
+      <hr />
+
+      <h3>Profiles &gt; Colors</h3>
+      <hr />
+
+      <p>Clicking on any of the color wells opens a color picker that lets you change
+      the setting for the selected color.</p>
+
+      <h4>Smart cursor color</h4>
+
+      <p>When selected, a block cursor will be displayed in reverse video. If this
+      would result in confusion, then a different color is chosen that will be most
+      visible given the surrounding cells' background colors.</p>
+
+      <h4>Minimum contrast</h4>
+
+      <p>If text is displayed against a similar background color, the minimum contrast
+      setting will move the text color towards black or towards white to ensure some
+      minimum level of visibility. Setting this slider all the way to maximum will make
+      all text black and white.</p>
+
+      <h4>Load Presets</h4>
+
+      <p>iTerm2 ships with some color presets, which you may load from this popup menu.
+      You can import and export color presets to files with the extension
+      "itermcolors". There is an online color gallery where users may share color
+      presets, and a link to it is provided in this menu. When importing a color
+      preset, the name it is assigned is based on the filename imported.</p>
+      <hr />
+
+      <h3>Profiles &gt; Text</h3>
+      <hr />
+
+      <h4>Cursor</h4>
+
+      <p>This lets you select a cursor shape.</p>
+
+      <h4>Blinking cursor</h4>
+
+      <p>If checked, the cursor will blink slowly to improve visibility.</p>
+
+      <h4>Draw bold text in bold font</h4>
+
+      <p>If selected, bold text will be drawn in a bold version of the selected font.
+      If the font does not have a bold version, then a bold appearance is simulated by
+      "double striking" the text: that is, drawing it twice, shifting it one pixel
+      horizontally the second time.</p>
+
+      <h4>Draw bold text in bright colors</h4>
+
+      <p>If selected, bold text will be drawn in a bright version of its color.</p>
+
+      <h4>Blinking text allowed</h4>
+
+      <p>If selected, text with the blink attribute set will actually blink. Oh, the
+      humanity.</p>
+
+      <h4>Italic text allowed</h4>
+
+      <p>If selected, text with the italic attribute set will be rendered in italics.
+      The font you select must have an italic face.</p>
+
+      <h4>Regular font</h4>
+
+      <p>ASCII text (latin letters, numbers, and some symbols) will be drawn using this
+      font. Select "Anti-aliased" to draw the text with smooth edges.</p>
+
+      <h4>Non-ASCII font</h4>
+
+      <p>All non-ASCII text (many accented Latin letters, non-Latin text, less-common
+      symbols, and thousands of miscellaneous unicode characters) will be drawn with
+      this font. It is recommended that you use the same point size for both regular
+      and non-ASCII fonts. Select "Anti-aliased" to draw the text with smooth
+      edges.</p>
+
+      <h4>Treat ambiguous-width characters as double width</h4>
+
+      <p>Some characters (e.g., Chinese ideograms) are double-width, and take two cells
+      to display. Other characters (e.g., Latin letters) are single width and take only
+      one cell to display. There is another category of characters known as "ambiguous
+      width". One example of ambiguous-width characters are Greek letters. Depending on
+      your application, you may prefer to display them as double-width or single-width.
+      If most of the text you deal with is double-width, then you should enable this
+      setting as it will help things to line up correctly in that context.</p>
+      <hr />
+
+      <h3>Profiles &gt; Window</h3>
+      <hr />
+
+      <h4>Transparency</h4>
+
+      <p>This sets the transparency of the window background. It can be temporarily
+      disabled with View &gt; Use Transparency.</p>
+
+      <h4>Blur</h4>
+
+      <p>If selected, the window background is blurred provided the background has some
+      transparency. Selecting a large radius will blur the background more, but
+      (especially on Retina displays) comes with a performance penalty.</p>
+
+      <h4>Rows/Columns</h4>
+
+      <p>When creating a new window with this profile, it will be created with this
+      many rows and columns.</p>
+
+      <h4>Background Image</h4>
+
+      <p>This allows you to select an image to display behind the terminal's text. If
+      Tile image is selected, then the image will be shown at its actual size and
+      tesselated; otherwise, it will be stretched to fit the whole pane. The blending
+      slider determines how strongly the image dominates over the text's background
+      color.</p>
+
+      <h4>Style</h4>
+
+      <p>This defines the window style. Bottom- and Top-of-screen windows will
+      disregard the columns setting. Left-of-screen windows will disregard the rows
+      setting. Full-screen windows only respect the rows and columns setting when
+      full-screen mode is exited.</p>
+
+      <h4>Screen</h4>
+
+      <p>If you have more than one screen connected, this lets you select the screen on
+      which a new window should open. It is particularly useful for fullscreen and
+      top-of-screen window styles.</p>
+
+      <h4>Space</h4>
+
+      <p>If you have enabled Spaces (or your OS uses Desktops instead of spaces) and
+      have set Spaces/Mission Control to use Control+Number to switch spaces/desktops,
+      then you can use this setting to select the initial space/desktop to open a new
+      window using this profile.</p>
+
+      <h4>If showing profile name in tab title, keep it when the title is changed</h4>
+
+      <p>You can specify that profile names are shown in window and tab titles under
+      Preferences &gt; Appearance &gt; Show Profile Name. If that is not set, then this
+      option is irrelevant. When in use, a host may send an escape code that changes
+      the window title. This setting causes the profile name to be preserved in that
+      session-set title.</p>
+
+      <h4>Disable session-initiated window resizing</h4>
+
+      <p>If the host sends an escape code to resize the window, it will be ignored if
+      this option is selected..</p>
+      <hr />
+
+      <h3>Profiles &gt; Terminal</h3>
+      <hr />
+
+      <h4>Scrollback lines</h4>
+
+      <p>The number of lines of scrollback buffer to keep above the visible part of the
+      screen. Unlimited scrollback will allow it to grow indefinitely, possibly using
+      all available memory.</p>
+
+      <h4>Save lines to scrollback when an app status bar is present</h4>
+
+      <p>Some programs (such as vim or tmux) keep a status bar at the bottom of the
+      screen. For some applications (like vim) it is undesirable to save lines to the
+      scrollback buffer when the application scrolls. For others (like tmux) you may
+      want to save scrolled-off lines into the scrollback buffer. When this setting is
+      enabled, lines scrolled off the top of the screen in the presence of a status bar
+      are added to the scrollback buffer. The screen is considered to have a status bar
+      if it has a scroll region whose top is the first line of the screen and whose
+      bottom is above the bottom of the screen.</p>
+
+      <h4>Save lines to scrollback in alternate screen mode</h4>
+
+      <p>When in alternate screen mode, lines that scroll off the top of the screen
+      will be saved to the scrollback buffer only if this option is enabled.</p>
+
+      <h4>Character encoding</h4>
+
+      <p>The encoding to send and receive in. For most people, "Unicode (UTF-8)" is the
+      right choice.</p>
+
+      <h4>Report terminal type</h4>
+
+      <p>The TERM variable will be set to this value by default. If xterm-256color is
+      selected and your system is missing the terminfo file, you will be prompted to
+      install it when you open a new session.</p>
+
+      <h4>Enable xterm mouse reporting</h4>
+
+      <p>If selected, applications may choose to receive information about the mouse.
+      This can be temporarily disabled by holding down Option.</p>
+
+      <h4>Allow terminal to report window title</h4>
+
+      <p>Programs running in a terminal may send an escape code to request the current
+      window title. You may disable this feature by enabling this option. It should be
+      disabled if you're communicating with an untrusted party, as there are possible
+      injection attacks.</p>
+
+      <h4>Use modern parser (experimental)</h4>
+
+      <p>iTerm2 includes an experimental parser for CSI codes that should produce more
+      correct results, but it isn't tested enough to be on by default. Enable this
+      option to use it.</p>
+
+      <h4>Disable session-initiated printing</h4>
+
+      <p>If enabled, escape codes that initiate printing will be ignored.</p>
+
+      <h4>Disable save/restore alternate screen</h4>
+
+      <p>Some programs (such as vim, tmux, and less) switch into a so-called "alternate
+      screen". A characteristic of this behavior is that when these programs terminate
+      the screen's contents are restored to their state from before the program was
+      run. If this option is selected, alternate screen mode is disabled and the screen
+      cannot be restored by an application.</p>
+
+      <h4>Silence bell</h4>
+
+      <p>If selected, the bell (control-G) will not make an audible sound.</p>
+
+      <h4>Enable Growl notifications</h4>
+
+      <p>If selected and Growl is installed, iTerm2 will post a Growl notification when
+      sessions receive output, become idle, ring the bell, or close.</p>
+
+      <h4>Flash visual bell</h4>
+
+      <p>If selected, a bell graphic will be flashed when the bell character is
+      received.</p>
+
+      <h4>Show bell icon in tabs</h4>
+
+      <p>If selected, tabs will indicate that a bell has rung by displaying a bell
+      graphic.</p>
+
+      <h4>Set locale variables automatically</h4>
+
+      <p>If enabled, LANG and LC_CTYPE ennvironment variables will be set based on your
+      machine's language settings.</p>
+      <hr />
+
+      <h3>Profiles &gt; Session</h3>
+      <hr />
+
+      <h4>Automatically close a session when it ends</h4>
+
+      <p>If selected, a session's pane, tab, or window will automatically close when
+      the session ends.</p>
+
+      <h4>Prompt before closing</h4>
+
+      <p>When a session will close, you can choose when to be prompted with a modal
+      alert.</p>
+
+      <h4>Automatically log session input to files in:</h4>
+
+      <p>If enabled, every session's output will be logged to a file in the specified
+      directory. File names are formatted as
+      Date_Time.ProfileName.TerminalID.ProcessId.RandomNumber.log.</p>
+
+      <h4>When idle, send ASCII code</h4>
+
+      <p>If selected, the specified ASCII code will be transmitted every 30 seconds
+      while nothing is happening. Don't use this unless you know what you're doing as
+      it can have unexpected consequences.</p>
+      <hr />
+
+      <h3>Profiles &gt; Keys</h3>
+      <hr />
+
+      <p>This panel shows key mappings. You can double-click on a mapping to edit it.
+      When the "Keyboard Shortcut" field has focus, you should press the keystroke that
+      you want to modify (even if it involves modifiers like Cmd). The following
+      actions are available:</p>
+
+      <h4>Ignore</h4>
+
+      <p>The keypress will do nothing.</p>
+
+      <h4>Do not remap modifiers</h4>
+
+      <p>If modifier remapping is in effect (set under Preferences &gt; Keys), it can
+      be disabled for certain key combinations. When you choose this action, modifier
+      remapping is temporarily disabled so you can press the key combination unremapped
+      in the key field.</p>
+
+      <h4>Remap modifiers in iTerm2 only</h4>
+
+      <p>If modifier remapping is in effect (set under Preferences &gt; Keys), it can
+      be set to not affect other applications that may listen for global hotkeys. When
+      you choose this action, modifier remapping is temporarily disabled so you can
+      press the key combination unremapped in the key field.</p>
+
+      <h4>Split/New Window/Tab with Profile</h4>
+
+      <p>These actions allow you to create a new session with a specified profile when
+      a key is pressed.</p>
+
+      <h4>Backward in Time/Forward in Time</h4>
+
+      <p>This is equivalent to the menu item View &gt; Step Backward/Forward in
+      Time</p>
+
+      <h4>Cycle Tabs Forward</h4>
+
+      <p>This implements tab switching the same way Cmd-Tab switches windows, with the
+      most-recently-used stack.</p>
+
+      <h4>Next/Previous Tab/Window</h4>
+
+      <p>These actions navigate among tabs and windows.</p>
+
+      <h4>Move tab left/right</h4>
+
+      <p>Changes the tab's position in the order.</p>
+
+      <h4>Scroll to End/Top/Up/Down</h4>
+
+      <p>These actions move through the scrollback buffer.</p>
+
+      <h4>Select Split Pane Above/Below/Left/Right</h4>
+
+      <p>These actions navigate split panes.</p>
+
+      <h4>Send ^? / ^H Backspace</h4>
+
+      <p>Modern systems use ^? for backspace, while some legacy systems use ^H.</p>
+
+      <h4>Send Escape Sequence</h4>
+
+      <p>This action allows you to enter some text that will be sent when the
+      associated key is pressed. First, the ESC character is sent, and then the text
+      you entered is sent.</p>
+
+      <h4>Send Hex Code</h4>
+
+      <p>This action allows you to enter a sequence of hex codes that will be sent.
+      Each value should begin with "0x" followed by one or two hex digits (0-9, a-f, or
+      A-F). Each code should be separated by a space. You can see a list of hex codes
+      on http://asciitable.com/ in the "Hx" column.</p>
+
+      <h4>Send Text</h4>
+
+      <p>This action allows you to enter a text string that will be sent when the
+      associated key is pressed. The following escape characters are supported: \n
+      (newline), \e (escape), \a (bell), \t (tab).</p>
+
+      <h4>Toggle Fullscreen</h4>
+
+      <p>This action enters or exits full screen mode.</p>
+
+      <h4>Run Coprocess</h4>
+
+      <p>This action launches a Coprocess. <a href=
+      "documentation-coprocesses.html">Learn more about coprocesses</a>.</p>
+
+      <h4>Select Menu Item...</h4>
+
+      <p>This action allows you to enter the name of an iTerm2 menu item. It must be
+      entered exactly the same as it appears in the menu. Ellipses can be typed with
+      option-semicolon.</p>
+
+      <p>You can add a new keymapping by pressing "+". You can remove an existing
+      mapping by selecting it and pressing "-". Three presets are provided: "Xterm
+      defaults" is the normal key mappings, while "Xterm defaults with numeric keypad"
+      disables the "application keypad" in favor of the numbers and symbols that the
+      numeric keypad typically emits. "Terminal.app Compatability" tries to emulate the
+      way that Terminal.app sends keys by default.</p>
+
+      <h4>Left/Right Option Key Acts As</h4>
+
+      <p>It is common to use a modifier to send so-called "meta keys". For most users,
+      selecting "+Esc" here is the right choice. The "Meta" option sets the high bit of
+      the input character, and is not compatible with modern systems.</p>
+
+      <h4>Delete sends ^H</h4>
+
+      <p>If you are on a legacy system that does not accept ^? for backspace, select
+      this and it will add a key mapping for you.</p>
+      <hr />
+
+      <h3>Profiles &gt; Advanced</h3>
+      <hr />
+
+      <h4>Triggers</h4>
+
+      <p>Triggers are actions that are performed when text matching a regular
+      expression is received. Each trigger has a regular expression, which defines when
+      it runs. It has an action, which defines what it performs, and it has an optional
+      parameter, whose meaning depends on the action. When the parameter is textual, \0
+      is replaced with the entire match, and \1...\9 are replaced with match
+      groups.</p>
+
+      <h4>Action: Bounce Dock Icon</h4>
+
+      <p>This action causes the dock icon to bounce when text matching the trigger is
+      received. The dock icon only bounces if iTerm2 is in the background.</p>
+
+      <h4>Action: Highlight Text</h4>
+
+      <p>The text matching the regex in the trigger will change color. The parameter
+      sets the color.</p>
+
+      <h4>Action: Ring Bell</h4>
+
+      <p>The system bell rings when text matching the trigger is received.</p>
+
+      <h4>Action: Run Command</h4>
+
+      <p>When text matching the trigger is received, a command is executed. Its output
+      is dropped. The parameter gives the command to run.</p>
+
+      <h4>Action: Run Coprocess</h4>
+
+      <p>When text matching the trigger is received, a coprocess is started. The
+      parameter gives a command to run as the coprocess.</p>
+
+      <h4>Action: Run Silent Coprocess</h4>
+
+      <p>When text matching the trigger is received, a silent coprocess is started. A
+      silent coprocess differs from a regular coprocess in that input goes only to the
+      coprocess and not to the terminal display. This is useful, for example, for
+      ZModem transfers. The parameter gives a command to run as the coprocess.</p>
+
+      <h4>Action: Send Growl Alert</h4>
+
+      <p>When text matching the trigger is received, a growl alert is posted with the
+      text inthe parameter.</p>
+
+      <h4>Action: Send Text</h4>
+
+      <p>When text matching the trigger is received, text in the parameter is written
+      to the terminal.</p>
+
+      <h4>Action: Show Alert</h4>
+
+      <p>When text matching the trigger is received, a modal alert is shown with text
+      in the parameter.</p>
+
+      <h4>Smart Selection</h4>
+
+      <p>Smart selection allows you to define a set of regular expressions, each with
+      an assigned priority, that are used for making the best possible selection. By
+      default, a quad-click invokes smart selection. Smart selection is described in
+      full in the Smart Selection document.</p>
+
+      <h4>Semantic History</h4>
+
+      <p>Semantic history is used to open a file when you Cmd-Click on it. The current
+      working directory for each line in the terminal is tracked to help find files. If
+      Semantic History is set to "Open with default app," then files are passed to the
+      OS to be opened with whatever is associated. Alternatively, you can choose "Open
+      URL..." to open a specific URL (with \1 replaced with the filename and \2
+      replaced with the line number, if applicable). If you choose "Open with
+      editor..." then text files will be opened with the designated editor, while other
+      files are opened with the default app for their file type. For more flexibility,
+      choose "Run command..." and specify a command to execute. \1 will be replaced
+      with the file name, \2 will be replaced with the line number (if applicable), \3
+      with text in the line prior to the click location, \4 with text in the line
+      subsequent to the click location, and \5 for the working directory of the line
+      clicked on. Finally, "Always run command..." is like "Run command...," but takes
+      effect even if the object clicked on is not an existing filename.</p>
+      <hr />
+
+      <h3>Keys</h3>
+      <hr />
+
+      <h4>Remap modifier keys</h4>
+
+      <p>iTerm2 allows you to change the meanings of the modifier keys only within
+      iTerm2. This is useful, for example, if you find it difficult to press "option"
+      for "meta" and would prefer to use "command" for that purpose.</p>
+
+      <h4>To switch tabs</h4>
+
+      <p>Tabs are normally navigated with cmd+number, but you can change the modifier
+      used for that function here.</p>
+
+      <h4>To switch windows</h4>
+
+      <p>Windows are normally navigated with cmd+opt+number, but you can change the
+      modifier used for that function here.</p>
+
+      <h4>Show/Hide iTerm2 with a system-wide hotkey</h4>
+
+      <p>When enabled, you can focus the Hotkey: field and press a keystroke. From then
+      on, pressing that keystroke (even when iTerm2 is not the front application) will
+      cause iTerm2 to come to the front. If it is the foreground app, it will be sent
+      to the back. This requires that you enable access for assistive devices in the
+      Universal Access panel of System Preferences.</p>
+
+      <h4>Hotkey toggles a dedicated window with profile</h4>
+
+      <p>If enabled, the hotkey set above will toggle a single window with a specific
+      profile. This provides an always-available terminal.</p>
+
+      <h4>Global shortcut keys</h4>
+
+      <p>This interface works like the keyboard shortcut system in profiles (described
+      above) but it affects all profiles. Settings here are overridden by those in a
+      profile's key mappings.</p>
+      <hr />
+
+      <h3>Pointer</h3>
+      <hr />
+
+      <h4>Mouse Button and Trackpad Gesture Actions</h4>
+
+      <p>You may assign custo actions to mouse clicks and trackpad gestures. The left
+      mouse button is not configurable because its behavior is rather complex, however.
+      This is especially useful if you have a mouse with many buttons. Any combination
+      of mouse button + number of clicks + modifiers may be assigned an action. For
+      gestures, three finger taps and swipes may be configured in combination with
+      modifiers. The following actions are available:</p>
+
+      <h4>Extend selection</h4>
+
+      <p>The text selection will grow, either from its beginning or end, to the
+      location of the pointer.</p>
+
+      <h4>Move pane</h4>
+
+      <p>The current pane will turn green. Click in another window's tab bar or in
+      another pane to split to move the now-green pane.</p>
+
+      <h4>New Horizontal/Vertical split with profile</h4>
+
+      <p>The pane under the pointer will be split and the new split will use the
+      specified profile.</p>
+
+      <h4>New Window With Profile</h4>
+
+      <p>A new window will be opened with the specified profile.</p>
+
+      <h4>Next/Previous Tab/Window</h4>
+
+      <p>Navigates through tabs and windows.</p>
+
+      <h4>Open Context Menu</h4>
+
+      <p>Opens the menu normally opened by a right click.</p>
+
+      <h4>Open URL in background</h4>
+
+      <p>Opens the URL under the pointer in your web browser without bringing the
+      browser to the foreground.</p>
+
+      <h4>Open URL/Semantic History</h4>
+
+      <p>Opens the URL under the pointer, bringing the web browser to the foreground.
+      If what's under the cursor is a filename on the local machine, it will be opened
+      with Semantic History.</p>
+
+      <h4>Paste from Clipboard</h4>
+
+      <p>This is identical to Edit &gt; Paste.</p>
+
+      <h4>Paste from Selection</h4>
+
+      <p>Pastes the most recent selection made in iTerm2, even if it's not what's in
+      the pasteboard.</p>
+
+      <h4>Select Next/Previous Pane</h4>
+
+      <p>Navigates panes according to how recently they were used.</p>
+
+      <h4>Select pane Above/Below/Left/Right</h4>
+
+      <p>Navigates panes by their layout.</p>
+
+      <h4>Send Escape Sequence...</h4>
+
+      <p>This action allows you to enter some text that will be sent when the
+      associated key is pressed. First, the ESC character is sent, and then the text
+      you entered is sent.</p>
+
+      <h4>Send Hex Code</h4>
+
+      <p>This action allows you to enter a sequence of hex codes that will be sent.
+      Each value should begin with "0x" followed by one or two hex digits (0-9, a-f, or
+      A-F). Each code should be separated by a space. You can see a list of hex codes
+      on http://asciitable.com/ in the "Hx" column.</p>
+
+      <h4>Send Text</h4>
+
+      <p>This action allows you to enter a text string that will be sent when the
+      associated key is pressed. The following escape characters are supported: \n
+      (newline), \e (escape), \a (bell), \t (tab).</p>
+
+      <h4>Smart Selection</h4>
+
+      <p>Performs smart selection on the text under the pointer.</p>
+
+      <h4>Smart Selection ignoring Newlines</h4>
+
+      <p>Performs smart selection on the text under the pointer, ignoring newlines
+      (e.g., if a URL is split by a hard newline, it can still be selected as a single
+      item).</p>
+
+      <h4>Focus follows mouse</h4>
+
+      <p>If enabled, moving the mouse over an inactive window will cause it to receive
+      keyboard focus.</p>
+
+      <h4>Cmd-Click Opens Filename/URL</h4>
+
+      <p>If enabled, then clicking on a filename (of an existing file on the local
+      machine) or a URL will open it.</p>
+
+      <h4>Report ctrl-click to apps instead of opening menu</h4>
+
+      <p>If enabled, ctrl-click will be sent to applications that support Xterm mouse
+      reporting (if mouse reporting is enabled).</p>
+
+      <h4>Three-finger tap reports middle click to apps</h4>
+
+      <p>If enabled, a three-finger tap acts like a middle click for the purposes of
+      mouse reporting.</p>
+
+      <h4>Triple-click selects full wrapped lines</h4>
+
+      <p>If enabled, a triple click selects a whole line, even if it was longer than
+      one row in the terminal. If off, then triple click selects exactly one row.</p>
+
+      <h4>Middle button pastes from clipboard</h4>
+
+      <p>If enabled, clicking the mouse's middle button will paste. Otherwise, it may
+      be reported to the application if Xterm mouse reporting is on and the application
+      supports it.</p>
+      <hr />
+
+      <h3>Arrangements</h3>
+      <hr />
+
+      <p>This tab lets you view saved window arrangements. You can delete them with the
+      minus button and select the default arrangement.</p>
+
+      <p><a name="documentation-coprocesses.html" id=
+      "documentation-coprocesses.html"></a></p>
+      <hr />
+
+      <h2>Coprocesses</h2>
+
+      <p>iTerm2 offers support for "coprocesses". This very powerful feature will allow
+      you to interact with your terminal session in a new way.</p>
+
+      <h4>What is a Coprocess?</h4>
+
+      <p>A coprocess is a job, such as a shell script, that has a special relationship
+      with a particular iTerm2 session. All output in a terminal window (that is, what
+      you see on the screen) is also input to the coprocess. All output from the
+      coprocess acts like text that the user is typing at the keyboard.</p>
+
+      <p>One obvious use of this feature is to automate interaction. For instance,
+      suppose you want to automate your presence in a chat room. The following script
+      could be used as a coprocess:</p>
+      <pre>
+<code>#!/usr/bin/python 
+import sys 
+while True: 
+line = raw_input() 
+if line.strip() == "Are you there?": 
+  print "Yes"
+sys.stdout.flush()
+</code>
+</pre>
+
+      <p>You could disappear for years before your friends discover you're gone.</p>
+
+      <h4>How Do I Start a Coprocess?</h4>
+
+      <p>There are two ways to start a coprocess.</p>
+
+      <ol>
+        <li>
+          <p>Select "Run Coprocess..." from the Shell menu. Enter the name of a command
+          to run as a coprocess.</p>
+        </li>
+
+        <li>
+          <p>Create a Trigger in Prefs&gt;Profiles&gt;Advaced and select Run
+          Coprocess... as the action. Give the script to run as a parameter. Triggers
+          also have Silent Coprocesses, which prevent any output from going to the
+          screen. This is useful for ZModem, for example.</p>
+        </li>
+      </ol>
+
+      <h4>Usage</h4>
+
+      <p>A session can not have more than one coprocess at a time. When a coprocess is
+      active, an icon will indicate that in the top right of the session.</p>
+
+      <h4>Technical Details</h4>
+
+      <p>The coprocess's stdin is a byte-for-byte copy of the input from the session's
+      pty, beginning at the time the coprocess starts. In the case of a trigger-started
+      coprocess, the line of input that triggered it MAY be the first line of input to
+      the coprocess, but this is not guaranteed. If a coprocess is running, triggers
+      with a Run Coprocess action will not fire. The coprocess's stdout stream will be
+      treated the same as keyboard input. A small amount of buffering is provided for
+      both input and output of the coprocess. When a buffer fills, the coprocess will
+      block.</p>
+
+      <p><a name="documentation-smart-selection.html" id=
+      "documentation-smart-selection.html"></a></p>
+      <hr />
+
+      <h2>Smart Selection</h2>
+
+      <p>iTerm2 offers a Smart Selection feature that simplifies making selections on
+      semantically recognizable objects.</p>
+
+      <h4>How do I use Smart Selection?</h4>
+
+      <p>A quad-click (four clicks of the left mouse button in quick selection)
+      activates Smart Selection at the mouse cursor's position. By default, the
+      following kinds of strings are recognized:</p>
+
+      <ul>
+        <li>Words bounded by whitespace or line boundaries.</li>
+
+        <li>C++-style pairs of identifiers separated by double colons, such as
+        "namespace::identifier".</li>
+
+        <li>Filesystem paths, such as "/foo/bar/baz.txt".</li>
+
+        <li>Quoted strings such as "foo bar".</li>
+
+        <li>Java or Python-style include paths, such as "foo.bar.baz".</li>
+
+        <li>URIs with the schemes: mailto, http, https, ssh, or telnet.</li>
+
+        <li>Objective-C selectors like "@selector(foo:bar:)".</li>
+
+        <li>Email addresses.</li>
+      </ul>
+
+      <h4>How do I Change Smart Selection Rules?</h4>
+
+      <p>Under Preferences&gt;Profiles&gt;Advanced, you may edit the smart selection
+      rules. In addition to a regular expression, each rule also has a Precision
+      attribute, which takes a value of Very Low, Low, Normal, High, or Very High.
+      Intuitively, it refers to how sure one can be that when a rule's regular
+      expression finds a match that it is what the user intended. For example, the
+      "Word" rule is low precision (it matches almost every time), while the "HTTP URL"
+      rule is very high precision (it almost never produces false positives). This
+      allows the "HTTP URL" rule to take precedence when both match, unless the "Word"
+      rule matches a much longer string. That might happen, for instance, if there were
+      a non-URL character after a URL followed by a lot more text. The precision levels
+      have a very strong effect, so it's very rare for a lower precision rule to take
+      precedence over a higher precision rule.</p>
+
+      <p>When editing rules, it is advised that you experiment with different precision
+      levels and different kinds of strings to find one that works well. A collection
+      of test cases may be found at smart_selection_cases.txt.</p>
+
+      <p>When Smart Selection is activated, iTerm2 tries each regular expression. For a
+      given regex, various strings on the screen are tested until the longest match is
+      found. Only matches that include the character under the cursor are of interest.
+      The longest such match is added to a pool of "selection candidates". Each
+      candidate is assigned a score equal to its length in characters times its
+      precision coefficient. The precision coefficient is defined as follows:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Precision</th>
+
+            <th>Coefficient</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Very Low</td>
+
+            <td>0.000001</td>
+          </tr>
+
+          <tr>
+            <td>Low</td>
+
+            <td>0.001</td>
+          </tr>
+
+          <tr>
+            <td>Normal</td>
+
+            <td>1.0</td>
+          </tr>
+
+          <tr>
+            <td>High</td>
+
+            <td>1000.0</td>
+          </tr>
+
+          <tr>
+            <td>Very High</td>
+
+            <td>1000000.0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>The highest-scoring candidate is then used as the selection.</p>
+
+      <h4>Actions</h4>
+
+      <p>Actions may be associated with smart selection rules. When you right click in
+      a terminal, smart selection is performed at the cursor's location. Any smart
+      selection rule that matches that location will be searched for associated
+      actions, and those actions will be added to the context menu. Actions may open a
+      file, open a URL, run a command, or start a coprocess.</p>
+
+      <h4>Regular Expressions</h4>
+
+      <p>Regular expressions conform to the <a href=
+      "http://userguide.icu-project.org/strings/regexp">ICU regular expressions</a>
+      rules.</p>
+
+      <p><a name="documentation-triggers.html" id=
+      "documentation-triggers.html"></a></p>
+      <hr />
+
+      <h2>Triggers</h2>
+
+      <p>A trigger is an action that is performed when text matching some regular
+      expression is received in a terminal session.</p>
+
+      <h4>What can Triggers Do?</h4>
+
+      <p>Various actions may be assigned to triggers. These include:</p>
+
+      <ul>
+        <li>Bounce Dock Icon: Makes the dock icon bounce until the iTerm2 window
+        becomes key.</li>
+
+        <li>Ring Bell: Plays the standard system bell sound once.</li>
+
+        <li>Run Command: Runs a user-defined command.</li>
+
+        <li>Run Coprocess: Runs a <a href="coprocesses.html">Coprocess</a>.</li>
+
+        <li>Send Growl Alert: If Growl is enabled, a Growl alert is sent.</li>
+
+        <li>Send Text: Sends user-defined text back to the terminal as though the user
+        had typed it.</li>
+
+        <li>Show Alert: Shows an alert box with user-defined text.</li>
+      </ul>
+
+      <h4>What is a Parameter?</h4>
+
+      <p>Various actions (Run Command, Run Coprocess, Send Growl Alert, Send Text, and
+      Show Alert) require additional information. This is specified in the "Parameters"
+      field. Some special values are allowed here:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Value</th>
+
+            <th>Meaning</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>\0</td>
+
+            <td>The entire value matched by the regular expression.</td>
+          </tr>
+
+          <tr>
+            <td>\1, \2, ..., \9</td>
+
+            <td>The nth value captured by the regular expression.</td>
+          </tr>
+
+          <tr>
+            <td>\a</td>
+
+            <td>A BEL character (^G).</td>
+          </tr>
+
+          <tr>
+            <td>\b</td>
+
+            <td>A backspace character ^H.</td>
+          </tr>
+
+          <tr>
+            <td>\e</td>
+
+            <td>An ESC character (ascii 27).</td>
+          </tr>
+
+          <tr>
+            <td>\n</td>
+
+            <td>A newline character.</td>
+          </tr>
+
+          <tr>
+            <td>\r</td>
+
+            <td>A linefeed character.</td>
+          </tr>
+
+          <tr>
+            <td>\t</td>
+
+            <td>A tab character.</td>
+          </tr>
+
+          <tr>
+            <td>\xNN</td>
+
+            <td>A hex value NN (for example: \x1b sends ascii code 27, an ESC).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Example</h4>
+
+      <p>The <a href="https://github.com/mmastrac/iterm2-zmodem">iTerm2-zmodem</a>
+      project demonstrates hooking up iTerm2 to zmodem upload and download.</p>
+
+      <h4>Technical Details</h4>
+
+      <p>Regular expressions conform to the <a href=
+      "http://userguide.icu-project.org/strings/regexp">ICU regular expressions</a>
+      rules. Text that is written to the screen and bells are sent to the regex matcher
+      for evaluation. Only one line at a time is matched. Matching is performed when a
+      newline or cursor-moving escape code is processed. Lines longer than 1024
+      characters are truncated at the 1024th character for performance reasons.</p>
+
+      <p><a name="documentation-escape-codes.html" id=
+      "documentation-escape-codes.html"></a></p>
+      <hr />
+
+      <h2>Proprietary Escape Codes</h2>
+
+      <p>iTerm2 supports several non-standard escape codes. These may not work properly
+      in tmux or screen, and may have unknown effects on other terminal emulators.
+      Proceed with caution.</p>
+
+      <h4>Set cursor shape</h4>
+      <pre>
+<code>^[]50;CursorShape=N^G
+</code>
+</pre>
+
+      <p>where N=0, 1, or 2.</p>
+
+      <ul>
+        <li>0: Block</li>
+
+        <li>1: Vertical bar</li>
+
+        <li>2: Underline</li>
+      </ul>
+
+      <p>Add this to your .vimrc to change cursor shape in insert mode:</p>
+      <pre>
+<code>let &amp;t_SI = "\&lt;Esc&gt;]50;CursorShape=1\x7" 
+let &amp;t_EI = "\&lt;Esc&gt;]50;CursorShape=0\x7"
+</code>
+</pre>
+
+      <p>This is derived from <a href=
+      "http://vim.wikia.com/wiki/Change_cursor_shape_in_different_modes">Konsole</a>.</p>
+
+      <h4>Set Mark</h4>
+
+      <p>The "Set Mark" (cmd-shift-M) command allows you to record a location and then
+      jump back to it later (with cmd-shift-J). The following escape code has the same
+      effect as that command:</p>
+      <pre>
+<code>^[]50;SetMark^G
+</code>
+</pre>
+
+      <h4>Steal Focus</h4>
+
+      <p>To bring iTerm2 to the foreground:</p>
+      <pre>
+<code>^[]50;StealFocus^G
+</code>
+</pre>
+
+      <h4>Clear Scrollback History</h4>
+
+      <p>To erase the scrollback history:</p>
+      <pre>
+<code>^[]50;ClearScrollback^G
+</code>
+</pre>
+
+      <h4>Set curent directory</h4>
+
+      <p>To inform iTerm2 of the current directory to help semantic history:</p>
+      <pre>
+<code>^[]50;CurrentDir=/the/current/directory^G
+</code>
+</pre>
+
+      <h4>Change profile</h4>
+
+      <p>To change the session's profile on the fly:</p>
+      <pre>
+<code>^[]50;SetProfile=NewProfileName^G
+</code>
+</pre>
+
+      <h4>Copy to clipboard</h4>
+
+      <p>To place text in the pasteboard:</p>
+      <pre>
+<code>^[]50;CopyToClipboard=name^G
+</code>
+</pre>
+
+      <p>Where name is one of "rule", "find", "font", or empty to mean the general
+      pasteboard (which is what you normally want). After this is sent, all text
+      received is placed in the pasteboard until this code comes in:</p>
+      <pre>
+<code>^[]50;EndCopy^G
+</code>
+</pre>
+
+      <h4>Set window title and tab chrome background color</h4>
+
+      <p>To set the window title and tab color use this escape sequence:</p>
+      <pre>
+<code>^[]6;1;bg;red;brightness;N^G 
+^[]6;1;bg;green;brightness;N^G 
+^[]6;1;bg;blue;brightness;N^G
+</code>
+</pre>
+
+      <p>Replace N with a decimal value in 0 to 255.</p>
+
+      <p>Example in bash that turns the background purple:</p>
+      <pre>
+<code>echo -e "\033]6;1;bg;red;brightness;255\a" 
+echo -e "\033]6;1;bg;green;brightness;0\a" 
+echo -e "\033]6;1;bg;blue;brightness;255\a"
+</code>
+</pre>
+
+      <h4>Change the color palette</h4>
+      <pre>
+<code>^[]Pnrrggbb^[\
+</code>
+</pre>
+
+      <p>Replace "n" with:</p>
+
+      <ul>
+        <li>0-f (hex) = ansi color</li>
+
+        <li>g = foreground</li>
+
+        <li>h = background</li>
+
+        <li>i = bold color</li>
+
+        <li>j = selection color</li>
+
+        <li>k = selected text color</li>
+
+        <li>l = cursor</li>
+
+        <li>m = cursor text</li>
+      </ul>
+
+      <p>rr, gg, bb are 2-digit hex value (for example, "ff"). Example in bash that
+      changes the foreground color blue:</p>
+      <pre>
+<code>echo -e "\033]Pg4040ff\033\\"
+</code>
+</pre>
+
+      <p><a name="documentation-fonts.html" id="documentation-fonts.html"></a></p>
+      <hr />
+
+      <h2>Fonts</h2>
+
+      <p>While iTerm2 does not require monospaced fonts, they look much better than
+      proportionately spaced fonts. If you want to use Consolas, you'll need to correct
+      its baseline offset as described at <a href=
+      "http://mbauman.net/geek/2009/03/15/minor-truetype-font-editing-on-a-mac/">how to
+      fix Consolas baseline</a>.</p>
+
+      <p><a name="documentation-hidden-settings.html" id=
+      "documentation-hidden-settings.html"></a></p>
+      <hr />
+
+      <h2>Hidden Settings</h2>
+
+      <p>There are a few settings that you cannot access via iTerm2's own Preferences
+      panel. However, you can use the "defaults" command to change them. To change a
+      hidden setting, quit iTerm2. In terminal, run the defaults command. Then restart
+      iTerm2.</p>
+
+      <p>To change the number of entries in the autocomplete menu:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 AutocompleteMaxOptions -int 10
+</code>
+</pre>
+
+      <p>To change the number of coprocess commands remembered:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 "Coprocess MRU" -int 10
+</code>
+</pre>
+
+      <p>To preserve whitespace in selections copied to the pasteboard:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 TrimWhitespaceOnCopy -bool false
+</code>
+</pre>
+
+      <p>When you open a file from the finder in iTerm2 (e.g., by double-clicking a
+      shell script), it will either open in a window or a tab. By default, it opens in
+      a tab. You can change this with:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 OpenFileInNewWindows -bool true
+</code>
+</pre>
+
+      <p>You can configure iTerm2 to quit when the last session is closed, and you can
+      also configure sessions to close automatically when they end. If something is
+      broken (like a bad command set in the default profile), it's possible for a
+      session to start and end almost immediately, causing iTerm2 to quit very soon
+      after launch and not giving you time to fix the problem. To prevent this issue,
+      there is a 10-second safety valve during which iTerm2 won't quit automatically
+      when the last session is closed. To change the time of this safety valve:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 MinRunningTime -float 10.0
+</code>
+</pre>
+
+      <p>When an external monitor is connected, sometimes it needs a few seconds to be
+      recognized by the system. If iTerm2 isn't handling this well, you can increase
+      the delay before it attempts to reconfigure itself after a change of
+      monitors.</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 UpdateScreenParamsDelay -float 1.0
+</code>
+</pre>
+
+      <p>To change the number of paste history entries saved:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 MaxPasteHistoryEntries -int 20
+</code>
+</pre>
+
+      <p>Pastes (both regular and slow) are done by splitting the text to paste into
+      chunks. There is a delay between the transmission of each chunk. To change the
+      speed that "paste" pastes at:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 QuickPasteBytesPerCall -int 1024
+defaults write com.googlecode.iterm2 QuickPasteDelayBetweenCalls -float 0.01
+</code>
+</pre>
+
+      <p>To change the speed that "paste slowly" pastes at:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 SlowPasteBytesPerCall -int 16 
+defaults write com.googlecode.iterm2 SlowPasteDelayBetweenCalls -float 0.125
+</code>
+</pre>
+
+      <p>To disable using the pinch gesture to change font size:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 PinchToChangeFontSizeDisabled -bool true
+</code>
+</pre>
+
+      <p>To keep LC_CTYPE from being set when locale environment variables are set:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 DoNotSetCtype -bool true
+</code>
+</pre>
+
+      <p>To allow Growl notifications to be posted for the current tab:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 GrowlOnForegroundTabs -bool true
+</code>
+</pre>
+
+      <p>To tune smart cursor color settings:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2.plist SmartCursorColorBgThreshold -float 0.5 
+defaults write com.googlecode.iterm2.plist SmartCursorColorFgThreshold -float 0.75
+</code>
+</pre>
+
+      <p>SmartCursorColorBgThreshold: If the cursor's background color is too close to
+      nearby background colors, force it to the "most different" color. This is the
+      difference threshold that triggers that change. 0 means always trigger, 1 means
+      never trigger.</p>
+
+      <p>SmartCursorColorFgThreshold: The cursor's text is forced to black or white if
+      it is too similar to the background. If the brightness difference is below a
+      threshold then the B/W text mode is triggered. 0 means always trigger, 1 means
+      never trigger.</p>
+
+      <p>To allow a three-finger tap to act like a three-finger click:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2.plist ThreeFingerTapEmulatesThreeFingerClick \
+-bool true
+</code>
+</pre>
+
+      <p>To change the set of characters that are considered part of a URL (besides
+      alphanumerics):</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2.plist URLCharacterSet -string \
+".?\\/:;%=&amp;_-,+~#@!*'()|[]"
+</code>
+</pre>
+
+      <p>To use some experimental optimizations that will improve performance (safety
+      not guaranteed):</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2.plist ExperimentalOptimizationsEnabled \
+-bool true
+</code>
+</pre>
+
+      <p>To tweak tab sizes:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 UseUnevenTabs -bool false 
+defaults write com.googlecode.iterm2 MinTabWidth -int 75 
+defaults write com.googlecode.iterm2 MinCompactTabWidth -int 60 
+defaults write com.googlecode.iterm2 OptimumTabWidth -int 175 
+</code>
+</pre>
+
+      <p>To change your search engine:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 SearchCommand \
+-string "http://google.com/search?q=%@"
+</code>
+</pre>
+
+      <p>To adjust the speed of the animation of the hotkey window's appearance and
+      disappearance:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 HotkeyTermAnimationDuration \ 
+-float 0.25
+</code>
+</pre>
+
+      <p>To adjust the amount of dimming of split panes. Set the value to a
+      floating-point number between 0 (no dimming) and 1 (complete dimming). The
+      default is 0.15:</p>
+      <pre>
+<code>defaults write com.googlecode.iterm2 SplitPaneDimmingAmount \ 
+-float 0.25
+</code>
+</pre>
+
+      <p><a name="documentation-scripting.html" id=
+      "documentation-scripting.html"></a></p>
+      <hr />
+
+      <h2>Scripting</h2>
+
+      <p>iTerm2 features Applescript support which allows you to automate many aspects
+      of its behavior. Quite a bit of customization is also possible by writing shell
+      scripts.</p>
+
+      <h3>Applescript</h3>
+
+      <p>iTerm2 has sophisticated Applescript support allowing one to write stand-alone
+      scripts to launch the application and open multiple sessions with profiles into
+      either new tabs or new windows. You can also set some other parameters for a
+      session such as foreground and background colors, and transparency.</p>
+
+      <p>Sample scripts may be found at the <a href=
+      "https://code.google.com/p/iterm2/wiki/AppleScript">iTerm2 Applescript
+      Examples</a> page.</p>
+
+      <p>These scripts can then be saved as stand-alone executable applications.</p>
+
+      <h4>Autolaunching Scripts</h4>
+
+      <p>iTerm2 also supports autolaunching of an Applescript on startup. On startup,
+      iTerm2 looks for an Applescript file in "~/Library/Application
+      Support/iTerm2/AutoLaunch.scpt". If it is found, the "AutoLauch.scpt" script is
+      launched and executed.</p>
+
+      <h4>User-Defined Scripts</h4>
+
+      <p>iTerm2 also supports launching of user defined scripts from the "Scripts"
+      menu. The scripts need to be stored under the ~/Library/Application
+      Support/iTerm/Scripts directory. You can create this directory if it does not
+      already exist. iTerm2 checks this directory on startup.</p>
+
+      <a name="licenses" ></a>
+      <h3>Licenses</h3>
+      <h4>The Solarized Color Schemes</h4>
+      Copyright (c) 2011 Ethan Schoonover
+      <br/>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+      <br/>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+      <br/>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+      <br/>
+      <h4>cmd-key-happy</h4>
+      Copyright (c) 2009, 2010 &lt;andrew iain mcdermott via gmail&gt;
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+<br/>
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+<br/>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+<br/>
+<h4>xterm-terminfo.txt</h4>
+Copyright 1996-2006,2007 by Thomas E. Dickey
+<br/>
+                        All Rights Reserved
+                        <br/>
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+<br/>
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+<br/>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+<br/>
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+  </div>
+  </div>
+</body>
+</html>
+
