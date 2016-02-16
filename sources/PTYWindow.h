@@ -27,6 +27,7 @@
 
 
 #import <Cocoa/Cocoa.h>
+#import "iTermWeakReference.h"
 
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate >
 - (BOOL)lionFullScreen;
@@ -34,7 +35,7 @@
 - (void)toggleTraditionalFullScreenMode;
 @end
 
-@interface PTYWindow : NSWindow
+@interface PTYWindow : NSWindow<iTermWeaklyReferenceable>
 
 @property(nonatomic, readonly) int screenNumber;
 @property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;

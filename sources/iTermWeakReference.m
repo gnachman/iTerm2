@@ -12,61 +12,99 @@
 
 #import <objc/runtime.h>
 
-@interface iTermWeakReference()
-- (void)nullify;
-@end
+NSString *const iTermWeaklyReferenceableObjectWillDealloc = @"iTermWeaklyReferenceableObjectWillDealloc";
 
-@interface iTermDeallocReporterObject : NSObject
-@property(nonatomic, assign) iTermWeakReference *owner;
-@end
-
-@implementation iTermDeallocReporterObject
-
-- (void)dealloc {
-    DLog(@"Reporter dealloced");
-    assert([NSThread isMainThread]);
-    [_owner nullify];
-    [super dealloc];
-}
-
-@end
+static OSSpinLock lock = OS_SPINLOCK_INIT;
 
 @implementation iTermWeakReference {
-    iTermDeallocReporterObject *_reporter;
+    id<iTermWeaklyReferenceable> _object;
+    Class _class;
 }
 
-+ (instancetype)weakReferenceToObject:(id)object {
-    return [[[self alloc] initWithObject:object] autorelease];
-}
-
-- (instancetype)initWithObject:(id)object {
-    self = [super init];
+- (instancetype)initWithObject:(id<iTermWeaklyReferenceable>)object {
     if (self) {
         _object = object;
-        _reporter = [[iTermDeallocReporterObject alloc] init];
-        _reporter.owner = self;
-        objc_setAssociatedObject(object,
-                                 [self class],
-                                 _reporter,
-                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        [_reporter release];
+        _class = [[object class] retain];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(objectWillDealloc:)
+                                                     name:iTermWeaklyReferenceableObjectWillDealloc
+                                                   object:_object];
     }
     return self;
 }
 
 - (void)dealloc {
-    assert([NSThread isMainThread]);
     if (_object) {
-        _reporter.owner = nil;
-        objc_setAssociatedObject(nil, [self class], nil, OBJC_ASSOCIATION_ASSIGN);
+        OSSpinLockLock(&lock);
+        _object = nil;
+        OSSpinLockUnlock(&lock);
+
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:iTermWeaklyReferenceableObjectWillDealloc
+                                                      object:_object];
+        [_class release];
     }
     [super dealloc];
 }
 
-- (void)nullify {
-    DLog(@"Nullify %@ from %@", _object, [NSThread callStackSymbols]);
-    _reporter = nil;
+- (NSString *)description {
+    OSSpinLockLock(&lock);
+    id theObject = [_object retain];
+    OSSpinLockUnlock(&lock);
+    
+    NSString *description = [NSString stringWithFormat:@"<%@: %p weak ref to %@>",
+                             NSStringFromClass([self class]), self, theObject];
+    [theObject release];
+    return description;
+}
+
+- (id)internal_unsafeObject {
+    return _object;
+}
+
+- (id)weaklyReferencedObject {
+    OSSpinLockLock(&lock);
+    id theObject = [_object retain];
+    OSSpinLockUnlock(&lock);
+
+    return [[theObject retain] autorelease];
+}
+
+#pragma mark - Notifications
+
+- (void)objectWillDealloc:(NSNotification *)notification {
+    OSSpinLockLock(&lock);
     _object = nil;
+    OSSpinLockUnlock(&lock);
+}
+
+#pragma mark - NSProxy
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
+    OSSpinLockLock(&lock);
+    id theObject = [_object retain];
+    OSSpinLockUnlock(&lock);
+
+    NSMethodSignature *signature;
+    if (theObject) {
+        signature = [theObject methodSignatureForSelector:selector];
+    } else {
+        signature = [_class instanceMethodSignatureForSelector:selector];
+    }
+    [theObject release];
+    return signature;
+}
+
+- (void)forwardInvocation:(NSInvocation *)invocation {
+    OSSpinLockLock(&lock);
+    id theObject = [_object retain];
+    OSSpinLockUnlock(&lock);
+
+    if (theObject) {
+        [invocation invokeWithTarget:theObject];
+        [theObject release];
+    }
 }
 
 @end
+

@@ -916,7 +916,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {
-    [_fullScreenWindowManager makeWindowEnterFullScreen:term.window];
+    [_fullScreenWindowManager makeWindowEnterFullScreen:term.ptyWindow];
 }
 
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {

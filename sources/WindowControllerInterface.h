@@ -3,6 +3,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 #import "PTYTabDelegate.h"
+#import "PTYWindow.h"
 
 @class iTermPopupWindowController;
 @class PSMTabBarControl;
@@ -104,6 +105,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // Underlying window
 - (NSWindow *)window;
+- (PTYWindow *)ptyWindow;
 
 // Unique identifier
 - (NSString *)terminalGuid;
