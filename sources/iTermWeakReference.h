@@ -23,10 +23,10 @@
 //
 // Call site:
 // MyClass *myObject = [[MyClass alloc] init];
-// MyClass *weakReference = [myObject weakSelf];
+// MyClass<iTermWeakReference> *weakReference = [myObject weakSelf];
 // [weakReference doFoo];  // invokes [myObject doFoo]
 // [myObject release];
-// [weakRefernece doFoo];  // no-op
+// [weakReference doFoo];  // no-op
 //
 // Caveats:
 // If a class is weakly referenceable, then all its subclasses must also be weakly referenceable.
