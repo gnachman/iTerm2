@@ -55,7 +55,9 @@
     NSInteger _uniqueNumber;
 }
 
-- (void)dealloc {
+ITERM_WEAKLY_REFERENCEABLE
+
+- (void)iterm_dealloc {
     [restoreState_ release];
     _titleSetter.window = nil;
     [_titleSetter release];
