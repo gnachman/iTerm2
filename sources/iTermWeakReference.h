@@ -41,6 +41,10 @@ extern NSString *const iTermWeaklyReferenceableObjectWillDealloc;
 // Returns the object if it has not been dealloc'ed, or nil if it has. The actual implementation is
 // in iTermWeakReference, and this method does not get forwarded. Classes should not implement this.
 - (id)weaklyReferencedObject;
+
+// For tests.
+- (id)internal_unsafeObject;
+
 @end
 
 // Objects that can be weakly referenced must conform to this protocol and use the
