@@ -13,6 +13,7 @@ iTerm.xcodeproj/*
 canary.xml
 testing.xml
 testing_changes.html
+<<<<<<< HEAD
 iTerm.plist
 DerivedData/
 Intermediates/
@@ -21,3 +22,9 @@ NMSSH/
 iTerm2.xcodeproj/xcuserdata/
 ColorPicker/ColorPicker.xcodeproj/project.xcworkspace/xcuserdata/
 ColorPicker/ColorPicker.xcodeproj/xcuserdata/
+=======
+.gitignore
+Intermediates
+iTerm.plist
+.gitignore
+>>>>>>> gnachman/adhoc_2.1.3
