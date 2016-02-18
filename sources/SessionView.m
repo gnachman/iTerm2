@@ -50,7 +50,9 @@ static NSDate* lastResizeDate_;
 }
 
 + (void)initialize {
-    lastResizeDate_ = [[NSDate date] retain];
+    if (self == [SessionView self]) {
+        lastResizeDate_ = [[NSDate date] retain];
+    }
 }
 
 + (void)windowDidResize {
@@ -83,7 +85,6 @@ static NSDate* lastResizeDate_;
 - (instancetype)initWithFrame:(NSRect)frame session:(PTYSession*)session {
     self = [self initWithFrame:frame];
     if (self) {
-        [self _initCommon];
         [self setSession:session];
     }
     return self;
