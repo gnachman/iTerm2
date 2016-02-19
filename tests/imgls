@@ -20,7 +20,7 @@ function print_st() {
 }
 
 if [ $# -eq 0 ]; then
-  echo "Usage: image.sh filename [filename...]"
+  echo "Usage: imgls filename [filename...]"
   exit 1
 fi
 for fn in "$@"
