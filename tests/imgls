@@ -20,8 +20,8 @@ function print_st() {
 }
 
 if [ $# -eq 0 ]; then
-  echo "Usage: image.sh filename [filename...]"
-  exit 1
+  # Replace arguments with file names in current directory.
+  set -- $(echo *)
 fi
 for fn in "$@"
 do
