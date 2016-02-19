@@ -13,6 +13,8 @@
 #import "SessionView.h"
 #import "TmuxController.h"
 
+NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
+
 @implementation MovePaneController {
     // If set then moving pane; otherwise swapping.
     BOOL isMove_;
@@ -223,8 +225,8 @@
     NSPasteboard *pboard;
 
     pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
-    [pboard declareTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", nil] owner: nil];
-    [pboard setString:@"" forType:@"iTermDragPanePBType"];
+    [pboard declareTypes:@[ iTermMovePaneDragType ] owner: nil];
+    [pboard setString:@"" forType:iTermMovePaneDragType];
 
     PTYTab *theTab = [session tab];
     NSRect rect = [[[session view] superview] convertRect:[[session view] frame] toView:nil];

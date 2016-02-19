@@ -124,6 +124,7 @@ DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, @"Windows: If the Profiles windo
 #pragma mark tmux
 DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
 DEFINE_BOOL(noSyncNewWindowOrTabFromTmuxOpensTmux, NO, @"Tmux Integration: Suppress alert asking what kind of tab/window to open in tmux integration.");
+DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, NO, @"Tmux Integration: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled in Prefs>Profiles>Keys.");

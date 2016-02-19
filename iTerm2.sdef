@@ -9,13 +9,6 @@
             <enumerator name="ask" code="ask " 
                     description="Ask the user whether or not to save the file."/> 
     </enumeration> 
-    <command name="quit" code="aevtquit" description="Quit the application."> 
-      <cocoa class="NSQuitCommand"/> 
-      <parameter name="saving" code="savo" type="save options" optional="yes" 
-        description="Whether or not changed documents should be saved before closing."> 
-        <cocoa key="SaveOptions"/> 
-      </parameter> 
-    </command> 
     <command name="count" code="corecnte" 
       description="Return the number of elements of a particular class within an object."> 
       <cocoa class="NSCountCommand"/> 

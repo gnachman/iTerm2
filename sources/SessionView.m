@@ -50,7 +50,9 @@ static NSDate* lastResizeDate_;
 }
 
 + (void)initialize {
-    lastResizeDate_ = [[NSDate date] retain];
+    if (self == [SessionView self]) {
+        lastResizeDate_ = [[NSDate date] retain];
+    }
 }
 
 + (void)windowDidResize {
@@ -59,7 +61,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)_initCommon {
-    [self registerForDraggedTypes:@[ @"iTermDragPanePBType", @"com.iterm2.psm.controlitem" ]];
+    [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
     [lastResizeDate_ release];
     lastResizeDate_ = [[NSDate date] retain];
     _announcements = [[NSMutableArray alloc] init];
@@ -83,7 +85,6 @@ static NSDate* lastResizeDate_;
 - (instancetype)initWithFrame:(NSRect)frame session:(PTYSession*)session {
     self = [self initWithFrame:frame];
     if (self) {
-        [self _initCommon];
         [self setSession:session];
     }
     return self;
@@ -436,7 +437,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound &&
+    if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound &&
         [[MovePaneController sharedInstance] isMovingSession:[self session]]) {
         return NSDragOperationMove;
     }
@@ -446,7 +447,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
             if (_session.tab.sessions.count == 1 && !_session.tab.realParentWindow.anyFullScreen) {
                 // If you dragged a session from a tab with split panes onto itself then do nothing.

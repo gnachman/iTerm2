@@ -94,7 +94,10 @@
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt;
-- (PseudoTerminal *)openWindowUsingProfile:(Profile *)profile;
+
+// Does not enter fullscreen automatically; that is left to the caller, since tmux has special
+// logic around this.
+- (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile;
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
@@ -143,6 +146,9 @@
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 
 void OnHotKeyEvent(void);
+
+// Does a serialized fullscreening of the term's window. Slated for production in 3.1.
+- (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term;
 
 @end
 

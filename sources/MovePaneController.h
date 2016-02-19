@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "SplitSelectionView.h"
 
+extern NSString *const iTermMovePaneDragType;
+
 @class PTYTab;
 @class PTYSession;
 @class SessionView;

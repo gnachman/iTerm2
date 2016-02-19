@@ -345,6 +345,7 @@ static const int kDragThreshold = 3;
 
 - (void)dealloc {
     [_selection release];
+    [_oldSelection release];
     [_smartSelectionRules release];
 
     [_mouseDownEvent release];

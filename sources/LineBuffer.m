@@ -124,7 +124,6 @@ static const int kLineBufferVersion = 1;
             return nil;
         }
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBufferMayHaveDWCKey] boolValue];
-        blocks = [[NSMutableArray alloc] init];
         block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
         cursor_x = [dictionary[kLineBufferCursorXKey] intValue];
         cursor_rawline = [dictionary[kLineBufferCursorRawlineKey] intValue];

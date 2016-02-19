@@ -6488,10 +6488,14 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
-- (void)screenSetBadgeFormat:(NSString *)theFormat {
-    theFormat = [theFormat stringByBase64DecodingStringWithEncoding:self.encoding];
-    [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
-    _textview.badgeLabel = [self badgeLabel];
+- (void)screenSetBadgeFormat:(NSString *)base64Format {
+    NSString *theFormat = [base64Format stringByBase64DecodingStringWithEncoding:self.encoding];
+    if (theFormat) {
+        [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
+        _textview.badgeLabel = [self badgeLabel];
+    } else {
+        ELog(@"Badge is not properly base64 encoded: %@", base64Format);
+    }
 }
 
 - (void)screenSetUserVar:(NSString *)kvpString {
