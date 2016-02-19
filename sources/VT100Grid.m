@@ -66,6 +66,7 @@ static NSString *const kGridSizeKey = @"Size";
     [lines_ release];
     [lineInfos_ release];
     [cachedDefaultLine_ release];
+    [resultLine_ release];
     [super dealloc];
 }
 
