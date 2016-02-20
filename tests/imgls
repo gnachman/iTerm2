@@ -19,12 +19,8 @@ function print_st() {
     fi
 }
 
-if [ $# -eq 0 ]; then
-  # Replace arguments with file names in current directory.
-  set -- $(echo *)
-fi
-for fn in "$@"
-do
+function list_file() {
+  fn=$1
   dims=$(php -r '$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else { echo $a[0] . "x" .$a[1]; exit(0); }' "$fn")
   rc=$?
   if [[ $rc == 0 ]] ; then
@@ -56,4 +52,17 @@ do
   else
     ls -l "$fn"
   fi
-done
+}
+
+if [ $# -eq 0 ]; then
+  for fn in *
+  do
+     list_file "$fn"
+  done < <(ls -ls)
+else
+  for fn in "$@"
+  do
+     list_file "$fn"
+  done
+fi
+
