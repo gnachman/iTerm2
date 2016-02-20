@@ -34,6 +34,8 @@
     [_shouldBeEnabled release];
     [_onChange release];
     [_customSettingChangedHandler release];
+    [_onUpdate release];
+    [_observer release];
     [super dealloc];
 }
 
@@ -42,10 +44,10 @@
     _observer = [observer copy];
     // Call the observer after a delayed perform so that the current profile can be set and then the
     // control's value gets initialized.
-    [self performSelector:@selector(callObserver) withObject:nil afterDelay:0];
+    [self _callObserver];
 }
 
-- (void)callObserver {
+- (void)_callObserver {
     if (self.observer) {
         self.observer();
     }

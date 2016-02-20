@@ -102,6 +102,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
+NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCloseNotification";
 
 @interface PreferencePanel() <NSTabViewDelegate>
 
@@ -139,24 +140,33 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     NSSize _standardSize;
 }
 
+static PreferencePanel *_sessionsInstance;
+static PreferencePanel *_sharedInstance;
+
 + (instancetype)sharedInstance {
-    static id instance;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        instance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
-                               editCurrentSessionMode:NO];
-    });
-    return instance;
+    if (!_sharedInstance) {
+        _sharedInstance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
+                                        editCurrentSessionMode:YES];
+    }
+    return _sharedInstance;
 }
 
 + (instancetype)sessionsInstance {
-    static id instance;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        instance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
-                               editCurrentSessionMode:YES];
-    });
-    return instance;
+    if (!_sessionsInstance) {
+        _sessionsInstance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
+                                        editCurrentSessionMode:YES];
+    }
+    return _sessionsInstance;
+}
+
++ (void)_releaseAndNilifySingletonInstancesIfNeeded:(PreferencePanel *)instance {
+    if (instance == _sharedInstance) {
+        [_sharedInstance release];
+        _sharedInstance = nil;
+    } else if (instance == _sessionsInstance) {
+        [_sessionsInstance release];
+        _sessionsInstance = nil;
+    }
 }
 
 - (instancetype)initWithProfileModel:(ProfileModel*)model
@@ -175,7 +185,8 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 #pragma mark - View layout
 
 - (void)awakeFromNib {
-    [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+    NSAssert(self.windowLoaded, @"window not loaded in %@", NSStringFromSelector(_cmd));
+    [self.windowIfLoaded setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
     _globalTabViewItem.view = _generalPreferencesViewController.view;
@@ -210,7 +221,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 // NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
 - (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab {
-    [self window];
+    (void)[self window];
     [self selectProfilesTab];
     [self run];
     [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
@@ -220,14 +231,23 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     return [_profilesViewController importColorPresetFromFile:filename];
 }
 
+- (NSWindow *)windowIfLoaded
+{
+    if (self.windowLoaded) {
+        return self.window;
+    }
+    return nil;
+}
+
 - (WindowArrangements *)arrangements {
     return arrangements_;
 }
 
 - (void)run {
+    (void)self.window;
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
-    if (!self.window.isVisible) {
+    if (!self.windowIfLoaded.isVisible) {
         [self showWindow:self];
     }
 }
@@ -249,6 +269,10 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 - (void)windowWillClose:(NSNotification *)aNotification {
     [_profilesViewController windowWillClose:aNotification];
     [[NSUserDefaults standardUserDefaults] synchronize];
+    if (self.windowLoaded) {
+        self.window = nil;
+    }
+    [self _closeCurrentSession:self force:YES];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
@@ -261,14 +285,25 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 // Shell>Close
 - (void)closeCurrentSession:(id)sender {
-    if ([[self window] isKeyWindow]) {
+    [self _closeCurrentSession:sender force:NO];
+}
+
+- (void)_closeCurrentSession:(id)sender force:(BOOL)force {
+    if (self.windowIfLoaded.isKeyWindow || force) {
         [self closeWindow:self];
     }
 }
 
 // Shell>Close Terminal Window
 - (void)closeWindow:(id)sender {
-    [[self window] close];
+    [self close];
+    [PreferencePanel _releaseAndNilifySingletonInstancesIfNeeded:self];
+}
+
+- (void)close
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelWillCloseNotification object:nil];
+    [super close];
 }
 
 - (void)changeFont:(id)fontManager {

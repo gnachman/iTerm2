@@ -38,6 +38,7 @@ extern NSString *const kUpdateLabelsNotification;
 extern NSString *const kKeyBindingsChangedNotification;
 extern NSString *const kPreferencePanelDidUpdateProfileFields;
 extern NSString *const kSessionProfileDidChange;  // Posted by a session when it changes to update the Get Info window.
+extern NSString *const kPreferencePanelWillCloseNotification;
 
 // All profiles should be reloaded.
 extern NSString *const kReloadAllProfiles;
@@ -82,6 +83,8 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)showMouseTabView:(id)sender;
 
 - (void)underlyingBookmarkDidChange;
+
+- (NSWindow *)windowIfLoaded;
 
 - (WindowArrangements *)arrangements;
 - (void)run;
