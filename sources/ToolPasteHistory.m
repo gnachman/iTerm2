@@ -176,7 +176,9 @@ static const CGFloat kMargin = 4;
     NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
     [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
     [thePasteboard setString:[entry mainValue] forType:NSStringPboardType];
-    [[[iTermController sharedInstance] frontTextView] paste:nil];
+    PTYTextView *textView = [[iTermController sharedInstance] frontTextView];
+    [textView paste:nil];
+    [textView.window makeFirstResponder:textView];
 }
 
 - (void)clear:(id)sender {
