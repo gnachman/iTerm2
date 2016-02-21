@@ -103,6 +103,7 @@ extern NSString *const kProfileWasDeletedNotification;
 // Keep the currently selected profile in the list and selected even if it no longer matches the
 // filter.
 - (void)lockSelection;
+- (void)selectLockedSelection;
 - (void)unlockSelection;
 
 @end

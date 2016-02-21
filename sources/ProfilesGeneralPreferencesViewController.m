@@ -80,6 +80,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
+    info.customSettingChangedHandler = ^(id sender) {
+        [_profileDelegate profilesGeneralPreferencesNameWillChange];
+        [self setString:_profileNameField.stringValue forKey:info.key];
+        [_profileDelegate profilesGeneralPreferencesNameDidChange];
+    };
     info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
 
     info = [self defineControl:_profileNameFieldForEditCurrentSession

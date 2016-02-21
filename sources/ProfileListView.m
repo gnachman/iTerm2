@@ -360,6 +360,14 @@ const CGFloat kDefaultTagsWidth = 80;
     dataSource_.lockedGuid = [self selectedGuid];
 }
 
+- (void)selectLockedSelection {
+    NSInteger theIndex = [dataSource_ indexOfProfileWithGuid:dataSource_.lockedGuid];
+    if (theIndex < 0) {
+        return;
+    }
+    [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:theIndex] byExtendingSelection:NO];
+}
+
 - (void)unlockSelection {
     dataSource_.lockedGuid = nil;
 }

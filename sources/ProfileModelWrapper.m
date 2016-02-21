@@ -143,6 +143,7 @@
 
 - (void)setFilter:(NSString*)newFilter
 {
+    self.lockedGuid = nil;
     [filter release];
     filter = [[NSMutableString stringWithString:newFilter] retain];
 }

@@ -683,6 +683,10 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     [_profilesListView lockSelection];
 }
 
+- (void)profilesGeneralPreferencesNameDidChange {
+    [_profilesListView selectLockedSelection];
+}
+
 - (void)profilesGeneralPreferencesNameDidEndEditing {
     [[NSNotificationCenter defaultCenter] postNotificationName:kProfileSessionNameDidEndEditing
                                                         object:[_profilesListView selectedGuid]];

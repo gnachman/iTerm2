@@ -15,6 +15,8 @@
 // This should be called only for "edit info" dialogs when the name field resigns first responder.
 - (void)profilesGeneralPreferencesNameDidEndEditing;
 
+- (void)profilesGeneralPreferencesNameDidChange;
+
 @end
 
 @interface ProfilesGeneralPreferencesViewController : iTermProfilePreferencesBaseViewController
