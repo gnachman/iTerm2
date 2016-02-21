@@ -7,6 +7,8 @@
 //
 
 #import "NSData+iTerm.h"
+
+#import "DebugLogging.h"
 #import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 
@@ -103,6 +105,44 @@
         }
     }
     return nil;
+}
+
+- (BOOL)appendToFile:(NSString *)path addLineBreakIfNeeded:(BOOL)addNewline {
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForUpdatingAtPath:path];
+    if (!fileHandle) {
+        [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
+        fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+        if (!fileHandle) {
+            DLog(@"Failed to open for writing or create %@", path);
+            return NO;
+        }
+    }
+
+    @try {
+        [fileHandle seekToEndOfFile];
+        if (addNewline) {
+            unsigned long long length = fileHandle.offsetInFile;
+            if (length > 0) {
+                [fileHandle seekToFileOffset:length - 1];
+                NSData *data = [fileHandle readDataOfLength:1];
+                if (data.length == 1) {
+                    char lastByte = ((const char *)data.bytes)[0];
+                    if (lastByte != '\r' && lastByte != '\n') {
+                        [fileHandle seekToEndOfFile];
+                        [fileHandle writeData:[NSData dataWithBytes:"\n" length:1]];
+                    }
+                }
+            }
+        }
+        [fileHandle writeData:self];
+        return YES;
+    }
+    @catch (NSException * e) {
+        return NO;
+    }
+    @finally {
+        [fileHandle closeFile];
+    }
 }
 
 @end

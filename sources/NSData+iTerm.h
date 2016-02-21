@@ -25,4 +25,10 @@
 
 - (BOOL)hasPrefixOfBytes:(char *)bytes length:(int)length;
 
+
+// Appends this data to the file at |path|. If |addNewline| is YES then a '\n' is appended if the
+// file does not already end with \n or \r. This plays a little fast and loose with character
+// encoding, but it gets the job done.
+- (BOOL)appendToFile:(NSString *)path addLineBreakIfNeeded:(BOOL)addNewline;
+
 @end
