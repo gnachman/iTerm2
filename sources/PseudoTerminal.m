@@ -3270,7 +3270,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         if ([self tabBarShouldBeVisible]) {
             switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
                 case PSMTab_LeftTab:
-                    contentSize.width -= kLeftTabsWidth;
+                    contentSize.width -= _contentView.leftTabBarWidth;
                     break;
 
                 case PSMTab_TopTab:
@@ -3990,7 +3990,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         contentFrame = viewRect = [textview frame];
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_LeftTab:
-                contentFrame.size.width += kLeftTabsWidth;
+                contentFrame.size.width += _contentView.leftTabBarWidth;
                 break;
 
             case PSMTab_TopTab:
@@ -4012,8 +4012,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         BOOL isHorizontal = YES;
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_LeftTab:
-                viewRect.origin.x += kLeftTabsWidth;
-                viewRect.size.width -= kLeftTabsWidth;
+                viewRect.origin.x += _contentView.leftTabBarWidth;
+                viewRect.size.width -= _contentView.leftTabBarWidth;
                 isHorizontal = NO;
                 break;
 
@@ -4069,7 +4069,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_LeftTab:
-                offset->width = kLeftTabsWidth;
+                offset->width = _contentView.leftTabBarWidth;
                 offset->height = 0;
                 break;
 

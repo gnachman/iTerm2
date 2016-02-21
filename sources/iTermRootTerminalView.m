@@ -10,13 +10,14 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermDragHandleView.h"
 #import "iTermPreferences.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
 #import "PTYTabView.h"
 
 const CGFloat kHorizontalTabBarHeight = 22;
-const CGFloat kLeftTabsWidth = 150;
+const CGFloat kDefaultLeftTabsWidth = 150;
 const CGFloat kDivisionViewHeight = 1;
 
 static const CGFloat kDefaultToolbeltWidth = 250;
@@ -24,12 +25,13 @@ static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
-@interface iTermRootTerminalView()<iTermTabBarControlViewDelegate>
+@interface iTermRootTerminalView()<iTermTabBarControlViewDelegate, iTermDragHandleViewDelegate>
 
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, retain) SolidColorView *divisionView;
 @property(nonatomic, retain) iTermToolbeltView *toolbelt;
+@property(nonatomic, retain) iTermDragHandleView *leftTabBarDragHandle;
 @end
 
 
@@ -46,7 +48,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _delegate = delegate;
 
         self.autoresizesSubviews = YES;
-
+        _leftTabBarWidth = kDefaultLeftTabsWidth;
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
@@ -110,6 +112,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
     [_divisionView release];
     [_toolbelt release];
+    self.leftTabBarDragHandle.delegate = nil;
+    [self.leftTabBarDragHandle release];
 
     [super dealloc];
 }
@@ -219,7 +223,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (CGFloat)tabviewWidth {
     if ([self tabBarShouldBeVisible] &&
         [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
-        return kLeftTabsWidth;
+        return _leftTabBarWidth;
     }
 
     CGFloat width;
@@ -237,6 +241,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     return width;
 }
 
+- (void)removeLeftTabBarDragHandle {
+    [self.leftTabBarDragHandle removeFromSuperview];
+    self.leftTabBarDragHandle = nil;
+}
+
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
 
@@ -251,6 +260,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     _tabViewFrameReduced = NO;
     if (![self tabBarShouldBeVisible]) {
         // The tabBarControl should not be visible.
+        [self removeLeftTabBarDragHandle];
         self.tabBarControl.hidden = YES;
         CGFloat yOrigin = [_delegate haveBottomBorder] ? 1 : 0;
         CGFloat heightAdjustment = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0;
@@ -275,6 +285,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             case PSMTab_TopTab: {
                 // Place tabs at the top.
                 // Add 1px border
+                [self removeLeftTabBarDragHandle];
                 CGFloat yOrigin = _delegate.haveBottomBorder ? 1 : 0;
                 CGFloat heightAdjustment = 0;
                 if (!self.tabBarControl.flashing) {
@@ -309,6 +320,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
             case PSMTab_BottomTab: {
                 DLog(@"repositionWidgets - putting tabs at bottom");
+                [self removeLeftTabBarDragHandle];
                 // setup aRect to make room for the tabs at the bottom.
                 NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
                                                 _delegate.haveBottomBorder ? 1 : 0,
@@ -339,6 +351,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             }
 
             case PSMTab_LeftTab: {
+                [self constrainLeftTabBarWidth];
                 CGFloat heightAdjustment = 0;
                 if (_delegate.haveBottomBorder) {
                     heightAdjustment += 1;
@@ -377,6 +390,19 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 }
                 self.tabView.frame = tabViewFrame;
                 [self updateDivisionView];
+                
+                const CGFloat dragHandleWidth = 3;
+                NSRect leftTabBarDragHandleFrame = NSMakeRect(NSMaxX(self.tabBarControl.frame) - dragHandleWidth,
+                                                              0,
+                                                              dragHandleWidth,
+                                                              NSHeight(self.tabBarControl.frame));
+                if (!self.leftTabBarDragHandle) {
+                    self.leftTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame];
+                    self.leftTabBarDragHandle.delegate = self;
+                    [self addSubview:self.leftTabBarDragHandle];
+                } else {
+                    self.leftTabBarDragHandle.frame = leftTabBarDragHandleFrame;
+                }
             }
         }
     }
@@ -406,6 +432,16 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"repositionWidgets - return.");
 }
 
+- (void)constrainLeftTabBarWidth {
+    if (_leftTabBarWidth < 50) {
+        _leftTabBarWidth = 50;
+    }
+    const CGFloat maxWidth = self.bounds.size.width / 3;
+    if (_leftTabBarWidth > maxWidth) {
+        _leftTabBarWidth = maxWidth;
+    }
+}
+
 #pragma mark - iTermTabBarControlViewDelegate
 
 - (BOOL)iTermTabBarShouldFlashAutomatically {
@@ -418,6 +454,15 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)iTermTabBarDidFinishFlash {
     [_delegate iTermTabBarDidFinishFlash];
+}
+
+#pragma mark - iTermDragHandleViewDelegate
+
+- (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
+    CGFloat originalValue = _leftTabBarWidth;
+    _leftTabBarWidth += delta;
+    [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
+    return _leftTabBarWidth - originalValue;
 }
 
 @end
