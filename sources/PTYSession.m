@@ -5955,7 +5955,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)screenDidReset {
     [self loadInitialColorTable];
     _cursorGuideSettingHasChanged = NO;
-    _textview.highlightCursorLine = NO;
+    _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
+                                                              inProfile:_profile];
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
 }
