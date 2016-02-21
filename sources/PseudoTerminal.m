@@ -3504,6 +3504,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
+    [self.currentTab recheckBlur];
     [self notifyTmuxOfWindowResize];
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
