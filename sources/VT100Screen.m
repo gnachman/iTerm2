@@ -1,4 +1,5 @@
-﻿#import "VT100Screen.h"
+﻿
+#import "VT100Screen.h"
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
@@ -268,6 +269,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [altGrid_ markAllCharsDirty:YES];
 }
 
+- (BOOL)intervalTreeObjectMayBeEmpty:(id)note {
+    // These kinds of ranges are allowed to be empty because
+    // although they nominally refer to an entire line, sometimes
+    // that line is blank such as just before the prompt is
+    // printed. See issue 4261.
+    return ([note isKindOfClass:[VT100RemoteHost class]] ||
+            [note isKindOfClass:[VT100WorkingDirectory class]]);
+}
+
 // This is used for a very specific case. It's used when you have some history, optionally followed
 // by lines pulled from the primary grid, followed by the alternate grid, all stuffed into a line
 // buffer. Given a pair of positions, it converts them to a range. If a position is between
@@ -477,7 +487,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                 VT100GridCoordRange range = sub.range.coordRange;
                 LineBufferPositionRange *positionRange =
                     [self positionRangeForCoordRange:range
-                                        inLineBuffer:lineBufferWithAltScreen];
+                                        inLineBuffer:lineBufferWithAltScreen
+                                       tolerateEmpty:NO];
                 if (positionRange) {
                     [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
                 } else {
@@ -515,7 +526,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                 [[note retain] autorelease];
                 [intervalTree_ removeObject:note];
                 LineBufferPositionRange *positionRange =
-                    [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer];
+                  [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
                 if (positionRange) {
                     DLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
                          VT100GridCoordRangeDescription(range),
@@ -553,7 +564,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             BOOL ok = [self convertRange:sub.range.coordRange
                                  toWidth:new_width
                                       to:&newSelection
-                            inLineBuffer:linebuffer_];
+                            inLineBuffer:linebuffer_
+                           tolerateEmpty:NO];
             if (ok) {
                 assert(sub.range.coordRange.start.y >= 0);
                 assert(sub.range.coordRange.end.y >= 0);
@@ -583,9 +595,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                 [intervalTree_ removeObject:note];
             } else {
                 if ([self convertRange:noteRange
-                                  toWidth:new_width
-                                       to:&newRange
-                             inLineBuffer:linebuffer_]) {
+                               toWidth:new_width
+                                    to:&newRange
+                          inLineBuffer:linebuffer_
+                         tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                     assert(noteRange.start.y >= 0);
                     assert(noteRange.end.y >= 0);
                     Interval *newInterval = [self intervalForGridCoordRange:newRange
@@ -738,7 +751,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
             VT100GridCoordRange newRange;
-            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:altScreenLineBuffer]) {
+            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
                 // Anticipate the lines that will be dropped when the alt grid is restored.
@@ -3910,7 +3923,8 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
-                                           inLineBuffer:(LineBuffer *)lineBuffer {
+                                           inLineBuffer:(LineBuffer *)lineBuffer
+                                          tolerateEmpty:(BOOL)tolerateEmpty {
     assert(range.end.y >= 0);
     assert(range.start.y >= 0);
 
@@ -3949,7 +3963,11 @@ static void SwapInt(int *a, int *b) {
                         toStartX:&trimmedStart
                           toEndX:&trimmedEnd];
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
-        return nil;
+        if (tolerateEmpty) {
+            trimmedStart = trimmedEnd = range.start;
+        } else {
+            return nil;
+        }
     }
 
     positionRange.start = [lineBuffer positionForCoordinate:trimmedStart
@@ -3971,7 +3989,7 @@ static void SwapInt(int *a, int *b) {
              toWidth:(int)newWidth
                   to:(VT100GridCoordRange *)resultPtr
         inLineBuffer:(LineBuffer *)lineBuffer
-{
+       tolerateEmpty:(BOOL)tolerateEmpty {
     if (range.start.y < 0 || range.end.y < 0) {
         return NO;
     }
@@ -3980,7 +3998,7 @@ static void SwapInt(int *a, int *b) {
     // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
     LineBuffer *savedLineBuffer = linebuffer_;
     linebuffer_ = lineBuffer;
-    selectionRange = [self positionRangeForCoordRange:range inLineBuffer:lineBuffer];
+    selectionRange = [self positionRangeForCoordRange:range inLineBuffer:lineBuffer tolerateEmpty:tolerateEmpty];
     DLog(@"%@ -> %@", VT100GridCoordRangeDescription(range), selectionRange);
     linebuffer_ = savedLineBuffer;
     if (!selectionRange) {

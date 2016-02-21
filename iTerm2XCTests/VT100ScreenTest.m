@@ -4166,6 +4166,21 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(buffer[2].backgroundColor == 5);
 }
 
+// Issue 4261
+- (void)testRemoteHostOnTrailingEmptyLineNotLostDuringResize {
+    // Append some text, then a newline, then set a remote host, then resize. Ensure the
+    // remote host is still there.
+    
+    VT100Screen *screen = [self screenWithWidth:5 height:4];
+    [self appendLines:@[ @"Hi" ] toScreen:screen];
+    
+    [screen terminalSetRemoteHost:@"example.com"];
+    [screen resizeWidth:6 height:4];
+    VT100RemoteHost *remoteHost = [screen remoteHostOnLine:2];
+    
+    XCTAssertEqualObjects([remoteHost hostname], @"example.com");
+}
+
 #pragma mark - CSI Tests
 
 - (void)testCSI_CUD {

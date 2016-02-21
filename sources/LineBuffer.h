@@ -136,10 +136,6 @@
 // the FindContext prior to calling this.
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
 
-// Convert a position (as returned by findSubstring) into an x,y position.
-// Returns TRUE if the conversion was successful, false if the position was out of bounds.
-- (BOOL)convertPosition:(int)position withWidth:(int)width toX:(int*)x toY:(int*)y;
-
 // Returns an array of XYRange values
 - (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;
 

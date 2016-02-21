@@ -837,23 +837,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return result;
 }
 
-// Returns YES if the position is valid.
-- (BOOL)convertPosition:(int)position
-              withWidth:(int)width
-                    toX:(int*)x
-                    toY:(int*)y
-{
-    BOOL ok;
-    LineBufferPosition *lbp = [LineBufferPosition position];
-    lbp.absolutePosition = position + droppedChars;
-    lbp.yOffset = 0;
-    lbp.extendsToEndOfLine = NO;
-    VT100GridCoord coord = [self coordinateForPosition:lbp width:width ok:&ok];
-    *x = coord.x;
-    *y = coord.y;
-    return ok;
-}
-
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
                                        offset:(int)offset
@@ -912,7 +895,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     if (position.absolutePosition == [self lastPos] + droppedChars) {
         VT100GridCoord result;
-        result.y = [self numLinesWithWidth:width] - 1;
+        // If the absolute position is equal to the last position, then
+        // numLinesWithWidth: will give the wrapped line number after all
+        // trailing empty lines. They all have the same position because they
+        // are empty. We need to back up by the number of empty lines and then
+        // use position.yOffset to disambiguate.
+        result.y = [self numLinesWithWidth:width] - 1 - [blocks.lastObject numberOfTrailingEmptyLines];
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
                                                        width:width
                                                 continuation:NULL];

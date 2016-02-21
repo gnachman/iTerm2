@@ -1246,4 +1246,24 @@ static int Search(NSString* needle,
     return self.rawSpaceUsed - start_offset;
 }
 
+- (int)lengthOfLine:(int)lineNumber {
+    if (lineNumber == 0) {
+        return cumulative_line_lengths[0];
+    } else {
+        return cumulative_line_lengths[lineNumber] - cumulative_line_lengths[lineNumber - 1];
+    }
+}
+
+- (int)numberOfTrailingEmptyLines {
+    int count = 0;
+    for (int i = cll_entries - 1; i >= first_entry; i--) {
+        if ([self lengthOfLine:i] == 0) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
 @end

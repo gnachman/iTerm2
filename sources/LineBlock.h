@@ -174,4 +174,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 // invalid if the block is changed.
 - (NSDictionary *)dictionary;
 
+// Number of empty lines at the end of the block.
+- (int)numberOfTrailingEmptyLines;
+
 @end
