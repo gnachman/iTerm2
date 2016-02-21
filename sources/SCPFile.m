@@ -189,7 +189,6 @@ static NSError *SCPFileError(NSString *description) {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *appSupport = [fileManager applicationSupportDirectory];
     NSArray *paths = @[ [appSupport stringByAppendingPathExtension:@"iTerm/ssh_config"],
-                        [@"~/.ssh/ssh_config" stringByExpandingTildeInPath],
                         [@"~/.ssh/config" stringByExpandingTildeInPath],
                         @"/etc/ssh/ssh_config",
                         @"/etc/ssh_config" ];
