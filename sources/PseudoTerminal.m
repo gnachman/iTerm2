@@ -2663,7 +2663,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // Issue 1251: we can take this path when a "clipboard manager" window is open.
         DLog(@"Some non-terminal window is now main. Key terminal windows are %@",
              [[iTermController sharedInstance] keyTerminalWindows]);
-        NSLog(@"%@", [[iTermController sharedInstance] terminals]);
         return nil;
     }
     if ([[hotkeyTerminal window] alphaValue] == 0) {
