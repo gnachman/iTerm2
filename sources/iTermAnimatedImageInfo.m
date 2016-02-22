@@ -16,6 +16,11 @@
 }
 
 - (instancetype)initWithData:(NSData *)data {
+    if (!data) {
+        // This happens in internal use when creating an image that we know isn't animated and no
+        // data is provided. For example, the Broken Pipe image.
+        return nil;
+    }
     self = [super init];
     if (self) {
         NSMutableArray *images = [NSMutableArray array];
