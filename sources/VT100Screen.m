@@ -2938,7 +2938,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)terminalIconTitle {
-    if (allowTitleReporting_) {
+    if (allowTitleReporting_ && [self terminalIsTrusted]) {
         // TODO: Should be something like screenRawName (which doesn't exist yet but would return
         // [self rawName]), not screenWindowTitle, right?
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName];
@@ -2948,7 +2948,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)terminalWindowTitle {
-    if (allowTitleReporting_) {
+    if (allowTitleReporting_ && [self terminalIsTrusted]) {
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : @"";
     } else {
         return @"";

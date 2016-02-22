@@ -1349,16 +1349,18 @@ static const int kMaxScreenRows = 4096;
             [self handleDeviceStatusReportWithToken:token withQuestion:NO];
             break;
         case VT100CSI_DECRQCRA: {
-            VT100GridRect defaultRectangle = VT100GridRectMake(0,
-                                                               0,
-                                                               [delegate_ terminalWidth],
-                                                               [delegate_ terminalHeight]);
-            // xterm incorrectly uses the second parameter for the Pid. Since I use this mostly to
-            // test xterm compatibility, it's handy to be bugwards-compatible.
-            [self sendChecksumReportWithId:token.csi->p[1]
-                                 rectangle:[self rectangleInToken:token
-                                                  startingAtIndex:2
-                                                 defaultRectangle:defaultRectangle]];
+            if ([delegate_ terminalIsTrusted]) {
+                VT100GridRect defaultRectangle = VT100GridRectMake(0,
+                                                                   0,
+                                                                   [delegate_ terminalWidth],
+                                                                   [delegate_ terminalHeight]);
+                // xterm incorrectly uses the second parameter for the Pid. Since I use this mostly to
+                // test xterm compatibility, it's handy to be bugwards-compatible.
+                [self sendChecksumReportWithId:token.csi->p[1]
+                                     rectangle:[self rectangleInToken:token
+                                                      startingAtIndex:2
+                                                     defaultRectangle:defaultRectangle]];
+            }
             break;
         }
         case VT100CSI_DECDSR:
@@ -2073,7 +2075,9 @@ static const int kMaxScreenRows = 4096;
     } else if ([key isEqualToString:@"EndFile"]) {
         ELog(@"Deprecated and unsupported code EndFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndCopy"]) {
-        [delegate_ terminalCopyBufferToPasteboard];
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalCopyBufferToPasteboard];
+        }
     } else if ([key isEqualToString:@"RequestAttention"]) {
         [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
