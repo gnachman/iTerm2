@@ -126,5 +126,6 @@
 + (BOOL)hotkeyWindowIgnoresSpotlight;
 + (BOOL)tabTitlesUseSmartTruncation;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
++ (BOOL)disablePotentiallyInsecureEscapeSequences;
 
 @end

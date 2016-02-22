@@ -3445,6 +3445,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return [delegate_ screenAppendDataToPasteboard:data];
 }
 
+- (BOOL)terminalIsTrusted {
+    return ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
+}
+
 - (void)terminalRequestAttention:(BOOL)request {
     [delegate_ screenRequestAttention:request isCritical:YES];
 }

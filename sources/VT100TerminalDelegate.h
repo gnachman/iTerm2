@@ -362,4 +362,6 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 
 - (BOOL)terminalFocusReportingEnabled;
 
+- (BOOL)terminalIsTrusted;
+
 @end
