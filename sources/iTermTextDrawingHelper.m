@@ -452,7 +452,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     VT100ScreenMark *mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark.isVisible && self.drawMarkIndicators) {
         NSImage *image = mark.code ? _markErrImage : _markImage;
-        CGFloat offset = (_cellSize.height - _markImage.size.height) / 2.0;
+        const CGFloat verticalSpacing = _cellSize.height - _cellSizeWithoutSpacing.height;
+        CGFloat offset = (_cellSizeWithoutSpacing.height - _markImage.size.height) / 2.0 + verticalSpacing;
         [image drawAtPoint:NSMakePoint(leftMargin.origin.x,
                                        leftMargin.origin.y + offset)
                   fromRect:NSMakeRect(0, 0, _markImage.size.width, _markImage.size.height)
