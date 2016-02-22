@@ -5,6 +5,7 @@
 #import "FutureMethods.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermPreferences.h"
+#import "NSView+iTerm.h"
 #import "MovePaneController.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYScrollView.h"
@@ -707,7 +708,14 @@ static NSDate* lastResizeDate_;
     if (announcement == _currentAnnouncement) {
         NSRect rect = announcement.view.frame;
         rect.origin.y += rect.size.height;
-        [announcement.view.animator setFrame:rect];
+        [NSView animateWithDuration:0.25
+                         animations:^{
+                             [announcement.view.animator setFrame:rect];
+                         }
+                         completion:^(BOOL finished) {
+                             [announcement.view removeFromSuperview];
+                         }];
+
         if (!_inDealloc) {
             [self performSelector:@selector(showNextAnnouncement)
                        withObject:nil

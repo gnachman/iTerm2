@@ -1567,7 +1567,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(hardStop)
                                                    object:nil];
-        if (!_shell.hasBrokenPipe) {
+        if (_shell.hasBrokenPipe) {
+            if (self.isRestartable) {
+                [self queueRestartSessionAnnouncement];
+            }
+        } else {
             _exited = NO;
         }
         _textview.dataSource = _screen;
@@ -1962,32 +1966,37 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [self appendBrokenPipeMessage:@"Session Restarted"];
         [self replaceTerminatedShellWithNewInstance];
     } else if ([self autoClose]) {
+        [self appendBrokenPipeMessage:@"Broken Pipe"];
         [[self tab] closeSession:self];
     } else {
         // Offer to restart the session by rerunning its program.
         [self appendBrokenPipeMessage:@"Broken Pipe"];
         if ([self isRestartable]) {
-            iTermAnnouncementViewController *announcement =
-                [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                                 style:kiTermAnnouncementViewStyleQuestion
-                                                           withActions:@[ @"Restart" ]
-                                                            completion:^(int selection) {
-                                                                switch (selection) {
-                                                                    case -2:  // Dismiss programmatically
-                                                                        break;
-
-                                                                    case -1: // No
-                                                                        break;
-
-                                                                    case 0: // Yes
-                                                                        [self replaceTerminatedShellWithNewInstance];
-                                                                        break;
-                                                                }
-                                                            }];
-            [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+            [self queueRestartSessionAnnouncement];
         }
         [self updateDisplay];
     }
+}
+
+- (void)queueRestartSessionAnnouncement {
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Restart" ]
+                                                    completion:^(int selection) {
+                                                        switch (selection) {
+                                                            case -2:  // Dismiss programmatically
+                                                                break;
+
+                                                            case -1: // No
+                                                                break;
+
+                                                            case 0: // Yes
+                                                                [self replaceTerminatedShellWithNewInstance];
+                                                                break;
+                                                        }
+                                                    }];
+    [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
 - (BOOL)isRestartable {
