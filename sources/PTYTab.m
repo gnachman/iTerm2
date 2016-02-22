@@ -4486,7 +4486,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         }
         if (![aSession shouldPostGrowlNotification]) {
             [aSession setHavePostedNewOutputNotification:NO];
-            [aSession setNewOutput:NO];
             shouldResetLabel = YES;
         }
     }
