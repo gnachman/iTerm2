@@ -4820,7 +4820,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
-    if ([self currentSession] == session && [[self window] isKeyWindow]) {
+    if ([self currentSession] == session && [[self window] isKeyWindow] && [[session currentCommand] length] > 0) {
         self.autoCommandHistorySessionGuid = session.guid;
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
