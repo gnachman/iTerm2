@@ -138,6 +138,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     PseudoTerminal* term = GetHotkeyWindow();
     [[term window] makeKeyAndOrderFront:nil];
     [[term window] makeFirstResponder:[[term currentSession] textview]];
+    [[[[HotkeyWindowController sharedInstance] hotKeyWindow] currentTab] recheckBlur];
 }
 
 - (Profile *)profile {
