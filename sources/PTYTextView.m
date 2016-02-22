@@ -1660,23 +1660,6 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
 }
 
-- (BOOL)canOpenURL:(NSString *)aURLString onLine:(int)line {
-    // A URL is openable if Semantic History can handle it or if it looks enough like a web URL to
-    // pass muster.
-    NSString* trimmedURLString;
-
-    NSCharacterSet *charsToTrim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
-
-    NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if ([self.semanticHistoryController canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
-        return YES;
-    }
-
-    // If it has a slash and is limited to the URL character set, it could be a URL.
-    return [self stringLooksLikeURL:aURLString];
-}
-
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
@@ -5615,7 +5598,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     NSRange slashRange = [s rangeOfString:@"/"];
-    return (slashRange.length > 0 && slashRange.location > 0);  // Must contain a slash, but must not start with it.
+    if (slashRange.location == 0) {
+        // URLs never start with a slash
+        return NO;
+    }
+    if (slashRange.length > 0) {
+        // Contains a slash but does not start with it.
+        return YES;
+    }
+    
+    NSString *ipRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
+    if ([s rangeOfRegex:ipRegex].location != NSNotFound) {
+        // IP addresses as dotted quad
+        return YES;
+    }
+    
+    NSString *hostnameRegex = @"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
+    if ([s rangeOfRegex:hostnameRegex].location != NSNotFound) {
+        // A hostname with at least two components.
+        return YES;
+    }
+    
+    return NO;
 }
 
 // Any sequence of words separated by spaces or tabs could be a filename. Search the neighborhood
