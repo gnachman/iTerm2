@@ -3310,7 +3310,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             break;
 
         case kVT100TerminalUnitsPercentage:
-            width = [self width];
+            width = ceil((double)[self width] * (double)MAX(MIN(100, width), 0) / 100.0);
             break;
 
         case kVT100TerminalUnitsCells:
@@ -3330,7 +3330,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             break;
 
         case kVT100TerminalUnitsPercentage:
-            height = [self height];
+            height = ceil((double)[self height] * (double)MAX(MIN(100, height), 0) / 100.0);
             break;
 
         case kVT100TerminalUnitsCells:
