@@ -388,14 +388,28 @@
             [[tabColor colorWithAlphaComponent:0.8] set];
             NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
         } else {
+            [[tabColor colorWithAlphaComponent:0.8] set];
             NSRect colorRect = cellFrame;
+
+            CGRect unscaledRect = CGRectMake(0, 0, 1, 1);
+            CGRect scaledRect = CGContextConvertRectToDeviceSpace([[NSGraphicsContext currentContext] graphicsPort], unscaledRect);
+            BOOL isRetina = (scaledRect.size.width >= 2);
+
             if (horizontal) {
-                colorRect.size.height = 4;
+                colorRect.size.height = isRetina ? 3.5 : 3;
             } else {
                 colorRect.size.width = 6;
             }
             [[tabColor colorWithAlphaComponent:0.8] set];
             NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
+
+            [[self topLineColorSelected:selected] set];
+            CGFloat stroke = isRetina ? 0.5 : 1;
+            if (horizontal) {
+                NSRectFill(NSMakeRect(NSMinX(colorRect), NSMaxY(colorRect), NSWidth(colorRect), stroke));
+            } else {
+                NSRectFill(NSMakeRect(NSMaxX(colorRect), NSMinY(colorRect), stroke, NSHeight(colorRect)));
+            }
         }
     }
 
