@@ -61,7 +61,41 @@ static struct {
         [paths[0] stringByAppendingPathComponent:@"KeyBindings/DefaultKeyBinding.dict"];
     NSDictionary *theDict = [NSDictionary dictionaryWithContentsOfFile:bindPath];
     DLog(@"Loaded key bindings dictionary:\n%@", theDict);
-    return [[self keyBindingDictionaryByNormalizingModifiersInKeys:theDict] retain];
+    return [[self keyBindingDictionaryByPruningUselessBranches:[self keyBindingDictionaryByNormalizingModifiersInKeys:theDict]] retain];
+}
+
++ (NSDictionary *)keyBindingDictionaryByPruningUselessBranches:(NSDictionary *)node {
+    // Remove leafs that do not have an insertText: action.
+    // Recursively rune dictionary values, removing them if empty.
+    // Returns nil if the result would be an empty dictionary.
+    // This is useful because when you press a series of keys following a path
+    // through the key bindings that ultimately ends on a node that is not
+    // insertText:, we swallow all the keys leading up to the last one (but not
+    // the last one). That leads to issues like issue 4209. Since most key
+    // bindings are not insertText:, that's a lot of pointlessly throwing out
+    // user input. It brings us closer to Terminal, which no longer supports
+    // key bindings at all.
+    NSMutableDictionary *replacement = [NSMutableDictionary dictionary];
+    for (id key in node) {
+        id value = node[key];
+        if ([value isKindOfClass:[NSDictionary class]]) {
+            value = [self keyBindingDictionaryByPruningUselessBranches:value];
+        } else if ([value isKindOfClass:[NSArray class]]) {
+            if (![[value firstObject] isEqualToString:@"insertText:"]) {
+                value = nil;
+            }
+        } else {
+            value = nil;
+        }
+        if (value) {
+            replacement[key] = value;
+        }
+    }
+    if ([replacement count]) {
+        return replacement;
+    } else {
+        return nil;
+    }
 }
 
 // Return the modifer mask for a special character.
