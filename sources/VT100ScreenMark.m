@@ -52,7 +52,11 @@ static NSString *const kMarkSessionGuidKey = @"Session Guid";
     if (self) {
         _code = [dict[kMarkCodeKey] intValue];
         _isPrompt = [dict[kScreenMarkIsPrompt] boolValue];
-        _guid = [dict[kMarkGuidKey] copy];
+        if ([dict[kMarkGuidKey] isKindOfClass:[NSString class]]) {
+            _guid = [dict[kMarkGuidKey] copy];
+        } else {
+            _guid = [[NSString uuid] retain];
+        }
         _sessionGuid = [dict[kMarkSessionGuidKey] copy];
         NSTimeInterval start = [dict[kMarkStartDateKey] doubleValue];
         if (start > 0) {
@@ -67,7 +71,7 @@ static NSString *const kMarkSessionGuidKey = @"Session Guid";
         for (NSDictionary *capturedOutputDict in dict[kMarkCapturedOutputKey]) {
             [array addObject:[CapturedOutput capturedOutputWithDictionary:capturedOutputDict]];
         }
-        if (dict[kMarkCommandKey]) {
+        if ([dict[kMarkCommandKey] isKindOfClass:[NSString class]]) {
             _command = [dict[kMarkCommandKey] copy];
         }
         [[self.class registry] setObject:self forKey:self.guid];
