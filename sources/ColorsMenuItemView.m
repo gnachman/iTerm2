@@ -41,7 +41,7 @@ const int kColorAreaBorder = 1;
 const int kDefaulColorOffset = 2;
 const int kDefaultColorDimension = 8;
 const int kDefaultColorStokeWidth = 2;
-const int kMenuFontOfSize = 14;
+const int kMenuFontSize = 14;
 const int kMenuLabelOffsetX = 20;
 const int kMenuLabelOffsetY = 32;
 
@@ -155,11 +155,14 @@ enum {
     [outlineGradient release];
 
     // draw the menu label
-    NSMutableDictionary *fontAtts = [[NSMutableDictionary alloc] init];
-    [fontAtts setObject: [NSFont menuFontOfSize: kMenuFontOfSize] forKey: NSFontAttributeName];
+    NSMutableDictionary *attributes = [NSMutableDictionary dictionary];
+    attributes[NSFontAttributeName] = [NSFont menuFontOfSize:kMenuFontSize];
+    if ([[[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"] isEqualToString:@"Dark"]) {
+        attributes[NSForegroundColorAttributeName] = [NSColor whiteColor];
+    }
+
     NSString *labelTitle = @"Tab Color:";
-    [labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:fontAtts];
-    [fontAtts release];
+    [labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];
 }
 
