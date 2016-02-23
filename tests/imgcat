@@ -81,6 +81,8 @@ while [ $# -gt 0 ]; do
       ;;
     *)
         if [ -r "$1" ] ; then
+            echo ""
+            echo "$1"
             print_image "$1" 1 "$(base64 < "$1")"
         else
             error "imgcat: $1: No such file or directory"
