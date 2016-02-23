@@ -10,8 +10,6 @@
 
 @interface iTermNSKeyBindingEmulator : NSObject
 
-+ (instancetype)sharedInstance;
-
 // Returns YES if the user's key bindings should handle this event.
 - (BOOL)handlesEvent:(NSEvent *)event;
 

@@ -232,12 +232,10 @@ static const int kDragThreshold = 3;
     // Number of times -setalKeyFocus has been called since the last time it
     // was released with releaseKeyFocus.
     int _keyFocusStolenCount;
+    
+    iTermNSKeyBindingEmulator *_keyBindingEmulator;
 }
 
-
-+ (void)initialize {
-    [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
-}
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     // Must call initWithFrame:colorMap:.
@@ -333,6 +331,7 @@ static const int kDragThreshold = 3;
         _accessibilityHelper.delegate = self;
 
         _badgeLabel = [[iTermBadgeLabel alloc] init];
+        _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] init];
     }
     return self;
 }
@@ -391,6 +390,7 @@ static const int kDragThreshold = 3;
     [_quickLookController close];
     [_quickLookController release];
     [_savedSelectedText release];
+    [_keyBindingEmulator release];
 
     [super dealloc];
 }
@@ -1378,7 +1378,7 @@ static const int kDragThreshold = 3;
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
 
-    if ([[iTermNSKeyBindingEmulator sharedInstance] handlesEvent:event]) {
+    if ([_keyBindingEmulator handlesEvent:event]) {
         DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
         [self interpretKeyEvents:@[ event ]];
         return;
