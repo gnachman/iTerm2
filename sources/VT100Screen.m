@@ -2790,7 +2790,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         int width = currentGrid_.rightMargin - currentGrid_.leftMargin + 1;
         int height = currentGrid_.bottomMargin - top + 1;
         [currentGrid_ scrollRect:VT100GridRectMake(left, top, width, height)
-                          downBy:n];
+                          downBy:n
+                       softBreak:NO];
         [delegate_ screenTriggerableChangeDidOccur];
     }
 }
@@ -2816,7 +2817,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                    currentGrid_.cursorY,
                                                    currentGrid_.rightMargin - currentGrid_.leftMargin + 1,
                                                    currentGrid_.bottomMargin - currentGrid_.cursorY + 1)
-                          downBy:-n];
+                          downBy:-n
+                       softBreak:NO];
         [delegate_ screenTriggerableChangeDidOccur];
     }
 }
@@ -2889,7 +2891,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
          i++) {
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
-                                               useScrollbackWithRegion:_appendToScrollbackWithStatusBar]];
+                                               useScrollbackWithRegion:_appendToScrollbackWithStatusBar
+                                                             softBreak:NO]];
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -2897,7 +2900,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)terminalScrollDown:(int)n {
     [delegate_ screenRemoveSelection];
     [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
-                      downBy:MIN(currentGrid_.size.height, n)];
+                      downBy:MIN(currentGrid_.size.height, n)
+                   softBreak:NO];
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
