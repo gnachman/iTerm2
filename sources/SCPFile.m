@@ -13,9 +13,7 @@
 #import <NMSSH/libssh2.h>
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "NSData+iTerm.h"
 #import "NSStringiTerm.h"
-#import "NSWorkspace+iTerm.h"
 
 @interface NMSSHSession(iTerm)
 - (id)agent;
@@ -402,21 +400,10 @@ static NSError *SCPFileError(NSString *description) {
     }
     
     if (_okToAdd) {
-        // Issue 4250 reveals that libssh2 deletes lines out of known_hosts if it
-        // does not recognize them. The workaround is to write to a temp file and then append it to
-        // the real file so libssh2 doesn't have a chance to mess up the real file.
-        NSString *tempFileName = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2" suffix:@"knownHost"];
-        [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @(0600) }
-                                         ofItemAtPath:tempFileName
-                                                error:nil];
         [self.session addKnownHostName:self.session.host
                                   port:[self.session.port intValue]
-                                toFile:tempFileName
+                                toFile:nil
                               withSalt:nil];
-        
-        NSData *newEntry = [NSData dataWithContentsOfFile:tempFileName];
-        [[NSFileManager defaultManager] removeItemAtPath:tempFileName error:nil];
-        [newEntry appendToFile:[@"~/.ssh/known_hosts" stringByExpandingTildeInPath] addLineBreakIfNeeded:YES];
     }
 
     if (isDownload) {
