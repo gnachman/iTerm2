@@ -338,7 +338,7 @@ static const int kNumCharsToSearchForDivider = 8;
                         [matches setObject:match forKey:result];
 
                         if (debug) {
-                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result,
+                            NSLog(@"Regex matched. Add result %@ at %d,%lld -> %d,%lld with score %lf", result,
                                   match.startX, match.absStartY, match.endX, match.absEndY,
                                   match.score);
                         }
@@ -690,9 +690,10 @@ static const int kNumCharsToSearchForDivider = 8;
                                        !theChar.complexChar) {
                                        // Is a backslash at the right edge of a window.
                                        // no-op
-                                   } else {
-                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @""
-                                       ;
+                                   } else if (theChar.complexChar ||
+                                              theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                              theChar.code > ITERM2_PRIVATE_END) {
+                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
                                        [joinedLines insertString:string atIndex:0];
                                        for (int i = 0; i < [string length]; i++) {
                                          [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
@@ -728,7 +729,9 @@ static const int kNumCharsToSearchForDivider = 8;
                               !theChar.complexChar) {
                               // Is a backslash at the right edge of a window.
                               // no-op
-                          } else {
+                          } else if (theChar.complexChar ||
+                                     theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                     theChar.code > ITERM2_PRIVATE_END) {
                               NSString* string = CharToStr(theChar.code, theChar.complexChar);
                               [joinedLines appendString:string];
                               for (int i = 0; i < [string length]; i++) {

@@ -11,6 +11,7 @@
 #import "iTermSelectorSwizzler.h"
 #import "iTermTextExtractor.h"
 #import "ScreenChar.h"
+#import "SmartSelectionController.h"
 #import <OCHamcrest/OCHamcrest.h>
 #import <OCMockito/OCMockito.h>
 
@@ -103,6 +104,26 @@
                                                                 @(i), VT100GridWindowedRangeDescription(range), actual, expected[i]);
                                       }
                                   }];
+}
+
+// Ensures double-width characters are handled properly.
+- (void)testDoubleWidthCharacterSmartSelection {
+    _lines = @[ @"blah 页页的翻真的很不方便.txt blah" ];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range;
+    NSDictionary *rule = @{ kRegexKey: @"\\S+",
+                            kPrecisionKey: kVeryHighPrecision };
+
+    SmartMatch *match = [extractor smartSelectionAt:VT100GridCoordMake(10, 0)
+                                          withRules:@[ rule ]
+                                     actionRequired:NO
+                                              range:&range
+                                   ignoringNewlines:NO];
+    XCTAssertNotNil(match);
+    XCTAssertEqual(match.startX, 5);
+    XCTAssertEqual(match.endX, 29);
+    XCTAssertEqual(match.absStartY, 0);
+    XCTAssertEqual(match.absEndY, 0);
 }
 
 // TODO(georgen): Support windowed ranges.
