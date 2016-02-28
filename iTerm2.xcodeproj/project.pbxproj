@@ -906,6 +906,8 @@
 		A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
+		A66B71221C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */; };
+		A66B71231C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */; };
 		A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
@@ -2304,6 +2306,7 @@
 		A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.h; sourceTree = "<group>"; };
 		A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.m; sourceTree = "<group>"; };
 		A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermWindowShortcutAccessoryView.xib; path = Interfaces/iTermWindowShortcutAccessoryView.xib; sourceTree = "<group>"; };
+		A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextExtractorTest.m; sourceTree = "<group>"; };
 		A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AboutWindow.xib; path = Interfaces/AboutWindow.xib; sourceTree = "<group>"; };
 		A67D0D121A2EE12A003A8B35 /* AddressBook.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = AddressBook.strings; path = Interfaces/AddressBook.strings; sourceTree = "<group>"; };
 		A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AdvancedWorkingDirectoryWindow.xib; path = Interfaces/AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
@@ -4213,6 +4216,7 @@
 				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
 				A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */,
 				A61CEAA51C72EA4C00939E97 /* iTermWeakReferenceTest.m */,
+				A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -5884,6 +5888,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
+				A66B71221C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A61CEAA61C72EA4C00939E97 /* iTermWeakReferenceTest.m in Sources */,
@@ -6263,6 +6268,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6BDB04A1B45EBD900F511E6 /* VT100CSIParserTest.m in Sources */,
+				A66B71231C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */,
 				A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */,
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
 				A6D22B441BC9D368004084E0 /* iTermShellHistoryTest.m in Sources */,
