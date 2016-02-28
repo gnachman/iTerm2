@@ -6933,6 +6933,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)setLastDirectory:(NSString *)lastDirectory {
+    DLog(@"Set last directory to %@", lastDirectory);
     if (lastDirectory) {
         [_directories addObject:lastDirectory];
     }

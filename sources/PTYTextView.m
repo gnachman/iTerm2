@@ -5743,9 +5743,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int fileCharsTaken = 0;
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:y];
+    DLog(@"According to data source, the working directory on line %d is %@", y, workingDirectory);
     if (!workingDirectory) {
         // Well, just try the current directory then.
+        DLog(@"That failed, so try to get the current working directory...");
         workingDirectory = [_delegate textViewCurrentWorkingDirectory];
+        DLog(@"It is %@", workingDirectory);
     }
     if (!workingDirectory) {
         workingDirectory = @"";

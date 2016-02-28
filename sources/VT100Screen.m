@@ -1802,15 +1802,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line {
+    DLog(@"setWorkingDirectory:%@ onLine:%d", workingDirectory, line);
     VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
     if (!workingDirectory) {
         workingDirectory = [delegate_ screenCurrentWorkingDirectory];
     }
     if (workingDirectory.length) {
+        DLog(@"Changing working directory to %@", workingDirectory);
         workingDirectoryObj.workingDirectory = workingDirectory;
 
         VT100WorkingDirectory *previousWorkingDirectory = [[[self objectOnOrBeforeLine:line
                                                                                ofClass:[VT100WorkingDirectory class]] retain] autorelease];
+        DLog(@"The previous directory was %@", previousWorkingDirectory);
         if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
             // Extend the previous working directory. We used to add a new VT100WorkingDirectory
             // every time but if the window title gets changed a lot then they can pile up really
@@ -1827,11 +1830,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
             [intervalTree_ removeObject:previousWorkingDirectory];
             range.end = VT100GridCoordMake(self.width, line);
+            DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
             Interval *interval = [self intervalForGridCoordRange:range];
             [intervalTree_ addObject:previousWorkingDirectory withInterval:interval];
         } else {
             VT100GridCoordRange range;
             range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
+            DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
             [intervalTree_ addObject:workingDirectoryObj
                         withInterval:[self intervalForGridCoordRange:range]];
         }
@@ -2740,9 +2745,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
+        DLog(@"Don't have a remote host, so changing working directory");
         // TODO: There's a bug here where remote host can scroll off the end of history, causing the
         // working directory to come from PTYTask (which is what happens when nil is passed here).
         [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor]];
+    } else {
+        DLog(@"Already have a remote host so not updating working directory because of title change");
     }
 }
 
@@ -3150,17 +3158,26 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (atRange.length == 1) {
         user = [remoteHost substringToIndex:atRange.location];
         host = [remoteHost substringFromIndex:atRange.location + 1];
+        if (host.length == 0) {
+            host = nil;
+        }
     } else {
         host = remoteHost;
     }
 
-    char localHostname[256];
-    if (remoteHost && !gethostname(localHostname, sizeof(localHostname) - 1)) {
-        localHostname[sizeof(localHostname) - 1] = '\0';
-        if ([remoteHost isEqualToString:[NSString stringWithUTF8String:localHostname]]) {
-            remoteHost = nil;
+    if (!host || !user) {
+        // A trigger can set the host and user alone. If remoteHost looks like example.com or
+        // user@, then preserve the previous host/user. Also ensure neither value is nil; the
+        // empty string will stand in for a real value if necessary.
+        VT100RemoteHost *lastRemoteHost = [self lastRemoteHost];
+        if (!host) {
+            host = [[lastRemoteHost.hostname copy] autorelease] ?: @"";
+        }
+        if (!user) {
+            user = [[lastRemoteHost.username copy] autorelease] ?: @"";
         }
     }
+
     int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
     VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
 
