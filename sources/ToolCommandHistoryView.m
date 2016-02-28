@@ -311,6 +311,14 @@ static const CGFloat kHelpMargin = 5;
     [self computeFilteredEntries];
 }
 
+- (NSArray *)control:(NSControl *)control
+            textView:(NSTextView *)textView
+         completions:(NSArray *)words
+ forPartialWordRange:(NSRange)charRange
+ indexOfSelectedItem:(NSInteger *)index {
+    return @[];
+}
+
 - (CGFloat)minimumHeight
 {
     return 88;

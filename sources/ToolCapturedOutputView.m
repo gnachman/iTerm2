@@ -309,6 +309,14 @@ static const CGFloat kMargin = 4;
     [self updateCapturedOutput];
 }
 
+- (NSArray *)control:(NSControl *)control
+            textView:(NSTextView *)textView
+         completions:(NSArray *)words
+ forPartialWordRange:(NSRange)charRange
+ indexOfSelectedItem:(NSInteger *)index {
+    return @[];
+}
+
 #pragma mark - Actions
 
 - (void)help:(id)sender {
