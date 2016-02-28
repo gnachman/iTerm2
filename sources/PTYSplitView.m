@@ -72,17 +72,17 @@
         int mouseY = locationInView.y;
         int bestY = 0;
         y = 0;
-        for (int i = subviews.count - 1; i >= 0; i--) {
+        for (int i = 0; i < subviews.count - 1; i++) {
             float subviewHeight = [[subviews objectAtIndex:i] frame].size.height;
             y += subviewHeight;
             if (bestDistance < 0 || abs(y - mouseY) < bestDistance) {
                 bestDistance = abs(y - mouseY);
-                clickedOnSplitterIndex = i - 1;
+                clickedOnSplitterIndex = i;
                 bestY = y;
             }
             y += [self dividerThickness];
         }
-        y = self.frame.size.height - bestY;
+        y = bestY;
     }
 
     [[self delegate] splitView:self draggingWillBeginOfSplit:clickedOnSplitterIndex];
