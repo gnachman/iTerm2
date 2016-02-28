@@ -281,6 +281,25 @@
     }
 }
 
+// This makes ^N and ^P work.
+- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector {
+    BOOL result = NO;
+    
+    if (commandSelector == @selector(moveUp:) || commandSelector == @selector(moveDown:)) {
+        NSInteger row = [_table selectedRow];
+        if (row < 0) {
+            row = 0;
+        } else if (commandSelector == @selector(moveUp:) && row > 0) {
+            row--;
+        } else if (commandSelector == @selector(moveDown:) && row + 1 < _table.numberOfRows) {
+            row++;
+        }
+        [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        result = YES;
+    }
+    return result;
+}
+
 #pragma mark - iTermOpenQuicklyTextFieldDelegate
 
 // Handle arrow keys while text field is key.
