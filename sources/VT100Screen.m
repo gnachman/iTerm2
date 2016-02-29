@@ -1878,21 +1878,27 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
+    DLog(@"Figuring out path for %@ on line %d", filename, line);
     VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
     if (!remoteHost.username || !remoteHost.hostname) {
+        DLog(@"nil username or hostname; return nil");
         return nil;
     }
     if (remoteHost.isLocalhost) {
+        DLog(@"Is localhost; return nil");
         return nil;
     }
     NSString *workingDirectory = [self workingDirectoryOnLine:line];
     if (!workingDirectory) {
+        DLog(@"No working directory; return nil");
         return nil;
     }
     NSString *path;
     if ([filename hasPrefix:@"/"]) {
+        DLog(@"Filename is absolute path, so that's easy");
         path = filename;
     } else {
+        DLog(@"Use working directory of %@", workingDirectory);
         path = [workingDirectory stringByAppendingPathComponent:filename];
     }
     SCPPath *scpPath = [[[SCPPath alloc] init] autorelease];

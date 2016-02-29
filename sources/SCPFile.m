@@ -501,6 +501,7 @@ static NSError *SCPFileError(NSString *description) {
         }
     } else {
         self.status = kTransferrableFileStatusTransferring;
+        DLog(@"Upload “%@” to “%@”", [self localPath], self.path.path);
         BOOL ok = [self.session.channel uploadFile:[self localPath]
                                                 to:self.path.path
                                           progress:^BOOL (NSUInteger bytes) {

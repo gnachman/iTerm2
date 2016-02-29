@@ -4494,7 +4494,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)maybeUpload:(NSArray *)tuple {
     NSArray *propertyList = tuple[0];
     SCPPath *dropScpPath = tuple[1];
+    DLog(@"Confirm upload to %@", dropScpPath);
     if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
+        DLog(@"initiating upload");
         [self.delegate uploadFiles:propertyList toPath:dropScpPath];
     }
 }
