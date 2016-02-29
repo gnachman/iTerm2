@@ -11,6 +11,7 @@
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermAutomaticProfileSwitcher.h"
 #import "iTermColorMap.h"
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
@@ -73,24 +74,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-@interface iTermSavedProfile : NSObject
-@property(nonatomic, copy) Profile *profile;
-@property(nonatomic, copy) Profile *originalProfile;
-@property(nonatomic, assign) BOOL isDivorced;
-@property(nonatomic, copy) NSMutableSet *overriddenFields;
-@end
-
-@implementation iTermSavedProfile
-
-- (void)dealloc {
-    [_profile release];
-    [_originalProfile release];
-    [_overriddenFields release];
-    [super dealloc];
-}
-
-@end
-
 
 // The format for a user defaults key that recalls if the user has already been pestered about
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
@@ -145,6 +128,7 @@ static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100R
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
+static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";  // Dictionary of APS state.
 
 static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Dictionary. See kProgram constants below.
 static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
@@ -181,7 +165,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // should be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
-@interface PTYSession () <iTermPasteHelperDelegate>
+@interface PTYSession () <iTermAutomaticProfileSwitcherDelegate, iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
@@ -203,6 +187,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 @property(nonatomic, copy) NSString *guid;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
+@property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
 @end
 
 @implementation PTYSession {
@@ -359,9 +344,6 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
-    
-    // Used by automatic profile switching.
-    NSMutableArray<iTermSavedProfile *> *_profileStack;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -421,7 +403,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
-        _profileStack = [[NSMutableArray alloc] init];
+        _automaticProfileSwitcher = [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -507,7 +489,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_lastCommand release];
     [_substitutions release];
     [_jobName release];
-    [_profileStack release];
+    [_automaticProfileSwitcher release];
+
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -926,6 +909,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_APS]) {
+        aSession.automaticProfileSwitcher =
+            [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
+                                                         savedState:arrangement[SESSION_ARRANGEMENT_APS]];
     }
     if (didRestoreContents && attachedToServer) {
         Interval *interval = aSession.screen.lastPromptMark.entry.interval;
@@ -3331,6 +3319,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
             [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
+        result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
@@ -6686,142 +6675,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
 }
 
-- (iTermSavedProfile *)savedProfile {
-    iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] init] autorelease];
-    savedProfile.profile = _profile;
-    savedProfile.originalProfile = _originalProfile;
-    savedProfile.isDivorced = _isDivorced;
-    savedProfile.overriddenFields = _overriddenFields;
-    return savedProfile;
-}
-
-- (void)restoreSavedProfile:(iTermSavedProfile *)savedProfileToRestore {
-    [self setProfile:savedProfileToRestore.originalProfile preservingName:NO];
-    if (savedProfileToRestore.isDivorced) {
-        NSMutableDictionary *overrides = [NSMutableDictionary dictionary];
-        for (NSString *key in savedProfileToRestore.overriddenFields) {
-            if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
-                continue;
-            }
-            overrides[key] = savedProfileToRestore.profile[key];
-        }
-        [self setSessionSpecificProfileValues:overrides];
-    }
-    [self sanityCheck];
-}
-
-- (NSString *)profileStackString {
-    NSMutableString *temp = [NSMutableString string];
-    for (iTermSavedProfile *savedProfile in _profileStack) {
-        [temp appendFormat:@"%@ ", savedProfile.profile[KEY_NAME]];
-    }
-    return temp;
-}
-
-- (Profile *)profileToSwitchToForHostname:(NSString *)hostname
-                                 username:(NSString *)username
-                                     path:(NSString *)path {
-    // Construct a map from host binding to profile. This could be expensive with a lot of profiles
-    // but it should be fairly rare for this code to run.
-    NSMutableDictionary<NSString *, Profile *> *ruleToProfileMap = [NSMutableDictionary dictionary];
-    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        NSArray *rules = profile[KEY_BOUND_HOSTS];
-        for (NSString *rule in rules) {
-            ruleToProfileMap[rule] = profile;
-        }
-    }
-    
-    // Find the best-matching rule.
-    int bestScore = 0;
-    int longestHost = 0;
-    Profile *bestProfile = nil;
-    
-    for (NSString *ruleString in ruleToProfileMap) {
-        iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        int score = [rule scoreForHostname:hostname username:username path:path];
-        if ((score > bestScore) || (score > 0 && score == bestScore && [rule.hostname length] > longestHost)) {
-            bestScore = score;
-            longestHost = [rule.hostname length];
-            bestProfile = ruleToProfileMap[ruleString];
-        }
-    }
-    return bestProfile;
-}
-
-- (void)pushCurrentProfileIfNeeded {
-    if (![[[_profileStack lastObject] profile] isEqual:_profile]) {
-        // Push the current profile state onto the stack if its guid is different that the one
-        // already on the stack. This means if you make changes in Edit Info they'll be lost.
-        NSLog(@"*** push %@", _profile[KEY_NAME]);
-        [_profileStack addObject:self.savedProfile];
-        NSLog(@"Stack is now: %@", [self profileStackString]);
-    } else {
-        NSLog(@"(not pushing %@ because it matches the top of the stack)", _profile[KEY_NAME]);
-    }
-}
-
-- (BOOL)profile:(Profile *)candidate
-    hasRuleMatchingHostname:(NSString *)hostname
-           username:(NSString *)username
-               path:(NSString *)path {
-    for (NSString *ruleString in candidate[KEY_BOUND_HOSTS]) {
-        iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        if ([rule scoreForHostname:hostname username:username path:path] > 0) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-- (iTermSavedProfile *)savedProfileMatchingHostname:(NSString *)hostname
-                                           username:(NSString *)username
-                                               path:(NSString *)path {
-    for (iTermSavedProfile *savedProfile in [_profileStack reverseObjectEnumerator]) {
-        if ([self profile:savedProfile.profile hasRuleMatchingHostname:hostname username:username path:path]) {
-            return savedProfile;
-        }
-    }
-    return nil;
-}
-
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
                                 username:(NSString *)username
                                     path:(NSString *)path {
-    iTermSavedProfile *savedProfile = [[[self savedProfileMatchingHostname:hostname
-                                                                  username:username
-                                                                      path:path] retain] autorelease];
-    if (savedProfile && ![savedProfile.profile isEqual:_profile]) {
-        NSLog(@"%@ is in the stack and matches. Popping until we remove it", savedProfile.profile[KEY_NAME]);
-        while ([_profileStack lastObject] == savedProfile) {
-            NSLog(@"Pop");
-            [_profileStack removeLastObject];
-        }
-        NSLog(@"Stack is now: %@", self.profileStackString);
-        [self restoreSavedProfile:savedProfile];
-    } else {
-        Profile *profileToSwitchTo = [self profileToSwitchToForHostname:hostname
-                                                               username:username
-                                                                   path:path];
-        if (profileToSwitchTo && ![profileToSwitchTo isEqual:_profile]) {
-            NSLog(@"Switching to %@", profileToSwitchTo[KEY_NAME]);
-            [self pushCurrentProfileIfNeeded];
-            [self setProfile:profileToSwitchTo preservingName:NO];
-        } else if (!profileToSwitchTo && _profileStack.count) {
-            NSLog(@"Restoring the stack root %@", [_profileStack.firstObject profile][KEY_NAME]);
-            // Restore first profile in stack
-            if (_profileStack.count > 1) {
-                NSLog(@"  Removing all but first object in stack");
-                [_profileStack removeObjectsInRange:NSMakeRange(1, _profileStack.count - 1)];
-            }
-            if (![_profileStack.firstObject isEqual:_profile]) {
-                [self restoreSavedProfile:_profileStack.firstObject];
-            }
-        }
-    }
-
-    // screenCurrentDirectoryDidChangeTo depends on us calling setBadgeLabel.
-    // If you remove it here, add one there.
-    [_textview setBadgeLabel:[self badgeLabel]];
+    [_automaticProfileSwitcher setHostname:hostname username:username path:path];
 }
 
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
@@ -6836,6 +6693,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
                                       path:newPath];
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (BOOL)screenShouldSendReport {
@@ -7303,6 +7161,40 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (BOOL)pasteHelperCanWaitForPrompt {
     return _shellIntegrationEverUsed;
+}
+
+#pragma mark - iTermAutomaticProfileSwitcherDelegate
+
+- (iTermSavedProfile *)automaticProfileSwitcherCurrentSavedProfile {
+    iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] init] autorelease];
+    savedProfile.profile = _profile;
+    savedProfile.originalProfile = _originalProfile;
+    savedProfile.isDivorced = _isDivorced;
+    savedProfile.overriddenFields = _overriddenFields;
+    return savedProfile;
+}
+
+- (NSDictionary *)automaticProfileSwitcherCurrentProfile {
+    return _profile;
+}
+
+- (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
+    [self setProfile:savedProfile.originalProfile preservingName:NO];
+    if (savedProfile.isDivorced) {
+        NSMutableDictionary *overrides = [NSMutableDictionary dictionary];
+        for (NSString *key in savedProfile.overriddenFields) {
+            if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
+                continue;
+            }
+            overrides[key] = savedProfile.profile[key];
+        }
+        [self setSessionSpecificProfileValues:overrides];
+    }
+    [self sanityCheck];
+}
+
+- (NSArray<NSDictionary *> *)automaticProfileSwitcherAllProfiles {
+    return [[ProfileModel sharedInstance] bookmarks];
 }
 
 @end

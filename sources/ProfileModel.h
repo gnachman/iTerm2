@@ -95,7 +95,7 @@ typedef struct {
 // Return the absolute index of a bookmark given its index with the filter applied.
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
 - (void)dump;
-- (NSArray*)bookmarks;
+- (NSArray<Profile *> *)bookmarks;
 - (NSArray*)guids;
 - (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
 - (NSArray *)names;

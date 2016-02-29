@@ -709,8 +709,7 @@ int gMigrated;
     }
 }
 
-- (NSArray*)bookmarks
-{
+- (NSArray<Profile *> *)bookmarks {
     return bookmarks_;
 }
 
