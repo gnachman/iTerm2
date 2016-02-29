@@ -76,6 +76,10 @@ static BOOL gWaitingForFullScreen;
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
+    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
+        completionHandler(nil, nil);
+        return;
+    }
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
     }
