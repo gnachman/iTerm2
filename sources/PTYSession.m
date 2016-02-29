@@ -7175,7 +7175,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (NSDictionary *)automaticProfileSwitcherCurrentProfile {
-    return _profile;
+    return _originalProfile;
 }
 
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
