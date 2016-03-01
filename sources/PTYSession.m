@@ -1918,7 +1918,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
                                        image:[NSImage imageNamed:@"BrokenPipeDivider"]
-                                        data:nil];
+                                        data:nil
+                                        view:nil];
     }
     [_screen appendStringAtCursor:message];
     [_screen appendStringAtCursor:@" "];
@@ -1930,7 +1931,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
                                        image:[NSImage imageNamed:@"BrokenPipeDivider"]
-                                        data:nil];
+                                        data:nil
+                                        view:nil];
     }
     [_screen crlf];
     [_terminal setForegroundColor:savedFgColor.foregroundColor
@@ -5962,7 +5964,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)screenNeedsRedraw {
     [self refreshAndStartTimerIfNeeded];
-    [_textview updateNoteViewFrames];
+    [_textview updateSubvieFrames];
     [_textview setNeedsDisplay:YES];
 }
 
@@ -5975,7 +5977,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)screenSizeDidChange {
     [self updateScroll];
-    [_textview updateNoteViewFrames];
+    [_textview updateSubvieFrames];
     _variables[kVariableKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
     _variables[kVariableKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
     [_textview setBadgeLabel:[self badgeLabel]];
@@ -6172,7 +6174,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)screenDidChangeNumberOfScrollbackLines {
-    [_textview updateNoteViewFrames];
+    [_textview updateSubvieFrames];
 }
 
 - (void)screenShowBellIndicator {
@@ -7079,6 +7081,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (BOOL)screenShouldReduceFlicker {
     return [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
+}
+
+- (void)screenDidAddInlineView:(NSView *)view coordRange:(VT100GridCoordRange)coordRange {
+    [view iterm_setCoordRange:coordRange];
+    [_textview addInlineView:view];
 }
 
 #pragma mark - Announcements

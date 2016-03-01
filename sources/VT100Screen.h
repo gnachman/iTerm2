@@ -150,7 +150,8 @@ extern int kVT100ScreenMinRows;
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
                               image:(NSImage *)image
-                               data:(NSData *)data;  // data is optional and only used by animated GIFs
+                               data:(NSData *)data    // data is optional and only used by animated GIFs
+                               view:(NSView *)view;
 
 - (void)resetAnimatedLines;
 

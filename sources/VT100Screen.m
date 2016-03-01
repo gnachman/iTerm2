@@ -24,6 +24,7 @@
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
 #import "SearchResult.h"
+#import "SolidColorView.h"
 #import "TmuxStateParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
@@ -3294,6 +3295,27 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
+- (void)terminalShowCustomViewWithValue:(NSString *)value {
+    NSView *view = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 200, 50) color:[NSColor whiteColor]] autorelease];
+
+    NSButton *checkbox = [[[NSButton alloc] initWithFrame:NSZeroRect] autorelease];
+    [checkbox setButtonType:NSSwitchButton];
+    checkbox.title = @"Do you like me, yes or no?";
+    checkbox.state = NSOnState;
+    [checkbox sizeToFit];
+    [view addSubview:checkbox];
+
+    [self appendImageAtCursorWithName:value ?: @"Custom View"
+                                width:view.frame.size.width
+                                units:kVT100TerminalUnitsPixels
+                               height:view.frame.size.height
+                                units:kVT100TerminalUnitsPixels
+                  preserveAspectRatio:YES
+                                image:nil
+                                 data:nil
+                                 view:view];
+}
+
 - (void)terminalSetPasteboard:(NSString *)value {
     [delegate_ screenSetPasteboard:value];
 }
@@ -3326,9 +3348,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
                               image:(NSImage *)image
-                               data:(NSData *)data {
-    if (!image) {
+                               data:(NSData *)data
+                               view:(NSView *)view {
+    if (!image && !view) {
         image = [NSImage imageNamed:@"broken_image"];
+    }
+    NSSize size;
+    if (image) {
+        size = image.size;
+    } else {
+        size = view.frame.size;
     }
 
     BOOL needsWidth = NO;
@@ -3347,7 +3376,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         case kVT100TerminalUnitsAuto:
             if (heightUnits == kVT100TerminalUnitsAuto) {
-                width = ceil((double)image.size.width / cellSize.width);
+                width = ceil((double)size.width / cellSize.width);
             } else {
                 needsWidth = YES;
             }
@@ -3367,16 +3396,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         case kVT100TerminalUnitsAuto:
             if (widthUnits == kVT100TerminalUnitsAuto) {
-                height = ceil((double)image.size.height / cellSize.height);
+                height = ceil((double)size.height / cellSize.height);
             } else {
-                double aspectRatio = image.size.width / image.size.height;
+                double aspectRatio = size.width / size.height;
                 height = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
             }
             break;
     }
 
     if (needsWidth) {
-        double aspectRatio = image.size.width / image.size.height;
+        double aspectRatio = size.width / size.height;
         width = ((double)(height * cellSize.height) * aspectRatio) / cellSize.width;
     }
 
@@ -3405,6 +3434,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int xOffset = self.cursorX - 1;
     int screenWidth = currentGrid_.size.width;
     screen_char_t c = ImageCharForNewImage(name, width, height, preserveAspectRatio);
+
+    VT100GridCoordRange coordRange = VT100GridCoordRangeMake(xOffset,
+                                                             currentGrid_.cursorY,
+                                                             xOffset + width,
+                                                             currentGrid_.cursorY + height);
+
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             [self linefeed];
@@ -3419,7 +3454,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
 
     // Add a mark after the image. When the mark gets freed, it will release the image's memory.
-    SetDecodedImage(c.code, image, data);
+    if (image) {
+        SetDecodedImage(c.code, image, data);
+    } else {
+        SetInlineView(c.code, view);
+    }
     long long absLine = (self.totalScrollbackOverflow +
                          [self numberOfScrollbackLines] +
                          currentGrid_.cursor.y + 1);
@@ -3427,6 +3466,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                        oneLine:YES
                                                        ofClass:[iTermImageMark class]];
     mark.imageCode = @(c.code);
+    if (view) {
+        [delegate_ screenDidAddInlineView:view coordRange:coordRange];
+    }
     [delegate_ screenNeedsRedraw];
 }
 
@@ -3442,7 +3484,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
                                     image:image
-                                     data:data];
+                                     data:data
+                                     view:nil];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {

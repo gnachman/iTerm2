@@ -432,7 +432,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)addViewForNote:(PTYNoteViewController *)note;
 
 // Makes sure not view frames are in the right places (e.g., after a resize).
-- (void)updateNoteViewFrames;
+- (void)updateSubvieFrames;
+
+- (void)addInlineView:(NSView *)view;
 
 // Show a visual highlight of a mark on the given line number.
 - (void)highlightMarkOnLine:(int)line;

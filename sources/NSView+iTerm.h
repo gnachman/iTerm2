@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "NSObject+iTerm.h"
+#import "VT100GridTypes.h"
 
 @interface NSView (iTerm)
 
@@ -34,5 +35,9 @@
 + (void)animateWithDuration:(NSTimeInterval)duration
                  animations:(void (^)(void))animations
                  completion:(void (^)(BOOL finished))completion;
+
+- (void)iterm_setCoordRange:(VT100GridCoordRange)coordRange;
+- (VT100GridCoordRange)iterm_coordRange;
+- (BOOL)iterm_hasCoordRange;
 
 @end

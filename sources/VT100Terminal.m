@@ -2063,6 +2063,10 @@ static const int kMaxScreenRows = 4096;
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetPasteboard:value];
         }
+    } else if ([key isEqualToString:@"CustomView"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalShowCustomViewWithValue:value];
+        }
     } else if ([key isEqualToString:@"File"]) {
         if ([delegate_ terminalIsTrusted]) {
             [self executeFileCommandWithValue:value];

@@ -237,4 +237,6 @@
 
 - (BOOL)screenShouldReduceFlicker;
 
+- (void)screenDidAddInlineView:(NSView *)view coordRange:(VT100GridCoordRange)coordRange;
+
 @end

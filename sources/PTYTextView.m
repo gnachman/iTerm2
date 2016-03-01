@@ -42,6 +42,7 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PasteboardHistory.h"
 #import "PointerController.h"
@@ -694,7 +695,7 @@ static const int kDragThreshold = 3;
     NSScrollView* scrollview = [self enclosingScrollView];
     [scrollview setLineScroll:[self lineHeight]];
     [scrollview setPageScroll:2 * [self lineHeight]];
-    [self updateNoteViewFrames];
+    [self updateSubvieFrames];
     [_delegate textViewFontDidChange];
 }
 
@@ -878,7 +879,7 @@ static const int kDragThreshold = 3;
     }
 
     // Move subviews up
-    [self updateNoteViewFrames];
+    [self updateSubvieFrames];
 
     NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
 }
@@ -3175,10 +3176,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self refresh];
     [note.view removeFromSuperview];
     [self addSubview:note.view];
-    [self updateNoteViewFrames];
+    [self updateSubvieFrames];
     [note setNoteHidden:NO];
 }
 
+- (void)addInlineView:(NSView *)view {
+    [self refresh];
+    [view removeFromSuperview];
+    [self addSubview:view];
+    [self updateSubvieFrames];
+}
 
 - (void)addNote:(id)sender
 {
@@ -3190,7 +3197,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self refresh];
         [note.view removeFromSuperview];
         [self addSubview:note.view];
-        [self updateNoteViewFrames];
+        [self updateSubvieFrames];
         [note setNoteHidden:NO];
         [note beginEditing];
     }
@@ -3251,8 +3258,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)updateNoteViewFrames
-{
+- (void)updateSubvieFrames {
     for (NSView *view in [self subviews]) {
         if ([view isKindOfClass:[PTYNoteView class]]) {
             PTYNoteView *noteView = (PTYNoteView *)view;
@@ -3263,6 +3269,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + MARGIN,
                                             (1 + coordRange.end.y) * _lineHeight)];
             }
+        } else if ([view iterm_hasCoordRange]) {
+            VT100GridCoordRange coordRange = view.iterm_coordRange;
+            view.frame = NSMakeRect(coordRange.end.x * _charWidth + MARGIN,
+                                    (1 + coordRange.start.y) * _lineHeight,
+                                    (coordRange.end.x - coordRange.start.x) * _charWidth,
+                                    (coordRange.end.y - coordRange.start.y) * _lineHeight);
         }
     }
     [_dataSource removeInaccessibleNotes];

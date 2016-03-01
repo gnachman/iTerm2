@@ -8,6 +8,7 @@
 
 #import "NSView+iTerm.h"
 #import "DebugLogging.h"
+#import <objc/runtime.h>
 
 @implementation NSView (iTerm)
 
@@ -93,6 +94,23 @@
                           completion(YES);
                       });
    }
+}
+
+- (void)iterm_setCoordRange:(VT100GridCoordRange)coordRange {
+    NSValue *value = [NSValue valueWithGridCoordRange:coordRange];
+    objc_setAssociatedObject(self, @selector(iterm_coordRange), value, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (VT100GridCoordRange)iterm_coordRange {
+    NSValue *value = objc_getAssociatedObject(self, @selector(iterm_coordRange));
+    if (!value) {
+        return VT100GridCoordRangeMake(0, 0, 0, 0);
+    }
+    return [value gridCoordRangeValue];
+}
+
+- (BOOL)iterm_hasCoordRange {
+    return objc_getAssociatedObject(self, @selector(iterm_coordRange)) != nil;
 }
 
 @end

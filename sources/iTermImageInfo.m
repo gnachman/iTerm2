@@ -61,6 +61,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
 
 - (void)dealloc {
     [_filename release];
+    [_view release];
     [_image release];
     [_embeddedImages release];
     [_animatedImage release];
@@ -89,6 +90,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
 }
 
 - (NSDictionary *)dictionary {
+    // TODO: View support
     return @{ kImageInfoSizeKey: [NSValue valueWithSize:_size],
               kImageInfoImageKey: _data ?: [NSData data],
               kImageInfoPreserveAspectRatioKey: @(_preserveAspectRatio),

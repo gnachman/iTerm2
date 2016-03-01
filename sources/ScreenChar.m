@@ -260,6 +260,12 @@ void SetDecodedImage(unichar code, NSImage *image, NSData *data) {
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
 }
 
+void SetInlineView(unichar code, NSView *view) {
+    iTermImageInfo *imageInfo = gImages[@(code)];
+    [imageInfo setView:view];
+    gEncodableImageMap[@(code)] = [imageInfo dictionary];
+}
+
 void ReleaseImage(unichar code) {
     [gImages removeObjectForKey:@(code)];
     [gEncodableImageMap removeObjectForKey:@(code)];

@@ -16,7 +16,10 @@
 // Size in cells.
 @property(nonatomic, assign) NSSize size;
 
-// Full-size image.
+// Inline view. Alterantive to image.
+@property(nonatomic, retain) NSView *view;
+
+// Full-size image. Alternative to view.
 @property(nonatomic, retain) NSImage *image;
 
 // If set, the image won't be squished.

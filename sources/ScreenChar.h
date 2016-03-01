@@ -407,6 +407,7 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y);
 // Assigns an image to a code allocated by ImageCharForNewImage. data is optional and only used for
 // animated gifs.
 void SetDecodedImage(unichar code, NSImage *image, NSData *data);
+void SetInlineView(unichar code, NSView *view);
 
 // Releases all memory associated with an image. The code comes from ImageCharForNewImage.
 void ReleaseImage(unichar code);
