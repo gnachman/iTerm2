@@ -7,9 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "PTYTextViewDataSource.h"
 #import "ScreenChar.h"
 #import "SmartMatch.h"
+#import "PTYTextViewDataSource.h"
 
 typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Any kind of white space.
@@ -20,6 +20,9 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
 
     // Unset character
     kTextExtractorClassNull,
+
+    // DWC_RIGHT or DWC_SKIP
+    kTextExtractorClassDoubleWidthPlaceholder,
 
     // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
     // Miscellaneous symbols, etc.
@@ -41,8 +44,8 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;
 
-+ (instancetype)textExtractorWithDataSource:(id<PTYTextViewDataSource>)dataSource;
-- (instancetype)initWithDataSource:(id<PTYTextViewDataSource>)dataSource;
++ (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource;
+- (instancetype)initWithDataSource:(id<iTermTextDataSource>)dataSource;
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord;
 
 // Returns the range of a word (string of characters belonging to the same class) at a location. If

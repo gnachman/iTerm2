@@ -13,7 +13,7 @@
 @implementation SetDirectoryTrigger
 
 + (NSString *)title {
-  return @"Set Directory";
+  return @"Report Directory";
 }
 
 - (BOOL)takesParameter{

@@ -488,17 +488,18 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, NO);
     }
+    NSString *previous = nil;
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
          y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
          y++) {
-        [self drawTimestampForLine:y];
+        previous = [self drawTimestampForLine:y previousTimestamp:previous];
     }
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);
     }
 }
 
-- (void)drawTimestampForLine:(int)line {
+- (NSString *)drawTimestampForLine:(int)line previousTimestamp:(NSString *)previousTimestamp {
     NSDate *timestamp = [_delegate drawingHelperTimestampForLine:line];
     NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
     const NSTimeInterval day = -86400;
@@ -529,10 +530,12 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     if (self.useTestingTimezone) {
         fmt.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
     }
-    NSString *s = [fmt stringFromDate:timestamp];
+    NSString *theTimestamp = [fmt stringFromDate:timestamp];
     if (!timestamp || ![timestamp timeIntervalSinceReferenceDate]) {
-        s = @"";
+        theTimestamp = @"";
     }
+    NSString *s = theTimestamp;
+    BOOL repeat = [theTimestamp isEqualToString:previousTimestamp];
 
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
     NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:10] }];
@@ -550,7 +553,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         shadowColor = [NSColor blackColor];
     }
 
-    const CGFloat alpha = self.isRetina ? 0.75 : 0.9;
+    const CGFloat alpha = 0.9;
     NSGradient *gradient =
         [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
                                        endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
@@ -580,7 +583,15 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                         NSForegroundColorAttributeName: fgColor };
     }
     CGFloat offset = (_cellSize.height - size.height) / 2;
-    [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
+    if (s.length && repeat) {
+        [fgColor set];
+        CGFloat center = x + 10;
+        NSRectFill(NSMakeRect(center - 1, y, 1, _cellSize.height));
+        NSRectFill(NSMakeRect(center + 1, y, 1, _cellSize.height));
+    } else {
+        [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
+    }
+    return theTimestamp;
 }
 
 - (NSSize)drawBadgeInRect:(NSRect)rect {

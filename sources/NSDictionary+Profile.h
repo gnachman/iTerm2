@@ -17,4 +17,7 @@ extern NSString *const kProfileLegacyDynamicTag;
 // with "Dynamic/".
 @property(nonatomic, readonly) BOOL profileIsDynamic;
 
+// Just compares GUIDs.
+- (BOOL)isEqualToProfile:(NSDictionary *)other;
+
 @end

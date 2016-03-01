@@ -802,7 +802,8 @@ do { \
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [grid scrollUpIntoLineBuffer:lineBuffer
              unlimitedScrollback:NO
-         useScrollbackWithRegion:YES];
+         useScrollbackWithRegion:YES
+                       softBreak:NO];
     XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
 
@@ -812,11 +813,13 @@ do { \
     [lineBuffer setMaxLines:1];
     int dropped = [grid scrollUpIntoLineBuffer:lineBuffer
                            unlimitedScrollback:NO
-                       useScrollbackWithRegion:YES];
+                       useScrollbackWithRegion:YES
+                                     softBreak:NO];
     XCTAssert(dropped == 0);
     dropped = [grid scrollUpIntoLineBuffer:lineBuffer
                        unlimitedScrollback:NO
-                   useScrollbackWithRegion:YES];
+                   useScrollbackWithRegion:YES
+                                 softBreak:NO];
     XCTAssert(dropped == 1);
     XCTAssert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\n....\n...."]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
@@ -828,7 +831,8 @@ do { \
     grid.useScrollRegionCols = YES;
     dropped = [grid scrollUpIntoLineBuffer:lineBuffer
                        unlimitedScrollback:NO
-                   useScrollbackWithRegion:YES];
+                   useScrollbackWithRegion:YES
+                                 softBreak:NO];
     XCTAssert(dropped == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:@"afgd\nejkh\ninol\nm..p"]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
@@ -865,7 +869,7 @@ do { \
                                         scrollRect:(VT100GridRect)scrollRect
                                       initialValue:(NSString *)initialValue {
     VT100Grid *grid = [self gridFromCompactLines:initialValue];
-    [grid scrollRect:scrollRect downBy:downBy];
+    [grid scrollRect:scrollRect downBy:downBy softBreak:NO];
     return [NSString stringWithFormat:@"%@\n\n%@", [grid compactLineDump], [grid compactDirtyDump]];
 }
 
@@ -1250,7 +1254,7 @@ do { \
                        @"ijkl+\n"
                        @"mnop+\n"
                        @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:1];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:1 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"....!\n"
@@ -1265,7 +1269,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:2];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:2 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"....!\n"
@@ -1281,7 +1285,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-1];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-1 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"ijkl+\n"
@@ -1296,7 +1300,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-2];
+    [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-2 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"mnop!\n"
@@ -1312,7 +1316,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"e...!\n"
@@ -1327,7 +1331,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:2];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:2 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"e...!\n"
@@ -1342,7 +1346,7 @@ do { \
             @"ijk>>\n"
             @"M-op+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"e...!\n"
@@ -1358,7 +1362,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"ejkl+\n"
@@ -1373,7 +1377,7 @@ do { \
             @"ijkl+\n"
             @"mno>>\n"
             @"Q-st!"];
-    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abc.!\n"
             @".jkl+\n"
@@ -1388,7 +1392,7 @@ do { \
             @"ijkl+\n"
             @"mnop+\n"
             @"qrst!"];
-    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-2];
+    [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-2 softBreak:NO];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"enop!\n"
@@ -2829,13 +2833,41 @@ do { \
 
 #pragma mark - Regression tests
 
-- (void)moveCursorRightToMargin {
+- (void)testMoveCursorRightToMargin {
     VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
                        @"abcd+\n"
                        @"efg.!"];
     [grid setCursorX:1];
     [grid moveCursorRight:99];
     XCTAssert(grid.cursorX == grid.size.width - 1);
+}
+
+// Issue 4308
+// There was a scroll region because screen was being used. The user appended a long line at the bottom
+// of the region (just above the status bar). When it scrolled up, a hard linebreak replaced the soft
+// one.
+- (void)testAppendingLongLineAtBottomOfScrollRegionGivesSoftBreak {
+    VT100Grid *grid = [self largeGrid];
+    grid.scrollRegionRows = VT100GridRangeMake(0, 4);
+    NSString *stringToAppend = @"0123456789abcdefghijklmnopqrstuvwxyz";
+    screen_char_t *line = [self screenCharLineForString:stringToAppend];
+    [grid appendCharsAtCursor:line
+                       length:stringToAppend.length
+      scrollingIntoLineBuffer:nil
+          unlimitedScrollback:NO
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+               @"89abcdef+\n"
+               @"ghijklmn+\n"
+               @"opqrstuv+\n"
+               @"wxyz....!\n"
+               @"........!\n"
+               @"........!\n"
+               @"........!\n"
+               @"........!"]);
 }
 
 @end

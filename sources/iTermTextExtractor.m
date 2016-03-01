@@ -20,11 +20,11 @@
 static const int kNumCharsToSearchForDivider = 8;
 
 @implementation iTermTextExtractor {
-    id<PTYTextViewDataSource> _dataSource;
+    id<iTermTextDataSource> _dataSource;
     VT100GridRange _logicalWindow;
 }
 
-+ (instancetype)textExtractorWithDataSource:(id<PTYTextViewDataSource>)dataSource {
++ (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource {
     return [[[self alloc] initWithDataSource:dataSource] autorelease];
 }
 
@@ -43,7 +43,7 @@ static const int kNumCharsToSearchForDivider = 8;
     return charset;
 }
 
-- (instancetype)initWithDataSource:(id<PTYTextViewDataSource>)dataSource {
+- (instancetype)initWithDataSource:(id<iTermTextDataSource>)dataSource {
     self = [super init];
     if (self) {
         _dataSource = dataSource;
@@ -81,12 +81,23 @@ static const int kNumCharsToSearchForDivider = 8;
     location = [self coordLockedToWindow:location];
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
+    if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
+        VT100GridCoord predecessor = [self predecessorOfCoord:location];
+        if (predecessor.x != location.x || predecessor.y != location.y) {
+            return [self rangeForWordAt:predecessor];
+        }
+    }
     if (theClass == kTextExtractorClassOther) {
         return [self windowedRangeWithRange:VT100GridCoordRangeMake(location.x,
                                                                     location.y,
                                                                     location.x + 1,
                                                                     location.y)];
     }
+
+    // String composed of the characters found to be in the word, excluding private range characters.
+    NSMutableString *stringFromLocation = [NSMutableString string];
+    NSMutableArray *coords = [NSMutableArray array];
+
     const int xLimit = [self xLimit];
     const int width = [_dataSource width];
     const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
@@ -96,14 +107,20 @@ static const int kNumCharsToSearchForDivider = 8;
                                                            width,
                                                            [_dataSource numberOfLines] - 1);
     // Search forward for the end of the word.
-    __block VT100GridCoord end = location;
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                            _logicalWindow.location,
                                                            _logicalWindow.length)
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
-                          BOOL isInWord = ([self classForCharacter:theChar] == theClass);
+                          iTermTextExtractorClass newClass = [self classForCharacter:theChar];
+                          BOOL isInWord = (newClass == kTextExtractorClassDoubleWidthPlaceholder ||
+                                           newClass == theClass);
                           if (isInWord) {
-                              end = coord;
+                              if (theChar.complexChar ||
+                                  theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                  theChar.code > ITERM2_PRIVATE_END) {
+                                  [stringFromLocation appendString:ScreenCharToStr(&theChar)];
+                                  [coords addObject:[NSValue valueWithGridCoord:coord]];
+                              }
                           }
                           return !isInWord;
                       }
@@ -117,14 +134,20 @@ static const int kNumCharsToSearchForDivider = 8;
 
     // Search backward for the start of the word.
     theRange = VT100GridCoordRangeMake(0, 0, location.x, location.y);
-    __block VT100GridCoord start = location;
+    NSMutableString *stringBeforeLocation = [NSMutableString string];
     [self enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                     _logicalWindow.location,
                                                                     _logicalWindow.length)
                                charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
-                                   BOOL isInWord = ([self classForCharacter:theChar] == theClass);
+                                   iTermTextExtractorClass newClass = [self classForCharacter:theChar];
+                                   BOOL isInWord = (newClass == kTextExtractorClassDoubleWidthPlaceholder ||
+                                                    newClass == theClass);
                                    if (isInWord) {
-                                       start = coord;
+                                       if (theChar.complexChar ||
+                                           theChar.code < ITERM2_PRIVATE_BEGIN || theChar.code > ITERM2_PRIVATE_END) {
+                                           [stringBeforeLocation insertString:ScreenCharToStr(&theChar) atIndex:0];
+                                           [coords insertObject:[NSValue valueWithGridCoord:coord] atIndex:0];
+                                       }
                                    }
                                    return !isInWord;
                                }
@@ -137,10 +160,89 @@ static const int kNumCharsToSearchForDivider = 8;
 
                                 }];
 
-    return [self windowedRangeWithRange:VT100GridCoordRangeMake(start.x,
-                                                                start.y,
-                                                                end.x + 1,
-                                                                end.y)];
+    if (!coords.count) {
+        return [self windowedRangeWithRange:VT100GridCoordRangeMake(location.x,
+                                                                    location.y,
+                                                                    location.x,
+                                                                    location.y)];
+    }
+
+    if (theClass != kTextExtractorClassWord) {
+        VT100GridCoord start = [[coords firstObject] gridCoordValue];
+        VT100GridCoord end = [[coords lastObject] gridCoordValue];
+        return [self windowedRangeWithRange:VT100GridCoordRangeMake(start.x,
+                                                                    start.y,
+                                                                    end.x + 1,
+                                                                    end.y)];
+    }
+    
+    // An alphanumeric character was selected. This is where it gets interesting.
+    
+    // We have now retrieved the longest possible string that could have a word. This is because we
+    // are more permissive than the OS about what can be in a word (the user can add punctuation,
+    // for example, making foo/bar a word if / belongs to the “characters considered part of a
+    // word.”) Now we want to shrink the range. For non-English languages, there is an added
+    // wrinkle: in issue 4325 we see that 翻真的 consists of two words: 翻 and 真的. The OS
+    // (presumably by using ICU's text boundary analysis code) knows how to do the segmentation.
+
+    NSString *string = [stringBeforeLocation stringByAppendingString:stringFromLocation];
+    NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:string attributes:@{}] autorelease];
+
+    // Set end to an index that is not in the middle of an OS-defined-words. It will be at the start
+    // of a word or on a whitelisted character.
+    BOOL previousCharacterWasWhitelisted = YES;
+    NSInteger end = stringBeforeLocation.length;
+    while (end < string.length) {
+        if ([self isWhitelistedAlphanumericAtCoord:[coords[end] gridCoordValue]]) {
+            ++end;
+            previousCharacterWasWhitelisted = YES;
+        } else if (previousCharacterWasWhitelisted) {
+            NSRange range = [attributedString doubleClickAtIndex:end];
+            end = NSMaxRange(range);
+            previousCharacterWasWhitelisted = NO;
+        } else {
+            break;
+        }
+    }
+    
+    // Same thing but in reverse.
+    
+    // First, ensure that start is either at the start of a word (as defined by the OS) or on a
+    // whitelisted character.
+    NSInteger start;
+    if ([self isWhitelistedAlphanumericAtCoord:[coords[stringBeforeLocation.length] gridCoordValue]]) {
+        previousCharacterWasWhitelisted = YES;
+        start = stringBeforeLocation.length;
+    } else {
+        previousCharacterWasWhitelisted = NO;
+        start = [attributedString doubleClickAtIndex:stringBeforeLocation.length].location;
+    }
+    
+    //  Move back until two consecutive OS-defined words are found or we reach the start of the string.
+    while (start > 0) {
+        if ([self isWhitelistedAlphanumericAtCoord:[coords[start - 1] gridCoordValue]]) {
+            --start;
+            previousCharacterWasWhitelisted = YES;
+        } else if (previousCharacterWasWhitelisted) {
+            start = [attributedString doubleClickAtIndex:start - 1].location;
+            previousCharacterWasWhitelisted = YES;
+        } else {
+            break;
+        }
+    }
+
+    VT100GridCoord startCoord = [coords[start] gridCoordValue];
+    VT100GridCoord endCoord = [coords[end - 1] gridCoordValue];
+    
+    return [self windowedRangeWithRange:VT100GridCoordRangeMake(startCoord.x,
+                                                                startCoord.y,
+                                                                endCoord.x + 1,
+                                                                endCoord.y)];
+}
+
+- (BOOL)isWhitelistedAlphanumericAtCoord:(VT100GridCoord)coord {
+    screen_char_t theChar = [self characterAt:coord];
+    return [self characterShouldBeTreatedAsAlphanumeric:ScreenCharToStr(&theChar)];
 }
 
 - (NSString *)stringForCharacter:(screen_char_t)theChar {
@@ -236,7 +338,7 @@ static const int kNumCharsToSearchForDivider = 8;
                         [matches setObject:match forKey:result];
 
                         if (debug) {
-                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result,
+                            NSLog(@"Regex matched. Add result %@ at %d,%lld -> %d,%lld with score %lf", result,
                                   match.startX, match.absStartY, match.endX, match.absEndY,
                                   match.score);
                         }
@@ -276,8 +378,12 @@ static const int kNumCharsToSearchForDivider = 8;
 
 // Returns the class for a character.
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter {
-    if (theCharacter.code == TAB_FILLER && !theCharacter.complexChar) {
-        return kTextExtractorClassWhitespace;
+    if (!theCharacter.complexChar) {
+        if (theCharacter.code == TAB_FILLER) {
+            return kTextExtractorClassWhitespace;
+        } else if (theCharacter.code == DWC_RIGHT || theCharacter.complexChar == DWC_SKIP) {
+            return kTextExtractorClassDoubleWidthPlaceholder;
+        }
     }
 
     if (!theCharacter.code) {
@@ -291,18 +397,23 @@ static const int kNumCharsToSearchForDivider = 8;
         return kTextExtractorClassWhitespace;
     }
 
-    range = [asString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]];
-    if (range.length == asString.length) {
-        return kTextExtractorClassWord;
-    }
-
-    range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
-                rangeOfString:asString];
-    if (range.length == asString.length) {
+    if ([self characterIsAlphanumeric:asString] ||
+        [self characterShouldBeTreatedAsAlphanumeric:asString]) {
         return kTextExtractorClassWord;
     }
 
     return kTextExtractorClassOther;
+}
+
+- (BOOL)characterIsAlphanumeric:(NSString *)characterAsString {
+    NSRange range = [characterAsString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]];
+    return (range.length == characterAsString.length);
+}
+
+- (BOOL)characterShouldBeTreatedAsAlphanumeric:(NSString *)characterAsString {
+    NSRange range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
+                        rangeOfString:characterAsString];
+    return (range.length == characterAsString.length);
 }
 
 - (VT100GridWindowedRange)rangeOfParentheticalSubstringAtLocation:(VT100GridCoord)location {
@@ -579,9 +690,10 @@ static const int kNumCharsToSearchForDivider = 8;
                                        !theChar.complexChar) {
                                        // Is a backslash at the right edge of a window.
                                        // no-op
-                                   } else {
-                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @""
-                                       ;
+                                   } else if (theChar.complexChar ||
+                                              theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                              theChar.code > ITERM2_PRIVATE_END) {
+                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
                                        [joinedLines insertString:string atIndex:0];
                                        for (int i = 0; i < [string length]; i++) {
                                          [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
@@ -617,7 +729,9 @@ static const int kNumCharsToSearchForDivider = 8;
                               !theChar.complexChar) {
                               // Is a backslash at the right edge of a window.
                               // no-op
-                          } else {
+                          } else if (theChar.complexChar ||
+                                     theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                     theChar.code > ITERM2_PRIVATE_END) {
                               NSString* string = CharToStr(theChar.code, theChar.complexChar);
                               [joinedLines appendString:string];
                               for (int i = 0; i < [string length]; i++) {

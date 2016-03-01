@@ -4494,7 +4494,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)maybeUpload:(NSArray *)tuple {
     NSArray *propertyList = tuple[0];
     SCPPath *dropScpPath = tuple[1];
+    DLog(@"Confirm upload to %@", dropScpPath);
     if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
+        DLog(@"initiating upload");
         [self.delegate uploadFiles:propertyList toPath:dropScpPath];
     }
 }
@@ -5743,9 +5745,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int fileCharsTaken = 0;
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:y];
+    DLog(@"According to data source, the working directory on line %d is %@", y, workingDirectory);
     if (!workingDirectory) {
         // Well, just try the current directory then.
+        DLog(@"That failed, so try to get the current working directory...");
         workingDirectory = [_delegate textViewCurrentWorkingDirectory];
+        DLog(@"It is %@", workingDirectory);
     }
     if (!workingDirectory) {
         workingDirectory = @"";

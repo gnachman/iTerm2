@@ -8,20 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface NSObject (IsRunningTests)
-- (BOOL)isTesting;
-@end
-
 @implementation NSApplication (iTerm)
 
 - (BOOL)isRunningUnitTests {
-  Class theClass;
-  theClass = NSClassFromString(@"XCTestProbe");
-  if (theClass) {
-      return [theClass isTesting];
-  } else {
-      return NO;
-  }
+    static BOOL testing = NO;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        testing = ([[[NSProcessInfo processInfo] environment] objectForKey:@"XCInjectBundle"] != nil);
+    });
+    return testing;
 }
 
 @end

@@ -774,6 +774,14 @@ const CGFloat kDefaultTagsWidth = 80;
     [self updateResultsForSearch];
 }
 
+- (NSArray *)control:(NSControl *)control
+            textView:(NSTextView *)textView
+         completions:(NSArray *)words
+ forPartialWordRange:(NSRange)charRange
+ indexOfSelectedItem:(NSInteger *)index {
+    return @[];
+}
+
 - (void)updateResultsForSearch
 {
     // search field changed

@@ -353,7 +353,8 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (int)scrollUpIntoLineBuffer:(LineBuffer *)lineBuffer
           unlimitedScrollback:(BOOL)unlimitedScrollback
-      useScrollbackWithRegion:(BOOL)useScrollbackWithRegion {
+      useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                    softBreak:(BOOL)softBreak {
     const int scrollTop = self.topMargin;
     const int scrollBottom = self.bottomMargin;
     const int scrollLeft = self.leftMargin;
@@ -381,7 +382,8 @@ static NSString *const kGridSizeKey = @"Size";
                                            scrollTop,
                                            scrollRight - scrollLeft + 1,
                                            scrollBottom - scrollTop + 1)
-                    downBy:-1];
+                    downBy:-1
+               softBreak:softBreak];
 
         return numLinesDropped;
     }
@@ -402,7 +404,8 @@ static NSString *const kGridSizeKey = @"Size";
     for (int i = 0; i < numLinesToScroll; i++) {
         numLinesDropped += [self scrollUpIntoLineBuffer:lineBuffer
                                     unlimitedScrollback:unlimitedScrollback
-                                useScrollbackWithRegion:NO];
+                                useScrollbackWithRegion:NO
+                                              softBreak:NO];
     }
     self.cursor = VT100GridCoordMake(0, 0);
 
@@ -444,7 +447,8 @@ static NSString *const kGridSizeKey = @"Size";
         }
         return [self scrollUpIntoLineBuffer:lineBuffer
                         unlimitedScrollback:unlimitedScrollback
-                    useScrollbackWithRegion:useScrollbackWithRegion];
+                    useScrollbackWithRegion:useScrollbackWithRegion
+                                  softBreak:YES];
     }
 }
 
@@ -1028,10 +1032,10 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)scrollDown {
-    [self scrollRect:[self scrollRegionRect] downBy:1];
+    [self scrollRect:[self scrollRegionRect] downBy:1 softBreak:NO];
 }
 
-- (void)scrollRect:(VT100GridRect)rect downBy:(int)distance {
+- (void)scrollRect:(VT100GridRect)rect downBy:(int)distance softBreak:(BOOL)softBreak {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);
     if (distance == 0) {
@@ -1108,9 +1112,10 @@ static NSString *const kGridSizeKey = @"Size";
                 pred[size_.width].code = EOL_HARD;
             }
         }
-        if (rect.origin.x + rect.size.width == size_.width) {
+        if (rect.origin.x + rect.size.width == size_.width && !softBreak) {
             // Clean up continuation mark on last line inside scroll region when scrolling down,
-            // or last last preserved line when scrolling up.
+            // or last last preserved line when scrolling up, unless we were asked to preserve
+            // soft breaks.
             int lastLineOfScrollRegion;
             if (direction > 0) {
                 lastLineOfScrollRegion = rect.origin.y + rect.size.height - 1;

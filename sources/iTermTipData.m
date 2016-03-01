@@ -23,7 +23,7 @@
                           kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0001": @{ kTipTitleKey: @"Timestamps",
-                         kTipBodyKey: @"“View > Toggle Timestamps” shows the time (and date, if appropriate) when each line was last modified." },
+                         kTipBodyKey: @"“View > Show Timestamps” shows the time (and date, if appropriate) when each line was last modified." },
 
             @"0002": @{ kTipTitleKey: @"Password Manager",
                         kTipBodyKey: @"Did you know iTerm2 has a password manager? Open it with “Window > Password Manager.” You can define a Trigger to open it for you at a password prompt in “Prefs > Profiles > Advanced > Triggers.”" },

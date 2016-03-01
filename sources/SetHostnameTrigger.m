@@ -13,7 +13,7 @@
 @implementation SetHostnameTrigger
 
 + (NSString *)title {
-  return @"Set User & Host";
+  return @"Report User & Host";
 }
 
 - (BOOL)takesParameter{

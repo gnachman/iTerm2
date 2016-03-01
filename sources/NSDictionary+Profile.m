@@ -31,4 +31,8 @@ NSString *const kProfileLegacyDynamicTag = @"dynamic";
     return NO;
 }
 
+- (BOOL)isEqualToProfile:(NSDictionary *)other {
+    return [self[KEY_GUID] isEqualToString:other[KEY_GUID]];
+}
+
 @end

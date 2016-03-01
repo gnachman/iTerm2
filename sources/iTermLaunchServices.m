@@ -7,13 +7,19 @@
 //
 
 #import "iTermLaunchServices.h"
+
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 
 static NSString *const kUrlHandlersUserDefaultsKey = @"URLHandlersByGuid";
 static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 
+@interface iTermLaunchServices()<NSOpenSavePanelDelegate>
+@end
+
 @implementation iTermLaunchServices {
     NSMutableDictionary *_urlHandlersByGuid;  // NSString scheme -> NSString guid
+    NSURL *_currentFileUrlForOpenPanel;
 }
 
 + (instancetype)sharedInstance {
@@ -120,6 +126,60 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     return profile;
 }
 
+- (BOOL)pickApplicationToOpenFile:(NSString *)fullPath {
+    DLog(@"Showing app open panel");
+    BOOL picked = NO;
+    _currentFileUrlForOpenPanel = [NSURL fileURLWithPath:fullPath];
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    panel.delegate = self;
+    panel.allowsMultipleSelection = NO;
+    if ([panel runModal] == NSOKButton) {
+        picked = YES;
+        DLog(@"Selected app has url %@", panel.URL);
+        NSBundle *appBundle = [NSBundle bundleWithURL:panel.URL];
+        NSString *bundleId = [appBundle bundleIdentifier];
+        DLog(@"Bundle id is %@", bundleId);
+        if (bundleId) {
+            NSString *uti;
+            NSError *error;
+            if ([_currentFileUrlForOpenPanel getResourceValue:&uti forKey:NSURLTypeIdentifierKey error:&error]) {
+                DLog(@"UTI is %@. Make it the default viewer.", uti);
+                LSSetDefaultRoleHandlerForContentType((CFStringRef)uti,
+                                                      kLSRolesViewer,
+                                                      (CFStringRef)bundleId);
+                _currentFileUrlForOpenPanel = nil;
+            }
+        }
+    }
+    return picked;
+}
+
+- (BOOL)offerToPickApplicationToOpenFile:(NSString *)fullPath {
+     NSAlert *alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"There is no application set to open the document “%@”", [fullPath lastPathComponent]]
+                                     defaultButton:@"Choose Application…"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@"Choose an application on your computer to open this file."];
+    DLog(@"Offer to pick an app to open %@", fullPath);
+    if ([alert runModal] == NSAlertDefaultReturn) {
+        return [self pickApplicationToOpenFile:fullPath];
+    } else {
+        DLog(@"Offer declined");
+        return NO;
+    }
+}
+
+- (BOOL)openFile:(NSString *)fullPath {
+    DLog(@"openFile: %@", fullPath);
+    BOOL ok = [[NSWorkspace sharedWorkspace] openFile:fullPath];
+    if (!ok && [self offerToPickApplicationToOpenFile:fullPath]) {
+        DLog(@"Try to open %@ again", fullPath);
+        ok = [[NSWorkspace sharedWorkspace] openFile:fullPath];
+        DLog(@"ok=%d", (int)ok);
+    }
+    return ok;
+}
+
 #pragma mark - Default Terminal
 
 - (void)makeITermDefaultTerminal {
@@ -149,6 +209,18 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     LSSetDefaultRoleHandlerForContentType(unixExecutableContentType,
                                           kLSRolesShell,
                                           (CFStringRef) bundleId);
+}
+
+#pragma mark - NSOpenSavePanelDelegate
+
+- (BOOL)panel:(id)sender shouldEnableURL:(NSURL *)url {
+    Boolean acceptsItem = NO;
+    LSCanURLAcceptURL((CFURLRef)_currentFileUrlForOpenPanel,
+                      (CFURLRef)url,
+                      kLSRolesViewer,
+                      kLSAcceptDefault,
+                      &acceptsItem);
+    return (BOOL)acceptsItem;
 }
 
 @end

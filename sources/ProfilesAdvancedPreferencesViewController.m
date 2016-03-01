@@ -198,7 +198,7 @@
 }
 
 - (IBAction)help:(id)sender {
-    [iTermShellHistoryController showInformationalMessage];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/automatic-profile-switching.html"]];
 }
 
 - (void)removeBoundHostOnRow:(NSInteger)rowIndex {

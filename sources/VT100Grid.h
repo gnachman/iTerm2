@@ -111,9 +111,14 @@
 // Scroll the screen or a region of the screen up by one line. If lineBuffer is set, a line scrolled
 // off the top will be moved into the line buffer. If a scroll region is present, the lineBuffer is
 // only added to if useScrollbackWithRegion is set.
+
+// When scrolling vertically within a region, the |softBreak| flag is used.
+// If |softBreak| is YES then the soft line break on the top line (when scrolling down) or bottom
+// line (when scrolling up) is preserved. Otherwise it is made hard.
 - (int)scrollUpIntoLineBuffer:(LineBuffer *)lineBuffer
           unlimitedScrollback:(BOOL)unlimitedScrollback
-      useScrollbackWithRegion:(BOOL)useScrollbackWithRegion;
+      useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                    softBreak:(BOOL)softBreak;
 
 // Scroll the whole screen into the line buffer by one line. Returns the number of lines dropped.
 // Scroll regions are ignored.
@@ -159,7 +164,9 @@
 
 // Scroll a rectangular area of the screen down (positive direction) or up (negative direction).
 // Clears the left-over region.
-- (void)scrollRect:(VT100GridRect)rect downBy:(int)direction;
+// If |softBreak| is YES then the soft line break on the top line (when scrolling down) or bottom
+// line (when scrolling up) is preserved. Otherwise it is made hard.
+- (void)scrollRect:(VT100GridRect)rect downBy:(int)direction softBreak:(BOOL)softBreak;
 
 // Load contents from a DVR frame.
 - (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info;

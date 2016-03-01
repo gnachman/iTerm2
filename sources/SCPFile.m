@@ -11,11 +11,11 @@
 #import <NMSSH/NMSSHConfig.h>
 #import <NMSSH/NMSSHHostConfig.h>
 #import <NMSSH/libssh2.h>
+
+#import "DebugLogging.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "NSData+iTerm.h"
 #import "NSStringiTerm.h"
-#import "NSWorkspace+iTerm.h"
 
 @interface NMSSHSession(iTerm)
 - (id)agent;
@@ -199,7 +199,7 @@ static NSError *SCPFileError(NSString *description) {
             if (config) {
                 [configs addObject:config];
             } else {
-                NSLog(@"Could not parse config file at %@", path);
+                ELog(@"Could not parse config file at %@", path);
             }
         }
     }
@@ -248,7 +248,7 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
         [self.session connect];
         if (self.stopped) {
-            NSLog(@"Stop after connect");
+            ELog(@"Stop after connect");
             dispatch_sync(dispatch_get_main_queue(), ^() {
                 [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
             });
@@ -289,11 +289,11 @@ static NSError *SCPFileError(NSString *description) {
         }
         for (NSString *authType in authTypes) {
             if (self.stopped) {
-                NSLog(@"Break out of auth loop because stopped");
+                ELog(@"Break out of auth loop because stopped");
                 break;
             }
             if (!self.session.session) {
-                NSLog(@"Break out of auth loop because disconnected");
+                ELog(@"Break out of auth loop because disconnected");
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
@@ -338,7 +338,7 @@ static NSError *SCPFileError(NSString *description) {
                 for (NSString *keyPath in keyPaths) {
                     keyPath = [self filenameByExpandingMetasyntaticVariables:keyPath];
                     if (![fileManager fileExistsAtPath:keyPath]) {
-                        NSLog(@"No key file at %@", keyPath);
+                        ELog(@"No key file at %@", keyPath);
                         continue;
                     }
                     __block NSString *password = nil;
@@ -351,18 +351,23 @@ static NSError *SCPFileError(NSString *description) {
                                                                      keyboardInteractivePrompt:prompt];
                         });
                     }
-                    NSLog(@"Attempting to authenticate with key %@", keyPath);
-                    [self.session authenticateByPublicKey:[keyPath stringByAppendingString:@".pub"]
+                    ELog(@"Attempting to authenticate with key %@", keyPath);
+                    NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
+                    if (![[NSFileManager defaultManager] fileExistsAtPath:publicKeyPath]) {
+                        ELog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
+                        publicKeyPath = nil;
+                    }
+                    [self.session authenticateByPublicKey:publicKeyPath
                                                privateKey:keyPath
                                               andPassword:password];
                 
                     if (self.session.isAuthorized) {
-                        NSLog(@"Authorized!");
+                        ELog(@"Authorized!");
                         break;
                     }
 
                     if (!self.session.session) {
-                        NSLog(@"Disconnected!");
+                        ELog(@"Disconnected!");
                         break;
                     }
                 }
@@ -373,7 +378,7 @@ static NSError *SCPFileError(NSString *description) {
         }
     }
     if (self.stopped) {
-        NSLog(@"Stop after auth");
+        ELog(@"Stop after auth");
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         });
@@ -402,21 +407,10 @@ static NSError *SCPFileError(NSString *description) {
     }
     
     if (_okToAdd) {
-        // Issue 4250 reveals that libssh2 deletes lines out of known_hosts if it
-        // does not recognize them. The workaround is to write to a temp file and then append it to
-        // the real file so libssh2 doesn't have a chance to mess up the real file.
-        NSString *tempFileName = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2" suffix:@"knownHost"];
-        [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @(0600) }
-                                         ofItemAtPath:tempFileName
-                                                error:nil];
         [self.session addKnownHostName:self.session.host
                                   port:[self.session.port intValue]
-                                toFile:tempFileName
+                                toFile:nil
                               withSalt:nil];
-        
-        NSData *newEntry = [NSData dataWithContentsOfFile:tempFileName];
-        [[NSFileManager defaultManager] removeItemAtPath:tempFileName error:nil];
-        [newEntry appendToFile:[@"~/.ssh/known_hosts" stringByExpandingTildeInPath] addLineBreakIfNeeded:YES];
     }
 
     if (isDownload) {
@@ -455,7 +449,7 @@ static NSError *SCPFileError(NSString *description) {
                                                     }
                                                 });
                                                 if (self.stopped) {
-                                                    NSLog(@"Stopping mid-download");
+                                                    ELog(@"Stopping mid-download");
                                                 }
                                                 return !self.stopped;
                                             }];
@@ -512,6 +506,7 @@ static NSError *SCPFileError(NSString *description) {
         }
     } else {
         self.status = kTransferrableFileStatusTransferring;
+        DLog(@"Upload “%@” to “%@”", [self localPath], self.path.path);
         BOOL ok = [self.session.channel uploadFile:[self localPath]
                                                 to:self.path.path
                                           progress:^BOOL (NSUInteger bytes) {
