@@ -1979,10 +1979,14 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)queueRestartSessionAnnouncement {
+    static NSString *const kSuppressRestartAnnouncement = @"SuppressRestartAnnouncement";
+    if ([[NSUserDefaults standardUserDefaults]boolForKey:kSuppressRestartAnnouncement]) {
+        return;
+    }
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
                                                          style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Restart" ]
+                                                   withActions:@[ @"Restart", @"Don’t Ask Again" ]
                                                     completion:^(int selection) {
                                                         switch (selection) {
                                                             case -2:  // Dismiss programmatically
@@ -1994,6 +1998,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                             case 0: // Yes
                                                                 [self replaceTerminatedShellWithNewInstance];
                                                                 break;
+
+                                                            case 1: // Don't ask again
+                                                                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                        forKey:kSuppressRestartAnnouncement];
                                                         }
                                                     }];
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
