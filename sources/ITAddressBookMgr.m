@@ -552,7 +552,8 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 }
 
 + (NSString *)shellLauncherCommand {
-    return [NSString stringWithFormat:@"%@ --launch_shell",
+    return [NSString stringWithFormat:@"/usr/bin/login -fpl %@ %@ --launch_shell",
+            NSUserName(),
             [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
 }
 
