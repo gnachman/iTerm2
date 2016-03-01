@@ -24,6 +24,7 @@
 
 #import "iTermSemanticHistoryController.h"
 #import "DebugLogging.h"
+#import "iTermLaunchServices.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -238,7 +239,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 - (BOOL)openFile:(NSString *)fullPath {
     DLog(@"Open file %@", fullPath);
-    return [[NSWorkspace sharedWorkspace] openFile:fullPath];
+    return [[iTermLaunchServices sharedInstance] openFile:fullPath];
 }
 
 - (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {

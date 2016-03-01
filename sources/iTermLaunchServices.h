@@ -22,6 +22,10 @@
 // the scheme.
 - (Profile *)profileForScheme:(NSString *)scheme;
 
+// Tries to open a file. If no app is associated with the UTI, offer the user an open panel to
+// choose an application. Associate the selected app as a view and reopen, if he picks one.
+- (BOOL)openFile:(NSString *)fullPath;
+
 #pragma mark - Default Terminal
 
 - (void)makeITermDefaultTerminal;
