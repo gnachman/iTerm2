@@ -833,7 +833,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return NO;
 }
 
-- (BOOL)screenShouldIgnoreBell {
+- (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
     return NO;
 }
 

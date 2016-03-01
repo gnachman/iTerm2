@@ -150,7 +150,7 @@
 - (BOOL)screenShouldPostTerminalGeneratedAlert;
 
 // Should this bell be ignored?
-- (BOOL)screenShouldIgnoreBell;
+- (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible;
 
 // PTYTextView deselect
 - (void)screenRemoveSelection;

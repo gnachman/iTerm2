@@ -6832,7 +6832,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     }
 }
 
-- (BOOL)screenShouldIgnoreBell {
+- (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now < _ignoreBellUntil) {
         return YES;
@@ -6878,44 +6878,77 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         !existingAnnouncement &&
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
         ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
-        iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
-                                                             style:kiTermAnnouncementViewStyleQuestion
-                                                       withActions:@[ @"Silence Bell Temporarily",
-                                                                      @"Suppress All Output",
-                                                                      @"Don't Offer Again",
-                                                                      @"Silence Automatically" ]
-                                                        completion:^(int selection) {
-                    // Release the moving average so the count will restart after the announcement goes away.
-                    [_bellRate release];
-                    _bellRate = nil;
-                    switch (selection) {
-                        case -2:  // Dismiss programmatically
-                            break;
+        iTermAnnouncementViewController *announcement = nil;
+        if (audible || visible) {
+            announcement =
+                [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
+                                                                 style:kiTermAnnouncementViewStyleQuestion
+                                                           withActions:@[ @"Silence Bell Temporarily",
+                                                                          @"Suppress All Output",
+                                                                          @"Don't Offer Again",
+                                                                          @"Silence Automatically" ]
+                                                            completion:^(int selection) {
+                        // Release the moving average so the count will restart after the announcement goes away.
+                        [_bellRate release];
+                        _bellRate = nil;
+                        switch (selection) {
+                            case -2:  // Dismiss programmatically
+                                break;
 
-                        case -1: // No
-                            _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
-                            break;
+                            case -1: // No
+                                _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
+                                break;
 
-                        case 0: // Suppress bell temporarily
-                            _ignoreBellUntil = now + 60;
-                            break;
+                            case 0: // Suppress bell temporarily
+                                _ignoreBellUntil = now + 60;
+                                break;
 
-                        case 1: // Suppress all output
-                            _suppressAllOutput = YES;
-                            break;
+                            case 1: // Suppress all output
+                                _suppressAllOutput = YES;
+                                break;
 
-                        case 2: // Never offer again
-                            [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                    forKey:kSuppressAnnoyingBellOffer];
-                            break;
+                            case 2: // Never offer again
+                                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                        forKey:kSuppressAnnoyingBellOffer];
+                                break;
 
-                        case 3:  // Silence automatically
-                            [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                    forKey:kSilenceAnnoyingBellAutomatically];
-                            break;
-                    }
-                }];
+                            case 3:  // Silence automatically
+                                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                        forKey:kSilenceAnnoyingBellAutomatically];
+                                break;
+                        }
+                    }];
+        } else {
+            // Neither audible nor visible.
+            announcement =
+                [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Want to suppress all output until things calm down?"
+                                                                 style:kiTermAnnouncementViewStyleQuestion
+                                                           withActions:@[ @"Suppress All Output",
+                                                                          @"Don't Offer Again" ]
+                                                            completion:^(int selection) {
+                        // Release the moving average so the count will restart after the announcement goes away.
+                        [_bellRate release];
+                        _bellRate = nil;
+                        switch (selection) {
+                            case -2:  // Dismiss programmatically
+                                break;
+
+                            case -1: // No
+                                _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
+                                break;
+
+                            case 0: // Suppress all output
+                                _suppressAllOutput = YES;
+                                break;
+
+                            case 2: // Never offer again
+                                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                        forKey:kSuppressAnnoyingBellOffer];
+                                break;
+                        }
+                    }];
+        }
+
         // Set the auto-dismiss timeout.
         announcement.timeout = 10;
         [self queueAnnouncement:announcement identifier:identifier];

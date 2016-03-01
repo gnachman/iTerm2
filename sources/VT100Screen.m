@@ -1115,7 +1115,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)activateBell {
-    if ([delegate_ screenShouldIgnoreBell]) return;
+    if ([delegate_ screenShouldIgnoreBellWhichIsAudible:audibleBell_ visible:flashBell_]) {
+        return;
+    }
     if (audibleBell_) {
         // Some bells or systems block on NSBeep so it's important to rate-limit it to prevent
         // bells from blocking the terminal indefinitely. The small delay we insert between
