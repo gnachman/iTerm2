@@ -2792,7 +2792,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (NSString *)badgeLabel {
-    return [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
+    NSString *p = [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
+    p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
+    p = [p stringByReplacingEscapedHexValuesWithChars];
+    return p;
 }
 
 - (BOOL)isAtShellPrompt {
