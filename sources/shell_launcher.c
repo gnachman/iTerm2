@@ -1,8 +1,8 @@
-// This function the user's shell, replacing the current process with the shell, and
+// This function runs the user's shell, replacing the current process with the shell, and
 // inserting a "-" at the start of argv[0] to make it think it's a login shell. Unfortunately,
 // Apple's login(1) doesn't let you preseve the working directory and also start a login shell,
 // which iTerm2 needs to be able to do. This is meant to be run this way:
-//   /usr/bin/login -fpl $USER iTerm.app --launch_shell
+//   /usr/bin/login -fpl $USER /full/path/to/iTerm.app --launch_shell
 
 #include "shell_launcher.h"
 #include <err.h>
