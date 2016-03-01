@@ -352,7 +352,12 @@ static NSError *SCPFileError(NSString *description) {
                         });
                     }
                     ELog(@"Attempting to authenticate with key %@", keyPath);
-                    [self.session authenticateByPublicKey:[keyPath stringByAppendingString:@".pub"]
+                    NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
+                    if (![[NSFileManager defaultManager] fileExistsAtPath:publicKeyPath]) {
+                        ELog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
+                        publicKeyPath = nil;
+                    }
+                    [self.session authenticateByPublicKey:publicKeyPath
                                                privateKey:keyPath
                                               andPassword:password];
                 
