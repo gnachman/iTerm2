@@ -214,4 +214,7 @@
 // after setting up tmux tabs.
 - (void)loadTitleFromSession;
 
+// Update icons in tab.
+- (void)updateIcon;
+
 @end

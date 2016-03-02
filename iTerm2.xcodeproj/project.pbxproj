@@ -1028,6 +1028,14 @@
 		A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
+		A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
+		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
+		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
+		A686A1181C86A6DD0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
+		A686A1191C86A6DE0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
+		A686A11A1C86A6DE0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
+		A686A11D1C86AA930024C2DE /* DeadForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */; };
+		A686A11E1C86AA930024C2DE /* DeadForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A11C1C86AA930024C2DE /* DeadForDarkTheme@2x.png */; };
 		A686C1951ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
 		A686C1961ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
 		A686C1971ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
@@ -2382,6 +2390,10 @@
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE991915DB1F00BE8758 /* iTermFlippedView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFlippedView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFlippedView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NewOutputForDarkTheme.png; path = images/NewOutputForDarkTheme.png; sourceTree = "<group>"; };
+		A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutputForDarkTheme@2x.png"; path = "images/NewOutputForDarkTheme@2x.png"; sourceTree = "<group>"; };
+		A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DeadForDarkTheme.png; path = images/DeadForDarkTheme.png; sourceTree = "<group>"; };
+		A686A11C1C86AA930024C2DE /* DeadForDarkTheme@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DeadForDarkTheme@2x.png"; path = "images/DeadForDarkTheme@2x.png"; sourceTree = "<group>"; };
 		A686C0D31ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testAnsiColors.png"; path = "tests/Goldens/PTYTextViewTest-golden-testAnsiColors.png"; sourceTree = "<group>"; };
 		A686C0D41ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testBarCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-testBarCursor.png"; sourceTree = "<group>"; };
 		A686C0D51ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursorReverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testBarCursorReverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-testBarCursorReverseVideo.png"; sourceTree = "<group>"; };
@@ -3407,6 +3419,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */,
+				A686A11C1C86AA930024C2DE /* DeadForDarkTheme@2x.png */,
+				A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */,
+				A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */,
 				1D99C8E21BD59C37001EE1FC /* SearchCursor.png */,
 				1D99C8E31BD59C37001EE1FC /* SearchCursor@2x.png */,
 				A6FD85321B768B7800EB9DCE /* BigArrow.png */,
@@ -5321,6 +5337,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D6ED97619AEA20D005A7799 /* close.png in Resources */,
+				A686A11A1C86A6DE0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				A67D0D5E1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
 				1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */,
@@ -5415,6 +5432,7 @@
 				A67D0D7F1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				1D6ED9C319AEA20D005A7799 /* Maximized@2x.png in Resources */,
 				1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */,
+				A686A1191C86A6DE0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A67D0D821A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D611A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D581A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
@@ -5499,6 +5517,7 @@
 				1DEDF56D19C917FD005B023A /* new-tab@2x.png in Resources */,
 				A67D0D451A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				1DE922E71AC3709200965876 /* BackgroundStripes.png in Resources */,
+				A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A67D0D871A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				A67D0D571A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
@@ -5545,6 +5564,7 @@
 				A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				A67D0D6F1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
+				A686A1181C86A6DD0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				A6B3A7361AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				A65B725B1B1A630100F947A7 /* CheckMark.png in Resources */,
@@ -5609,6 +5629,7 @@
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				A67D0D741A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
+				A686A11D1C86AA930024C2DE /* DeadForDarkTheme.png in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
 				A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A6B70FBD19830C37007A4284 /* dead@2x.png in Resources */,
@@ -5626,9 +5647,11 @@
 				A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
+				A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
+				A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */,
@@ -5660,6 +5683,7 @@
 				A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
+				A686A11E1C86AA930024C2DE /* DeadForDarkTheme@2x.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				A67D0D3B1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,

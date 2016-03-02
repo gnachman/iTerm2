@@ -5843,6 +5843,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         for (PTYSession *aSession in [aTab sessions]) {
             [aTab fitSessionToCurrentViewSize:aSession];
         }
+        // Theme change could affect tab icons
+        [aTab updateIcon];
     }
 
     // Assign counts to each session. This causes tabs to show their tab number,
