@@ -40,19 +40,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
-static unsigned int oppositeDelimiter(unichar start) {
-    switch(start) {
-        case '(': return ')';
-        case '<': return '>';
-        case '[': return ']';
-        case '{': return '}';
-        case '\'':
-        case '"':
-            return start;
-        default:
-            return (unsigned int)-1; // unsigned int to prevent it from matching any unsigned short
-    }
-}
 
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
@@ -66,14 +53,7 @@ static unsigned int oppositeDelimiter(unichar start) {
     }
 
     // If it's in any form of bracketed delimiters, strip them
-    int parens = 0;
-    while (oppositeDelimiter([path characterAtIndex:parens]) == [path characterAtIndex:(path.length - parens - 1)]) {
-        parens++;
-    }
-    if (parens > 0) {
-        path = [path substringWithRange:NSMakeRange(parens, path.length - parens - 1)];
-        DLog(@" Strip parens, leaving %@", path);
-    }
+    path = [path stringByRemovingEnclosingBrackets];
 
     // strip various trailing characters that are unlikely to be part of the file name.
     path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
