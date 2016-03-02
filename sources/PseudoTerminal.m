@@ -771,12 +771,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)hideToolbelt {
+    DLog(@"hideToolbelt from\n%@", [NSThread callStackSymbols]);
     if (_contentView.shouldShowToolbelt) {
         [self toggleToolbeltVisibility:nil];
     }
 }
 
 - (IBAction)toggleToolbeltVisibility:(id)sender {
+    DLog(@"toggleToolbeltVisibility from\n%@", [NSThread callStackSymbols]);
+
     _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
     BOOL didResizeWindow = NO;
     if (_contentView.shouldShowToolbelt) {
@@ -4090,6 +4093,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView
 {
     PtyLog(@"%s(%d):-[PseudoTerminal tabViewDidChangeNumberOfTabViewItems]", __FILE__, __LINE__);
+    DLog(@"%@", [NSThread callStackSymbols]);
+
     for (PTYSession* session in [self allSessions]) {
         [session setIgnoreResizeNotifications:NO];
     }

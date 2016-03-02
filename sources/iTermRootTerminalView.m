@@ -14,6 +14,7 @@
 #import "iTermPreferences.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
+#import "NSView+RecursiveDescription.h"
 #import "PTYTabView.h"
 
 const CGFloat kHorizontalTabBarHeight = 22;
@@ -148,18 +149,24 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 #pragma mark - Toolbelt
 
 - (void)updateToolbelt {
+    DLog(@"Update toolbelt");
     _toolbelt.frame = [self toolbeltFrame];
     _toolbelt.hidden = ![self shouldShowToolbelt];
+    DLog(@"frame is now %@, hidden is now %@", NSStringFromRect(_toolbelt.frame), @(_toolbelt.hidden));
+
     [_delegate repositionWidgets];
     [_toolbelt relayoutAllTools];
 }
 
 - (void)constrainToolbeltWidth {
+    DLog(@"Constrain toolbelt width. Original width is %@", @(_toolbeltWidth));
     CGFloat minSize = MIN(kMinimumToolbeltSizeInPoints,
                           self.frame.size.width * kMinimumToolbeltSizeAsFractionOfWindow);
+    DLog(@"Min width: %@ based on my frame of %@", @(minSize), NSStringFromRect(self.frame));;
     _toolbeltWidth = MAX(MIN(_toolbeltWidth,
                              self.frame.size.width * kMaximumToolbeltSizeAsFractionOfWindow),
                          minSize);
+    DLog(@"Constrained width is %@", @(_toolbeltWidth));
 }
 
 - (NSRect)toolbeltFrame {
@@ -178,6 +185,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     if (shouldShowToolbelt == _shouldShowToolbelt) {
         return;
     }
+    DLog(@"setShouldShowToolbelt <- %@ from\n%@", @(shouldShowToolbelt), [NSThread callStackSymbols]);
 
     _shouldShowToolbelt = shouldShowToolbelt;
     _toolbelt.hidden = !shouldShowToolbelt;
@@ -248,7 +256,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
-
+    DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     BOOL showToolbeltInline = self.shouldShowToolbelt;
     BOOL hasScrollbar = self.scrollbarShouldBeVisible;
     NSWindow *thisWindow = _delegate.window;
@@ -430,6 +438,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"repositionWidgets - update tab bar");
     [self.tabBarControl updateFlashing];
     DLog(@"repositionWidgets - return.");
+    DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
 - (void)constrainLeftTabBarWidth {
