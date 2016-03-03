@@ -284,6 +284,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)terminalAppendDataToPasteboard:(NSData *)data;
 - (void)terminalShowNativeViewWithValue:(NSString *)value;
 - (void)terminalAcceptNativeViewHeightWithValue:(NSString *)value;
+- (void)terminalDisconnectFromNativeViewWithIdentifier:(NSString *)identifier;
 
 // Download of a base64-encoded file
 // nil = name unknown, -1 = size unknown.

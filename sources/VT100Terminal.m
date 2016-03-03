@@ -2071,6 +2071,10 @@ static const int kMaxScreenRows = 4096;
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalAcceptNativeViewHeightWithValue:value];
         }
+    } else if ([key isEqualToString:@"DisconnectFromNativeView"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalDisconnectFromNativeViewWithIdentifier:value];
+        }
     } else if ([key isEqualToString:@"File"]) {
         if ([delegate_ terminalIsTrusted]) {
             [self executeFileCommandWithValue:value];

@@ -4681,6 +4681,11 @@ static void SwapInt(int *a, int *b) {
                                                                proposesHeightChangeTo:viewController.proposedRows]];
 }
 
+- (void)terminalDisconnectFromNativeViewWithIdentifier:(NSString *)identifier {
+    iTermNativeViewController *viewController = [self nativeViewControllerWithIdentifier:identifier];
+    viewController.nativeViewControllerDelegate = nil;
+}
+
 - (void)terminalAcceptNativeViewHeightWithValue:(NSString *)value {
     NSLog(@"Accept native view %@", value);
     NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
