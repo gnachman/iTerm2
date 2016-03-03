@@ -11,15 +11,18 @@
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermImageMark.h"
+#import "iTermNativeViewFactory.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
+#import "iTermWeakReference.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -70,7 +73,10 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
-@interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
+@interface VT100Screen () <
+    iTermTemporaryDoubleBufferedGridControllerDelegate,
+    iTermMarkDelegate,
+    iTermWeaklyReferenceable>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
 @property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @end
@@ -152,6 +158,8 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
+
+    NSMutableDictionary *_nativeViewControllers;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -210,11 +218,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         nextCommandOutputStart_ = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _animatedLines = [[NSMutableIndexSet alloc] init];
+        _nativeViewControllers = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
 
-- (void)dealloc {
+ITERM_WEAKLY_REFERENCEABLE
+
+- (void)iterm_dealloc {
     [primaryGrid_ release];
     [altGrid_ release];
     [tabStops_ release];
@@ -232,6 +243,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
     [_animatedLines release];
+    [_nativeViewControllers release];
     [super dealloc];
 }
 
@@ -3295,27 +3307,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
-- (void)terminalShowCustomViewWithValue:(NSString *)value {
-    NSView *view = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 200, 50) color:[NSColor whiteColor]] autorelease];
-
-    NSButton *checkbox = [[[NSButton alloc] initWithFrame:NSZeroRect] autorelease];
-    [checkbox setButtonType:NSSwitchButton];
-    checkbox.title = @"Do you like me, yes or no?";
-    checkbox.state = NSOnState;
-    [checkbox sizeToFit];
-    [view addSubview:checkbox];
-
-    [self appendImageAtCursorWithName:value ?: @"Custom View"
-                                width:view.frame.size.width
-                                units:kVT100TerminalUnitsPixels
-                               height:view.frame.size.height
-                                units:kVT100TerminalUnitsPixels
-                  preserveAspectRatio:YES
-                                image:nil
-                                 data:nil
-                                 view:view];
-}
-
 - (void)terminalSetPasteboard:(NSString *)value {
     [delegate_ screenSetPasteboard:value];
 }
@@ -3436,19 +3427,21 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     screen_char_t c = ImageCharForNewImage(name, width, height, preserveAspectRatio);
 
     VT100GridCoordRange coordRange = VT100GridCoordRangeMake(xOffset,
-                                                             currentGrid_.cursorY,
+                                                             currentGrid_.cursorY + [self numberOfScrollbackLines],
                                                              xOffset + width,
-                                                             currentGrid_.cursorY + height);
+                                                             currentGrid_.cursorY + [self numberOfScrollbackLines] + height);
 
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             [self linefeed];
         }
-        for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
-            SetPositionInImageChar(&c, x - xOffset, y);
-            [currentGrid_ setCharsFrom:VT100GridCoordMake(x, currentGrid_.cursorY)
-                                    to:VT100GridCoordMake(x, currentGrid_.cursorY)
-                                toChar:c];
+        if (image) {
+            for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
+                SetPositionInImageChar(&c, x - xOffset, y);
+                [currentGrid_ setCharsFrom:VT100GridCoordMake(x, currentGrid_.cursorY)
+                                        to:VT100GridCoordMake(x, currentGrid_.cursorY)
+                                    toChar:c];
+            }
         }
     }
     currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
@@ -4644,6 +4637,94 @@ static void SwapInt(int *a, int *b) {
     // I think the update timer was hitting a worst case scenario which made the lag visible.
     // See issue 3537.
     [delegate_ screenUpdateDisplay:YES];
+}
+
+#pragma mark - iTermNativeViewControllerDelegate
+
+- (void)nativeViewControllerViewDidLoad:(iTermNativeViewController *)viewController {
+    NSLog(@"Native view did load %@", viewController);
+    [self addNativeViewController:viewController];
+    [self proposeResizeOfNativeViewController:viewController toHeight:viewController.view.frame.size.height];
+}
+
+- (void)nativeViewController:(iTermNativeViewController *)nativeViewController
+                willResizeTo:(NSSize)proposedSize {
+    [self proposeResizeOfNativeViewController:nativeViewController toHeight:proposedSize.height];
+}
+
+#pragma mark - Native view stuff
+
+- (void)addNativeViewController:(iTermNativeViewController *)viewController {
+    _nativeViewControllers[viewController.identifier] = viewController.weakSelf;
+    [self appendImageAtCursorWithName:viewController.title
+                                width:100
+                                units:kVT100TerminalUnitsPercentage
+                               height:1
+                                units:kVT100TerminalUnitsCells
+                  preserveAspectRatio:NO
+                                image:nil
+                                 data:nil
+                                 view:viewController.view];
+}
+
+- (iTermNativeViewController *)nativeViewControllerWithIdentifier:(NSString *)identifier {
+    return _nativeViewControllers[identifier];
+}
+
+- (void)proposeResizeOfNativeViewController:(iTermNativeViewController *)viewController
+                                   toHeight:(CGFloat)proposedHeight {
+    NSSize cellSize = [delegate_ screenCellSize];
+    viewController.proposedRows = ceil(proposedHeight / cellSize.height);
+    NSLog(@"Propose size change to %f points, %d rows", proposedHeight, viewController.proposedRows);
+
+    [delegate_ screenWriteDataToTask:[terminal_.output reportNativeViewWithIdentifier:viewController.identifier
+                                                               proposesHeightChangeTo:viewController.proposedRows]];
+}
+
+- (void)terminalAcceptNativeViewHeightWithValue:(NSString *)value {
+    NSLog(@"Accept native view %@", value);
+    NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
+    if (parts.count != 2) {
+        ELog(@"Unexpected value %@", value);
+        return;
+    }
+
+    NSString *identifier = parts[0];
+    NSInteger acceptedHeight = [parts[1] integerValue];
+    iTermNativeViewController *viewController = [self nativeViewControllerWithIdentifier:identifier];
+    if (!identifier) {
+        ELog(@"Unknown native view controller identifier %@", identifier);
+        return;
+    }
+    if (acceptedHeight < 1) {
+        ELog(@"Bogus accepted height of %@", @(acceptedHeight));
+        return;
+    }
+
+    NSSize cellSize = [delegate_ screenCellSize];
+    if (acceptedHeight > self.height) {
+        ELog(@"Accepted height too tall. Try again.");
+        [self proposeResizeOfNativeViewController:viewController toHeight:cellSize.height * self.height];
+        return;
+    }
+
+    NSRect frame = viewController.view.frame;
+    frame.size.height = cellSize.height * acceptedHeight;
+    [viewController setSize:frame.size];
+
+    VT100GridCoordRange coordRange = viewController.view.iterm_coordRange;
+    coordRange.end.y = coordRange.start.y + acceptedHeight;
+    [viewController.view iterm_setCoordRange:coordRange];
+}
+
+- (void)terminalShowNativeViewWithValue:(NSString *)value {
+    NSLog(@"Show native view %@", value);
+    iTermNativeViewController *viewController = [iTermNativeViewFactory nativeViewControllerWithDescriptor:value];
+    if (!viewController) {
+        return;
+    }
+    NSLog(@"Showing %@", viewController.identifier);
+    viewController.nativeViewControllerDelegate = [self weakSelf];
 }
 
 @end

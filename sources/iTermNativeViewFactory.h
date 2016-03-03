@@ -6,8 +6,11 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
+#import "iTermNativeViewController.h"
 
 @interface iTermNativeViewFactory : NSObject
+
++ (iTermNativeViewController *)nativeViewControllerWithDescriptor:(NSString *)descriptor;
 
 @end

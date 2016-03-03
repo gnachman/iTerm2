@@ -3271,9 +3271,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else if ([view iterm_hasCoordRange]) {
             VT100GridCoordRange coordRange = view.iterm_coordRange;
-            view.frame = NSMakeRect(coordRange.end.x * _charWidth + MARGIN,
+            view.frame = NSMakeRect(MARGIN,
                                     (1 + coordRange.start.y) * _lineHeight,
-                                    (coordRange.end.x - coordRange.start.x) * _charWidth,
+                                    [_dataSource width] * _charWidth,
                                     (coordRange.end.y - coordRange.start.y) * _lineHeight);
         }
     }

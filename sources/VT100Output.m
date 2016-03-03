@@ -34,6 +34,7 @@ typedef enum {
 } MouseButtonModifierFlag;
 
 #define ESC  0x1b
+#define BEL  7
 
 // Codes to send for keypresses
 #define CURSOR_SET_DOWN      "\033OB"
@@ -653,5 +654,17 @@ typedef enum {
     return [message dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportNativeViewWillLoad {
+    NSString *string = [NSString stringWithFormat:@"%c]1337;NativeViewStatus=WillLoad%c", (char)ESC, (char)BEL];
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *)reportNativeViewWithIdentifier:(NSString *)identifier
+                    proposesHeightChangeTo:(NSInteger)proposedHeight {
+    NSString *string =
+        [NSString stringWithFormat:@"%c]1337;NativeViewHeightChange=%@;%ld%c",
+            (char)ESC, identifier, proposedHeight, (char)BEL];
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
 
 @end

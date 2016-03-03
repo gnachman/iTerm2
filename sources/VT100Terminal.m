@@ -2063,9 +2063,13 @@ static const int kMaxScreenRows = 4096;
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetPasteboard:value];
         }
-    } else if ([key isEqualToString:@"CustomView"]) {
+    } else if ([key isEqualToString:@"NativeView"]) {
         if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalShowCustomViewWithValue:value];
+            [delegate_ terminalShowNativeViewWithValue:value];
+        }
+    } else if ([key isEqualToString:@"NativeViewHeightAccepted"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalAcceptNativeViewHeightWithValue:value];
         }
     } else if ([key isEqualToString:@"File"]) {
         if ([delegate_ terminalIsTrusted]) {
