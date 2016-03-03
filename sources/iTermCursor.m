@@ -108,6 +108,7 @@
         NSFrameRect(rect);
         return;
     } else {
+        DLog(@"Fill rect %@", NSStringFromRect(rect));
         NSRectFill(rect);
     }
 

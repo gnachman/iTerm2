@@ -80,6 +80,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
             _drawRectDuration.alpha = 0.95;
             _drawRectInterval.alpha = 0.95;
         }
+        _debug = YES;
     }
     return self;
 }
@@ -108,7 +109,9 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount {
+    static int iteration;
     DLog(@"drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+    DLog(@"BEGIN ITERATION %d", iteration);
     if (_debug) {
         [[NSColor redColor] set];
         NSRectFill(rect);
@@ -130,6 +133,14 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     if (_drawRectDuration) {
         [self stopTiming];
     }
+    
+    DLog(@"END ITERATION %d", iteration);
+    NSString *s = [NSString stringWithFormat:@"[%d]", iteration++];
+    NSDictionary *attributes = @{ NSForegroundColorAttributeName: [NSColor yellowColor],
+                                  NSBackgroundColorAttributeName: [NSColor redColor],
+                                  NSFontAttributeName: [NSFont systemFontOfSize:8] };
+    [s drawInRect:NSMakeRect(rect.origin.x, rect.origin.y, 25, 10) withAttributes:attributes];
+
 }
 
 - (void)clipAndDrawRect:(NSRect)rect {
@@ -146,6 +157,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     // Draw an extra ring of characters outside it.
     NSRect outerRect = [self rectByGrowingRectByOneCell:innerRect];
+    DLog(@"Clip to %@ and draw in %@", NSStringFromRect(innerRect), NSStringFromRect(outerRect));
     [self drawOneRect:outerRect];
 
     [context restoreGraphicsState];
@@ -239,11 +251,16 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         [self drawNoteRangesOnLine:runArray.line];
 
         if (_debug) {
+            [[NSColor yellowColor] set];
+            NSRectFill(NSMakeRect(0, runArray.y, 5, 5));
+
             NSString *s = [NSString stringWithFormat:@"%d", runArray.line];
-            [s drawAtPoint:NSMakePoint(0, runArray.y)
-                withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor],
-                                  NSBackgroundColorAttributeName: [NSColor whiteColor],
-                                  NSFontAttributeName: [NSFont systemFontOfSize:8] }];
+            NSRect rect = NSMakeRect(0, runArray.y, 25, 10);
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName: [NSColor blackColor],
+                                          NSBackgroundColorAttributeName: [NSColor whiteColor],
+                                          NSFontAttributeName: [NSFont systemFontOfSize:8] };
+            NSLog(@"%@", NSStringFromRect(rect));
+            [s drawInRect:rect withAttributes:attributes];
         }
     }
 
@@ -264,6 +281,11 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     
     [_selectedFont release];
     _selectedFont = nil;
+}
+
+- (void)setCursorVisible:(BOOL)cursorVisible {
+    DLog(@"Set cursor visible to %@ from\n%@", @(cursorVisible), [NSThread callStackSymbols]);
+    _cursorVisible = cursorVisible;
 }
 
 #pragma mark - Drawing: Background
@@ -1214,7 +1236,13 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                      focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
                        coord:_cursorCoord
                   cellHeight:_cellSize.height];
+        
+        NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(rect.origin.x - 5, rect.origin.y - 5, rect.size.width + 10, rect.size.height + 10)];
+        [[NSColor blueColor] set];
+        [path stroke];
+        
         if (_showSearchingCursor) {
+            DLog(@"Drawing search cursor");
             NSImage *image = [NSImage imageNamed:@"SearchCursor"];
             if (image) {
                 NSRect imageRect = rect;
@@ -1529,8 +1557,14 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         [NSDate timeIntervalSinceReferenceDate] - _lastTimeCursorMoved > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.
+        if (!_blinkingItemsVisible) {
+            DLog(@"shouldShowCursor returning **NO** because it's blinking, in the key window, text view is active, and the cursor hasn't moved in half a second");
+        } else {
+            DLog(@"shouldShowCursor returning YES because blinking items are visible");
+        }
         return _blinkingItemsVisible;
     } else {
+        DLog(@"shouldShowCursor returning YES because not all conditions met");
         return YES;
     }
 }
