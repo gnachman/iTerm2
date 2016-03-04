@@ -110,6 +110,20 @@
                         pixels:changePx];
 }
 
+- (void)setFrame:(NSRect)frame {
+    DLog(@"Frame of splitview %@ with delegate %@ changing from %@ to %@",
+          self, self.delegate, NSStringFromRect(self.frame), NSStringFromRect(frame));
+    DLog(@"%@", [NSThread callStackSymbols]);
+    [super setFrame:frame];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    DLog(@"Frame size of splitview %@ with delegate %@ changing from %@ to %@",
+          self, self.delegate, NSStringFromSize(self.frame.size), NSStringFromSize(newSize));
+    DLog(@"%@", [NSThread callStackSymbols]);
+    [super setFrameSize:newSize];
+}
+
 @end
 
 

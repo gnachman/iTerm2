@@ -1674,6 +1674,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)setReportIdealSizeAsCurrent:(BOOL)v
 {
+    NSLog(@"Set report ideal for tab %@ to %@ from\n%@", self, @(v), [NSThread callStackSymbols]);
     reportIdeal_ = v;
 }
 
@@ -1681,8 +1682,10 @@ static NSString* FormatRect(NSRect r) {
 - (NSSize)currentSize
 {
     if (reportIdeal_) {
+        DLog(@"Reporting ideal size");
         return [self size];
     } else {
+        DLog(@"Reporting size of root frame");
         return [root_ frame].size;
     }
 }

@@ -1185,6 +1185,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
+    DLog(@"removeTab:%@", aTab);
     if (![aTab isTmuxTab]) {
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [aTab sessions];
@@ -4102,7 +4103,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // check window size in case tabs have to be hidden or shown
     if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
         ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
-         ([_contentView.tabView numberOfTabViewItems] > 1 && [_contentView.tabBarControl isHidden]))) {
+         ([_contentView.tabView numberOfTabViewItems] > 1 &&
+          [_contentView.tabBarControl isHidden]))) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
@@ -5221,16 +5223,17 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             continue;
         }
         NSSize tabSize = [tab currentSize];
-        PtyLog(@"The natural size of this tab is %lf", tabSize.height);
+        PtyLog(@"The natural size of this tab is %@", NSStringFromSize(tabSize));
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }
         if (tabSize.height > maxTabSize.height) {
             maxTabSize.height = tabSize.height;
         }
+        PtyLog(@"maxTabSize is now %@", NSStringFromSize(maxTabSize));
 
         tabSize = [tab minSize];
-        PtyLog(@"The min size of this tab is %lf", tabSize.height);
+        PtyLog(@"The min size of this tab is %@", NSStringFromSize(tabSize));
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }
@@ -5250,8 +5253,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (BOOL)fitWindowToTabSize:(NSSize)tabSize
-{
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize {
     PtyLog(@"fitWindowToTabSize %@", [NSValue valueWithSize:tabSize]);
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
@@ -5259,17 +5261,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     // Set the window size to be large enough to encompass that tab plus its decorations.
     NSSize decorationSize = [self windowDecorationSize];
+    DLog(@"Decoration size is %@", NSStringFromSize(decorationSize));
     NSSize winSize = tabSize;
     winSize.width += decorationSize.width;
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
-
+    DLog(@"Preliminary window size (not including possible toolbelt) is %@", NSStringFromSize(winSize));
     if (_contentView.shouldShowToolbelt) {
-        winSize.width += floor(_contentView.toolbeltWidth);
+        winSize.width += floor(_contentView.toolbeltWidth);  // 2096+709=2805
+        DLog(@"After adding toolbelt, window size is %@", NSStringFromSize(winSize));
     }
 
     BOOL mustResizeTabs = NO;
-    NSSize maxFrameSize = [self maxFrame].size;
+    NSSize maxFrameSize = [self maxFrame].size;  // maxFrameSize.width= 5120
     PtyLog(@"maxFrameSize=%@, screens=%@", [NSValue valueWithSize:maxFrameSize], [NSScreen screens]);
     if (maxFrameSize.width <= 0 || maxFrameSize.height <= 0) {
         // This can happen when scrollers are changing while no monitors are
@@ -5327,7 +5331,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
     DLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
-         NSStringFromRect(self.screen.frame));
+         NSStringFromRect(self.screen.frame)); // screen width is 2560
     switch (windowType_) {
         case WINDOW_TYPE_BOTTOM:
             frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
@@ -6054,6 +6058,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                 contentSize.height += kHorizontalTabBarHeight;
                 break;
             case PSMTab_LeftTab:
+                DLog(@"adding tabview width %f to decoration's content size", self.tabviewWidth);
                 contentSize.width += [self tabviewWidth];
                 break;
         }
@@ -6076,6 +6081,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         ++contentSize.height;
     }
 
+    DLog(@"windowDecorationSize: content size is %@", NSStringFromSize(contentSize));
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
