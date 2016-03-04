@@ -19,8 +19,9 @@ function read_bytes()
 }
 
 function read_dsr() {
-  # Reading response to DSR, presuming ESC [ has already been read.
+  # Reading response to DSR.
   dsr=""
+  spam=$(read_bytes 2)
   byte=$(read_bytes 1)
   while [ "${byte}" != "n" ]; do
     dsr=${dsr}${byte}
@@ -59,9 +60,6 @@ echo -n '[1337n'
 # do this because if the terminal will not respond to iTerm2's custom escape
 # sequence, we can still read from stdin without blocking indefinitely.
 echo -n '[5n'
-
-# Read esc [, which either iTerm2 or any VT100-compatible terminal will send.
-byte=$(read_bytes 2)
 
 version_string=$(read_dsr)
 if [ "${version_string}" != "0" ]; then
