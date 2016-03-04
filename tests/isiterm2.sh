@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Make sure stdin and stdout are a tty.
+if [ ! -t 0 ] ; then
+  exit 1
+fi
+if [ ! -t 1 ] ; then
+  exit 1
+fi
+
 # Save the tty's state.
 saved_stty=$(stty -g)
 
