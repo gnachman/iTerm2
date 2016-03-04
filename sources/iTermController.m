@@ -73,6 +73,7 @@ static iTermController *gSharedInstance;
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
     PseudoTerminal *_frontTerminalWindowController;
     iTermFullScreenWindowManager *_fullScreenWindowManager;
+    BOOL _willPowerOff;
 }
 
 + (iTermController *)sharedInstance {
@@ -105,6 +106,11 @@ static iTermController *gSharedInstance;
                                                                enterFullScreenSelector:@selector(toggleFullScreen:)];
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
+        
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(workspaceWillPowerOff:)
+                                                                   name:NSWorkspaceWillPowerOffNotification
+                                                                 object:nil];
     }
 
     return (self);
@@ -117,6 +123,10 @@ static iTermController *gSharedInstance;
 }
 
 - (BOOL)shouldLeaveSessionsRunningOnQuit {
+    if (_willPowerOff) {
+        // For issue 4147.
+        return NO;
+    }
     const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
                                       [iTermAdvancedSettingsModel restoreWindowContents] &&
                                       self.willRestoreWindowsAtNextLaunch);
@@ -128,6 +138,7 @@ static iTermController *gSharedInstance;
 - (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
     if (self.shouldLeaveSessionsRunningOnQuit) {
         // We don't want to kill running jobs. This can be for one of two reasons:
@@ -1353,6 +1364,10 @@ static iTermController *gSharedInstance;
 - (void)removeTerminalWindow:(PseudoTerminal *)terminalWindow {
     [_terminalWindows removeObject:terminalWindow];
     [self updateWindowTitles];
+}
+
+- (void)workspaceWillPowerOff:(NSNotification *)notification {
+    _willPowerOff = YES;
 }
 
 @end

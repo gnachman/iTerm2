@@ -790,6 +790,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
     [super dealloc];
 }
