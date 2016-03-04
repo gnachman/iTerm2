@@ -652,6 +652,23 @@ int decode_utf8_char(const unsigned char *datap,
     return [self rangeOfString:trimmedURLString];
 }
 
+- (NSString *)stringByRemovingEnclosingBrackets {
+    int index;
+    for (index = 0; 2*index < self.length; index++) {
+      unichar start = [self characterAtIndex:index];
+      unichar end = [self characterAtIndex:self.length-index-1];
+      if (!((start == '(' && end == ')') ||
+            (start == '<' && end == '>') ||
+            (start == '[' && end == ']') ||
+            (start == '{' && end == '}') ||
+            (start == '\'' && end == '\'') ||
+            (start == '"' && end == '"'))) {
+          break;
+      }
+    }
+    return [self substringWithRange:NSMakeRange(index, self.length-2*index)];
+}
+
 - (NSString *)stringByRemovingTerminatingPunctuation {
     NSString *s = self;
     NSArray *punctuationMarks = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];

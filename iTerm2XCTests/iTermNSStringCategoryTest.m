@@ -190,6 +190,32 @@
     }
 }
 
+- (void)testStringByRemovingEnclosingBrackets {
+  XCTAssert([@"abc" isEqualToString:[@"abc" stringByRemovingEnclosingBrackets]]);
+
+  XCTAssert([@"abc" isEqualToString:[@"(abc)" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"abc" isEqualToString:[@"<abc>" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"abc" isEqualToString:[@"[abc]" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"abc" isEqualToString:[@"{abc}" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"abc" isEqualToString:[@"'abc'" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"abc" isEqualToString:[@"\"abc\"" stringByRemovingEnclosingBrackets]]);
+
+  XCTAssert([@"(abc(" isEqualToString:[@"(abc(" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"<abc<" isEqualToString:[@"<abc<" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"[abc[" isEqualToString:[@"[abc[" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"{abc{" isEqualToString:[@"{abc{" stringByRemovingEnclosingBrackets]]);
+
+  XCTAssert([@"a" isEqualToString:[@"a" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"a" isEqualToString:[@"(a)" stringByRemovingEnclosingBrackets]]);
+
+  XCTAssert([@"" isEqualToString:[@"" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"" isEqualToString:[@"()" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"" isEqualToString:[@"([])" stringByRemovingEnclosingBrackets]]);
+
+  XCTAssert([@"abc" isEqualToString:[@"<[abc]>" stringByRemovingEnclosingBrackets]]);
+  XCTAssert([@"<[abc>]" isEqualToString:[@"<[abc>]" stringByRemovingEnclosingBrackets]]);
+}
+
 - (void)testStringMatchesCaseInsensitiveGlobPattern {
   // Empty string tests
   XCTAssertTrue([@"" stringMatchesCaseInsensitiveGlobPattern:@""]);

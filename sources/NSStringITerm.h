@@ -134,6 +134,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 //    "*http://example.com" -> "http://example.com"
 - (NSRange)rangeOfURLInString;
 
+- (NSString *)stringByRemovingEnclosingBrackets;
+
 - (NSString *)stringByEscapingForURL;
 - (NSString *)stringByCapitalizingFirstLetter;
 
