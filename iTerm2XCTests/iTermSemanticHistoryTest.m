@@ -205,18 +205,20 @@
     XCTAssert(lineNumber.length == 0);
 }
 
-- (void)testGetFullPathStripsParens {
-    NSString *lineNumber = nil;
-    static NSString *const kFilename = @"/path/to/file";
-    NSString *kFilenameWithParens = [NSString stringWithFormat:@"(%@)", kFilename];
-    static NSString *const kWorkingDirectory = @"/working/directory";
-    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
-    NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithParens
-                                              workingDirectory:kWorkingDirectory
-                                                    lineNumber:&lineNumber];
-    NSString *expected = kFilename;
-    XCTAssert([expected isEqualToString:actual]);
-    XCTAssert(lineNumber.length == 0);
+- (void)testGetFullPathStripsDelimiters {
+    for (NSString *delimiters in @[ @"()", @"<>", @"[]", @"{}", @"''", @"\"\"" ]) {
+        NSString *lineNumber = nil;
+        static NSString *const kFilename = @"/path/to/file";
+        NSString *kFilenameWithParens = [NSString stringWithFormat:@"%C%@%C", [delimiters characterAtIndex:0], kFilename, [delimiters characterAtIndex:1]];
+        static NSString *const kWorkingDirectory = @"/working/directory";
+        [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+        NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithParens
+                                                  workingDirectory:kWorkingDirectory
+                                                        lineNumber:&lineNumber];
+        NSString *expected = kFilename;
+        assert([expected isEqualToString:actual]);
+        assert(lineNumber.length == 0);
+    }
 }
 
 - (void)testGetFullPathStripsTrailingPunctuation {
