@@ -20,11 +20,7 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
     self = [super initWithDictionary:dictionary];
     if (self) {
-        NSLog(@"Starting 1 second timer to ready");
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            NSLog(@"Interactive view has decided it's ready");
-            [self notifyViewReadyForDisplay];
-        });
+        [self notifyViewReadyForDisplay];
     }
     return self;
 }

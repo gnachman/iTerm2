@@ -4643,8 +4643,9 @@ static void SwapInt(int *a, int *b) {
 
 - (void)nativeViewControllerViewDidLoad:(iTermNativeViewController *)viewController {
     NSLog(@"Native view did load %@", viewController);
+    CGFloat height = viewController.view.frame.size.height;
     [self addNativeViewController:viewController];
-    [self proposeResizeOfNativeViewController:viewController toHeight:viewController.view.frame.size.height];
+    [self proposeResizeOfNativeViewController:viewController toHeight:height];
 }
 
 - (void)nativeViewController:(iTermNativeViewController *)nativeViewController
@@ -4718,8 +4719,14 @@ static void SwapInt(int *a, int *b) {
     [viewController setSize:frame.size];
 
     VT100GridCoordRange coordRange = viewController.view.iterm_coordRange;
-    coordRange.end.y = coordRange.start.y + acceptedHeight;
+    coordRange.end.y = coordRange.start.y + acceptedHeight + 1;
     [viewController.view iterm_setCoordRange:coordRange];
+
+    if (coordRange.end.y > [self numberOfLines]) {
+        [self terminalScrollUp:coordRange.end.y - [self numberOfLines]];
+    }
+    [self terminalSetCursorX:1];
+    [self terminalSetCursorY:coordRange.end.y - [self numberOfScrollbackLines] + 1];
 }
 
 - (void)terminalShowNativeViewWithValue:(NSString *)value {

@@ -433,25 +433,31 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         if (i < [beforeChunks count]) {
             beforeChunk = [beforeChunks objectAtIndex:i];
         }
+        DLog(@"Consider before chunk %d: %@", i, beforeChunk);
 
         [left insertString:beforeChunk atIndex:0];
         NSMutableString *possiblePath = [NSMutableString stringWithString:left];
 
         // Do not search more than 10 chunks forward to avoid starving leftward search.
         for (int j = 0; j < [afterChunks count] && j < 10; j++) {
+            DLog(@"Consider after chunk %d: %@", j, afterChunks[j]);
             [possiblePath appendString:afterChunks[j]];
+
             NSString *trimmedPath;
             if (trimWhitespace) {
                 trimmedPath = [possiblePath stringByTrimmingCharactersInSet:whitespaceCharset];
             } else {
                 trimmedPath = possiblePath;
             }
+            DLog(@"Trimmed path is “%@”", trimmedPath);
             if ([paths containsObject:[NSString stringWithString:trimmedPath]]) {
                 continue;
             }
             [paths addObject:[[trimmedPath copy] autorelease]];
 
+            DLog(@"Iterate over modified paths by removing questionable suffixes");
             for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
+                DLog(@"Consider path “%@”", modifiedPossiblePath);
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
                     exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL] != nil);
@@ -475,6 +481,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                     return modifiedPossiblePath;
                 }
             }
+            DLog(@"Decrement limit to %d", limit - 1);
             if (--limit == 0) {
                 return nil;
             }
