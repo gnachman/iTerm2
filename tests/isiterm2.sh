@@ -19,7 +19,7 @@ function ctrl_c() {
   exit 1
 }
 
-# Read some bytes from stdin. Pass the number as the first argument.
+# Read some bytes from stdin. Pass the number of bytes to read as the first argument.
 function read_bytes()
 {
   numbytes=$1
@@ -70,17 +70,20 @@ echo -n '[1337n'
 echo -n '[5n'
 
 version_string=$(read_dsr)
-if [ "${version_string}" != "0" ]; then
-  # Already read DSR 1337. Read DSR 5 and throw it away..
+if [ "${version_string}" != "0" -a "${version_string}" != "3" ]; then
+  # Already read DSR 1337. Read DSR 5 and throw it away.
   dsr=$(read_dsr)
 else
-  # Terminal didn't respond to the DSR 1337. The response we read from from DSR 5.
+  # Terminal didn't respond to the DSR 1337. The response we read is from DSR 5.
   version_string=""
 fi
 
 # Restore the terminal to cooked mode.
 stty "$saved_stty"
 
+# Extract the terminal name and version number from the response.
 version=$(version "${version_string}")
 term=$(terminal "${version_string}")
+
+# Check if they match what we're looking for. This becomes the return code of the script.
 test "$term" = ITERM2 -a \( "$version" \> "$MIN_VERSION" -o "$version" = "$MIN_VERSION" \)
