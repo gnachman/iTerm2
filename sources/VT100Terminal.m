@@ -863,6 +863,10 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
 
+            case 1337:  // iTerm2 extension
+                [delegate_ terminalSendReport:[self.output reportiTerm2Version]];
+                break;
+                
             case 0: // Response from VT100 -- Ready, No malfuctions detected
             default:
                 break;

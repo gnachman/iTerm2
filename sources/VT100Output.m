@@ -530,6 +530,14 @@ typedef enum {
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
+- (NSData *)reportiTerm2Version {
+    // We uppercase the string to ensure it does not contain a "n".
+    // The [ must never be followed by a 0 (see the isiterm2.sh script for justification).
+    NSString *version = [NSString stringWithFormat:@"%c[ITERM2 %@n", ESC,
+                         [[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] uppercaseString]];
+    return [version dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q
 {
     char buf[64];
