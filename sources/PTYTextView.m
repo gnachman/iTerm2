@@ -6017,7 +6017,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             *numberOfValidItemsPtr = MIN(1, filenames.count);
         }
         return NSDragOperationGeneric;
-    } else if ((sourc/private/tmp/ct.shutdown 6eMask & NSDragOperationGeneric) && pasteOK) {
+    } else if ((sourceMask & NSDragOperationGeneric) && pasteOK) {
         // Either Command was pressed or the sender allows Generic but not
         // copy, and it's ok to paste, so select the paste operation.
         if (numberOfValidItemsPtr) {
@@ -6863,7 +6863,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!scpFile) {
         return nil;
     }
-    return [NSString stringWithFormat:@"%@@%@", scpFile.username, scpFile.hostname];
+    return [NSString stringWithFormat:@"%@@%@:%@", scpFile.username, scpFile.hostname, scpFile.path];
 }
 
 #pragma mark - Accessibility
