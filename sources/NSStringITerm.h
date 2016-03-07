@@ -211,6 +211,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSUInteger)iterm_unsignedIntegerValue;
 
+// Returns modified attributes for drawing self fitting size within one point.
+- (NSDictionary *)attributesUsingFont:(NSFont *)font fittingSize:(NSSize)size attributes:(NSDictionary *)attributes;
+
 @end
 
 @interface NSMutableString (iTerm)

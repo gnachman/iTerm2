@@ -62,6 +62,8 @@
 
 - (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord ofLength:(int)length;
 
+- (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line;
+
 @end
 
 @interface iTermTextDrawingHelper : NSObject
@@ -240,6 +242,12 @@
 
 // Change the cursor to indicate that a search is being performed.
 @property(nonatomic, assign) BOOL showSearchingCursor;
+
+// Should drop targets be indicated?
+@property(nonatomic, assign) BOOL showDropTargets;
+
+// Line number that is being hovered over for drop
+@property(nonatomic, assign) int dropLine;
 
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect

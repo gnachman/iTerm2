@@ -23,6 +23,7 @@
 #import "iTermTextExtractor.h"
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"  // TODO: Remove this dependency
@@ -126,6 +127,10 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         [self clipAndDrawRect:rectArray[i]];
     }
     [self drawCursor];
+
+    if (_showDropTargets) {
+        [self drawDropTargets];
+    }
 
     if (_drawRectDuration) {
         [self stopTiming];
@@ -624,6 +629,80 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeRightMargin];
 
     return imageSize;
+}
+
+#pragma mark - Drawing: Drop targets
+
+- (void)drawDropTargets {
+    NSColor *scrimColor;
+    NSColor *borderColor;
+    NSColor *labelColor;
+    NSColor *outlineColor;
+    
+    if ([[self defaultBackgroundColor] isDark]) {
+        outlineColor = [NSColor whiteColor];
+        scrimColor = [NSColor whiteColor];
+        borderColor = [NSColor lightGrayColor];
+        labelColor = [NSColor blackColor];
+    } else {
+        outlineColor = [NSColor blackColor];
+        scrimColor = [NSColor blackColor];
+        borderColor = [NSColor darkGrayColor];
+        labelColor = [NSColor whiteColor];
+    }
+    scrimColor = [scrimColor colorWithAlphaComponent:0.6];
+
+    NSDictionary *attributes = @{ NSForegroundColorAttributeName: labelColor,
+                                  NSStrokeWidthAttributeName: @-4,
+                                  NSStrokeColorAttributeName: outlineColor };
+    
+    [self enumerateDropTargets:^(NSString *label, NSRange range) {
+        NSRect rect = NSMakeRect(0,
+                                 range.location * _cellSize.height,
+                                 _scrollViewDocumentVisibleRect.size.width,
+                                 _cellSize.height * range.length);
+        
+        if (NSLocationInRange(_dropLine, range)) {
+            [[[NSColor selectedControlColor] colorWithAlphaComponent:0.7] set];
+        } else {
+            [scrimColor set];
+        }
+        NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+        
+        [borderColor set];
+        NSFrameRect(rect);
+        
+        [label drawInRect:rect withAttributes:[label attributesUsingFont:[NSFont boldSystemFontOfSize:8]
+                                                             fittingSize:rect.size
+                                                              attributes:attributes]];
+    }];
+}
+
+- (void)enumerateDropTargets:(void (^)(NSString *, NSRange))block {
+    NSRect rect = _scrollViewDocumentVisibleRect;
+    VT100GridCoordRange coordRange = [self drawableCoordRangeForRect:rect];
+    CGFloat y = coordRange.start.y * _cellSize.height;
+    NSMutableArray *labels = [NSMutableArray array];
+    NSMutableArray *lineRanges = [NSMutableArray array];
+    int firstLine = coordRange.start.y;
+    for (int line = coordRange.start.y; line <= coordRange.end.y; line++, y += _cellSize.height) {
+        NSString *label = [_delegate drawingHelperLabelForDropTargetOnLine:line];
+        if (!label) {
+            continue;
+        }
+        NSString *previousLabel = labels.lastObject;
+        if ([label isEqualToString:previousLabel]) {
+            [labels removeLastObject];
+            [lineRanges removeLastObject];
+        } else {
+            firstLine = line;
+        }
+        [labels addObject:label];
+        [lineRanges addObject:[NSValue valueWithRange:NSMakeRange(firstLine, line - firstLine)]];
+    }
+    for (NSInteger i = 0; i < labels.count; i++) {
+        block(labels[i], [lineRanges[i] rangeValue]);
+    }
 }
 
 #pragma mark - Drawing: Text

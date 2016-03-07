@@ -4434,17 +4434,34 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     // NOTE: draggingUpdated: calls this method because they need the same implementation.
     int numValid = -1;
+    NSDragOperation dragOperation = [sender draggingSourceOperationMask];
+    if (dragOperation == NSDragOperationCopy) {  // Option-drag to copy
+        _drawingHelper.showDropTargets = YES;
+    }
     NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
     if (numValid != sender.numberOfValidItemsForDrop) {
         sender.numberOfValidItemsForDrop = numValid;
     }
+    [self setNeedsDisplay:YES];
     return operation;
+}
+
+- (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
+    _drawingHelper.showDropTargets = NO;
+    [self setNeedsDisplay:YES];
 }
 
 //
 // Called when the dragged object is moved within our drop area
 //
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
+    NSPoint windowDropPoint = [sender draggingLocation];
+    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+    int dropLine = dropPoint.y / _lineHeight;
+    if (dropLine != _drawingHelper.dropLine) {
+        _drawingHelper.dropLine = dropLine;
+        [self setNeedsDisplay:YES];
+    }
     return [self draggingEntered:sender];
 }
 
@@ -4570,6 +4587,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Called when the dragged item is released in our drop area.
 //
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+    _drawingHelper.showDropTargets = NO;
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
     if (dragOperation == NSDragOperationCopy) {  // Option-drag to copy
@@ -5985,7 +6003,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else if ((sourceMask & NSDragOperationCopy) && uploadOK) {
         // Either Option was pressed or the sender allows Copy but not Generic,
         // and it's ok to upload, so select the upload operation.
-        if (numberOfValidItemsPtr){
+        if (numberOfValidItemsPtr) {
             *numberOfValidItemsPtr = [[pb filenamesOnPasteboardWithShellEscaping:NO] count];
         }
         return NSDragOperationCopy;
@@ -5999,7 +6017,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             *numberOfValidItemsPtr = MIN(1, filenames.count);
         }
         return NSDragOperationGeneric;
-    } else if ((sourceMask & NSDragOperationGeneric) && pasteOK) {
+    } else if ((sourc/private/tmp/ct.shutdown 6eMask & NSDragOperationGeneric) && pasteOK) {
         // Either Command was pressed or the sender allows Generic but not
         // copy, and it's ok to paste, so select the paste operation.
         if (numberOfValidItemsPtr) {
@@ -6838,6 +6856,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord
                                                 ofLength:(int)length {
     [_dataSource setRangeOfCharsAnimated:NSMakeRange(coord.x, length) onLine:coord.y];
+}
+
+- (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line {
+    SCPPath *scpFile = [_dataSource scpPathForFile:@"" onLine:line];
+    if (!scpFile) {
+        return nil;
+    }
+    return [NSString stringWithFormat:@"%@@%@", scpFile.username, scpFile.hostname];
 }
 
 #pragma mark - Accessibility
