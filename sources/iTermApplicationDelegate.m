@@ -87,6 +87,7 @@ static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableS
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
+NSString *const kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 

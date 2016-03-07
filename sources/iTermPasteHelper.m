@@ -219,7 +219,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         return;
     }
     if (!(pasteEvent.flags & kPasteFlagsCommands)) {
-        if (![self maybeWarnAboutMultiLinePaste:pasteEvent.string]) {
+        if (![self maybeWarnAboutMultiLinePaste:pasteEvent]) {
             DLog(@"Multiline paste declined.");
             return;
         }
@@ -453,19 +453,16 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     [self pasteNextChunkAndScheduleTimer];
 }
 
-- (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string {
-    iTermApplicationDelegate *applicationDelegate = iTermApplication.sharedApplication.delegate;
-    if (![applicationDelegate warnBeforeMultiLinePaste]) {
-        return YES;
-    }
+// This may modify pasteEvent.string.
+- (BOOL)maybeWarnAboutMultiLinePaste:(PasteEvent *)pasteEvent {
     NSCharacterSet *newlineCharacterSet =
         [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
-    NSRange rangeOfFirstNewline = [string rangeOfCharacterFromSet:newlineCharacterSet];
+    NSRange rangeOfFirstNewline = [pasteEvent.string rangeOfCharacterFromSet:newlineCharacterSet];
     if (rangeOfFirstNewline.length == 0) {
         return YES;
     }
     if ([iTermAdvancedSettingsModel suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline] &&
-        rangeOfFirstNewline.location == string.length - 1) {
+        rangeOfFirstNewline.location == pasteEvent.string.length - 1) {
         return YES;
     }
     BOOL atShellPrompt = [_delegate pasteHelperIsAtShellPrompt];
@@ -473,8 +470,12 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         !atShellPrompt) {
         return YES;
     }
-    NSArray *lines = [string componentsSeparatedByRegex:@"(?:\r\n)|(?:\r)|(?:\n)"];
+    NSArray *lines = [pasteEvent.string componentsSeparatedByRegex:@"(?:\r\n)|(?:\r)|(?:\n)"];
     NSString *theTitle;
+    NSMutableArray *actions = [NSMutableArray array];
+    [actions addObject:@"Paste"];
+    [actions addObject:@"Cancel"];
+    NSString *identifier = kMultiLinePasteWarningUserDefaultsKey;
     if (lines.count > 1) {
         if (atShellPrompt) {
             theTitle = [NSString stringWithFormat:@"OK to paste %d lines at shell prompt?",
@@ -485,6 +486,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         }
     } else {
         if (atShellPrompt) {
+            [actions insertObject:@"Paste Without Newline" atIndex:1];
+            identifier = kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey;
             theTitle = @"OK to paste one line ending in a newline at shell prompt?";
         } else {
             theTitle = @"OK to paste one line ending in a newline?";
@@ -492,10 +495,35 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     }
     iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:theTitle
-                                   actions:@[ @"Paste", @"Cancel" ]
-                                identifier:kMultiLinePasteWarningUserDefaultsKey
+                                   actions:actions
+                                identifier:identifier
                                silenceable:YES];
-    return selection == kiTermWarningSelection0;
+    switch (selection) {
+        case kiTermWarningSelection0:
+            return YES;
+            
+        case kiTermWarningSelection1:
+            if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
+                // cancel
+                return NO;
+            } else {
+                // Paste without newline
+                pasteEvent.string =
+                    [pasteEvent.string stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
+                return YES;
+            }
+            
+        case kiTermWarningSelection2:
+            // cancel
+            return NO;
+            
+        case kItermWarningSelectionError:
+            ELog(@"Unexpected error from warning");
+            return YES;
+    }
+    
+    ELog(@"Unhandled selection %@", @(selection));
+    return YES;
 }
 
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source {
