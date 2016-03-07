@@ -40,7 +40,11 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
 
         ssize_t n;
         do {
+            // There used to be a race condition where the server would die
+            // really early and then we'd get stuck in recvmsg. See issue 4383.
+            syslog(LOG_NOTICE, "calling recvmsg...");
             n = recvmsg(fd, &message, 0);
+            syslog(LOG_NOTICE, "recvmsg returned %zd, errno=%s\n", n, (n < 0 ? strerror(errno) : "n/a"));
         } while (n < 0 && errno == EINTR);
 
         if (n <= 0) {

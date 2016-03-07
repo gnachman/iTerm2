@@ -196,6 +196,13 @@ static int Initialize(char *path, pid_t childPid) {
     signal(SIGCHLD, SigChildHandler);
     signal(SIGUSR1, SigUsr1Handler);
 
+    // Unblock SIGCHLD.
+    sigset_t signal_set;
+    sigemptyset(&signal_set);
+    sigaddset(&signal_set, SIGCHLD);
+    syslog(LOG_NOTICE, "Unblocking SIGCHLD.");
+    sigprocmask(SIG_UNBLOCK, &signal_set, NULL);
+
     return 0;
 }
 

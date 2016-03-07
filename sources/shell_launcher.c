@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <stdio.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -52,17 +53,6 @@ int launch_shell(void) {
     err(1, "Failed to exec %s with arg %s", shell, argv0);
 }
 
-// Our child process died before the server got spun up. Wait for it to avoid a
-// zombie and then exit. The actual exit status doesn't matter.
-static void HandleEarlySigChild(int sig) {
-    int status;
-    pid_t pid;
-    do {
-        pid = wait(&status);
-    } while (pid == -1 && errno == EINTR);
-    _exit(status);
-}
-
 // Precondition: PTY Master on fd 0, PTY Slave on fd 1
 static void ExecChild(int argc, char *const *argv) {
     // Child process
@@ -78,13 +68,20 @@ static void ExecChild(int argc, char *const *argv) {
 
 // Precondition: PTY Master on fd 0, PTY Slave on fd 1, connected unix domain socket on fd 2
 int iterm2_server(int argc, char *const *argv) {
-    // Set up a signal handler that makes the server die with the child's status code if the child
-    // dies before the server is done setting itself up.
-    signal(SIGCHLD, HandleEarlySigChild);
+    // Block SIGCHLD so we can handle it when we're ready.
+    sigset_t signal_set;
+    sigemptyset(&signal_set);
+    sigaddset(&signal_set, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &signal_set, NULL);
 
     // Start the child.
     pid_t pid = fork();
     if (pid == 0) {
+        // Unblock SIGCHLD in the child process.
+        sigemptyset(&signal_set);
+        sigaddset(&signal_set, SIGCHLD);
+        sigprocmask(SIG_UNBLOCK, &signal_set, NULL);
+
         ExecChild(argc, argv);
         return -1;
     } else if (pid > 0) {
@@ -96,7 +93,7 @@ int iterm2_server(int argc, char *const *argv) {
         char path[PATH_MAX + 1];
         iTermFileDescriptorSocketPath(path, sizeof(path), getpid());
 
-        // Run the server.
+        // Run the server. It will unblock SIGCHILD when it's ready.
         int status = iTermFileDescriptorServerRun(path, pid, kPtySocketFileDescriptor);
         return status;
     } else {
