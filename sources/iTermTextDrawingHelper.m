@@ -698,7 +698,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
             firstLine = line;
         }
         [labels addObject:label];
-        [lineRanges addObject:[NSValue valueWithRange:NSMakeRange(firstLine, line - firstLine)]];
+        [lineRanges addObject:[NSValue valueWithRange:NSMakeRange(firstLine, line - firstLine + 1)]];
     }
     for (NSInteger i = 0; i < labels.count; i++) {
         block(labels[i], [lineRanges[i] rangeValue]);
