@@ -65,6 +65,24 @@ static BOOL gShowingWarning;
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
                                       heading:(NSString *)heading {
+    return [self showWarningWithTitle:title
+                              actions:actions
+                        actionMapping:actionToSelectionMap
+                            accessory:accessory
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:heading
+                          cancelLabel:kCancel];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading
+                                  cancelLabel:(NSString *)cancelLabel {
     if (!gWarningHandler &&
         warningType != kiTermWarningTypePersistent &&
         [self identifierIsSilenced:identifier]) {
@@ -78,7 +96,7 @@ static BOOL gShowingWarning;
                          informativeTextWithFormat:@"%@", title];
     int numNonCancelActions = [actions count];
     for (NSString *string in actions) {
-        if ([string isEqualToString:kCancel]) {
+        if ([string isEqualToString:cancelLabel]) {
             --numNonCancelActions;
         }
     }
@@ -120,15 +138,15 @@ static BOOL gShowingWarning;
     switch (result) {
         case NSAlertDefaultReturn:
             selection = [self remapSelection:kiTermWarningSelection0 withMapping:actionToSelectionMap];
-            remember = ![actions[0] isEqualToString:kCancel];
+            remember = ![actions[0] isEqualToString:cancelLabel];
             break;
         case NSAlertAlternateReturn:
             selection = [self remapSelection:kiTermWarningSelection1 withMapping:actionToSelectionMap];
-            remember = ![actions[1] isEqualToString:kCancel];
+            remember = ![actions[1] isEqualToString:cancelLabel];
             break;
         case NSAlertOtherReturn:
             selection = [self remapSelection:kiTermWarningSelection2 withMapping:actionToSelectionMap];
-            remember = ![actions[2] isEqualToString:kCancel];
+            remember = ![actions[2] isEqualToString:cancelLabel];
             break;
         default:
             selection = kItermWarningSelectionError;

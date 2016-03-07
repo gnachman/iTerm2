@@ -13,6 +13,7 @@
 #import <NMSSH/libssh2.h>
 
 #import "DebugLogging.h"
+#import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringiTerm.h"
@@ -22,6 +23,7 @@
 @end
 
 static NSString *const kSCPFileErrorDomain = @"com.googlecode.iterm2.SCPFile";
+static NSString *const kSecureCopyConnectionFailedWarning = @"NoSyncSecureCopyConnectionFailedWarning";
 
 static NSError *SCPFileError(NSString *description) {
     return [NSError errorWithDomain:kSCPFileErrorDomain
@@ -269,6 +271,18 @@ static NSError *SCPFileError(NSString *description) {
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:theError];
+            iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to connect to %@:%d. Double-check that the host name is correct.", self.hostname, self.port]
+                                           actions:@[ @"Ok", @"Help" ]
+                                     actionMapping:nil
+                                         accessory:nil
+                                        identifier:kSecureCopyConnectionFailedWarning
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                           heading:@"Connection Failed"
+                                       cancelLabel:@"Help"];
+            if (selection == kiTermWarningSelection1) {
+                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/troubleshoot-hostname"]];
+            }
         });
         return;
     }

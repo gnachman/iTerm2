@@ -64,4 +64,14 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
                                   silenceable:(iTermWarningType)warningType
                                       heading:(NSString *)heading;
 
+// cancelLabel is the action name to treat like "Cancel". It won't be remembered.
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading
+                                  cancelLabel:(NSString *)cancelLabel;
+
 @end
