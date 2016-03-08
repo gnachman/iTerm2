@@ -390,4 +390,8 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return -[_delegate growToolbeltBy:-delta];
 }
 
+- (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
+    [_delegate toolbeltDidFinishGrowing];
+}
+
 @end

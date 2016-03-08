@@ -20,6 +20,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate>
 - (void)repositionWidgets;
+- (void)rootTerminalViewDidResizeContentArea;
 - (BOOL)haveTopBorder;
 - (BOOL)haveBottomBorder;
 - (BOOL)haveLeftBorder;

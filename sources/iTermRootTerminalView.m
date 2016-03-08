@@ -458,11 +458,16 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 #pragma mark - iTermDragHandleViewDelegate
 
+// For the left-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
     CGFloat originalValue = _leftTabBarWidth;
     _leftTabBarWidth += delta;
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
     return _leftTabBarWidth - originalValue;
+}
+
+- (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
+    [_delegate rootTerminalViewDidResizeContentArea];
 }
 
 @end

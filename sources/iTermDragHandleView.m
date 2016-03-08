@@ -44,6 +44,10 @@
                 break;
         }
     }
+    
+    if ([_delegate respondsToSelector:@selector(dragHandleViewDidFinishMoving:)]) {
+        [_delegate dragHandleViewDidFinishMoving:self];
+    }
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {

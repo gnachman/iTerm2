@@ -747,6 +747,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             ![self tabBarVisibleOnTop]);
 }
 
+- (void)rootTerminalViewDidResizeContentArea {
+    // Fixes an analog of issue 4323 that happens with left-side tabs. More
+    // details in -toolbeltDidFinishGrowing.
+    [self fitTabsToWindow];
+}
+
 - (CGFloat)tabviewWidth {
     return _contentView.tabviewWidth;
 }
@@ -2388,6 +2394,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView constrainToolbeltWidth];
     [self repositionWidgets];
     return _contentView.toolbeltWidth - before;
+}
+
+- (void)toolbeltDidFinishGrowing {
+    // Fixes issue 4323. During live dragging it's fine to just resize the
+    // visible tab, but when you're done they all must be in sync.
+    [self fitTabsToWindow];
 }
 
 - (void)canonicalizeWindowFrame {

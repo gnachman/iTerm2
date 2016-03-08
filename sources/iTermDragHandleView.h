@@ -16,6 +16,11 @@
 // allowed to move.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta;
 
+@optional
+
+// Called when dragging finishes.
+- (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle;
+
 @end
 
 // An invisible vertical drag handle that reports horizontal drags to the delegate.

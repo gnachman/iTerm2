@@ -19,6 +19,8 @@
 @protocol iTermToolbeltViewDelegate<NSObject>
 
 - (CGFloat)growToolbeltBy:(CGFloat)amount;
+// Dragging of the toolbelt's handle finished.
+- (void)toolbeltDidFinishGrowing;
 - (void)toolbeltUpdateMouseCursor;
 - (void)toolbeltInsertText:(NSString *)text;
 - (VT100RemoteHost *)toolbeltCurrentHost;
