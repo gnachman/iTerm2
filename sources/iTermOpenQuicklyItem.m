@@ -43,10 +43,26 @@
 
 @end
 
+@implementation iTermOpenQuicklyChangeProfileItem
+
+- (NSImage *)icon {
+    return [NSImage imageNamed:@"ChangeProfile"];
+}
+
+@end
+
 @implementation iTermOpenQuicklyArrangementItem
 
 - (NSImage *)icon {
   return [NSImage imageNamed:@"restore-arrangement"];
+}
+
+@end
+
+@implementation iTermOpenQuicklyHelpItem
+
+- (NSImage *)icon {
+    return [NSImage imageNamed:@"Info"];
 }
 
 @end

@@ -161,12 +161,14 @@
     if (row >= 0) {
         id object = [self.model objectAtIndex:row];
         if ([object isKindOfClass:[PTYSession class]]) {
+            // Switch to session
             PTYSession *session = object;
             if (session) {
                 NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
                 [term makeSessionActive:session];
             }
         } else if ([object isKindOfClass:[Profile class]]) {
+            // Create a new tab/window
             Profile *profile = object;
             iTermController *controller = [iTermController sharedInstance];
             [controller launchBookmark:profile
@@ -178,7 +180,23 @@
                                command:nil
                                  block:nil];
         } else if ([object isKindOfClass:[NSString class]]) {
+            // Load window arrangement
             [[iTermController sharedInstance] loadWindowArrangementWithName:object];
+        } else if ([object isKindOfClass:[iTermOpenQuicklyChangeProfileItem class]]) {
+            // Change profile
+            PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+            PTYSession *session = term.currentSession;
+            NSString *guid = [object identifier];
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+            if (profile) {
+                [session setProfile:profile preservingName:YES];
+                // Make sure the OS doesn't pick some random window to make key
+                [term.window makeKeyAndOrderFront:nil];
+            }
+        } else if ([object isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
+            _textField.stringValue = [object identifier];
+            [self update];
+            return;
         }
     }
 

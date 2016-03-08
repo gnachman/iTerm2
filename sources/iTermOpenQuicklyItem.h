@@ -39,5 +39,11 @@
 @interface iTermOpenQuicklyProfileItem : iTermOpenQuicklyItem
 @end
 
+@interface iTermOpenQuicklyChangeProfileItem : iTermOpenQuicklyItem
+@end
+
 @interface iTermOpenQuicklyArrangementItem : iTermOpenQuicklyItem
+@end
+
+@interface iTermOpenQuicklyHelpItem : iTermOpenQuicklyItem
 @end

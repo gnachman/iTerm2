@@ -2,6 +2,7 @@
 #import "iTermController.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMinimumSubsequenceMatcher.h"
+#import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
@@ -27,9 +28,50 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 @implementation iTermOpenQuicklyModel
 
-- (void)removeAllItems {
-    [_items removeAllObjects];
+#pragma mark - Commands
+
+- (NSArray<Class> *)commands {
+    static NSArray<Class> *commands;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        commands = @[ [iTermOpenQuicklyWindowArrangementCommand class],
+                      [iTermOpenQuicklySearchSessionsCommand class],
+                      [iTermOpenQuicklySwitchProfileCommand class],
+                      [iTermOpenQuicklyCreateTabCommand class] ];
+        [commands retain];
+    });
+    return commands;
 }
+
+- (Class)commandTypeWithAbbreviation:(NSString *)abbreviation {
+    for (Class commandClass in self.commands) {
+        if ([[commandClass command] isEqualToString:abbreviation]) {
+            return commandClass;
+        }
+    }
+    return nil;
+}
+
+- (id<iTermOpenQuicklyCommand>)commandForQuery:(NSString *)queryString {
+    if ([queryString hasPrefix:@"/"]) {
+        NSRange rangeOfSpace = [queryString rangeOfString:@" "];
+        if (rangeOfSpace.location != NSNotFound) {
+            NSString *command = [[queryString substringToIndex:rangeOfSpace.location] substringFromIndex:1];
+            NSString *text = [queryString substringFromIndex:rangeOfSpace.location + 1];
+            Class commandClass = [self commandTypeWithAbbreviation:command];
+            if (commandClass) {
+                id<iTermOpenQuicklyCommand> theCommand= [[[commandClass alloc] init] autorelease];
+                theCommand.text = text;
+                return theCommand;
+            }
+        }
+    }
+    id<iTermOpenQuicklyCommand> theCommand = [[[iTermOpenQuicklyNoCommand alloc] init] autorelease];
+    theCommand.text = queryString;
+    return theCommand;
+}
+
+#pragma mark - Utilities
 
 // Returns an array of all sessions.
 - (NSArray *)sessions {
@@ -42,15 +84,26 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     return sessions;
 }
 
-- (void)updateWithQuery:(NSString *)queryString {
-    NSArray *sessions = [self sessions];
+#pragma mark - Add Items
 
-    queryString = [queryString lowercaseString];
-    iTermMinimumSubsequenceMatcher *matcher =
-        [[[iTermMinimumSubsequenceMatcher alloc] initWithQuery:queryString] autorelease];
+- (void)addTipsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items {
+    for (Class commandClass in self.commands) {
+        iTermOpenQuicklyHelpItem *item = [[[iTermOpenQuicklyHelpItem alloc] init] autorelease];
+        item.score = 0;
+        item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                       value:[commandClass tipTitle]
+                                                          highlightedIndexes:nil];
+        item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                        value:[commandClass tipDetail]
+                                                           highlightedIndexes:nil];
+        item.identifier = [NSString stringWithFormat:@"/%@ ", [commandClass command]];
+        [items addObject:item];
+    }
+}
 
-    NSMutableArray *items = [NSMutableArray array];
-    for (PTYSession *session in sessions) {
+- (void)addSessionLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                    withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    for (PTYSession *session in self.sessions) {
         NSMutableArray *features = [NSMutableArray array];
         iTermOpenQuicklySessionItem *item = [[[iTermOpenQuicklySessionItem alloc] init] autorelease];
         item.logoGenerator.textColor = session.foregroundColor;
@@ -77,28 +130,51 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
             [items addObject:item];
         }
     }
+}
 
-    BOOL haveCurrentWindow = [[iTermController sharedInstance] currentTerminal] != nil;
+- (void)addCreateNewTabToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                   withMatcher:(iTermMinimumSubsequenceMatcher *)matcher
+             haveCurrentWindow:(BOOL)haveCurrentWindow {
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        iTermOpenQuicklyProfileItem *item = [[[iTermOpenQuicklyProfileItem alloc] init] autorelease];
+        iTermOpenQuicklyProfileItem *newSessionWithProfileItem = [[[iTermOpenQuicklyProfileItem alloc] init] autorelease];
         NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
-        item.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
-        if (item.score > 0) {
+        newSessionWithProfileItem.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
+        if (newSessionWithProfileItem.score > 0) {
             NSString *theValue;
             if (!haveCurrentWindow || [profile[KEY_PREVENT_TAB] boolValue]) {
                 theValue = @"Create a new window with this profile";
             } else {
                 theValue = @"Create a new tab with this profile";
             }
-            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                            value:theValue
-                                                               highlightedIndexes:nil];
-            item.title = attributedName;
-            item.identifier = profile[KEY_GUID];
-            [items addObject:item];
+            newSessionWithProfileItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                                                 value:theValue
+                                                                                    highlightedIndexes:nil];
+            newSessionWithProfileItem.title = attributedName;
+            newSessionWithProfileItem.identifier = profile[KEY_GUID];
+            [items addObject:newSessionWithProfileItem];
         }
     }
+}
 
+- (void)addChangeProfileToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                    withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        iTermOpenQuicklyChangeProfileItem *changeProfileItem = [[[iTermOpenQuicklyChangeProfileItem alloc] init] autorelease];
+        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        changeProfileItem.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
+        if (changeProfileItem.score > 0) {
+            changeProfileItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                                         value:@"Change current session’s profile"
+                                                                            highlightedIndexes:nil];
+            changeProfileItem.title = attributedName;
+            changeProfileItem.identifier = profile[KEY_GUID];
+            [items addObject:changeProfileItem];
+        }
+    }
+}
+
+- (void)addOpenArrangementToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                      withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (NSString *arrangementName in [WindowArrangements allNames]) {
         iTermOpenQuicklyArrangementItem *item = [[[iTermOpenQuicklyArrangementItem alloc] init] autorelease];
         NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
@@ -114,7 +190,42 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
             [items addObject:item];
         }
     }
+}
 
+#pragma mark - APIs
+
+- (void)removeAllItems {
+    [_items removeAllObjects];
+}
+
+- (void)updateWithQuery:(NSString *)queryString {
+    id<iTermOpenQuicklyCommand> command = [self commandForQuery:[queryString lowercaseString]];
+    
+    iTermMinimumSubsequenceMatcher *matcher =
+        [[[iTermMinimumSubsequenceMatcher alloc] initWithQuery:command.text] autorelease];
+
+    NSMutableArray *items = [NSMutableArray array];
+
+    if ([queryString isEqualToString:@"/"]) {
+        [self addTipsToItems:items];
+    }
+    
+    if ([command supportsSessionLocation]) {
+        [self addSessionLocationToItems:items withMatcher:matcher];
+    }
+
+    BOOL haveCurrentWindow = [[iTermController sharedInstance] currentTerminal] != nil;
+    if ([command supportsCreateNewTab]) {
+        [self addCreateNewTabToItems:items withMatcher:matcher haveCurrentWindow:haveCurrentWindow];
+    }
+    if ([command supportsChangeProfile] && haveCurrentWindow) {
+        [self addChangeProfileToItems:items withMatcher:matcher];
+    }
+
+    if ([command supportsOpenArrangement]) {
+        [self addOpenArrangementToItems:items withMatcher:matcher];
+    }
+    
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
                                                    iTermOpenQuicklyItem *obj2) {
@@ -130,6 +241,28 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     // Replace self.items with new items.
     self.items = items;
 }
+
+- (id)objectAtIndex:(NSInteger)index {
+    iTermOpenQuicklyItem *item = _items[index];
+    if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
+        return [[ProfileModel sharedInstance] bookmarkWithGuid:item.identifier];
+    } else if ([item isKindOfClass:[iTermOpenQuicklyChangeProfileItem class]] ||
+               [item isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
+        return item.identifier;
+    } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
+        NSString *guid = item.identifier;
+        for (PTYSession *session in [self sessions]) {
+            if ([session.guid isEqualTo:guid]) {
+                return session;
+            }
+        }
+    }
+    return nil;
+}
+
+#pragma mark - Scoring
 
 - (double)scoreForArrangementWithName:(NSString *)arrangementName
                               matcher:(iTermMinimumSubsequenceMatcher *)matcher
@@ -297,6 +430,19 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
         // Feature is disabled. In the future, we might let users tweak multipliers.
         return 0;
     }
+    if (matcher.query.length == 0) {
+        // Trivially matches every document.
+        double score = 0.01;
+        for (NSString *document in documents) {
+            if (features) {
+                id displayString = [_delegate openQuicklyModelDisplayStringForFeatureNamed:name
+                                                                                     value:document
+                                                                        highlightedIndexes:[NSIndexSet indexSet]];
+                [features addObject:@[ displayString, @(score) ]];
+            }
+        }
+        return score;
+    }
     double score = 0;
     double highestValue = 0;
     NSString *bestFeature = nil;
@@ -374,6 +520,8 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     return numRanges - 1;
 }
 
+#pragma mark - Feature Extraction
+
 // Returns an array of hostnames from an array of VT100RemoteHost*s
 - (NSArray *)hostnamesInHosts:(NSArray *)hosts {
     NSMutableArray *names = [NSMutableArray array];
@@ -390,23 +538,6 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
         [names addObject:host.username];
     }
     return names;
-}
-
-- (id)objectAtIndex:(NSInteger)index {
-    iTermOpenQuicklyItem *item = _items[index];
-    if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
-        return [[ProfileModel sharedInstance] bookmarkWithGuid:item.identifier];
-    } else if ([item isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
-        return item.identifier;
-    } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
-        NSString *guid = item.identifier;
-        for (PTYSession *session in [self sessions]) {
-            if ([session.guid isEqualTo:guid]) {
-                return session;
-            }
-        }
-    }
-    return nil;
 }
 
 @end
