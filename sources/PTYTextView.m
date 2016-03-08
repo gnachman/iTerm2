@@ -72,7 +72,8 @@
 #import <WebKit/WebKit.h>
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
-static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
+// Fixes https://gitlab.com/gnachman/iterm2/issues/4399
+static const int kMaxSemanticHistoryPrefixOrSuffix = 100000;
 
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.
