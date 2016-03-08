@@ -487,6 +487,28 @@
     XCTAssert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
 }
 
+// Open a file with a line number in the default app, which happens to be MacVim.
+- (void)testOpenPathOpensTextFileInDefaultAppWithLineNumber {
+    _semanticHistoryController.prefs =
+      @{ kSemanticHistoryActionKey: kSemanticHistoryBestEditorAction };
+    NSString *kExistingFileAbsolutePath = @"/file/that/exists";
+    NSString *fileWithLineNumber = [kExistingFileAbsolutePath stringByAppendingString:@":12"];
+    [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
+    _semanticHistoryController.defaultAppIsEditor = YES;
+    _semanticHistoryController.bundleIdForDefaultApp = kMacVimIdentifier;  // Act like macvim is the default for this kind of file
+
+    BOOL opened = [_semanticHistoryController openPath:fileWithLineNumber
+                                      workingDirectory:@"/"
+                                         substitutions:@{ kSemanticHistoryPrefixSubstitutionKey: @"Prefix",
+                                                          kSemanticHistorySuffixSubstitutionKey: @"Suffix",
+                                                          kSemanticHistoryWorkingDirectorySubstitutionKey: @"/" }];
+    XCTAssert(opened);
+    NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@&line=12",
+                                   kExistingFileAbsolutePath];
+    XCTAssert([_semanticHistoryController.openedURL isEqualTo:[NSURL URLWithString:expectedUrlString]]);
+    XCTAssert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
+}
+
 - (void)testOpenPathOpensTextFileInEditorWithLineNumberWhenEditorIsDefaultApp {
     _semanticHistoryController.prefs =
     @{ kSemanticHistoryActionKey: kSemanticHistoryEditorAction,
