@@ -185,6 +185,7 @@ static NSDate* lastResizeDate_;
 // constantly, plus it can miss mouse exit events and spurious mouse enter events (issue 3345).
 // I beleive it also caused hangs (issue 3974).
 - (void)updateTrackingAreas {
+#if 0
     if ([self window]) {
         int trackingOptions;
         trackingOptions = (NSTrackingMouseEnteredAndExited |
@@ -200,6 +201,7 @@ static NSDate* lastResizeDate_;
                                                                     userInfo:nil] autorelease];
         [self addTrackingArea:trackingArea];
     }
+#endif
 }
 
 - (void)mouseEntered:(NSEvent *)theEvent {
