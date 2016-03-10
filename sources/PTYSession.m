@@ -5705,6 +5705,41 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return [iTermProfilePreferences boolForKey:KEY_SHOW_MARK_INDICATORS inProfile:_profile];
 }
 
+- (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
+    static NSString *const kIdentifier = @"AskAboutAlternateMouseScroll";
+    if (!isTrying) {
+        [self dismissAnnouncementWithIdentifier:kIdentifier];
+        return;
+    }
+    static NSString *const kNeverAskAboutAltMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kNeverAskAboutAltMouseScroll]) {
+        return;
+    }
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"Do you want the scroll wheel to move the cursor in interactive programs like this?"
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Don‘t Ask Again" ]
+                                                    completion:^(int selection) {
+                                                        switch (selection) {
+                                                            case -2:  // Dismiss programmatically
+                                                                break;
+                                                                
+                                                            case -1: // No
+                                                                break;
+                                                                
+                                                            case 0: // Yes
+                                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"AlternateMouseScroll"];
+                                                                break;
+                                                                
+                                                            case 1: { // Never
+                                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kNeverAskAboutAltMouseScroll];
+                                                                break;
+                                                            }
+                                                        }
+                                                    }];
+    [self queueAnnouncement:announcement identifier:kIdentifier];
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {

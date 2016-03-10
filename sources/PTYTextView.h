@@ -161,6 +161,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
 
+// We guess the user is trying to send arrow keys with the scroll wheel in alt screen.
+- (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying;
+
 @end
 
 @interface PTYTextView : NSView <
