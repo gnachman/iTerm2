@@ -73,7 +73,6 @@
 #import <WebKit/WebKit.h>
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
-static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
 
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.
@@ -2480,14 +2479,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSString *extendedPrefix = [extractor wrappedStringAt:coord
                                                               forward:NO
                                                   respectHardNewlines:NO
-                                                             maxChars:kMaxSemanticHistoryPrefixOrSuffix
+                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
                 NSString *extendedSuffix = [extractor wrappedStringAt:coord
                                                               forward:YES
                                                   respectHardNewlines:NO
-                                                             maxChars:kMaxSemanticHistoryPrefixOrSuffix
+                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
@@ -5763,7 +5762,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxSemanticHistoryPrefixOrSuffix
+                                         maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                 continuationChars:continuationCharsCoords
                               convertNullsToSpace:NO
                                            coords:prefixCoords];
@@ -5772,7 +5771,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxSemanticHistoryPrefixOrSuffix
+                                         maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                 continuationChars:continuationCharsCoords
                               convertNullsToSpace:NO
                                            coords:suffixCoords];

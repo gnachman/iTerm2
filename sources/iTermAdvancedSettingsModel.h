@@ -127,5 +127,6 @@
 + (BOOL)tabTitlesUseSmartTruncation;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
++ (int)maxSemanticHistoryPrefixOrSuffix;
 
 @end
