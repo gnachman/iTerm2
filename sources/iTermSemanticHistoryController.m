@@ -171,20 +171,20 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (void)openFile:(NSString *)path
     inEditorWithBundleId:(NSString *)identifier
           lineNumber:(NSString *)lineNumber {
-    if ([self preferredEditorIdentifier]) {
+    if (identifier) {
         DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
-        if ([[self preferredEditorIdentifier] isEqualToString:kAtomIdentifier]) {
+        if ([identifier isEqualToString:kAtomIdentifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             [self launchAtomWithPath:path];
-        } else if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText2Identifier] ||
-                   [[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
+        } else if ([identifier isEqualToString:kSublimeText2Identifier] ||
+                   [identifier isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             NSString *bundleId;
-            if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
+            if ([identifier isEqualToString:kSublimeText3Identifier]) {
                 bundleId = kSublimeText3Identifier;
             } else {
                 bundleId = kSublimeText2Identifier;
@@ -194,7 +194,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         } else {
             path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
             NSURL *url = nil;
-            NSString *editorIdentifier = [self preferredEditorIdentifier];
+            NSString *editorIdentifier = identifier;
             if (lineNumber) {
                 url = [NSURL URLWithString:[NSString stringWithFormat:
                                             @"%@://open?url=file://%@&line=%@",
