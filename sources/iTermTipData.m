@@ -67,7 +67,7 @@
 
     // Big but not new features
             @"0014": @{ kTipTitleKey: @"Semantic History",
-                         kTipBodyKey: @"⌘-click on a file or URL to open it.", },
+                         kTipBodyKey: @"The “Semantic History” feature allows you to ⌘-click on a file or URL to open it.", },
 
             @"0015": @{ kTipTitleKey: @"Tmux Integration",
                         kTipBodyKey: @"If you use tmux, try running “tmux -CC” to get iTerm2‘s tmux integration mode. The tmux windows show up as native iTerm2 windows, and you can use iTerm2‘s keyboard shortcuts. It even works over ssh!",
