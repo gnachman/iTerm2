@@ -1674,6 +1674,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)setCharDirtyAtCursorX:(int)x Y:(int)y {
     if (y < 0) {
+        DLog(@"Warning: cannot set character dirty at y=%d", y);
         return;
     }
     int xToMark = x;

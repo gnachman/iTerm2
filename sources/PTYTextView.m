@@ -1066,10 +1066,8 @@ static const int kDragThreshold = 3;
 - (void)markCursorDirty {
   int currentCursorX = [_dataSource cursorX] - 1;
   int currentCursorY = [_dataSource cursorY] - 1;
-  DLog(@"Mark cursor position %d,%lldld dirty",
-       _previousCursorCoord.x, _previousCursorCoord.y - [_dataSource totalScrollbackOverflow]);
-  [_dataSource setCharDirtyAtCursorX:currentCursorX
-                                   Y:currentCursorY - [_dataSource totalScrollbackOverflow]];
+    DLog(@"Mark cursor position %d, %d dirty.", currentCursorX, currentCursorY);
+  [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 }
 
 - (void)setCursorVisible:(BOOL)cursorVisible {
