@@ -4,122 +4,161 @@
 //  Created by Andreas on 23.01.07.
 //  Copyright 2007 Andreas Mayer. All rights reserved.
 //
+// Updated to use a layer animation by George Nachman on 3/10/2016.
 
 #import "AMIndeterminateProgressIndicator.h"
+#import "NSImage+iTerm.h"
+#import <QuartzCore/QuartzCore.h>
 
-#define ConvertAngle(a) (fmod((90.0-(a)), 360.0))
+static CGFloat DegreesToRadians(double radians) {
+    return radians / 180.0 * M_PI;
+}
 
-#define DEG2RAD  0.017453292519943295
-
-@interface AMIndeterminateProgressIndicator ()
-@property(nonatomic) BOOL animate;
+@interface AMIndeterminateProgressIndicator()
+@property(nonatomic, retain) CAKeyframeAnimation *animation;
 @end
 
 @implementation AMIndeterminateProgressIndicator {
-  double _step;
-  NSTimer *_timer;
-  NSTimeInterval _startTime;
+    NSSize _animationSize;
 }
 
-- (id)init {
-  self = [super init];
-	if (self) {
-		[self setColor:[NSColor blackColor]];
-	}
-	return self;
+- (id)initWithFrame:(NSRect)frameRect {
+  self = [super initWithFrame:frameRect];
+  if (self) {
+      self.wantsLayer = YES;
+      [self setColor:[NSColor blackColor]];
+  }
+  return self;
 }
 
 - (void)dealloc {
-	[_color release];
-	[super dealloc];
+    [_animation release];
+    [_color release];
+    [super dealloc];
 }
 
 - (void)setColor:(NSColor *)value {
-	if (_color != value) {
-		[_color autorelease];
-		_color = [value retain];
-    assert([_color alphaComponent] > 0.999);
-	}
+    if (_color != value) {
+        [_color autorelease];
+        _color = [value retain];
+        assert([_color alphaComponent] > 0.999);
+    }
+}
+
+- (NSSize)physicalSize {
+    NSSize size = self.frame.size;
+    CGFloat scale = self.layer.contentsScale;
+    size.width *= scale;
+    size.height *= scale;
+    return size;
 }
 
 - (void)startAnimation:(id)sender {
-  self.animate = YES;
+    if (!self.animation || !NSEqualSizes(_animationSize, self.physicalSize)) {
+        _animationSize = self.physicalSize;
+        self.animation = [CAKeyframeAnimation animationWithKeyPath:@"contents"];
+        self.animation.calculationMode = kCAAnimationDiscrete;
+        self.animation.duration = 0.5;
+        self.animation.values = self.images;
+        self.animation.repeatCount = INFINITY;
+    }
+    [self.layer removeAllAnimations];
+    [self.layer addAnimation:_animation forKey:@"contents"];
 }
 
 - (void)stopAnimation:(id)sender {
-  self.animate = NO;
+    [self.layer removeAllAnimations];
 }
 
-- (void)drawRect:(NSRect)dirtyRect {
-  if (self.animate) {
-    NSTimeInterval delta = [NSDate timeIntervalSinceReferenceDate] - _startTime;
-    int step = round(-fmod(delta * 2.2, 1.0) * 12);
+// Returns an array of CGImageRefs for each frame of the animation.
+- (NSArray *)images {
+    NSMutableArray *frames = [NSMutableArray array];
+    NSSize size = self.physicalSize;
+
+    for (NSInteger step = 0; step < self.numberOfSteps; step++) {
+        NSImage *image = [[[NSImage alloc] initWithSize:size] autorelease];
+        [image lockFocus];
+        [self drawStep:step];
+        [image unlockFocus];
+        
+        NSBitmapImageRep *rep = image.bitmapImageRep;
+        NSData *data = [rep representationUsingType:NSPNGFileType
+                                         properties:@{ NSImageInterlaced: @NO,
+                                                       NSImageCompressionFactor: @1 }];
+        CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef)data);
+        CGImageRef cgImage = CGImageCreateWithPNGDataProvider(provider,
+                                                              NULL,
+                                                              true,
+                                                              kCGRenderingIntentDefault);
+        CFRelease(provider);
+
+        [frames addObject:(id)cgImage];
+        CFRelease(cgImage);
+    }
+    return frames;
+}
+
+- (NSInteger)numberOfSteps {
+    return 12;
+}
+
+- (void)drawStrokeFromPoint:(NSPoint)firstPoint
+                    toPoint:(NSPoint)secondPoint
+                strokeWidth:(CGFloat)strokeWidth {
+    NSLineCapStyle previousLineCapStyle = [NSBezierPath defaultLineCapStyle];
+    CGFloat previousLineWidth = [NSBezierPath defaultLineWidth];
+
+    [NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
+    [NSBezierPath setDefaultLineWidth:strokeWidth];
+    
+    [NSBezierPath strokeLineFromPoint:firstPoint toPoint:secondPoint];
+
+    // Restore previous defaults
+    [NSBezierPath setDefaultLineCapStyle:previousLineCapStyle];
+    [NSBezierPath setDefaultLineWidth:previousLineWidth];
+}
+
+- (void)drawStep:(int)step {
     CGRect frame = self.frame;
-		float size = MIN(frame.size.width, frame.size.height);
+    
+    // Scale frame by the layer's contentsScale so we fill it properly.
+    CGFloat scale = self.layer.contentsScale;
+    frame.size.width *= scale;
+    frame.size.height *= scale;
+    frame.origin.x *= scale;
+    frame.origin.y *= scale;
+    
+    float size = MIN(frame.size.width, frame.size.height);
     NSPoint center = NSMakePoint(NSMidX(frame), NSMidY(frame));
+    
+    CGFloat outerRadius;
+    CGFloat innerRadius;
+    const CGFloat strokeWidth = size * 0.09;
+    if (size >= 32.0 * scale) {
+        outerRadius = size * 0.38;
+        innerRadius = size * 0.23;
+    } else {
+        outerRadius = size * 0.48;
+        innerRadius = size * 0.27;
+    }
+    
+    NSPoint innerPoint;
+    NSPoint outerPoint;
+    CGFloat anglePerStep = 360 / self.numberOfSteps;
+    CGFloat initialAngle = DegreesToRadians(270 - (step * anglePerStep));
 
-		float outerRadius;
-		float innerRadius;
-		float strokeWidth = size * 0.09;
-		if (size >= 32.0) {
-			outerRadius = size * 0.38;
-			innerRadius = size * 0.23;
-		} else {
-			outerRadius = size * 0.48;
-			innerRadius = size * 0.27;
-		}
+    for (NSInteger i = 0; i < self.numberOfSteps; i++) {
+        CGFloat currentAngle = initialAngle - DegreesToRadians(anglePerStep) * i;
+        [[_color colorWithAlphaComponent:1.0 - sqrt(i) * 0.25] set];
+        
+        outerPoint = NSMakePoint(center.x + cos(currentAngle) * outerRadius,
+                                 center.y + sin(currentAngle) * outerRadius);
+        
+        innerPoint = NSMakePoint(center.x + cos(currentAngle) * innerRadius,
+                                 center.y + sin(currentAngle) * innerRadius);
 
-		float a; // angle
-		NSPoint inner;
-		NSPoint outer;
-		// remember defaults
-		NSLineCapStyle previousLineCapStyle = [NSBezierPath defaultLineCapStyle];
-		float previousLineWidth = [NSBezierPath defaultLineWidth]; 
-		// new defaults for our loop
-		[NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
-		[NSBezierPath setDefaultLineWidth:strokeWidth];
-    if (self.animate) {
-			a = (270 + (step * 30)) * DEG2RAD;
-		} else {
-			a = 270 * DEG2RAD;
-		}
-		int i;
-		for (i = 0; i < 12; i++) {
-      [[_color colorWithAlphaComponent:1.0 - sqrt(i) * 0.25] set];
-			outer = NSMakePoint(center.x + cos(a) * outerRadius, center.y + sin(a) * outerRadius);
-			inner = NSMakePoint(center.x + cos(a) * innerRadius, center.y + sin(a) * innerRadius);
-			[NSBezierPath strokeLineFromPoint:inner toPoint:outer];
-			a -= 30 * DEG2RAD;
-		}
-		// restore previous defaults
-		[NSBezierPath setDefaultLineCapStyle:previousLineCapStyle];
-		[NSBezierPath setDefaultLineWidth:previousLineWidth];
-	}
-}
-
-#pragma mark - Private
-
-- (void)redraw {
-  [self setNeedsDisplay:YES];
-}
-
-- (void)setAnimate:(BOOL)animate {
-  if (animate == _animate) {
-    return;
-  }
-
-  _animate = animate;
-  if (animate) {
-    _startTime = [NSDate timeIntervalSinceReferenceDate];
-    _timer = [NSTimer scheduledTimerWithTimeInterval:1 / 60.0
-                                              target:self
-                                            selector:@selector(redraw)
-                                            userInfo:nil
-                                             repeats:YES];
-  } else {
-    [_timer invalidate];
-    _timer = nil;
-  }
+        [self drawStrokeFromPoint:innerPoint toPoint:outerPoint strokeWidth:strokeWidth];
+    }
 }
 
 @end
