@@ -417,7 +417,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             actionString = @"Toggle Fullscreen";
             break;
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
-            actionString = @"Toggle Hotkey Window Pinning";
+            actionString = @"Toggle Hotkey Hides When Focus Lost";
             break;
         case KEY_ACTION_UNDO:
             actionString = @"Undo";

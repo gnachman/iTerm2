@@ -127,6 +127,12 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                            key:kPreferenceKeyHotkeyAutoHides
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
+    // You can change this setting with a key binding action, so we observer it to update the
+    // control when the user default changes.
+    [iTermPreferences addObserverForKey:kPreferenceKeyHotkeyAutoHides
+                                  block:^(id before, id after) {
+                                      [self updateValueForInfo:info];
+                                  }];
 
     [self defineControl:_hotkeyBookmark
                     key:kPreferenceKeyHotkeyProfileGuid
