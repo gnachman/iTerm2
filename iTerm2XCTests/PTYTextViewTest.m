@@ -486,6 +486,9 @@
     return YES;
 }
 
+- (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying {
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
     return NO;
 }
