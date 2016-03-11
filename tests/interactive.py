@@ -33,11 +33,11 @@ def SendLoadCommand(name, args):
 
 SendLoadCommand("NativeView",
                 """
-                { "app": "Interactive",
+                { "app": "WebView",
                   "arguments": {
-                    "key": "value"
+                    "url": "%s"
                   }
-                }""")
+                }""" % sys.argv[1])
 
 try:
   while True:
