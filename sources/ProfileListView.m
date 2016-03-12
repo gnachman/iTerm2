@@ -561,7 +561,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (NSAttributedString *)attributedStringForString:(NSString *)string selected:(BOOL)selected {
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
-                                  NSForegroundColorAttributeName: selected ? [NSColor whiteColor] : [NSColor blackColor] };
+                                  NSForegroundColorAttributeName: (selected && [NSApp isActive] && self.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor] };
     return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
 }
 
