@@ -503,7 +503,11 @@ const CGFloat kDefaultTagsWidth = 80;
     NSColor *tagColor;
     NSColor *highlightedBackgroundColor;
     if (selected) {
-        textColor = [NSColor whiteColor];
+        if ([NSApp isActive] && self.window.isKeyWindow) {
+            textColor = [NSColor whiteColor];
+        } else {
+            textColor = [NSColor blackColor];
+        }
         tagColor = [NSColor whiteColor];
         highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
     } else {
