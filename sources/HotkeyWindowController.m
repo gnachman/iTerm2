@@ -478,6 +478,15 @@ static BOOL UserIsActive() {
     return YES;
 }
 
+static BOOL ShouldRemap(BOOL disableRemapping, BOOL isDoNotRemap) {
+    if (disableRemapping) {
+        return NO;
+    } else {
+        // Remap unless bound action is DNR
+        return !isDoNotRemap;
+    }
+}
+
 /*
  * The callback is passed a proxy for the tap, the event type, the incoming event,
  * and the refcon the callback was registered with.
@@ -532,7 +541,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
         unsigned int modflag = [cocoaEvent modifierFlags];
         NSString *keyBindingText;
-        BOOL tempDisabled = [shortcutView disableKeyRemapping];
+        BOOL disableRemapping = shortcutView.disableKeyRemapping;
 
         int action = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                 modifiers:modflag
@@ -549,8 +558,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             event = eventCopy;
             eventCopy = temp;
         }
-        if ((!tempDisabled && !isDoNotRemap) ||  // normal case, whether keysheet is open or not
-            (!tempDisabled && isDoNotRemap)) {  // about to change dnr to non-dnr
+        if (ShouldRemap(disableRemapping, isDoNotRemap)) {
             [iTermKeyBindingMgr remapModifiersInCGEvent:event];
             cocoaEvent = [NSEvent eventWithCGEvent:event];
         }
@@ -562,7 +570,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             eventCopy = temp;
         }
         CFRelease(eventCopy);
-        if (tempDisabled && !isDoNotRemap) {
+        if (disableRemapping) {
             callDirectly = YES;
         }
     } else {
