@@ -157,7 +157,13 @@ enum {
     // draw the menu label
     NSMutableDictionary *attributes = [NSMutableDictionary dictionary];
     attributes[NSFontAttributeName] = [NSFont menuFontOfSize:kMenuFontSize];
-    if ([[[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"] isEqualToString:@"Dark"]) {
+    
+    NSMenu *rootMenu = self.enclosingMenuItem.menu;
+    while (rootMenu.supermenu) {
+        rootMenu = rootMenu.supermenu;
+    }
+    if (rootMenu == [NSApp mainMenu] &&
+        [[[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"] isEqualToString:@"Dark"]) {
         attributes[NSForegroundColorAttributeName] = [NSColor whiteColor];
     }
 
