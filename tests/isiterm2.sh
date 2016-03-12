@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Make sure stdin and stdout are a tty.
 if [ ! -t 0 ] ; then
   exit 1

@@ -8,6 +8,8 @@
 
 #import "PTYFontInfo.h"
 
+#import "DebugLogging.h"
+
 @implementation PTYFontInfo
 
 @synthesize font = font_;
@@ -33,8 +35,10 @@
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* boldFont = [fontManager convertWeight:YES ofFont:font_];
     if (boldFont && ([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {
+        DLog(@"Bold version of %@ is %@", font_, boldFont);
         return [PTYFontInfo fontInfoWithFont:boldFont baseline:baselineOffset_];
     } else {
+        DLog(@"Failed to find a bold version of %@", font_);
         return nil;
     }
 }
@@ -43,8 +47,10 @@
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* italicFont = [fontManager convertFont:font_ toHaveTrait:NSItalicFontMask];
     if (italicFont && ([fontManager traitsOfFont:italicFont] & NSItalicFontMask)) {
+        DLog(@"Italic version of %@ is %@", font_, italicFont);
         return [PTYFontInfo fontInfoWithFont:italicFont baseline:baselineOffset_];
     } else {
+        DLog(@"Failed to find an italic version of %@", font_);
         return nil;
     }
 }
