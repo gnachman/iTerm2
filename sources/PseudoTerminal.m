@@ -3670,7 +3670,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     NSString *newGuid = [session divorceAddressBookEntryFromPreferences];
     [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid selectGeneralTab:makeKey];
     if (makeKey) {
-        [PreferencePanel.sessionsInstance.windowIfLoaded makeKeyAndOrderFront:nil];
+        [[PreferencePanel sessionsInstance].windowIfLoaded makeKeyAndOrderFront:nil];
     }
 }
 
@@ -6885,9 +6885,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                 [session setDefaultName:[profile objectForKey:KEY_NAME]];
             }
             if ([session isDivorced] &&
-                [PreferencePanel.sessionsInstance.currentProfileGuid isEqualToString:guid] &&
-                 PreferencePanel.sessionsInstance.windowIfLoaded.isVisible) {
-                [PreferencePanel.sessionsInstance underlyingBookmarkDidChange];
+                [[PreferencePanel sessionsInstance].currentProfileGuid isEqualToString:guid] &&
+                 [PreferencePanel sessionsInstance].windowIfLoaded.isVisible) {
+                [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
         [oldName release];
@@ -7272,11 +7272,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         _directoriesPopupWindowController.delegate = nil;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    if (PreferencePanel.sessionsInstance.windowIfLoaded.isVisible) {
+    if ([PreferencePanel sessionsInstance].windowIfLoaded.isVisible) {
         if (self.currentSession) {
             [self editSession:self.currentSession makeKey:NO];
         } else {
-            [PreferencePanel.sessionsInstance.windowIfLoaded close];
+            [[PreferencePanel sessionsInstance].windowIfLoaded close];
         }
     }
 }

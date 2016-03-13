@@ -710,10 +710,10 @@ static const int kDragThreshold = 3;
 
 - (void)changeFont:(id)fontManager
 {
-    if (PreferencePanel.sharedInstance.windowIfLoaded.isVisible) {
-        [PreferencePanel.sharedInstance changeFont:fontManager];
-    } else if (PreferencePanel.sessionsInstance.windowIfLoaded.isVisible) {
-        [PreferencePanel.sessionsInstance changeFont:fontManager];
+    if ([PreferencePanel sharedInstance].windowIfLoaded.isVisible) {
+        [[PreferencePanel sharedInstance] changeFont:fontManager];
+    } else if ([PreferencePanel sessionsInstance].windowIfLoaded.isVisible) {
+        [[PreferencePanel sessionsInstance] changeFont:fontManager];
     }
 }
 
