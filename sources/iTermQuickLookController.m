@@ -7,7 +7,7 @@
 //
 
 #import "iTermQuickLookController.h"
-#import <Quartz/Quartz.h>
+#import "QLPreviewPanel+iTerm.h"
 
 @interface iTermQuickLookController() <QLPreviewPanelDataSource, QLPreviewPanelDelegate>
 @property(nonatomic, retain) NSMutableArray<NSURL *> *files;
@@ -22,9 +22,10 @@
 @implementation iTermQuickLookController
 
 + (void)dismissSharedPanel {
-  if ([[QLPreviewPanel sharedPreviewPanel] isVisible]) {
-    [[QLPreviewPanel sharedPreviewPanel] orderOut:nil];
-  }
+    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanelIfExists];
+    if ([panel isVisible]) {
+        [panel orderOut:nil];
+    }
 }
 
 - (void)dealloc {
@@ -60,11 +61,11 @@
 }
 
 - (void)close {
-  QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
-  if ([panel isVisible] &&
-      [panel delegate] == self) {
-    [panel orderOut:nil];
-  }
+    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanelIfExists];
+    if ([panel isVisible] &&
+        [panel delegate] == self) {
+        [panel orderOut:nil];
+    }
 }
 
 - (void)takeControl {
