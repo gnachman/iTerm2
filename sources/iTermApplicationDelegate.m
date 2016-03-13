@@ -64,6 +64,7 @@
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
+#import "QLPreviewPanel+iTerm.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -1684,10 +1685,13 @@ static BOOL hasBecomeActive = NO;
 
 - (void)currentSessionDidChange {
     [_passwordManagerWindowController update];
-    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
     PseudoTerminal *currentWindow = [[iTermController sharedInstance] currentTerminal];
-    if (panel.currentController == currentWindow) {
-        [currentWindow.currentSession.quickLookController takeControl];
+    iTermQuickLookController *quickLookController = currentWindow.currentSession.quickLookController;
+    if (quickLookController) {
+        QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanelIfExists];
+        if (panel.currentController == currentWindow) {
+            [quickLookController takeControl];
+        }
     }
 }
 
