@@ -30,6 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class PreferencePanel;
 @class iTermApplicationDelegate;
 
 @interface iTermApplication : NSApplication

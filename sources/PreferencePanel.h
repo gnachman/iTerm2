@@ -38,6 +38,7 @@ extern NSString *const kUpdateLabelsNotification;
 extern NSString *const kKeyBindingsChangedNotification;
 extern NSString *const kPreferencePanelDidUpdateProfileFields;
 extern NSString *const kSessionProfileDidChange;  // Posted by a session when it changes to update the Get Info window.
+extern NSString *const kPreferencePanelDidLoadNotification;
 extern NSString *const kPreferencePanelWillCloseNotification;
 
 // All profiles should be reloaded.
@@ -72,6 +73,8 @@ void LoadPrefsFromCustomFolder(void);
 
 + (instancetype)sharedInstance;
 + (instancetype)sessionsInstance;
+
+- (instancetype)initWithProfileModel:(ProfileModel*)model editCurrentSessionMode:(BOOL)editCurrentSessionMode;
 
 - (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab;
 

@@ -8,6 +8,8 @@
 
 #import "PreferenceInfo.h"
 
+extern NSString *const kPreferencePanelDidLoadNotification;
+
 @implementation PreferenceInfo
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
@@ -42,12 +44,16 @@
 - (void)setObserver:(void (^)())observer {
     [_observer autorelease];
     _observer = [observer copy];
-    // Call the observer after a delayed perform so that the current profile can be set and then the
-    // control's value gets initialized.
-    [self _callObserver];
+    // wait until the control is properly set up and then update its value
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_preferencePanelDidLoad:)
+                                                 name:kPreferencePanelDidLoadNotification
+                                               object:nil];
 }
 
-- (void)_callObserver {
+- (void)_preferencePanelDidLoad:(NSNotification *)notification
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kPreferencePanelDidLoadNotification object:nil];
     if (self.observer) {
         self.observer();
     }

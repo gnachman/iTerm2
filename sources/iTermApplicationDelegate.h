@@ -136,4 +136,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
 
+// Preference panels
+- (PreferencePanel *)sharedPreferencePanel;
+- (PreferencePanel *)sessionsPreferencePanel;
+
 @end

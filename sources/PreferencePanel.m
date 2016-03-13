@@ -94,6 +94,7 @@
 #import "PTYSession.h"
 #import "SessionView.h"
 #import "WindowArrangements.h"
+#import "iTermApplication.h"
 #include <stdlib.h>
 
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
@@ -102,6 +103,7 @@ NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotificat
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
+NSString *const kPreferencePanelDidLoadNotification = @"kPreferencePanelDidLoadNotification";
 NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCloseNotification";
 
 @interface PreferencePanel() <NSTabViewDelegate>
@@ -140,33 +142,12 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
     NSSize _standardSize;
 }
 
-static PreferencePanel *_sessionsInstance;
-static PreferencePanel *_sharedInstance;
-
 + (instancetype)sharedInstance {
-    if (!_sharedInstance) {
-        _sharedInstance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
-                                        editCurrentSessionMode:YES];
-    }
-    return _sharedInstance;
+    return [iTermApplication sharedApplication].delegate.sharedPreferencePanel;
 }
 
 + (instancetype)sessionsInstance {
-    if (!_sessionsInstance) {
-        _sessionsInstance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
-                                        editCurrentSessionMode:YES];
-    }
-    return _sessionsInstance;
-}
-
-+ (void)_releaseAndNilifySingletonInstancesIfNeeded:(PreferencePanel *)instance {
-    if (instance == _sharedInstance) {
-        [_sharedInstance release];
-        _sharedInstance = nil;
-    } else if (instance == _sessionsInstance) {
-        [_sessionsInstance release];
-        _sessionsInstance = nil;
-    }
+    return [iTermApplication sharedApplication].delegate.sessionsPreferencePanel;
 }
 
 - (instancetype)initWithProfileModel:(ProfileModel*)model
@@ -229,6 +210,17 @@ static PreferencePanel *_sharedInstance;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename {
     return [_profilesViewController importColorPresetFromFile:filename];
+}
+
+- (NSWindow *)window
+{
+    BOOL shouldPostWindowLoadNotification = !self.windowLoaded;
+    NSWindow *window = [super window];
+    if (shouldPostWindowLoadNotification) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidLoadNotification
+                                                            object:self];
+    }
+    return window;
 }
 
 - (NSWindow *)windowIfLoaded
@@ -297,19 +289,17 @@ static PreferencePanel *_sharedInstance;
 // Shell>Close Terminal Window
 - (void)closeWindow:(id)sender {
     [self close];
-    [PreferencePanel _releaseAndNilifySingletonInstancesIfNeeded:self];
 }
 
 - (void)close
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelWillCloseNotification object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelWillCloseNotification object:self];
     [super close];
 }
 
 - (void)changeFont:(id)fontManager {
     [_profilesViewController changeFont:fontManager];
 }
-
 
 #pragma mark - IBActions
 

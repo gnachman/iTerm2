@@ -150,6 +150,9 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
+
+    PreferencePanel *_sharedPreferencePanel;
+    PreferencePanel *_sessionsPreferencePanel;
 }
 
 // NSApplication delegate methods
@@ -659,6 +662,10 @@ static BOOL hasBecomeActive = NO;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(currentSessionDidChange)
                                                      name:kCurrentSessionDidChange
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferencePanelWillClose:)
+                                                     name:kPreferencePanelWillCloseNotification
                                                    object:nil];
         [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                            andSelector:@selector(getUrl:withReplyEvent:)
@@ -1701,6 +1708,35 @@ static BOOL hasBecomeActive = NO;
 
 - (NSArray*)terminals {
     return [[iTermController sharedInstance] terminals];
+}
+
+- (void)preferencePanelWillClose:(NSNotification *)notification
+{
+    if (notification.object == _sharedPreferencePanel) {
+        [_sharedPreferencePanel release];
+        _sharedPreferencePanel = nil;
+    } else if (notification.object == _sessionsPreferencePanel) {
+        [_sessionsPreferencePanel release];
+        _sessionsPreferencePanel = nil;
+    }
+}
+
+- (PreferencePanel *)sharedPreferencePanel
+{
+    if (!_sharedPreferencePanel) {
+        _sharedPreferencePanel = [[PreferencePanel alloc] initWithProfileModel:[ProfileModel sharedInstance]
+                                                        editCurrentSessionMode:NO];
+    }
+    return _sharedPreferencePanel;
+}
+
+- (PreferencePanel *)sessionsPreferencePanel
+{
+    if (!_sessionsPreferencePanel) {
+        _sessionsPreferencePanel = [[PreferencePanel alloc] initWithProfileModel:[ProfileModel sessionsInstance]
+                                                          editCurrentSessionMode:YES];
+    }
+    return _sessionsPreferencePanel;
 }
 
 @end
