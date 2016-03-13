@@ -6030,7 +6030,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // This is preferred since it doesn't have the green plus indicating a copy
             return NSDragOperationGeneric;
         } else {
-            // Even if the source only allows copy, we allow it. See issue 4313.
+            // Even if the source only allows copy, we allow it. See issue 4286.
             // Such sources are silly and we route around the damage.
             return NSDragOperationCopy;
         }
