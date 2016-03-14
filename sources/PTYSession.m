@@ -3524,7 +3524,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     _timeOfLastScheduling = now;
     _lastTimeout = timeout;
 
-    static const NSTimeInterval kMinimumDelay = 1 / 60.0;
+    static const NSTimeInterval kMinimumDelay = 1 / 30.0;
     DLog(@"  scheduling timer to run in %f sec", MAX(kMinimumDelay, timeout - timeSinceLastUpdate));
     
 #if 0
