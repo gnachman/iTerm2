@@ -132,8 +132,6 @@
 		1D5FDD7D1208E91100C46BA3 /* config.png in Resources */ = {isa = PBXBuildFile; fileRef = FB754C5F036EFC5301F955DB /* config.png */; };
 		1D5FDD7F1208E91100C46BA3 /* important.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB2EBCD040AC7C201F955DB /* important.png */; };
 		1D5FDD811208E91100C46BA3 /* newwin.png in Resources */ = {isa = PBXBuildFile; fileRef = FB896717038D935801F955DB /* newwin.png */; };
-		1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */ = {isa = PBXBuildFile; fileRef = DD02576609CB93C2008F320C /* overflowImage.tiff */; };
-		1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02576709CB93C2008F320C /* overflowImagePressed.tif */; };
 		1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
 		1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
 		1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
@@ -441,9 +439,7 @@
 		1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
 		1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
 		1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
-		1D6ED98C19AEA20D005A7799 /* overflowImage.tiff in Resources */ = {isa = PBXBuildFile; fileRef = DD02576609CB93C2008F320C /* overflowImage.tiff */; };
 		1D6ED98D19AEA20D005A7799 /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
-		1D6ED98E19AEA20D005A7799 /* overflowImagePressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02576709CB93C2008F320C /* overflowImagePressed.tif */; };
 		1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
 		1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
 		1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
@@ -730,6 +726,10 @@
 		1DFA9D6418F37160008ADC98 /* iTermEditKeyActionWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */; };
 		1DFA9D7018F3A30F008ADC98 /* PointerPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
+		534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690231C94FE8000B7E4E9 /* overflowImage.png */; };
+		534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690271C94FF0000B7E4E9 /* overflowImagePressed.png */; };
+		5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */; };
+		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */; };
@@ -2156,6 +2156,10 @@
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; tabWidth = 4; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
+		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
+		534690271C94FF0000B7E4E9 /* overflowImagePressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImagePressed.png; sourceTree = "<group>"; };
+		534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImagePressed@2x.png"; sourceTree = "<group>"; };
+		5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImage@2x.png"; sourceTree = "<group>"; };
 		5BC84AA2F3A178CCEF36EB64 /* Pods-iTerm2XCTests.nightly.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.nightly.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.nightly.xcconfig"; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2747,8 +2751,6 @@
 		DD02573209CB9398008F320C /* PSMTabBarControl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarControl.h; sourceTree = "<group>"; };
 		DD02573309CB9398008F320C /* PSMTabBarControl.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarControl.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02573909CB9398008F320C /* PSMTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabStyle.h; sourceTree = "<group>"; };
-		DD02576609CB93C2008F320C /* overflowImage.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = overflowImage.tiff; sourceTree = "<group>"; };
-		DD02576709CB93C2008F320C /* overflowImagePressed.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = overflowImagePressed.tif; sourceTree = "<group>"; };
 		DD02576E09CB93C2008F320C /* TabNewMetal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetal.png; sourceTree = "<group>"; };
 		DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalPressed.png; sourceTree = "<group>"; };
 		DD02577009CB93C2008F320C /* TabNewMetalRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalRollover.png; sourceTree = "<group>"; };
@@ -4364,8 +4366,10 @@
 		DD02575509CB93C2008F320C /* images */ = {
 			isa = PBXGroup;
 			children = (
-				DD02576609CB93C2008F320C /* overflowImage.tiff */,
-				DD02576709CB93C2008F320C /* overflowImagePressed.tif */,
+				534690271C94FF0000B7E4E9 /* overflowImagePressed.png */,
+				534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */,
+				534690231C94FE8000B7E4E9 /* overflowImage.png */,
+				5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */,
 				1D48B288165F3669000046EE /* TabClose_Front.png */,
 				1D48B280165F362B000046EE /* TabClose_Front@2x.png */,
 				1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */,
@@ -5347,13 +5351,11 @@
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
-				1D6ED98C19AEA20D005A7799 /* overflowImage.tiff in Resources */,
 				A67D0D551A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A67D0D371A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				1D6ED98D19AEA20D005A7799 /* mark.png in Resources */,
-				1D6ED98E19AEA20D005A7799 /* overflowImagePressed.tif in Resources */,
 				1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */,
 				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
@@ -5580,8 +5582,10 @@
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
 				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
+				534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */,
 				A67D0D711A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A66DB80E1C8E182B00233E88 /* Info.png in Resources */,
+				5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */,
 				1D5FDD7F1208E91100C46BA3 /* important.png in Resources */,
 				1DC13ABD1886146B00034DAE /* mark_err.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
@@ -5596,14 +5600,12 @@
 				A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
 				A67D0D4A1A2EE12A003A8B35 /* configPanel.strings in Resources */,
-				1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */,
 				A67D0D531A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A66DB8331C8E4C2E00233E88 /* ChangeProfile@2x.png in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */,
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
-				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
@@ -5668,8 +5670,10 @@
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
+				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
+				5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */,
 				A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
