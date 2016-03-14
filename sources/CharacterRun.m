@@ -9,7 +9,14 @@
 #import "CharacterRun.h"
 #import "ScreenChar.h"
 
-@implementation CRunStorage : NSObject
+#define SIZEOF_CODES    sizeof(*codes_)
+#define SIZEOF_GLYPHS   sizeof(*glyphs_)
+#define SIZEOF_ADVANCES sizeof(*advances_)
+#define SIZEOF_ELEMENTS (SIZEOF_CODES + SIZEOF_GLYPHS + SIZEOF_ADVANCES)
+
+@implementation CRunStorage {
+    void *elements_;
+}
 
 + (CRunStorage *)cRunStorageWithCapacity:(int)capacity {
     return [[[CRunStorage alloc] initWithCapacity:capacity] autorelease];
@@ -18,11 +25,9 @@
 - (instancetype)initWithCapacity:(int)capacity {
     self = [super init];
     if (self) {
-        capacity = MAX(capacity, 1);
-        codes_ = malloc(sizeof(unichar) * capacity);
-        glyphs_ = malloc(sizeof(CGGlyph) * capacity);
-        advances_ = malloc(sizeof(NSSize) * capacity);
-        capacity_ = capacity;
+        capacity_ = MAX(capacity, 1);
+        elements_ = malloc(SIZEOF_ELEMENTS * capacity_);
+        [self _setElements];
         colors_ = [[NSHashTable alloc] initWithOptions:NSHashTableObjectPointerPersonality
                                               capacity:2];
         used_ = 0;
@@ -31,9 +36,7 @@
 }
 
 - (void)dealloc {
-    free(codes_);
-    free(glyphs_);
-    free(advances_);
+    free(elements_);
     for (NSColor *color in colors_.allObjects) {
         [color release];
     }
@@ -56,14 +59,20 @@
     return advances_ + theIndex;
 }
 
+- (void)_setElements
+{
+    codes_    = elements_;
+    glyphs_   = elements_ + SIZEOF_CODES * capacity_;
+    advances_ = elements_ + (SIZEOF_CODES + SIZEOF_GLYPHS) * capacity_;
+}
+
 - (int)allocate:(int)size {
     int theIndex = used_;
     used_ += size;
     while (used_ > capacity_) {
         capacity_ *= 2;
-        codes_ = realloc(codes_, sizeof(unichar) * capacity_);
-        glyphs_ = realloc(glyphs_, sizeof(CGGlyph) * capacity_);
-        advances_ = realloc(advances_, sizeof(NSSize) * capacity_);
+        elements_ = realloc(elements_, SIZEOF_ELEMENTS * capacity_);
+        [self _setElements];
     }
     return theIndex;
 }
