@@ -59,3 +59,7 @@ extern BOOL gDebugLogging;
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 void TurnOnDebugLoggingSilently(void);
+
+@interface iTermAllocationTracker : NSObject
++ (void)writeToDebugLog;
+@end

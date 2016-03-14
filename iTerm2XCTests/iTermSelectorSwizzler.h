@@ -19,4 +19,7 @@
               withBlock:(id)fakeSelectorBlock
                forBlock:(dispatch_block_t)block;
 
++ (void)swizzleSelector:(SEL)selector fromClass:(Class)fromClass withBlock:(id)fakeSelectorBlock;
+
++ (IMP)implementationOfSelector:(SEL)selector inClass:(Class)fromClass;
 @end

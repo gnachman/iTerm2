@@ -39,6 +39,7 @@
 #import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
+#import "iTermSelectorSwizzler.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
@@ -97,6 +98,55 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
+static NSCountedSet *gTrackerStacks;
+
+
+@implementation iTermAllocationTracker {
+    NSString *_fingerprint;
+}
+
+- (instancetype)initWithFingerprint:(NSString *)fingerprint {
+    self = [super init];
+    if (self) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            gTrackerStacks = [[NSCountedSet alloc] init];
+        });
+        _fingerprint = [[NSString stringWithFormat:@"FINGERPRINT:\n%@\nStack:\n%@\n",
+                         fingerprint,
+                         [[NSThread callStackSymbols] description]] retain];
+        @synchronized(gTrackerStacks) {
+            [gTrackerStacks addObject:_fingerprint];
+        }
+    }
+    return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p\n%@>", self.class, self, _fingerprint];
+}
+
+- (void)dealloc {
+    @synchronized(gTrackerStacks) {
+        [gTrackerStacks removeObject:_fingerprint];
+    }
+    [_fingerprint release];
+    [super dealloc];
+}
+
++ (void)logAllTrackers {
+    NSLog(@"%@", gTrackerStacks);
+}
+
++ (void)writeToDebugLog {
+    for (NSString *key in [gTrackerStacks allObjects]) {
+        DLog(@"%@", key);
+    }
+}
+
+
+@end
+
 @interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
@@ -151,8 +201,28 @@ static BOOL hasBecomeActive = NO;
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 }
 
+typedef id TrackingAreaInitFunction(id self, SEL cmd, NSRect rect, NSTrackingAreaOptions options, id owner, NSDictionary *userInfo);
+TrackingAreaInitFunction *originalImpl;
+
+static id BetterImpl(id self, SEL cmd, NSRect rect, NSTrackingAreaOptions options, id owner, NSDictionary *userInfo) {
+    id object = originalImpl(self, cmd, rect, options, owner, userInfo);
+    NSString *fp = [NSString stringWithFormat:@"owner=%@ userinfo=%@ rect=%@", owner, userInfo, NSStringFromRect(rect)];
+    iTermAllocationTracker *tracker = [[iTermAllocationTracker alloc] initWithFingerprint:fp];
+    objc_setAssociatedObject(object, "iterm", tracker, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [tracker release];
+    return object;
+}
+
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+    originalImpl = (TrackingAreaInitFunction *)[iTermSelectorSwizzler implementationOfSelector:@selector(initWithRect:options:owner:userInfo:)
+                                                                                       inClass:[NSTrackingArea class]];
+    // - (instancetype)initWithRect:(NSRect)rect options:(NSTrackingAreaOptions)options owner:(nullable id)owner userInfo:(nullable NSDictionary<id, id> *)userInfo;
+
+    Method originalMethod = class_getInstanceMethod([NSTrackingArea class],
+                                                    @selector(initWithRect:options:owner:userInfo:));
+    method_setImplementation(originalMethod, BetterImpl);
+
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();

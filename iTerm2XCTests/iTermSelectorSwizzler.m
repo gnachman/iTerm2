@@ -11,6 +11,8 @@
         return;
     }
 
+    [self swizzleSelector:selector fromClass:fromClass withBlock:fakeSelectorBlock];
+
     Method originalMethod = class_getClassMethod(fromClass, selector)
         ?: class_getInstanceMethod(fromClass, selector);
 
@@ -21,6 +23,25 @@
     block();
 
     method_setImplementation(originalMethod, originalMethodImplementation);
+}
+
++ (void)swizzleSelector:(SEL)selector fromClass:(Class)fromClass withBlock:(id)fakeSelectorBlock {
+    if (!fakeSelectorBlock) {
+        return;
+    }
+
+    Method originalMethod = class_getClassMethod(fromClass, selector)
+        ?: class_getInstanceMethod(fromClass, selector);
+
+    IMP fakeMethodImplementation = imp_implementationWithBlock(fakeSelectorBlock);
+    method_setImplementation(originalMethod, fakeMethodImplementation);
+}
+
++ (IMP)implementationOfSelector:(SEL)selector inClass:(Class)fromClass {
+    Method originalMethod = class_getClassMethod(fromClass, selector)
+            ?: class_getInstanceMethod(fromClass, selector);
+
+    return method_getImplementation(originalMethod);
 }
 
 @end

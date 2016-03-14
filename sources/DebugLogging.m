@@ -113,6 +113,9 @@ static void StartDebugLogging() {
     gDebugLogStr = [[NSMutableString alloc] init];
     gDebugLogging = !gDebugLogging;
     WriteDebugLogHeader();
+    DLog(@"=== Begin tracked allocations ===");
+    [iTermAllocationTracker writeToDebugLog];
+    DLog(@"=== End tracked allocations ===");
     [gDebugLogLock unlock];
 }
 
