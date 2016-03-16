@@ -286,7 +286,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             iTermExposeTabView* tabView = (iTermExposeTabView*)aView;
-            if ([aView wasMaximized] && [theSession tab] != [tabView tab]) {
+            if ([aView wasMaximized] && [theSession.delegate.realParentWindow tabForSession:theSession] != [tabView tab]) {
                 [[tabView tab] maximize];
             }
         }

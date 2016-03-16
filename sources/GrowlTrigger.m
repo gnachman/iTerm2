@@ -38,7 +38,7 @@
     [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:capturedStrings count:captureCount]
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
                          [aSession name],
-                         [[aSession tab] realObjectCount]]
+                         aSession.delegate.tabNumber]
         andNotification:@"Customized Message"
         windowIndex:[aSession screenWindowIndex]
            tabIndex:[aSession screenTabIndex]

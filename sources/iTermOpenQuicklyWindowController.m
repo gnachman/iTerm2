@@ -164,7 +164,7 @@
             // Switch to session
             PTYSession *session = object;
             if (session) {
-                NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
+                NSWindowController<iTermWindowController> *term = session.delegate.realParentWindow;
                 [term makeSessionActive:session];
             }
         } else if ([object isKindOfClass:[Profile class]]) {

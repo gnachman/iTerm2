@@ -69,7 +69,7 @@
     [resultView_ setHasResult:NO];
     resultView_ = nil;
     resultSession_ = nil;
-    PTYTab* changedTab = [theSession tab];
+    PTYTab *changedTab = [theSession.delegate.realParentWindow tabForSession:theSession];
     for (iTermExposeTabView* aView in [grid_ subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             PTYTab* theTab = [aView tabObject];
@@ -82,7 +82,7 @@
     }
     [resultView_ setHasResult:YES];
     if (resultView_) {
-        [grid_ updateTab:[theSession tab]];
+        [grid_ updateTab:changedTab];
     }
 }
 

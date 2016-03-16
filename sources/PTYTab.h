@@ -2,11 +2,12 @@
 // owner of PTYSession.
 
 #import <Cocoa/Cocoa.h>
-#import "WindowControllerInterface.h"
-#import "PSMTabBarControl.h"
-#import "PTYSplitView.h"
 #import "FutureMethods.h"
+#import "PSMTabBarControl.h"
+#import "PTYSession.h"
+#import "PTYSplitView.h"
 #import "PTYTabDelegate.h"
+#import "WindowControllerInterface.h"
 
 @class PTYSession;
 @class PTYTab;
@@ -20,6 +21,7 @@
 @interface PTYTab : NSObject <
   NSCopying,
   NSSplitViewDelegate,
+  PTYSessionDelegate,
   PTYSplitViewDelegate,
   PSMTabBarControlRepresentedObjectIdentifierProtocol>
 
@@ -30,7 +32,6 @@
 @property(nonatomic, readonly) BOOL isMaximized;
 // Sessions ordered in a similar-to-reading-order fashion.
 @property(nonatomic, readonly) NSArray *orderedSessions;
-@property(nonatomic, readonly) int tabNumberForItermSessionId;
 @property(nonatomic, assign) id<PTYTabDelegate> delegate;
 
 @property(nonatomic, retain) PTYSession *activeSession;
@@ -86,22 +87,15 @@
 - (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
-- (void)previousSession;
-- (void)nextSession;
 - (int)indexOfSessionView:(SessionView*)sessionView;
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
-- (id<WindowControllerInterface>)parentWindow;
-- (NSWindowController<iTermWindowController> *)realParentWindow;
 - (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent;
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
 - (FakeWindow*)fakeWindow;
 
-- (void)setBell:(BOOL)flag;
-- (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName;
 
 - (BOOL)isForegroundTab;
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession;
 // Fit session views to scroll views.
@@ -111,22 +105,14 @@
 // tight fit. This should be followed by fitting the window to tabs.
 - (void)recompact;
 
-// Tab index.
-- (int)number;
-
 - (PTYSession *)sessionWithViewId:(int)viewId;
 
-- (int)realObjectCount;
 // Should show busy indicator in tab?
 - (BOOL)isProcessing;
 - (BOOL)realIsProcessing;
 - (void)setIsProcessing:(BOOL)aFlag;
 - (BOOL)isActiveSession;
-// Returns true if another update may be needed later (so the timer should be scheduled).
-- (BOOL)updateLabelAttributes;
-- (void)closeSession:(PTYSession*)session;
 - (void)terminateAllSessions;
-- (NSArray*)sessions;
 - (NSArray *)windowPanes;
 - (NSArray*)sessionViews;
 - (BOOL)allSessionsExited;
@@ -147,13 +133,9 @@
 - (NSImage*)image:(BOOL)withSpaceForFrame;
 - (bool)blur;
 - (double)blurRadius;
-- (void)recheckBlur;
 
 - (NSSize)_minSessionSize:(SessionView*)sessionView;
 - (NSSize)_sessionSize:(SessionView*)sessionView;
-
-// Remove a dead session. This should be called from [session terminate] only.
-- (void)removeSession:(PTYSession*)aSession;
 
 // If the active session's parent splitview has:
 //   only one child: make its orientation vertical and add a new subview.
@@ -172,9 +154,7 @@
 - (NSDictionary*)arrangement;
 
 - (void)notifyWindowChanged;
-- (BOOL)hasMaximizedPane;
 - (void)maximize;
-- (void)unmaximize;
 // Does any session in this tab require prompt on close?
 - (BOOL)promptOnClose;
 
@@ -188,7 +168,6 @@
 - (void)reloadTmuxLayout;
 // Size we are given the current layout
 
-- (int)tmuxWindow;
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController
                zoomed:(NSNumber *)zoomed;
@@ -207,8 +186,6 @@
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 
 - (NSDictionary*)arrangementWithContents:(BOOL)contents;
-
-- (void)addHiddenLiveView:(SessionView *)hiddenLiveView;
 
 // Update the tab's title from the active session's name. Needed for initialzing the tab's title
 // after setting up tmux tabs.
