@@ -175,7 +175,10 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename {
     struct statfs buf;
+    NSDate *before = [NSDate date];
     int rc = statfs([filename UTF8String], &buf);
+    NSLog(@"Time to statfs %@ is %f", filename, [before timeIntervalSinceNow]);
+    
     if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
         return [self fileExistsAtPath:filename];
     } else {
