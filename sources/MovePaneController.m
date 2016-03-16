@@ -74,7 +74,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 }
 
 - (void)moveWindowBy:(NSPoint)point {
-    NSWindow *window = session_.tab.realParentWindow.window;
+    NSWindow *window = session_.delegate.realParentWindow.window;
     NSPoint origin = window.frame.origin;
     origin.x += point.x;
     origin.y += point.y;
@@ -83,14 +83,13 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
     [window setFrameOrigin:origin];
 }
 
-- (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point
-{
+- (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point {
     if ([movingSession isTmuxClient]) {
         [[movingSession tmuxController] breakOutWindowPane:[movingSession tmuxPane]
                                                    toPoint:point];
         return;
     }
-    PTYTab *theTab = [movingSession tab];
+    PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
     NSWindowController<iTermWindowController> * term =
         [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
 
@@ -117,8 +116,8 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
     SessionView *oldView = [session_ view];
     [oldView retain];
     PTYSession *movingSession = session_;
-    PTYTab *theTab = [movingSession tab];
-    [[movingSession tab] removeSession:movingSession];
+    PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
+    [movingSession.delegate removeSession:movingSession];
     if ([[theTab sessions] count] == 0) {
         [[theTab realParentWindow] closeTab:theTab];
     }
@@ -184,30 +183,32 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
         return YES;
     }
 
+    PTYTab *destinationTab = [dest.delegate.realParentWindow tabForSession:dest];
     if (isMove_) {
         PTYSession *movingSession = session_;
         BOOL isVertical = (half == kWestHalf || half == kEastHalf);
-        if (![[[dest tab] realParentWindow] canSplitPaneVertically:isVertical
-                                                      withBookmark:[movingSession profile]]) {
+        if (![[destinationTab realParentWindow] canSplitPaneVertically:isVertical
+                                                          withBookmark:[movingSession profile]]) {
             return NO;
         }
 
         SessionView *oldView = [movingSession view];
         [oldView retain];
-        PTYTab *theTab = [movingSession tab];
-        [[movingSession tab] removeSession:movingSession];
+        PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
+        [theTab removeSession:movingSession];
         if ([[theTab sessions] count] == 0) {
             [[theTab realParentWindow] closeTab:theTab];
         }
-        [[[dest tab] realParentWindow] splitVertically:isVertical
-                                                before:(half == kNorthHalf || half == kWestHalf)
-                                         addingSession:movingSession
-                                         targetSession:dest
-                                          performSetup:NO];
+
+        [[destinationTab realParentWindow] splitVertically:isVertical
+                                                    before:(half == kNorthHalf || half == kWestHalf)
+                                             addingSession:movingSession
+                                             targetSession:dest
+                                              performSetup:NO];
         [oldView release];
-        [[dest tab] fitSessionToCurrentViewSize:movingSession];
+        [destinationTab fitSessionToCurrentViewSize:movingSession];
     } else {
-        [[dest tab] swapSession:dest withSession:session_];
+        [destinationTab swapSession:dest withSession:session_];
     }
     return YES;
 }
@@ -228,7 +229,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
     [pboard declareTypes:@[ iTermMovePaneDragType ] owner: nil];
     [pboard setString:@"" forType:iTermMovePaneDragType];
 
-    PTYTab *theTab = [session tab];
+    PTYTab *theTab = [session.delegate.realParentWindow tabForSession:session];
     NSRect rect = [[[session view] superview] convertRect:[[session view] frame] toView:nil];
     SessionView *source = [session view];
     [source retain];

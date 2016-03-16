@@ -2,11 +2,12 @@
 // owner of PTYSession.
 
 #import <Cocoa/Cocoa.h>
-#import "WindowControllerInterface.h"
+#import "FutureMethods.h"
 #import "PSMTabBarControl.h"
 #import "PTYSplitView.h"
-#import "FutureMethods.h"
+#import "PTYSession.h"
 #import "PTYTabDelegate.h"
+#import "WindowControllerInterface.h"
 
 @class PTYSession;
 @class PTYTab;
@@ -20,6 +21,7 @@
 @interface PTYTab : NSObject <
   NSCopying,
   NSSplitViewDelegate,
+  PTYSessionDelegate,
   PTYSplitViewDelegate,
   PSMTabBarControlRepresentedObjectIdentifierProtocol>
 

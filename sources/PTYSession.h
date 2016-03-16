@@ -29,10 +29,12 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
 @class PTYScrollView;
+@class PTYTab;
 @class PTYTask;
 @class PTYTextView;
 @class PasteContext;
 @class PreferencePanel;
+@class PTYSession;
 @class VT100RemoteHost;
 @class VT100Screen;
 @class VT100Terminal;
@@ -41,6 +43,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class iTermController;
 @class iTermGrowlDelegate;
 @class iTermQuickLookController;
+@class SessionView;
 
 // The time period for just blinking is in -[iTermAdvancedSettingsModel timeBetweenBlinks].
 // Timer period when receiving lots of data.
@@ -64,7 +67,45 @@ typedef enum {
     TMUX_CLIENT  // Session mirrors a tmux virtual window
 } PTYSessionTmuxMode;
 
-@class PTYTab;
+@protocol PTYSessionDelegate<NSObject>
+- (NSWindowController<iTermWindowController> *)realParentWindow;
+- (id<WindowControllerInterface>)parentWindow;
+- (void)addHiddenLiveView:(SessionView *)hiddenLiveView;
+- (int)tabNumberForItermSessionId;
+- (NSArray<PTYSession *> *)sessions;
+- (int)tmuxWindow;
+- (void)removeSession:(PTYSession *)aSession;
+- (BOOL)sessionBelongsToVisibleTab;
+- (int)realObjectCount;
+- (BOOL)updateLabelAttributes;
+- (void)closeSession:(PTYSession *)session;
+- (void)setBell:(BOOL)flag;
+- (void)recheckBlur;
+- (NSString *)tmuxWindowName;
+- (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName;
+- (BOOL)sessionIsActiveInTab:(PTYSession *)session;
+- (void)sessionDidChangeFontSize:(PTYSession *)session;
+- (void)nextSession;
+- (void)previousSession;
+- (BOOL)hasMaximizedPane;
+- (void)setActiveSession:(PTYSession*)session;
+- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
+- (int)number;
+- (void)sessionSelectContainingTab;
+- (void)addSession:(PTYSession *)self toRestorableSession:(iTermRestorableSession *)restorableSession;
+- (void)unmaximize;
+- (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)horizontalSpacing
+           vSpacing:(double)verticalSpacing;
+- (Profile *)tmuxBookmark;
+- (void)sessionWithTmuxGateway:(PTYSession *)session
+       wasNotifiedWindowWithId:(int)windowId
+                     renamedTo:(NSString *)newName;
+- (void)sessionMakeEnclosingTabVisible;
+- (NSScriptObjectSpecifier *)objectSpecifier;
+@end
+
 @class SessionView;
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
@@ -73,7 +114,7 @@ typedef enum {
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
-
+@property(nonatomic, assign) id<PTYSessionDelegate> delegate;
 @property(nonatomic, assign) BOOL alertOnNextMark;
 @property(nonatomic, copy) NSColor *tabColor;
 
@@ -96,9 +137,6 @@ typedef enum {
 
 // Array of subprocessess names.
 @property(nonatomic, readonly) NSArray *childJobNames;
-
-// The owning tab. TODO: Make this into a protocol because it's essentially a delegate.
-@property(nonatomic, assign) PTYTab *tab;
 
 // Time since reference date when last output was receivced.
 @property(nonatomic, readonly) NSTimeInterval lastOutput;
@@ -342,7 +380,7 @@ typedef enum {
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement;
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
                                inView:(SessionView*)sessionView
-                                inTab:(PTYTab*)theTab
+                         withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark;

@@ -217,6 +217,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)fitWindowToTabs;
 
 - (void)tabActiveSessionDidChange;
+- (PTYTab *)tabForSession:(PTYSession *)session;
 
 #pragma mark - Sessions
 

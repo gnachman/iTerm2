@@ -50,10 +50,10 @@
             break;
             
         case NSAlertAlternateReturn: {
-            NSWindowController<iTermWindowController> * term = [[aSession tab] realParentWindow];
+            NSWindowController<iTermWindowController> * term = [[aSession delegate] realParentWindow];
             [[term window] makeKeyAndOrderFront:nil];
-            [[term tabView] selectTabViewItemWithIdentifier:[aSession tab]];
-            [[aSession tab] setActiveSession:aSession];
+            [aSession.delegate sessionSelectContainingTab];
+            [aSession.delegate setActiveSession:aSession];
             break;
             
         case NSAlertOtherReturn:

@@ -102,7 +102,7 @@
         [aTerm sessionInitiatedResize:session width:pendingW height:pendingH];
     }
     if (hasPendingFitWindowToTab) {
-        [aTerm fitWindowToTab:[session tab]];
+        [aTerm fitWindowToTab:[aTerm tabForSession:session]];
     }
     if (hasPendingSetWindowTitle) {
         [aTerm setWindowTitle];

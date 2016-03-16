@@ -29,10 +29,14 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermWeakReference.h"
 
-@protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate >
+@class PTYTab;
+@class PTYSession;
+
+@protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
 - (BOOL)lionFullScreen;
 - (void)windowWillShowInitial;
 - (void)toggleTraditionalFullScreenMode;
+- (PTYTab *)tabForSession:(PTYSession *)session;
 @end
 
 @interface PTYWindow : NSWindow<iTermWeaklyReferenceable>

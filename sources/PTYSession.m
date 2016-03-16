@@ -47,7 +47,6 @@
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "PTYScrollView.h"
-#import "PTYTab.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "SCPFile.h"
@@ -540,8 +539,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 {
     if (!_dvr) {
         if (dir < 0) {
-            [[[self tab] realParentWindow] replaySession:self];
-            PTYSession* irSession = [[[self tab] realParentWindow] currentSession];
+            [[_delegate realParentWindow] replaySession:self];
+            PTYSession* irSession = [[_delegate realParentWindow] currentSession];
              if (irSession != self) {
                  // Failed to enter replay mode (perhaps nothing to replay?)
                 [irSession irAdvance:dir];
@@ -659,7 +658,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 + (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
                                inView:(SessionView *)sessionView
-                                inTab:(PTYTab *)theTab
+                         withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType {
     DLog(@"Restoring session from arrangement");
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
@@ -684,7 +683,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
      // set our preferences
     [aSession setProfile:theBookmark];
 
-    [aSession setScreenSize:[sessionView frame] parent:[theTab realParentWindow]];
+    [aSession setScreenSize:[sessionView frame] parent:[delegate realParentWindow]];
     NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
         // For tmux tabs, get the size from the arrangement instead of the containing view because
@@ -700,10 +699,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     } else {
         [aSession setBookmarkName:[theBookmark objectForKey:KEY_NAME]];
     }
-    if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
-        [[theTab realParentWindow] setWindowTitle];
+    if ([[[[delegate realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
+        [[delegate realParentWindow] setWindowTitle];
     }
-    [aSession setTab:theTab];
+    aSession.delegate = delegate;
 
     BOOL haveSavedProgramData = YES;
     if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] isKindOfClass:[NSDictionary class]]) {
@@ -963,10 +962,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
     if (liveArrangement) {
         SessionView *liveView = [[[SessionView alloc] initWithFrame:sessionView.frame] autorelease];
-        [theTab addHiddenLiveView:liveView];
+        [delegate addHiddenLiveView:liveView];
         aSession.liveSession = [self sessionFromArrangement:liveArrangement
                                                      inView:liveView
-                                                      inTab:theTab
+                                               withDelegate:delegate
                                               forObjectType:objectType];
     }
     if (shouldEnterTmuxMode) {
@@ -1169,7 +1168,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     }
     isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
-    [[[self tab] realParentWindow] setName:theName forSession:self];
+    [[_delegate realParentWindow] setName:theName forSession:self];
 
     // Start the command
     [self startProgram:cmd
@@ -1184,7 +1183,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_screen resizeWidth:width height:height];
     [_shell setWidth:width height:height];
     [_textview clearHighlights];
-    [[_tab realParentWindow] invalidateRestorableState];
+    [[_delegate realParentWindow] invalidateRestorableState];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -1285,9 +1284,9 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (NSString *)sessionId {
     return [NSString stringWithFormat:@"w%dt%dp%lu:%@",
-            [[_tab realParentWindow] number],
-            _tab.tabNumberForItermSessionId,
-            (unsigned long)_tab.sessions.count,
+            [[_delegate realParentWindow] number],
+            _delegate.tabNumberForItermSessionId,
+            (unsigned long)_delegate.sessions.count,
             self.guid];
 }
 
@@ -1431,12 +1430,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (iTermRestorableSession *)restorableSession {
     iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
-    restorableSession.sessions = @[ self ];
-    restorableSession.terminalGuid = self.tab.realParentWindow.terminalGuid;
-    restorableSession.tabUniqueId = self.tab.uniqueId;
-    restorableSession.arrangement = self.tab.arrangement;
-    restorableSession.group = kiTermRestorableSessionGroupSession;
-
+    [_delegate addSession:self toRestorableSession:restorableSession];
     return restorableSession;
 }
 
@@ -1467,16 +1461,16 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (self.tmuxMode == TMUX_CLIENT) {
-        assert([_tab tmuxWindow] >= 0);
-        [_tmuxController deregisterWindow:[_tab tmuxWindow]
+        assert([_delegate tmuxWindow] >= 0);
+        [_tmuxController deregisterWindow:[_delegate tmuxWindow]
                                windowPane:_tmuxPane
                                   session:self];
         // This call to fitLayoutToWindows is necessary to handle the case where
         // a small window closes and leaves behind a larger (e.g., fullscreen)
         // window. We want to set the client size to that of the smallest
         // remaining window.
-        int n = [[_tab sessions] count];
-        if ([[_tab sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
+        int n = [[_delegate sessions] count];
+        if ([[_delegate sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
             n--;
         }
         if (n == 0) {
@@ -1521,7 +1515,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     // final update of display
     [self updateDisplay];
 
-    [_tab removeSession:self];
+    [_delegate removeSession:self];
 
     _colorMap.delegate = nil;
 
@@ -1537,9 +1531,9 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     [_pasteHelper abort];
 
-    [[_tab realParentWindow] sessionDidTerminate:self];
+    [[_delegate realParentWindow] sessionDidTerminate:self];
 
-    _tab = nil;
+    _delegate = nil;
 }
 
 - (void)makeTerminationUndoable {
@@ -1611,10 +1605,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     }
 
     // check if we want to send this input to all the sessions
-    if (canBroadcast && [[[self tab] realParentWindow] broadcastInputToSession:self]) {
+    if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
         // Ask the parent window to write directly to the PTYTask of all
         // sessions being broadcasted to.
-        [[[self tab] realParentWindow] sendInputToAllSessions:data];
+        [[_delegate realParentWindow] sendInputToAllSessions:data];
     } else if (!_exited) {
         // Send to only this session
         if (canBroadcast) {
@@ -1672,8 +1666,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 {
     if (self.tmuxMode == TMUX_CLIENT) {
         [self setBell:NO];
-        if ([[_tab realParentWindow] broadcastInputToSession:self]) {
-            [[_tab realParentWindow] sendInputToAllSessions:data];
+        if ([[_delegate realParentWindow] broadcastInputToSession:self]) {
+            [[_delegate realParentWindow] sendInputToAllSessions:data];
         } else {
             [[_tmuxController gateway] sendKeys:data
                                    toWindowPane:_tmuxPane];
@@ -1813,7 +1807,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     // Make sure the screen gets redrawn soonish
     _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
-    if ([[[self tab] parentWindow] currentTab] == [self tab]) {
+    if ([_delegate sessionBelongsToVisibleTab]) {
         if (length < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
@@ -1965,13 +1959,13 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                           [self name],
-                                                          [[self tab] realObjectCount]]
+                                                          [_delegate realObjectCount]]
                                          andNotification:@"Broken Pipes"];
     }
 
     _exited = YES;
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    [[self tab] updateLabelAttributes];
+    [_delegate updateLabelAttributes];
 
     if (_shouldRestart) {
         [_terminal resetByUserRequest:NO];
@@ -1979,7 +1973,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [self replaceTerminatedShellWithNewInstance];
     } else if ([self autoClose]) {
         [self appendBrokenPipeMessage:@"Broken Pipe"];
-        [[self tab] closeSession:self];
+        [_delegate closeSession:self];
     } else {
         // Offer to restart the session by rerunning its program.
         [self appendBrokenPipeMessage:@"Broken Pipe"];
@@ -2043,7 +2037,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 {
     NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + MARGIN * 2,
                                   [_screen height] * [_textview lineHeight] + VMARGIN * 2);
-    BOOL hasScrollbar = [[_tab realParentWindow] scrollbarShouldBeVisible];
+    BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
     NSSize outerSize =
         [PTYScrollView frameSizeForContentSize:innerSize
                        horizontalScrollerClass:nil
@@ -2395,11 +2389,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     if (!_screen.postGrowlNotifications) {
         return NO;
     }
-    if (![[self tab] isForegroundTab]) {
+    if (![_delegate sessionBelongsToVisibleTab]) {
         return YES;
     }
     BOOL windowIsObscured =
-        ([[iTermController sharedInstance] terminalIsObscured:self.tab.realParentWindow]);
+        ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow]);
     return (windowIsObscured);
 }
 
@@ -2458,7 +2452,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 {
     if (flag != _bell) {
         _bell = flag;
-        [[self tab] setBell:flag];
+        [_delegate setBell:flag];
         if (_bell) {
             if ([_textview keyIsARepeat] == NO &&
                 [self shouldPostGrowlNotification] &&
@@ -2466,7 +2460,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                 [[iTermGrowlDelegate sharedInstance] growlNotify:@"Bell"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
                                                                   [self name],
-                                                                  [[self tab] realObjectCount]]
+                                                                  [_delegate realObjectCount]]
                                                  andNotification:@"Bells"
                                                      windowIndex:[self screenWindowIndex]
                                                         tabIndex:[self screenTabIndex]
@@ -2741,9 +2735,9 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:[iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 
-    PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
-    if (currentTab == nil || currentTab == [self tab]) {
-        [[self tab] recheckBlur];
+    PTYTab* currentTab = [[_delegate parentWindow] currentTab];
+    if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
+        [_delegate recheckBlur];
     }
     [_triggers release];
     _triggers = [[NSMutableArray alloc] init];
@@ -2796,7 +2790,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
     [_screen setSaveToScrollbackInAlternateScreen:[iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
                                                                             inProfile:aDict]];
-    [[_tab realParentWindow] invalidateRestorableState];
+    [[_delegate realParentWindow] invalidateRestorableState];
 }
 
 - (NSString *)badgeLabel {
@@ -2829,7 +2823,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         // window name. This is confusing: this refers to the name of a tmux window, which is
         // equivalent to an iTerm2 tab. It is reported to us by tmux. We ignore the base name
         // because the real name comes from the server and that's all we care about.
-        return [NSString stringWithFormat:@"↣ %@", [[self tab] tmuxWindowName]];
+        return [NSString stringWithFormat:@"↣ %@", [_delegate tmuxWindowName]];
     }
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
     if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && self.jobName) {
@@ -2881,18 +2875,17 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     _defaultName = [theName copy];
 }
 
-- (void)setTab:(PTYTab*)tab
-{
+- (void)setDelegate:(id<PTYSessionDelegate>)delegate {
     if ([self isTmuxClient]) {
-        [_tmuxController deregisterWindow:[_tab tmuxWindow]
+        [_tmuxController deregisterWindow:[_delegate tmuxWindow]
                                windowPane:_tmuxPane
                                   session:self];
     }
-    _tab = tab;
+    _delegate = delegate;
     if ([self isTmuxClient]) {
         [_tmuxController registerSession:self
                                 withPane:_tmuxPane
-                                inWindow:[_tab tmuxWindow]];
+                                inWindow:[_delegate tmuxWindow]];
     }
     [_tmuxController fitLayoutToWindows];
 }
@@ -2938,13 +2931,13 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [self setWindowTitle:theName];
     }
 
-    [[self tab] nameOfSession:self didChangeTo:[self name]];
+    [_delegate nameOfSession:self didChangeTo:[self name]];
     [self setBell:NO];
 
     // get the session submenu to be rebuilt
-    if ([[iTermController sharedInstance] currentTerminal] == [[self tab] parentWindow]) {
+    if ([[iTermController sharedInstance] currentTerminal] == [_delegate parentWindow]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNameOfSessionDidChange"
-                                                            object:[[self tab] parentWindow]
+                                                            object:[_delegate parentWindow]
                                                           userInfo:nil];
     }
     _variables[kVariableKeySessionName] = [self name];
@@ -2972,8 +2965,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         _windowTitle = [theTitle copy];
     }
 
-    if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        [[[self tab] parentWindow] setWindowTitle];
+    if ([_delegate sessionBelongsToVisibleTab]) {
+        [[_delegate parentWindow] setWindowTitle];
     }
 }
 
@@ -3259,8 +3252,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     [_profile release];
     _profile = [mutableProfile retain];
-    [[_tab realParentWindow] invalidateRestorableState];
-    [[[self tab] realParentWindow] updateTabColors];
+    [[_delegate realParentWindow] invalidateRestorableState];
+    [[_delegate realParentWindow] updateTabColors];
 }
 
 - (void)sendCommand:(NSString *)command
@@ -3419,11 +3412,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     // Set attributes of tab to indicate idle, processing, etc.
     if (![self isTmuxGateway]) {
-        anotherUpdateNeeded |= [[self tab] updateLabelAttributes];
+        anotherUpdateNeeded |= [_delegate updateLabelAttributes];
     }
 
     static const NSTimeInterval kUpdateTitlePeriod = 0.7;
-    if ([[self tab] activeSession] == self) {
+    if ([_delegate sessionIsActiveInTab:self]) {
         // Update window info for the active tab.
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
         if (!self.jobName ||
@@ -3442,7 +3435,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     }
 
     anotherUpdateNeeded |= [_textview refresh];
-    anotherUpdateNeeded |= self.tab.realParentWindow.isShowingTransientTitle;
+    anotherUpdateNeeded |= _delegate.realParentWindow.isShowingTransientTitle;
     BOOL animating = _textview.getAndResetDrawingAnimatedImageFlag;
     anotherUpdateNeeded |= animating;
 
@@ -3450,7 +3443,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         if (animating) {
             // A cell of animated GIF has been drawn since the last call to updateDisplay.
             [self scheduleUpdateIn:kFastTimerIntervalSec];
-        } else if ([[[self tab] parentWindow] currentTab] == [self tab]) {
+        } else if ([_delegate sessionBelongsToVisibleTab]) {
             [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
         } else {
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
@@ -3474,13 +3467,13 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     // Update the job name in the tab title.
     if (!(newJobName == self.jobName || [newJobName isEqualToString:self.jobName])) {
         self.jobName = newJobName;
-        [[self tab] nameOfSession:self didChangeTo:[self name]];
+        [_delegate nameOfSession:self didChangeTo:[self name]];
         [self.view setTitle:self.name];
     }
     
-    if (self.tab.isForegroundTab) {
+    if ([_delegate sessionBelongsToVisibleTab]) {
         // Revert to the permanent tab title.
-        [[[self tab] parentWindow] setWindowTitle];
+        [[_delegate parentWindow] setWindowTitle];
     }
 }
 
@@ -3603,7 +3596,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     verticalSpacing:(float)verticalSpacing
 {
     DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
-    NSWindow *window = [[[self tab] realParentWindow] window];
+    NSWindow *window = [[_delegate realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
     if ([_textview.font isEqualTo:font] &&
@@ -3613,7 +3606,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         // There's an unfortunate problem that this is a band-aid over.
         // If you change some attribute of a profile that causes sessions to reload their profiles
         // with the kReloadAllProfiles notification, then each profile will call this in turn,
-        // and it may be a no-op for all of them. If each calls -[PseudoTerminal fitWindowToTab:[self tab]]
+        // and it may be a no-op for all of them. If each calls -[PseudoTerminal fitWindowToTab:_delegate]
         // and different tabs come up with slightly different ideal sizes (e.g., because they
         // have different split pane layouts) then the window may shrink by a few pixels for each
         // session.
@@ -3625,18 +3618,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         horizontalSpacing:horizontalSpacing
         verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", (float)[_textview lineHeight]);
-    if (![[[self tab] parentWindow] anyFullScreen]) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
-            [[[self tab] parentWindow] fitWindowToTab:[self tab]];
-        }
-    }
-    // If the window isn't able to adjust, or adjust enough, make the session
-    // work with whatever size we ended up having.
-    if ([self isTmuxClient]) {
-        [_tmuxController windowDidResize:[[self tab] realParentWindow]];
-    } else {
-        [[self tab] fitSessionToCurrentViewSize:self];
-    }
+    [_delegate sessionDidChangeFontSize:self];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
 }
@@ -3656,7 +3638,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [self isTmuxClient] &&
         [theGuid isEqualToString:_profile[KEY_GUID]]) {
         Profile *profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:theGuid];
-        [_tmuxController renameWindowWithId:self.tab.tmuxWindow
+        [_tmuxController renameWindowWithId:_delegate.tmuxWindow
                                   inSession:nil
                                      toName:profile[KEY_NAME]];
         _tmuxTitleOutOfSync = NO;
@@ -3690,10 +3672,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                                       @(_textview.horizontalSpacing),
                                                                       @(_textview.verticalSpacing) ]];
         fontChangeNotificationInProgress = NO;
-        [PTYTab setTmuxFont:_textview.font
-               nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
-                   hSpacing:_textview.horizontalSpacing
-                   vSpacing:_textview.verticalSpacing];
+        [_delegate setTmuxFont:_textview.font
+                  nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
+                      hSpacing:_textview.horizontalSpacing
+                      vSpacing:_textview.verticalSpacing];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
                                                             object:nil];
     }
@@ -3895,9 +3877,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return [_textview selectedText];
 }
 
-- (BOOL)canSearch
-{
-    return _textview != nil && _tab && [_tab realParentWindow];
+- (BOOL)canSearch {
+    return _textview != nil && _delegate && [_delegate realParentWindow];
 }
 
 - (void)findString:(NSString *)aString
@@ -3922,7 +3903,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)takeFocus {
-    [[[[self tab] realParentWindow] window] makeFirstResponder:_textview];
+    [[[_delegate realParentWindow] window] makeFirstResponder:_textview];
 }
 
 - (void)findViewControllerMakeDocumentFirstResponder {
@@ -4075,7 +4056,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)hideSession {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:self
                                                         atPoint:[[_view window] pointToScreenCoords:NSMakePoint(0, 0)]];
-    [[[_tab realParentWindow] window] miniaturize:self];
+    [[[_delegate realParentWindow] window] miniaturize:self];
 }
 
 - (NSString *)preferredTmuxClientName {
@@ -4098,7 +4079,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                    clientName:[self preferredTmuxClientName]];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     NSSize theSize;
-    Profile *tmuxBookmark = [PTYTab tmuxBookmark];
+    Profile *tmuxBookmark = [_delegate tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
     [_tmuxController validateOptions];
@@ -4323,12 +4304,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_tmuxController windowsChanged];
 }
 
-- (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName
-{
-    PTYTab *tab = [_tmuxController window:windowId];
-    if (tab) {
-        [tab setTmuxWindowName:newName];
-    }
+- (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName {
+    [_delegate sessionWithTmuxGateway:self wasNotifiedWindowWithId:windowId renamedTo:newName];
     [_tmuxController windowWasRenamedWithId:windowId to:newName];
 }
 
@@ -4339,7 +4316,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow {
-    return self.tab.realParentWindow;
+    return _delegate.realParentWindow;
 }
 
 - (void)tmuxHostDisconnected
@@ -4361,8 +4338,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     self.tmuxMode = TMUX_NONE;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
-        [[[_tab realParentWindow] window] isMiniaturized]) {
-        [[[_tab realParentWindow] window] deminiaturize:self];
+        [[[_delegate realParentWindow] window] isMiniaturized]) {
+        [[[_delegate realParentWindow] window] deminiaturize:self];
     }
 }
 
@@ -4437,13 +4414,13 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (NSSize)tmuxBookmarkSize
 {
-        NSDictionary *dict = [PTYTab tmuxBookmark];
+        NSDictionary *dict = [_delegate tmuxBookmark];
         return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
                                           [[dict objectForKey:KEY_ROWS] intValue]);
 }
 
 - (NSInteger)tmuxNumHistoryLinesInBookmark {
-    NSDictionary *dict = [PTYTab tmuxBookmark];
+    NSDictionary *dict = [_delegate tmuxBookmark];
     if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
         // 10M is close enough to infinity to be indistinguishable.
         return 10 * 1000 * 1000;
@@ -4542,15 +4519,15 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         // Escape exits zoom (pops out one level, since you can zoom repeatedly)
         // The zoomOut: IBAction doesn't get performed by shortcut, I guess because Esc is not a
         // valid shortcut. So we do it here.
-        [[[self tab] realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
-    } else if ([[[self tab] realParentWindow] inInstantReplay]) {
+        [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    } else if ([[_delegate realParentWindow] inInstantReplay]) {
         DLog(@"PTYSession keyDown in IR");
 
         // Special key handling in IR mode, and keys never get sent to the live
         // session, even though it might be displayed.
         if (unicode == 27) {
             // Escape exits IR
-            [[[self tab] realParentWindow] closeInstantReplay:self];
+            [[_delegate realParentWindow] closeInstantReplay:self];
             return;
         } else if (unmodunicode == NSLeftArrowFunctionKey) {
             // Left arrow moves to prev frame
@@ -4559,7 +4536,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                 n = 15;
             }
             for (int i = 0; i < n; i++) {
-                [[[self tab] realParentWindow] irPrev:self];
+                [[_delegate realParentWindow] irPrev:self];
             }
         } else if (unmodunicode == NSRightArrowFunctionKey) {
             // Right arrow moves to next frame
@@ -4568,7 +4545,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                 n = 15;
             }
             for (int i = 0; i < n; i++) {
-                [[[self tab] realParentWindow] irNext:self];
+                [[_delegate realParentWindow] irNext:self];
             }
         } else {
             NSBeep();
@@ -4603,7 +4580,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                 int tempKeyCode = unmodunicode;
                 if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
                     (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
-                    [[[self tab] sessions] count] > 1) {
+                    [[_delegate sessions] count] > 1) {
                     if ([self _askAboutOutdatedKeyMappings]) {
                         int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
                                                      @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
@@ -4634,33 +4611,33 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
         switch (keyBindingAction) {
             case KEY_ACTION_MOVE_TAB_LEFT:
-                [[[self tab] realParentWindow] moveTabLeft:nil];
+                [[_delegate realParentWindow] moveTabLeft:nil];
                 break;
             case KEY_ACTION_MOVE_TAB_RIGHT:
-                [[[self tab] realParentWindow] moveTabRight:nil];
+                [[_delegate realParentWindow] moveTabRight:nil];
                 break;
             case KEY_ACTION_NEXT_MRU_TAB:
-                [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
-                                                                      forwards:YES];
+                [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                                     forwards:YES];
                 break;
             case KEY_ACTION_PREVIOUS_MRU_TAB:
-                [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
-                                                                      forwards:NO];
+                [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                                     forwards:NO];
                 break;
             case KEY_ACTION_NEXT_PANE:
-                [[self tab] nextSession];
+                [_delegate nextSession];
                 break;
             case KEY_ACTION_PREVIOUS_PANE:
-                [[self tab] previousSession];
+                [_delegate previousSession];
                 break;
             case KEY_ACTION_NEXT_SESSION:
-                [[[self tab] parentWindow] nextTab:nil];
+                [[_delegate parentWindow] nextTab:nil];
                 break;
             case KEY_ACTION_NEXT_WINDOW:
                 [[iTermController sharedInstance] nextTerminal];
                 break;
             case KEY_ACTION_PREVIOUS_SESSION:
-                [[[self tab] parentWindow] previousTab:nil];
+                [[_delegate parentWindow] previousTab:nil];
                 break;
             case KEY_ACTION_PREVIOUS_WINDOW:
                 [[iTermController sharedInstance] previousTerminal];
@@ -4768,16 +4745,16 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                 [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
                 break;
             case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
-                [[[self tab] realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
+                [[_delegate realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
                 break;
             case KEY_ACTION_NEW_TAB_WITH_PROFILE:
-                [[[self tab] realParentWindow] newTabWithBookmarkGuid:keyBindingText];
+                [[_delegate realParentWindow] newTabWithBookmarkGuid:keyBindingText];
                 break;
             case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
-                [[[self tab] realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
+                [[_delegate realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
                 break;
             case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
-                [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
+                [[_delegate realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
                 break;
             case KEY_ACTION_SET_PROFILE: {
                 Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
@@ -5174,9 +5151,9 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
     // Ask the parent if it has anything to add
-    if ([[self tab] realParentWindow] &&
-        [[[self tab] realParentWindow] respondsToSelector:@selector(menuForEvent:menu:)]) {
-        [[[self tab] realParentWindow] menuForEvent:theEvent menu:theMenu];
+    if ([_delegate realParentWindow] &&
+        [[_delegate realParentWindow] respondsToSelector:@selector(menuForEvent:menu:)]) {
+        [[_delegate realParentWindow] menuForEvent:theEvent menu:theMenu];
     }
 }
 
@@ -5216,7 +5193,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Show advanced paste window.
 - (IBAction)pasteOptions:(id)sender {
-    [_pasteHelper showPasteOptionsInWindow:self.tab.realParentWindow.window
+    [_pasteHelper showPasteOptionsInWindow:_delegate.realParentWindow.window
                          bracketingEnabled:_terminal.bracketedPasteMode];
 }
 
@@ -5321,7 +5298,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)textViewInvalidateRestorableState {
     if ([iTermAdvancedSettingsModel restoreWindowContents]) {
-        [self.tab.realParentWindow invalidateRestorableState];
+        [_delegate.realParentWindow invalidateRestorableState];
     }
 }
 
@@ -5372,7 +5349,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (BOOL)textViewShouldDrawFilledInCursor {
     // If the auto-command history popup is open for this session, the filled-in cursor should be
     // drawn even though the textview isn't in the key window.
-    return [self textViewIsActiveSession] && [[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self];
+    return [self textViewIsActiveSession] && [[_delegate realParentWindow] autoCommandHistoryIsOpenForSession:self];
 }
 
 - (void)textViewWillNeedUpdateForBlink
@@ -5386,19 +5363,19 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     if (guid) {
         profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     }
-    [[[self tab] realParentWindow] splitVertically:vertically
-                                      withBookmark:profile
-                                     targetSession:self];
+    [[_delegate realParentWindow] splitVertically:vertically
+                                     withBookmark:profile
+                                    targetSession:self];
 }
 
 - (void)textViewSelectNextTab
 {
-    [[[self tab] realParentWindow] nextTab:nil];
+    [[_delegate realParentWindow] nextTab:nil];
 }
 
 - (void)textViewSelectPreviousTab
 {
-    [[[self tab] realParentWindow] previousTab:nil];
+    [[_delegate realParentWindow] previousTab:nil];
 }
 
 - (void)textViewSelectNextWindow {
@@ -5411,29 +5388,29 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)textViewSelectNextPane
 {
-    [[self tab] nextSession];
+    [_delegate nextSession];
 }
 
 - (void)textViewSelectPreviousPane
 {
-    [[self tab] previousSession];
+    [_delegate previousSession];
 }
 
 - (void)textViewEditSession {
-    [[[self tab] realParentWindow] editSession:self makeKey:YES];
+    [[_delegate realParentWindow] editSession:self makeKey:YES];
 }
 
 - (void)textViewToggleBroadcastingInput
 {
-    [[[self tab] realParentWindow] toggleBroadcastingInputToSession:self];
+    [[_delegate realParentWindow] toggleBroadcastingInputToSession:self];
 }
 
 - (void)textViewCloseWithConfirmation {
-    [[[self tab] realParentWindow] closeSessionWithConfirmation:self];
+    [[_delegate realParentWindow] closeSessionWithConfirmation:self];
 }
 
 - (void)textViewRestartWithConfirmation {
-    [[[self tab] realParentWindow] restartSessionWithConfirmation:self];
+    [[_delegate realParentWindow] restartSessionWithConfirmation:self];
 }
 
 - (NSString *)mostRecentlySelectedText {
@@ -5472,7 +5449,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (BOOL)textViewWindowUsesTransparency {
-    return [[[self tab] realParentWindow] useTransparency];
+    return [[_delegate realParentWindow] useTransparency];
 }
 
 - (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth
@@ -5482,24 +5459,23 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)textViewCreateWindowWithProfileGuid:(NSString *)guid
 {
-    [[[self tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+    [[_delegate realParentWindow] newWindowWithBookmarkGuid:guid];
 }
 
 - (void)textViewCreateTabWithProfileGuid:(NSString *)guid
 {
-    [[[self tab] realParentWindow] newTabWithBookmarkGuid:guid];
+    [[_delegate realParentWindow] newTabWithBookmarkGuid:guid];
 }
 
 // Called when a key is pressed.
 - (BOOL)textViewDelegateHandlesAllKeystrokes
 {
     [self resumeOutputIfNeeded];
-    return [[[self tab] realParentWindow] inInstantReplay];
+    return [[_delegate realParentWindow] inInstantReplay];
 }
 
 - (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other {
-    PTYTab *myTab = [self tab];
-    for (PTYSession *session in [myTab sessions]) {
+    for (PTYSession *session in [_delegate sessions]) {
         if ([session textview] == other) {
             return YES;
         }
@@ -5507,27 +5483,26 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return NO;
 }
 
-- (BOOL)textViewIsActiveSession
-{
-    return [[self tab] activeSession] == self;
+- (BOOL)textViewIsActiveSession {
+    return [_delegate sessionIsActiveInTab:self];
 }
 
 - (BOOL)textViewSessionIsBroadcastingInput
 {
-    return [[[self tab] realParentWindow] broadcastInputToSession:self];
+    return [[_delegate realParentWindow] broadcastInputToSession:self];
 }
 
 - (BOOL)textViewIsMaximized {
-    return [[self tab] hasMaximizedPane];
+    return [_delegate hasMaximizedPane];
 }
 
 - (BOOL)textViewTabHasMaximizedPanel
 {
-    return [[self tab] hasMaximizedPane];
+    return [_delegate hasMaximizedPane];
 }
 
 - (void)textViewDidBecomeFirstResponder {
-    [[self tab] setActiveSession:self];
+    [_delegate setActiveSession:self];
 }
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType
@@ -5866,14 +5841,14 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     DVRFrameInfo info = [_dvrDecoder info];
     if (info.width != [_screen width] || info.height != [_screen height]) {
         if (![_liveSession isTmuxClient]) {
-            [[[self tab] realParentWindow] sessionInitiatedResize:self
-                                                            width:info.width
-                                                           height:info.height];
+            [[_delegate realParentWindow] sessionInitiatedResize:self
+                                                           width:info.width
+                                                          height:info.height];
         }
     }
     [_screen setFromFrame:s len:len info:info];
-    [[[self tab] realParentWindow] clearTransientTitle];
-    [[[self tab] realParentWindow] setWindowTitle];
+    [[_delegate realParentWindow] clearTransientTitle];
+    [[_delegate realParentWindow] setWindowTitle];
 }
 
 - (void)continueTailFind
@@ -5926,7 +5901,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)sessionContentsChanged:(NSNotification *)notification {
     if (!_tailFindTimer &&
         [notification object] == self &&
-        [[_tab realParentWindow] currentTab] == _tab) {
+        [_delegate sessionBelongsToVisibleTab]) {
         [self beginTailFind];
     }
 }
@@ -6065,11 +6040,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)screenResizeToWidth:(int)width height:(int)height {
-    [[self tab] sessionInitiatedResize:self width:width height:height];
+    [_delegate sessionInitiatedResize:self width:width height:height];
 }
 
 - (void)screenResizeToPixelWidth:(int)width height:(int)height {
-    [[[self tab] realParentWindow] setFrameSize:NSMakeSize(width, height)];
+    [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
 }
 
 - (BOOL)screenShouldBeginPrinting {
@@ -6097,18 +6072,18 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (BOOL)screenWindowIsFullscreen {
-    return [[[self tab] parentWindow] anyFullScreen];
+    return [[_delegate parentWindow] anyFullScreen];
 }
 
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
     NSRect screenFrame = [self screenWindowScreenFrame];
     point.x += screenFrame.origin.x;
     point.y = screenFrame.origin.y + screenFrame.size.height - point.y;
-    [[[self tab] parentWindow] windowSetFrameTopLeftPoint:point];
+    [[_delegate parentWindow] windowSetFrameTopLeftPoint:point];
 }
 
 - (NSRect)screenWindowScreenFrame {
-    return [[[[self tab] parentWindow] windowScreen] visibleFrame];
+    return [[[_delegate parentWindow] windowScreen] visibleFrame];
 }
 
 - (NSPoint)screenWindowTopLeftPixelCoordinate {
@@ -6121,23 +6096,23 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 // If flag is set, miniaturize; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag {
     if (flag) {
-        [[[self tab] parentWindow] windowPerformMiniaturize:nil];
+        [[_delegate parentWindow] windowPerformMiniaturize:nil];
     } else {
-        [[[self tab] parentWindow] windowDeminiaturize:nil];
+        [[_delegate parentWindow] windowDeminiaturize:nil];
     }
 }
 
 // If flag is set, bring to front; if not, move to back.
 - (void)screenRaise:(BOOL)flag {
     if (flag) {
-        [[[self tab] parentWindow] windowOrderFront:nil];
+        [[_delegate parentWindow] windowOrderFront:nil];
     } else {
-        [[[self tab] parentWindow] windowOrderBack:nil];
+        [[_delegate parentWindow] windowOrderBack:nil];
     }
 }
 
 - (BOOL)screenWindowIsMiniaturized {
-    return [[[self tab] parentWindow] windowIsMiniaturized];
+    return [[_delegate parentWindow] windowIsMiniaturized];
 }
 
 - (void)screenWriteDataToTask:(NSData *)data {
@@ -6145,11 +6120,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (NSRect)screenWindowFrame {
-    return [[[self tab] parentWindow] windowFrame];
+    return [[_delegate parentWindow] windowFrame];
 }
 
 - (NSSize)screenSize {
-    return [[[[[self tab] parentWindow] currentSession] scrollview] documentVisibleRect].size;
+    return [[[[_delegate parentWindow] currentSession] scrollview] documentVisibleRect].size;
 }
 
 // If the flag is set, push the window title; otherwise push the icon title.
@@ -6175,15 +6150,15 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (int)screenNumber {
-    return [[self tab] realObjectCount];
+    return [_delegate realObjectCount];
 }
 
 - (int)screenWindowIndex {
-    return [[iTermController sharedInstance] indexOfTerminal:(PseudoTerminal *)[[self tab] realParentWindow]];
+    return [[iTermController sharedInstance] indexOfTerminal:(PseudoTerminal *)[_delegate realParentWindow]];
 }
 
 - (int)screenTabIndex {
-    return [[self tab] number];
+    return [_delegate number];
 }
 
 - (int)screenViewIndex {
@@ -6252,7 +6227,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)screenIncrementBadge {
-    [[_tab realParentWindow] incrementBadge];
+    [[_delegate realParentWindow] incrementBadge];
 }
 
 - (NSString *)screenCurrentWorkingDirectory {
@@ -6290,18 +6265,18 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)reveal {
-    NSWindowController<iTermWindowController> *terminal = [[self tab] realParentWindow];
+    NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
         [[HotkeyWindowController sharedInstance] showHotKeyWindow];
     } else {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         [[terminal window] makeKeyAndOrderFront:self];
-        [[terminal tabView] selectTabViewItemWithIdentifier:[self tab]];
+        [_delegate sessionSelectContainingTab];
     }
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
 
-    [[self tab] setActiveSession:self];
+    [_delegate setActiveSession:self];
 }
 
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
@@ -6323,7 +6298,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
             [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                               [self name],
-                                                              [[self tab] realObjectCount]]
+                                                              [_delegate realObjectCount]]
                                              andNotification:@"Mark Set"
                                                  windowIndex:[self screenWindowIndex]
                                                     tabIndex:[self screenTabIndex]
@@ -6595,7 +6570,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
     [self setTabColor:color];
-    id<WindowControllerInterface> term = [_tab parentWindow];
+    id<WindowControllerInterface> term = [_delegate parentWindow];
     [term updateTabColors];
 }
 
@@ -6630,7 +6605,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                 green:[curColor greenComponent]
                                                  blue:[curColor blueComponent]
                                                 alpha:1]];
-    [[_tab parentWindow] updateTabColors];
+    [[_delegate parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
@@ -6639,7 +6614,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                 green:color
                                                  blue:[curColor blueComponent]
                                                 alpha:1]];
-    [[_tab parentWindow] updateTabColors];
+    [[_delegate parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
@@ -6648,7 +6623,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                 green:[curColor greenComponent]
                                                  blue:color
                                                 alpha:1]];
-    [[_tab parentWindow] updateTabColors];
+    [[_delegate parentWindow] updateTabColors];
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
@@ -6664,7 +6639,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
-    [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
+    [[_delegate realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     NSString *path = [_screen workingDirectoryOnLine:line];
@@ -6806,16 +6781,16 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     BOOL haveCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
     if (!haveCommand && hadCommand) {
         DLog(@"Hide because don't have a command, but just had one");
-        [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+        [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
     } else {
         if (!hadCommand && range.start.x >= 0) {
             DLog(@"Show because I have a range but didn't have a command");
-            [[[self tab] realParentWindow] showAutoCommandHistoryForSession:self];
+            [[_delegate realParentWindow] showAutoCommandHistoryForSession:self];
         }
         NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
         DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
         if (haveCommand) {
-            [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
+            [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
                                                                    inSession:self];
         }
     }
@@ -6845,7 +6820,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [self updateVariables];
     _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
-    [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+    [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
 }
 
 - (BOOL)screenShouldPlacePromptAtFirstColumn {
@@ -7150,15 +7125,15 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)popupWillClose:(iTermPopupWindowController *)popup {
-    [[[self tab] realParentWindow] popupWillClose:popup];
+    [[_delegate realParentWindow] popupWillClose:popup];
 }
 
 - (NSWindowController *)popupWindowController {
-    return [[self tab] realParentWindow];
+    return [_delegate realParentWindow];
 }
 
 - (BOOL)popupWindowIsInHotkeyWindow {
-    return self.tab.realParentWindow.isHotKeyWindow;
+    return _delegate.realParentWindow.isHotKeyWindow;
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -7176,11 +7151,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (BOOL)popupHandleSelector:(SEL)selector
                      string:(NSString *)string
                currentValue:(NSString *)currentValue {
-    if (![[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
+    if (![[_delegate realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
         return NO;
     }
     if (selector == @selector(cancel:)) {
-        [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+        [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
         return YES;
     }
     if (selector == @selector(insertNewline:)) {

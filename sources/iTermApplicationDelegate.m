@@ -709,7 +709,7 @@ static BOOL hasBecomeActive = NO;
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
     id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
     if (session) {
-        term = session.tab.realParentWindow;
+        term = session.delegate.realParentWindow;
     }
     if (term) {
         return [term openPasswordManagerToAccountName:name inSession:session];
@@ -1460,7 +1460,7 @@ static BOOL hasBecomeActive = NO;
     PseudoTerminal *currentTerminal = [self currentTerminal];
     PTYSession* aSession = [aNotification object];
 
-    if (currentTerminal != [[aSession tab] parentWindow] ||
+    if (currentTerminal != [[aSession delegate] parentWindow] ||
         ![[currentTerminal window] isKeyWindow]) {
         return;
     }
