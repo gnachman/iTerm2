@@ -219,7 +219,7 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
 - (BOOL)authenticateByPassword:(NSString *)password;
 
 /**
- Authenticate by private key pair
+ Authenticate by private key pair from file(s)
 
  Use password:nil when the key is unencrypted
 
@@ -231,6 +231,20 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
 - (BOOL)authenticateByPublicKey:(NSString *)publicKey
                      privateKey:(NSString *)privateKey
                     andPassword:(NSString *)password;
+
+/**
+ Authenticate by private key pair
+
+ Use password:nil when the key is unencrypted
+
+ @param publicKey public key
+ @param privateKey private key
+ @param password Password for encrypted private key
+ @returns Authentication success
+ */
+- (BOOL)authenticateByInMemoryPublicKey:(NSString *)publicKey
+                             privateKey:(NSString *)privateKey
+                            andPassword:(NSString *)password;
 
 /**
  Authenticate by keyboard-interactive using delegate.
