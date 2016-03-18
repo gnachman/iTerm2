@@ -2467,7 +2467,7 @@
     return _canPasteFile;
 }
 
-- (void)refreshAndStartTimerIfNeeded {
+- (void)refresh {
     [self registerCall:_cmd];
 }
 

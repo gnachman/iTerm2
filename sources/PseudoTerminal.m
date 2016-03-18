@@ -2349,9 +2349,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // svn history for the old impl.
 
     // update the cursor
-    if ([[[self currentSession] textview] refresh]) {
-        [[self currentSession] scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
-    }
+    [[self currentSession] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
 
@@ -3806,7 +3804,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // up to date to avoid a jump when it's shown.
         [[aSession textview] setNeedsDisplay:YES];
         [aSession updateDisplay];
-        [aSession scheduleUpdateIn:kFastTimerIntervalSec];
+        aSession.active = YES;
         [self setDimmingForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
