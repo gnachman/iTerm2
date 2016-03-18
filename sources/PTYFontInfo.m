@@ -42,6 +42,20 @@
     NSInteger minimumAcceptableWeight = weight + 4;
     DLog(@"Looking for a bold version of %@, whose weight is %@", font, @(weight));
     NSFont *lastFont = font;
+    
+    // Sometimes the heavier version of a font is oblique (issue 4442). So
+    // check the traits to make sure nothing significant changes.
+    const NSFontTraitMask kImmutableTraits = (NSItalicFontMask |
+                                              NSNarrowFontMask |
+                                              NSExpandedFontMask |
+                                              NSCondensedFontMask |
+                                              NSSmallCapsFontMask |
+                                              NSPosterFontMask |
+                                              NSCompressedFontMask |
+                                              NSFixedPitchFontMask |
+                                              NSUnitalicFontMask);
+    NSFontTraitMask requiredTraits = ([fontManager traitsOfFont:font] & kImmutableTraits);
+    DLog(@"Required traits: %x", (int)requiredTraits);
     while (lastFont) {
         NSFont *heavierFont = [fontManager convertWeight:YES ofFont:lastFont];
         if (heavierFont == lastFont) {
@@ -50,7 +64,9 @@
         }
         NSInteger weight = [fontManager weightOfFont:heavierFont];
         DLog(@"  next bolder font is %@ with a weight of %@",  heavierFont, @(weight));
-        if (weight >= minimumAcceptableWeight) {
+        NSFontTraitMask maskedTraits = ([fontManager traitsOfFont:heavierFont] & kImmutableTraits);
+        DLog(@"  masked traits=%x", (int)maskedTraits);
+        if (maskedTraits == requiredTraits && weight >= minimumAcceptableWeight) {
             DLog(@"  accepted!");
             return heavierFont;
         }
