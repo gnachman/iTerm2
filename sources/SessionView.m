@@ -407,7 +407,7 @@ static NSDate* lastResizeDate_;
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
-        if (theTab == [_session tab] || [[theTab sessions] count] > 1) {
+        if (theTab == _session.delegate || [[theTab sessions] count] > 1) {
             return NSDragOperationNone;
         }
         if (![[theTab activeSession] isCompatibleWith:[self session]]) {
@@ -450,7 +450,7 @@ static NSDate* lastResizeDate_;
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-            if (_session.tab.sessions.count == 1 && !_session.tab.realParentWindow.anyFullScreen) {
+            if (_session.delegate.sessions.count == 1 && !_session.delegate.realParentWindow.anyFullScreen) {
                 // If you dragged a session from a tab with split panes onto itself then do nothing.
                 // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
                 // whole window.
@@ -628,7 +628,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)close {
-    [[[_session tab] realParentWindow] closeSessionWithConfirmation:_session];
+    [[[_session delegate] realParentWindow] closeSessionWithConfirmation:_session];
 }
 
 - (void)beginDrag {

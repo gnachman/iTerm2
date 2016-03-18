@@ -34,10 +34,19 @@ static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
 // States
-static const NSUInteger kPTYTabBellState = (1 << 0);
-static const NSUInteger kPTYTabIdleState = (1 << 1);
-static const NSUInteger kPTYTabNewOutputState = (1 << 2);
-static const NSUInteger kPTYTabDeadState = (1 << 3);
+typedef NS_OPTIONS(NSUInteger, PTYTabState) {
+    // Bell has rung.
+    kPTYTabBellState = (1 << 0),
+    
+    // Background tab is idle; it's been a while since new output arrived.
+    kPTYTabIdleState = (1 << 1),
+    
+    // Background tab just got new output.
+    kPTYTabNewOutputState = (1 << 2),
+    
+    // A session has ended.
+    kPTYTabDeadState = (1 << 3)
+};
 
 @implementation PTYTab {
     int _activityCounter;
@@ -246,7 +255,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [session setActivityCounter:@(_activityCounter++)];
         [[session view] setDimmed:NO];
         [self setRoot:[[[PTYSplitView alloc] init] autorelease]];
-        PTYTab *oldTab = [session tab];
+        PTYTab *oldTab = (PTYTab *)[session delegate];
         if (oldTab && [oldTab tmuxWindow] >= 0) {
             tmuxWindow_ = [oldTab tmuxWindow];
             tmuxController_ = [[oldTab tmuxController] retain];
@@ -255,7 +264,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         } else {
             tmuxWindow_ = -1;
         }
-        [session setTab:self];
+        session.delegate = self;
         [root_ addSubview:[session view]];
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -321,7 +330,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     PtyLog(@"PTYTab dealloc");
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     for (PTYSession* aSession in [self sessions]) {
-        [aSession setTab:nil];
+        aSession.delegate = nil;
     }
     [root_ release];
 
@@ -330,7 +339,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
         PTYSession* aSession = [aView session];
         [aSession cancelTimers];
-        [aSession setTab:nil];
+        aSession.delegate = nil;
     }
 
     root_ = nil;
@@ -410,14 +419,34 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (BOOL)isForegroundTab
-{
+- (BOOL)isForegroundTab {
     return [[tabViewItem_ tabView] selectedTabViewItem] == tabViewItem_;
 }
 
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height
-{
+- (void)sessionWithTmuxGateway:(PTYSession *)session
+       wasNotifiedWindowWithId:(int)windowId
+                     renamedTo:(NSString *)newName {
+    PTYTab *tab = [session.tmuxController window:windowId];
+    if (tab) {
+        [tab setTmuxWindowName:newName];
+    }
+}
+
+- (void)sessionSelectContainingTab {
+    [[self.realParentWindow tabView] selectTabViewItemWithIdentifier:self];
+}
+
+- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height {
     [parentWindow_ sessionInitiatedResize:session width:width height:height];
+}
+
+- (void)addSession:(PTYSession *)session toRestorableSession:(iTermRestorableSession *)restorableSession {
+    NSArray *sessions = restorableSession.sessions ?: @[];
+    restorableSession.sessions = [sessions arrayByAddingObject:session];
+    restorableSession.terminalGuid = self.realParentWindow.terminalGuid;
+    restorableSession.tabUniqueId = self.uniqueId;
+    restorableSession.arrangement = self.arrangement;
+    restorableSession.group = kiTermRestorableSessionGroupSession;
 }
 
 - (PTYSession*)activeSession
@@ -686,13 +715,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (int)number
-{
+- (int)number {
     return [[tabViewItem_ tabView] indexOfTabViewItem:tabViewItem_];
 }
 
-- (int)realObjectCount
-{
+- (int)tabNumber {
     return objectCount_;
 }
 
@@ -735,6 +762,15 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 - (BOOL)isActiveSession
 {
     return ([[[self tabViewItem] tabView] selectedTabViewItem] == [self tabViewItem]);
+}
+
+- (BOOL)anySessionIsProcessing {
+    for (PTYSession *session in self.sessions) {
+        if (session.isProcessing) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)anySessionHasNewOutput:(BOOL *)okToNotify
@@ -892,9 +928,8 @@ static NSString* FormatRect(NSRect r) {
     return [self _sessionAdjacentTo:session verticalDir:YES after:YES];
 }
 
-- (BOOL)updateLabelAttributes
-{
-    PtyLog(@"PTYTab updateLabelAttributes");
+- (BOOL)updateLabelAttributes {
+    DLog(@"PTYTab updateLabelAttributes for tab %d", objectCount_);
     struct timeval now;
     BOOL needsFollowUp = NO;
     
@@ -903,13 +938,16 @@ static NSString* FormatRect(NSRect r) {
         // Session has terminated.
         [self setLabelAttributesForDeadSession];
     } else {
-        if (!self.activeSession.isProcessing) {
+        if (![self anySessionIsProcessing]) {
+            DLog(@"No session is processing");
             // Too much time has passed since activity occurred and we're idle.
             [self setLabelAttributesForIdleTabAtTime:now];
         } else {
+            DLog(@"Some session is processing");
             // Less than 2 seconds has passed since the last output in the session.
             BOOL okToNotify;
             if ([self anySessionHasNewOutput:&okToNotify]) {
+                DLog(@"Some session has new output");
                 [self setLabelAttributesForActiveTab:okToNotify];
             }
             needsFollowUp = YES;
@@ -920,8 +958,7 @@ static NSString* FormatRect(NSRect r) {
     return needsFollowUp;
 }
 
-- (void)closeSession:(PTYSession*)session
-{
+- (void)closeSession:(PTYSession*)session {
     [[self parentWindow] closeSession:session];
 }
 
@@ -1300,8 +1337,26 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (void)removeSession:(PTYSession*)aSession
-{
+- (BOOL)sessionBelongsToVisibleTab {
+    return [self isForegroundTab];
+}
+
+- (void)sessionDidChangeFontSize:(PTYSession *)session {
+    if (![[self parentWindow] anyFullScreen]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+            [[self parentWindow] fitWindowToTab:self];
+        }
+    }
+    // If the window isn't able to adjust, or adjust enough, make the session
+    // work with whatever size we ended up having.
+    if ([session isTmuxClient]) {
+        [session.tmuxController windowDidResize:[self realParentWindow]];
+    } else {
+        [self fitSessionToCurrentViewSize:session];
+    }
+}
+
+- (void)removeSession:(PTYSession*)aSession {
     if (idMap_) {
         [self unmaximize];
     }
@@ -1917,11 +1972,11 @@ static NSString* FormatRect(NSRect r) {
     int height = (size.height - VMARGIN*2) / [[aSession textview] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
-        NSLog(@"WARNING: Session has %d width", width);
+        ELog(@"WARNING: Session has %d width", width);
         width = 1;
     }
     if (height <= 0) {
-        NSLog(@"WARNING: Session has %d height", height);
+        ELog(@"WARNING: Session has %d height", height);
         height = 1;
     }
 
@@ -2035,8 +2090,7 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (void)recheckBlur
-{
+- (void)recheckBlur {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
@@ -2244,7 +2298,7 @@ static NSString* FormatRect(NSRect r) {
         PTYSession *session;
         if (uniqueId && [sessionView session]) {  // TODO: Is it right to check if session exists here?
             session = [sessionView session];
-            session.tab = self;
+            session.delegate = self;
         } else if (wp && [sessionView session]) {
             // Re-use existing session because the session view was recycled
             // from the existing view hierarchy when the tmux layout changed but
@@ -2254,7 +2308,7 @@ static NSString* FormatRect(NSRect r) {
         } else {
             session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
                                                   inView:(SessionView*)view
-                                                   inTab:theTab
+                                            withDelegate:theTab
                                            forObjectType:objectType];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
@@ -2287,7 +2341,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut {
     for (PTYSession *aSession in [tabToGut sessions]) {
-        aSession.tab = self;
+        aSession.delegate = self;
     }
     for (PTYSplitView *splitview in [self splitters]) {
         if (splitview != root_) {
@@ -2464,12 +2518,10 @@ static NSString* FormatRect(NSRect r) {
                 result[TAB_ARRANGEMENT_SESSION] =
                     [[sessionView session] arrangementWithContents:YES];
             } else {
-                NSLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
-                DLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
+                ELog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
             }
         } else {
-            NSLog(@"No session ID in arrangement node %@", node);
-            DLog(@"No session ID in arrangement node %@", node);
+            ELog(@"No session ID in arrangement node %@", node);
         }
     }
     return result;
@@ -2704,18 +2756,15 @@ static NSString* FormatRect(NSRect r) {
     return tmuxController_ != nil;
 }
 
-- (int)tmuxWindow
-{
+- (int)tmuxWindow {
     return tmuxWindow_;
 }
 
-- (NSString *)tmuxWindowName
-{
+- (NSString *)tmuxWindowName {
     return tmuxWindowName_ ? tmuxWindowName_ : @"tmux";
 }
 
-- (void)setTmuxWindowName:(NSString *)tmuxWindowName
-{
+- (void)setTmuxWindowName:(NSString *)tmuxWindowName {
     [tmuxWindowName_ autorelease];
     tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
@@ -2738,11 +2787,14 @@ static NSString* FormatRect(NSRect r) {
     return bookmark;
 }
 
+- (Profile *)tmuxBookmark {
+    return [PTYTab tmuxBookmark];
+}
+
 + (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
-           vSpacing:(double)vs
-{
+           vSpacing:(double)vs {
     [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
                                        forKey:KEY_NORMAL_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
@@ -2756,6 +2808,13 @@ static NSString* FormatRect(NSRect r) {
                                        forKey:KEY_VERTICAL_SPACING
                                    inBookmark:[PTYTab tmuxBookmark]];
     [[ProfileModel sharedInstance] postChangeNotification];
+}
+
+- (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)hs
+           vSpacing:(double)vs {
+    [PTYTab setTmuxFont:font nonAsciiFont:nonAsciiFont hSpacing:hs vSpacing:vs];
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
@@ -3311,8 +3370,7 @@ static NSString* FormatRect(NSRect r) {
             root_.frame.size.height > flexibleView_.frame.size.height);
 }
 
-- (BOOL)hasMaximizedPane
-{
+- (BOOL)hasMaximizedPane {
     return isMaximized_;
 }
 
@@ -3562,15 +3620,15 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2 {
-    assert(session1.tab == self);
+    assert(session1.delegate == self);
     if (isMaximized_) {
         [self unmaximize];
     }
-    if (session2.tab.hasMaximizedPane) {
-        [session2.tab unmaximize];
+    if (session2.delegate.hasMaximizedPane) {
+        [session2.delegate unmaximize];
     }
 
-    if (session1.tab->lockedSession_ || session2.tab->lockedSession_) {
+    if (((PTYTab *)session1.delegate)->lockedSession_ || ((PTYTab *)session2.delegate)->lockedSession_) {
         return;
     }
     if ([session1 isTmuxClient] ||
@@ -3584,8 +3642,8 @@ static NSString* FormatRect(NSRect r) {
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
 
-    PTYTab *session1Tab = session1.tab;
-    PTYTab *session2Tab = session2.tab;
+    PTYTab *session1Tab = (PTYTab *)session1.delegate;
+    PTYTab *session2Tab = (PTYTab *)session2.delegate;
     
     PTYSplitView *session1Superview = (PTYSplitView *)session1.view.superview;
     NSUInteger session1Index = [[session1Superview subviews] indexOfObject:session1.view];
@@ -3608,8 +3666,8 @@ static NSString* FormatRect(NSRect r) {
     session1Superview.delegate = session1Tab;
     session2Superview.delegate = session2Tab;
     
-    session1.tab = session2Tab;
-    session2.tab = session1Tab;
+    session1.delegate = session2Tab;
+    session2.delegate = session1Tab;
 
     [session1Tab setActiveSession:session2];
     [session2Tab setActiveSession:session1];
@@ -3788,7 +3846,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     if (overflow > 0) {
         // We can't maintain the locked size without making some other subview smaller than
         // its allowed min. Ignore the lockedness of the session.
-        NSLog(@"Warning: locked session doesn't leave enough space for other views. overflow=%lf", overflow);
+        ELog(@"Warning: locked session doesn't leave enough space for other views. overflow=%lf", overflow);
         [splitView adjustSubviews];
         [self _splitViewDidResizeSubviews:splitView];
     } else {
@@ -4045,8 +4103,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             }
         }
         if (!anyChange) {
-            PtyLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
-            NSLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
+            ELog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
             return;
         }
     }
@@ -4065,7 +4122,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         return;
     }
     if ([splitView frame].size.width == 0) {
-        NSLog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
+        ELog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
         return;
     }
     PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
@@ -4194,8 +4251,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                 if (fabs(currentSumOfSizes - targetSize) > [[splitView subviews] count]) {
                     // I'm not sure this will ever happen, but just in case quantization prevents us
                     // from converging give up and ignore constraints.
-                    NSLog(@"No changes! Ignoring constraints!");
-                    PtyLog(@"splitView:resizeSubviewsWithOldSize - No changes! Ignoring constraints!");
+                    ELog(@"No changes! Ignoring constraints!");
                     ignoreConstraints = YES;
                 } else {
                     PtyLog(@"splitView:resizeSubviewsWithOldSize - redistribute quantization error");
@@ -4318,7 +4374,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         return;
     }
     if ([root_ frame].size.width == 0) {
-        NSLog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
+        ELog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
         return;
     }
     PtyLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);
@@ -4396,6 +4452,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     return originalPosition + allowedDiff;
 }
 
+- (BOOL)sessionIsActiveInTab:(PTYSession *)session {
+    return [self activeSession] == session;
+}
+
 #pragma mark - Private
 
 - (void)setLabelAttributesForDeadSession {
@@ -4413,43 +4473,55 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     return elapsed < (2 * kBackgroundSessionIntervalSec);
 }
 
-- (void)setLabelAttributesForIdleTabAtTime:(struct timeval)now
-{
+- (void)setLabelAttributesForIdleTabAtTime:(struct timeval)now {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
     if ([self isProcessing]) {
         [self setIsProcessing:NO];  // This triggers KVO in PSMTabBarCell
     }
 
+    BOOL allSessionsWithNewOutputAreIdle = YES;
+    BOOL anySessionHasNewOutput = NO;
     for (PTYSession* session in [self sessions]) {
         if ([session newOutput]) {
-            // Idle after new output
-            if (!session.havePostedIdleNotification &&
-                [session shouldPostGrowlNotification] &&
-                [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC &&
-                session.isIdle) {
-                NSString *theDescription =
-                    [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
-                        [[self activeSession] name],
-                        [self realObjectCount]];
-                if ([iTermProfilePreferences boolForKey:KEY_SEND_IDLE_ALERT inProfile:session.profile]) {
-                    [[iTermGrowlDelegate sharedInstance] growlNotify:@"Idle"
-                                                     withDescription:theDescription
-                                                     andNotification:@"Idle"
-                                                         windowIndex:[session screenWindowIndex]
-                                                            tabIndex:[session screenTabIndex]
-                                                           viewIndex:[session screenViewIndex]];
+            // Got new output
+            anySessionHasNewOutput = YES;
+
+            if (session.isIdle &&
+                [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
+                // Idle after new output
+                
+                // See if a notification should be posted.
+                if (!session.havePostedIdleNotification && [session shouldPostGrowlNotification]) {
+                    NSString *theDescription =
+                        [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
+                            [session name],
+                            [self tabNumber]];
+                    if ([iTermProfilePreferences boolForKey:KEY_SEND_IDLE_ALERT inProfile:session.profile]) {
+                        [[iTermGrowlDelegate sharedInstance] growlNotify:@"Idle"
+                                                         withDescription:theDescription
+                                                         andNotification:@"Idle"
+                                                             windowIndex:[session screenWindowIndex]
+                                                                tabIndex:[session screenTabIndex]
+                                                               viewIndex:[session screenViewIndex]];
+                    }
+                    session.havePostedIdleNotification = YES;
+                    session.havePostedNewOutputNotification = NO;
                 }
-                session.havePostedIdleNotification = YES;
-                session.havePostedNewOutputNotification = NO;
+            } else {
+                allSessionsWithNewOutputAreIdle = NO;
             }
-            if (isBackgroundTab) {
+        }
+    }
+
+    // Update state
+    if (isBackgroundTab) {
+        if (anySessionHasNewOutput) {
+            if (allSessionsWithNewOutputAreIdle) {
                 [self setState:kPTYTabIdleState reset:kPTYTabNewOutputState];
             }
         } else {
-            // normal state
-            if (isBackgroundTab) {
-                [self setState:0 reset:(kPTYTabIdleState | kPTYTabNewOutputState)];
-            }
+            // No new output (either we got foregrounded or nothing has happened to a background tab)
+            [self setState:0 reset:(kPTYTabIdleState | kPTYTabNewOutputState)];
         }
     }
 }
@@ -4469,7 +4541,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                                                                                 @"Growl Alerts")
                                              withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
                                                               [[self activeSession] name],
-                                                              [self realObjectCount]]
+                                                              [self tabNumber]]
                                              andNotification:@"New Output"
                                                  windowIndex:[[self activeSession] screenWindowIndex]
                                                     tabIndex:[[self activeSession] screenTabIndex]
