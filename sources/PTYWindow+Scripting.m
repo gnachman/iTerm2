@@ -52,7 +52,7 @@
                                              canActivate:NO
                                                  command:command
                                                    block:nil];
-    return session.tab;
+    return [_delegate tabForSession:session];
 }
 
 - (id)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
@@ -75,7 +75,7 @@
                                              canActivate:NO
                                                  command:command
                                                    block:nil];
-    return session.tab;
+    return [_delegate tabForSession:session];
 }
 
 #pragma mark - Accessors

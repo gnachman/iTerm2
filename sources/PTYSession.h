@@ -29,10 +29,12 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
 @class PTYScrollView;
+@class PTYTab;
 @class PTYTask;
 @class PTYTextView;
 @class PasteContext;
 @class PreferencePanel;
+@class PTYSession;
 @class VT100RemoteHost;
 @class VT100Screen;
 @class VT100Terminal;
@@ -41,6 +43,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class iTermController;
 @class iTermGrowlDelegate;
 @class iTermQuickLookController;
+@class SessionView;
 
 // The time period for just blinking is in -[iTermAdvancedSettingsModel timeBetweenBlinks].
 // Timer period when receiving lots of data.
@@ -64,7 +67,114 @@ typedef enum {
     TMUX_CLIENT  // Session mirrors a tmux virtual window
 } PTYSessionTmuxMode;
 
-@class PTYTab;
+// This is implemented by a view that coontains a collection of sessions, nominally a tab.
+@protocol PTYSessionDelegate<NSObject>
+
+// Return the window controller for this session. This is the "real" one, not a
+// possible proxy that gets subbed in during instant replay.
+- (NSWindowController<iTermWindowController> *)realParentWindow;
+
+// A window controller which may be a proxy during instant replay.
+- (id<WindowControllerInterface>)parentWindow;
+
+// When a surrogate view is replacing the real SessionView, a reference to the
+// real (or "live") view must be held. Invoke this to add it to an array of
+// live views so it will be kept alive. Use -showLiveSession:inPlaceOf: to
+// remove a view from this list.
+- (void)addHiddenLiveView:(SessionView *)hiddenLiveView;
+
+// Provides a tab number for the ITERM_SESSION_ID environment variable. This
+// may not correspond to the physical tab number because it's immutable for a
+// given tab.
+- (int)tabNumberForItermSessionId;
+
+// Sibling sessions in this tab.
+- (NSArray<PTYSession *> *)sessions;
+
+// Remove aSession from the tab.
+// Remove a dead session. This should be called from [session terminate] only.
+- (void)removeSession:(PTYSession *)aSession;
+
+// Is the tab this session belongs to currently visible?
+- (BOOL)sessionBelongsToVisibleTab;
+
+// The tab number as shown in the tab bar, starting at 1. May go into double digits.
+- (int)tabNumber;
+
+// Returns true if another update may be needed later (so the timer should be scheduled).
+- (BOOL)updateLabelAttributes;
+
+// End the session (calling terminate normally or killing/hiding a tmux
+// session), and closes the tab if neeed.
+- (void)closeSession:(PTYSession *)session;
+
+// Sets whether the bell indicator should show.
+- (void)setBell:(BOOL)flag;
+
+// Something changed with the profile that might cause the window to be blurred.
+- (void)recheckBlur;
+
+// Indicates if this session is the active one in its tab, even if the tab
+// isn't necessarily selected.
+- (BOOL)sessionIsActiveInTab:(PTYSession *)session;
+
+// Session-initiated name change.
+- (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
+
+// Session-initiated font size. May cause window size to adjust.
+- (void)sessionDidChangeFontSize:(PTYSession *)session;
+
+// Session-initiated resize.
+- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
+
+// Select the "next" session in this tab.
+- (void)nextSession;
+
+// Select the "previous" session in this tab.
+- (void)previousSession;
+
+// Does the tab have a maximized pane?
+- (BOOL)hasMaximizedPane;
+
+// Make session active in this tab. Assumes session belongs to thet ab.
+- (void)setActiveSession:(PTYSession*)session;
+
+// Index of the tab. 0-based.
+- (int)number;
+
+// Make the containing tab selected in its window. The window may not be visible, though.
+- (void)sessionSelectContainingTab;
+
+// Add the session to the restorableSession.
+- (void)addSession:(PTYSession *)self toRestorableSession:(iTermRestorableSession *)restorableSession;
+
+// Unmaximize the maximized pane (if any) in the tab.
+- (void)unmaximize;
+
+// Tmux window number (a tmux window is like a tab).
+- (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)horizontalSpacing
+           vSpacing:(double)verticalSpacing;
+
+// Returns the profile to use for tmux sessions.
+- (Profile *)tmuxBookmark;
+
+// Notify the tab that this session, which is a tmux gateway, received a rename of a tmux window.
+- (void)sessionWithTmuxGateway:(PTYSession *)session
+       wasNotifiedWindowWithId:(int)windowId
+                     renamedTo:(NSString *)newName;
+
+// Returns the objectSpecifier of the tab (used to identify a tab for Applescript).
+- (NSScriptObjectSpecifier *)objectSpecifier;
+
+// Returns the tmux window ID of the containing tab. -1 if not tmux.
+- (int)tmuxWindow;
+
+// If the tab is a tmux window, this gives its name.
+- (NSString *)tmuxWindowName;
+@end
+
 @class SessionView;
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
@@ -73,7 +183,7 @@ typedef enum {
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
-
+@property(nonatomic, assign) id<PTYSessionDelegate> delegate;
 @property(nonatomic, assign) BOOL alertOnNextMark;
 @property(nonatomic, copy) NSColor *tabColor;
 
@@ -96,9 +206,6 @@ typedef enum {
 
 // Array of subprocessess names.
 @property(nonatomic, readonly) NSArray *childJobNames;
-
-// The owning tab. TODO: Make this into a protocol because it's essentially a delegate.
-@property(nonatomic, assign) PTYTab *tab;
 
 // Time since reference date when last output was receivced.
 @property(nonatomic, readonly) NSTimeInterval lastOutput;
@@ -342,7 +449,7 @@ typedef enum {
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement;
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
                                inView:(SessionView*)sessionView
-                                inTab:(PTYTab*)theTab
+                         withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark;

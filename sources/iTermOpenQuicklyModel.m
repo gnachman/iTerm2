@@ -373,7 +373,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
-                           documents:@[ session.profile[KEY_NAME] ?: @"" ]
+                           documents:@[ session.originalProfile[KEY_NAME] ?: @"" ]
                           multiplier:kProfileNameMultiplier
                                 name:@"Profile"
                             features:features

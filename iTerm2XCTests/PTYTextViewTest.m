@@ -359,10 +359,6 @@
 - (void)saveToDvr {
 }
 
-- (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other {
-    return YES;
-}
-
 - (void)removeInaccessibleNotes {
 }
 

@@ -552,7 +552,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
             GlobalSearchInstance* aSearch;
             aSearch = [[[GlobalSearchInstance alloc] initWithSession:aSession
                                                            findString:findString
-                                                                label:[iTermExpose labelForTab:[aSession tab]
+                                                                label:[iTermExpose labelForTab:[aTerminal tabForSession:aSession]
                                                                                   windowNumber:i+1
                                                                                      tabNumber:j+1]] autorelease];
             [searches_ addObject:aSearch];

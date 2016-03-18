@@ -43,15 +43,15 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 }
 
 - (BOOL)capturedOutputToolVisibleInSession:(PTYSession *)aSession {
-    if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
+    if (!aSession.delegate.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
     return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName];
 }
 
 - (void)showCaptureOutputToolInSession:(PTYSession *)aSession {
-    if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
-        [aSession.tab.realParentWindow toggleToolbeltVisibility:nil];
+    if (!aSession.delegate.realParentWindow.shouldShowToolbelt) {
+        [aSession.delegate.realParentWindow toggleToolbeltVisibility:nil];
     }
     if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName]) {
         [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];

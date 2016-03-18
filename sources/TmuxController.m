@@ -419,9 +419,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
-               inWindow:(int)window
-{
-    [self retainWindow:window withTab:[aSession tab]];
+               inWindow:(int)window {
+    [self retainWindow:window withTab:[aSession.delegate.realParentWindow tabForSession:aSession]];
     [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
 }
 
@@ -1320,7 +1319,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // body modifies it by closing sessions.
     for (NSString *key in [[windowPanes_ copy] autorelease]) {
         PTYSession *session = [windowPanes_ objectForKey:key];
-        [[[session tab] realParentWindow] softCloseSession:session];
+        [session.delegate.realParentWindow softCloseSession:session];
     }
 
     // Clean up all state to avoid trying to reuse it.
