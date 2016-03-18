@@ -164,6 +164,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // should be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
+// Timer period between updates when active (not idle, tab is visible or title bar is changing,
+// etc.)
+static const NSTimeInterval kActiveUpdateCadence = 1.0 / 30.0;
+
+// Timer period for background sessions. This changes the tab item's color
+// so it must run often enough for that to be useful.
+// TODO(georgen): There's room for improvement here.
+static const NSTimeInterval kBackgroundUpdateCadence = 1;
+
 @interface PTYSession () <iTermAutomaticProfileSwitcherDelegate, iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
@@ -343,6 +352,9 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
+
+    // Cached advanced setting
+    NSTimeInterval _idleTime;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -366,6 +378,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
         _triggerLineNumber = -1;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
@@ -406,10 +419,6 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(windowResized)
-                                                     name:@"iTermWindowDidResize"
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
                                                    object:nil];
@@ -434,7 +443,9 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return self;
 }
 
-- (void)dealloc {
+ITERM_WEAKLY_REFERENCEABLE
+
+- (void)iterm_dealloc {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
@@ -458,7 +469,6 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_backgroundImagePath release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
-    [_antiIdleTimer release];
     [_updateTimer invalidate];
     [_originalProfile release];
     [_liveSession release];
@@ -504,13 +514,6 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 {
     return [NSString stringWithFormat:@"<%@: %p %dx%d>",
                [self class], self, [_screen width], [_screen height]];
-}
-
-- (void)cancelTimers {
-    [_updateTimer invalidate];
-    _updateTimer = nil;
-    [_antiIdleTimer invalidate];
-    _antiIdleTimer = nil;
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
@@ -626,15 +629,6 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)coprocessChanged
 {
     [_textview setNeedsDisplay:YES];
-}
-
-- (void)windowResized
-{
-    // When the window is resized the title is temporarily changed and it's our
-    // timer that resets it.
-    if (!_exited) {
-        [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
-    }
 }
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame
@@ -1095,7 +1089,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
     _antiIdleCode = 0;
-    [_antiIdleTimer release];
+    [_antiIdleTimer invalidate];
     _antiIdleTimer = nil;
     _newOutput = NO;
     [_view updateScrollViewFrame];
@@ -1526,9 +1520,6 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [[_view findViewController] setDelegate:nil];
     }
 
-    [_updateTimer invalidate];
-    _updateTimer = nil;
-
     [_pasteHelper abort];
 
     [[_delegate realParentWindow] sessionDidTerminate:self];
@@ -1808,15 +1799,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     // Make sure the screen gets redrawn soonish
     _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
-    if ([_delegate sessionBelongsToVisibleTab]) {
-        if (length < 1024) {
-            [self scheduleUpdateIn:kFastTimerIntervalSec];
-        } else {
-            [self scheduleUpdateIn:kSlowTimerIntervalSec];
-        }
-    } else {
-        [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
-    }
+    self.active = YES;
     [[ProcessCache sharedInstance] notifyNewOutput];
 }
 
@@ -2796,14 +2779,16 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return _commandRange.start.x >= 0;
 }
 
+// You're processing if data was read off the socket in the last "idleTimeSeconds".
 - (BOOL)isProcessing {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    return (now - _lastOutput) < [iTermAdvancedSettingsModel idleTimeSeconds];
+    return (now - _lastOutput) < _idleTime;
 }
 
+// You're idle if it's been one second since isProcessing was true.
 - (BOOL)isIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    return (now - _lastOutput) < ([iTermAdvancedSettingsModel idleTimeSeconds] + 1);
+    return (now - _lastOutput) > (_idleTime + 1);
 }
 
 - (NSString*)formattedName:(NSString*)base {
@@ -3026,8 +3011,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_terminal setTermType:_termVariable];
 }
 
-- (void)setView:(SessionView*)newView
-{
+- (void)setView:(SessionView*)newView {
     // View holds a reference to us so we don't hold a reference to it.
     _view = newView;
     [[_view findViewController] setDelegate:self];
@@ -3114,22 +3098,20 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)setAntiIdle:(BOOL)set {
     [_antiIdleTimer invalidate];
-    [_antiIdleTimer release];
     _antiIdleTimer = nil;
-    
+
     _antiIdlePeriod = MAX(_antiIdlePeriod, kMinimumAntiIdlePeriod);
-    
+
     if (set) {
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
-                                                           target:self
-                                                         selector:@selector(doAntiIdle)
-                                                         userInfo:nil
-                                                          repeats:YES] retain];
+        _antiIdleTimer = [NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
+                                                          target:self.weakSelf
+                                                        selector:@selector(doAntiIdle)
+                                                        userInfo:nil
+                                                         repeats:YES];
     }
 }
 
-- (BOOL)useBoldFont
-{
+- (BOOL)useBoldFont {
     return [_textview useBoldFont];
 }
 
@@ -3387,24 +3369,20 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     }
 }
 
-- (void)updateDisplayTimerDidFire:(NSTimer *)timer {
-    _updateTimer = nil;
-    [self updateDisplay];
-}
-
 - (void)updateDisplay {
     _timerRunning = YES;
-    BOOL anotherUpdateNeeded = [NSApp isActive];
-    if (!anotherUpdateNeeded &&
+    BOOL active = !self.isIdle;
+
+    if (![NSApp isActive] &&
         _updateDisplayUntil &&
         [NSDate timeIntervalSinceReferenceDate] < _updateDisplayUntil) {
         // We're still in the time window after the last output where updates are needed.
-        anotherUpdateNeeded = YES;
+        active = YES;
     }
 
     // Set attributes of tab to indicate idle, processing, etc.
     if (![self isTmuxGateway]) {
-        anotherUpdateNeeded |= [_delegate updateLabelAttributes];
+        [_delegate updateLabelAttributes];
     }
 
     static const NSTimeInterval kUpdateTitlePeriod = 0.7;
@@ -3417,33 +3395,17 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
             // the job doesn't have a name.
             [self updateTitles];
             _lastUpdate = now;
-        } else if (now < _lastUpdate + kUpdateTitlePeriod) {
-            // If it's been less than 700ms keep updating.
-            anotherUpdateNeeded = YES;
         }
     } else {
         self.jobName = [_shell currentJob:NO];
         [self.view setTitle:self.name];
     }
 
-    anotherUpdateNeeded |= [_textview refresh];
-    anotherUpdateNeeded |= _delegate.realParentWindow.isShowingTransientTitle;
-    BOOL animating = _textview.getAndResetDrawingAnimatedImageFlag;
-    anotherUpdateNeeded |= animating;
+    const BOOL somethingIsBlinking = [_textview refresh];
+    const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
+    const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
 
-    if (anotherUpdateNeeded) {
-        if (animating) {
-            // A cell of animated GIF has been drawn since the last call to updateDisplay.
-            [self scheduleUpdateIn:kFastTimerIntervalSec];
-        } else if ([_delegate sessionBelongsToVisibleTab]) {
-            [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
-        } else {
-            [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
-        }
-    } else {
-        [_updateTimer invalidate];
-        _updateTimer = nil;
-    }
+    self.active = (somethingIsBlinking || transientTitle || animationPlaying);
 
     if (_tailFindTimer && [[[_view findViewController] view] isHidden]) {
         [self stopTailFind];
@@ -3462,74 +3424,62 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [_delegate nameOfSession:self didChangeTo:[self name]];
         [self.view setTitle:self.name];
     }
-    
+
     if ([_delegate sessionBelongsToVisibleTab]) {
         // Revert to the permanent tab title.
         [[_delegate parentWindow] setWindowTitle];
     }
 }
 
-- (void)refreshAndStartTimerIfNeeded
-{
+- (void)refresh {
     if ([_textview refresh]) {
-        [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
+        self.active = YES;
     }
 }
 
-- (void)scheduleUpdateIn:(NSTimeInterval)timeout {
-    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f",
-         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout);
-    if (_exited) {
+- (void)setActive:(BOOL)active {
+    active = active && [_delegate sessionBelongsToVisibleTab];
+    if (active == _active) {
+        return;
+    } else {
+        if (active) {
+            DLog(@"Become active for session %@", self);
+        } else {
+            DLog(@"Become inactive for session %@", self);
+        }
+    }
+    _active = active;
+    if (active) {
+        [self setUpdateCadence:kActiveUpdateCadence];
+    } else if ([NSApp isActive]) {
+        [self setUpdateCadence:kBackgroundUpdateCadence];
+    }
+}
+
+- (void)setUpdateCadence:(NSTimeInterval)cadence {
+    if (_updateTimer.timeInterval == cadence) {
+        DLog(@"No change to cadence.");
         return;
     }
-
-    if (!_timerRunning && [_updateTimer isValid]) {
-        if (_lastTimeout == kSlowTimerIntervalSec && timeout == kFastTimerIntervalSec) {
-            // Don't go from slow to fast
-            DLog(@"  declining to go from slow to fast");
-            return;
-        }
-        if (_lastTimeout == timeout) {
-            // No change? No point.
-            DLog(@"  declining; no change");
-            return;
-        }
-        if (timeout > kSlowTimerIntervalSec && timeout > _lastTimeout) {
-            // This is a longer timeout than the existing one, and is background/blink.
-            DLog(@"  declining to use a longer timeout when new frequency is blink.");
-            return;
-        }
-    }
-
-    [_updateTimer invalidate];
-    _updateTimer = nil;
-
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    NSTimeInterval timeSinceLastUpdate = now - _timeOfLastScheduling;
-    _timeOfLastScheduling = now;
-    _lastTimeout = timeout;
-
-    static const NSTimeInterval kMinimumDelay = 1 / 30.0;
-    DLog(@"  scheduling timer to run in %f sec", MAX(kMinimumDelay, timeout - timeSinceLastUpdate));
-    
+    DLog(@"Set cadence of %@ to %f", self, cadence);
 #if 0
     // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
     // I'm worried about the possible side effects it might have since there's no way to 
     // know all the tracking event loops.
     _updateTimer = [NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
                                                       timeout - timeSinceLastUpdate)
-                                           target:self
-                                         selector:@selector(updateDisplayTimerDidFire:)
-                                         userInfo:[NSNumber numberWithFloat:(float)timeout]
-                                          repeats:NO];
+                                           target:self.weakSelf
+                                         selector:@selector(updateDisplay)
+                                         userInfo:nil
+                                          repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
 #else
-    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:MAX(kMinimumDelay,
-                                                               timeout - timeSinceLastUpdate)
-                                                    target:self
-                                                  selector:@selector(updateDisplayTimerDidFire:)
-                                                  userInfo:[NSNumber numberWithFloat:(float)timeout]
-                                                   repeats:NO];
+    [_updateTimer invalidate];
+    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
+                                                    target:self.weakSelf
+                                                  selector:@selector(updateDisplay)
+                                                  userInfo:nil
+                                                   repeats:YES];
 #endif
 }
 
@@ -5343,9 +5293,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return [self textViewIsActiveSession] && [[_delegate realParentWindow] autoCommandHistoryIsOpenForSession:self];
 }
 
-- (void)textViewWillNeedUpdateForBlink
-{
-    [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
+- (void)textViewWillNeedUpdateForBlink {
+    self.active = YES;
 }
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
@@ -5949,11 +5898,11 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)screenScheduleRedrawSoon {
-    [self scheduleUpdateIn:kFastTimerIntervalSec];
+    self.active = YES;
 }
 
 - (void)screenNeedsRedraw {
-    [self refreshAndStartTimerIfNeeded];
+    [self refresh];
     [_textview updateNoteViewFrames];
     [_textview setNeedsDisplay:YES];
 }

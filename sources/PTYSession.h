@@ -3,6 +3,7 @@
 #import "DVR.h"
 #import "FindViewController.h"
 #import "iTermFileDescriptorClient.h"
+#import "iTermWeakReference.h"
 #import "ITAddressBookMgr.h"
 #import "iTermPopupWindowController.h"
 #import "LineBuffer.h"
@@ -44,16 +45,6 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class iTermGrowlDelegate;
 @class iTermQuickLookController;
 @class SessionView;
-
-// The time period for just blinking is in -[iTermAdvancedSettingsModel timeBetweenBlinks].
-// Timer period when receiving lots of data.
-static const float kSlowTimerIntervalSec = 1.0 / 15.0;
-// Timer period for interactive use.
-static const float kFastTimerIntervalSec = 1.0 / 30.0;
-// Timer period for background sessions. This changes the tab item's color
-// so it must run often enough for that to be useful.
-// TODO(georgen): There's room for improvement here.
-static const float kBackgroundSessionIntervalSec = 1;
 
 typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
@@ -101,8 +92,7 @@ typedef enum {
 // The tab number as shown in the tab bar, starting at 1. May go into double digits.
 - (int)tabNumber;
 
-// Returns true if another update may be needed later (so the timer should be scheduled).
-- (BOOL)updateLabelAttributes;
+- (void)updateLabelAttributes;
 
 // End the session (calling terminate normally or killing/hiding a tmux
 // session), and closes the tab if neeed.
@@ -178,12 +168,27 @@ typedef enum {
 @class SessionView;
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
+    iTermWeaklyReferenceable,
+    PopupDelegate,
+    PTYTaskDelegate,
+@class SessionView;
+@interface PTYSession : NSResponder <
+    FindViewControllerDelegate,
+    iTermWeaklyReferenceable,
     PopupDelegate,
     PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
 @property(nonatomic, assign) id<PTYSessionDelegate> delegate;
+
+// A session is active when it's in a visible tab and it needs periodic redraws (something is
+// blinking, it isn't idle, etc), or when a background tab is updating its tab label. This controls
+// how often -updateDisplay gets called to check for dirty characters and invalidate dirty rects,
+// update the tab and window titles, stop "tail find" (searching the live session repeatedly
+// because the find window is open), and evaluating partial-line triggers.
+@property(nonatomic, assign) BOOL active;
+
 @property(nonatomic, assign) BOOL alertOnNextMark;
 @property(nonatomic, copy) NSColor *tabColor;
 
@@ -425,9 +430,6 @@ typedef enum {
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;
 
-// Disable all timers.
-- (void)cancelTimers;
-
 // Begin showing DVR frames from some live session.
 - (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
 
@@ -564,11 +566,8 @@ typedef enum {
 - (NSString*)divorceAddressBookEntryFromPreferences;
 - (void)remarry;
 
-// Schedule the screen update timer to run in a specified number of seconds.
-- (void)scheduleUpdateIn:(NSTimeInterval)timeout;
-
 // Call refresh on the textview and schedule a timer if anything is blinking.
-- (void)refreshAndStartTimerIfNeeded;
+- (void)refresh;
 
 // Open the current selection with semantic history.
 - (void)openSelection;
