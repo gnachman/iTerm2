@@ -577,6 +577,12 @@ DQ
                                                             <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
                                                         </connections>
                                                     </menuItem>
+                                                    <menuItem title="Alert on All Marks" id="UTS-kI-fam">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="toggleAlertOnAllMarks:" target="-1" id="tMe-Bo-PMD"/>
+                                                        </connections>
+                                                    </menuItem>
                                                     <menuItem isSeparatorItem="YES" id="cY7-mh-hpz">
                                                         <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                                     </menuItem>

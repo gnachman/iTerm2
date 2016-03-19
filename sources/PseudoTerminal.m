@@ -5495,6 +5495,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (IBAction)toggleAlertOnNextMark:(id)sender {
     PTYSession *currentSession = [self currentSession];
     currentSession.alertOnNextMark = !currentSession.alertOnNextMark;
+    [iTermPreferences setBool:NO forKey:kPreferenceKeyAlertOnAllMarks];
+}
+
+- (IBAction)toggleAlertOnAllMarks:(id)sender {
+    BOOL oldValue = [iTermPreferences boolForKey:kPreferenceKeyAlertOnAllMarks];
+    BOOL newValue = !oldValue;
+    [iTermPreferences setBool:newValue forKey:kPreferenceKeyAlertOnAllMarks];
+    
+    // Turn off alert on next mark for all sessions
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYSession *session in term.allSessions) {
+            session.alertOnNextMark = NO;
+        }
+    }
 }
 
 - (void)sessionWasRemoved
@@ -6603,9 +6617,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
         if ([item respondsToSelector:@selector(setState:)]) {
-            [item setState:currentSession.alertOnNextMark ? NSOnState : NSOffState];
+            BOOL shouldAlert = currentSession.alertOnNextMark && ![iTermPreferences boolForKey:kPreferenceKeyAlertOnAllMarks];
+            [item setState:shouldAlert ? NSOnState : NSOffState];
         }
         result = (currentSession != nil);
+    } else if ([item action] == @selector(toggleAlertOnAllMarks:)) {
+        if ([item respondsToSelector:@selector(setState:)]) {
+            [item setState:[iTermPreferences boolForKey:kPreferenceKeyAlertOnAllMarks] ? NSOnState : NSOffState];
+        }
+        result = YES;
     } else if ([item action] == @selector(selectPaneUp:) ||
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||

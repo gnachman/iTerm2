@@ -138,6 +138,8 @@ extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 
 extern NSString *const kPreferenceKeyShowFullscreenTabBar;
 
+extern NSString *const kPreferenceKeyAlertOnAllMarks;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple

@@ -1165,7 +1165,7 @@ static const int kDragThreshold = 3;
     [_indicatorsHelper setIndicator:kiTermIndicatorCoprocess
                             visible:[_delegate textViewHasCoprocess]];
     [_indicatorsHelper setIndicator:kiTermIndicatorAlert
-                            visible:[_delegate alertOnNextMark]];
+                            visible:[_delegate alertOnNextMark] && ![iTermPreferences boolForKey:kPreferenceKeyAlertOnAllMarks]];
     [_indicatorsHelper setIndicator:kiTermIndicatorAllOutputSuppressed
                             visible:[_delegate textViewSuppressingAllOutput]];
     [_indicatorsHelper setIndicator:kiTermIndicatorZoomedIn

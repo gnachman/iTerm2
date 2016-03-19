@@ -6274,7 +6274,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
                                                 oneLine:YES
                                                 ofClass:markClass] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
-    if (self.alertOnNextMark) {
+    if (self.alertOnNextMark || [iTermPreferences boolForKey:kPreferenceKeyAlertOnAllMarks]) {
         NSString *action = iTermApplication.sharedApplication.delegate.markAlertAction;
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
             [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
@@ -6440,8 +6440,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
-    _alertOnNextMark = alertOnNextMark;
-    [_textview setNeedsDisplay:YES];
+    if (alertOnNextMark != _alertOnNextMark) {
+        _alertOnNextMark = alertOnNextMark;
+        [_textview setNeedsDisplay:YES];
+    }
 }
 
 - (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
