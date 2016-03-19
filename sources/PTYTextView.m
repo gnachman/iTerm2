@@ -4243,8 +4243,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return theMenu;
 }
 
-- (NSMenu *)menuAtCoord:(VT100GridCoord)coord
-{
+- (NSMenu *)menuAtCoord:(VT100GridCoord)coord {
     NSMenu *theMenu;
 
     // Allocate a menu

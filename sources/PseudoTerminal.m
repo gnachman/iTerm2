@@ -1348,7 +1348,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                        otherButton:nil
                          informativeTextWithFormat:@"Running jobs will be killed."];
     if (aSession.exited || [alert runModal] == NSAlertDefaultReturn) {
-        [self.currentSession restartSession];
+        [aSession restartSession];
     }
 }
 
