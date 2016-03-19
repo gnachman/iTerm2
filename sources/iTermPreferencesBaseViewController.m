@@ -45,6 +45,11 @@ static NSString *const kKey = @"key";
                                                  selector:@selector(preferenceDidChangeFromOtherPanel:)
                                                      name:kPreferenceDidChangeFromOtherPanel
                                                    object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferencePanelWillClose:)
+                                                     name:kPreferencePanelWillCloseNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -512,6 +517,12 @@ static NSString *const kKey = @"key";
     PreferenceInfo *info = [self infoForKey:key];
     assert(info);
     [self updateValueForInfo:info];
+}
+
+- (void)preferencePanelWillClose:(NSNotification *)notification {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    // breaks reference cycles in settingChanged and update blocks
+    [_keyMap removeAllObjects];
 }
 
 @end
