@@ -10,6 +10,7 @@
 
 @interface QLPreviewPanel (iTerm)
 
+// Returns the shared QLPreviewPanel if one exists, or nil otherwise.
 + (instancetype)sharedPreviewPanelIfExists;
 
 @end

@@ -30,8 +30,9 @@
 #import "DebugLogging.h"
 #import "iTermApplication.h"
 
-@class PTYSession;
+@class PreferencePanel;
 @class PseudoTerminal;
+@class PTYSession;
 
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
@@ -58,6 +59,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 @property(nonatomic, readonly) BOOL useBackgroundPatternIndicator;
 @property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
+
+// Preference panels. The app delegate holds the reference to these window controllers.
+@property(nonatomic, readonly) PreferencePanel *sharedPreferencePanel;
+@property(nonatomic, readonly) PreferencePanel *sessionsPreferencePanel;
 
 - (void)awakeFromNib;
 
@@ -135,9 +140,5 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
-
-// Preference panels
-- (PreferencePanel *)sharedPreferencePanel;
-- (PreferencePanel *)sessionsPreferencePanel;
 
 @end

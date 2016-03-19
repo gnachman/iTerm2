@@ -69,15 +69,16 @@
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAdvancedSettingsViewController.h"
+#import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
+#import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermLaunchServices.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
@@ -94,7 +95,6 @@
 #import "PTYSession.h"
 #import "SessionView.h"
 #import "WindowArrangements.h"
-#import "iTermApplication.h"
 #include <stdlib.h>
 
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
@@ -143,11 +143,11 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 }
 
 + (instancetype)sharedInstance {
-    return [iTermApplication sharedApplication].delegate.sharedPreferencePanel;
+    return [[[iTermApplication sharedApplication] delegate] sharedPreferencePanel];
 }
 
 + (instancetype)sessionsInstance {
-    return [iTermApplication sharedApplication].delegate.sessionsPreferencePanel;
+    return [[[iTermApplication sharedApplication] delegate] sessionsPreferencePanel];
 }
 
 - (instancetype)initWithProfileModel:(ProfileModel*)model
@@ -166,8 +166,8 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 #pragma mark - View layout
 
 - (void)awakeFromNib {
-    NSAssert(self.windowLoaded, @"window not loaded in %@", NSStringFromSelector(_cmd));
-    [self.windowIfLoaded setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+    NSAssert(self.isWindowLoaded, @"window not loaded in %@", NSStringFromSelector(_cmd));
+    [self.window setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
     _globalTabViewItem.view = _generalPreferencesViewController.view;
@@ -176,6 +176,12 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
     _arrangementsTabViewItem.view = arrangements_.view;
     _mouseTabViewItem.view = _pointerViewController.view;
     _advancedTabViewItem.view = _advancedViewController.view;
+
+    _generalPreferencesViewController.preferencePanel = self;
+    _appearancePreferencesViewController.preferencePanel = self;
+    _keysViewController.preferencePanel = self;
+    _profilesViewController.preferencePanel = self;
+    _pointerViewController.preferencePanel = self;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
@@ -202,7 +208,7 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 
 // NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
 - (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab {
-    (void)[self window];
+    [self window];
     [self selectProfilesTab];
     [self run];
     [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
@@ -212,9 +218,8 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
     return [_profilesViewController importColorPresetFromFile:filename];
 }
 
-- (NSWindow *)window
-{
-    BOOL shouldPostWindowLoadNotification = !self.windowLoaded;
+- (NSWindow *)window {
+    BOOL shouldPostWindowLoadNotification = !self.isWindowLoaded;
     NSWindow *window = [super window];
     if (shouldPostWindowLoadNotification) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidLoadNotification
@@ -223,12 +228,12 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
     return window;
 }
 
-- (NSWindow *)windowIfLoaded
-{
-    if (self.windowLoaded) {
+- (NSWindow *)windowIfLoaded {
+    if (self.isWindowLoaded) {
         return self.window;
+    } else {
+        return nil;
     }
-    return nil;
 }
 
 - (WindowArrangements *)arrangements {
@@ -236,10 +241,10 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 }
 
 - (void)run {
-    (void)self.window;
+    [self window];
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
-    if (!self.windowIfLoaded.isVisible) {
+    if (!self.window.isVisible) {
         [self showWindow:self];
     }
 }
@@ -261,10 +266,7 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 - (void)windowWillClose:(NSNotification *)aNotification {
     [_profilesViewController windowWillClose:aNotification];
     [[NSUserDefaults standardUserDefaults] synchronize];
-    if (self.windowLoaded) {
-        self.window = nil;
-    }
-    [self _closeCurrentSession:self force:YES];
+    [self postWillCloseNotification];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
@@ -273,17 +275,16 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
                                                       userInfo:nil];
 }
 
+- (void)postWillCloseNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelWillCloseNotification
+                                                        object:self];
+}
+
 #pragma mark - Handle calls to current first responder
 
 // Shell>Close
 - (void)closeCurrentSession:(id)sender {
-    [self _closeCurrentSession:sender force:NO];
-}
-
-- (void)_closeCurrentSession:(id)sender force:(BOOL)force {
-    if (self.windowIfLoaded.isKeyWindow || force) {
-        [self closeWindow:self];
-    }
+    [self close];
 }
 
 // Shell>Close Terminal Window
@@ -291,9 +292,8 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
     [self close];
 }
 
-- (void)close
-{
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelWillCloseNotification object:self];
+- (void)close {
+    [self postWillCloseNotification];
     [super close];
 }
 

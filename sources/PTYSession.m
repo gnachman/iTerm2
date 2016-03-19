@@ -3708,7 +3708,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [[ProfileModel sessionsInstance] setBookmark:[self profile] withGuid:guid];
 
         // Update an existing one-bookmark prefs dialog, if open.
-        if ([PreferencePanel sessionsInstance].windowIfLoaded.isVisible) {
+        if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
             [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
         }
     }

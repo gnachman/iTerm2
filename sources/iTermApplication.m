@@ -39,7 +39,6 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
-#import "PreferencePanel.h"
 
 @implementation iTermApplication
 
@@ -223,3 +222,4 @@
 }
 
 @end
+

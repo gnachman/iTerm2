@@ -520,9 +520,11 @@ static NSString *const kKey = @"key";
 }
 
 - (void)preferencePanelWillClose:(NSNotification *)notification {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    // breaks reference cycles in settingChanged and update blocks
-    [_keyMap removeAllObjects];
+    if (_preferencePanel == notification.object) {
+        _preferencePanel = nil;
+        // Breaks reference cycles in settingChanged and update blocks.
+        [_keyMap removeAllObjects];
+    }
 }
 
 @end

@@ -71,10 +71,14 @@ void LoadPrefsFromCustomFolder(void);
 
 @property(nonatomic, readonly) NSString *currentProfileGuid;
 
+// Returns the window if the pref panel is loaded or nil if not.
+@property(nonatomic, readonly) NSWindow *windowIfLoaded;
+
 + (instancetype)sharedInstance;
 + (instancetype)sessionsInstance;
 
-- (instancetype)initWithProfileModel:(ProfileModel*)model editCurrentSessionMode:(BOOL)editCurrentSessionMode;
+- (instancetype)initWithProfileModel:(ProfileModel *)model
+              editCurrentSessionMode:(BOOL)editCurrentSessionMode;
 
 - (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab;
 
@@ -86,8 +90,6 @@ void LoadPrefsFromCustomFolder(void);
 - (IBAction)showMouseTabView:(id)sender;
 
 - (void)underlyingBookmarkDidChange;
-
-- (NSWindow *)windowIfLoaded;
 
 - (WindowArrangements *)arrangements;
 - (void)run;

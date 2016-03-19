@@ -31,25 +31,25 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
-#import "iTermPreferences.h"
-#import "iTermRemotePreferences.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
-#import "iTermProfilesWindowController.h"
 #import "iTermPasswordManagerWindowController.h"
-#import "iTermRestorableSession.h"
+#import "iTermPreferences.h"
+#import "iTermProfilesWindowController.h"
 #import "iTermQuickLookController.h"
+#import "iTermRemotePreferences.h"
+#import "iTermRestorableSession.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
-#import "iTermWarning.h"
 #import "iTermTipWindowController.h"
+#import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -61,10 +61,10 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "QLPreviewPanel+iTerm.h"
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
-#import "QLPreviewPanel+iTerm.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -1710,19 +1710,17 @@ static BOOL hasBecomeActive = NO;
     return [[iTermController sharedInstance] terminals];
 }
 
-- (void)preferencePanelWillClose:(NSNotification *)notification
-{
+- (void)preferencePanelWillClose:(NSNotification *)notification {
     if (notification.object == _sharedPreferencePanel) {
-        [_sharedPreferencePanel release];
+        [_sharedPreferencePanel autorelease];
         _sharedPreferencePanel = nil;
     } else if (notification.object == _sessionsPreferencePanel) {
-        [_sessionsPreferencePanel release];
+        [_sessionsPreferencePanel autorelease];
         _sessionsPreferencePanel = nil;
     }
 }
 
-- (PreferencePanel *)sharedPreferencePanel
-{
+- (PreferencePanel *)sharedPreferencePanel {
     if (!_sharedPreferencePanel) {
         _sharedPreferencePanel = [[PreferencePanel alloc] initWithProfileModel:[ProfileModel sharedInstance]
                                                         editCurrentSessionMode:NO];
@@ -1730,8 +1728,7 @@ static BOOL hasBecomeActive = NO;
     return _sharedPreferencePanel;
 }
 
-- (PreferencePanel *)sessionsPreferencePanel
-{
+- (PreferencePanel *)sessionsPreferencePanel {
     if (!_sessionsPreferencePanel) {
         _sessionsPreferencePanel = [[PreferencePanel alloc] initWithProfileModel:[ProfileModel sessionsInstance]
                                                           editCurrentSessionMode:YES];

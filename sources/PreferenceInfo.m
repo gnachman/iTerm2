@@ -7,8 +7,7 @@
 //
 
 #import "PreferenceInfo.h"
-
-extern NSString *const kPreferencePanelDidLoadNotification;
+#import "PreferencePanel.h"
 
 @implementation PreferenceInfo
 
@@ -26,11 +25,18 @@ extern NSString *const kPreferencePanelDidLoadNotification;
     self = [super init];
     if (self) {
         _range = NSMakeRange(0, INT_MAX);
+        // Observers' initial execution happens from the notification because it gives the current
+        // profile a chance to get set before the observer runs.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferencePanelDidLoad:)
+                                                     name:kPreferencePanelDidLoadNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_key release];
     [_control release];
     [_shouldBeEnabled release];
@@ -44,16 +50,11 @@ extern NSString *const kPreferencePanelDidLoadNotification;
 - (void)setObserver:(void (^)())observer {
     [_observer autorelease];
     _observer = [observer copy];
-    // wait until the control is properly set up and then update its value
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_preferencePanelDidLoad:)
-                                                 name:kPreferencePanelDidLoadNotification
-                                               object:nil];
 }
 
-- (void)_preferencePanelDidLoad:(NSNotification *)notification
-{
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:kPreferencePanelDidLoadNotification object:nil];
+#pragma mark - Notifications
+
+- (void)preferencePanelDidLoad:(NSNotification *)notification {
     if (self.observer) {
         self.observer();
     }

@@ -22,42 +22,41 @@
 @implementation iTermQuickLookController
 
 + (void)dismissSharedPanel {
-    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanelIfExists];
-    if ([panel isVisible]) {
-        [panel orderOut:nil];
-    }
+  if ([[QLPreviewPanel sharedPreviewPanelIfExists] isVisible]) {
+    [[QLPreviewPanel sharedPreviewPanel] orderOut:nil];
+  }
 }
 
 - (void)dealloc {
-  [_files release];
-  [super dealloc];
+    [_files release];
+    [super dealloc];
 }
 
 - (void)addURL:(NSURL *)url {
-  if (!_files) {
-    _files = [[NSMutableArray alloc] init];
-  }
-  [_files addObject:url];
+    if (!_files) {
+        _files = [[NSMutableArray alloc] init];
+    }
+    [_files addObject:url];
 }
 
 - (void)showWithSourceRect:(NSRect)sourceRect controller:(id)controller {
-  self.sourceRect = sourceRect;
-  QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
-  if (panel.currentController == controller) {
-    panel.dataSource = self;
-    panel.delegate = self;
-    [panel reloadData];
-  } else {
-    [panel updateController];
-  }
+    self.sourceRect = sourceRect;
+    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
+    if (panel.currentController == controller) {
+        panel.dataSource = self;
+        panel.delegate = self;
+        [panel reloadData];
+    } else {
+        [panel updateController];
+    }
 
-  // This undocumented API makes the quicklook window appear beneath the cursor. It doesn't seem
-  // to matter what the item is. NSURL implements QLPreviewItem so it's as good as anything.
-  if ([panel respondsToSelector:@selector(setPositionNearPreviewItem:)]) {
-    [panel setPositionNearPreviewItem:[NSURL URLWithString:@"http://example.com/"]];
-  }
+    // This undocumented API makes the quicklook window appear beneath the cursor. It doesn't seem
+    // to matter what the item is. NSURL implements QLPreviewItem so it's as good as anything.
+    if ([panel respondsToSelector:@selector(setPositionNearPreviewItem:)]) {
+        [panel setPositionNearPreviewItem:[NSURL URLWithString:@"http://example.com/"]];
+    }
 
-  [panel makeKeyAndOrderFront:nil];
+    [panel makeKeyAndOrderFront:nil];
 }
 
 - (void)close {
