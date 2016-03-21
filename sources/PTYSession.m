@@ -3433,36 +3433,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-<<<<<<< HEAD
 - (void)refresh {
-||||||| merged common ancestors
-- (void)refreshAndStartTimerIfNeeded
-{
-=======
-- (void)refreshAndStartTimerIfNeeded
-{
     DLog(@"Session %@ calling refresh", self);
->>>>>>> 5a186991e65376f41ca7d957f483b97fd1a85222
     if ([_textview refresh]) {
         self.active = YES;
     }
 }
 
-<<<<<<< HEAD
 - (void)setActive:(BOOL)active {
+    DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
+         @(active), @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
     active = active && [_delegate sessionBelongsToVisibleTab];
     if (active == _active) {
-||||||| merged common ancestors
-- (void)scheduleUpdateIn:(NSTimeInterval)timeout {
-    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f",
-         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout);
-    if (_exited) {
-=======
-- (void)scheduleUpdateIn:(NSTimeInterval)timeout {
-    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
-         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
-    if (_exited) {
->>>>>>> 5a186991e65376f41ca7d957f483b97fd1a85222
         return;
     } else {
         if (active) {

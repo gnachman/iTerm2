@@ -171,12 +171,6 @@ typedef enum {
     iTermWeaklyReferenceable,
     PopupDelegate,
     PTYTaskDelegate,
-@class SessionView;
-@interface PTYSession : NSResponder <
-    FindViewControllerDelegate,
-    iTermWeaklyReferenceable,
-    PopupDelegate,
-    PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
