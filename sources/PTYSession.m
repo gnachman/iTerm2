@@ -1889,6 +1889,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_terminal setBackgroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
     int width = (_screen.width - message.length) / 2;
+    const NSEdgeInsets zeroInset = { 0 };
     if (width > 0) {
         [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
                                        width:width
@@ -1896,6 +1897,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                       height:1
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
+                                       inset:zeroInset
                                        image:[NSImage imageNamed:@"BrokenPipeDivider"]
                                         data:nil];
     }
@@ -1908,6 +1910,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                       height:1
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
+                                       inset:zeroInset
                                        image:[NSImage imageNamed:@"BrokenPipeDivider"]
                                         data:nil];
     }

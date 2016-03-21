@@ -2376,7 +2376,7 @@
 		A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWorkspace+iTerm.h"; sourceTree = "<group>"; };
 		A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWorkspace+iTerm.m"; sourceTree = "<group>"; };
 		A67F57B51B01A01800B4F135 /* iTermImageInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageInfo.h; sourceTree = "<group>"; };
-		A67F57B61B01A01800B4F135 /* iTermImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageInfo.m; sourceTree = "<group>"; };
+		A67F57B61B01A01800B4F135 /* iTermImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageInfo.m; sourceTree = "<group>"; };
 		A67F57BC1B01A08800B4F135 /* iTermAnimatedImageInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnimatedImageInfo.h; sourceTree = "<group>"; };
 		A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnimatedImageInfo.m; sourceTree = "<group>"; };
 		A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorServer.c; sourceTree = "<group>"; tabWidth = 4; };
