@@ -43,6 +43,8 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
 - (void)tmuxPrintLine:(NSString *)line;
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow;
+- (void)tmuxInitialCommandDidCompleteSuccessfully;
+- (void)tmuxInitialCommandDidFailWithError:(NSString *)error;
 
 @end
 

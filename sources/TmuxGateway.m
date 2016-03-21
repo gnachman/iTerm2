@@ -52,6 +52,10 @@ static NSString *kCommandIsLastInList = @"lastInList";
     BOOL detachSent_;
     BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
     NSMutableString *strayMessages_;
+    
+    // When we get the first %begin-%{end,error} we notify the delegate. Until that happens, this is
+    // set to NO.
+    BOOL _initialized;
 }
 
 @synthesize delegate = delegate_;
@@ -322,6 +326,15 @@ error:
     if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
         acceptNotifications_ = YES;
     }
+    if (!_initialized) {
+        _initialized = YES;
+        if (withError) {
+            [delegate_ tmuxInitialCommandDidFailWithError:currentCommandResponse_];
+        } else {
+            [delegate_ tmuxInitialCommandDidCompleteSuccessfully];
+        }
+    }
+
     [currentCommand_ release];
     currentCommand_ = nil;
     [currentCommandResponse_ release];
@@ -330,8 +343,11 @@ error:
     currentCommandData_ = nil;
 }
 
-- (void)parseBegin:(NSString *)command
-{
+- (void)parseBegin:(NSString *)command {
+    if (currentCommand_) {
+        [self abortWithErrorMessage:@"%begin without %end"];
+        return;
+    }
     int flags = -1;
     // begin commandId commandNumber[ flags]
     // flags = 0: Server-originated command
@@ -357,9 +373,13 @@ error:
         currentCommandResponse_ = [[NSMutableString alloc] init];
         currentCommandData_ = [[NSMutableData alloc] init];
     } else {
-        currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
-        NSString *commandId = [components objectAtIndex:1];
-        [currentCommand_ setObject:commandId forKey:kCommandId];
+        if (!commandQueue_.count) {
+            [self abortWithErrorMessage:@"%begin with empty command queue"];
+            return;
+        }
+        currentCommand_ = [commandQueue_[0] retain];
+        NSString *commandId = components[1];
+        currentCommand_[kCommandId] = commandId;
         TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
         [currentCommandResponse_ release];
         [currentCommandData_ release];
@@ -462,13 +482,7 @@ error:
         }
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%begin"]) {
-        if (currentCommand_) {
-            [self abortWithErrorMessage:@"%begin without %end"];
-        } else if (!commandQueue_.count) {
-            [self abortWithErrorMessage:@"%begin with empty command queue"];
-        } else {
-            [self parseBegin:command];
-        }
+        [self parseBegin:command];
     } else {
         if (![command hasPrefix:@"%"] && ![iTermAdvancedSettingsModel tolerateUnrecognizedTmuxCommands]) {
             [delegate_ tmuxPrintLine:@"Unrecognized command from tmux. Did your ssh session die? The command was:"];

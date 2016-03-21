@@ -307,9 +307,8 @@
                     range:range];
 
     // Paragraph Style for Truncating Long Text
-    NSMutableParagraphStyle *truncatingTailParagraphStyle = nil;
-    truncatingTailParagraphStyle =
-        [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
+    NSMutableParagraphStyle *truncatingTailParagraphStyle =
+        [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
     [truncatingTailParagraphStyle setLineBreakMode:[cell truncationStyle]];
     [truncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
 

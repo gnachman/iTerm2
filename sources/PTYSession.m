@@ -1588,7 +1588,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)writeTaskImpl:(NSData *)data canBroadcast:(BOOL)canBroadcast {
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        DLog(@"writeTaskImpl<%p> canBroadcast=%@: called from %@", self, @(canBroadcast), stack);
+        DLog(@"writeTaskImpl session=%@ canBroadcast=%@: called from %@", self, @(canBroadcast), stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
             DLog(@"writeTask keydown %d: %d (%c)", i, (int)bytes[i], bytes[i]);
@@ -1747,6 +1747,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
+    DLog(@"Session %@ begins executing tokens", self);
     int n = CVectorCount(vector);
 
     if (_shell.paused) {
@@ -3401,6 +3402,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.view setTitle:self.name];
     }
 
+    DLog(@"Session %@ calling refresh", self);
     const BOOL somethingIsBlinking = [_textview refresh];
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
     const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
@@ -3431,15 +3433,36 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+<<<<<<< HEAD
 - (void)refresh {
+||||||| merged common ancestors
+- (void)refreshAndStartTimerIfNeeded
+{
+=======
+- (void)refreshAndStartTimerIfNeeded
+{
+    DLog(@"Session %@ calling refresh", self);
+>>>>>>> 5a186991e65376f41ca7d957f483b97fd1a85222
     if ([_textview refresh]) {
         self.active = YES;
     }
 }
 
+<<<<<<< HEAD
 - (void)setActive:(BOOL)active {
     active = active && [_delegate sessionBelongsToVisibleTab];
     if (active == _active) {
+||||||| merged common ancestors
+- (void)scheduleUpdateIn:(NSTimeInterval)timeout {
+    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f",
+         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout);
+    if (_exited) {
+=======
+- (void)scheduleUpdateIn:(NSTimeInterval)timeout {
+    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
+         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
+    if (_exited) {
+>>>>>>> 5a186991e65376f41ca7d957f483b97fd1a85222
         return;
     } else {
         if (active) {
@@ -3857,6 +3880,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSImage *)snapshot {
+    DLog(@"Session %@ calling refresh", self);
     [_textview refresh];
     return [_view snapshot];
 }
@@ -4023,8 +4047,34 @@ ITERM_WEAKLY_REFERENCEABLE
     Profile *tmuxBookmark = [_delegate tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
-    [_tmuxController validateOptions];
+    // We intentionally don't send anything to tmux yet. We wait to get a
+    // begin-end pair from it to make sure everything is cool (we have a legit
+    // session) and then we start going.
 
+    // This is to fix issue 4429, where we used to send a command immediately
+    // and tmux would terminate immediately and we would spam the user's
+    // command line.
+    //
+    // Tmux always prints something when you first attach. It's a notification, a response, or an
+    // error. The options I've considered are:
+    //
+    // tmux -CC with or without an existing session prints this unsolicited:
+    //    %begin time 1 0
+    //    %end time 1 0
+    //    %window-add @id
+
+    // tmux -CC attach with no existing session prints this unsolicited;
+    // %begin time 1 0
+    // no sessions
+    // %error time
+    
+    // tmux -CC attach with an existing session prints this unsolicited:
+    // %begin time 1 0
+    // %end time 1 0
+
+    // One of tmuxInitialCommandDidCompleteSuccessfully: or
+    // tmuxInitialCommandDidFailWithError: will be called on the first %end or
+    // %error, respectively.
     [self printTmuxMessage:@"** tmux mode started **"];
     [_screen crlf];
     [self printTmuxMessage:@"Command Menu"];
@@ -4248,6 +4298,16 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName {
     [_delegate sessionWithTmuxGateway:self wasNotifiedWindowWithId:windowId renamedTo:newName];
     [_tmuxController windowWasRenamedWithId:windowId to:newName];
+}
+
+- (void)tmuxInitialCommandDidCompleteSuccessfully {
+    // This kicks off a chain reaction that leads to windows being opened.
+    [_tmuxController validateOptions];
+}
+
+- (void)tmuxInitialCommandDidFailWithError:(NSString *)error {
+    // Let the user know what went wrong.
+    [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
 }
 
 - (void)tmuxPrintLine:(NSString *)line
@@ -6211,6 +6271,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
+    DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
     if ([_lastMark isKindOfClass:[VT100ScreenMark class]]) {
         VT100ScreenMark *screenMark = (VT100ScreenMark *)_lastMark;
@@ -6264,6 +6325,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Save the current scroll position
 - (void)screenSaveScrollPosition
 {
+    DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
     [_lastMark release];
     _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
