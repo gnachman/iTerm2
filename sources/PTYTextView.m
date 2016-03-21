@@ -925,7 +925,7 @@ static const int kDragThreshold = 3;
 // Returns YES if blinking text or cursor was found. TODO: This is a stupid
 // micro-optimization and should be removed.
 - (BOOL)refresh {
-    DebugLog(@"PTYTextView refresh called");
+    DLog(@"PTYTextView refresh called with delegate %@", _delegate);
     if (_dataSource == nil || _inRefresh) {
         return YES;
     }
@@ -6345,6 +6345,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self invalidateInputMethodEditorRect];
     }
 
+    if (foundDirty) {
+        // Dump the screen contents
+        DLog(@"Found dirty with delegate %@", _delegate);
+        DLog(@"\n%@", [_dataSource debugString]);
+    } else {
+        DLog(@"Nothing dirty found, delegate=%@", _delegate);
+    }
+
     // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
     [_dataSource resetDirty];
@@ -6359,10 +6367,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_delegate textViewPostTabContentsChangedNotification];
     }
 
-    if (foundDirty && gDebugLogging) {
-        // Dump the screen contents
-        DebugLog([_dataSource debugString]);
-    }
     [_dataSource setUseSavedGridIfAvailable:NO];
 
     // If you're viewing the scrollback area and it contains an animated gif it will need

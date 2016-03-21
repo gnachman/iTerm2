@@ -1255,7 +1255,7 @@ static NSString *const kGridSizeKey = @"Size";
         line[x] = 0;
         dirtyline[x] = 0;
         [result appendFormat:@"%04d: %s %@\n", y, line, [self stringForContinuationMark:p[size_.width].code]];
-        [result appendFormat:@"dirty %s\n", dirtyline];
+        [result appendFormat:@"dirty %s%@\n", dirtyline, y == cursor_.y ? @" -cursor-" : @""];
     }
     return result;
 }

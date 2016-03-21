@@ -1597,7 +1597,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)writeTaskImpl:(NSData *)data canBroadcast:(BOOL)canBroadcast {
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        DLog(@"writeTaskImpl<%p> canBroadcast=%@: called from %@", self, @(canBroadcast), stack);
+        DLog(@"writeTaskImpl session=%@ canBroadcast=%@: called from %@", self, @(canBroadcast), stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
             DLog(@"writeTask keydown %d: %d (%c)", i, (int)bytes[i], bytes[i]);
@@ -1756,6 +1756,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
+    DLog(@"Session %@ begins executing tokens", self);
     int n = CVectorCount(vector);
 
     if (_shell.paused) {
@@ -3426,6 +3427,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
         [self.view setTitle:self.name];
     }
 
+    DLog(@"Session %@ calling refresh", self);
     anotherUpdateNeeded |= [_textview refresh];
     anotherUpdateNeeded |= _delegate.realParentWindow.isShowingTransientTitle;
     BOOL animating = _textview.getAndResetDrawingAnimatedImageFlag;
@@ -3471,14 +3473,15 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 - (void)refreshAndStartTimerIfNeeded
 {
+    DLog(@"Session %@ calling refresh", self);
     if ([_textview refresh]) {
         [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
     }
 }
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout {
-    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f",
-         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout);
+    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
+         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
     if (_exited) {
         return;
     }
@@ -3907,6 +3910,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (NSImage *)snapshot {
+    DLog(@"Session %@ calling refresh", self);
     [_textview refresh];
     return [_view snapshot];
 }
@@ -6298,6 +6302,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 }
 
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
+    DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
     if ([_lastMark isKindOfClass:[VT100ScreenMark class]]) {
         VT100ScreenMark *screenMark = (VT100ScreenMark *)_lastMark;
@@ -6351,6 +6356,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 // Save the current scroll position
 - (void)screenSaveScrollPosition
 {
+    DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
     [_lastMark release];
     _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
