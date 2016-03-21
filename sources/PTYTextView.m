@@ -6094,9 +6094,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
 {
-    NSSize region = NSMakeSize(_charWidth * imageInfo.size.width,
-                               _lineHeight * imageInfo.size.height);
-    NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
+    NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)];
 
     NSData *imageData = imageInfo.data;
     if (!imageData) {

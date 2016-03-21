@@ -1984,18 +1984,30 @@ static const int kMaxScreenRows = 4096;
         heightUnits = kVT100TerminalUnitsPercentage;
     }
 
+    CGFloat insetTop = [dict[@"insetTop"] doubleValue];
+    CGFloat insetLeft = [dict[@"insetLeft"] doubleValue];
+    CGFloat insetBottom = [dict[@"insetBottom"] doubleValue];
+    CGFloat insetRight = [dict[@"insetRight"] doubleValue];
+
     NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
     if (!name) {
         name = @"Unnamed file";
     }
     if ([dict[@"inline"] boolValue]) {
+        NSEdgeInsets inset = {
+            .top = insetTop,
+            .left = insetLeft,
+            .bottom = insetBottom,
+            .right = insetRight
+        };
         [delegate_ terminalWillReceiveInlineFileNamed:name
                                                ofSize:[dict[@"size"] intValue]
                                                 width:width
                                                 units:widthUnits
                                                height:height
                                                 units:heightUnits
-                                  preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]];
+                                  preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
+                                                inset:inset];
     } else {
         [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
     }
