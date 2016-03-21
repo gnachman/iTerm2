@@ -380,7 +380,6 @@ error:
         currentCommand_ = [commandQueue_[0] retain];
         NSString *commandId = components[1];
         currentCommand_[kCommandId] = commandId;
-        currentCommand_[kCommandFlags] = @(flags);
         TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
         [currentCommandResponse_ release];
         [currentCommandData_ release];
