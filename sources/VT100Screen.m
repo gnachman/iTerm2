@@ -3410,10 +3410,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     int xOffset = self.cursorX - 1;
     int screenWidth = currentGrid_.size.width;
     NSEdgeInsets fractionalInset = {
-        .left = MAX(MIN(inset.left / cellSize.width, 1), 0),
-        .top = MAX(MIN(inset.top / cellSize.height, 1), 0),
-        .right = MAX(MIN(inset.right / cellSize.width, 1), 0),
-        .bottom = MAX(MIN(inset.bottom / cellSize.height, 1), 0)
+        .left = MAX(inset.left / cellSize.width, 0),
+        .top = MAX(inset.top / cellSize.height, 0),
+        .right = MAX(inset.right / cellSize.width, 0),
+        .bottom = MAX(inset.bottom / cellSize.height, 0)
     };
     screen_char_t c = ImageCharForNewImage(name,
                                            width,
