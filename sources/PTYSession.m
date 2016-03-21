@@ -3371,6 +3371,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateDisplay {
+    DLog(@"updateDisplay session=%@", self);
     _timerRunning = YES;
     BOOL active = !self.isIdle;
 
