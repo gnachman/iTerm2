@@ -3,6 +3,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
@@ -2090,6 +2091,15 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalSetBadgeFormat:value];
     } else if ([key isEqualToString:@"SetUserVar"]) {
         [delegate_ terminalSetUserVar:value];
+    } else if ([key isEqualToString:@"ReportCellSize"]) {
+        if ([delegate_ terminalShouldSendReport]) {
+            NSSize size = [delegate_ terminalCellSizeInPoints];
+            NSString *width = [[NSString stringWithFormat:@"%0.2f", size.width] stringByCompactingFloatingPointString];
+            NSString *height = [[NSString stringWithFormat:@"%0.2f", size.height] stringByCompactingFloatingPointString];
+            NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@\033\\",
+                           height, width];
+            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+        }
     }
 }
 

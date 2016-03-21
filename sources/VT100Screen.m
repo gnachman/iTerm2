@@ -3750,6 +3750,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return result;
 }
 
+- (NSSize)terminalCellSizeInPoints {
+    return [delegate_ screenCellSize];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
