@@ -4073,8 +4073,34 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     Profile *tmuxBookmark = [_delegate tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
-    [_tmuxController validateOptions];
+    // We intentionally don't send anything to tmux yet. We wait to get a
+    // begin-end pair from it to make sure everything is cool (we have a legit
+    // session) and then we start going.
 
+    // This is to fix issue 4429, where we used to send a command immediately
+    // and tmux would terminate immediately and we would spam the user's
+    // command line.
+    //
+    // Tmux always prints something when you first attach. It's a notification, a response, or an
+    // error. The options I've considered are:
+    //
+    // tmux -CC with or without an existing session prints this unsolicited:
+    //    %begin time 1 0
+    //    %end time 1 0
+    //    %window-add @id
+
+    // tmux -CC attach with no existing session prints this unsolicited;
+    // %begin time 1 0
+    // no sessions
+    // %error time
+    
+    // tmux -CC attach with an existing session prints this unsolicited:
+    // %begin time 1 0
+    // %end time 1 0
+
+    // One of tmuxInitialCommandDidCompleteSuccessfully: or
+    // tmuxInitialCommandDidFailWithError: will be called on the first %end or
+    // %error, respectively.
     [self printTmuxMessage:@"** tmux mode started **"];
     [_screen crlf];
     [self printTmuxMessage:@"Command Menu"];
@@ -4298,6 +4324,16 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName {
     [_delegate sessionWithTmuxGateway:self wasNotifiedWindowWithId:windowId renamedTo:newName];
     [_tmuxController windowWasRenamedWithId:windowId to:newName];
+}
+
+- (void)tmuxInitialCommandDidCompleteSuccessfully {
+    // This kicks off a chain reaction that leads to windows being opened.
+    [_tmuxController validateOptions];
+}
+
+- (void)tmuxInitialCommandDidFailWithError:(NSString *)error {
+    // Let the user know what went wrong.
+    [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
 }
 
 - (void)tmuxPrintLine:(NSString *)line
