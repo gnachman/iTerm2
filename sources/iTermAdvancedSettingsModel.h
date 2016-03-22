@@ -128,5 +128,6 @@
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
 + (int)maxSemanticHistoryPrefixOrSuffix;
++ (BOOL)performDictionaryLookupOnQuickLook;
 
 @end

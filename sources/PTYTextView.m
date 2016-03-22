@@ -2733,7 +2733,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)quickLookWithEvent:(NSEvent *)event {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     URLAction *urlAction = [self urlActionForClickAtX:clickPoint.x y:clickPoint.y];
-    if (!urlAction) {
+    if (!urlAction && [iTermAdvancedSettingsModel performDictionaryLookupOnQuickLook]) {
         [self showDefinitionForWordAt:clickPoint];
         return;
     }
