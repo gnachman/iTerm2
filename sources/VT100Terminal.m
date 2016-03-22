@@ -3,6 +3,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
@@ -1983,18 +1984,30 @@ static const int kMaxScreenRows = 4096;
         heightUnits = kVT100TerminalUnitsPercentage;
     }
 
+    CGFloat insetTop = [dict[@"insetTop"] doubleValue];
+    CGFloat insetLeft = [dict[@"insetLeft"] doubleValue];
+    CGFloat insetBottom = [dict[@"insetBottom"] doubleValue];
+    CGFloat insetRight = [dict[@"insetRight"] doubleValue];
+
     NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
     if (!name) {
         name = @"Unnamed file";
     }
     if ([dict[@"inline"] boolValue]) {
+        NSEdgeInsets inset = {
+            .top = insetTop,
+            .left = insetLeft,
+            .bottom = insetBottom,
+            .right = insetRight
+        };
         [delegate_ terminalWillReceiveInlineFileNamed:name
                                                ofSize:[dict[@"size"] intValue]
                                                 width:width
                                                 units:widthUnits
                                                height:height
                                                 units:heightUnits
-                                  preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]];
+                                  preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
+                                                inset:inset];
     } else {
         [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
     }
@@ -2090,6 +2103,15 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalSetBadgeFormat:value];
     } else if ([key isEqualToString:@"SetUserVar"]) {
         [delegate_ terminalSetUserVar:value];
+    } else if ([key isEqualToString:@"ReportCellSize"]) {
+        if ([delegate_ terminalShouldSendReport]) {
+            NSSize size = [delegate_ terminalCellSizeInPoints];
+            NSString *width = [[NSString stringWithFormat:@"%0.2f", size.width] stringByCompactingFloatingPointString];
+            NSString *height = [[NSString stringWithFormat:@"%0.2f", size.height] stringByCompactingFloatingPointString];
+            NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@\033\\",
+                           height, width];
+            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+        }
     }
 }
 

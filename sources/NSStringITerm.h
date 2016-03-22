@@ -214,6 +214,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns modified attributes for drawing self fitting size within one point.
 - (NSDictionary *)attributesUsingFont:(NSFont *)font fittingSize:(NSSize)size attributes:(NSDictionary *)attributes;
 
+// Removes trailing zeros from a floating point value, leaving at most one.
+// 1.0000 -> 1.0
+// 1.0010 -> 1.001
+- (NSString *)stringByCompactingFloatingPointString;
+
 @end
 
 @interface NSMutableString (iTerm)

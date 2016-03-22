@@ -227,8 +227,11 @@ static void AllocateImageMapsIfNeeded(void) {
     }
 }
 
-screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio)
-{
+screen_char_t ImageCharForNewImage(NSString *name,
+                                   int width,
+                                   int height,
+                                   BOOL preserveAspectRatio,
+                                   NSEdgeInsets inset) {
     AllocateImageMapsIfNeeded();
     int newKey;
     do {
@@ -243,6 +246,7 @@ screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL p
     imageInfo.filename = name;
     imageInfo.preserveAspectRatio = preserveAspectRatio;
     imageInfo.size = NSMakeSize(width, height);
+    imageInfo.inset = inset;
     gImages[@(c.code)] = imageInfo;
 
     return c;

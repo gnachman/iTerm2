@@ -160,6 +160,7 @@ static NSString *const kInlineFileHeight = @"height";  // NSNumber
 static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
 static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
 static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
+static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 @synthesize terminal = terminal_;
 @synthesize audibleBell = audibleBell_;
@@ -3309,7 +3310,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                      units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
                                      units:(VT100TerminalUnits)heightUnits
-                       preserveAspectRatio:(BOOL)preserveAspectRatio {
+                       preserveAspectRatio:(BOOL)preserveAspectRatio
+                                     inset:(NSEdgeInsets)inset {
     [inlineFileInfo_ release];
     inlineFileInfo_ = [@{ kInlineFileName: name,
                           kInlineFileWidth: @(width),
@@ -3317,7 +3319,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                           kInlineFileHeight: @(height),
                           kInlineFileHeightUnits: @(heightUnits),
                           kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
-                          kInlineFileBase64String: [NSMutableString string] } retain];
+                          kInlineFileBase64String: [NSMutableString string],
+                          kInilineFileInset: [NSValue valueWithEdgeInsets:inset] } retain];
 }
 
 - (void)appendImageAtCursorWithName:(NSString *)name
@@ -3326,6 +3329,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
+                              inset:(NSEdgeInsets)inset
                               image:(NSImage *)image
                                data:(NSData *)data {
     if (!image) {
@@ -3405,7 +3409,17 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // TODO: Support scroll regions.
     int xOffset = self.cursorX - 1;
     int screenWidth = currentGrid_.size.width;
-    screen_char_t c = ImageCharForNewImage(name, width, height, preserveAspectRatio);
+    NSEdgeInsets fractionalInset = {
+        .left = MAX(inset.left / cellSize.width, 0),
+        .top = MAX(inset.top / cellSize.height, 0),
+        .right = MAX(inset.right / cellSize.width, 0),
+        .bottom = MAX(inset.bottom / cellSize.height, 0)
+    };
+    screen_char_t c = ImageCharForNewImage(name,
+                                           width,
+                                           height,
+                                           preserveAspectRatio,
+                                           fractionalInset);
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             [self linefeed];
@@ -3442,6 +3456,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                    inset:[inlineFileInfo_[kInilineFileInset] edgeInsetsValue]
                                     image:image
                                      data:data];
         [inlineFileInfo_ release];
@@ -3748,6 +3763,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         }
     }
     return result;
+}
+
+- (NSSize)terminalCellSizeInPoints {
+    return [delegate_ screenCellSize];
 }
 
 #pragma mark - Private

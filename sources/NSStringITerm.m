@@ -1495,6 +1495,18 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return attributes;
 }
 
+- (NSString *)stringByCompactingFloatingPointString {
+    if ([self rangeOfString:@"."].location == NSNotFound) {
+        // Bogus input. Don't even try.
+        return self;
+    }
+    NSString *compact = [self stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"0"]];
+    if ([compact hasSuffix:@"."]) {
+        compact = [compact stringByAppendingString:@"0"];
+    }
+    return compact;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

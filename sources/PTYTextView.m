@@ -922,8 +922,7 @@ static const int kDragThreshold = 3;
 // This is called periodically. It updates the frame size, scrolls if needed, ensures selections
 // and subviews are positioned correctly in case things scrolled
 //
-// Returns YES if blinking text or cursor was found. TODO: This is a stupid
-// micro-optimization and should be removed.
+// Returns YES if blinking text or cursor was found.
 - (BOOL)refresh {
     DLog(@"PTYTextView refresh called with delegate %@", _delegate);
     if (_dataSource == nil || _inRefresh) {
@@ -2122,7 +2121,7 @@ static const int kDragThreshold = 3;
     }
 
     DLog(@"Mouse down. selection set to %@", _selection);
-    [_delegate refreshAndStartTimerIfNeeded];
+    [_delegate refresh];
 
     DLog(@"Reached end of mouseDownImpl.");
     return NO;
@@ -2310,7 +2309,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     DLog(@"Mouse up. selection=%@", _selection);
 
-    [_delegate refreshAndStartTimerIfNeeded];
+    [_delegate refresh];
 }
 
 - (void)mouseMoved:(NSEvent *)event {
@@ -4808,7 +4807,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([self hasMarkedText]) {
         // In case imeOffset changed, the frame height must adjust.
-        [_delegate refreshAndStartTimerIfNeeded];
+        [_delegate refresh];
     }
 }
 
@@ -4860,7 +4859,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // char in the IME buffer then this causes it be erased.
         [self invalidateInputMethodEditorRect];
     }
-    [_delegate refreshAndStartTimerIfNeeded];
+    [_delegate refresh];
     [self scrollEnd];
 }
 
@@ -4874,7 +4873,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, 0);
     _drawingHelper.numberOfIMELines = 0;
     [self invalidateInputMethodEditorRect];
-    [_delegate refreshAndStartTimerIfNeeded];
+    [_delegate refresh];
     [self scrollEnd];
 }
 
@@ -6095,9 +6094,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
 {
-    NSSize region = NSMakeSize(_charWidth * imageInfo.size.width,
-                               _lineHeight * imageInfo.size.height);
-    NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
+    NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)];
 
     NSData *imageData = imageInfo.data;
     if (!imageData) {
@@ -6499,7 +6496,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         _selectionTime = 0;
     }
-    [_delegate refreshAndStartTimerIfNeeded];
+    [_delegate refresh];
     DLog(@"Update selection time to %lf. selection=%@. stack=%@",
          (double)_selectionTime, selection, [NSThread callStackSymbols]);
 }

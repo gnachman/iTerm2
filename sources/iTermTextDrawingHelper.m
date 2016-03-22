@@ -908,9 +908,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 - (void)drawImageCellInRun:(CRun *)run atPoint:(NSPoint)point {
     iTermImageInfo *imageInfo = GetImageInfo(run->attrs.imageCode);
-    NSImage *image =
-        [imageInfo imageEmbeddedInRegionOfSize:NSMakeSize(_cellSize.width * imageInfo.size.width,
-                                                          _cellSize.height * imageInfo.size.height)];
+    NSImage *image = [imageInfo imageWithCellSize:_cellSize];
     NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
                                   image.size.height / imageInfo.size.height);
 

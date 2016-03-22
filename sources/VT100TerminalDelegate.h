@@ -232,6 +232,9 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (int)terminalWidth;
 - (int)terminalHeight;
 
+// Returns the size of a single cell. May contain non-integer values.
+- (NSSize)terminalCellSizeInPoints;
+
 // Called when the mouse reporting mode changes.
 - (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode;
 
@@ -292,7 +295,8 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
                                      units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
                                      units:(VT100TerminalUnits)heightUnits
-                       preserveAspectRatio:(BOOL)preserveAspectRatio;
+                       preserveAspectRatio:(BOOL)preserveAspectRatio
+                                     inset:(NSEdgeInsets)inset;
 
 // Download completed normally
 - (void)terminalDidFinishReceivingFile;

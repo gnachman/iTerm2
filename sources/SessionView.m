@@ -107,6 +107,9 @@ static NSDate* lastResizeDate_;
     _inDealloc = YES;
     [_title removeFromSuperview];
     [self unregisterDraggedTypes];
+    if (_session.view == self) {
+        _session.view = nil;
+    }
     [_session release];
     [_currentAnnouncement dismiss];
     [_currentAnnouncement release];

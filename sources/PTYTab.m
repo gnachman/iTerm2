@@ -338,7 +338,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         SessionView* aView = [idMap_ objectForKey:key];
 
         PTYSession* aSession = [aView session];
-        [aSession cancelTimers];
+        aSession.active = NO;
         aSession.delegate = nil;
     }
 
@@ -928,11 +928,10 @@ static NSString* FormatRect(NSRect r) {
     return [self _sessionAdjacentTo:session verticalDir:YES after:YES];
 }
 
-- (BOOL)updateLabelAttributes {
+- (void)updateLabelAttributes {
     DLog(@"PTYTab updateLabelAttributes for tab %d", objectCount_);
     struct timeval now;
-    BOOL needsFollowUp = NO;
-    
+
     gettimeofday(&now, NULL);
     if ([[self activeSession] exited]) {
         // Session has terminated.
@@ -950,12 +949,10 @@ static NSString* FormatRect(NSRect r) {
                 DLog(@"Some session has new output");
                 [self setLabelAttributesForActiveTab:okToNotify];
             }
-            needsFollowUp = YES;
         }
         // If possible, reset label attributes on this tab.
         [self resetLabelAttributesIfAppropriate];
     }
-    return needsFollowUp;
 }
 
 - (void)closeSession:(PTYSession*)session {
@@ -1104,7 +1101,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
     PtyLog(@"PTYTab showLiveSession:%p", liveSession);
-    [replaySession cancelTimers];
+    replaySession.active = NO;
     [liveSession setProfile:[replaySession profile]];
 
     SessionView* oldView = [replaySession view];
@@ -4466,11 +4463,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 }
 
-- (BOOL)_windowResizedRecently
-{
+- (BOOL)_windowResizedRecently {
     NSDate *lastResize = [realParentWindow_ lastResizeTime];
     double elapsed = [[NSDate date] timeIntervalSinceDate:lastResize];
-    return elapsed < (2 * kBackgroundSessionIntervalSec);
+    return elapsed < 2;
 }
 
 - (void)setLabelAttributesForIdleTabAtTime:(struct timeval)now {
