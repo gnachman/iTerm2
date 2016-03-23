@@ -107,7 +107,7 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 #pragma mark - Testing
 
 // Tests can subclass and override -fileManager to fake the filesystem. The following methods are
-// called: fileExistsAtPathLocally:, fileExistsAtPath:, fileExistsAtPath:isDirectory:
+// called: fileExistsAtPathLocally:additionalNetworkPaths:, fileExistsAtPath:, fileExistsAtPath:isDirectory:
 @property (nonatomic, readonly) NSFileManager *fileManager;
 
 // Tests can subclass and override these methods to avoid interacting with the filesystem.

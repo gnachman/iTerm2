@@ -23,6 +23,8 @@
 
 
 #import "NSFileManager+iTerm.h"
+
+#import "iTermAdvancedSettingsModel.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 
@@ -173,7 +175,14 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return YES;
 }
 
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename {
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+    for (NSString *path in additionalNetworkPaths) {
+        if (path.length && [filename hasPrefix:path] && ([path hasSuffix:@"/'"] || [filename characterAtIndex:path.length] == '/')) {
+            return NO;
+        }
+    }
+
     struct statfs buf;
     int rc = statfs([filename UTF8String], &buf);
     if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
