@@ -404,11 +404,12 @@ static const int kDragThreshold = 3;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ dataSource=%@ window=%@>",
+    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ dataSource=%@ delegate=%@ window=%@>",
             self,
             [NSValue valueWithRect:self.frame],
             [NSValue valueWithRect:[self visibleRect]],
             _dataSource,
+            _delegate,
             self.window];
 }
 
