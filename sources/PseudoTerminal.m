@@ -51,6 +51,8 @@
 #import "ProcessCache.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMDarkTabStyle.h"
+#import "PSMDarkHighContrastTabStyle.h"
+#import "PSMLightHighContrastTabStyle.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 #import "PTYScrollView.h"
@@ -5915,14 +5917,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
-            style = [[PSMYosemiteTabStyle alloc] init];
+            style = [[[PSMYosemiteTabStyle alloc] init] autorelease];
             break;
         case TAB_STYLE_DARK:
-            style = [[PSMDarkTabStyle alloc] init];
+            style = [[[PSMDarkTabStyle alloc] init] autorelease];
+            break;
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            style = [[[PSMLightHighContrastTabStyle alloc] init] autorelease];
+            break;
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            style = [[[PSMDarkHighContrastTabStyle alloc] init] autorelease];
             break;
     }
     [_contentView.tabBarControl setStyle:style];
-    [style release];
 }
 
 - (void)hideMenuBar {

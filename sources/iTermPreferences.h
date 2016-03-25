@@ -20,7 +20,9 @@ typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
 // Values for kPreferenceKeyTabStyle. Do not alter values in this enumeration as they are saved in the preferences.
 typedef NS_ENUM(int, iTermPreferencesTabStyle) {
     TAB_STYLE_LIGHT = 0,
-    TAB_STYLE_DARK = 1
+    TAB_STYLE_DARK = 1,
+    TAB_STYLE_LIGHT_HIGH_CONTRAST = 2,
+    TAB_STYLE_DARK_HIGH_CONTRAST = 3
 };
 
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
