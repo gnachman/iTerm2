@@ -452,7 +452,7 @@
             NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
 
             [[self topLineColorSelected:selected] set];
-            CGFloat stroke = isRetina ? 0.5 : 1;
+            CGFloat stroke = 1;
             if (horizontal) {
                 NSRectFill(NSMakeRect(NSMinX(colorRect), NSMaxY(colorRect), NSWidth(colorRect), stroke));
             } else {
