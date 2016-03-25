@@ -1946,8 +1946,8 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
 - (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier {
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
-    cell.indicator.animate = isProcessing;
     cell.indicator.hidden = !isProcessing;
+    cell.indicator.animate = isProcessing;
 }
 
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier {

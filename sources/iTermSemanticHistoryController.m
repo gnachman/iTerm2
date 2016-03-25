@@ -23,7 +23,9 @@
  */
 
 #import "iTermSemanticHistoryController.h"
+
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermLaunchServices.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "NSFileManager+iTerm.h"
@@ -40,6 +42,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
+- (BOOL)fileExistsAtPathLocally:(NSString *)path {
+    return [self.fileManager fileExistsAtPathLocally:path
+                              additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
+}
 
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
@@ -82,7 +88,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     path = [[url standardizedURL] path];
     DLog(@"  Standardized path is %@", path);
 
-    if ([self.fileManager fileExistsAtPathLocally:path]) {
+    if ([self fileExistsAtPathLocally:path]) {
         DLog(@"    YES: A file exists at %@", path);
         return path;
     }
@@ -378,7 +384,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                workingDirectory:(NSString *)workingDirectory
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
                                  trimWhitespace:(BOOL)trimWhitespace {
-    BOOL workingDirectoryIsOk = [self.fileManager fileExistsAtPathLocally:workingDirectory];
+    BOOL workingDirectoryIsOk = [self fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
         DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
              workingDirectory);

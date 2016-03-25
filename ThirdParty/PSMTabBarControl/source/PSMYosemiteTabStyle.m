@@ -8,10 +8,48 @@
 
 #import "PSMYosemiteTabStyle.h"
 #import "PSMTabBarCell.h"
+#import "PSMTabBarControl.h"
+#import <objc/runtime.h>
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
+
+@interface PSMTabBarCell(PSMYosemiteTabStyle)
+
+@property(nonatomic) NSAttributedString *previousAttributedString;
+@property(nonatomic) CGFloat previousWidthOfAttributedString;
+
+@end
+
+@implementation PSMTabBarCell(PSMYosemiteTabStyle)
+
+- (NSMutableDictionary *)psm_yosemiteAssociatedDictionary {
+    NSMutableDictionary *dictionary = objc_getAssociatedObject(self, _cmd);
+    if (!dictionary) {
+        dictionary = [NSMutableDictionary dictionary];
+        objc_setAssociatedObject(self, _cmd, dictionary, OBJC_ASSOCIATION_RETAIN);
+    }
+    return dictionary;
+}
+
+- (NSAttributedString *)previousAttributedString {
+    return self.psm_yosemiteAssociatedDictionary[@"attributedString"];
+}
+
+- (void)setPreviousAttributedString:(NSAttributedString *)previousAttributedString {
+    self.psm_yosemiteAssociatedDictionary[@"attributedString"] = [[previousAttributedString copy] autorelease];
+}
+
+- (CGFloat)previousWidthOfAttributedString {
+    return [self.psm_yosemiteAssociatedDictionary[@"attributedStringWidth"] doubleValue];
+}
+
+- (void)setPreviousWidthOfAttributedString:(CGFloat)previousWidthOfAttributedString {
+    self.psm_yosemiteAssociatedDictionary[@"attributedStringWidth"] = @(previousWidthOfAttributedString);
+}
+
+@end
 
 @implementation PSMYosemiteTabStyle {
     NSImage *_closeButton;
@@ -234,9 +272,21 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
                 [self widthOfRightMatterInCell:cell]);
 }
 
+- (CGFloat)widthOfAttributedStringInCell:(PSMTabBarCell *)cell {
+    NSAttributedString *attributedString = [cell attributedStringValue];
+    if (![cell.previousAttributedString isEqualToAttributedString:attributedString]) {
+        cell.previousAttributedString = attributedString;
+        CGFloat width = [attributedString size].width;
+        cell.previousWidthOfAttributedString = width;
+        return width;
+    } else {
+        return cell.previousWidthOfAttributedString;
+    }
+}
+
 - (float)desiredWidthOfTabCell:(PSMTabBarCell *)cell {
     return ceil([self widthOfLeftMatterInCell:cell] +
-                [[cell attributedStringValue] size].width +
+                [self widthOfAttributedStringInCell:cell] +
                 [self widthOfRightMatterInCell:cell]);
 }
 
@@ -407,7 +457,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
             NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
 
             [[self topLineColorSelected:selected] set];
-            CGFloat stroke = isRetina ? 0.5 : 1;
+            CGFloat stroke = 1;
             if (horizontal) {
                 NSRectFill(NSMakeRect(NSMinX(colorRect), NSMaxY(colorRect), NSWidth(colorRect), stroke));
             } else {

@@ -920,6 +920,8 @@
 		A66DB8371C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8351C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m */; };
 		A66DB83A1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h in Headers */ = {isa = PBXBuildFile; fileRef = A66DB8381C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h */; };
 		A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */; };
+		A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */; };
+		A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */; };
 		A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
@@ -2346,6 +2348,8 @@
 		A66DB8351C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyCommands.m; sourceTree = "<group>"; };
 		A66DB8381C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAltScreenMouseScrollInferer.h; sourceTree = "<group>"; };
 		A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAltScreenMouseScrollInferer.m; sourceTree = "<group>"; };
+		A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAutoMasterParser.h; sourceTree = "<group>"; };
+		A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutoMasterParser.m; sourceTree = "<group>"; };
 		A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AboutWindow.xib; path = Interfaces/AboutWindow.xib; sourceTree = "<group>"; };
 		A67D0D121A2EE12A003A8B35 /* AddressBook.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = AddressBook.strings; path = Interfaces/AddressBook.strings; sourceTree = "<group>"; };
 		A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AdvancedWorkingDirectoryWindow.xib; path = Interfaces/AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
@@ -4164,6 +4168,8 @@
 				A6EEA6671C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m */,
 				A66DB8381C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h */,
 				A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */,
+				A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */,
+				A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -5133,6 +5139,7 @@
 				A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */,
 				A62C3B2D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				A66DB83A1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h in Headers */,
+				A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				1DF121091C344DF100E39F1F /* iTermDynamicProfileManager.h in Headers */,
 				A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */,
@@ -6342,6 +6349,7 @@
 				A62C3A8E1BCAE08300B5629D /* iTermDirectoryTree.m in Sources */,
 				A6C763AB1B45C52B00E3C992 /* AlertTrigger.m in Sources */,
 				A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */,
+				A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */,
 				A6C763C61B45C52B00E3C992 /* VT100State.m in Sources */,
 				A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */,
 				A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */,

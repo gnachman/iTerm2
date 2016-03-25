@@ -102,12 +102,14 @@ DEFINE_INT(maximumBytesToProvideToServices, 100000, @"General: Maximum number of
 DEFINE_BOOL(useOpenDirectory, YES, @"General: Use Open Directory to determine the user shell");
 DEFINE_BOOL(hideFromDockAndAppSwitcher, NO, @"General: Hide iTerm2 from the dock and from the ⌘-Tab app switcher. This also hides the menu bar.\nYou must restart iTerm2 after changing this setting for it to take effect.");
 DEFINE_BOOL(disablePotentiallyInsecureEscapeSequences, NO, @"General: Disable potentially insecure escape sequences.\nSome features of iTerm2 expand the surface area for security issues. Consider turning this on when viewing untrusted content. The following custom escape sequences will be disabled: RemoteHost, StealFocus, CurrentDir, SetProfile, CopyToClipboard, EndCopy, File, SetBackgroundImageFile. The following DEC sequences are disabled: DECRQCRA. The following xterm extensions are disabled: Window Title Reporting, Icon Title Reporting.");
+DEFINE_BOOL(performDictionaryLookupOnQuickLook, YES, @"General: Perform dictionary lookups on force press.\nIf this is NO, force press will still preview the Semantic History action; only dictionary lookups can be disabled.");
 
 #pragma mark - Semantic History
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlines for the purposes of locating URLs for Semantic History.\nIf a hard newline occurs at the end of a line then cmd-click will not see it all unless this setting is turned on. This is useful for some interactive applications.");
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'()|[]", @"Semantic History: Non-alphanumeric characters considered part of a URL for Semantic History.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a URL begins and ends.");
 DEFINE_INT(maxSemanticHistoryPrefixOrSuffix, 2000, @"Semantic History: Maximum number of bytes of text before and after click location to take into account.\nThis also limits the size of the \\3 and \\4 substitutions.");
+DEFINE_STRING(pathsToIgnore, @"", @"Semantic History: Paths to ignore for Semantic History.\nSeparate paths with a comma. Any file under one of these paths will not be openable with Semantic History.");
 
 #pragma mark - Debugging
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");

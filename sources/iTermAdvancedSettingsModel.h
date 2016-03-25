@@ -128,5 +128,7 @@
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
 + (int)maxSemanticHistoryPrefixOrSuffix;
++ (BOOL)performDictionaryLookupOnQuickLook;
++ (NSString *)pathsToIgnore;
 
 @end

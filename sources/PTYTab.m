@@ -759,8 +759,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 - (void)setIsProcessing:(BOOL)aFlag {
-    isProcessing_ = aFlag;
-    [_delegate tab:self didChangeProcessingStatus:self.isProcessing];
+    if (aFlag != isProcessing_) {
+        DLog(@"Set processing flag of %@ from %@ to %@", self, @(isProcessing_), @(aFlag));
+        isProcessing_ = aFlag;
+        [_delegate tab:self didChangeProcessingStatus:self.isProcessing];
+    }
 }
 
 - (BOOL)isActiveSession
@@ -4528,7 +4531,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
 - (void)setLabelAttributesForActiveTab:(BOOL)notify {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-    [self setIsProcessing:YES];
+    [self setIsProcessing:[self anySessionIsProcessing] && ![self isForegroundTab]];
 
     if (![[self activeSession] havePostedNewOutputNotification] &&
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&

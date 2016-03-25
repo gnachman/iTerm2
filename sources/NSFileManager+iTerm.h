@@ -34,7 +34,8 @@
 - (BOOL)directoryIsWritable:(NSString *)dir;
 
 // Returns YES if the file exists on a local (non-network) filesystem.
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename;
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
 
 // Returns the path to the user's desktop.
 - (NSString *)desktopDirectory;
