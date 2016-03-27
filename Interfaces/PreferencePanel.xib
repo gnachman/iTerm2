@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
@@ -4763,7 +4763,7 @@ DQ
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" id="uFJ-bZ-kag">
-                    <rect key="frame" x="130" y="259" width="112" height="26"/>
+                    <rect key="frame" x="130" y="259" width="187" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="dAw-Fo-tf4" userLabel="Tab Style">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -4772,6 +4772,9 @@ DQ
                             <items>
                                 <menuItem title="Light" id="ZNW-QH-Lff"/>
                                 <menuItem title="Dark" tag="1" id="jvn-mf-Qsy"/>
+                                <menuItem isSeparatorItem="YES" id="Nge-uR-XLf"/>
+                                <menuItem title="Light (High Contrast)" tag="2" id="O45-Gi-i9j"/>
+                                <menuItem title="Dark (High Contrast)" tag="3" id="fm1-QT-Lct"/>
                             </items>
                         </menu>
                     </popUpButtonCell>

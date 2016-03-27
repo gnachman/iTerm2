@@ -28,6 +28,8 @@
 		1D085FA216F138A100B7FCE9 /* ToastWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085FA016F138A000B7FCE9 /* ToastWindowController.h */; };
 		1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
 		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
+		1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0EA59F1CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h */; };
+		1D0EA5A21CA5DAA2005FCF8B /* PSMLightHighContrastTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0EA5A01CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.m */; };
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
 		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
@@ -141,6 +143,8 @@
 		1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BED1386E34F00111319 /* GTMObjectSingleton.h */; };
 		1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */; };
 		1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF51386E3B400111319 /* GTMTypeCasting.h */; };
+		1D6578421CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6578401CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h */; };
+		1D6578431CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6578411CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m */; };
 		1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67AAA714284BF300D5DA4E /* ToolNotes.h */; };
 		1D67ABAB14285D6000D5DA4E /* NSFileManager+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */; };
 		1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */; };
@@ -1783,6 +1787,8 @@
 		1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxControllerRegistry.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowsTable.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowsTable.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D0EA59F1CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMLightHighContrastTabStyle.h; sourceTree = "<group>"; };
+		1D0EA5A01CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMLightHighContrastTabStyle.m; sourceTree = "<group>"; };
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -1889,6 +1895,8 @@
 		1D624BED1386E34F00111319 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GTMObjectSingleton.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GTMDebugSelectorValidation.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D624BF51386E3B400111319 /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GTMTypeCasting.h; sourceTree = "<group>"; tabWidth = 4; };
+		1D6578401CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkHighContrastTabStyle.h; sourceTree = "<group>"; };
+		1D6578411CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMDarkHighContrastTabStyle.m; sourceTree = "<group>"; };
 		1D67AAA714284BF300D5DA4E /* ToolNotes.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolNotes.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D67AAA814284BF300D5DA4E /* ToolNotes.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolNotes.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -4344,26 +4352,30 @@
 			isa = PBXGroup;
 			children = (
 				A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */,
+				A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */,
 				D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */,
+				D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */,
 				DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */,
+				DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */,
 				DD02572C09CB9398008F320C /* PSMProgressIndicator.h */,
+				DD02572D09CB9398008F320C /* PSMProgressIndicator.m */,
 				DD02572E09CB9398008F320C /* PSMRolloverButton.h */,
+				DD02572F09CB9398008F320C /* PSMRolloverButton.m */,
 				DD02573009CB9398008F320C /* PSMTabBarCell.h */,
+				DD02573109CB9398008F320C /* PSMTabBarCell.m */,
 				DD02573209CB9398008F320C /* PSMTabBarControl.h */,
+				DD02573309CB9398008F320C /* PSMTabBarControl.m */,
 				F6E708B70A9D0EA400D0C4EF /* PSMTabDragAssistant.h */,
+				F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */,
 				F62D15F00AA64B2F0075A287 /* PSMTabDragWindow.h */,
+				F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */,
 				DD02573909CB9398008F320C /* PSMTabStyle.h */,
 				DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */,
-				A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */,
-				D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */,
-				DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */,
-				DD02572D09CB9398008F320C /* PSMProgressIndicator.m */,
-				DD02572F09CB9398008F320C /* PSMRolloverButton.m */,
-				DD02573109CB9398008F320C /* PSMTabBarCell.m */,
-				DD02573309CB9398008F320C /* PSMTabBarControl.m */,
-				F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */,
-				F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */,
 				DD02572709CB9398008F320C /* PSMYosemiteTabStyle.m */,
+				1D0EA59F1CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h */,
+				1D0EA5A01CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.m */,
+				1D6578401CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h */,
+				1D6578411CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m */,
 			);
 			name = source;
 			path = PSMTabBarControl/source;
@@ -5131,6 +5143,7 @@
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				1DF121091C344DF100E39F1F /* iTermDynamicProfileManager.h in Headers */,
 				A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */,
+				1D6578421CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h in Headers */,
 				A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
@@ -5139,6 +5152,7 @@
 				A62C3A911BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
 				A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */,
+				1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */,
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
 				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
@@ -6010,6 +6024,7 @@
 				A6C7634C1B45C52B00E3C992 /* PasteView.m in Sources */,
 				A6C763B51B45C52B00E3C992 /* SendTextTrigger.m in Sources */,
 				A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */,
+				1D0EA5A21CA5DAA2005FCF8B /* PSMLightHighContrastTabStyle.m in Sources */,
 				A6C7639E1B45C52B00E3C992 /* TmuxStateParser.m in Sources */,
 				A6C763771B45C52B00E3C992 /* PointerPrefsController.m in Sources */,
 				A6C763481B45C52B00E3C992 /* iTermShortcutInputView.m in Sources */,
@@ -6255,6 +6270,7 @@
 				A6C763C51B45C52B00E3C992 /* VT100Parser.m in Sources */,
 				A62C3B2A1BCC24AB00B5629D /* iTermHostRecordMO.m in Sources */,
 				1DECF96C1BD948CC00E75FEB /* iTermQuickLookController.m in Sources */,
+				1D6578431CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m in Sources */,
 				A6C7637F1B45C52B00E3C992 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A6C763251B45C52B00E3C992 /* PasteContext.m in Sources */,
 				A6EEA6691C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m in Sources */,

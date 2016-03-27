@@ -158,8 +158,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSImage imageNamed:@"NewOutput"];
         case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
             return [NSImage imageNamed:@"NewOutputForDarkTheme"];
     }
 
@@ -177,8 +179,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSImage imageNamed:@"dead"];
         case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
             return [NSImage imageNamed:@"DeadForDarkTheme"];
     }
     return [NSImage imageNamed:@"dead"];
