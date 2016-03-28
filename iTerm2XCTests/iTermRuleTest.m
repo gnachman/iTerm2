@@ -19,7 +19,7 @@
     iTermRule *_username;  // username@
     iTermRule *_usernameHostname;  // username@hostname
     iTermRule *_usernameHostnamePath;  // username@hostname:path
-    iTermRule *_usernameWildcardPath;  // username@*:path
+    iTermRule *_usernamePath;  // username@*:path
     iTermRule *_usernameWildcardStartPath;  // username@*hostname:path
     iTermRule *_usernameWildcardEndPath;  // username@hostname*:path
     iTermRule *_usernameWildcardStartEndPath;  // username@*hostname*:path
@@ -39,7 +39,7 @@
     _username = [iTermRule ruleWithString:@"username@"];
     _usernameHostname = [iTermRule ruleWithString:@"username@hostname"];
     _usernameHostnamePath = [iTermRule ruleWithString:@"username@hostname:/path"];
-    _usernameWildcardPath = [iTermRule ruleWithString:@"username@*:/path"];
+    _usernamePath = [iTermRule ruleWithString:@"username@*:/path"];
   
     _usernameWildcardStartPath = [iTermRule ruleWithString:@"username@*hostname:/path"];
     _usernameWildcardEndPath = [iTermRule ruleWithString:@"username@hostname*:/path"];
@@ -56,7 +56,7 @@
                 _username,
                 _usernameHostname,
                 _usernameHostnamePath,
-                _usernameWildcardPath,
+                _usernamePath,
                 _usernameWildcardStartPath,
                 _usernameWildcardEndPath,
                 _usernameWildcardStartEndPath,
@@ -71,7 +71,7 @@
 - (NSArray *)matchingRulesSortedByScoreWithHostname:(NSString *)hostname username:(NSString *)username path:(NSString *)path {
     NSMutableArray *matching = [NSMutableArray array];
     for (iTermRule *rule in _rules) {
-        int score = [rule scoreForHostname:hostname username:username path:path];
+        double score = [rule scoreForHostname:hostname username:username path:path];
         if (score > 0) {
             [matching addObject:rule];
         }
@@ -109,10 +109,18 @@
     NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
                                                          username:@"username"
                                                              path:@"/path"];
-    NSArray *expected = @[ _usernameHostnamePath, _usernameHostname, _hostnamePath, _hostname,
-                           _usernameWildcardStartPath, _usernameWildcardEndPath,
-                           _usernameWildcardStartEndPath, _usernameWildcardMiddlePath, _usernameWildcardAllPath,
-                           _usernameWildcardPath, _username, _path ];
+    NSArray *expected = @[ _usernameHostnamePath,
+                           _usernameHostname,
+                           _usernameWildcardStartPath,
+                           _usernameWildcardEndPath,
+                           _usernameWildcardStartEndPath,
+                           _usernameWildcardMiddlePath,
+                           _usernameWildcardAllPath,
+                           _hostnamePath,
+                           _hostname,
+                           _usernamePath,
+                           _username,
+                           _path ];
 
     XCTAssertEqualObjects(rules, expected);
 }
@@ -121,7 +129,8 @@
     NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"x"
                                                          username:@"username"
                                                              path:@"/path"];
-    NSArray *expected = @[ _usernameWildcardPath, _username,
+    NSArray *expected = @[ _usernamePath,
+                           _username,
                            _path ];
     XCTAssertEqualObjects(rules, expected);
 }
@@ -130,8 +139,12 @@
   NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"service01.hostname"
                                                        username:@"username"
                                                            path:@"/path"];
-  NSArray *expected = @[ _usernameWildcardStartPath, _usernameWildcardStartEndPath, _usernameWildcardAllPath,
-                         _usernameWildcardPath, _username, _path ];
+  NSArray *expected = @[ _usernameWildcardStartPath,
+                         _usernameWildcardStartEndPath,
+                         _usernameWildcardAllPath,
+                         _usernamePath,
+                         _username,
+                         _path ];
   XCTAssertEqualObjects(rules, expected);
 }
 
@@ -139,8 +152,12 @@
   NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname.com"
                                                        username:@"username"
                                                            path:@"/path"];
-  NSArray *expected = @[ _usernameWildcardEndPath, _usernameWildcardStartEndPath, _usernameWildcardAllPath,
-                         _usernameWildcardPath, _username, _path ];
+  NSArray *expected = @[ _usernameWildcardEndPath,
+                         _usernameWildcardStartEndPath,
+                         _usernameWildcardAllPath,
+                         _usernamePath,
+                         _username,
+                         _path ];
   XCTAssertEqualObjects(rules, expected);
 }
 
@@ -148,8 +165,11 @@
   NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"service01.hostname.com"
                                                        username:@"username"
                                                            path:@"/path"];
-  NSArray *expected = @[ _usernameWildcardStartEndPath, _usernameWildcardAllPath,
-                         _usernameWildcardPath, _username, _path ];
+  NSArray *expected = @[ _usernameWildcardStartEndPath,
+                         _usernameWildcardAllPath,
+                         _usernamePath,
+                         _username,
+                         _path ];
   XCTAssertEqualObjects(rules, expected);
 }
 
@@ -157,8 +177,12 @@
   NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"service01.prod.hostname.com"
                                                        username:@"username"
                                                            path:@"/path"];
-  NSArray *expected = @[ _usernameWildcardStartEndPath, _usernameWildcardAllPath, _usernameWildcardActualPath,
-                         _usernameWildcardPath, _username, _path ];
+  NSArray *expected = @[ _usernameWildcardStartEndPath,
+                         _usernameWildcardAllPath,
+                         _usernameWildcardActualPath,
+                         _usernamePath,
+                         _username,
+                         _path ];
   XCTAssertEqualObjects(rules, expected);
 }
 
@@ -167,7 +191,8 @@
     NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
                                                          username:@"x"
                                                              path:@"/path"];
-    NSArray *expected = @[ _hostnamePath, _hostname,
+    NSArray *expected = @[ _hostnamePath,
+                           _hostname,
                            _path ];
     XCTAssertEqualObjects(rules, expected);
 }
@@ -184,6 +209,46 @@
                                                          username:@"x"
                                                              path:@"x"];
     XCTAssertEqualObjects(rules, @[ ]);
+}
+
+- (void)testScoreMonotonicInWildcardMatchedHostname {
+    iTermRule *rule = [iTermRule ruleWithString:@"hostname*"];
+    double shortScore = [rule scoreForHostname:@"hostname1" username:@"george" path:@"/path"];
+    double longerScore = [rule scoreForHostname:@"hostname12" username:@"george" path:@"/path"];
+    double longestScore = [rule scoreForHostname:@"hostname123" username:@"george" path:@"/path"];
+    
+    XCTAssertGreaterThan(longerScore, shortScore);
+    XCTAssertGreaterThan(longestScore, longerScore);
+}
+
+- (void)testScoreMonotonicInWildcardMatchedPath {
+    iTermRule *rule = [iTermRule ruleWithString:@"/path*"];
+    double shortScore = [rule scoreForHostname:@"hostname" username:@"george" path:@"/path"];
+    double longerScore = [rule scoreForHostname:@"hostname" username:@"george" path:@"/path1"];
+    double longestScore = [rule scoreForHostname:@"hostname" username:@"george" path:@"/path12"];
+    
+    XCTAssertGreaterThan(longerScore, shortScore);
+    XCTAssertGreaterThan(longestScore, longerScore);
+}
+
+- (void)testScoreMonotonicInWildcardMatchedLongPath {
+    iTermRule *rule = [iTermRule ruleWithString:@"/path*"];
+    NSMutableString *longString = [NSMutableString string];
+    for (int i = 0; i < 1024; i++) {
+        [longString appendString:@"x"];
+    }
+    double shortScore = [rule scoreForHostname:@"hostname" username:@"george" path:[@"/path" stringByAppendingString:longString]];
+    double longerScore = [rule scoreForHostname:@"hostname" username:@"george" path:[@"/path1" stringByAppendingString:longString]];
+    
+    XCTAssertGreaterThan(longerScore, shortScore);
+}
+
+- (void)testSticky {
+    iTermRule *nonStickyRule = [iTermRule ruleWithString:@"hostname"];
+    iTermRule *stickyRule = [iTermRule ruleWithString:@"!hostname"];
+    
+    XCTAssertFalse(nonStickyRule.isSticky);
+    XCTAssertTrue(stickyRule.isSticky);
 }
 
 @end

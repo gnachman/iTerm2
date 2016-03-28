@@ -103,9 +103,11 @@ static NSString *const kStackKey = @"Profile Stack";
         APSLog(@"Stack is now: %@", self.profileStackString);
         [_delegate automaticProfileSwitcherLoadProfile:savedProfile];
     } else {
+        BOOL sticky = NO;
         Profile *profileToSwitchTo = [self profileToSwitchToForHostname:hostname
                                                                username:username
-                                                                   path:path];
+                                                                   path:path
+                                                                 sticky:&sticky];
         if (profileToSwitchTo && ![profileToSwitchTo isEqualToProfile:_delegate.automaticProfileSwitcherCurrentProfile]) {
             APSLog(@"Switching to %@", profileToSwitchTo[KEY_NAME]);
             [self pushCurrentProfileIfNeeded];
@@ -113,6 +115,12 @@ static NSString *const kStackKey = @"Profile Stack";
             iTermSavedProfile *newSavedProfile = [[[iTermSavedProfile alloc] init] autorelease];
             newSavedProfile.originalProfile = profileToSwitchTo;
             [_delegate automaticProfileSwitcherLoadProfile:newSavedProfile];
+            
+            if (sticky) {
+                DLog(@"Found a sticky rule so clearing the stack and pushing the new profile");
+                [_profileStack removeAllObjects];
+                [self pushCurrentProfileIfNeeded];
+            }
         } else if (!profileToSwitchTo && _profileStack.count) {
             // Restore first profile in stack
             if (_profileStack.count > 1) {
@@ -155,7 +163,8 @@ static NSString *const kStackKey = @"Profile Stack";
 // Search all the profiles for one that is the best match for the current configuration.
 - (Profile *)profileToSwitchToForHostname:(NSString *)hostname
                                  username:(NSString *)username
-                                     path:(NSString *)path {
+                                     path:(NSString *)path
+                                   sticky:(BOOL *)sticky {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
     // but it should be fairly rare for this code to run.
     NSMutableDictionary<NSString *, Profile *> *ruleToProfileMap = [NSMutableDictionary dictionary];
@@ -167,17 +176,20 @@ static NSString *const kStackKey = @"Profile Stack";
     }
     
     // Find the best-matching rule.
-    int bestScore = 0;
+    double bestScore = 0;
     int longestHost = 0;
     Profile *bestProfile = nil;
-    
+
     for (NSString *ruleString in ruleToProfileMap) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        int score = [rule scoreForHostname:hostname username:username path:path];
-        if ((score > bestScore) || (score > 0 && score == bestScore && [rule.hostname length] > longestHost)) {
+        double score = [rule scoreForHostname:hostname username:username path:path];
+        if (score > bestScore) {
             bestScore = score;
             longestHost = [rule.hostname length];
             bestProfile = ruleToProfileMap[ruleString];
+            if (sticky) {
+                *sticky = rule.isSticky;
+            }
         }
     }
     return bestProfile;

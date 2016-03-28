@@ -1405,7 +1405,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return set;
 }
 
-- (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob {
+- (BOOL)stringMatchesGlobPattern:(NSString *)glob caseSensitive:(BOOL)caseSensitive {
     NSArray *parts = [glob componentsSeparatedByString:@"*"];
     const BOOL anchorToStart = ![glob hasPrefix:@"*"];
 
@@ -1418,7 +1418,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         assert(start <= self.length);
         NSRange searchRange = NSMakeRange(start, self.length - start);
         NSRange matchingRange = [self rangeOfString:part
-                                            options:NSCaseInsensitiveSearch
+                                            options:caseSensitive ? 0 : NSCaseInsensitiveSearch
                                               range:searchRange];
         if (matchingRange.location == NSNotFound) {
             return NO;
