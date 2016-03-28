@@ -454,7 +454,8 @@ static int MyForkPty(int *amaster,
     // notifier.
     signal(SIGCHLD, HandleSigChld);
     const char* argpath;
-    argpath = [[progpath stringByStandardizingPath] UTF8String];
+    NSString *commandToExec = [progpath stringByStandardizingPath];
+    argpath = [commandToExec UTF8String];
 
     int max = (args == nil) ? 0 : [args count];
     const char* argv[max + 2];
@@ -467,6 +468,8 @@ static int MyForkPty(int *amaster,
         }
     }
     argv[max + 1] = NULL;
+    DLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
+    DLog(@"Environment is\n%@", env);
     char **newEnviron = [self environWithOverrides:env];
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
