@@ -28,19 +28,19 @@
     // username@*:path
     // hostname:path
     // /path
-    
+
     NSString *username = nil;
     NSString *hostname = nil;
     NSString *path = nil;
     BOOL sticky = NO;
-    
+
     if ([string hasPrefix:@"!"]) {
         sticky = YES;
         string = [string substringFromIndex:1];
     }
     NSUInteger atSign = [string rangeOfString:@"@"].location;
     NSUInteger colon = [string rangeOfString:@":"].location;
-    
+
     if (atSign != NSNotFound) {
         // user@host[:path]
         username = [string substringToIndex:atSign];
@@ -105,37 +105,37 @@
                       path:(NSString *)path {
     const int kHostExactMatchScore = 8;
     const int kHostPartialMatchScore = 4;
-    
+
     const int kUserExactMatchScore = 2;
-    
+
     const int kPathExactMatchScore = 1;
     const int kPathPartialMatchScore = 0;
 
     double score = 0;
-    
+
     if (self.hostname != nil) {
         NSRange wildcardPos = [self.hostname rangeOfString:@"*"];
         if (wildcardPos.location == NSNotFound && [hostname isEqualToString:self.hostname]) {
             score += kHostExactMatchScore;
         } else if ([hostname stringMatchesGlobPattern:self.hostname caseSensitive:NO]) {
-            score += kHostPartialMatchScore * (1.0 + [self squash:hostname.length]);
+            score += kHostPartialMatchScore * (1.0 + [self squash:self.hostname.length]);
         } else if (self.hostname.length) {
             return 0;
         }
     }
-    
+
     if ([username isEqualToString:self.username]) {
         score += kUserExactMatchScore;
     } else if (self.username.length) {
         return 0;
     }
-    
+
     if (self.path != nil) {
         NSRange wildcardPos = [self.path rangeOfString:@"*"];
         if (wildcardPos.location == NSNotFound && [path isEqualToString:self.path]) {
             score += kPathExactMatchScore;
         } else if ([path stringMatchesGlobPattern:self.path caseSensitive:YES]) {
-            score += kPathPartialMatchScore + [self squash:path.length];
+            score += kPathPartialMatchScore + [self squash:self.path.length];
         } else if (self.path.length) {
             return 0;
         }

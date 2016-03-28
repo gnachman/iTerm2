@@ -2604,7 +2604,7 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRuleTest.m; sourceTree = "<group>"; };
+		A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRuleTest.m; sourceTree = "<group>"; };
 		A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMouseCursor.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermMouseCursor.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnnouncementViewController.h; sourceTree = "<group>"; tabWidth = 4; };

@@ -211,36 +211,49 @@
     XCTAssertEqualObjects(rules, @[ ]);
 }
 
-- (void)testScoreMonotonicInWildcardMatchedHostname {
-    iTermRule *rule = [iTermRule ruleWithString:@"hostname*"];
-    double shortScore = [rule scoreForHostname:@"hostname1" username:@"george" path:@"/path"];
-    double longerScore = [rule scoreForHostname:@"hostname12" username:@"george" path:@"/path"];
-    double longestScore = [rule scoreForHostname:@"hostname123" username:@"george" path:@"/path"];
-    
-    XCTAssertGreaterThan(longerScore, shortScore);
-    XCTAssertGreaterThan(longestScore, longerScore);
+- (void)testScoreMonotonicInWildcardRuleHostLength {
+    iTermRule *exactHostnameRule = [iTermRule ruleWithString:@"hostname12"];
+    iTermRule *longHostnameRule = [iTermRule ruleWithString:@"hostname*"];
+    iTermRule *shortHostnameRule = [iTermRule ruleWithString:@"h*"];
+
+    double exactScore = [exactHostnameRule scoreForHostname:@"hostname12" username:@"george" path:@"/path"];
+    double longScore = [longHostnameRule scoreForHostname:@"hostname12" username:@"george" path:@"/path"];
+    double shortScore = [shortHostnameRule scoreForHostname:@"hostname12" username:@"george" path:@"/path"];
+
+    XCTAssertGreaterThan(longScore, shortScore);
+    XCTAssertGreaterThan(exactScore, longScore);
 }
 
-- (void)testScoreMonotonicInWildcardMatchedPath {
-    iTermRule *rule = [iTermRule ruleWithString:@"/path*"];
-    double shortScore = [rule scoreForHostname:@"hostname" username:@"george" path:@"/path"];
-    double longerScore = [rule scoreForHostname:@"hostname" username:@"george" path:@"/path1"];
-    double longestScore = [rule scoreForHostname:@"hostname" username:@"george" path:@"/path12"];
-    
-    XCTAssertGreaterThan(longerScore, shortScore);
-    XCTAssertGreaterThan(longestScore, longerScore);
+- (void)testScoreMonotonicInWildcardRulePathLength {
+    iTermRule *exactPathRule = [iTermRule ruleWithString:@"/path123"];
+    iTermRule *longPathRule = [iTermRule ruleWithString:@"/path*"];
+    iTermRule *shortPathRule = [iTermRule ruleWithString:@"/p*"];
+
+    double exactScore = [exactPathRule scoreForHostname:@"hostname" username:@"george" path:@"/path123"];
+    double longScore = [longPathRule scoreForHostname:@"hostname" username:@"george" path:@"/path123"];
+    double shortScore = [shortPathRule scoreForHostname:@"hostname" username:@"george" path:@"/path123"];
+
+    XCTAssertGreaterThan(longScore, shortScore);
+    XCTAssertGreaterThan(exactScore, longScore);
 }
 
-- (void)testScoreMonotonicInWildcardMatchedLongPath {
-    iTermRule *rule = [iTermRule ruleWithString:@"/path*"];
+- (void)testScoreMonotonicInWildcardRulePathLength_VeryLongRule {
     NSMutableString *longString = [NSMutableString string];
     for (int i = 0; i < 1024; i++) {
         [longString appendString:@"x"];
     }
-    double shortScore = [rule scoreForHostname:@"hostname" username:@"george" path:[@"/path" stringByAppendingString:longString]];
-    double longerScore = [rule scoreForHostname:@"hostname" username:@"george" path:[@"/path1" stringByAppendingString:longString]];
-    
-    XCTAssertGreaterThan(longerScore, shortScore);
+
+    NSString *longRuleString = [NSString stringWithFormat:@"/x%@*", longString];
+    NSString *shortRuleString = [NSString stringWithFormat:@"/%@*", longString];
+    NSString *path = [NSString stringWithFormat:@"/xx%@", longString];
+
+    iTermRule *longRule = [iTermRule ruleWithString:longRuleString];
+    iTermRule *shortRule = [iTermRule ruleWithString:shortRuleString];
+
+    double longScore = [longRule scoreForHostname:@"hostname" username:@"george" path:path];
+    double shortScore = [shortRule scoreForHostname:@"hostname" username:@"george" path:path];
+
+    XCTAssertGreaterThan(longScore, shortScore);
 }
 
 - (void)testSticky {
