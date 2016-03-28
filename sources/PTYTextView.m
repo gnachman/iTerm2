@@ -2867,73 +2867,73 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewSelectPreviousPane];
 }
 
-- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk
-{
+- (VT100GridCoord)moveCursorHorizontallyTo:(VT100GridCoord)target from:(VT100GridCoord)cursor {
+    DLog(@"Moving cursor horizontally from %@ to %@",
+         VT100GridCoordDescription(cursor), VT100GridCoordDescription(target));
+    VT100Terminal *terminal = [_dataSource terminal];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    NSComparisonResult initialOrder = VT100GridCoordOrder(cursor, target);
+    // Note that we could overshoot the destination because of double-width characters if the target
+    // is a DWC_RIGHT.
+    while (![extractor coord:cursor isEqualToCoord:target]) {
+        switch (initialOrder) {
+            case NSOrderedAscending:
+                [_delegate writeTask:[terminal.output keyArrowRight:0]];
+                cursor = [extractor successorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                break;
+
+            case NSOrderedDescending:
+                [_delegate writeTask:[terminal.output keyArrowLeft:0]];
+                cursor = [extractor predecessorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                break;
+
+            case NSOrderedSame:
+                return cursor;
+        }
+    }
+    DLog(@"Cursor will move to %@", VT100GridCoordDescription(cursor));
+    return cursor;
+}
+
+- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk {
     DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-    int cursorY = [_dataSource absoluteLineNumberOfCursor] - [_dataSource totalScrollbackOverflow];
-    int cursorX = [_dataSource cursorX];
-    int width = [_dataSource width];
+    VT100GridCoord target = VT100GridCoordMake(clickPoint.x, clickPoint.y);
     VT100Terminal *terminal = [_dataSource terminal];
 
-    int i = abs(cursorX - x);
-    int j = abs(cursorY - y);
-
+    VT100GridCoord cursor = VT100GridCoordMake([_dataSource cursorX] - 1,
+                                               [_dataSource absoluteLineNumberOfCursor] - [_dataSource totalScrollbackOverflow]);
     if (!verticalOk) {
-        VT100GridCoord target = VT100GridCoordMake(x, y);
-        VT100GridCoord cursor = VT100GridCoordMake(cursorX - 1, cursorY);
-        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-        NSComparisonResult initialOrder = VT100GridCoordOrder(cursor, target);
-        while (VT100GridCoordOrder(cursor, target) == initialOrder) {
-            switch (initialOrder) {
-                case NSOrderedAscending:
-                    [_delegate writeTask:[terminal.output keyArrowRight:0]];
-                    cursor = [extractor successorOfCoord:cursor skippingDoubleWidthExtensions:YES];
-                    break;
-
-                case NSOrderedDescending:
-                    [_delegate writeTask:[terminal.output keyArrowLeft:0]];
-                    cursor = [extractor predecessorOfCoord:cursor skippingDoubleWidthExtensions:YES];
-                    break;
-
-                case NSOrderedSame:
-                    return;
-            }
-        }
+        DLog(@"Vertical movement not allowed");
+        [self moveCursorHorizontallyTo:target from:cursor];
         return;
     }
 
-    if (cursorX > x) {
-        // current position is right of going-to-be x,
+    if (cursor.x > target.x) {
+        DLog(@"Move cursor left before any vertical movement");
+        // current position is right of target x,
         // so first move to left, and (if necessary)
         // up or down afterwards
-        while (i > 0) {
-            [_delegate writeTask:[terminal.output keyArrowLeft:0]];
-            i--;
-        }
+        cursor = [self moveCursorHorizontallyTo:VT100GridCoordMake(target.x, cursor.y)
+                                           from:cursor];
     }
-    while (j > 0) {
-        if (cursorY > y) {
+
+    // Move cursor vertically.
+    DLog(@"Move cursor vertically from %@ to y=%d", VT100GridCoordDescription(cursor), target.y);
+    while (cursor.y != target.y) {
+        if (cursor.y > target.y) {
             [_delegate writeTask:[terminal.output keyArrowUp:0]];
+            cursor.y--;
         } else {
             [_delegate writeTask:[terminal.output keyArrowDown:0]];
-        }
-        j--;
-    }
-    if (cursorX < x) {
-        // current position is left of going-to-be x
-        // so first moved up/down (if necessary)
-        // and then/now to the right
-        while (i > 0) {
-            [_delegate writeTask:[terminal.output keyArrowRight:0]];
-            i--;
+            cursor.y++;
         }
     }
-    DLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
-          cursorX, cursorY, x, y, width);
+
+    if (cursor.x != target.x) {
+        [self moveCursorHorizontallyTo:target from:cursor];
+    }
 
     DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
 }

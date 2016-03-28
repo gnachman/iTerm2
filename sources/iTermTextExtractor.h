@@ -148,4 +148,8 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
 
+// Checks if two coordinates are equal. Either they are the same coordinate or they are adjacent
+// on the same DWC.
+- (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2;
+
 @end

@@ -983,6 +983,25 @@ static const int kNumCharsToSearchForDivider = 8;
     return !sct.complexChar && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
 }
 
+- (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2 {
+    if (coord1.x == coord2.x && coord1.y == coord2.y) {
+        return YES;
+    }
+    if (coord1.y != coord2.y) {
+        return NO;
+    }
+    if (abs(coord1.x - coord2.x) > 1) {
+        return NO;
+    }
+
+    int large = MAX(coord1.x, coord2.x);
+    if ([self haveDoubleWidthExtensionAt:VT100GridCoordMake(large, coord1.y)]) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 #pragma mark - Private
 
 - (VT100GridCoord)canonicalizedLocation:(VT100GridCoord)location {
