@@ -906,6 +906,62 @@ static const int kNumCharsToSearchForDivider = 8;
     return result;
 }
 
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range {
+    __block VT100GridAbsCoordRange trimmedRange = range;
+    __block BOOL foundNonWhitespace = NO;
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceCharacterSet];
+    NSCharacterSet *nonWhitespace = [whitespace invertedSet];
+    long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
+    VT100GridCoordRange localRange = VT100GridCoordRangeMake(range.start.x,
+                                                             range.start.y - totalScrollbackOverflow,
+                                                             range.end.x,
+                                                             range.end.y - totalScrollbackOverflow);
+    if (range.start.y < totalScrollbackOverflow) {
+        localRange.start.y = 0;
+        localRange.start.x = 0;
+    }
+    if (range.end.y < totalScrollbackOverflow) {
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    }
+
+    VT100GridWindowedRange windowedRange =
+            VT100GridWindowedRangeMake(localRange, _logicalWindow.location, _logicalWindow.length);
+    [self enumerateCharsInRange:windowedRange
+                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                          NSString *string = ScreenCharToStr(&theChar);
+                          if ([string rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
+                              trimmedRange.start.x = coord.x;
+                              trimmedRange.start.y = coord.y + totalScrollbackOverflow;
+                              foundNonWhitespace = YES;
+                              return YES;
+                          } else {
+                              return NO;
+                          }
+                      }
+                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                           return NO;
+                       }];
+    if (!foundNonWhitespace) {
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    }
+    [self enumerateInReverseCharsInRange:windowedRange
+                               charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                                   NSString *string = ScreenCharToStr(&theChar);
+                                   if ([string rangeOfCharacterFromSet:whitespace].location != NSNotFound) {
+                                       trimmedRange.end.x = coord.x;
+                                       trimmedRange.end.y = coord.y + totalScrollbackOverflow;
+                                       return NO;
+                                   } else {
+                                       return YES;
+                                   }
+                               }
+                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                    return NO;
+                                }];
+
+    return trimmedRange;
+}
+
 #pragma mark - Private
 
 - (VT100GridCoord)canonicalizedLocation:(VT100GridCoord)location {

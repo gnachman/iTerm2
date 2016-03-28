@@ -150,6 +150,62 @@
     return string;
 }
 
+- (void)testRangeByTrimmingWhitespace_TrimBothEnds {
+  _lines = @[ @"  foo  " ];
+  iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+  VT100GridAbsCoordRange actual = [extractor rangeByTrimmingWhitespaceFromRange:VT100GridAbsCoordRangeMake(0, 0, 7, 0)];
+  VT100GridAbsCoordRange expected = VT100GridAbsCoordRangeMake(2, 0, 5, 0);
+  XCTAssertEqual(actual.start.x, expected.start.x);
+  XCTAssertEqual(actual.start.y, expected.start.y);
+  XCTAssertEqual(actual.end.x, expected.end.x);
+  XCTAssertEqual(actual.end.y, expected.end.y);
+}
+
+- (void)testRangeByTrimmingWhitespace_TrimLeft {
+  _lines = @[ @"  foo" ];
+  iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+  VT100GridAbsCoordRange actual = [extractor rangeByTrimmingWhitespaceFromRange:VT100GridAbsCoordRangeMake(0, 0, 5, 0)];
+  VT100GridAbsCoordRange expected = VT100GridAbsCoordRangeMake(2, 0, 5, 0);
+  XCTAssertEqual(actual.start.x, expected.start.x);
+  XCTAssertEqual(actual.start.y, expected.start.y);
+  XCTAssertEqual(actual.end.x, expected.end.x);
+  XCTAssertEqual(actual.end.y, expected.end.y);
+}
+
+- (void)testRangeByTrimmingWhitespace_TrimRight {
+  _lines = @[ @"foo  " ];
+  iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+  VT100GridAbsCoordRange actual = [extractor rangeByTrimmingWhitespaceFromRange:VT100GridAbsCoordRangeMake(0, 0, 5, 0)];
+  VT100GridAbsCoordRange expected = VT100GridAbsCoordRangeMake(0, 0, 3, 0);
+  XCTAssertEqual(actual.start.x, expected.start.x);
+  XCTAssertEqual(actual.start.y, expected.start.y);
+  XCTAssertEqual(actual.end.x, expected.end.x);
+  XCTAssertEqual(actual.end.y, expected.end.y);
+}
+
+- (void)testRangeByTrimmingWhitespace_NothingToTrim {
+  _lines = @[ @"foo" ];
+  iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+  VT100GridAbsCoordRange actual = [extractor rangeByTrimmingWhitespaceFromRange:VT100GridAbsCoordRangeMake(0, 0, 3, 0)];
+  VT100GridAbsCoordRange expected = VT100GridAbsCoordRangeMake(0, 0, 3, 0);
+  XCTAssertEqual(actual.start.x, expected.start.x);
+  XCTAssertEqual(actual.start.y, expected.start.y);
+  XCTAssertEqual(actual.end.x, expected.end.x);
+  XCTAssertEqual(actual.end.y, expected.end.y);
+}
+
+- (void)testRangeByTrimmingWhitespace_MultiLine {
+  _lines = @[ @"  fooba", @"123456 ", @"       " ];
+  iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+  VT100GridAbsCoordRange actual = [extractor rangeByTrimmingWhitespaceFromRange:VT100GridAbsCoordRangeMake(0, 0, 7, 2)];
+  VT100GridAbsCoordRange expected = VT100GridAbsCoordRangeMake(2, 0, 6, 1);
+  XCTAssertEqual(actual.start.x, expected.start.x);
+  XCTAssertEqual(actual.start.y, expected.start.y);
+  XCTAssertEqual(actual.end.x, expected.end.x);
+  XCTAssertEqual(actual.end.y, expected.end.y);
+}
+
+
 #pragma mark - iTermTextDataSource
 
 - (int)lengthOfLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {

@@ -3010,9 +3010,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (IBAction)selectCurrentCommand:(id)sender {
+    DLog(@"selectCurrentCommand");
+    [self selectRange:[_delegate textViewRangeOfCurrentCommand]];
+}
+
 - (IBAction)selectOutputOfLastCommand:(id)sender {
     DLog(@"selectOutputOfLastCommand:");
-    VT100GridAbsCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
+    [self selectRange:[_delegate textViewRangeOfLastCommandOutput]];
+}
+
+- (void)selectRange:(VT100GridAbsCoordRange)range {
     DLog(@"The range is %@", VT100GridAbsCoordRangeDescription(range));
 
     if (range.start.x < 0) {
@@ -3525,6 +3533,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [_selection hasSelection];
     } else if ([item action]==@selector(selectOutputOfLastCommand:)) {
         return [_delegate textViewCanSelectOutputOfLastCommand];
+    } else if ([item action]==@selector(selectCurrentCommand:)) {
+        return [_delegate textViewCanSelectCurrentCommand];
     }
     if ([item action] == @selector(downloadWithSCP:)) {
         return ([self _haveShortSelection] &&

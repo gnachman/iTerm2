@@ -145,4 +145,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 
+// Returns a subset of `range` by removing leading and trailing whitespace.
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
+
 @end
