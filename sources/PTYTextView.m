@@ -2883,28 +2883,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int j = abs(cursorY - y);
 
     if (!verticalOk) {
-      VT100GridCoord target = VT100GridCoordMake(x, y);
-      VT100GridCoord cursor = VT100GridCoordMake(cursorX, cursorY);
-      iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-      BOOL done = NO;
-      do {
-        switch (VT100GridCoordOrder(cursor, target)) {
-          case NSOrderedAscending:
-             [_delegate writeTask:[terminal.output keyArrowRight:0]];
-             cursor = [extractor successorOfCoord:cursor];
-             break;
+        VT100GridCoord target = VT100GridCoordMake(x, y);
+        VT100GridCoord cursor = VT100GridCoordMake(cursorX - 1, cursorY);
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+        NSComparisonResult initialOrder = VT100GridCoordOrder(cursor, target);
+        while (VT100GridCoordOrder(cursor, target) == initialOrder) {
+            switch (initialOrder) {
+                case NSOrderedAscending:
+                    [_delegate writeTask:[terminal.output keyArrowRight:0]];
+                    cursor = [extractor successorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                    break;
 
-          case NSOrderedDescending:
-             [_delegate writeTask:[terminal.output keyArrowLeft:0]];
-             cursor = [extractor predecessorOfCoord:cursor];
-             break;
+                case NSOrderedDescending:
+                    [_delegate writeTask:[terminal.output keyArrowLeft:0]];
+                    cursor = [extractor predecessorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                    break;
 
-          case NSOrderedSame:
-             done = YES;
-             break;
+                case NSOrderedSame:
+                    return;
+            }
         }
-      } while (!done);
-      return;
+        return;
     }
 
     if (cursorX > x) {
@@ -5891,7 +5890,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // This shouldn't happen, but better safe than sorry
             lastCoord = [[prefixCoords lastObject] gridCoordValue];
         }
-        range.coordRange.end = [extractor successorOfCoord:lastCoord];
+        range.coordRange.end = [extractor successorOfCoord:lastCoord skippingDoubleWidthExtensions:NO];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 

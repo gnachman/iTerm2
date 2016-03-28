@@ -82,7 +82,7 @@ static const int kNumCharsToSearchForDivider = 8;
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
     if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
-        VT100GridCoord predecessor = [self predecessorOfCoord:location];
+        VT100GridCoord predecessor = [self predecessorOfCoord:location skippingDoubleWidthExtensions:NO];
         if (predecessor.x != location.x || predecessor.y != location.y) {
             return [self rangeForWordAt:predecessor];
         }
@@ -325,7 +325,7 @@ static const int kNumCharsToSearchForDivider = 8;
                         VT100GridCoord startCoord = [coords[i + temp.location] gridCoordValue];
                         VT100GridCoord endCoord = [coords[MIN(numCoords - 1,
                                                               i + temp.location + temp.length - 1)] gridCoordValue];
-                        endCoord = [self successorOfCoord:endCoord];
+                        endCoord = [self successorOfCoord:endCoord skippingDoubleWidthExtensions:NO];
                         match.startX = startCoord.x;
                         match.absStartY = startCoord.y + [_dataSource totalScrollbackOverflow];
                         match.endX = endCoord.x;
@@ -472,14 +472,22 @@ static const int kNumCharsToSearchForDivider = 8;
     }
 }
 
-- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord {
+- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip {
     coord.x++;
     int xLimit = [self xLimit];
+    BOOL checkedForDWC = NO;
+    if (coord.x < xLimit && [self haveDoubleWidthExtensionAt:coord]) {
+        coord.x++;
+        checkedForDWC = YES;
+    }
     if (coord.x >= xLimit) {
         coord.x = _logicalWindow.location;
         coord.y++;
         if (coord.y >= [_dataSource numberOfLines]) {
             return VT100GridCoordMake(xLimit - 1, [_dataSource numberOfLines] - 1);
+        }
+        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            coord.x++;
         }
     }
     return coord;
@@ -502,13 +510,21 @@ static const int kNumCharsToSearchForDivider = 8;
     return coord;
 }
 
-- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip {
     coord.x--;
+    BOOL checkedForDWC = NO;
+    if (coord.x >= 0 && [self haveDoubleWidthExtensionAt:coord]) {
+        checkedForDWC = YES;
+        coord.x--;
+    }
     if (coord.x < _logicalWindow.location) {
         coord.x = [self xLimit] - 1;
         coord.y--;
         if (coord.y < 0) {
             return VT100GridCoordMake(_logicalWindow.location, 0);
+        }
+        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            coord.x--;
         }
     }
 
@@ -639,9 +655,9 @@ static const int kNumCharsToSearchForDivider = 8;
         }
         VT100GridCoord prev = coord;
         if (forward) {
-            coord = [self successorOfCoord:coord];
+            coord = [self successorOfCoord:coord skippingDoubleWidthExtensions:NO];
         } else {
-            coord = [self predecessorOfCoord:coord];
+            coord = [self predecessorOfCoord:coord skippingDoubleWidthExtensions:NO];
         }
         if (VT100GridCoordEquals(coord, prev)) {
             return VT100GridCoordMake(-1, -1);
@@ -960,6 +976,11 @@ static const int kNumCharsToSearchForDivider = 8;
                                 }];
 
     return trimmedRange;
+}
+
+- (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
+    screen_char_t sct = [self characterAt:coord];
+    return !sct.complexChar && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
 }
 
 #pragma mark - Private
