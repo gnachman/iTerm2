@@ -102,7 +102,11 @@
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (VT100ScreenMark *)markOnLine:(int)line;
+
+// return -1 if none
 - (int)lineNumberOfMarkAfterLine:(int)line;
+
+// return -1 if none
 - (int)lineNumberOfMarkBeforeLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;

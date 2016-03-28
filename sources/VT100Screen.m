@@ -2093,7 +2093,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         }
         objects = [enumerator nextObject];
     }
-    return line;
+    return -1;
 }
 
 - (int)lineNumberOfMarkAfterLine:(int)line {
@@ -2109,7 +2109,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         }
         objects = [enumerator nextObject];
     }
-    return line;
+    return -1;
 }
 
 - (NSArray *)marksOrNotesBefore:(Interval *)location {
