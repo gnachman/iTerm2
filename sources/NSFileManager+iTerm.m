@@ -179,11 +179,15 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
          additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+    DLog(@"Additional network paths are: %@", additionalNetworkPaths);
     // Augment list of additional paths with nfs automounter mount points.
     NSMutableArray *networkPaths = [[additionalNetworkPaths mutableCopy] autorelease];
     [networkPaths addObjectsFromArray:[[iTermAutoMasterParser sharedInstance] mountpointsWithMap:@"auto_nfs"]];
     
     for (NSString *path in networkPaths) {
+        if (!path.length) {
+            continue;
+        }
         if (![path hasSuffix:@"/"]) {
             path = [path stringByAppendingString:@"/"];
         }
