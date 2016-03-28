@@ -7054,6 +7054,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selection endLiveSelection];
 }
 
+- (VT100GridCoordRange)accessibilityHelperSelectedRange {
+    iTermSubSelection *sub = _selection.allSubSelections.lastObject;
+    VT100GridCoordRange coordRange = sub.range.coordRange;
+    int minY = _dataSource.numberOfLines - _dataSource.height;
+    if (coordRange.start.y < minY) {
+        coordRange.start.y = 0;
+        coordRange.start.x = 0;
+    } else {
+        coordRange.start.y -= minY;
+    }
+    if (coordRange.end.y < minY) {
+        coordRange.end.y = 0;
+        coordRange.end.x = 0;
+    } else {
+        coordRange.end.y -= minY;
+    }
+    return coordRange;
+}
+
 - (NSString *)accessibilityHelperSelectedText {
     return [self selectedTextAttributed:NO
                            cappedAtSize:0
