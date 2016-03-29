@@ -47,6 +47,7 @@ typedef enum {
     VT100_ASCIISTRING,
     VT100_UNKNOWNCHAR,
     VT100_INVALID_SEQUENCE,
+    VT100_BINARY_GARBAGE,
 
     VT100CSI_CPR,                   // Cursor Position Report
     VT100CSI_CUB,                   // Cursor Backward

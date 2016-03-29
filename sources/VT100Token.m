@@ -116,6 +116,7 @@ static iTermObjectPool *gPool;
                           @(VT100_ASCIISTRING):               @"VT100_ASCIISTRING",
                           @(VT100_UNKNOWNCHAR):               @"VT100_UNKNOWNCHAR",
                           @(VT100_INVALID_SEQUENCE):          @"VT100_INVALID_SEQUENCE",
+                          @(VT100_BINARY_GARBAGE):            @"VT100_BINARY_GARBAGE",
                           @(VT100CSI_CPR):                    @"VT100CSI_CPR",
                           @(VT100CSI_CUB):                    @"VT100CSI_CUB",
                           @(VT100CSI_CUD):                    @"VT100CSI_CUD",
