@@ -164,9 +164,6 @@ static BOOL hasBecomeActive = NO;
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
-    // set the TERM_PROGRAM environment variable
-    putenv("TERM_PROGRAM=iTerm.app");
-
     [self buildScriptMenu:nil];
 
     // Fix up various user defaults settings.
