@@ -513,4 +513,7 @@
     return @[];
 }
 
+- (void)toolbeltDidFinishGrowing {
+}
+
 @end

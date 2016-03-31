@@ -370,6 +370,10 @@
     return VT100GridAbsCoordRangeMake(0, 0, 0, 0);
 }
 
+- (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand {
+    return VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+}
+
 - (void)textViewCreateWindowWithProfileGuid:(NSString *)guid {
 }
 

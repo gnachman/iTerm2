@@ -486,7 +486,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     }
 }
 
-- (void)drawTimestamps {
+- (CGFloat)drawTimestamps {
     [self updateCachedMetrics];
 
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
@@ -494,17 +494,24 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         CGContextSetShouldSmoothFonts(ctx, NO);
     }
     NSString *previous = nil;
+    CGFloat width = 0;
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
          y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
          y++) {
-        previous = [self drawTimestampForLine:y previousTimestamp:previous];
+        CGFloat thisWidth = 0;
+        previous = [self drawTimestampForLine:y previousTimestamp:previous width:&thisWidth];
+        width = MAX(thisWidth, width);
     }
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);
     }
+    
+    return width;
 }
 
-- (NSString *)drawTimestampForLine:(int)line previousTimestamp:(NSString *)previousTimestamp {
+- (NSString *)drawTimestampForLine:(int)line
+                 previousTimestamp:(NSString *)previousTimestamp
+                             width:(CGFloat *)widthPtr {
     NSDate *timestamp = [_delegate drawingHelperTimestampForLine:line];
     NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
     const NSTimeInterval day = -86400;
@@ -596,6 +603,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     } else {
         [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
     }
+    *widthPtr = w;
     return theTimestamp;
 }
 

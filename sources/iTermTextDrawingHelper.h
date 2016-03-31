@@ -253,7 +253,9 @@
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount;
-- (void)drawTimestamps;
+
+// Draw timestamps. Returns the width of the widest timestamp.
+- (CGFloat)drawTimestamps;
 
 #pragma mark - Testing Only
 

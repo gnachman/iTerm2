@@ -65,6 +65,24 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (item.action == @selector(performMiniaturize:)) {
+        // This makes borderless windows miniaturizable.
+        return ![_delegate anyFullScreen];
+    } else {
+        return [super validateMenuItem:item];
+    }
+}
+
+- (void)performMiniaturize:(id)sender {
+    if ([_delegate anyFullScreen]) {
+        [super performMiniaturize:sender];
+    } else {
+        // NSWindow's performMiniaturize gates miniaturization on the presence of a miniaturize button.
+        [self miniaturize:self];
+    }
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d delegate=%p>",
             [self class],

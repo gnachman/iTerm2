@@ -311,9 +311,10 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Add transitions from passthrough state.
 
-    // On entry to passthrough, save the initial character.
+    // On entry to passthrough, save the initial character. Note that there could be ESC characters
+    // that cause us to re-enter passthrough after having already been in it so don't do anything
+    // destructive here.
     dcsPassthroughState.entryAction = ^(unsigned char c) {
-        [_data setString:@""];
         [_data appendCharacter:c];
         if (!_hook) {
             [self hook];
