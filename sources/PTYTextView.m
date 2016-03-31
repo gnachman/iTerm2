@@ -1129,11 +1129,12 @@ static const int kDragThreshold = 3;
 
     [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
-    [self drawIndicators];
-
+    CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
-        [_drawingHelper drawTimestamps];
+        rightMargin = [_drawingHelper drawTimestamps] + 8;
     }
+
+    [self drawIndicatorsWithRightMargin:rightMargin];
 
     // Not sure why this is needed, but for some reason this view draws over its subviews.
     for (NSView *subview in [self subviews]) {
@@ -1157,7 +1158,7 @@ static const int kDragThreshold = 3;
     return result;
 }
 
-- (void)drawIndicators {
+- (void)drawIndicatorsWithRightMargin:(CGFloat)rightMargin {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
@@ -1170,7 +1171,9 @@ static const int kDragThreshold = 3;
                             visible:[_delegate textViewSuppressingAllOutput]];
     [_indicatorsHelper setIndicator:kiTermIndicatorZoomedIn
                             visible:[_delegate textViewIsZoomedIn]];
-    [_indicatorsHelper drawInFrame:self.visibleRect];
+    NSRect rect = self.visibleRect;
+    rect.size.width -= rightMargin;
+    [_indicatorsHelper drawInFrame:rect];
 }
 
 - (NSString*)_getTextInWindowAroundX:(int)x
