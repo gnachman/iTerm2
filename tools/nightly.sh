@@ -25,12 +25,11 @@ function SparkleSign {
 
 
 set -x
-cd ~/server/nightly/iTerm2/
 # todo: git pull origin master
 rm -rf build/Nightly/iTerm2.app
 make clean || die "Make clean failed"
 make Nightly || die "Nightly build failed"
-./sign.sh
+tools/sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
