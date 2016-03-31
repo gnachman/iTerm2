@@ -1339,6 +1339,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
     NSString *itermId = [self sessionId];
     env[@"ITERM_SESSION_ID"] = itermId;
+    env[@"TERM_PROGRAM_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    env[@"TERM_SESSION_ID"] = itermId;
+    env[@"TERM_PROGRAM"] = @"iTerm.app";
+
+
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
@@ -5622,11 +5627,34 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand {
+    DLog(@"Fetching range of current command");
+    if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
+        DLog(@"Command history has never been used.");
+        [iTermShellHistoryController showInformationalMessage];
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    } else {
+        VT100GridAbsCoordRange range =
+            VT100GridAbsCoordRangeMake(_commandRange.start.x,
+                                       _commandRange.start.y + _screen.totalScrollbackOverflow,
+                                       _commandRange.end.x,
+                                       _commandRange.end.y + _screen.totalScrollbackOverflow);
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
+        return [extractor rangeByTrimmingWhitespaceFromRange:range];
+    }
+}
+
 - (BOOL)textViewCanSelectOutputOfLastCommand {
     // Return YES if command history has never been used so we can show the informational message.
     return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
 
+}
+
+- (BOOL)textViewCanSelectCurrentCommand {
+    // Return YES if command history has never been used so we can show the informational message.
+    return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
+            self.isAtShellPrompt);
 }
 
 - (BOOL)textViewUseHFSPlusMapping {

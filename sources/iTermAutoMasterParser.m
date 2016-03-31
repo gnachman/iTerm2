@@ -8,6 +8,8 @@
 
 #import "iTermAutoMasterParser.h"
 
+#import "DebugLogging.h"
+
 // Represents an entry in /etc/auto_master.
 @interface iTermAutoMasterEntry : NSObject
 @property(nonatomic, copy) NSString *mountpoint;
@@ -101,6 +103,7 @@
     NSMutableArray<NSString *> *result = [NSMutableArray array];
     for (iTermAutoMasterEntry *entry in _entries) {
         if ([entry.map isEqualToString:map]) {
+            DLog(@"Found NFS automounter at %@", entry.mountpoint);
             [result addObject:entry.mountpoint];
         }
     }

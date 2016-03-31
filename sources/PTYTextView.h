@@ -146,7 +146,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
                           deltaY:(CGFloat)deltaY;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput;
+- (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand;
 - (BOOL)textViewCanSelectOutputOfLastCommand;
+- (BOOL)textViewCanSelectCurrentCommand;
 - (NSColor *)textViewCursorGuideColor;
 - (BOOL)textViewUseHFSPlusMapping;
 - (NSColor *)textViewBadgeColor;

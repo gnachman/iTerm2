@@ -1772,6 +1772,7 @@ static const int kMaxScreenRows = 4096;
             // Handled prior to switch.
             break;
 
+        case VT100_BINARY_GARBAGE:
         case VT100CC_NULL:
         case VT100CC_SOH:
         case VT100_INVALID_SEQUENCE:

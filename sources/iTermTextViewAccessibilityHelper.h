@@ -36,8 +36,12 @@
 // Select the range, which is in accessibility-space.
 - (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)range;
 
+// Gets the selected range in accessibility-space.
+- (VT100GridCoordRange)accessibilityHelperSelectedRange;
+
 // Returns the contents of selected text in accessibility-space only.
 - (NSString *)accessibilityHelperSelectedText;
+
 @end
 
 // This outsources accessibilty methods for PTYTextView. It's useful to keep

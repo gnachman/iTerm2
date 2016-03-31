@@ -226,6 +226,10 @@
     return NO;
 }
 
+- (BOOL)textViewCanSelectCurrentCommand {
+    return NO;
+}
+
 - (void)textViewCloseWithConfirmation {
 }
 
