@@ -3416,6 +3416,8 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
     const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
 
+    // Even if "active" isn't changing we need the side effect of setActive: that updates the
+    // cadence since we might have just become idle.
     self.active = (somethingIsBlinking || transientTitle || animationPlaying);
 
     if (_tailFindTimer && [[[_view findViewController] view] isHidden]) {
@@ -3453,17 +3455,12 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
          @(active), @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
     active = active && [_delegate sessionBelongsToVisibleTab];
-    if (active == _active) {
-        return;
-    } else {
-        if (active) {
-            DLog(@"Become active for session %@", self);
-        } else {
-            DLog(@"Become inactive for session %@", self);
-        }
-    }
     _active = active;
-    if (active) {
+    [self changeCadenceIfNeeded];
+}
+
+- (void)changeCadenceIfNeeded {
+    if (_active || !self.isIdle) {
         [self setUpdateCadence:kActiveUpdateCadence];
     } else if ([NSApp isActive]) {
         [self setUpdateCadence:kBackgroundUpdateCadence];
