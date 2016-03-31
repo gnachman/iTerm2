@@ -200,14 +200,13 @@
     XCTAssert([_parser.data isEqualToString:@"Abc~"]);
 }
 
-- (void)testDCSPassthrough {
+- (void)testDCSCatchesBinaryGarbage {
     VT100Token *token = [self tokenForDataWithFormat:@"%cPAbc%c%c%c%c~",
                             VT100CC_ESC, VT100CC_LF, VT100CC_EM, VT100CC_FS, VT100CC_DEL];
-    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(token->type == VT100_BINARY_GARBAGE);
     XCTAssert(_parser.state == kVT100DCSStatePassthrough);
     XCTAssert([_parser.parameters isEqual:@[ ]]);
-    NSString *expected = [NSString stringWithFormat:@"Abc%c%c%c~",
-                          VT100CC_LF, VT100CC_EM, VT100CC_FS];
+    NSString *expected = [NSString stringWithFormat:@"Abc%c", VT100CC_LF];
     XCTAssertEqualObjects(_parser.data, expected);
 }
 
