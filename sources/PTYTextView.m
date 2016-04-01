@@ -6711,27 +6711,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
-    if (event.type == NSLeftMouseDragged ||
-        event.type == NSLeftMouseDown ||
-        event.type == NSLeftMouseUp) {
-        return MOUSE_BUTTON_LEFT;
-    }
+    switch (event.type) {
+        case NSLeftMouseDragged:
+        case NSLeftMouseDown:
+        case NSLeftMouseUp:
+            return MOUSE_BUTTON_LEFT;
 
-    if (event.type == NSScrollWheel) {
-        if ([event deltaY] > 0) {
-            return MOUSE_BUTTON_SCROLLDOWN;
-        } else {
-            return MOUSE_BUTTON_SCROLLUP;
-        }
-    }
+        case NSRightMouseDown:
+        case NSRightMouseUp:
+        case NSRightMouseDragged:
+            return MOUSE_BUTTON_RIGHT;
 
-    MouseButtonNumber buttonNumber = (MouseButtonNumber) [event buttonNumber];
-    if (buttonNumber == 2) {
-        // convert NSEvent's "middle button" to X11's middle button number
-        buttonNumber = MOUSE_BUTTON_MIDDLE;
-    }
+        case NSOtherMouseDown:
+        case NSOtherMouseUp:
+        case NSOtherMouseDragged:
+            return MOUSE_BUTTON_MIDDLE;
 
-    return buttonNumber;
+        case NSScrollWheel:
+            if ([event deltaY] > 0) {
+                return MOUSE_BUTTON_SCROLLDOWN;
+            } else {
+                return MOUSE_BUTTON_SCROLLUP;
+            }
+
+        default:
+            return MOUSE_BUTTON_NONE;
+    }
 }
 
 // Returns YES if the mouse event should not be handled natively.
