@@ -2,6 +2,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermFileDescriptorClient.h"
+#import "VT100GridTypes.h"
 
 extern NSString *kCoprocessStatusChangeNotification;
 
@@ -65,7 +66,11 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)writeTask:(NSData*)data;
 
 - (void)sendSignal:(int)signo;
-- (void)setWidth:(int)width height:(int)height;
+
+// Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
+// tty's current window size then no action is taken.
+- (void)setSize:(VT100GridSize)size;
+
 - (void)stop;
 
 

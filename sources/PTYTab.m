@@ -2001,20 +2001,18 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (BOOL)resizeSession:(PTYSession *)aSession toSize:(VT100GridSize)newSize {
-    int width = newSize.width;
-    int height = newSize.height;
-    if ([aSession rows] == height &&
-        [aSession columns] == width) {
+    if ([aSession rows] == newSize.height &&
+        [aSession columns] == newSize.width) {
         PtyLog(@"PTYTab fitSessionToCurrentViewSize: noop");
         return NO;
     }
-    if (width == [aSession columns] && height == [aSession rows]) {
+    if (newSize.width == [aSession columns] && newSize.height == [aSession rows]) {
         PtyLog(@"fitSessionToWindow - terminating early because session size doesn't change");
         return NO;
     }
 
-    [aSession setWidth:width height:height];
-    PtyLog(@"fitSessionToCurrentViewSize -  calling setWidth:%d height:%d", width, height);
+    PtyLog(@"fitSessionToCurrentViewSize -  calling setSize:%@", VT100GridSizeDescription(newSize));
+    [aSession setSize:newSize];
     [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
     [[aSession scrollview] setPageScroll:2 * [[aSession textview] lineHeight]];
     if ([aSession backgroundImagePath]) {

@@ -36,6 +36,11 @@ NSString *VT100GridAbsCoordRangeDescription(VT100GridAbsCoordRange range) {
             range.end.y];
 }
 
+NSString *VT100GridSizeDescription(VT100GridSize size) {
+    return [NSString stringWithFormat:@"%d x %d", size.width, size.height];
+}
+
+
 @implementation NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {

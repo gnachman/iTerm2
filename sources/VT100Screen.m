@@ -422,10 +422,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return result;
 }
 
-- (void)resizeWidth:(int)new_width height:(int)new_height {
+- (VT100GridSize)size {
+    return currentGrid_.size;
+}
+
+- (void)setSize:(VT100GridSize)newSize {
     [self.temporaryDoubleBuffer reset];
 
-    DLog(@"Resize session to %dx%d", new_width, new_height);
+    DLog(@"Resize session to %@", VT100GridSizeDescription(newSize));
     DLog(@"Before:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
     if (commandStartX_ != -1) {
@@ -434,15 +438,15 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
     self.lastCommandMark = nil;
 
+    newSize.width = MAX(newSize.width, 1);
+    newSize.height = MAX(newSize.height, 1);
     if (currentGrid_.size.width == 0 ||
         currentGrid_.size.height == 0 ||
-        (new_width == currentGrid_.size.width &&
-         new_height == currentGrid_.size.height)) {
+        (newSize.width == currentGrid_.size.width &&
+         newSize.height == currentGrid_.size.height)) {
             return;
     }
     VT100GridSize oldSize = currentGrid_.size;
-    new_width = MAX(new_width, 1);
-    new_height = MAX(new_height, 1);
 
     iTermSelection *selection = [delegate_ screenSelection];
     if (selection.live) {
@@ -483,7 +487,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             [self appendScreen:currentGrid_
                   toScrollback:lineBufferWithAltScreen
                 withUsedHeight:usedHeight
-                     newHeight:new_height];
+                     newHeight:newSize.height];
             altScreenSubSelectionTuples = [NSMutableArray array];
             for (iTermSubSelection *sub in selection.allSubSelections) {
                 VT100GridCoordRange range = sub.range.coordRange;
@@ -504,7 +508,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [self appendScreen:altGrid_
               toScrollback:altScreenLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height];
+                 newHeight:newSize.height];
 
         if ([intervalTree_ count]) {
             // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
@@ -520,7 +524,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             [self appendScreen:altGrid_
                   toScrollback:appendOnlyLineBuffer
                 withUsedHeight:usedHeight
-                     newHeight:new_height];
+                     newHeight:newSize.height];
             altScreenNotes = [NSMutableArray array];
 
             for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
@@ -552,7 +556,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [self appendScreen:primaryGrid_
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
-             newHeight:new_height];
+             newHeight:newSize.height];
     DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
@@ -564,7 +568,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             VT100GridCoordRange newSelection;
             DLog(@"convert sub %@", sub);
             BOOL ok = [self convertRange:sub.range.coordRange
-                                 toWidth:new_width
+                                 toWidth:newSize.width
                                       to:&newSelection
                             inLineBuffer:linebuffer_
                            tolerateEmpty:NO];
@@ -597,14 +601,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                 [intervalTree_ removeObject:note];
             } else {
                 if ([self convertRange:noteRange
-                               toWidth:new_width
+                               toWidth:newSize.width
                                     to:&newRange
                           inLineBuffer:linebuffer_
                          tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                     assert(noteRange.start.y >= 0);
                     assert(noteRange.end.y >= 0);
                     Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                      width:new_width
+                                                                      width:newSize.width
                                                                 linesOffset:[self totalScrollbackOverflow]];
                     [[note retain] autorelease];
                     [intervalTree_ removeObject:note];
@@ -620,7 +624,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             currentGrid_ = altGrid_;
         }
     }
-    VT100GridSize newSize = VT100GridSizeMake(new_width, new_height);
     currentGrid_.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
@@ -647,7 +650,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
                             toChar:primaryGrid_.savedDefaultChar];
-        if (oldSize.height < new_height) {
+        if (oldSize.height < newSize.height) {
             // Growing (avoid pulling in stuff from scrollback. Add blank lines
             // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
             // line because it was just initialized with default lines.
@@ -661,7 +664,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             // default lines.
             [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                                       withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:new_height];
+                                    maxLinesToRestore:newSize.height];
         }
 
         // Any onscreen notes in primary grid get moved to savedIntervalTree_.
@@ -684,7 +687,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [self appendScreen:copyOfAltGrid
               toScrollback:appendOnlyLineBuffer
             withUsedHeight:usedHeight
-                 newHeight:new_height];
+                 newHeight:newSize.height];
 
         for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
             LineBufferPositionRange *positionRange = altScreenSubSelectionTuples[i][0];
@@ -694,7 +697,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                             limitPosition:newLastPos
                                             startPosition:positionRange.start
                                               endPosition:positionRange.end
-                                                 newWidth:new_width
+                                                 newWidth:newSize.width
                                                lineBuffer:appendOnlyLineBuffer
                                                     range:&newSelection
                                              linesMovedUp:linesMovedUp];
@@ -719,14 +722,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                             limitPosition:newLastPos
                                             startPosition:start
                                               endPosition:end
-                                                 newWidth:new_width
+                                                 newWidth:newSize.width
                                                lineBuffer:appendOnlyLineBuffer
                                                     range:&newRange
                                              linesMovedUp:linesMovedUp];
             if (ok) {
                 DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
                 Interval *interval = [self intervalForGridCoordRange:newRange
-                                                               width:new_width
+                                                               width:newSize.width
                                                          linesOffset:[self totalScrollbackOverflow]];
                 [intervalTree_ addObject:note withInterval:interval];
             } else {
@@ -741,10 +744,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [self appendScreen:altGrid_
               toScrollback:altScreenLineBuffer
             withUsedHeight:[altGrid_ numberOfLinesUsed]
-                 newHeight:new_height];
-        int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:new_width],
-                                             new_height);
-        int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:new_width] - numLinesThatWillBeRestored;
+                 newHeight:newSize.height];
+        int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
+                                             newSize.height);
+        int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
 
         // Convert note ranges to new coords, dropping or truncating as needed
         currentGrid_ = altGrid_;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
@@ -753,7 +756,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
             VT100GridCoordRange newRange;
-            if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+            if ([self convertRange:noteRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
                 // Anticipate the lines that will be dropped when the alt grid is restored.
@@ -767,7 +770,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                 [savedIntervalTree_ removeObject:note];
                 if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
                     Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                      width:new_width
+                                                                      width:newSize.width
                                                                 linesOffset:0];
                     [replacementTree addObject:note withInterval:newInterval];
                 } else {
@@ -780,13 +783,13 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         currentGrid_ = primaryGrid_;  // Swap back to primary grid
 
         // Restore alt screen with new width
-        altGrid_.size = VT100GridSizeMake(new_width, new_height);
+        altGrid_.size = VT100GridSizeMake(newSize.width, newSize.height);
         [altGrid_ restoreScreenFromLineBuffer:altScreenLineBuffer
                               withDefaultChar:[altGrid_ defaultChar]
                             maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width]];
     }
 
-    [terminal_ clampSavedCursorToScreenSize:VT100GridSizeMake(new_width, new_height)];
+    [terminal_ clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
 
     [primaryGrid_ resetScrollRegions];
     [altGrid_ resetScrollRegions];
@@ -804,7 +807,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
     // An immediate refresh is needed so that the size of textview can be
     // adjusted to fit the new size
-    DebugLog(@"resizeWidth setDirty");
+    DebugLog(@"setSize setDirty");
     [delegate_ screenNeedsRedraw];
     [selection clearSelection];
     if (couldHaveSelection) {
@@ -1388,23 +1391,19 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [linebuffer_ numLinesWithWidth:currentGrid_.size.width] + currentGrid_.size.height;
 }
 
-- (int)width
-{
+- (int)width {
     return currentGrid_.size.width;
 }
 
-- (int)height
-{
+- (int)height {
     return currentGrid_.size.height;
 }
 
-- (int)cursorX
-{
+- (int)cursorX {
     return currentGrid_.cursorX + 1;
 }
 
-- (int)cursorY
-{
+- (int)cursorY {
     return currentGrid_.cursorY + 1;
 }
 

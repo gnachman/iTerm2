@@ -130,5 +130,6 @@
 + (int)maxSemanticHistoryPrefixOrSuffix;
 + (BOOL)performDictionaryLookupOnQuickLook;
 + (NSString *)pathsToIgnore;
++ (BOOL)jiggleTTYSizeOnClearBuffer;
 
 @end

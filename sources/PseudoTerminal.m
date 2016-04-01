@@ -6334,9 +6334,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 // Push a size change to a session (and on to its shell) but clamps the size to
 // reasonable minimum and maximum limits.
-// Set the session to a size that fits on the screen.
-// Push a size change to a session (and on to its shell) but clamps the size to
-// reasonable minimum and maximum limits.
 - (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns
 {
     if ([aSession exited]) {
@@ -6384,7 +6381,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             height -= error;
         }
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
-        [aSession setWidth:width height:height];
+        [aSession setSize:VT100GridSizeMake(width, height)];
         [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
         [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
         [[aSession scrollview] setPageScroll:2*[[aSession textview] lineHeight]];

@@ -519,8 +519,8 @@ typedef enum {
 // a scrollbar.
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle;
 
-// misc
-- (void)setWidth:(int)width height:(int)height;
+// Change the size of the session and its tty.
+- (void)setSize:(VT100GridSize)size;
 
 // Returns the number of pixels over or under the an ideal size.
 // Will never exceed +/- cell size/2.

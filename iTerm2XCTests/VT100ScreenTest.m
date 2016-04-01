@@ -889,12 +889,12 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 #pragma mark - Tests
 
-- (void)testResizeWidthRespectsContinuations {
+- (void)testSetSizeRespectsContinuations {
     VT100Screen *screen;
     screen = [self screenWithWidth:5 height:5];
     screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
     line[5].backgroundColor = 5;
-    [screen resizeWidth:6 height:4];
+    [screen setSize:VT100GridSizeMake(6, 4)];
     line = [screen.currentGrid screenCharsAtLineNumber:0];
     XCTAssert(line[0].backgroundColor == 5);
 }
@@ -909,12 +909,12 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(line[5].backgroundColor == 0);
 }
 
-- (void)testResizeWidthHeight {
+- (void)testSetSizeHeight {
     VT100Screen *screen;
 
     // No change = no-op
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
-    [screen resizeWidth:5 height:4];
+    [screen setSize:VT100GridSizeMake(5, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcde\n"
                @"fgh..\n"
@@ -925,7 +925,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Starting in primary - shrinks, but everything still fits on screen
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcd\n"
                @"efgh\n"
@@ -936,7 +936,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Starting in primary - grows, but line buffer is empty
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
-    [screen resizeWidth:9 height:4];
+    [screen setSize:VT100GridSizeMake(9, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcdefgh.\n"
                @"ijkl.....\n"
@@ -947,7 +947,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Try growing vertically only
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
-    [screen resizeWidth:5 height:5];
+    [screen setSize:VT100GridSizeMake(5, 5)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcde\n"
                @"fgh..\n"
@@ -959,7 +959,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Starting in primary - grows, pulling lines out of line buffer
     screen = [self fiveByFourScreenWithFourLinesOneWrappedAndOneInLineBuffer];
-    [screen resizeWidth:6 height:5];
+    [screen setSize:VT100GridSizeMake(6, 5)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"gh....\n"
                @"ijkl..\n"
@@ -971,7 +971,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Starting in primary, it shrinks, pushing some of primary into linebuffer
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
                @"l..\n"
@@ -987,7 +987,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // No change = no-op
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:5 height:4];
+    [screen setSize:VT100GridSizeMake(5, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCDE\n"
                @"FGH..\n"
@@ -1007,7 +1007,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Starting in alt - shrinks, but everything still fits on screen
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCD\n"
                @"EFGH\n"
@@ -1027,7 +1027,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Starting in alt - grows, but line buffer is empty
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:9 height:4];
+    [screen setSize:VT100GridSizeMake(9, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCDEFGH.\n"
                @"IJKL.....\n"
@@ -1047,7 +1047,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Try growing vertically only
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:5 height:5];
+    [screen setSize:VT100GridSizeMake(5, 5)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCDE\n"
                @"FGH..\n"
@@ -1067,7 +1067,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Starting in alt - grows, but we don't pull anything out of the line buffer.
     screen = [self fiveByFourScreenWithFourLinesOneWrappedAndOneInLineBuffer];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:6 height:5];
+    [screen setSize:VT100GridSizeMake(6, 5)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"IJKL..\n"
                @"MNOPQR\n"
@@ -1089,7 +1089,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Starting in alt, it shrinks, pushing some of primary into linebuffer
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"IJK\n"
                @"L..\n"
@@ -1123,7 +1123,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "jk"
     [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 3, 2)];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
                @"l..\n"
@@ -1145,7 +1145,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "abcd"
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 4, 0)];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
                @"l..\n"
@@ -1167,7 +1167,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "gh\ij"
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
                @"l..\n"
@@ -1185,7 +1185,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "gh\ij"
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
-    [screen resizeWidth:9 height:4];
+    [screen setSize:VT100GridSizeMake(9, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcdefgh.\n"
                @"ijkl.....\n"
@@ -1205,7 +1205,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     // select "gh\ij"
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCD\n"
                @"EFGH\n"
@@ -1224,7 +1224,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // select "gh\nij"
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"GH\nIJ"]);
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"IJK\n"
                @"L..\n"
@@ -1241,7 +1241,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     // select "abc"
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 3, 0)];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"IJK\n"
                @"L..\n"
@@ -1259,7 +1259,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // select "gh\nij"
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"GH\nIJ"]);
-    [screen resizeWidth:6 height:5];
+    [screen setSize:VT100GridSizeMake(6, 5)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCDEF\n"
                @"GH....\n"
@@ -1295,7 +1295,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // TODO There's a bug when the selection is at the very end (5,6). It is deselected.
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"MNOPQR\n"
                @"ST....\n"
@@ -1332,7 +1332,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // select everything
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ\n"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     ITERM_TEST_KNOWN_BUG([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ\n"],
                          [[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ"]);
 
@@ -1343,7 +1343,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     [screen setMaxScrollbackLines:1];
     [self showAltAndUppercase:screen];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"IJK\n"
                @"L..\n"
@@ -1366,7 +1366,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [screen terminalSetScrollRegionTop:0 bottom:1];
     [screen terminalSetLeftMargin:0 rightMargin:1];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert(VT100GridRectEquals([[screen currentGrid] scrollRegionRect],
                                   VT100GridRectMake(0, 0, 3, 3)));
 
@@ -1375,7 +1375,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "efgh.."
     [self setSelectionRange:VT100GridCoordRangeMake(4, 0, 5, 1)];
-    [screen resizeWidth:3 height:3];
+    [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"efgh\n"]);
     needsRedraw_ = 0;
     sizeDidChange_ = 0;
@@ -1391,7 +1391,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // ijkl.
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 2)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"\nabcdef"]);
-    [screen resizeWidth:13 height:4];
+    [screen setSize:VT100GridSizeMake(13, 4)];
     // TODO
     // This is kind of questionable. We strip nulls in -convertCurrentSelectionToWidth..., while it
     // would be better to preserve the selection.
@@ -1417,7 +1417,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 2)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nij"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abcdef\n"
                @"NOPQRS\n"
@@ -1447,7 +1447,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 2, 3)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"jklmNO"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"NO"]);
 
     // In alt screen with selection that begins and ends onscreen. The screen is grown and some history
@@ -1458,7 +1458,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(0, 4, 2, 4)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
 
     // In alt screen with selection that begins in history just above the visible screen and ends
@@ -1470,7 +1470,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(0, 2, 2, 2)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"ij"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([self selectedStringInScreen:screen] == nil);
 
     // In alt screen with selection that begins in history and ends in history just above the visible
@@ -1482,7 +1482,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 1)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
 
     // End is one before previous test.
@@ -1492,7 +1492,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 0)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
 
     // End is two after previous test.
@@ -1502,7 +1502,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 1)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefg"]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
 
     // Starting in primary but with content on the alt screen. It is properly restored.
@@ -1522,7 +1522,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"UVWXY\n"
                @"Z....\n"
                @"....."]);
-    [screen resizeWidth:6 height:6];
+    [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"NOPQRS\n"
                @"T.....\n"
@@ -2411,7 +2411,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
               matchesResults:(NSArray *)expected
   callBlockBetweenIterations:(void (^)(VT100Screen *))block {
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen resizeWidth:screen.width height:2];
+    [screen setSize:VT100GridSizeMake(screen.width, 2)];
     [[screen findContext] setMaxTime:0];
     [screen setFindString:pattern
          forwardDirection:forward
@@ -3938,7 +3938,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 2, 1)];  // fg
     [screen terminalShowAltBuffer];
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     [screen terminalShowPrimaryBuffer];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcd\n"
@@ -3964,7 +3964,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....."]);
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:VT100GridCoordRangeMake(0, 3, 2, 3)];  // First two chars on last line
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
     XCTAssert(notes.count == 0);
 }
@@ -3975,7 +3975,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalShowAltBuffer];
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     XCTAssert([selection_ hasSelection]);
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert(![selection_ hasSelection]);
 }
 
@@ -3984,7 +3984,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = self;
     [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
     XCTAssert([selection_ hasSelection]);
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert(![selection_ hasSelection]);
 }
 
@@ -4003,7 +4003,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2)];  // ij
     [screen terminalShowAltBuffer];
-    [screen resizeWidth:4 height:4];
+    [screen setSize:VT100GridSizeMake(4, 4)];
     [screen terminalShowPrimaryBuffer];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abcd\n"  // history
@@ -4035,7 +4035,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2)];  // ij
     [screen terminalShowAltBuffer];
-    [screen resizeWidth:3 height:4];
+    [screen setSize:VT100GridSizeMake(3, 4)];
     [screen terminalShowPrimaryBuffer];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abc\n"
@@ -4070,7 +4070,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 5, 3)];  // ijkl\nhello
     [screen terminalShowAltBuffer];
-    [screen resizeWidth:3 height:4];
+    [screen setSize:VT100GridSizeMake(3, 4)];
     [screen terminalShowPrimaryBuffer];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abc\n"
@@ -4130,7 +4130,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3)];  // fgh\nIJKL\nHELLO
-    [screen resizeWidth:3 height:4];
+    [screen setSize:VT100GridSizeMake(3, 4)];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abc\n"
                @"def\n"
@@ -4175,7 +4175,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self appendLines:@[ @"Hi" ] toScreen:screen];
     
     [screen terminalSetRemoteHost:@"example.com"];
-    [screen resizeWidth:6 height:4];
+    [screen setSize:VT100GridSizeMake(6, 4)];
     VT100RemoteHost *remoteHost = [screen remoteHostOnLine:2];
     
     XCTAssertEqualObjects([remoteHost hostname], @"example.com");

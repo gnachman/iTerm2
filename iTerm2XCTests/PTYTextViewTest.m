@@ -573,7 +573,7 @@
 
     XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
     [session setPreferencesFromAddressBookEntry:profile];
-    [session setWidth:size.width height:size.height];
+    [session setSize:size];
     NSRect theFrame = NSMakeRect(0,
                                  0,
                                  size.width * session.textview.charWidth + MARGIN * 2,

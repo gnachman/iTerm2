@@ -644,10 +644,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSRectFill(frame);
 }
 
-- (void)setSizeFromArrangement:(NSDictionary*)arrangement
-{
-    [self setWidth:[[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue]
-            height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
+- (void)setSizeFromArrangement:(NSDictionary*)arrangement {
+    [self setSize:VT100GridSizeMake([[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue],
+                                    [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
 + (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
@@ -1119,7 +1118,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection];
-        [_shell setWidth:_screen.width height:_screen.height];
+        [_shell setSize:_screen.size];
         @synchronized(self) {
             _registered = YES;
         }
@@ -1171,11 +1170,10 @@ ITERM_WEAKLY_REFERENCEABLE
          substitutions:substitutions];
 }
 
-- (void)setWidth:(int)width height:(int)height
-{
-    DLog(@"Set session %@ to %dx%d", self, width, height);
-    [_screen resizeWidth:width height:height];
-    [_shell setWidth:width height:height];
+- (void)setSize:(VT100GridSize)size {
+    DLog(@"Set session %@ to %@", self, VT100GridSizeDescription(size));
+    [_screen setSize:size];
+    [_shell setSize:size];
     [_textview clearHighlights];
     [[_delegate realParentWindow] invalidateRestorableState];
 }
@@ -2018,8 +2016,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell release];
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
-    [_shell setWidth:_screen.width
-              height:_screen.height];
+    [_shell setSize:_screen.size];
     [self startProgram:_program
            environment:_environment
                 isUTF8:_isUTF8
@@ -3185,6 +3182,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)clearBuffer {
     [_screen clearBuffer];
+
+    if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
+        VT100GridSize size = _screen.size;
+        size.width++;
+        _shell.size = size;
+        _shell.size = _screen.size;
+    }
 }
 
 - (void)clearScrollbackBuffer
@@ -4106,10 +4110,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxController toggleZoomForPane:self.tmuxPane];
 }
 
-- (void)resizeFromArrangement:(NSDictionary *)arrangement
-{
-    [self setWidth:[[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue]
-            height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
+- (void)resizeFromArrangement:(NSDictionary *)arrangement {
+    [self setSize:VT100GridSizeMake([[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue],
+                                    [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
