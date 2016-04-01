@@ -491,7 +491,9 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                 textField.bordered = NO;
                 textField.drawsBackground = NO;
                 textField.delegate = self;
-                textField.placeholderString = [trigger paramPlaceholder];
+                if ([textField respondsToSelector:@selector(setPlaceholderString:)]) {
+                    textField.placeholderString = [trigger paramPlaceholder];
+                }
                 textField.identifier = kParameterColumnIdentifier;
 
                 return textField;
