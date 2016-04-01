@@ -239,7 +239,7 @@ static NSDictionary *gIntrospection;
                                                                      attributes:spacerAttributes] autorelease];
     NSDictionary *attributes =
         @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
-           NSForegroundColorAttributeName: selected ? [NSColor whiteColor] : [NSColor blackColor] };
+           NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor] };
     NSAttributedString *title = [[[NSAttributedString alloc] initWithString:string
                                                                  attributes:attributes] autorelease];
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
@@ -310,7 +310,7 @@ static NSDictionary *gIntrospection;
                                    selected:tableView.selectedRow == row
                                        bold:NO];
         if (subtitle) {
-            NSColor *color = (tableView.selectedRow == row) ? [NSColor whiteColor] : [NSColor grayColor];
+            NSColor *color = (tableView.selectedRow == row && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor grayColor];
             NSDictionary *attributes = @{ NSForegroundColorAttributeName: color,
                                           NSFontAttributeName: [NSFont systemFontOfSize:11] };
             NSAttributedString *attributedSubtitle =
