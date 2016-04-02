@@ -5933,6 +5933,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)hideMenuBar {
+    DLog(@"hideMenuBar called from\n%@", [NSThread callStackSymbols]);
     NSScreen* menubarScreen = nil;
     NSScreen* currentScreen = nil;
 
@@ -5948,8 +5949,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     // If screens have separate spaces (only applicable in Mavericks and later) then all screens have a menu bar.
     if (currentScreen == menubarScreen || (IsMavericksOrLater() && [NSScreen futureScreensHaveSeparateSpaces])) {
+        DLog(@"set flags to auto-hide dock");
         int flags = NSApplicationPresentationAutoHideDock;
         if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+            DLog(@"Set flags to auto-hide menu bar");
             flags |= NSApplicationPresentationAutoHideMenuBar;
         }
         NSApplicationPresentationOptions presentationOptions =
@@ -5968,8 +5971,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
 }
 
-- (void)showMenuBar
-{
+- (void)showMenuBar {
+    DLog(@"showMenuBar called from\n%@", [NSThread callStackSymbols]);
     int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
     NSApplicationPresentationOptions presentationOptions =
         [[NSApplication sharedApplication] presentationOptions];
