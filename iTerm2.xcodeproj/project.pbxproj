@@ -2320,7 +2320,7 @@
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
 		A663010F19CFE41A004AF81C /* iTermAboutWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAboutWindow.m; sourceTree = "<group>"; };
 		A663011519CFE450004AF81C /* iTermAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindowController.h; sourceTree = "<group>"; };
-		A663011619CFE450004AF81C /* iTermAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAboutWindowController.m; sourceTree = "<group>"; };
+		A663011619CFE450004AF81C /* iTermAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAboutWindowController.m; sourceTree = "<group>"; };
 		A663012219D0864C004AF81C /* SCConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCConstants.h; path = SCEvents/Source/SCConstants.h; sourceTree = "<group>"; };
 		A663012319D0864C004AF81C /* SCEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEvent.h; path = SCEvents/Source/SCEvent.h; sourceTree = "<group>"; };
 		A663012419D0864C004AF81C /* SCEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvent.m; path = SCEvents/Source/SCEvent.m; sourceTree = "<group>"; };
