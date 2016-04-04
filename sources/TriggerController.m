@@ -12,6 +12,7 @@
 #import "BounceTrigger.h"
 #import "CaptureTrigger.h"
 #import "CoprocessTrigger.h"
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "GrowlTrigger.h"
 #import "HighlightTrigger.h"
