@@ -1890,6 +1890,7 @@ static const int kDragThreshold = 3;
         limit = width - 1;
     }
     x = MIN(x, limit);
+    y = MIN(y, [_dataSource numberOfLines] - 1);
 
     return NSMakePoint(x, y);
 }
