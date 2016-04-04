@@ -5964,6 +5964,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)showMenuBarHideDock {
+    DLog(@"showMenuBarHideDock called from\n%@", [NSThread callStackSymbols]);
     NSApplicationPresentationOptions presentationOptions =
         [[NSApplication sharedApplication] presentationOptions];
     presentationOptions |= NSApplicationPresentationAutoHideDock;
