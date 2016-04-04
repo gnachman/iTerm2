@@ -2261,15 +2261,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTask:[_terminal.output keyPageDown:0]];
 }
 
-+ (NSData *)pasteboardFile
-{
++ (NSData *)pasteboardFile {
     NSPasteboard *board;
 
     board = [NSPasteboard generalPasteboard];
-    assert(board != nil);
+    if (!board) {
+        return nil;
+    }
 
-    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, nil];
-    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+    NSString *bestType = [board availableTypeFromArray:@[ NSFilenamesPboardType ]];
 
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
@@ -5434,8 +5434,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)textViewCanPasteFile
-{
+- (BOOL)textViewCanPasteFile {
     return [[self class] pasteboardFile] != nil;
 }
 
