@@ -8,6 +8,10 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *const kDelayedTitleSetterSetTitle;
+// User info key for new title
+extern NSString *const kDelayedTitleSetterTitleKey;
+
 // In bug 2593, we see a crazy thing where setting the window title right
 // after a window is created causes it to have the wrong background color.
 // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
