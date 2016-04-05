@@ -17,7 +17,7 @@
     BOOL _isMove;
     SplitSessionHalf half_;
     NSTrackingArea *trackingArea_;
-    PTYSession *session_;  // weak
+    NSView *view_;  // weak
     id<SplitSelectionViewDelegate> delegate_;  // weak
 }
 
@@ -35,13 +35,13 @@
 
 - (instancetype)initAsCancelOnly:(BOOL)cancelOnly
                        withFrame:(NSRect)frame
-                     withSession:(PTYSession *)session
+                            view:(NSView *)view
                         delegate:(id<SplitSelectionViewDelegate>)delegate
                             move:(BOOL)move {
     self = [self initWithFrame:frame];
     if (self) {
         cancelOnly_ = cancelOnly;
-        session_ = session;
+        view_ = view;
         delegate_ = delegate;
         _isMove = move;
         [self _createTrackingArea];
@@ -185,7 +185,7 @@
 - (void)mouseDown:(NSEvent *)theEvent
 {
     if (delegate_) {
-        [delegate_ didSelectDestinationSession:session_ half:half_];
+        [delegate_ didSelectDestinationView:view_ half:half_];
     }
 }
 

@@ -24,8 +24,8 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
 @protocol SplitSelectionViewDelegate <NSObject>
 
 // dest will be null when canceling.
-- (void)didSelectDestinationSession:(PTYSession *)dest
-                               half:(SplitSessionHalf)half;
+- (void)didSelectDestinationView:(NSView *)view
+                            half:(SplitSessionHalf)half;
 @end
 
 @interface SplitSelectionView : NSView
@@ -40,7 +40,7 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
 // the delegate gets called when a selection is made.
 - (instancetype)initAsCancelOnly:(BOOL)cancelOnly
                        withFrame:(NSRect)frame
-                     withSession:(PTYSession *)session
+                            view:(NSView *)view
                         delegate:(id<SplitSelectionViewDelegate>)delegate
                             move:(BOOL)move;
 

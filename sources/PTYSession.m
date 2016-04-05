@@ -446,6 +446,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
+    [_view release];
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
@@ -656,7 +657,6 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Restoring session from arrangement");
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession.view = sessionView;
-    [sessionView setSession:aSession];
 
     [[sessionView findViewController] setDelegate:aSession];
     Profile* theBookmark =

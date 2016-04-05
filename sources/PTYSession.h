@@ -252,9 +252,7 @@ typedef enum {
 @property(nonatomic, retain) VT100Screen *screen;
 
 // The view in which this session's objects live.
-// NOTE! This is a weak reference.
-// TODO: SessionView should hold a weak reference to PTYSession, which should be an NSViewController.
-@property(nonatomic, assign) SessionView *view;
+@property(nonatomic, retain) SessionView *view;
 
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.
