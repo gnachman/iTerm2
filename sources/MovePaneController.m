@@ -90,11 +90,15 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
         return;
     }
     PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
-    NSWindowController<iTermWindowController> * term =
+    NSWindowController<iTermWindowController> *term =
         [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
 
     SessionView *oldView = [movingSession view];
     [oldView retain];
+
+    // Prevent -removeSession from freeing the session.
+    [[movingSession retain] autorelease];
+
     [theTab removeSession:movingSession];
     if ([[theTab sessions] count] == 0) {
         [[theTab realParentWindow] closeTab:theTab];
@@ -147,8 +151,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 // It isn't called at all if a session is dragged into an existing tab bar.
 - (BOOL)dropInSession:(PTYSession *)dest
                  half:(SplitSessionHalf)half
-              atPoint:(NSPoint)point
-{
+              atPoint:(NSPoint)point {
     if ((dest && ![session_ isCompatibleWith:dest]) ||  // Would create hetero-tmuxual splits in tab
         dest == session_ ||  // move to self
         !session_) {         // no source (?)
@@ -256,10 +259,8 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 
 #pragma mark Delegate
 
-- (void)didSelectDestinationSession:(PTYSession *)dest
-                               half:(SplitSessionHalf)half
-{
-    [self dropInSession:dest half:half atPoint:NSZeroPoint];
+- (void)didSelectDestinationSession:(PTYSession *)session half:(SplitSessionHalf)half {
+    [self dropInSession:session half:half atPoint:NSZeroPoint];
     [self exitMovePaneMode];
 }
 

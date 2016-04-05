@@ -351,7 +351,8 @@ static BOOL hasBecomeActive = NO;
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
 
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
             [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
         }];
@@ -1248,6 +1249,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    if (self.isApplescriptTestApp) {
+        return;
+    }
     NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);

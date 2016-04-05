@@ -45,7 +45,6 @@
     iTermColorMap *_colorMap;
     NSString *_pasteboardString;
     NSMutableDictionary *_methodsCalled;
-    BOOL _canPasteFile;
     screen_char_t _buffer[4];
 }
 
@@ -55,7 +54,6 @@
     _textView.delegate = self;
     _textView.dataSource = self;
     _methodsCalled = [[NSMutableDictionary alloc] init];
-    _canPasteFile = NO;
 }
 
 - (void)tearDown {
@@ -433,9 +431,6 @@
     return NO;
 }
 
-- (void)textViewSizeDidChange {
-}
-
 - (void)textViewSelectNextTab {
 }
 
@@ -491,6 +486,9 @@
 }
 
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying {
+}
+
+- (void)textViewResizeFrameIfNeeded {
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
@@ -550,12 +548,6 @@
     [_textView selectAll:nil];
     [self invokeMenuItemWithSelector:@selector(pasteSelection:) tag:1];
     XCTAssert([_methodsCalled[@"textViewPasteFromSessionWithMostRecentSelection:1"] intValue] == 1);
-}
-
-- (void)testPasteBase64Encoded {
-    _canPasteFile = YES;
-    [self invokeMenuItemWithSelector:@selector(pasteBase64Encoded:)];
-    XCTAssert([_methodsCalled[@"textViewPasteFileWithBase64Encoding"] intValue] == 1);
 }
 
 - (PTYSession *)sessionWithProfileOverrides:(NSDictionary *)profileOverrides
@@ -2465,14 +2457,6 @@
 
 - (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags {
     [self registerCall:_cmd argument:@(flags)];
-}
-
-- (void)textViewPasteFileWithBase64Encoding {
-    [self registerCall:_cmd];
-}
-
-- (BOOL)textViewCanPasteFile {
-    return _canPasteFile;
 }
 
 - (void)refresh {

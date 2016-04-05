@@ -32,4 +32,17 @@
     return results;
 }
 
+- (NSData *)dataForFirstFile {
+    NSString *bestType = [self availableTypeFromArray:@[ NSFilenamesPboardType ]];
+    
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [self propertyListForType:NSFilenamesPboardType];
+        if (filenames.count > 0) {
+            NSString *filename = filenames[0];
+            return [NSData dataWithContentsOfFile:filename];
+        }
+    }
+    return nil;
+}
+
 @end
