@@ -46,7 +46,6 @@
 #import "ProcessCache.h"
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
-#import "PTYScrollView.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "SCPFile.h"
@@ -173,7 +172,10 @@ static const NSTimeInterval kActiveUpdateCadence = 1.0 / 30.0;
 // TODO(georgen): There's room for improvement here.
 static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
-@interface PTYSession () <iTermAutomaticProfileSwitcherDelegate, iTermPasteHelperDelegate>
+@interface PTYSession () <
+    iTermAutomaticProfileSwitcherDelegate,
+    iTermPasteHelperDelegate,
+    iTermSessionViewDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
@@ -1001,39 +1003,20 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     _screen.delegate = self;
 
-    // Allocate a container to hold the scrollview
+    // Allocate the root per-session view.
     if (!_view) {
-        self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
-                                                session:self] autorelease];
+        self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)] autorelease];
         [[_view findViewController] setDelegate:self];
     }
 
-    // Allocate a scrollview
-    _scrollview = [[[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
-                                                                   0,
-                                                                   aRect.size.width,
-                                                                   aRect.size.height)
-                                    hasVerticalScroller:[parent scrollbarShouldBeVisible]] autorelease];
-    NSParameterAssert(_scrollview != nil);
-    [_scrollview setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
-
-    // assign the main view
-    [_view addSubview:_scrollview];
     if (![self isTmuxClient]) {
         [_view setAutoresizesSubviews:YES];
     }
-    // TODO(georgen): I disabled setCopiesOnScroll because there is a vertical margin in the PTYTextView and
-    // we would not want that copied. This is obviously bad for performance when scrolling, but it's unclear
-    // whether the difference will ever be noticable. I believe it could be worked around (painfully) by
-    // subclassing NSClipView and overriding viewBoundsChanged: and viewFrameChanged: so that it coipes on
-    // scroll but it doesn't include the vertical marigns when doing so.
-    // The vertical margins are indespensable because different PTYTextViews may use different fonts/font
-    // sizes, but the window size does not change as you move from tab to tab. If the margin is outside the
-    // NSScrollView's contentView it looks funny.
-    [[_scrollview contentView] setCopiesOnScroll:NO];
+
+    _view.scrollview.hasVerticalRuler = [parent scrollbarShouldBeVisible];
 
     // Allocate a text view
-    NSSize aSize = [_scrollview contentSize];
+    NSSize aSize = [_view.scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
 
     // In commit f6dabc53024d13ec1bd7be92bf505f72f87ea779, the max-y margin was
@@ -1080,12 +1063,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_textview setDataSource:_screen];
     [_textview setDelegate:self];
-    [_scrollview setDocumentView:_wrapper];
+    [_view.scrollview setDocumentView:_wrapper];
     [_wrapper release];
-    [_scrollview setDocumentCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
-    [_scrollview setLineScroll:[_textview lineHeight]];
-    [_scrollview setPageScroll:2 * [_textview lineHeight]];
-    [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
+    [_view.scrollview setDocumentCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
+    [_view.scrollview setLineScroll:[_textview lineHeight]];
+    [_view.scrollview setPageScroll:2 * [_textview lineHeight]];
+    [_view.scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
     _antiIdleCode = 0;
     [_antiIdleTimer invalidate];
@@ -1179,7 +1162,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
-    [[self view] setSplitSelectionMode:mode move:move];
+    [[self view] setSplitSelectionMode:mode move:move session:self];
 }
 
 - (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically
@@ -1610,7 +1593,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // beautiful here, but in that case we want to turn off the bell and scroll to the
             // bottom.
             [self setBell:NO];
-            PTYScroller* ptys = (PTYScroller*)[_scrollview verticalScroller];
+            PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
             [ptys setUserScroll:NO];
         }
         [_shell writeTask:data];
@@ -1666,7 +1649,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[_tmuxController gateway] sendKeys:data
                                    toWindowPane:_tmuxPane];
         }
-        PTYScroller* ptys = (PTYScroller*)[_scrollview verticalScroller];
+        PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
         [ptys setUserScroll:NO];
         return;
     } else if (self.tmuxMode == TMUX_GATEWAY) {
@@ -2360,7 +2343,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (PTYScroller *)textViewVerticalScroller
 {
-    return (PTYScroller *)[_scrollview verticalScroller];
+    return (PTYScroller *)[_view.scrollview verticalScroller];
 }
 
 - (BOOL)textViewHasCoprocess {
@@ -3017,9 +3000,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_terminal setTermType:_termVariable];
 }
 
-- (void)setView:(SessionView*)newView {
+- (void)setView:(SessionView *)newView {
     // View holds a reference to us so we don't hold a reference to it.
     _view = newView;
+    newView.delegate = self;
     [[_view findViewController] setDelegate:self];
 }
 
@@ -3377,7 +3361,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateScroll {
-    if (![(PTYScroller*)([_scrollview verticalScroller]) userScroll]) {
+    if (![(PTYScroller*)([_view.scrollview verticalScroller]) userScroll]) {
         [_textview scrollEnd];
     }
 }
@@ -6128,7 +6112,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)screenSize {
-    return [[[[_delegate parentWindow] currentSession] scrollview] documentVisibleRect].size;
+    return [[[[[_delegate parentWindow] currentSession] view] scrollview] documentVisibleRect].size;
 }
 
 // If the flag is set, push the window title; otherwise push the icon title.
@@ -7255,6 +7239,109 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSArray<NSDictionary *> *)automaticProfileSwitcherAllProfiles {
     return [[ProfileModel sharedInstance] bookmarks];
+}
+
+#pragma mark - iTermSessionViewDelegate
+
+- (void)sessionViewMouseEntered:(NSEvent *)event {
+    [_textview mouseEntered:event];
+}
+
+- (void)sessionViewMouseExited:(NSEvent *)event {
+    [_textview mouseExited:event];
+}
+    
+- (void)sessionViewMouseMoved:(NSEvent *)event {
+    [_textview mouseMoved:event];
+}
+
+- (void)sessionViewRightMouseDown:(NSEvent *)event {
+    [_textview rightMouseDown:event];
+}
+
+- (BOOL)sessionViewShouldForwardMouseDownToSuper:(NSEvent *)event {
+    return [_textview mouseDownImpl:event];
+}
+
+- (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
+    self.colorMap.dimmingAmount = newDimmingAmount;
+}
+
+- (BOOL)sessionViewIsVisible {
+    return YES;
+}
+
+- (void)sessionViewDrawBackgroundImageInView:(NSView *)view
+                                    viewRect:(NSRect)rect
+                      blendDefaultBackground:(BOOL)blendDefaultBackground {
+    [self textViewDrawBackgroundImageInView:view
+                                   viewRect:rect
+                     blendDefaultBackground:blendDefaultBackground];
+    
+}
+
+- (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender {
+    PTYSession *movingSession = [[MovePaneController sharedInstance] session];
+    if (![_delegate session:self shouldAllowDrag:sender]) {
+        return NSDragOperationNone;
+    }
+    
+    if ([[MovePaneController sharedInstance] isMovingSession:self]) {
+        // Moving me onto myself
+        return NSDragOperationMove;
+    } else if (![movingSession isCompatibleWith:self]) {
+        // We must both be non-tmux or belong to the same session.
+        return NSDragOperationNone;
+    }
+    
+    [self.view createSplitSelectionView];
+    return NSDragOperationMove;
+}
+
+- (BOOL)sessionViewShouldSplitSelectionAfterDragUpdate:(id<NSDraggingInfo>)sender {
+    if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound &&
+        [[MovePaneController sharedInstance] isMovingSession:self]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender {
+    return [_delegate session:self performDragOperation:sender];
+}
+
+- (NSString *)sessionViewTitle {
+    return self.name;
+}
+
+- (NSSize)sessionViewCellSize {
+    return NSMakeSize([_textview charWidth], [_textview lineHeight]);
+}
+
+- (VT100GridSize)sessionViewGridSize {
+    return VT100GridSizeMake(_screen.width, _screen.height);
+}
+
+- (BOOL)sessionViewTerminalIsFirstResponder {
+    return _textview.window.firstResponder == _textview;
+}
+
+- (NSColor *)sessionViewTabColor {
+    return self.tabColor;
+}
+
+- (NSMenu *)sessionViewContextMenu {
+    return [_textview titleBarMenu];
+}
+
+- (void)sessionViewConfirmAndClose {
+    [[_delegate realParentWindow] closeSessionWithConfirmation:self];
+}
+
+- (void)sessionViewBeginDrag {
+    if (![[MovePaneController sharedInstance] session]) {
+        [[MovePaneController sharedInstance] beginDrag:self];
+    }
 }
 
 @end

@@ -45,6 +45,8 @@ static NSDate* lastResizeDate_;
 
     BOOL _showTitle;
     SessionTitleView *_title;
+    
+    BOOL _inAddSubview;
 }
 
 + (double)titleHeight {
@@ -62,38 +64,46 @@ static NSDate* lastResizeDate_;
     lastResizeDate_ = [[NSDate date] retain];
 }
 
-- (void)_initCommon {
-    [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
-    [lastResizeDate_ release];
-    lastResizeDate_ = [[NSDate date] retain];
-    _announcements = [[NSMutableArray alloc] init];
-}
-
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        [self _initCommon];
+        [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
+        [lastResizeDate_ release];
+        lastResizeDate_ = [[NSDate date] retain];
+        _announcements = [[NSMutableArray alloc] init];
+
+        // Set up find view
         _findView = [[FindViewController alloc] initWithNibName:@"FindView" bundle:nil];
         [[_findView view] setHidden:YES];
         [self addSubview:[_findView view]];
         NSRect aRect = [self frame];
         [_findView setFrameOrigin:NSMakePoint(aRect.size.width - [[_findView view] frame].size.width - 30,
                                                      aRect.size.height - [[_findView view] frame].size.height)];
+        
+        // Assign a globally unique view ID.
         _viewId = nextViewId++;
+
+        // Allocate a scrollview
+        _scrollview = [[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
+                                                                      0,
+                                                                      aRect.size.width,
+                                                                      aRect.size.height)
+                                       hasVerticalScroller:NO];
+        [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
+
+        // assign the main view
+        [self addSubview:_scrollview];
+        // TODO(georgen): I disabled setCopiesOnScroll because there is a vertical margin in the PTYTextView and
+        // we would not want that copied. This is obviously bad for performance when scrolling, but it's unclear
+        // whether the difference will ever be noticable. I believe it could be worked around (painfully) by
+        // subclassing NSClipView and overriding viewBoundsChanged: and viewFrameChanged: so that it coipes on
+        // scroll but it doesn't include the vertical marigns when doing so.
+        // The vertical margins are indespensable because different PTYTextViews may use different fonts/font
+        // sizes, but the window size does not change as you move from tab to tab. If the margin is outside the
+        // NSScrollView's contentView it looks funny.
+        [[_scrollview contentView] setCopiesOnScroll:NO];
     }
     return self;
-}
-
-- (void)addSubview:(NSView *)aView {
-    static BOOL running;
-    BOOL wasRunning = running;
-    running = YES;
-    if (!wasRunning && _findView && aView != [_findView view]) {
-        [super addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
-    } else {
-        [super addSubview:aView];
-    }
-    running = NO;
 }
 
 - (void)dealloc {
@@ -107,7 +117,19 @@ static NSDate* lastResizeDate_;
     while (self.trackingAreas.count) {
         [self removeTrackingArea:self.trackingAreas[0]];
     }
+    [_scrollview release];
     [super dealloc];
+}
+
+- (void)addSubview:(NSView *)aView {
+    BOOL wasRunning = _inAddSubview;
+    _inAddSubview = YES;
+    if (!wasRunning && _findView && aView != [_findView view]) {
+        [super addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
+    } else {
+        [super addSubview:aView];
+    }
+    _inAddSubview = NO;
 }
 
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {
@@ -296,13 +318,13 @@ static NSDate* lastResizeDate_;
     [self setFrameSize:_savedSize];
 }
 
-- (void)_createSplitSelectionView:(BOOL)cancelOnly move:(BOOL)move {
+- (void)createSplitSelectionView:(BOOL)cancelOnly move:(BOOL)move session:(id)session {
     _splitSelectionView = [[SplitSelectionView alloc] initAsCancelOnly:cancelOnly
                                                              withFrame:NSMakeRect(0,
                                                                                   0,
                                                                                   [self frame].size.width,
                                                                                   [self frame].size.height)
-                                                                  view:self
+                                                               session:session
                                                               delegate:[MovePaneController sharedInstance]
                                                                   move:move];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
@@ -311,13 +333,13 @@ static NSDate* lastResizeDate_;
     [_splitSelectionView release];
 }
 
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session {
     switch (mode) {
         case kSplitSelectionModeOn:
             if (_splitSelectionView) {
                 return;
             }
-            [self _createSplitSelectionView:NO move:move];
+            [self createSplitSelectionView:NO move:move session:session];
             break;
 
         case kSplitSelectionModeOff:
@@ -326,7 +348,7 @@ static NSDate* lastResizeDate_;
             break;
 
         case kSplitSelectionModeCancel:
-            [self _createSplitSelectionView:YES move:move];
+            [self createSplitSelectionView:YES move:move session:session];
             break;
     }
 }
@@ -370,6 +392,24 @@ static NSDate* lastResizeDate_;
     }
 }
 
+- (void)createSplitSelectionView {
+    NSRect frame = self.frame;
+    _splitSelectionView = [[SplitSelectionView alloc] initWithFrame:NSMakeRect(0,
+                                                                               0,
+                                                                               frame.size.width,
+                                                                               frame.size.height)];
+    [self addSubview:_splitSelectionView];
+    [_splitSelectionView release];
+    [[self window] orderFront:nil];
+}
+
+- (SplitSessionHalf)removeSplitSelectionView {
+    SplitSessionHalf half = [_splitSelectionView half];
+    [_splitSelectionView removeFromSuperview];
+    _splitSelectionView = nil;
+    return half;
+}
+
 #pragma mark NSDraggingSource protocol
 
 - (void)draggedImage:(NSImage *)draggedImage movedTo:(NSPoint)screenPoint {
@@ -404,7 +444,11 @@ static NSDate* lastResizeDate_;
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-    return [_delegate sessionViewDraggingUpdated:sender];
+    if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
+        NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
+        [_splitSelectionView updateAtPoint:point];
+    }
+    return NSDragOperationMove;
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {

@@ -29,7 +29,6 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
-@class PTYScrollView;
 @class PTYTab;
 @class PTYTask;
 @class PTYTextView;
@@ -163,6 +162,10 @@ typedef enum {
 
 // If the tab is a tmux window, this gives its name.
 - (NSString *)tmuxWindowName;
+
+- (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender;
+- (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender;
+
 @end
 
 @class SessionView;
@@ -257,9 +260,6 @@ typedef enum {
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.
 @property(nonatomic, retain) PTYTextView *textview;
-
-// The scrollview. It is a subview of SessionView and contains -textview.
-@property(nonatomic, retain) PTYScrollView *scrollview;
 
 @property(nonatomic, assign) NSStringEncoding encoding;
 

@@ -8,12 +8,14 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "MovePaneController.h"
 #import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
 #import "PSMTabBarControl.h"
+#import "PSMTabDragAssistant.h"
 #import "PSMTabStyle.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -1325,18 +1327,17 @@ static NSString* FormatRect(NSRect r) {
     return nil;
 }
 
-- (void)fitSubviewsToRoot
-{
+- (void)fitSubviewsToRoot {
     // Make SessionViews full-size.
     [root_ adjustSubviews];
 
     // Make scrollbars the right size and put them at the tops of their session views.
     for (PTYSession *theSession in [self sessions]) {
         NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
-        [[theSession scrollview] setFrame:NSMakeRect(0,
-                                                     0,
-                                                     theSize.width,
-                                                     theSize.height)];
+        [[theSession.view scrollview] setFrame:NSMakeRect(0,
+                                                          0,
+                                                          theSize.width,
+                                                          theSize.height)];
         if ([self isTmuxTab]) {
             [[theSession view] setAutoresizesSubviews:NO];
         }
@@ -1465,8 +1466,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (SessionView*)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
-                  targetSession:(PTYSession*)targetSession
-{
+                  targetSession:(PTYSession *)targetSession  {
     if (isMaximized_) {
         [self unmaximize];
     }
@@ -1973,7 +1973,7 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
-    [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
+    [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
     int width = (size.width - MARGIN*2) / [[aSession textview] charWidth];
@@ -2017,8 +2017,8 @@ static NSString* FormatRect(NSRect r) {
 
     PtyLog(@"fitSessionToCurrentViewSize -  calling setSize:%@", VT100GridSizeDescription(newSize));
     [aSession setSize:newSize];
-    [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
-    [[aSession scrollview] setPageScroll:2 * [[aSession textview] lineHeight]];
+    [[aSession.view scrollview] setLineScroll:[[aSession textview] lineHeight]];
+    [[aSession.view scrollview] setPageScroll:2 * [[aSession textview] lineHeight]];
     if ([aSession backgroundImagePath]) {
         [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
     }
@@ -2974,8 +2974,8 @@ static NSString* FormatRect(NSRect r) {
         } else {
             SessionView *sv = (SessionView *)view;
             PTYSession *session = [self sessionForSessionView:sv];
-            NSRect svFrame = [[session scrollview] frame];
-            NSRect visibleFrame = [[session scrollview] documentVisibleRect];  // excludes scrollbar, if any
+            NSRect svFrame = [[session.view scrollview] frame];
+            NSRect visibleFrame = [[session.view scrollview] documentVisibleRect];  // excludes scrollbar, if any
             int chars = forHeight ? (svFrame.size.height - VMARGIN * 2) / cellSize.height :
                                     (visibleFrame.size.width - MARGIN * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
@@ -3165,10 +3165,10 @@ static NSString* FormatRect(NSRect r) {
         NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
         [sv setFrame:aFrame];
         NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
-        [[theSession scrollview] setFrame:NSMakeRect(0,
-                                                     0,
-                                                     theSize.width,
-                                                     theSize.height)];
+        [[theSession.view scrollview] setFrame:NSMakeRect(0,
+                                                          0,
+                                                          theSize.width,
+                                                          theSize.height)];
         [[theSession view] setAutoresizesSubviews:NO];
         [[theSession view] updateTitleFrame];
     }
@@ -4588,6 +4588,51 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         [self setState:0 reset:(kPTYTabIdleState |
                                 kPTYTabNewOutputState |
                                 kPTYTabDeadState)];
+    }
+}
+
+#pragma mark - PTYSessionDelegate
+// TODO: Move the rest of the methods in here.
+
+- (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
+        // Dragging a tab handle. Source is a PSMTabBarControl.
+        PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
+        if ([[theTab sessions] containsObject:session] || [[theTab sessions] count] > 1) {
+            return NO;
+        }
+        if (![[theTab activeSession] isCompatibleWith:session]) {
+            // Can't have heterogeneous tmux controllers in one tab.
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender {
+    if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
+        if ([[MovePaneController sharedInstance] isMovingSession:session]) {
+            if (self.sessions.count > 1 && !self.realParentWindow.anyFullScreen) {
+                // If you dragged a session from a tab with split panes onto itself then do nothing.
+                // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
+                // whole window.
+                [[MovePaneController sharedInstance] moveWindowBy:[sender draggedImageLocation]];
+            }
+            // Regardless, we must say the drag failed because otherwise
+            // draggedImage:endedAt:operation: will try to move the session to its own window.
+            [[MovePaneController sharedInstance] setDragFailed:YES];
+            return NO;
+        }
+        return [[MovePaneController sharedInstance] dropInSession:session
+                                                             half:[session.view removeSplitSelectionView]
+                                                          atPoint:[sender draggingLocation]];
+    } else {
+        // Drag a tab into a split
+        PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
+        return [[MovePaneController sharedInstance] dropTab:theTab
+                                                  inSession:session
+                                                       half:[session.view removeSplitSelectionView]
+                                                    atPoint:[sender draggingLocation]];
     }
 }
 

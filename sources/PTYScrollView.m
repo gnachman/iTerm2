@@ -124,6 +124,10 @@
                [NSValue valueWithRect:[self documentVisibleRect]]];
 }
 
+- (PTYScroller *)verticalScroller {
+    return (PTYScroller *)[super verticalScroller];
+}
+
 static CGFloat RoundTowardZero(CGFloat value) {
     if (value > 0) {
         return floor(value);

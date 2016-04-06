@@ -1661,7 +1661,7 @@ static const int kDragThreshold = 3;
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     }
     if (changed) {
-        [[_delegate scrollview] setDocumentCursor:cursor_];
+        [self.enclosingScrollView setDocumentCursor:cursor_];
     }
 }
 

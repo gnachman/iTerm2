@@ -3171,16 +3171,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     BOOL changed = NO;
     for (PTYSession *aSession in [self allSessions]) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        if (aSession.scrollview.hasVerticalScroller != hasScrollbar) {
+        if (aSession.view.scrollview.hasVerticalScroller != hasScrollbar) {
             changed = YES;
         }
-        [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
+        [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
 
         NSScrollerStyle style = [self scrollerStyle];
-        if (aSession.scrollview.scrollerStyle != style) {
+        if (aSession.view.scrollview.scrollerStyle != style) {
             changed = YES;
         }
-        [[aSession scrollview] setScrollerStyle:style];
+        [[aSession.view scrollview] setScrollerStyle:style];
         [[aSession textview] updateScrollerForBackgroundColor];
     }
 
@@ -3377,7 +3377,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (BOOL)scrollbarShouldBeVisible {
     return _contentView.scrollbarShouldBeVisible;
-    return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
@@ -3543,9 +3542,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // panes then the margins probably won't turn out perfect. If other tabs have
     // a different char size, they will also have imperfect margins.
     float decorationHeight = [sender frame].size.height -
-        [[[self currentSession] scrollview] documentVisibleRect].size.height + VMARGIN * 2;
+        [[[[self currentSession] view] scrollview] documentVisibleRect].size.height + VMARGIN * 2;
     float decorationWidth = [sender frame].size.width -
-        [[[self currentSession] scrollview] documentVisibleRect].size.width + MARGIN * 2;
+        [[[[self currentSession] view] scrollview] documentVisibleRect].size.width + MARGIN * 2;
 
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
@@ -5069,9 +5068,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
-    [sessionView setSession:newSession];
     newSession.delegate = self.currentTab;
-    scrollView = [[[newSession view] subviews] objectAtIndex:0];
+    scrollView = sessionView.scrollview;
     [newSession setView:sessionView];
     NSSize size = [sessionView frame].size;
     if (performSetup) {
@@ -6059,7 +6057,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else if ([self anyFullScreen] ||
                windowType_ == WINDOW_TYPE_RIGHT ) {
         return NO;
-    } else if (![[[self currentSession] scrollview] isLegacyScroller] ||
+    } else if (![[[[self currentSession] view] scrollview] isLegacyScroller] ||
                ![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
         return YES;
@@ -6282,7 +6280,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
     if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
-        NSSize contentSize = [[[self currentSession] scrollview] documentVisibleRect].size;
+        NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
     }
@@ -6386,9 +6384,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
         [aSession setSize:VT100GridSizeMake(width, height)];
-        [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
-        [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
-        [[aSession scrollview] setPageScroll:2*[[aSession textview] lineHeight]];
+        [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
+        [[aSession.view scrollview] setLineScroll:[[aSession textview] lineHeight]];
+        [[aSession.view scrollview] setPageScroll:2*[[aSession textview] lineHeight]];
         if ([aSession backgroundImagePath]) {
             [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
         }

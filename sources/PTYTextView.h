@@ -83,7 +83,6 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
                                  viewRect:(NSRect)rect
                    blendDefaultBackground:(BOOL)blendDefaultBackground;
 - (BOOL)textViewHasBackgroundImage;
-- (PTYScrollView *)scrollview;
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;
 - (void)sendText:(NSString *)text;

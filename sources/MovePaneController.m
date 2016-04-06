@@ -256,9 +256,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 
 #pragma mark Delegate
 
-- (void)didSelectDestinationView:(NSView *)view
-                            half:(SplitSessionHalf)half {
-    PTYSession *session = [self sessionWithSessionView:view];
+- (void)didSelectDestinationSession:(PTYSession *)session half:(SplitSessionHalf)half {
     [self dropInSession:session half:half atPoint:NSZeroPoint];
     [self exitMovePaneMode];
 }

@@ -27,8 +27,10 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FindViewController.h"
+#import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionTitleView.h"
+#import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
 @class PTYSession;
@@ -46,78 +48,9 @@
 - (void)sessionViewDrawBackgroundImageInView:(NSView *)view
                                     viewRect:(NSRect)rect
                       blendDefaultBackground:(BOOL)blendDefaultBackground;  // Forward to textViewDrawBackgroundImageInView:viewRect:blendDefaultBackground:
-- (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender; /*
-    PTYSession *movingSession = [[MovePaneController sharedInstance] session];
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
-        // Dragging a tab handle. Source is a PSMTabBarControl.
-        PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
-        if (_session.tab == theTab || [[theTab sessions] count] > 1) {
-            return NSDragOperationNone;
-        }
-        if (![[theTab activeSession] isCompatibleWith:[self session]]) {
-            // Can't have heterogeneous tmux controllers in one tab.
-            return NSDragOperationNone;
-        }
-    } else if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        // Moving me onto myself
-        return NSDragOperationMove;
-    } else if (![movingSession isCompatibleWith:[self session]]) {
-        // We must both be non-tmux or belong to the same session.
-        return NSDragOperationNone;
-    }
-    NSRect frame = [self frame];
-    _splitSelectionView = [[SplitSelectionView alloc] initWithFrame:NSMakeRect(0,
-                                                                               0,
-                                                                               frame.size.width,
-                                                                               frame.size.height)];
-    [self addSubview:_splitSelectionView];
-    [_splitSelectionView release];
-    [[self window] orderFront:nil];
-    return NSDragOperationMove;
-*/
-- (NSDragOperation)sessionViewDraggingUpdated:(id<NSDraggingInfo>)sender; /*
-    if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound &&
-        [[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        return NSDragOperationMove;
-    }
-    NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-    [_splitSelectionView updateAtPoint:point];
-    return NSDragOperationMove;
-*/
-- (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender; /*
-    if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
-        if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-            if (![_delegate sessionViewHasSiblings] && ![_delegate sessionViewBelongsToFullScreenWindow]) {
-                // If you dragged a session from a tab with split panes onto itself then do nothing.
-                // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
-                // whole window.
-                [[MovePaneController sharedInstance] moveWindowBy:[sender draggedImageLocation]];
-            }
-            // Regardless, we must say the drag failed because otherwise
-            // draggedImage:endedAt:operation: will try to move the session to its own window.
-            [[MovePaneController sharedInstance] setDragFailed:YES];
-            return NO;
-        }
-        SplitSessionHalf half = [_splitSelectionView half];
-        [_splitSelectionView removeFromSuperview];
-        _splitSelectionView = nil;
-        return [[MovePaneController sharedInstance] dropInSession:[self session]
-                                                             half:half
-                                                          atPoint:[sender draggingLocation]];
-    } else {
-        // Drag a tab into a split
-        SplitSessionHalf half = [_splitSelectionView half];
-        [_splitSelectionView removeFromSuperview];
-        _splitSelectionView = nil;
-        PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
-        return [[MovePaneController sharedInstance] dropTab:theTab
-                                                  inSession:[self session]
-                                                       half:half
-                                                    atPoint:[sender draggingLocation]];
-    }
-*/
-- (BOOL)sessionViewHasSiblings;  // _session.delegate.sessions.count == 1
-- (BOOL)sessionViewBelongsToFullScreenWindow;  // !_session.delegate.realParentWindow.anyFullScreen
+- (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender;
+- (BOOL)sessionViewShouldSplitSelectionAfterDragUpdate:(id<NSDraggingInfo>)sender;
+- (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender;
 - (NSString *)sessionViewTitle;  // _session.name
 - (NSSize)sessionViewCellSize;  // NSMakeSize([[_session textview] charWidth], [[_session textview] lineHeight]);
 - (VT100GridSize)sessionViewGridSize;  // VT100GridSizeMake([_session columns], [_session rows]);
@@ -141,6 +74,7 @@
 @property(nonatomic, assign) int ordinal;
 @property(nonatomic, readonly) iTermAnnouncementViewController *currentAnnouncement;
 @property(nonatomic, assign) id<iTermSessionViewDelegate> delegate;
+@property(nonatomic, readonly) PTYScrollView *scrollview;
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;
@@ -152,7 +86,7 @@
 - (void)updateDim;
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
-- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session;
 - (BOOL)setShowTitle:(BOOL)value adjustScrollView:(BOOL)adjustScrollView;
 - (BOOL)showTitle;
 - (void)setTitle:(NSString *)title;
@@ -176,5 +110,8 @@
 - (NSRect)contentRect;
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement;
+
+- (void)createSplitSelectionView;
+- (SplitSessionHalf)removeSplitSelectionView;
 
 @end
