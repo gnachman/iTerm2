@@ -102,6 +102,11 @@ static const int kNumCharsToSearchForDivider = 8;
     const int width = [_dataSource width];
     const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
     const BOOL windowTouchesRightMargin = (xLimit == width);
+    int numberOfLines = [_dataSource numberOfLines];
+    if (location.y >= numberOfLines) {
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                          _logicalWindow.location, _logicalWindow.length);
+    }
     VT100GridCoordRange theRange = VT100GridCoordRangeMake(location.x,
                                                            location.y,
                                                            width,

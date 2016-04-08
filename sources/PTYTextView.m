@@ -1890,6 +1890,7 @@ static const int kDragThreshold = 3;
         limit = width - 1;
     }
     x = MIN(x, limit);
+    y = MIN(y, [_dataSource numberOfLines] - 1);
 
     return NSMakePoint(x, y);
 }
@@ -2993,8 +2994,33 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)installShellIntegration:(id)sender {
-    NSString *theCommand = @"curl -L https://iterm2.com/misc/install_shell_integration.sh | bash\n";
-    [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
+    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    warning.title = @"Shell Integration comes with an optional Utilities Package, which lets you view images and download files. What would you prefer?";
+    warning.actions = @[ @"Install Shell Integration & Utilities", @"Cancel", @"Shell Integration Only" ];
+    warning.identifier = @"NoSyncInstallUtilitiesPackage";
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    warning.showHelpBlock = ^() {
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/utilities.html"]];
+    };
+
+    NSString *theCommand = nil;
+    switch ([warning runModal]) {
+        case kiTermWarningSelection0:
+            theCommand = @"curl -L https://iterm2.com/misc/install_shell_integration_and_utilities.sh | bash\n";
+            break;
+        case kiTermWarningSelection1:
+            return;
+        case kiTermWarningSelection2:
+            theCommand = @"curl -L https://iterm2.com/misc/install_shell_integration.sh | bash\n";
+            break;
+        case kItermWarningSelectionError:
+            assert(false);
+    }
+    if (theCommand) {
+        [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
+    } else {
+        assert(false);
+    }
 }
 
 - (IBAction)selectAll:(id)sender

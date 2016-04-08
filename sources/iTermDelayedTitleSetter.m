@@ -8,6 +8,9 @@
 
 #import "iTermDelayedTitleSetter.h"
 
+NSString *const kDelayedTitleSetterSetTitle = @"kDelayedTitleSetterSetTitle";
+NSString *const kDelayedTitleSetterTitleKey = @"title";
+
 static const NSTimeInterval kDelay = 0.1;
 
 @interface iTermDelayedTitleSetter()
@@ -37,7 +40,11 @@ static const NSTimeInterval kDelay = 0.1;
     self.timer = nil;
     NSString *newTitle = [[self.pendingTitle retain] autorelease];
     self.pendingTitle = nil;
-    self.window.title = newTitle;
+    if (newTitle) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kDelayedTitleSetterSetTitle
+                                                            object:self.window
+                                                          userInfo:@{ kDelayedTitleSetterTitleKey: newTitle }];
+    }
 }
 
 @end

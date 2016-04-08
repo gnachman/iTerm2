@@ -74,4 +74,19 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
                                       heading:(NSString *)heading
                                   cancelLabel:(NSString *)cancelLabel;
 
+
+// If you prefer you can set the properties you care about and then invoke runModal.
+
+@property(nonatomic, copy) NSString *title;
+@property(nonatomic, retain) NSArray<NSString *> *actions;
+@property(nonatomic, retain) NSArray<NSNumber *> *actionToSelectionMap;
+@property(nonatomic, retain) NSView *accessory;
+@property(nonatomic, copy) NSString *identifier;
+@property(nonatomic, assign) iTermWarningType warningType;
+@property(nonatomic, copy) NSString *heading;
+@property(nonatomic, copy) NSString *cancelLabel;
+@property(nonatomic, copy) void (^showHelpBlock)();
+
+- (iTermWarningSelection)runModal;
+
 @end

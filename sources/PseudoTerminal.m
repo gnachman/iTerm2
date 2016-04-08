@@ -2434,11 +2434,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             // Nothing we can do if we're headless.
             return;
         }
-        if ([screens count] < screenNumber) {
+        if ([screens count] <= screenNumber) {
             PtyLog(@"Using screen 0 because the preferred screen isn't around any more");
             screenNumber = 0;
         }
-        screen = [[NSScreen screens] objectAtIndex:screenNumber];
+        screen = screens[screenNumber];
     }
     NSRect frame = [[self window] frame];
     NSRect screenVisibleFrame = [screen visibleFrame];
@@ -5964,6 +5964,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)showMenuBarHideDock {
+    DLog(@"showMenuBarHideDock called from\n%@", [NSThread callStackSymbols]);
     NSApplicationPresentationOptions presentationOptions =
         [[NSApplication sharedApplication] presentationOptions];
     presentationOptions |= NSApplicationPresentationAutoHideDock;
