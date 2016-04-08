@@ -2911,7 +2911,7 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="VYD-F1-fDI"/>
-                        <outlet property="nextKeyView" destination="4978" id="6418"/>
+                        <outlet property="nextKeyView" destination="fwj-4Y-nja" id="u8P-d1-x0a"/>
                     </connections>
                 </button>
                 <button toolTip="Enable this to prevent background colors for text from being affected by the transparency setting. Useful for having a transparent terminal background but opaque Powerline segments(background) to match opaque Powerline separators(foreground)." id="fwj-4Y-nja">
@@ -2935,6 +2935,7 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="5jm-v3-jaw"/>
+                        <outlet property="nextKeyView" destination="6416" id="5hh-n9-L6w"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="5012">
