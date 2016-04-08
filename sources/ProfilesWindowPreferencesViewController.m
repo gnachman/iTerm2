@@ -41,6 +41,7 @@
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
     IBOutlet NSButton *_preventTab;
+    IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
 }
 
@@ -118,6 +119,11 @@
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
+
+   info = [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
+                          key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
+                         type:kPreferenceInfoTypeCheckbox];
+   info.observer = ^() { _transparencyAffectsOnlyDefaultBackgroundColor.enabled = (_transparency.doubleValue > 0); };
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT

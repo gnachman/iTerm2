@@ -176,6 +176,9 @@
 // Amount to blend background color over background image, 0-1.
 @property(nonatomic, assign) float blend;
 
+// Should transparency not affect background colors other than the default?
+@property(nonatomic, assign) BOOL transparencyAffectsOnlyDefaultBackgroundColor;
+
 // Should the cursor guide be shown?
 @property(nonatomic, assign) BOOL highlightCursorLine;
 

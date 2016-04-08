@@ -304,6 +304,12 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     } else {
         const BOOL defaultBackground = (run->bgColor == ALTSEM_DEFAULT &&
                                         run->bgColorMode == ColorModeAlternate);
+        // When set in preferences, applies alpha only to the defaultBackground
+        // color, useful for keeping Powerline segments opacity(background)
+        // consistent with their seperator glyphs opacity(foreground).
+        if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
+            alpha = 1;
+        }
         if (_reverseVideo && defaultBackground) {
             // Reverse video is only applied to default background-
             // color chars.
