@@ -1486,6 +1486,7 @@ DQ
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
+                <outlet property="_defaultBGAlphaOnly" destination="fwj-4Y-nja" id="caf-eb-abe"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_openToolbelt" destination="hmf-ta-TMb" id="nOK-vG-n8c"/>
                 <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>
@@ -2911,6 +2912,18 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="VYD-F1-fDI"/>
                         <outlet property="nextKeyView" destination="4978" id="6418"/>
+                    </connections>
+                </button>
+                <button toolTip="Enable this to prevent background colors for text from being affected by the transparency setting. Useful for having a transparent terminal background but opaque Powerline segments(background) to match opaque Powerline separators(foreground)." id="fwj-4Y-nja">
+                    <rect key="frame" x="15" y="9" width="389" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Only apply transparency to the main background color." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="sBm-XA-tIi">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="sGR-E1-876"/>
+                        <outlet property="nextKeyView" destination="4978" id="Tpo-gX-6bI"/>
                     </connections>
                 </button>
                 <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="5008">
