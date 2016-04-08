@@ -3458,15 +3458,15 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setActive:(BOOL)active {
     DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
          @(active), @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
-    active = active && [_delegate sessionBelongsToVisibleTab];
     _active = active;
     [self changeCadenceIfNeeded];
 }
 
 - (void)changeCadenceIfNeeded {
-    if (_active || !self.isIdle) {
+    BOOL effectivelyActive = (_active || !self.isIdle || [NSApp isActive]);
+    if (effectivelyActive && [_delegate sessionBelongsToVisibleTab]) {
         [self setUpdateCadence:kActiveUpdateCadence];
-    } else if ([NSApp isActive]) {
+    } else {
         [self setUpdateCadence:kBackgroundUpdateCadence];
     }
 }

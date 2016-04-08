@@ -608,7 +608,6 @@ static NSDate* lastResizeDate_;
         title = @"";
     }
     _title.title = title;
-    [_title setNeedsDisplay:YES];
 }
 
 - (NSString *)description {
