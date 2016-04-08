@@ -1033,6 +1033,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
+    [self setDefaultBGAlphaOnly:[[_profile objectForKey:KEY_DEFAULT_BG_ALPHA_ONLY] boolValue]];
 
     [_wrapper addSubview:_textview];
     [_textview setFrame:NSMakeRect(0, VMARGIN, aSize.width, aSize.height - VMARGIN)];
@@ -2646,6 +2647,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
     [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
+    [self setDefaultBGAlphaOnly:[iTermProfilePreferences floatForKey:KEY_DEFAULT_BG_ALPHA_ONLY inProfile:aDict]];
 
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
@@ -3050,6 +3052,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setBlend:(float)blendVal {
     [_textview setBlend:blendVal];
+}
+
+- (void)setDefaultBGAlphaOnly:(BOOL)value
+{
+    [_textview setDefaultBGAlphaOnly:value];
 }
 
 - (BOOL)antiIdle {

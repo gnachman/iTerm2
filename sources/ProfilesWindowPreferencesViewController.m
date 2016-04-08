@@ -41,6 +41,7 @@
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
     IBOutlet NSButton *_preventTab;
+    IBOutlet NSButton *_defaultBGAlphaOnly;
     IBOutlet NSButton *_openToolbelt;
 }
 
@@ -118,6 +119,10 @@
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
+
+   [self defineControl:_defaultBGAlphaOnly
+                   key:KEY_DEFAULT_BG_ALPHA_ONLY
+                  type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT

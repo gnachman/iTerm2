@@ -5179,6 +5179,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setDefaultBGAlphaOnly:(BOOL)value {
+    _drawingHelper.defaultBGAlphaOnly = value;
+    [self setNeedsDisplay:YES];
+}
+
 - (float)blend {
     return _drawingHelper.blend;
 }
