@@ -8,6 +8,7 @@
 
 #import "iTermImageInfo.h"
 #import "iTermAnimatedImageInfo.h"
+#import "FutureMethods.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSWorkspace+iTerm.h"
@@ -16,7 +17,7 @@ static NSString *const kImageInfoSizeKey = @"Size";
 static NSString *const kImageInfoImageKey = @"Image";  // data
 static NSString *const kImageInfoPreserveAspectRatioKey = @"Preserve Aspect Ratio";
 static NSString *const kImageInfoFilenameKey = @"Filename";
-static NSString *const kImageInfoInsetKey = @"Inset";
+static NSString *const kImageInfoInsetKey = @"Edge Insets";
 static NSString *const kImageInfoCodeKey = @"Code";
 
 @interface iTermImageInfo ()
@@ -42,7 +43,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
     self = [super init];
     if (self) {
         _size = [dictionary[kImageInfoSizeKey] sizeValue];
-        _inset = [dictionary[kImageInfoInsetKey] edgeInsetsValue];
+        _inset = [dictionary[kImageInfoInsetKey] futureEdgeInsetsValue];
         _data = [dictionary[kImageInfoImageKey] retain];
         _animatedImage = [[iTermAnimatedImageInfo alloc] initWithData:_data];
         if (!_animatedImage) {
@@ -92,7 +93,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
 
 - (NSDictionary *)dictionary {
     return @{ kImageInfoSizeKey: [NSValue valueWithSize:_size],
-              kImageInfoInsetKey: [NSValue valueWithEdgeInsets:_inset],
+              kImageInfoInsetKey: [NSValue futureValueWithEdgeInsets:_inset],
               kImageInfoImageKey: _data ?: [NSData data],
               kImageInfoPreserveAspectRatioKey: @(_preserveAspectRatio),
               kImageInfoFilenameKey: _filename ?: @"",
