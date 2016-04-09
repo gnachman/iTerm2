@@ -3001,8 +3001,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setView:(SessionView *)newView {
-    // View holds a reference to us so we don't hold a reference to it.
-    _view = newView;
+    _view = [newView retain];
     newView.delegate = self;
     [[_view findViewController] setDelegate:self];
 }

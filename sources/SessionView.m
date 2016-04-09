@@ -117,7 +117,6 @@ static NSDate* lastResizeDate_;
     while (self.trackingAreas.count) {
         [self removeTrackingArea:self.trackingAreas[0]];
     }
-    [_scrollview release];
     [super dealloc];
 }
 

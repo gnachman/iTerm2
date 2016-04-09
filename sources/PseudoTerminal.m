@@ -1988,14 +1988,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
-        NSDictionary *viewMap = nil;
+        NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
         if (sessions) {
-            viewMap = [PTYTab viewMapWithArrangement:tabArrangement sessions:sessions];
+            sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
         }
         if (![PTYTab openTabWithArrangement:tabArrangement
                                  inTerminal:self
                             hasFlexibleView:NO
-                                    viewMap:viewMap]) {
+                                    viewMap:nil
+                                 sessionMap:sessionMap]) {
             return NO;
         }
     }
@@ -4928,7 +4929,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     NSMutableArray *allSessions = [NSMutableArray array];
     [allSessions addObjectsFromArray:sessions];
     [allSessions addObjectsFromArray:[tab sessions]];
-    NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:allSessions];
+    NSDictionary<NSString *, PTYSession *> *theMap = [PTYTab sessionMapWithArrangement:arrangement
+                                                                              sessions:allSessions];
 
     BOOL ok = (theMap != nil);
     if (ok) {
@@ -4963,7 +4965,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     PTYTab *temporaryTab = [PTYTab tabWithArrangement:arrangement
                                            inTerminal:nil
                                       hasFlexibleView:NO
-                                              viewMap:theMap];
+                                              viewMap:nil
+                                           sessionMap:theMap];
     [tab replaceWithContentsOfTab:temporaryTab];
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
@@ -4974,8 +4977,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                      uniqueId:(int)tabUniqueId
                      sessions:(NSArray *)sessions
                  predecessors:(NSArray *)predecessors {
-    NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:sessions];
-    if (!theMap) {
+    NSDictionary<NSString *, PTYSession *> *sessionMap = [PTYTab sessionMapWithArrangement:arrangement
+                                                                                  sessions:sessions];
+    if (!sessionMap) {
         // Can't do it. Just add each session as its own tab.
         for (PTYSession *session in sessions) {
             if ([session revive]) {
@@ -4988,10 +4992,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     PTYTab *tab = [PTYTab tabWithArrangement:arrangement
                                   inTerminal:self
                              hasFlexibleView:NO
-                                     viewMap:theMap];
+                                     viewMap:nil
+                                  sessionMap:sessionMap];
     tab.uniqueId = tabUniqueId;
-    for (id theKey in theMap) {
-        PTYSession *session = theMap[theKey];
+    for (NSString *theKey in sessionMap) {
+        PTYSession *session = sessionMap[theKey];
         assert([session revive]);  // TODO: This isn't guarantted
     }
 
@@ -5065,12 +5070,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // Inherit from tab.
         tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
     }
-    SessionView* sessionView = [[self currentTab] splitVertically:isVertical
-                                                           before:before
-                                                    targetSession:targetSession];
-    newSession.delegate = self.currentTab;
+    [[self currentTab] splitVertically:isVertical
+                            newSession:newSession
+                                before:before
+                         targetSession:targetSession];
+    SessionView *sessionView = newSession.view;
     scrollView = sessionView.scrollview;
-    [newSession setView:sessionView];
     NSSize size = [sessionView frame].size;
     if (performSetup) {
         [self setupSession:newSession title:nil withSize:&size];

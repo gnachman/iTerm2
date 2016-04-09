@@ -147,8 +147,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 // It isn't called at all if a session is dragged into an existing tab bar.
 - (BOOL)dropInSession:(PTYSession *)dest
                  half:(SplitSessionHalf)half
-              atPoint:(NSPoint)point
-{
+              atPoint:(NSPoint)point {
     if ((dest && ![session_ isCompatibleWith:dest]) ||  // Would create hetero-tmuxual splits in tab
         dest == session_ ||  // move to self
         !session_) {         // no source (?)
