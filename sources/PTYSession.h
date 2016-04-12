@@ -631,6 +631,8 @@ typedef enum {
 // Change the current profile but keep the name the same.
 - (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName;
 
+- (void)setScrollViewDocumentView;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

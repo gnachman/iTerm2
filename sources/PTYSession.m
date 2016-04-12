@@ -1384,7 +1384,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
-    if (iTermApplication.sharedApplication.delegate.isApplescriptTestApp) {
+    if (iTermApplication.sharedApplication.delegate.isApplescriptTestApp ||
+        iTermApplication.sharedApplication.delegate.isUITestRunner) {
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
@@ -3193,6 +3194,16 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     return NO;
+}
+
+- (void)setScrollViewDocumentView {
+    [_view.scrollview setDocumentView:_wrapper];
+    NSRect rect = {
+        .origin = NSZeroPoint,
+        .size = _view.scrollview.contentSize
+    };
+    _wrapper.frame = rect;
+    [_textview refresh];
 }
 
 - (void)setProfile:(Profile *)newProfile {
