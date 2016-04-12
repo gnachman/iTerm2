@@ -60,6 +60,7 @@
 - (void)sessionViewConfirmAndClose;
 - (void)sessionViewBeginDrag;
 - (CGFloat)sessionViewDesiredHeightOfDocumentView;
+- (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically;
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

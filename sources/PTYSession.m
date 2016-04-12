@@ -7338,4 +7338,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return _textview.desiredHeight + VMARGIN;
 }
 
+- (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically {
+    // We won't automatically layout the session view's descendents for tmux
+    // tabs. Instead the change gets reported to the tmux server and it will
+    // send us a new layout.
+    if (self.isTmuxClient) {
+        // This makes dragging a split pane in a tmux tab look way better.
+        return [_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged];
+    } else {
+        return YES;
+    }
+}
+
 @end

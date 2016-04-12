@@ -118,7 +118,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // The root view of this tab. May be a SolidColorView for tmux tabs or the
     // same as root_ otherwise (the normal case).
-    NSView *tabView_;  // weak
+    __unsafe_unretained NSView *tabView_;
 
     // If there is a flexible root view, this is set and is the tabview's view.
     // Otherwise it is nil.
@@ -169,6 +169,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL broadcasting_;
 
     NSMapTable<SessionView *, PTYSession *> *sessions_;
+    
+    // Currently dragging a split pane in a tab that's also a tmux tab?
+    BOOL _isDraggingSplitInTmuxTab;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -2360,17 +2363,16 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 - (void)notifyWindowChanged {
-    if (![self isTmuxTab]) {
-        return;
-    }
-    if (!flexibleView_) {
-        [self enableFlexibleView];
-    }
-    [self updateFlexibleViewColors];
-    [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
-    for (PTYSession *aSession in [self sessions]) {
-        [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it is a tmux tab
-        [[aSession view] updateTitleFrame];
+    if ([self isTmuxTab]) {
+        if (!flexibleView_) {
+            [self enableFlexibleView];
+        }
+        [self updateFlexibleViewColors];
+        [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
+        for (PTYSession *aSession in [self sessions]) {
+            // Because it's a tmux view it won't automatically resize.
+            [[aSession view] updateTitleFrame];
+        }
     }
 }
 
@@ -2844,10 +2846,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
-    // The only way a tmux view should resize is because the server told it to.
-    for (PTYSession *aSession in [theTab sessions]) {
-        [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it's a tmux tab
-    }
 
     [term appendTab:theTab];
     [theTab didAddToTerminal:term withArrangement:arrangement];
@@ -3125,7 +3123,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
                                                           0,
                                                           theSize.width,
                                                           theSize.height)];
-        [[theSession view] setAutoresizesSubviews:NO];
         [[theSession view] updateTitleFrame];
     }
 }
@@ -3664,9 +3661,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         return;
     }
     // Dragging looks a lot better if we turn on resizing subviews temporarily.
-    for (SessionView *sessionView in [self sessionViews]) {
-        [sessionView setAutoresizesSubviews:YES];
-    }
+    _isDraggingSplitInTmuxTab = YES;
 }
 
 - (void)splitView:(PTYSplitView *)splitView
@@ -3676,9 +3671,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         // Don't care for non-tmux tabs.
         return;
     }
-    for (SessionView *sv in [self sessionViews]) {
-        [sv setAutoresizesSubviews:NO];
-    }
+    _isDraggingSplitInTmuxTab = NO;
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
     NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
@@ -4554,6 +4547,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
                                                        half:[session.view removeSplitSelectionView]
                                                     atPoint:[sender draggingLocation]];
     }
+}
+
+- (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged {
+    return _isDraggingSplitInTmuxTab;
 }
 
 @end

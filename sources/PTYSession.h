@@ -166,6 +166,8 @@ typedef enum {
 - (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender;
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender;
 
+- (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged;
+
 @end
 
 @class SessionView;
