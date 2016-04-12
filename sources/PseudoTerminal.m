@@ -5080,6 +5080,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (performSetup) {
         [self setupSession:newSession title:nil withSize:&size];
         scrollView = [[[newSession view] subviews] objectAtIndex:0];
+    } else {
+        [newSession setScrollViewDocumentView];
     }
     // Move the scrollView created by PTYSession into sessionView.
     [scrollView retain];
