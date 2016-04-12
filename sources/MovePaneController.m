@@ -95,6 +95,10 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 
     SessionView *oldView = [movingSession view];
     [oldView retain];
+
+    // Prevent -removeSession from freeing the session.
+    [[movingSession retain] autorelease];
+
     [theTab removeSession:movingSession];
     if ([[theTab sessions] count] == 0) {
         [[theTab realParentWindow] closeTab:theTab];
