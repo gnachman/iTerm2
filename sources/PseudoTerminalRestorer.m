@@ -85,8 +85,9 @@ static BOOL gWaitingForFullScreen;
     }
 
     DLog(@"Restore window with identifier %@", identifier);
-    if ([[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"]) {
-        // Disable window restoration for iTerm2ForApplescriptTesting
+    if ([[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"] ||
+        [[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.test.iTerm2UITests-Runner"]) {
+        // Disable window restoration for iTerm2ForApplescriptTesting or UI tests.
         DLog(@"Abort because bundle ID contains applescript");
         completionHandler(nil, nil);
         return;

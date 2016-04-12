@@ -227,7 +227,8 @@ static BOOL hasBecomeActive = NO;
         } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
                    ![PseudoTerminalRestorer willOpenWindows] &&
                    [[[iTermController sharedInstance] terminals] count] == 0 &&
-                   ![self isApplescriptTestApp]) {
+                   ![self isApplescriptTestApp] &&
+                   ![self isUITestRunner]) {
             [self newWindow:nil];
         }
     }
@@ -351,7 +352,9 @@ static BOOL hasBecomeActive = NO;
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
 
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        !self.isApplescriptTestApp &&
+        !self.isUITestRunner) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
             [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
         }];
@@ -514,9 +517,13 @@ static BOOL hasBecomeActive = NO;
     return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
 }
 
+- (BOOL)isUITestRunner {
+    return [[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.test.iTerm2UITests-Runner"];
+}
+
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
-    if ([self isApplescriptTestApp]) {
+    if ([self isApplescriptTestApp] || [self isUITestRunner]) {
         // Don't want to do this for applescript testing so we have a blank slate.
         return NO;
     }
@@ -1248,6 +1255,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    if (self.isApplescriptTestApp || self.isUITestRunner) {
+        return;
+    }
     NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
