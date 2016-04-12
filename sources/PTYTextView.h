@@ -78,7 +78,6 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)paste:(id)sender;
 - (void)pasteOptions:(id)sender;
 - (void)textViewFontDidChange;
-- (void)textViewSizeDidChange;
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)rect
                    blendDefaultBackground:(BOOL)blendDefaultBackground;
@@ -286,6 +285,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property(nonatomic, assign) BOOL showSearchingCursor;
 
 @property(nonatomic, readonly) iTermQuickLookController *quickLookController;
+
+// Returns the desired height of this view that exactly fits its contents.
+@property(nonatomic, readonly) CGFloat desiredHeight;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

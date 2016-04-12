@@ -38,32 +38,28 @@
 @class SessionTitleView;
 
 @protocol iTermSessionViewDelegate<NSObject>
-- (void)sessionViewMouseEntered:(NSEvent *)event;  // forward to textview
-- (void)sessionViewMouseExited:(NSEvent *)event;  // forward to textview
-- (void)sessionViewMouseMoved:(NSEvent *)event;  // forward to textview
-- (void)sessionViewRightMouseDown:(NSEvent *)event;  // forward to textview
-- (BOOL)sessionViewShouldForwardMouseDownToSuper:(NSEvent *)event;  // forward to textview **mouseDownImpl**
-- (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount;  // set colorMap.dimmingAmount
-- (BOOL)sessionViewIsVisible;  // Just return YES, delegate will be nil otherwise
+- (void)sessionViewMouseEntered:(NSEvent *)event;
+- (void)sessionViewMouseExited:(NSEvent *)event;
+- (void)sessionViewMouseMoved:(NSEvent *)event;
+- (void)sessionViewRightMouseDown:(NSEvent *)event;
+- (BOOL)sessionViewShouldForwardMouseDownToSuper:(NSEvent *)event;
+- (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount;
+- (BOOL)sessionViewIsVisible;
 - (void)sessionViewDrawBackgroundImageInView:(NSView *)view
                                     viewRect:(NSRect)rect
-                      blendDefaultBackground:(BOOL)blendDefaultBackground;  // Forward to textViewDrawBackgroundImageInView:viewRect:blendDefaultBackground:
+                      blendDefaultBackground:(BOOL)blendDefaultBackground;
 - (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender;
 - (BOOL)sessionViewShouldSplitSelectionAfterDragUpdate:(id<NSDraggingInfo>)sender;
 - (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender;
-- (NSString *)sessionViewTitle;  // _session.name
-- (NSSize)sessionViewCellSize;  // NSMakeSize([[_session textview] charWidth], [[_session textview] lineHeight]);
-- (VT100GridSize)sessionViewGridSize;  // VT100GridSizeMake([_session columns], [_session rows]);
-- (BOOL)sessionViewTerminalIsFirstResponder;  // _session.textview.window.firstResponder == _session.textview
-- (NSColor *)sessionViewTabColor;  // _session.tabColor
-- (NSMenu *)sessionViewContextMenu;  // [[_session textview] titleBarMenu]
-- (void)sessionViewConfirmAndClose;  // [[[_session delegate] realParentWindow] closeSessionWithConfirmation:_session]
-- (void)sessionViewBeginDrag; /*
-    if (![[MovePaneController sharedInstance] session]) {
-        [[MovePaneController sharedInstance] beginDrag:_session];
-    }
-*/
-
+- (NSString *)sessionViewTitle;
+- (NSSize)sessionViewCellSize;
+- (VT100GridSize)sessionViewGridSize;
+- (BOOL)sessionViewTerminalIsFirstResponder;
+- (NSColor *)sessionViewTabColor;
+- (NSMenu *)sessionViewContextMenu;
+- (void)sessionViewConfirmAndClose;
+- (void)sessionViewBeginDrag;
+- (CGFloat)sessionViewDesiredHeightOfDocumentView;
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

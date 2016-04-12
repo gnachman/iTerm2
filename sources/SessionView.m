@@ -131,6 +131,17 @@ static NSDate* lastResizeDate_;
     _inAddSubview = NO;
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize {
+    CGFloat titleHeight = 0;
+    if (self.showTitle) {
+        [self updateTitleFrame];
+        titleHeight = NSHeight(_title.frame);
+    } else {
+        [self updateScrollViewFrame];
+        [self updateFindViewFrame];
+    }
+}
+
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {
     _delegate = delegate;
     [_delegate sessionViewDimmingAmountDidChange:[self adjustedDimmingAmount]];
@@ -557,6 +568,11 @@ static NSDate* lastResizeDate_;
                                     kTitleHeight)];
     }
     [self updateScrollViewFrame];
+    [self updateFindViewFrame];
+}
+
+- (void)updateFindViewFrame {
+    NSRect aRect = self.frame;
     [_findView setFrameOrigin:NSMakePoint(aRect.size.width - [[_findView view] frame].size.width - 30,
                                           aRect.size.height - [[_findView view] frame].size.height)];
 }
@@ -573,6 +589,10 @@ static NSDate* lastResizeDate_;
     rect.size.height = rows * lineHeight + margins;
     rect.origin.y = self.frame.size.height - titleHeight - rect.size.height;
     [self scrollview].frame = rect;
+    
+    rect.size.width = _scrollview.contentSize.width;
+    rect.size.height = [_delegate sessionViewDesiredHeightOfDocumentView];
+    [_scrollview.documentView setFrame:rect];
 }
 
 - (void)setTitle:(NSString *)title {

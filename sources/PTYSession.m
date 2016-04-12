@@ -1009,27 +1009,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [[_view findViewController] setDelegate:self];
     }
 
-    if (![self isTmuxClient]) {
-        [_view setAutoresizesSubviews:YES];
-    }
-
     _view.scrollview.hasVerticalRuler = [parent scrollbarShouldBeVisible];
 
     // Allocate a text view
     NSSize aSize = [_view.scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
-
-    // In commit f6dabc53024d13ec1bd7be92bf505f72f87ea779, the max-y margin was
-    // made flexible. The commit description there explains why. But then I
-    // found that it was causing unsatisfiable constraints that were more
-    // reproducible when maximizing a tmux window. It had a constraint like
-    // this:
-    //     "<NSAutoresizingMaskLayoutConstraint:0x60000068a230 h=-&- v=-&& TextViewWrapper:0x60800012b900.height == 3.0687*NSClipView:0x1009d6920.height - 6.1374>",
-    // Which is obviously wrong. This is a less-wrong answer, but still pretty
-    // obviously broken. Maybe I shouldn't use autoresizing masks for the
-    // wrapper at all. This is a big complicated mess that I need to
-    // disentangle.
-    [_wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
                                           colorMap:_colorMap];
@@ -3004,6 +2988,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setView:(SessionView *)newView {
     _view = [newView retain];
     newView.delegate = self;
+    [newView updateTitleFrame];
     [[_view findViewController] setDelegate:self];
 }
 
@@ -5191,11 +5176,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view updateScrollViewFrame];
 }
 
-- (void)textViewSizeDidChange
-{
-    [_view updateScrollViewFrame];
-}
-
 - (BOOL)textViewHasBackgroundImage {
     return _backgroundImage != nil;
 }
@@ -7352,6 +7332,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![[MovePaneController sharedInstance] session]) {
         [[MovePaneController sharedInstance] beginDrag:self];
     }
+}
+
+- (CGFloat)sessionViewDesiredHeightOfDocumentView {
+    return _textview.desiredHeight + VMARGIN;
 }
 
 @end

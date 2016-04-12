@@ -71,4 +71,11 @@
     return YES;
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    NSRect rect = self.bounds;
+    rect.size.height -= VMARGIN;
+    child_.frame = rect;
+    [child_ recomputeBadgeLabel];
+}
+
 @end

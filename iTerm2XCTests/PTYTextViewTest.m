@@ -433,9 +433,6 @@
     return NO;
 }
 
-- (void)textViewSizeDidChange {
-}
-
 - (void)textViewSelectNextTab {
 }
 
