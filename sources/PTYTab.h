@@ -105,8 +105,6 @@
 - (int)indexOfSessionView:(SessionView*)sessionView;
 
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
-- (FakeWindow*)fakeWindow;
-
 
 - (BOOL)isForegroundTab;
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
