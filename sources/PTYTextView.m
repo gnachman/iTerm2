@@ -38,6 +38,7 @@
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -751,26 +752,16 @@ static const int kDragThreshold = 3;
     return MAX(visible.size.height - usablePixels + VMARGIN, VMARGIN);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
 }
 
-// We override this method since both refresh and window resize can conflict
-// resulting in this happening twice So we do not allow the size to be set
-// larger than what the data source can fill.
-//
-// TODO: This is a freaking horror show.
-// When the session view's frame is set, that triggers an autoresize of the scrollview, which
-// triggers an autoresize of this view, which manually resizes the TextViewWrapper (self.superview),
-// which triggers an autoresize of THIS VIEW AGAIN. WTF.
-// I'm not sure if that horrible flow happens in real life but it does happen in the unit tests.
-- (void)setFrameSize:(NSSize)frameSize {
+- (CGFloat)desiredHeight {
     // Force the height to always be correct
-    frameSize.height = ([_dataSource numberOfLines] * _lineHeight +
-                        [self excess] +
-                        _drawingHelper.numberOfIMELines * _lineHeight);
-    [super setFrameSize:frameSize];
+    return ([_dataSource numberOfLines] * _lineHeight +
+            [self excess] +
+            _drawingHelper.numberOfIMELines * _lineHeight);
+}
 
-    frameSize.height += VMARGIN;  // This causes a margin to be left at the top
-    [[self superview] setFrameSize:frameSize];
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
     [self recomputeBadgeLabel];
-    [_delegate textViewSizeDidChange];
 }
 
 // This exists to work around an apparent OS bug described in issue 2690. Under some circumstances
@@ -832,26 +823,6 @@ static const int kDragThreshold = 3;
 
 - (BOOL)_isAnythingBlinking {
     return [self isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
-}
-
-// Grow or shrink the height of the frame if the number of lines in the data
-// source + IME has changed.
-- (void)resizeFrameIfNeeded {
-    // Check if the frame size needs to grow or shrink.
-    const CGFloat height = [_dataSource numberOfLines] * _lineHeight;
-    NSRect frame = [self frame];
-    const CGFloat excess = [self excess];
-    const long long numberOfLinesAvailable =
-        height + excess + _drawingHelper.numberOfIMELines * _lineHeight;
-    if (numberOfLinesAvailable != (long long) frame.size.height) {
-        // Grow the frame
-        // Add VMARGIN to include top margin.
-        frame.size.height =
-            height + excess + _drawingHelper.numberOfIMELines * _lineHeight + VMARGIN;
-        [[self superview] setFrame:frame];
-        NSAccessibilityPostNotification(self,
-                                        NSAccessibilityRowCountChangedNotification);
-    }
 }
 
 - (void)handleScrollbackOverflow:(int)scrollbackOverflow userScroll:(BOOL)userScroll {
@@ -933,7 +904,7 @@ static const int kDragThreshold = 3;
     // Get the number of lines that have disappeared if scrollback buffer is full.
     int scrollbackOverflow = [_dataSource scrollbackOverflow];
     [_dataSource resetScrollbackOverflow];
-    [self resizeFrameIfNeeded];
+    [_delegate textViewResizeFrameIfNeeded];
 
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
@@ -1661,7 +1632,7 @@ static const int kDragThreshold = 3;
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     }
     if (changed) {
-        [[_delegate scrollview] setDocumentCursor:cursor_];
+        [self.enclosingScrollView setDocumentCursor:cursor_];
     }
 }
 
@@ -3489,7 +3460,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)pasteBase64Encoded:(id)sender {
-    [_delegate textViewPasteFileWithBase64Encoding];
+    NSData *data = [[NSPasteboard generalPasteboard] dataForFirstFile];
+    if (data) {
+        [_delegate pasteString:[data stringWithBase64EncodingWithLineBreak:@"\r"]];
+    }
 }
 
 - (BOOL)_broadcastToggleable
@@ -3592,7 +3566,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [_dataSource textViewRangeOfOutputForCommandMark:[item representedObject]].start.x != -1;
     }
     if ([item action] == @selector(pasteBase64Encoded:)) {
-        return [_delegate textViewCanPasteFile];
+        return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
     }
 
     SEL theSel = [item action];

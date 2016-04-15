@@ -37,6 +37,9 @@
 
 @interface PTYScrollView : NSScrollView
 
+// More specific type for the base class's method.
+- (PTYScroller *)verticalScroller;
+
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
 - (void)detectUserScroll;
 - (BOOL)isLegacyScroller;

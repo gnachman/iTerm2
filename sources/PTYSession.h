@@ -29,7 +29,6 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
-@class PTYScrollView;
 @class PTYTab;
 @class PTYTask;
 @class PTYTextView;
@@ -163,6 +162,13 @@ typedef enum {
 
 // If the tab is a tmux window, this gives its name.
 - (NSString *)tmuxWindowName;
+
+- (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender;
+- (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender;
+
+// Indicates if the splits are currently being dragged. Affects how resizing works for tmux tabs.
+- (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged;
+
 @end
 
 @class SessionView;
@@ -252,16 +258,11 @@ typedef enum {
 @property(nonatomic, retain) VT100Screen *screen;
 
 // The view in which this session's objects live.
-// NOTE! This is a weak reference.
-// TODO: SessionView should hold a weak reference to PTYSession, which should be an NSViewController.
-@property(nonatomic, assign) SessionView *view;
+@property(nonatomic, retain) SessionView *view;
 
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.
 @property(nonatomic, retain) PTYTextView *textview;
-
-// The scrollview. It is a subview of SessionView and contains -textview.
-@property(nonatomic, retain) PTYScrollView *scrollview;
 
 @property(nonatomic, assign) NSStringEncoding encoding;
 
@@ -633,13 +634,15 @@ typedef enum {
 // Change the current profile but keep the name the same.
 - (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName;
 
+// Make the scroll view's document view be this session's textViewWrapper.
+- (void)setScrollViewDocumentView;
+
+// Set a value in the session's dictionary without affecting the backing profile.
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;
-
-#pragma mark - Private for use by Scripting category
-
-- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 
 @end
 

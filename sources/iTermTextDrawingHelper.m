@@ -357,9 +357,9 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         // evenly in the available space.
         NSRect visibleRect = _visibleRect;
         excessRect.origin.x = 0;
-        excessRect.origin.y = visibleRect.origin.y + visibleRect.size.height - _excess;
+        excessRect.origin.y = visibleRect.origin.y + _scrollViewContentSize.height - _excess - VMARGIN;
         excessRect.size.width = _scrollViewContentSize.width;
-        excessRect.size.height = _excess;
+        excessRect.size.height = _excess + VMARGIN;
     }
 
     [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect

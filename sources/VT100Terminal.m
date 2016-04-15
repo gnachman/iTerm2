@@ -2099,7 +2099,9 @@ static const int kMaxScreenRows = 4096;
     } else if ([key isEqualToString:@"RequestAttention"]) {
         [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
-        [delegate_ terminalSetBackgroundImageFile:value];
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalSetBackgroundImageFile:value];
+        }
     } else if ([key isEqualToString:@"SetBadgeFormat"]) {
         [delegate_ terminalSetBadgeFormat:value];
     } else if ([key isEqualToString:@"SetUserVar"]) {
