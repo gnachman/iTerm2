@@ -142,6 +142,7 @@ static const int kDragThreshold = 3;
     double _charHeightWithoutSpacing;
 
     // NSTextInputClient support
+    NSEvent* _keydownEvent;
     BOOL _inputMethodIsInserting;
     NSDictionary *_markedTextAttributes;
 
@@ -1434,7 +1435,8 @@ static const int kDragThreshold = 3;
         // track the instance of PTYTextView that is currently handling a key event and rerouting
         // calls as needed in -insertText and -doCommandBySelector.
         gCurrentKeyEventTextView = [[self retain] autorelease];
-        [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        _keydownEvent = event;
+        _inputMethodIsInserting = !event.isARepeat && [self.inputContext handleEvent:event];
         gCurrentKeyEventTextView = nil;
 
         // If the IME didn't want it, pass it on to the delegate
@@ -4831,8 +4833,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // See comment in -keyDown:
         DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
         [gCurrentKeyEventTextView doCommandBySelector:aSelector];
+        [self.delegate keyDown:_keydownEvent];
         return;
     }
+    [self.delegate keyDown:_keydownEvent];
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 }
 
