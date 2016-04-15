@@ -637,13 +637,12 @@ typedef enum {
 // Make the scroll view's document view be this session's textViewWrapper.
 - (void)setScrollViewDocumentView;
 
+// Set a value in the session's dictionary without affecting the backing profile.
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;
-
-#pragma mark - Private for use by Scripting category
-
-- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 
 @end
 

@@ -3640,8 +3640,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
-{
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
     [self sanityCheck];
     if (!_isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
@@ -3649,7 +3648,11 @@ ITERM_WEAKLY_REFERENCEABLE
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     for (NSString *key in newValues) {
         NSObject *value = newValues[key];
-        temp[key] = value;
+        if ([value isKindOfClass:[NSNull class]]) {
+            [temp removeObjectForKey:key];
+        } else {
+            temp[key] = value;
+        }
     }
     if ([temp isEqualToDictionary:_profile]) {
         // This was a no-op, so there's no need to get a divorce. Happens most
@@ -6435,6 +6438,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename {
     filename = [filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    if (!filename.length) {
+        [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: [NSNull null] }];
+        return;
+    }
     if (!filename || ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
         return;
     }
