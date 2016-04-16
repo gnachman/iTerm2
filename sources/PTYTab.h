@@ -27,6 +27,9 @@
 
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
+// Parent controller. Always set. Equals one of realParent or fakeParent.
+@property(nonatomic, assign) __unsafe_unretained id<WindowControllerInterface> parentWindow;
+
 // uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
 @property(nonatomic, assign) int uniqueId;
 @property(nonatomic, readonly) BOOL isMaximized;
@@ -34,7 +37,9 @@
 @property(nonatomic, readonly) NSArray *orderedSessions;
 @property(nonatomic, assign) id<PTYTabDelegate> delegate;
 
-@property(nonatomic, retain) PTYSession *activeSession;
+// While activeSession is not retained, it should only ever refer to a session that belongs to
+// this tab, and is thus retained through the view-to-session map.
+@property(nonatomic, assign) __unsafe_unretained PTYSession *activeSession;
 @property(nonatomic, retain) NSTabViewItem *tabViewItem;
 
 // These values are observed by PSMTTabBarControl:
@@ -49,6 +54,12 @@
 @property(nonatomic, copy) NSString *tmuxWindowName;
 @property (readonly, getter=isTmuxTab) BOOL tmuxTab;
 
+// If non-nil, this session may not change size. This is useful when you want
+// to change a session's size. You can resize it, lock it, and then
+// adjustSubviews of the splitview (ordinarily done by a call to -[PTYTab
+// setSize:]).
+@property(nonatomic, assign) __unsafe_unretained PTYSession *lockedSession;
+
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.
@@ -61,14 +72,17 @@
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
                         inTerminal:(NSWindowController<iTermWindowController> *)term
                    hasFlexibleView:(BOOL)hasFlexible
-                           viewMap:(NSDictionary *)viewMap;
+                           viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
+                        sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap;
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
-                       viewMap:(NSDictionary *)viewMap;
+                       viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
+                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap;
 
-+ (NSDictionary *)viewMapWithArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions;
++ (NSDictionary<NSString *, PTYSession *> *)sessionMapWithArrangement:(NSDictionary *)arrangement
+                                                             sessions:(NSArray *)sessions;
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
@@ -82,18 +96,15 @@
 
 // init/dealloc
 - (instancetype)initWithSession:(PTYSession*)session;
-- (instancetype)initWithRoot:(NSSplitView*)root;
+- (instancetype)initWithRoot:(NSSplitView *)root
+                    sessions:(NSMapTable<SessionView *, PTYSession *> *)sessions;
 
 - (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
 - (int)indexOfSessionView:(SessionView*)sessionView;
 
-- (void)setLockedSession:(PTYSession*)lockedSession;
-- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent;
 - (void)setFakeParentWindow:(FakeWindow*)theParent;
-- (FakeWindow*)fakeWindow;
-
 
 - (BOOL)isForegroundTab;
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
@@ -111,11 +122,9 @@
 - (BOOL)isProcessing;
 - (BOOL)realIsProcessing;
 - (void)setIsProcessing:(BOOL)aFlag;
-- (BOOL)isActiveSession;
 - (void)terminateAllSessions;
 - (NSArray *)windowPanes;
 - (NSArray*)sessionViews;
-- (BOOL)allSessionsExited;
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
@@ -131,7 +140,7 @@
 - (PTYSession*)sessionBelow:(PTYSession*)session;
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize;
 - (NSImage*)image:(BOOL)withSpaceForFrame;
-- (bool)blur;
+- (BOOL)blur;
 - (double)blurRadius;
 
 - (NSSize)_minSessionSize:(SessionView*)sessionView;
@@ -141,11 +150,10 @@
 //   only one child: make its orientation vertical and add a new subview.
 //   more than one child and a vertical orientation: add a new subview and return it.
 //   more than one child and a horizontal orientation: add a new split subview with vertical orientation and add a sessionview subview to it and return that sessionview.
-- (SessionView*)splitVertically:(BOOL)isVertical
-                         before:(BOOL)before
-                  targetSession:(PTYSession*)targetSession;
-- (NSSize)_recursiveMinSize:(NSSplitView*)node;
-- (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
+- (void)splitVertically:(BOOL)isVertical
+             newSession:(PTYSession *)newSession
+                 before:(BOOL)before
+          targetSession:(PTYSession*)targetSession;
 
 // A viewMap maps a session's unique ID to a SessionView. Views in the
 // arrangement with matching session unique IDs will be assigned those

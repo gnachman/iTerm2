@@ -9,6 +9,7 @@
 #import "MarkTrigger.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
+#import "SessionView.h"
 
 // Whether to stop scrolling.
 typedef enum {
@@ -76,7 +77,7 @@ typedef enum {
                                     stop:(BOOL *)stop {
     [aSession.screen terminalSaveScrollPositionWithArgument:@"saveCursorLine"];
     if ([self shouldStopScrolling]) {
-        [(PTYScroller *)[aSession.scrollview verticalScroller] setUserScroll:YES];
+        [[aSession.view.scrollview verticalScroller] setUserScroll:YES];
     }
     return YES;
 }

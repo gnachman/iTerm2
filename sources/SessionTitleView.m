@@ -232,9 +232,13 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)setTitle:(NSString *)title {
+    if ([title isEqualToString:title_]) {
+        return;
+    }
     [title_ autorelease];
     title_ = [title copy];
     [self updateTitle];
+    [self setNeedsDisplay:YES];
 }
 
 - (NSString *)titleString {
