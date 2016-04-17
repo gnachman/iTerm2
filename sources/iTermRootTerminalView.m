@@ -17,7 +17,6 @@
 #import "PTYTabView.h"
 
 const CGFloat kHorizontalTabBarHeight = 22;
-const CGFloat kDefaultLeftTabsWidth = 150;
 const CGFloat kDivisionViewHeight = 1;
 
 static const CGFloat kDefaultToolbeltWidth = 250;
@@ -48,7 +47,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _delegate = delegate;
 
         self.autoresizesSubviews = YES;
-        _leftTabBarWidth = kDefaultLeftTabsWidth;
+        _leftTabBarWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
@@ -463,6 +462,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     CGFloat originalValue = _leftTabBarWidth;
     _leftTabBarWidth += delta;
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
+    [[NSUserDefaults standardUserDefaults] setDouble:_leftTabBarWidth
+                                              forKey:kPreferenceKeyLeftTabBarWidth];
     return _leftTabBarWidth - originalValue;
 }
 
