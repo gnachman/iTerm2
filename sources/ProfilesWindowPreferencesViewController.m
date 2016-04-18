@@ -120,9 +120,10 @@
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
 
-   [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
-                   key:KEY_DEFAULT_BG_ALPHA_ONLY
-                  type:kPreferenceInfoTypeCheckbox];
+   info = [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
+                          key:KEY_DEFAULT_BG_ALPHA_ONLY
+                         type:kPreferenceInfoTypeCheckbox];
+   info.observer = ^() { _transparencyAffectsOnlyDefaultBackgroundColor.enabled = (_transparency.doubleValue > 0); };
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT
