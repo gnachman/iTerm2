@@ -1655,9 +1655,9 @@ static const int kDragThreshold = 3;
 }
 
 // Update range of underlined chars indicating cmd-clicakble url.
-- (void)updateUnderlinedURLs:(NSEvent *)event
-{
-    if (([event modifierFlags] & NSCommandKeyMask) && self.window.isKeyWindow) {
+- (void)updateUnderlinedURLs:(NSEvent *)event {
+    if (([event modifierFlags] & NSCommandKeyMask) && (self.window.isKeyWindow ||
+                                                       [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory])) {
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
                                                                             screenPoint.y,
@@ -1939,7 +1939,7 @@ static const int kDragThreshold = 3;
         // Clicking in an inactive pane with focus follows mouse makes it active.
         // Becuase of how FFM works, this would only happen if another app were key.
         // See issue 3163.
-        DLog(@"Click on inactive pain with focus follows mouse");
+        DLog(@"Click on inactive pane with focus follows mouse");
         _mouseDownWasFirstMouse = YES;
         [[self window] makeFirstResponder:self];
         return NO;
@@ -1997,8 +1997,10 @@ static const int kDragThreshold = 3;
             }
         } else if ([NSApp keyWindow] != [self window]) {
             // A cmd-click in an active session in a non-key window acts like a click without cmd.
+            // This can be changed in advanced settings so cmd-click will still invoke semantic
+            // history even for non-key windows.
             DLog(@"Cmd-click in active session in non-key window");
-            cmdPressed = NO;
+            cmdPressed = [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory];
         }
     }
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
@@ -2153,7 +2155,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     const BOOL cmdActuallyPressed = (([event modifierFlags] & NSCommandKeyMask) != 0);
-    const BOOL cmdPressed = cmdActuallyPressed && !_mouseDownWasFirstMouse;
+    // Make an exception to the first-mouse rule when cmd-click is set to always invoke
+    // semantic history.
+    const BOOL cmdPressed = cmdActuallyPressed && (!_mouseDownWasFirstMouse ||
+                                                   [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
     if (mouseDown == NO) {
         DLog(@"Returning from mouseUp because the mouse was never down.");
         return;
