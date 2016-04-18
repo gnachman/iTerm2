@@ -177,7 +177,7 @@
 @property(nonatomic, assign) float blend;
 
 // Should transparency not affect background colors other than the default?
-@property(nonatomic, assign) BOOL defaultBGAlphaOnly;
+@property(nonatomic, assign) BOOL transparencyAffectsOnlyDefaultBackgroundColor;
 
 // Should the cursor guide be shown?
 @property(nonatomic, assign) BOOL highlightCursorLine;

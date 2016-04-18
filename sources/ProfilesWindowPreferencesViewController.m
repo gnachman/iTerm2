@@ -41,7 +41,7 @@
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
     IBOutlet NSButton *_preventTab;
-    IBOutlet NSButton *_defaultBGAlphaOnly;
+    IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
 }
 
@@ -120,7 +120,7 @@
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
 
-   [self defineControl:_defaultBGAlphaOnly
+   [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
                    key:KEY_DEFAULT_BG_ALPHA_ONLY
                   type:kPreferenceInfoTypeCheckbox];
 

@@ -315,7 +315,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         // When set in preferences, applies alpha only to the defaultBackground
         // colour, useful for keeping Powerline segments opacity(background)
         // consistent with their seperator glyphs opacity(foreground).
-        if (_defaultBGAlphaOnly && !defaultBackground) {
+        if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
         }
         if (_reverseVideo && defaultBackground) {

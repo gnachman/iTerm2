@@ -1486,7 +1486,7 @@ DQ
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
-                <outlet property="_defaultBGAlphaOnly" destination="fwj-4Y-nja" id="caf-eb-abe"/>
+                <outlet property="_transparencyAffectsOnlyDefaultBackgroundColor" destination="fwj-4Y-nja" id="caf-eb-abe"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_openToolbelt" destination="hmf-ta-TMb" id="nOK-vG-n8c"/>
                 <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>

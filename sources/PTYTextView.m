@@ -5179,8 +5179,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)setDefaultBGAlphaOnly:(BOOL)value {
-    _drawingHelper.defaultBGAlphaOnly = value;
+- (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
+    _drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor = value;
     [self setNeedsDisplay:YES];
 }
 
