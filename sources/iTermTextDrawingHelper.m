@@ -313,7 +313,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         const BOOL defaultBackground = (run->bgColor == ALTSEM_DEFAULT &&
                                         run->bgColorMode == ColorModeAlternate);
         // When set in preferences, applies alpha only to the defaultBackground
-        // colour, useful for keeping Powerline segments opacity(background)
+        // color, useful for keeping Powerline segments opacity(background)
         // consistent with their seperator glyphs opacity(foreground).
         if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
