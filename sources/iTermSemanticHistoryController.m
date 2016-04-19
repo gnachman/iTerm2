@@ -134,7 +134,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                             [bundle objectForInfoDictionaryKey:(id)kCFBundleExecutableKey]];
     if (bundle && executable && path) {
         DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
-        [self launchTaskWithPath:executable arguments:@[ executable, path ] wait:NO];
+        [self launchTaskWithPath:executable arguments:@[ path ] wait:NO];
     }
 }
 
