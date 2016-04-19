@@ -1140,6 +1140,24 @@ static BOOL hasBecomeActive = NO;
     return -1;
 }
 
+- (void)setSecureInput:(BOOL)secure {
+    DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+    if (secure) {
+        OSErr err = EnableSecureEventInput();
+        DLog(@"EnableSecureEventInput err=%d", (int)err);
+        if (err) {
+            NSLog(@"EnableSecureEventInput failed with error %d", (int)err);
+        }
+    } else {
+        OSErr err = DisableSecureEventInput();
+        DLog(@"DisableSecureEventInput err=%d", (int)err);
+        if (err) {
+            NSLog(@"DisableSecureEventInput failed with error %d", (int)err);
+        }
+    }
+    DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+}
+
 - (BOOL)warnBeforeMultiLinePaste {
     if ([iTermWarning warningHandler]) {
         // In a test.
@@ -1165,17 +1183,10 @@ static BOOL hasBecomeActive = NO;
 {
     // Set secureInputDesired_ to the opposite of the current state.
     secureInputDesired_ = [secureInput state] == NSOffState;
+    DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
 
     // Try to set the system's state of secure input to the desired state.
-    if (secureInputDesired_) {
-        if (EnableSecureEventInput() != noErr) {
-            NSLog(@"Failed to enable secure input.");
-        }
-    } else {
-        if (DisableSecureEventInput() != noErr) {
-            NSLog(@"Failed to disable secure input.");
-        }
-    }
+    [self setSecureInput:secureInputDesired_];
 
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
@@ -1188,9 +1199,8 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
     if (secureInputDesired_) {
-        if (EnableSecureEventInput() != noErr) {
-            NSLog(@"Failed to enable secure input.");
-        }
+        DLog(@"Application becoming active. Enable secure input.");
+        [self setSecureInput:YES];
     }
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
@@ -1222,12 +1232,10 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)applicationDidResignActive:(NSNotification *)aNotification
-{
+- (void)applicationDidResignActive:(NSNotification *)aNotification {
     if (secureInputDesired_) {
-        if (DisableSecureEventInput() != noErr) {
-            NSLog(@"Failed to disable secure input.");
-        }
+        DLog(@"Application resigning active. Disabling secure input.");
+        [self setSecureInput:NO];
     }
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
