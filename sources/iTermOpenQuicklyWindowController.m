@@ -33,6 +33,8 @@
     IBOutlet NSTableView *_table;
 
     IBOutlet NSScrollView *_scrollView;
+
+    IBOutlet SolidColorView *_divider;
 }
 
 + (instancetype)sharedInstance {
@@ -76,8 +78,10 @@
     contentView.wantsLayer = YES;
     contentView.layer.cornerRadius = 6;
     contentView.layer.masksToBounds = YES;
-    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] CGColor];
-    contentView.layer.borderWidth = 1;
+    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1] CGColor];
+    contentView.layer.borderWidth = 0.5;
+
+    _divider.color = [NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1];
 }
 
 - (void)presentWindow {
@@ -102,6 +106,7 @@
     // autoresizing to do this automatically.
     NSRect frame = [self frame];
     NSRect contentViewFrame = [self.window frameRectForContentRect:frame];
+    _divider.hidden = (self.model.items.count == 0);
     _scrollView.frame = NSMakeRect(_scrollView.frame.origin.x,
                                    _scrollView.frame.origin.y,
                                    contentViewFrame.size.width,
@@ -130,7 +135,7 @@
     if (!screen) {
         screen = [NSScreen mainScreen];
     }
-    static const CGFloat kMarginAboveField = 6;
+    static const CGFloat kMarginAboveField = 10;
     static const CGFloat kMarginBelowField = 6;
     static const CGFloat kMarginAboveWindow = 170;
     CGFloat maxHeight = screen.frame.size.height - kMarginAboveWindow * 2;
@@ -139,8 +144,15 @@
                                          (maxHeight - nonTableSpace) / (_table.rowHeight + _table.intercellSpacing.height));
     NSRect frame = self.window.frame;
     NSSize contentSize = frame.size;
-    contentSize.height = nonTableSpace + (_table.rowHeight + _table.intercellSpacing.height) * numberOfVisibleRowsDesired;
 
+    contentSize.height = nonTableSpace;
+    if (numberOfVisibleRowsDesired > 0) {
+        // Use the bottom of the last visible cell's frame for the height of the table view portion
+        // of the window. This is the most reliable way of getting its max-Y position.
+        NSRect frameOfLastVisibleCell = [_table frameOfCellAtColumn:0
+                                                                row:numberOfVisibleRowsDesired - 1];
+        contentSize.height += NSMaxY(frameOfLastVisibleCell);
+    }
     frame.size.height = contentSize.height;
 
     frame.origin.x = NSMinX(screen.frame) + floor((screen.frame.size.width - frame.size.width) / 2);

@@ -82,6 +82,8 @@
 		1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3214BABE8700BD5035 /* VT100Screen.h */; };
 		1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
+		1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D44CCD91CC6A1DE00BE5630 /* Loupe.png */; };
+		1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D44CCDA1CC6A1DE00BE5630 /* Loupe@2x.png */; };
 		1D468BB91B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */; };
 		1D468BBA1B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */; };
 		1D468BC01B056CD600226083 /* iTermProfileSearchToken.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BBE1B056CD600226083 /* iTermProfileSearchToken.h */; };
@@ -1859,6 +1861,8 @@
 		1D407A3314BABE8700BD5035 /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Terminal.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D44CCD91CC6A1DE00BE5630 /* Loupe.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Loupe.png; path = images/Loupe.png; sourceTree = "<group>"; };
+		1D44CCDA1CC6A1DE00BE5630 /* Loupe@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Loupe@2x.png"; path = "images/Loupe@2x.png"; sourceTree = "<group>"; };
 		1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyboardNavigatableTableView.h; sourceTree = "<group>"; };
 		1D468BB81B0543E300226083 /* iTermKeyboardNavigatableTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyboardNavigatableTableView.m; sourceTree = "<group>"; };
 		1D468BBE1B056CD600226083 /* iTermProfileSearchToken.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfileSearchToken.h; sourceTree = "<group>"; };
@@ -3432,6 +3436,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				1D44CCD91CC6A1DE00BE5630 /* Loupe.png */,
+				1D44CCDA1CC6A1DE00BE5630 /* Loupe@2x.png */,
 				A66DB8301C8E4C2E00233E88 /* ChangeProfile.png */,
 				A66DB8311C8E4C2E00233E88 /* ChangeProfile@2x.png */,
 				A66DB80C1C8E182B00233E88 /* Info.png */,
@@ -5600,6 +5606,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
+				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
 				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
@@ -5693,6 +5700,7 @@
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
+				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
 				5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */,
 				A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
