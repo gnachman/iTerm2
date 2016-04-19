@@ -131,5 +131,6 @@
 + (BOOL)performDictionaryLookupOnQuickLook;
 + (NSString *)pathsToIgnore;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
++ (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 
 @end
