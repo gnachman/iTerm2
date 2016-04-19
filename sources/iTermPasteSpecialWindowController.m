@@ -289,6 +289,10 @@
     _pasteSpecialViewController.shouldUseBracketedPasteMode = (_bracketingEnabled && shouldBracket);
     _pasteSpecialViewController.enableBase64 = !_base64only;
     _pasteSpecialViewController.shouldBase64Encode = _base64only;
+    _pasteSpecialViewController.enableUseRegexSubstitution = !_base64only;  // Binary data can't be regexed
+    _pasteSpecialViewController.shouldUseRegexSubstitution = !_base64only && [iTermPreferences boolForKey:kPreferencesKeyPasteSpecialUseRegexSubstitution];
+    _pasteSpecialViewController.regexString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialRegex];
+    _pasteSpecialViewController.substitutionString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialSubstitution];
     _pasteSpecialViewController.enableWaitForPrompt = _canWaitForPrompt;
     _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt;
 
@@ -412,6 +416,14 @@
         [iTermPreferences setBool:_pasteSpecialViewController.shouldConvertUnicodePunctuation
                            forKey:kPreferenceKeyPasteSpecialConvertUnicodePunctuation];
     }
+    if (_pasteSpecialViewController.isUseRegexSubstitutionEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldUseRegexSubstitution
+                           forKey:kPreferencesKeyPasteSpecialUseRegexSubstitution];
+        [iTermPreferences setString:_pasteSpecialViewController.regexString
+                             forKey:kPreferencesKeyPasteSpecialRegex];
+        [iTermPreferences setString:_pasteSpecialViewController.substitutionString
+                             forKey:kPreferencesKeyPasteSpecialSubstitution];
+    }
 }
 
 - (PasteEvent *)pasteEvent {
@@ -434,6 +446,7 @@
         // Other operations are idempotent.
         flags &= ~kPasteFlagsEscapeSpecialCharacters;
         flags &= ~kPasteFlagsBase64Encode;
+        flags &= ~kPasteFlagsUseRegexSubstitution;
     }
     return [PasteEvent pasteEventWithString:string
                                       flags:flags
@@ -442,7 +455,9 @@
                                defaultDelay:self.delayBetweenChunks
                                    delayKey:nil
                                tabTransform:tabTransform
-                               spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab];
+                               spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab
+                                      regex:_pasteSpecialViewController.regexString
+                               substitution:_pasteSpecialViewController.substitutionString];
 }
 
 #pragma mark - Actions

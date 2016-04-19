@@ -135,6 +135,9 @@ extern NSString *const kPreferenceKeyPasteSpecialConvertUnicodePunctuation;
 extern NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines;
 extern NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes;
 extern NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode;
+extern NSString *const kPreferencesKeyPasteSpecialUseRegexSubstitution;
+extern NSString *const kPreferencesKeyPasteSpecialRegex;
+extern NSString *const kPreferencesKeyPasteSpecialSubstitution;
 extern NSString *const kPreferenceKeyLeftTabBarWidth;
 
 extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;

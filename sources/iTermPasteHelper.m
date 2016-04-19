@@ -156,6 +156,18 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
             break;
     }
 
+    if (pasteEvent.flags & kPasteFlagsUseRegexSubstitution && pasteEvent.regex.length > 0) {
+        NSString *replacement = nil;
+        @try {
+            replacement = [theString stringByReplacingOccurrencesOfRegex:pasteEvent.regex ?: @""
+                                                              withString:pasteEvent.substitution ?: @""] ?: @"";
+            if (replacement) {
+                theString = replacement;
+            }
+        } @catch (NSException *exception) {
+            NSLog(@"Exception with s/%@/%@/g: %@", pasteEvent.regex ?: @"", pasteEvent.substitution ?: @"", exception);
+        }
+    }
     if (pasteEvent.flags & kPasteFlagsBase64Encode) {
         NSData *temp = [theString dataUsingEncoding:encoding];
         theString = [temp stringWithBase64EncodingWithLineBreak:@"\r"];
@@ -205,7 +217,9 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                             defaultDelay:defaultDelay
                                                 delayKey:delayKey
                                             tabTransform:tabTransform
-                                            spacesPerTab:spacesPerTab];
+                                            spacesPerTab:spacesPerTab
+                                                   regex:nil
+                                            substitution:nil];
     [self tryToPasteEvent:event];
 }
 

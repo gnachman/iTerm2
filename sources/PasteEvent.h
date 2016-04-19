@@ -41,6 +41,8 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 
     // New additions
     kPasteFlagsRemovingNewlines = (1 << 9),
+
+    kPasteFlagsUseRegexSubstitution = (1 << 10),
 };
 
 @interface PasteEvent : NSEvent
@@ -53,6 +55,8 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 @property(nonatomic, copy) NSString *delayKey;
 @property(nonatomic, assign) iTermTabTransformTags tabTransform;
 @property(nonatomic, assign) int spacesPerTab;
+@property(nonatomic, copy) NSString *regex;
+@property(nonatomic, copy) NSString *substitution;
 
 + (instancetype)pasteEventWithString:(NSString *)string
                                flags:(iTermPasteFlags)flags
@@ -61,6 +65,8 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
                         defaultDelay:(NSTimeInterval)defaultDelay
                             delayKey:(NSString *)delayKey
                         tabTransform:(iTermTabTransformTags)tabTransform
-                        spacesPerTab:(int)spacePerTab;
+                        spacesPerTab:(int)spacePerTab
+                               regex:(NSString *)regex
+                        substitution:(NSString *)substitution;
 
 @end
