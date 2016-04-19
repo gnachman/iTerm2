@@ -360,7 +360,11 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSMutableParagraphStyle *truncatingTailParagraphStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
     [truncatingTailParagraphStyle setLineBreakMode:[cell truncationStyle]];
-    [truncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        [truncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
+    } else {
+        [truncatingTailParagraphStyle setAlignment:NSLeftTextAlignment];
+    }
 
     [attrStr addAttribute:NSParagraphStyleAttributeName
                     value:truncatingTailParagraphStyle
