@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasteSpecialViewController.h"
+#import "NSTextField+iTerm.h"
 #import "PasteEvent.h"
 
 typedef struct {
@@ -68,6 +69,7 @@ static NSString *const kSubstitution = @"Substitution";
     IBOutlet NSTextField *_chunkSizeLabel;
     IBOutlet NSTextField *_delayBetweenChunksLabel;
     IBOutlet NSStepper *_stepper;
+    IBOutlet NSTextField *_icuRegexHelpLabel;  // Warning: this gets removed from superview in awakeFromNib.
 }
 
 - (instancetype)init {
@@ -84,6 +86,9 @@ static NSString *const kSubstitution = @"Substitution";
 
     self.delayBetweenChunks = kDelayRange.visualCenter;
     self.chunkSize = kChunkSizeRange.visualCenter;
+
+    [_icuRegexHelpLabel replaceWithHyperlinkTo:[NSURL URLWithString:@"https://iterm2.com/regex"]];
+    _icuRegexHelpLabel = nil;
 }
 
 // TODO: When 10.7 support is dropped use NSByteCountFormatter
