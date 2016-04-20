@@ -783,6 +783,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
             return _isRetina;
     }
 }
+
 - (void)drawRunsAt:(NSPoint)initialPoint
                run:(CRun *)run
            storage:(CRunStorage *)storage

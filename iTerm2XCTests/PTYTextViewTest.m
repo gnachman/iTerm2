@@ -16,9 +16,11 @@
 #import <OCHamcrest/OCHamcrest.h>
 #import <OCMockito/OCMockito.h>
 
+#define NUM_DIFF_BUCKETS 10
 typedef struct {
     CGFloat variance;
     CGFloat maxDiff;
+    int buckets[NUM_DIFF_BUCKETS];
 } iTermDiffStats;
 
 @interface PTYTextViewTest : XCTestCase
@@ -617,6 +619,9 @@ typedef struct {
     CGFloat sumOfSquares = 0;
     CGFloat maxDiff = 0;
     CGFloat sum = 0;
+    for (int j = 0; j < NUM_DIFF_BUCKETS; j++) {
+        stats->buckets[j] = 0;
+    }
     for (int i = 0; i < image1.length; i+= 4) {
         CGFloat brightness1 = PerceivedBrightness(bytes1[i + 0] / 255.0, bytes1[i + 1] / 255.0, bytes1[i + 2] / 255.0);
         CGFloat brightness2 = PerceivedBrightness(bytes2[i + 0] / 255.0, bytes2[i + 1] / 255.0, bytes2[i + 2] / 255.0);
@@ -624,6 +629,10 @@ typedef struct {
         sumOfSquares += diff*diff;
         sum += diff;
         maxDiff = MAX(maxDiff, diff);
+        if (diff > 0) {
+            int bucket = MIN((NUM_DIFF_BUCKETS - 1), MAX(0, diff * NUM_DIFF_BUCKETS));
+            stats->buckets[bucket]++;
+        }
     }
     CGFloat N = image1.length / 4;
     stats->variance = sumOfSquares/N - (sum/N)*(sum/N);
@@ -631,6 +640,13 @@ typedef struct {
     return maxDiff < threshold;
 }
 
+- (NSString *)decilesInStats:(iTermDiffStats)stats {
+    NSMutableArray *array = [NSMutableArray array];
+    for (int i = 0; i < NUM_DIFF_BUCKETS; i++) {
+        [array addObject:[@(stats.buckets[i]) description]];
+    }
+    return [array componentsJoinedByString:@", "];
+}
 
 - (void)doGoldenTestForInput:(NSString *)input
                         name:(NSString *)name
@@ -638,7 +654,15 @@ typedef struct {
             profileOverrides:(NSDictionary *)profileOverrides
                 createGolden:(BOOL)createGolden
                         size:(VT100GridSize)size {
-    NSImage *actual = [self imageForInput:input hook:hook profileOverrides:profileOverrides size:size];
+    NSImage *actual = [self imageForInput:input
+                                     hook:^(PTYTextView *textView) {
+                                         textView.thinStrokes = iTermThinStrokesSettingNever;
+                                         if (hook) {
+                                             hook(textView);
+                                         }
+                                     }
+                         profileOverrides:profileOverrides
+                                     size:size];
     NSString *goldenName = [self pathForGoldenWithName:name];
     if (createGolden) {
         NSData *pngData = [actual dataForFileOfType:NSPNGFileType];
@@ -657,9 +681,8 @@ typedef struct {
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
             NSLog(@"Test “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
-            NSLog(@"Variance: %f. Max diff: %f", stats.variance, stats.maxDiff);
         }
-        XCTAssert(ok);
+        XCTAssert(ok, @"variance=%f maxdiff=%f deciles=%@", stats.variance, stats.maxDiff, [self decilesInStats:stats]);
     }
 }
 
