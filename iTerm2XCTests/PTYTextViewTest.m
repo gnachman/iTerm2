@@ -9,6 +9,8 @@
 #import "PTYTextView.h"
 #import "SessionView.h"
 #import "VT100LineInfo.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import <objc/runtime.h>
@@ -603,11 +605,15 @@ typedef struct {
 }
 
 - (NSString *)shortNameForGolden:(NSString *)name {
-    NSString *nonretina = @"";
-    if ([[NSScreen mainScreen] backingScaleFactor] == 1.0) {
-        nonretina = @"nonretina-";
+    NSString *domain = @"";
+    if ([[[iTermApplication sharedApplication] delegate] isRunningOnTravis]) {
+        // Travis runs in a VM that renders text a little differently than a retina device running
+        // the app in low-res mode.
+        domain = @"travis-";
+    } else if ([[NSScreen mainScreen] backingScaleFactor] == 1.0) {
+        domain = @"nonretina-";
     }
-    return [NSString stringWithFormat:@"PTYTextViewTest-golden-%@%@.png", nonretina, name];
+    return [NSString stringWithFormat:@"PTYTextViewTest-golden-%@%@.png", domain, name];
 }
 
 - (NSString *)pathForTestResourceNamed:(NSString *)name {
@@ -615,15 +621,15 @@ typedef struct {
     return [resourcePath stringByAppendingPathComponent:name];
 }
 
-// Minor differences in anti-aliasing cause false failures with golden images, so we'll ignore tiny
-// differences in brightness (less than 5%).
+// Minor differences in anti-aliasing on different machines (even running the same version of the
+// OS) cause false failures with golden images, so we'll ignore tiny differences in brightness.
 - (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 stats:(iTermDiffStats *)stats {
     if (image1.length != image2.length) {
         return NO;
     }
     unsigned char *bytes1 = (unsigned char *)image1.bytes;
     unsigned char *bytes2 = (unsigned char *)image2.bytes;
-    const CGFloat threshold = 0.05;
+    const CGFloat threshold = 0.1;
     CGFloat sumOfSquares = 0;
     CGFloat maxDiff = 0;
     CGFloat sum = 0;
