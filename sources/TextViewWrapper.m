@@ -74,6 +74,7 @@
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     NSRect rect = self.bounds;
     rect.size.height -= VMARGIN;
+    rect.origin.y = VMARGIN;
     if (!NSEqualRects(child_.frame, rect)) {
         child_.frame = rect;
     }

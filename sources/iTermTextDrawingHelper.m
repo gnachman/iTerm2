@@ -357,13 +357,24 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         // evenly in the available space.
         NSRect visibleRect = _visibleRect;
         excessRect.origin.x = 0;
-        excessRect.origin.y = visibleRect.origin.y + _scrollViewContentSize.height - _excess - VMARGIN;
+        excessRect.origin.y = NSMaxY(visibleRect) - _excess;
         excessRect.size.width = _scrollViewContentSize.width;
-        excessRect.size.height = _excess + VMARGIN;
+        excessRect.size.height = _excess;
     }
 
     [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect
                                    blendDefaultBackground:YES];
+    
+    if (_debug) {
+        [[NSColor blueColor] set];
+        NSBezierPath *path = [NSBezierPath bezierPath];
+        [path moveToPoint:excessRect.origin];
+        [path lineToPoint:NSMakePoint(NSMaxX(excessRect), NSMaxY(excessRect))];
+        [path stroke];
+        
+        NSFrameRect(excessRect);
+    }
+    
     if (_showStripes) {
         [self drawStripesInRect:excessRect];
     }
