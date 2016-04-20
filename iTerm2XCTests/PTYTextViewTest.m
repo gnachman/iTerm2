@@ -599,7 +599,11 @@ typedef struct {
 }
 
 - (NSString *)pathForGoldenWithName:(NSString *)name {
-    return [self pathForTestResourceNamed:[NSString stringWithFormat:@"PTYTextViewTest-golden-%@.png", name]];
+    NSString *nonretina = @"";
+    if ([[NSScreen mainScreen] backingScaleFactor] == 1.0) {
+        nonretina = @"nonretina-";
+    }
+    return [self pathForTestResourceNamed:[NSString stringWithFormat:@"PTYTextViewTest-golden-%@%@.png", nonretina, name]];
 }
 
 - (NSString *)pathForTestResourceNamed:(NSString *)name {
