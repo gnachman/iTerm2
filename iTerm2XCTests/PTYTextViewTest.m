@@ -16,6 +16,11 @@
 #import <OCHamcrest/OCHamcrest.h>
 #import <OCMockito/OCMockito.h>
 
+typedef struct {
+    CGFloat variance;
+    CGFloat maxDiff;
+} iTermDiffStats;
+
 @interface PTYTextViewTest : XCTestCase
 @end
 
@@ -602,21 +607,28 @@
 
 // Minor differences in anti-aliasing cause false failures with golden images, so we'll ignore tiny
 // differences in brightness (less than 5%).
-- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 {
+- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 stats:(iTermDiffStats *)stats {
     if (image1.length != image2.length) {
         return NO;
     }
     unsigned char *bytes1 = (unsigned char *)image1.bytes;
     unsigned char *bytes2 = (unsigned char *)image2.bytes;
-    CGFloat threshold = 0.05;
+    const CGFloat threshold = 0.05;
+    CGFloat sumOfSquares = 0;
+    CGFloat maxDiff = 0;
+    CGFloat sum = 0;
     for (int i = 0; i < image1.length; i+= 4) {
-        CGFloat brightness1 = PerceivedBrightness(bytes1[0] / 255.0, bytes1[1] / 255.0, bytes1[2] / 255.0);
-        CGFloat brightness2 = PerceivedBrightness(bytes2[0] / 255.0, bytes2[1] / 255.0, bytes2[2] / 255.0);
-        if (fabs(brightness1 - brightness2) > threshold) {
-            return NO;
-        }
+        CGFloat brightness1 = PerceivedBrightness(bytes1[i + 0] / 255.0, bytes1[i + 1] / 255.0, bytes1[i + 2] / 255.0);
+        CGFloat brightness2 = PerceivedBrightness(bytes2[i + 0] / 255.0, bytes2[i + 1] / 255.0, bytes2[i + 2] / 255.0);
+        CGFloat diff = fabs(brightness1 - brightness2);
+        sumOfSquares += diff*diff;
+        sum += diff;
+        maxDiff = MAX(maxDiff, diff);
     }
-    return YES;
+    CGFloat N = image1.length / 4;
+    stats->variance = sumOfSquares/N - (sum/N)*(sum/N);
+    stats->maxDiff = maxDiff;
+    return maxDiff < threshold;
 }
 
 
@@ -636,12 +648,16 @@
         NSImage *golden = [[NSImage alloc] initWithContentsOfFile:goldenName];
         NSData *goldenData = [golden rawPixelsInRGBColorSpace];
         NSData *actualData = [actual rawPixelsInRGBColorSpace];
-        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData];
-        if (!ok) {
+        iTermDiffStats stats;
+        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData stats:&stats];
+        if (ok) {
+            NSLog(@"Tests “%@” ok with variance: %f. Max diff: %f", name, stats.variance, stats.maxDiff);
+        } else {
             NSString *failPath = @"/tmp/failed-test.png";
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
             NSLog(@"Test “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
+            NSLog(@"Variance: %f. Max diff: %f", stats.variance, stats.maxDiff);
         }
         XCTAssert(ok);
     }
