@@ -599,11 +599,15 @@ typedef struct {
 }
 
 - (NSString *)pathForGoldenWithName:(NSString *)name {
+    return [self pathForTestResourceNamed:[self shortNameForGolden:name]];
+}
+
+- (NSString *)shortNameForGolden:(NSString *)name {
     NSString *nonretina = @"";
     if ([[NSScreen mainScreen] backingScaleFactor] == 1.0) {
         nonretina = @"nonretina-";
     }
-    return [self pathForTestResourceNamed:[NSString stringWithFormat:@"PTYTextViewTest-golden-%@%@.png", nonretina, name]];
+    return [NSString stringWithFormat:@"PTYTextViewTest-golden-%@%@.png", nonretina, name];
 }
 
 - (NSString *)pathForTestResourceNamed:(NSString *)name {
@@ -674,9 +678,15 @@ typedef struct {
         NSLog(@"Wrote to golden file at %@", goldenName);
     } else {
         NSImage *golden = [[NSImage alloc] initWithContentsOfFile:goldenName];
+        if (!golden) {
+            golden = [NSImage imageNamed:[self shortNameForGolden:name]];
+        }
+        XCTAssertNotNil(golden, @"Failed to load golden image with name %@, short name %@", goldenName, [self shortNameForGolden:name]);
         NSData *goldenData = [golden rawPixelsInRGBColorSpace];
+        XCTAssertNotNil(goldenData, @"Failed to extract pixels from golden image");
         NSData *actualData = [actual rawPixelsInRGBColorSpace];
-        iTermDiffStats stats;
+        XCTAssertEqual(goldenData.length, actualData.length, @"Different number of pixels between %@ and %@", golden, actual);
+        iTermDiffStats stats = { 0 };
         BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData stats:&stats];
         if (ok) {
             NSLog(@"Tests “%@” ok with variance: %f. Max diff: %f", name, stats.variance, stats.maxDiff);
