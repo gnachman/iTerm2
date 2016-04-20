@@ -2250,7 +2250,7 @@
                               line[0].code = DWC_RIGHT;
                           }
               profileOverrides:nil
-                  createGolden:YES
+                  createGolden:NO
                           size:VT100GridSizeMake(5, 3)];
 }
 
