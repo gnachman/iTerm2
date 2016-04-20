@@ -609,13 +609,22 @@
     unsigned char *bytes1 = (unsigned char *)image1.bytes;
     unsigned char *bytes2 = (unsigned char *)image2.bytes;
     CGFloat threshold = 0.05;
+    CGFloat sumOfSquares = 0;
+    CGFloat maxDiff = 0;
+    CGFloat sum = 0;
     for (int i = 0; i < image1.length; i+= 4) {
-        CGFloat brightness1 = PerceivedBrightness(bytes1[0] / 255.0, bytes1[1] / 255.0, bytes1[2] / 255.0);
-        CGFloat brightness2 = PerceivedBrightness(bytes2[0] / 255.0, bytes2[1] / 255.0, bytes2[2] / 255.0);
-        if (fabs(brightness1 - brightness2) > threshold) {
+        CGFloat brightness1 = PerceivedBrightness(bytes1[i + 0] / 255.0, bytes1[i + 1] / 255.0, bytes1[i + 2] / 255.0);
+        CGFloat brightness2 = PerceivedBrightness(bytes2[i + 0] / 255.0, bytes2[i + 1] / 255.0, bytes2[i + 2] / 255.0);
+        CGFloat diff = fabs(brightness1 - brightness2);
+        sumOfSquares += diff*diff;
+        sum += diff;
+        maxDiff = MAX(maxDiff, diff);
+        if (diff > threshold) {
             return NO;
         }
     }
+//    CGFloat N = image1.length / 4;
+//    NSLog(@"Variance: %f. Max diff: %f", sumOfSquares/N - (sum/N)*(sum/N), maxDiff);
     return YES;
 }
 
