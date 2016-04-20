@@ -677,7 +677,7 @@ typedef struct {
         if (ok) {
             NSLog(@"Tests “%@” ok with variance: %f. Max diff: %f", name, stats.variance, stats.maxDiff);
         } else {
-            NSString *failPath = @"/tmp/failed-test.png";
+            NSString *failPath = [NSString stringWithFormat:@"/tmp/failed-%@.png", name];
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
             NSLog(@"Test “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
