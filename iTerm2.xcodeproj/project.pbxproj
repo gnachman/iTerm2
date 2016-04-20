@@ -757,6 +757,104 @@
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
 		A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */; };
+		A60251041CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test24BitColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test24BitColor.png */; };
+		A60251051CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test256Colors.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test256Colors.png */; };
+		A60251061CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAnsiColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAnsiColors.png */; };
+		A60251071CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png */; };
+		A60251081CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png */; };
+		A60251091CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png */; };
+		A602510A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png */; };
+		A602510B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250A91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png */; };
+		A602510C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250AA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png */; };
+		A602510D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250AB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundStripes.png */; };
+		A602510E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBadge.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250AC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBadge.png */; };
+		A602510F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250AD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursor.png */; };
+		A60251101CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250AE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png */; };
+		A60251111CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBasicDraw.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250AF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBasicDraw.png */; };
+		A60251121CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png */; };
+		A60251131CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png */; };
+		A60251141CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png */; };
+		A60251151CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png */; };
+		A60251161CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursor.png */; };
+		A60251171CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png */; };
+		A60251181CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png */; };
+		A60251191CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxDrawing.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxDrawing.png */; };
+		A602511A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png */; };
+		A602511B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOff.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250B91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOff.png */; };
+		A602511C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOn.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250BA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOn.png */; };
+		A602511D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250BB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelection.png */; };
+		A602511E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250BC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png */; };
+		A602511F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250BD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png */; };
+		A60251201CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250BE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorBoost.png */; };
+		A60251211CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250BF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png */; };
+		A60251221CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png */; };
+		A60251231CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorGuide.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorGuide.png */; };
+		A60251241CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingText.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingText.png */; };
+		A60251251CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png */; };
+		A60251261CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png */; };
+		A60251271CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png */; };
+		A60251281CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png */; };
+		A60251291CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png */; };
+		A602512A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png */; };
+		A602512B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250C91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png */; };
+		A602512C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250CA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png */; };
+		A602512D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250CB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png */; };
+		A602512E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testEmoji.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250CC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testEmoji.png */; };
+		A602512F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintText.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250CD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintText.png */; };
+		A60251301CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250CE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png */; };
+		A60251311CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFindMatches.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250CF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFindMatches.png */; };
+		A60251321CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursor.png */; };
+		A60251331CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png */; };
+		A60251341CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHiddenCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHiddenCursor.png */; };
+		A60251351CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png */; };
+		A60251361CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIME.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIME.png */; };
+		A60251371CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png */; };
+		A60251381CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png */; };
+		A60251391CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png */; };
+		A602513A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMark.png */; };
+		A602513B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250D91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrast.png */; };
+		A602513C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250DA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png */; };
+		A602513D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250DB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png */; };
+		A602513E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250DC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png */; };
+		A602513F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250DD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png */; };
+		A60251401CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250DE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png */; };
+		A60251411CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNote.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250DF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNote.png */; };
+		A60251421CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png */; };
+		A60251431CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png */; };
+		A60251441CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png */; };
+		A60251451CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png */; };
+		A60251461CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png */; };
+		A60251471CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png */; };
+		A60251481CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png */; };
+		A60251491CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png */; };
+		A602514A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png */; };
+		A602514B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250E91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png */; };
+		A602514C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250EA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png */; };
+		A602514D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250EB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png */; };
+		A602514E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250EC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png */; };
+		A602514F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250ED1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png */; };
+		A60251501CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250EE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png */; };
+		A60251511CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250EF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png */; };
+		A60251521CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png */; };
+		A60251531CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png */; };
+		A60251541CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png */; };
+		A60251551CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png */; };
+		A60251561CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png */; };
+		A60251571CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png */; };
+		A60251581CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png */; };
+		A60251591CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png */; };
+		A602515A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png */; };
+		A602515B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePair.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250F91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePair.png */; };
+		A602515C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250FA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png */; };
+		A602515D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTimestamps.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250FB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTimestamps.png */; };
+		A602515E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250FC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTransparency.png */; };
+		A602515F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250FD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png */; };
+		A60251601CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250FE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png */; };
+		A60251611CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineHost.png in Resources */ = {isa = PBXBuildFile; fileRef = A60250FF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineHost.png */; };
+		A60251621CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png in Resources */ = {isa = PBXBuildFile; fileRef = A60251001CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png */; };
+		A60251631CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testVerticalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A60251011CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testVerticalSpacing.png */; };
+		A60251641CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A60251021CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png */; };
+		A60251651CC757BF009BABF1 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png in Resources */ = {isa = PBXBuildFile; fileRef = A60251031CC757BF009BABF1 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png */; };
 		A6057C041878CD30004A60AF /* ProfileTagsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C021878CD30004A60AF /* ProfileTagsView.h */; };
 		A6057C09187A1809004A60AF /* TerminalFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C07187A1809004A60AF /* TerminalFile.h */; };
 		A6057C0E187BC4C3004A60AF /* iTermShellHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* iTermShellHistoryController.h */; };
@@ -2200,6 +2298,104 @@
 		A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableAttributedString+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermNSKeyBindingEmulator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSKeyBindingEmulator.m; sourceTree = "<group>"; tabWidth = 4; };
+		A60250A21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test24BitColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-test24BitColor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-test24BitColor.png"; sourceTree = "<group>"; };
+		A60250A31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test256Colors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-test256Colors.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-test256Colors.png"; sourceTree = "<group>"; };
+		A60250A41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAnsiColors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testAnsiColors.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testAnsiColors.png"; sourceTree = "<group>"; };
+		A60250A51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png"; sourceTree = "<group>"; };
+		A60250A61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png"; sourceTree = "<group>"; };
+		A60250A71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png"; sourceTree = "<group>"; };
+		A60250A81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png"; sourceTree = "<group>"; };
+		A60250A91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png"; sourceTree = "<group>"; };
+		A60250AA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png"; sourceTree = "<group>"; };
+		A60250AB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundStripes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBackgroundStripes.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBackgroundStripes.png"; sourceTree = "<group>"; };
+		A60250AC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBadge.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBadge.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBadge.png"; sourceTree = "<group>"; };
+		A60250AD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBarCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBarCursor.png"; sourceTree = "<group>"; };
+		A60250AE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png"; sourceTree = "<group>"; };
+		A60250AF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBasicDraw.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBasicDraw.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBasicDraw.png"; sourceTree = "<group>"; };
+		A60250B01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png"; sourceTree = "<group>"; };
+		A60250B11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png"; sourceTree = "<group>"; };
+		A60250B21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png"; sourceTree = "<group>"; };
+		A60250B31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png"; sourceTree = "<group>"; };
+		A60250B41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlockCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlockCursor.png"; sourceTree = "<group>"; };
+		A60250B51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png"; sourceTree = "<group>"; };
+		A60250B61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png"; sourceTree = "<group>"; };
+		A60250B71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxDrawing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBoxDrawing.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBoxDrawing.png"; sourceTree = "<group>"; };
+		A60250B81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBoxSelection.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBoxSelection.png"; sourceTree = "<group>"; };
+		A60250B91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOff.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBrightBoldOff.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBrightBoldOff.png"; sourceTree = "<group>"; };
+		A60250BA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testBrightBoldOn.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testBrightBoldOn.png"; sourceTree = "<group>"; };
+		A60250BB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCharacterSelection.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCharacterSelection.png"; sourceTree = "<group>"; };
+		A60250BC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png"; sourceTree = "<group>"; };
+		A60250BD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCombiningMark.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCombiningMark.png"; sourceTree = "<group>"; };
+		A60250BE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorBoost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCursorBoost.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCursorBoost.png"; sourceTree = "<group>"; };
+		A60250BF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png"; sourceTree = "<group>"; };
+		A60250C01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png"; sourceTree = "<group>"; };
+		A60250C11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorGuide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCursorGuide.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCursorGuide.png"; sourceTree = "<group>"; };
+		A60250C21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingText.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingText.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingText.png"; sourceTree = "<group>"; };
+		A60250C31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png"; sourceTree = "<group>"; };
+		A60250C41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png"; sourceTree = "<group>"; };
+		A60250C51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png"; sourceTree = "<group>"; };
+		A60250C61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png"; sourceTree = "<group>"; };
+		A60250C71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png"; sourceTree = "<group>"; };
+		A60250C81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png"; sourceTree = "<group>"; };
+		A60250C91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png"; sourceTree = "<group>"; };
+		A60250CA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png"; sourceTree = "<group>"; };
+		A60250CB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png"; sourceTree = "<group>"; };
+		A60250CC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testEmoji.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testEmoji.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testEmoji.png"; sourceTree = "<group>"; };
+		A60250CD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintText.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testFaintText.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testFaintText.png"; sourceTree = "<group>"; };
+		A60250CE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png"; sourceTree = "<group>"; };
+		A60250CF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFindMatches.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testFindMatches.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testFindMatches.png"; sourceTree = "<group>"; };
+		A60250D01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testFrameCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testFrameCursor.png"; sourceTree = "<group>"; };
+		A60250D11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png"; sourceTree = "<group>"; };
+		A60250D21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHiddenCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testHiddenCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testHiddenCursor.png"; sourceTree = "<group>"; };
+		A60250D31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png"; sourceTree = "<group>"; };
+		A60250D41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIME.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testIME.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testIME.png"; sourceTree = "<group>"; };
+		A60250D51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png"; sourceTree = "<group>"; };
+		A60250D61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png"; sourceTree = "<group>"; };
+		A60250D71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png"; sourceTree = "<group>"; };
+		A60250D81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testMark.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testMark.png"; sourceTree = "<group>"; };
+		A60250D91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrast.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testMinimumContrast.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testMinimumContrast.png"; sourceTree = "<group>"; };
+		A60250DA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png"; sourceTree = "<group>"; };
+		A60250DB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png"; sourceTree = "<group>"; };
+		A60250DC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testNoAntiAlias.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testNoAntiAlias.png"; sourceTree = "<group>"; };
+		A60250DD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png"; sourceTree = "<group>"; };
+		A60250DE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png"; sourceTree = "<group>"; };
+		A60250DF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNote.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testNote.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testNote.png"; sourceTree = "<group>"; };
+		A60250E01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png"; sourceTree = "<group>"; };
+		A60250E11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png"; sourceTree = "<group>"; };
+		A60250E21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png"; sourceTree = "<group>"; };
+		A60250E31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png"; sourceTree = "<group>"; };
+		A60250E41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSelectedTab.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSelectedTab.png"; sourceTree = "<group>"; };
+		A60250E51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png"; sourceTree = "<group>"; };
+		A60250E61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png"; sourceTree = "<group>"; };
+		A60250E71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png"; sourceTree = "<group>"; };
+		A60250E81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png"; sourceTree = "<group>"; };
+		A60250E91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png"; sourceTree = "<group>"; };
+		A60250EA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png"; sourceTree = "<group>"; };
+		A60250EB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png"; sourceTree = "<group>"; };
+		A60250EC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png"; sourceTree = "<group>"; };
+		A60250ED1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png"; sourceTree = "<group>"; };
+		A60250EE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png"; sourceTree = "<group>"; };
+		A60250EF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png"; sourceTree = "<group>"; };
+		A60250F01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png"; sourceTree = "<group>"; };
+		A60250F11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png"; sourceTree = "<group>"; };
+		A60250F21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png"; sourceTree = "<group>"; };
+		A60250F31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png"; sourceTree = "<group>"; };
+		A60250F41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png"; sourceTree = "<group>"; };
+		A60250F51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png"; sourceTree = "<group>"; };
+		A60250F61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png"; sourceTree = "<group>"; };
+		A60250F71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png"; sourceTree = "<group>"; };
+		A60250F81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png"; sourceTree = "<group>"; };
+		A60250F91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePair.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSurrogatePair.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSurrogatePair.png"; sourceTree = "<group>"; };
+		A60250FA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png"; sourceTree = "<group>"; };
+		A60250FB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTimestamps.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testTimestamps.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testTimestamps.png"; sourceTree = "<group>"; };
+		A60250FC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTransparency.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testTransparency.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testTransparency.png"; sourceTree = "<group>"; };
+		A60250FD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testUnderlineCursor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testUnderlineCursor.png"; sourceTree = "<group>"; };
+		A60250FE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png"; sourceTree = "<group>"; };
+		A60250FF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineHost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testUnderlineHost.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testUnderlineHost.png"; sourceTree = "<group>"; };
+		A60251001CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png"; sourceTree = "<group>"; };
+		A60251011CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testVerticalSpacing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testVerticalSpacing.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testVerticalSpacing.png"; sourceTree = "<group>"; };
+		A60251021CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png"; sourceTree = "<group>"; };
+		A60251031CC757BF009BABF1 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testRegionStartingWithDWCRight.png"; path = "tests/Goldens/PTYTextViewTest-golden-testRegionStartingWithDWCRight.png"; sourceTree = "<group>"; };
 		A6057C021878CD30004A60AF /* ProfileTagsView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTagsView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6057C031878CD30004A60AF /* ProfileTagsView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTagsView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6057C07187A1809004A60AF /* TerminalFile.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TerminalFile.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4010,6 +4206,103 @@
 		A686C0D21ADA38CA00906FAE /* Golden Images for Tests */ = {
 			isa = PBXGroup;
 			children = (
+				A60250A21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test24BitColor.png */,
+				A60250A31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test256Colors.png */,
+				A60250A41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAnsiColors.png */,
+				A60250A51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png */,
+				A60250A61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png */,
+				A60250A71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png */,
+				A60250A81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png */,
+				A60250A91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png */,
+				A60250AA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png */,
+				A60250AB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundStripes.png */,
+				A60250AC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBadge.png */,
+				A60250AD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursor.png */,
+				A60250AE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png */,
+				A60250AF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBasicDraw.png */,
+				A60250B01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png */,
+				A60250B11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png */,
+				A60250B21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png */,
+				A60250B31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png */,
+				A60250B41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursor.png */,
+				A60250B51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png */,
+				A60250B61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png */,
+				A60250B71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxDrawing.png */,
+				A60250B81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png */,
+				A60250B91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOff.png */,
+				A60250BA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOn.png */,
+				A60250BB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelection.png */,
+				A60250BC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png */,
+				A60250BD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png */,
+				A60250BE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorBoost.png */,
+				A60250BF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png */,
+				A60250C01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png */,
+				A60250C11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorGuide.png */,
+				A60250C21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingText.png */,
+				A60250C31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png */,
+				A60250C41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png */,
+				A60250C51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png */,
+				A60250C61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png */,
+				A60250C71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png */,
+				A60250C81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png */,
+				A60250C91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png */,
+				A60250CA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png */,
+				A60250CB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png */,
+				A60250CC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testEmoji.png */,
+				A60250CD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintText.png */,
+				A60250CE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png */,
+				A60250CF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFindMatches.png */,
+				A60250D01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursor.png */,
+				A60250D11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png */,
+				A60250D21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHiddenCursor.png */,
+				A60250D31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png */,
+				A60250D41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIME.png */,
+				A60250D51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png */,
+				A60250D61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png */,
+				A60250D71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png */,
+				A60250D81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMark.png */,
+				A60250D91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrast.png */,
+				A60250DA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png */,
+				A60250DB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png */,
+				A60250DC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png */,
+				A60250DD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png */,
+				A60250DE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png */,
+				A60250DF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNote.png */,
+				A60250E01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png */,
+				A60250E11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png */,
+				A60250E21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png */,
+				A60250E31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png */,
+				A60250E41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png */,
+				A60250E51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png */,
+				A60250E61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png */,
+				A60250E71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png */,
+				A60250E81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png */,
+				A60250E91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png */,
+				A60250EA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png */,
+				A60250EB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png */,
+				A60250EC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png */,
+				A60250ED1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png */,
+				A60250EE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png */,
+				A60250EF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png */,
+				A60250F01CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png */,
+				A60250F11CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png */,
+				A60250F21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png */,
+				A60250F31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png */,
+				A60250F41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png */,
+				A60250F51CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png */,
+				A60250F61CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png */,
+				A60250F71CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png */,
+				A60250F81CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png */,
+				A60250F91CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePair.png */,
+				A60250FA1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png */,
+				A60250FB1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTimestamps.png */,
+				A60250FC1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTransparency.png */,
+				A60250FD1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png */,
+				A60250FE1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png */,
+				A60250FF1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineHost.png */,
+				A60251001CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png */,
+				A60251011CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testVerticalSpacing.png */,
+				A60251021CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png */,
 				A686C1201ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png */,
 				A686C1211ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png */,
 				A686C0D31ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png */,
@@ -4073,6 +4366,7 @@
 				A686C0EC1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonretinaFakeBold.png */,
 				A686C0ED1ADA38EE00906FAE /* PTYTextViewTest-golden-testNote.png */,
 				A686C0EE1ADA38EE00906FAE /* PTYTextViewTest-golden-testOversizeGlyphs.png */,
+				A60251031CC757BF009BABF1 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png */,
 				A686C0EF1ADA38EE00906FAE /* PTYTextViewTest-golden-testRetinaFakeBold.png */,
 				A686C12D1ADA38EE00906FAE /* PTYTextViewTest-golden-testScrollbackOverflow.png */,
 				A686C12E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTab.png */,
@@ -5599,22 +5893,38 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
+				A60251301CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintTextWithTransparency.png in Resources */,
 				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
+				A60251251CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png in Resources */,
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
+				A60251111CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBasicDraw.png in Resources */,
 				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */,
+				A60251411CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNote.png in Resources */,
+				A602512C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png in Resources */,
+				A602515C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png in Resources */,
 				A67D0D711A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A66DB80E1C8E182B00233E88 /* Info.png in Resources */,
 				5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */,
+				A60251141CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextHidden.png in Resources */,
+				A60251181CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png in Resources */,
+				A60251051CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test256Colors.png in Resources */,
+				A602513F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png in Resources */,
 				1D5FDD7F1208E91100C46BA3 /* important.png in Resources */,
+				A60251191CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxDrawing.png in Resources */,
+				A60251631CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testVerticalSpacing.png in Resources */,
 				1DC13ABD1886146B00034DAE /* mark_err.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
+				A60251561CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A67D0D891A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */,
+				A602510C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithTransparency.png in Resources */,
+				A602514B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allDarkGray.png in Resources */,
+				A60251511CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */,
 				1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */,
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
@@ -5624,8 +5934,13 @@
 				A67D0D531A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A66DB8331C8E4C2E00233E88 /* ChangeProfile@2x.png in Resources */,
+				A60251541CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
+				A602511F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png in Resources */,
+				A60251131CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png in Resources */,
+				A60251121CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png in Resources */,
 				1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */,
+				A60251041CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test24BitColor.png in Resources */,
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
@@ -5633,7 +5948,13 @@
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
+				A60251651CC757BF009BABF1 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png in Resources */,
+				A602514D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
+				A60251481CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png in Resources */,
+				A602510F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursor.png in Resources */,
+				A602512E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testEmoji.png in Resources */,
+				A602514E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
@@ -5651,32 +5972,55 @@
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
+				A60251421CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */,
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
+				A60251061CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAnsiColors.png in Resources */,
+				A602513E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
 				A6FD85301B767D6300EB9DCE /* Hamburger.png in Resources */,
+				A60251611CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineHost.png in Resources */,
+				A60251081CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png in Resources */,
+				A602515B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSurrogatePair.png in Resources */,
+				A60251521CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png in Resources */,
+				A60251351CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHorizontalSpacing.png in Resources */,
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,
 				1D8BBA731B30F7FB0005A852 /* Dismiss.png in Resources */,
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
+				A60251451CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png in Resources */,
 				A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
+				A602514F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
+				A602511D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelection.png in Resources */,
+				A60251101CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBarCursorReverseVideo.png in Resources */,
 				A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
+				A60251071CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png in Resources */,
+				A60251281CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png in Resources */,
 				1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
+				A60251321CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursor.png in Resources */,
+				A602511A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png in Resources */,
+				A602515D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTimestamps.png in Resources */,
 				A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */,
+				A60251341CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testHiddenCursor.png in Resources */,
 				1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */,
 				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
 				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
+				A60251091CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png in Resources */,
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
+				A602513A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMark.png in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */,
+				A60251501CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
+				A60251581CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
 				A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
+				A602510A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
 				1DE922E61AC3709200965876 /* BackgroundStripes.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
@@ -5688,43 +6032,73 @@
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
+				A60251271CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */,
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
+				A60251211CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
 				5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */,
+				A602510E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBadge.png in Resources */,
+				A60251331CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFrameCursorWithNondefaultColors.png in Resources */,
+				A602510B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png in Resources */,
+				A602511C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOn.png in Resources */,
 				A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
+				A602515A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColorWithCursorBoost.png in Resources */,
 				A686A11E1C86AA930024C2DE /* DeadForDarkTheme@2x.png in Resources */,
+				A602515E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testTransparency.png in Resources */,
+				A602514A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
+				A60251201CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorBoost.png in Resources */,
+				A60251471CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png in Resources */,
+				A602513D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMultipleDiscontinuousSelection.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				A67D0D3B1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				A690F7011B424C55009F76D8 /* Media.xcassets in Resources */,
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
+				A60251371CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
 				A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
+				A60251171CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png in Resources */,
 				1D8BBA6B1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A67D0D801A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
+				A60251241CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingText.png in Resources */,
+				A60251261CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png in Resources */,
 				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,
+				A602511B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBrightBoldOff.png in Resources */,
+				A60251621CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUseNonAsciiFont.png in Resources */,
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
 				1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */,
+				A602513B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrast.png in Resources */,
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
+				A602511E1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
+				A60251551CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
+				A60251161CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlockCursor.png in Resources */,
+				A60251401CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png in Resources */,
 				A67D0D4D1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
+				A602512B1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png in Resources */,
 				1DBBA5E11B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
+				A60251391CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */,
+				A60251311CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFindMatches.png in Resources */,
+				A60251531CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png in Resources */,
 				A67D0D621A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
+				A60251461CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png in Resources */,
+				A60251431CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
+				A602512A1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
 				1DB8FBD019468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				1DEDF56919C917FD005B023A /* new-tab.png in Resources */,
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
@@ -5732,32 +6106,50 @@
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				A67D0D381A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
+				A60251221CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
 				1D99C8E71BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
+				A60251361CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIME.png in Resources */,
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
+				A60251291CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndCursorBoost.png in Resources */,
+				A60251491CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png in Resources */,
 				9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */,
+				A60251591CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */,
+				A60251151CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png in Resources */,
 				A65B72AC1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */,
 				A6057C171883D12E004A60AF /* broken_image.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
+				A602514C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png in Resources */,
 				A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
+				A602510D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testBackgroundStripes.png in Resources */,
+				A602512D1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png in Resources */,
 				A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */,
 				A6B3A73B1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
+				A60251381CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
+				A60251641CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testWindowedCharacterSelection.png in Resources */,
+				A60251441CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png in Resources */,
 				9DB3D6E9176CBC0C0071CCF8 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8C1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
+				A602515F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
+				A60251601CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png in Resources */,
 				1DA76A241B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				9DB3D6F0176CCABE0071CCF8 /* PrefsArrangements.png in Resources */,
+				A60251231CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testCursorGuide.png in Resources */,
 				9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */,
+				A602512F1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testFaintText.png in Resources */,
+				A60251571CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
+				A602513C1CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
