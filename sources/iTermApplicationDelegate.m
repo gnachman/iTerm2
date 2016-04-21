@@ -514,6 +514,11 @@ static BOOL hasBecomeActive = NO;
     return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
 }
 
+- (BOOL)isRunningOnTravis {
+    NSString *travis = [[[NSProcessInfo processInfo] environment] objectForKey:@"TRAVIS"];
+    return [travis isEqualToString:@"true"];
+}
+
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
     if ([self isApplescriptTestApp]) {
