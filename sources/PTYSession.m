@@ -3736,7 +3736,7 @@ ITERM_WEAKLY_REFERENCEABLE
         self.currentMarkOrNotePosition = mark.entry.interval;
         offset += [_screen totalScrollbackOverflow];
         [_textview scrollToAbsoluteOffset:offset height:[_screen height]];
-        [_textview highlightMarkOnLine:VT100GridRangeMax(range)];
+        [_textview highlightMarkOnLine:VT100GridRangeMax(range) hasErrorCode:NO];
     }
 }
 
@@ -4157,7 +4157,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {
-        [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])];
+        BOOL hasErrorCode = NO;
+        if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+            hasErrorCode = mark.code != 0;
+        }
+        [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])
+                          hasErrorCode:hasErrorCode];
     } else {
         PTYNoteViewController *note = (PTYNoteViewController *)obj;
         [note setNoteHidden:NO];

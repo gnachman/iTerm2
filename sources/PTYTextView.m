@@ -5254,23 +5254,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)highlightMarkOnLine:(int)line {
+- (void)highlightMarkOnLine:(int)line hasErrorCode:(BOOL)hasErrorCode {
     CGFloat y = line * _lineHeight;
-    NSView *blue = [[[NSView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
-    [blue setWantsLayer:YES];
-    [self addSubview:blue];
+    NSView *highlightingView = [[[NSView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
+    [highlightingView setWantsLayer:YES];
+    [self addSubview:highlightingView];
 
     // Set up layer's initial state
-    blue.layer.backgroundColor = [[NSColor blueColor] CGColor];
-    blue.layer.opaque = NO;
-    blue.layer.opacity = 0.75;
+    highlightingView.layer.backgroundColor = hasErrorCode ? [[NSColor redColor] CGColor] : [[NSColor blueColor] CGColor];
+    highlightingView.layer.opaque = NO;
+    highlightingView.layer.opacity = 0.75;
 
     // Animate it out, removing from superview when complete.
     [CATransaction begin];
-    [blue retain];
+    [highlightingView retain];
     [CATransaction setCompletionBlock:^{
-        [blue removeFromSuperview];
-        [blue release];
+        [highlightingView removeFromSuperview];
+        [highlightingView release];
     }];
     const NSTimeInterval duration = 0.75;
 
@@ -5281,7 +5281,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
     animation.removedOnCompletion = NO;
     animation.fillMode = kCAFillModeForwards;
-    [blue.layer addAnimation:animation forKey:@"opacity"];
+    [highlightingView.layer addAnimation:animation forKey:@"opacity"];
 
     [CATransaction commit];
 }
