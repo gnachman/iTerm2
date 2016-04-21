@@ -123,7 +123,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
 
-    IBOutlet NSMenuItem *secureInput;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
@@ -1179,17 +1178,13 @@ static BOOL hasBecomeActive = NO;
     [self updateUseTransparencyMenuItem];
 }
 
-- (IBAction)toggleSecureInput:(id)sender
-{
+- (IBAction)toggleSecureInput:(id)sender {
     // Set secureInputDesired_ to the opposite of the current state.
-    secureInputDesired_ = [secureInput state] == NSOffState;
+    secureInputDesired_ = !IsSecureEventInputEnabled();
     DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
 
     // Try to set the system's state of secure input to the desired state.
     [self setSecureInput:secureInputDesired_];
-
-    // Set the state of the control to the new true state.
-    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 
     // Save the preference, independent of whether it succeeded or not.
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:secureInputDesired_]
@@ -1202,8 +1197,6 @@ static BOOL hasBecomeActive = NO;
         DLog(@"Application becoming active. Enable secure input.");
         [self setSecureInput:YES];
     }
-    // Set the state of the control to the new true state.
-    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 
     // If focus follows mouse is on, find the textview under the cursor and make it first responder.
     // Make its window key.
@@ -1237,8 +1230,6 @@ static BOOL hasBecomeActive = NO;
         DLog(@"Application resigning active. Disabling secure input.");
         [self setSecureInput:NO];
     }
-    // Set the state of the control to the new true state.
-    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 }
 
 - (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
@@ -1518,8 +1509,7 @@ static BOOL hasBecomeActive = NO;
     return nil;
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
-{
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
@@ -1563,6 +1553,9 @@ static BOOL hasBecomeActive = NO;
         return YES;
     } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
         return ![[iTermTipController sharedInstance] showingTip];
+    } else if ([menuItem action] == @selector(toggleSecureInput:)) {
+        menuItem.state = IsSecureEventInputEnabled() ? NSOnState : NSOffState;
+        return YES;
     } else {
         return YES;
     }
