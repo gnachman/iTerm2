@@ -11,6 +11,8 @@
 #import "NSApplication+iTerm.h"
 #import <objc/runtime.h>
 
+NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
+
 typedef enum {
     kiTermAdvancedSettingTypeBoolean,
     kiTermAdvancedSettingTypeInteger,
@@ -199,7 +201,8 @@ static NSDictionary *gIntrospection;
         for (int i = 0; i < methodCount; i++) {
             SEL name = method_getName(methods[i]);
             NSString *stringName = NSStringFromSelector(name);
-            if (![internalMethods containsObject:stringName]) {
+            // Ignore selectors ending with : because they are setters.
+            if (![internalMethods containsObject:stringName] && ![stringName hasSuffix:@":"]) {
                 [iTermAdvancedSettingsModel performSelector:name withObject:nil];
                 assert(gIntrospection != nil);
                 [settings addObject:gIntrospection];
@@ -217,6 +220,7 @@ static NSDictionary *gIntrospection;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_filteredAdvancedSettings release];
     [super dealloc];
 }
@@ -227,6 +231,11 @@ static NSDictionary *gIntrospection;
     [_tableView setGridStyleMask:NSTableViewGridNone];
     [_tableView setIntercellSpacing:NSMakeSize(0, 0)];
     [_tableView setBackgroundColor:[NSColor whiteColor]];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(advancedSettingsDidChange:)
+                                                 name:iTermAdvancedSettingsDidChange
+                                               object:nil];
 }
 
 - (NSMutableAttributedString *)attributedStringForString:(NSString *)string
@@ -384,6 +393,12 @@ static NSDictionary *gIntrospection;
 
     return _filteredAdvancedSettings;
 }
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    [_tableView reloadData];
+}
+
+#pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
     return [[self filteredAdvancedSettings] count];

@@ -1952,8 +1952,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)queueRestartSessionAnnouncement {
-    static NSString *const kSuppressRestartAnnouncement = @"SuppressRestartAnnouncement";
-    if ([[NSUserDefaults standardUserDefaults]boolForKey:kSuppressRestartAnnouncement]) {
+    if ([iTermAdvancedSettingsModel suppressRestartAnnouncement]) {
         return;
     }
     iTermAnnouncementViewController *announcement =
@@ -1973,8 +1972,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                 break;
 
                                                             case 1: // Don't ask again
-                                                                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                                                        forKey:kSuppressRestartAnnouncement];
+                                                                [iTermAdvancedSettingsModel setSuppressRestartAnnouncement:YES];
                                                         }
                                                     }];
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
