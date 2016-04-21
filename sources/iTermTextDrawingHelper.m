@@ -40,10 +40,6 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     // Current font. Only valid for the duration of a single drawing context.
     NSFont *_selectedFont;
 
-    // Graphics for marks.
-    NSImage *_markImage;
-    NSImage *_markErrImage;
-
     // Last position of blinking cursor
     VT100GridCoord _oldCursorPosition;
 
@@ -72,8 +68,6 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _markImage = [[NSImage imageNamed:@"mark"] retain];
-        _markErrImage = [[NSImage imageNamed:@"mark_err"] retain];
         if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
             _drawRectDuration = [[MovingAverage alloc] init];
@@ -94,8 +88,6 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     [_colorMap release];
 
     [_selectedFont release];
-    [_markImage release];
-    [_markErrImage release];
     [_drawRectDuration release];
     [_drawRectInterval release];
 
@@ -467,14 +459,39 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 - (void)drawMarkIfNeededOnLine:(int)line leftMarginRect:(NSRect)leftMargin {
     VT100ScreenMark *mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark.isVisible && self.drawMarkIndicators) {
-        NSImage *image = mark.code ? _markErrImage : _markImage;
         const CGFloat verticalSpacing = _cellSize.height - _cellSizeWithoutSpacing.height;
-        CGFloat offset = (_cellSizeWithoutSpacing.height - _markImage.size.height) / 2.0 + verticalSpacing;
-        [image drawAtPoint:NSMakePoint(leftMargin.origin.x,
-                                       leftMargin.origin.y + offset)
-                  fromRect:NSMakeRect(0, 0, _markImage.size.width, _markImage.size.height)
-                 operation:NSCompositeSourceOver
-                  fraction:1.0];
+        CGRect rect = NSMakeRect(leftMargin.origin.x,
+                                 leftMargin.origin.y + verticalSpacing,
+                                 MARGIN,
+                                 _cellSizeWithoutSpacing.height);
+        NSBezierPath *path;
+        
+        path = [NSBezierPath bezierPath];
+        
+        const CGFloat kMaxHeight = 15;
+        const CGFloat kMinMargin = 3;
+        const CGFloat kMargin = MAX(kMinMargin, (_cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
+        NSPoint top = NSMakePoint(NSMinX(rect), rect.origin.y + kMargin);
+        NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
+        NSPoint bottom = NSMakePoint(NSMinX(rect), NSMaxY(rect) - kMargin);
+
+        [[NSColor blackColor] set];
+        path = [NSBezierPath bezierPath];
+        [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
+        [path lineToPoint:NSMakePoint(right.x, right.y)];
+        [path setLineWidth:1.0];
+        [path stroke];
+
+        if (mark.code) {
+            [[NSColor colorWithCalibratedRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
+        } else {
+            [[NSColor colorWithCalibratedRed:120.0 / 255.0 green:178.0 / 255.0 blue:255.0 / 255.0 alpha:1] set];
+        }
+        [path moveToPoint:top];
+        [path lineToPoint:right];
+        [path lineToPoint:bottom];
+        [path lineToPoint:top];
+        [path fill];
     }
 }
 
