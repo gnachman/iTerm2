@@ -2917,7 +2917,7 @@ DQ
                 <button toolTip="Enable this to make non-default background colors always opaque. This is useful when using Powerline in a translucent window." id="fwj-4Y-nja">
                     <rect key="frame" x="15" y="9" width="389" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Only apply transparency to the main background color." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="sBm-XA-tIi">
+                    <buttonCell key="cell" type="check" title="Only apply transparency to the default background color." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="sBm-XA-tIi">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
