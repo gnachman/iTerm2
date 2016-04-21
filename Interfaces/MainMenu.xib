@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
@@ -1034,7 +1034,6 @@ DQ
                 <outlet property="logStart" destination="229" id="793"/>
                 <outlet property="logStop" destination="230" id="794"/>
                 <outlet property="maximizePane" destination="1233" id="1237"/>
-                <outlet property="secureInput" destination="1174" id="1177"/>
                 <outlet property="selectTab" destination="847" id="863"/>
                 <outlet property="sendInputNormally" destination="1268" id="1276"/>
                 <outlet property="sendInputToAllPanes" destination="1266" id="1279"/>
