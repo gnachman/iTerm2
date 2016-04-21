@@ -121,7 +121,7 @@
                    type:kPreferenceInfoTypeCheckbox];
 
    info = [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
-                          key:KEY_DEFAULT_BG_ALPHA_ONLY
+                          key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
                          type:kPreferenceInfoTypeCheckbox];
    info.observer = ^() { _transparencyAffectsOnlyDefaultBackgroundColor.enabled = (_transparency.doubleValue > 0); };
 
