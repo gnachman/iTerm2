@@ -3630,6 +3630,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalAbortCommand {
     DLog(@"FinalTerm: terminalAbortCommand");
+    VT100ScreenMark *screenMark = [self lastCommandMark];
+    if (screenMark) {
+        DLog(@"Removing last command mark %@", screenMark);
+        [intervalTree_ removeObject:screenMark];
+    }
+
     commandStartX_ = commandStartY_ = -1;
     [delegate_ screenCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
