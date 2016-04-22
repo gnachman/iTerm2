@@ -20,6 +20,14 @@
                                                       description:theDescription]; \
 }
 
+#define DEFINE_SETTABLE_BOOL(name, capitalizedName, theDefault, theDescription) \
+DEFINE_BOOL(name, theDefault, theDescription) \
++ (void)set##capitalizedName :(BOOL)newValue { \
+    [[NSUserDefaults standardUserDefaults] setBool:newValue forKey:@#capitalizedName]; \
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAdvancedSettingsDidChange \
+                                                        object:nil]; \
+}
+
 #define DEFINE_INT(name, theDefault, theDescription) \
 + (int)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
@@ -117,9 +125,11 @@ DEFINE_STRING(pathsToIgnore, @"", @"Semantic History: Paths to ignore for Semant
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(logDrawingPerformance, NO, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
 
-#pragma mark - Session Restoration
-DEFINE_BOOL(runJobsInServers, YES, @"Session Restoration: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
-DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
+#pragma mark - Session
+DEFINE_BOOL(runJobsInServers, YES, @"Session: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
+DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session: User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
+DEFINE_SETTABLE_BOOL(suppressRestartAnnouncement, SuppressRestartAnnouncement, NO, @"Session: Suppress the Restart Session offer.\nWhen a sessions terminates, it will offer to restart itself. Turn this on to suppress the offer permanently.");
+
 
 #pragma mark - Window
 DEFINE_BOOL(openFileInNewWindows, NO, @"Windows: Open files in new windows, not new tabs.\nThis affects shell scripts opened from Finder, for example.");

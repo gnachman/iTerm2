@@ -111,6 +111,17 @@ static const CGFloat kStandardButtonHeight = 34;
     [super dealloc];
 }
 
+- (void)setImportant:(BOOL)important {
+    _important = important;
+    if (important) {
+        _textField.textColor = [NSColor whiteColor];
+        self.layer.backgroundColor = [[NSColor redColor] CGColor];
+    } else {
+        _textField.textColor = [[self class] blueColor];
+        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+    }
+}
+
 - (void)setIndexInRow:(int)indexInRow {
     _indexInRow = indexInRow;
     _leftDivider.hidden = (indexInRow == 0);

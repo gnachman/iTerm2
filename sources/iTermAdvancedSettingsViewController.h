@@ -8,6 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+// The model posts this notification when it makes a change.
+extern NSString *const iTermAdvancedSettingsDidChange;
+
 @interface iTermAdvancedSettingsViewController : NSViewController <NSTableViewDataSource, NSTableViewDelegate>
 
 // Don't call these methods directly. Instead, go through iTermAdvancedSettingsModel.
