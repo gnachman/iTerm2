@@ -3054,8 +3054,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBlend:blendVal];
 }
 
-- (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value
-{
+- (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
     [_textview setTransparencyAffectsOnlyDefaultBackgroundColor:value];
 }
 

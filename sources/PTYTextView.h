@@ -498,6 +498,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Undoes -refuseFirstResponderAtCurrentMouseLocation.
 - (void)resetMouseLocationToRefuseFirstResponderAt;
 
+- (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value;
+
 #pragma mark - Testing only
 
 - (id)selectedTextAttributed:(BOOL)attributed
