@@ -154,6 +154,7 @@ static const CGFloat kWindowWidth = 400;
                                if (![_delegate tipWindowTipsAreDisabled]) {
                                    iTermTipCardActionButton *theButton = [card actionWithTitle:kDisableTipsTitle];
                                    if (theButton) {
+                                       [theButton setImportant:YES];
                                        [theButton setTitle:kReallyDisableTipsTitle];
                                    } else {
                                        [self disableTips];
