@@ -6621,6 +6621,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [_variables removeObjectForKey:kVariableKeySessionUsername];
     }
+    [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
     [[_delegate realParentWindow] sessionHostDidChange:self to:host];
