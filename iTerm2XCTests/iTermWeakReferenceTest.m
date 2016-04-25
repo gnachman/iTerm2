@@ -7,6 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import "iTermSelectorSwizzler.h"
 #import "iTermWeakReference.h"
 #import <objc/runtime.h>
 
@@ -198,12 +199,53 @@ ITERM_WEAKLY_REFERENCEABLE
 // from notification center. It was hard to see because it didn't happen in 10.11.
 - (void)testReferenceRemovedFromNotificationCenter {
   iTerm2FakeObject *fakeObject = [[iTerm2FakeObject alloc] init];
+  iTermSelectorSwizzlerContext *context = [[[iTermSelectorSwizzlerContext alloc] init] autorelease];
+  __block BOOL observing = YES;
+
+  // Use an autorelease pool to make sure the weak reference gets released before the context is
+  // drained.
   @autoreleasepool {
-    [fakeObject weakSelf];
+    iTerm2FakeObject *weakRef = [fakeObject weakSelf];
+
+    // NSValue used to keep the block from 
+    NSValue *weakRefValue = [NSValue valueWithNonretainedObject:weakRef];
+
+    // Proper function pointers let us call the impl without warnings.
+    typedef void RemoveObserverImp(id, SEL, id);
+    typedef void RemoveObserverNameObjectImp(id, SEL, id, id, id);
+
+    // These must be __block so the blocks don't capture the pre-assignment values.
+    __block RemoveObserverImp *removeObserver;
+    __block RemoveObserverNameObjectImp *removeObserverNameObject;
+
+    removeObserver = (RemoveObserverImp *)
+      [[NSNotificationCenter defaultCenter] swizzleInstanceMethodSelector:@selector(removeObserver:)
+                                                                withBlock:^(id target, id observer) {
+                                                                  if (observer == weakRefValue.nonretainedObjectValue) {
+                                                                    observing = NO;
+                                                                  }
+                                                                  removeObserver(target,
+                                                                                 @selector(removeObserver:),
+                                                                                 observer);
+                                                                }];
+    removeObserverNameObject = (RemoveObserverNameObjectImp *)
+      [[NSNotificationCenter defaultCenter] swizzleInstanceMethodSelector:@selector(removeObserver:name:object:)
+                                                                withBlock:^(id target, id observer, id name, id object) {
+                                                                  if (observer == weakRefValue.nonretainedObjectValue) {
+                                                                    observing = NO;
+                                                                  }
+                                                                  removeObserverNameObject(target,
+                                                                                           @selector(removeObserver:name:object:),
+                                                                                           observer,
+                                                                                           name,
+                                                                                           object);
+                                                                }];
+
     [fakeObject release];
   }
-  [[NSNotificationCenter defaultCenter] postNotificationName:iTermWeaklyReferenceableObjectWillDealloc
-                                                      object:fakeObject];
+  [context drain];
+
+  XCTAssertFalse(observing);
 }
 
 @end
