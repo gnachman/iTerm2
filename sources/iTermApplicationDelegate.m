@@ -467,7 +467,7 @@ static BOOL hasBecomeActive = NO;
 
 /**
  * The following applescript invokes this method before
- * _performStartupActivites is run and prevents it from being run. Scripts can
+ * _performStartupActivities is run and prevents it from being run. Scripts can
  * use it to launch a command in a predictable way if iTerm2 isn't running (and
  * window arrangements won't be restored, etc.)
  *
@@ -476,9 +476,10 @@ static BOOL hasBecomeActive = NO;
  *    // create a terminal if needed, run commands, whatever.
  * end tell
  */
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
-{
+- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
+    DLog(@"application:%@ openFile:%@", theApplication, filename);
     if ([filename hasSuffix:@".itermcolors"]) {
+        DLog(@"Importing color presets from %@", filename);
         if ([[PreferencePanel sharedInstance] importColorPresetFromFile:filename]) {
             NSRunAlertPanel(@"Colors Scheme Imported", @"The color scheme was imported and added to presets. You can find it under Preferences>Profiles>Colors>Load Presets….", @"OK", nil, nil);
         }

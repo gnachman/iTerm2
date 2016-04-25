@@ -7,6 +7,7 @@
 //
 
 #import "ProfilesColorsPreferencesViewController.h"
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "NSColor+iTerm.h"
@@ -299,7 +300,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     return [[filename stringByDeletingPathExtension] lastPathComponent];
 }
 
-- (void)addColorPreset:(NSString*)presetName withColors:(NSDictionary*)theDict {
+- (void)addColorPreset:(NSString *)presetName withColors:(NSDictionary *)theDict {
+    DLog(@"Add color preset with name %@ and dictionary %@", presetName, theDict);
     NSDictionary *presets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
     NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:presets];
     if (!customPresets) {
@@ -328,9 +330,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     return nil;
 }
 
-- (BOOL)importColorPresetFromFile:(NSString*)filename {
-    NSDictionary* aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
+- (BOOL)importColorPresetFromFile:(NSString *)filename {
+    DLog(@"Colors VC importing presets from %@", filename);
+    NSDictionary *aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
+        DLog(@"Failed to parse dictionary");
         NSRunAlertPanel(@"Import Failed.",
                         @"The selected file could not be read or did not contain a valid color scheme.",
                         @"OK",
@@ -338,14 +342,17 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                         nil);
         return NO;
     } else {
+        DLog(@"Parsed dictionary ok");
         NSString *dup = [self nameOfPresetsEqualTo:aDict];
         if (dup) {
+            DLog(@"Is a duplicate preset");
             NSAlert *alert = [NSAlert alertWithMessageText:@"Add duplicate color preset?"
                                              defaultButton:@"Cancel"
                                            alternateButton:@"Add it anyway"
                                                otherButton:nil
                                  informativeTextWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
             if ([alert runModal] == NSAlertDefaultReturn) {
+                DLog(@"User declined to install dup");
                 return NO;
             }
         }
