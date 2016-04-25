@@ -3420,7 +3420,7 @@
 		A6FCB6081C6714230019184E /* iTermFullScreenWindowManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFullScreenWindowManager.h; sourceTree = "<group>"; };
 		A6FCB6091C6714230019184E /* iTermFullScreenWindowManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFullScreenWindowManager.m; sourceTree = "<group>"; };
 		A6FCB60C1C6714C70019184E /* iTermWeakReference.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWeakReference.h; sourceTree = "<group>"; };
-		A6FCB60D1C6714C70019184E /* iTermWeakReference.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWeakReference.m; sourceTree = "<group>"; };
+		A6FCB60D1C6714C70019184E /* iTermWeakReference.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWeakReference.m; sourceTree = "<group>"; };
 		A6FD852E1B767D6300EB9DCE /* Hamburger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Hamburger.png; path = images/Hamburger.png; sourceTree = "<group>"; };
 		A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Hamburger@2x.png"; path = "images/Hamburger@2x.png"; sourceTree = "<group>"; };
 		A6FD85321B768B7800EB9DCE /* BigArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigArrow.png; path = images/BigArrow.png; sourceTree = "<group>"; };

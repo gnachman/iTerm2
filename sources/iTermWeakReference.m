@@ -36,12 +36,12 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 - (void)dealloc {
     if (_object) {
         OSSpinLockLock(&lock);
-        _object = nil;
-        OSSpinLockUnlock(&lock);
-
         [[NSNotificationCenter defaultCenter] removeObserver:self
                                                         name:iTermWeaklyReferenceableObjectWillDealloc
                                                       object:_object];
+        _object = nil;
+        OSSpinLockUnlock(&lock);
+
         [_class release];
     }
     [super dealloc];
