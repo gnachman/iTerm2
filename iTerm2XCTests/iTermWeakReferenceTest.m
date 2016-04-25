@@ -128,7 +128,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)testProxyRaisesExceptionOnNonexistantMethods {
     iTerm2FakeObject *fakeObject = [[[iTerm2FakeObject alloc] init] autorelease];
-    NSString *ref = [fakeObject weakSelf];
+    iTerm2FakeObject *ref = [fakeObject weakSelf];
     BOOL ok = NO;
     @try {
         [ref performSelector:@selector(testProxyRaisesExceptionOnNonexistantMethods)
@@ -192,6 +192,18 @@ ITERM_WEAKLY_REFERENCEABLE
     dispatch_release(startGroup);
     dispatch_release(raceGroup);
     dispatch_release(doneGroup);
+}
+
+// This is a regression test. There was a bug that the weak reference did not properly remove itself
+// from notification center. It was hard to see because it didn't happen in 10.11.
+- (void)testReferenceRemovedFromNotificationCenter {
+  iTerm2FakeObject *fakeObject = [[iTerm2FakeObject alloc] init];
+  @autoreleasepool {
+    [fakeObject weakSelf];
+    [fakeObject release];
+  }
+  [[NSNotificationCenter defaultCenter] postNotificationName:iTermWeaklyReferenceableObjectWillDealloc
+                                                      object:fakeObject];
 }
 
 @end
