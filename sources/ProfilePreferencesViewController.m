@@ -270,7 +270,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
 }
 
 - (BOOL)importColorPresetFromFile:(NSString *)filename {
-    DLog(@"Importing color presets from %@ using colors view controller %@", _colorsViewController);
+    DLog(@"Importing color presets from %@ using colors view controller %@", filename, _colorsViewController);
    return [_colorsViewController importColorPresetFromFile:filename];
 }
 
