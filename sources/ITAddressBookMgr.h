@@ -139,6 +139,7 @@
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
 #define KEY_PREVENT_TAB                       @"Prevent Opening in a Tab"
+#define KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR @"Only The Default BG Color Uses Transparency"
 #define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
 #define KEY_SYNC_TITLE                        @"Sync Title"

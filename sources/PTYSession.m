@@ -1033,6 +1033,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
+    [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
     [_wrapper addSubview:_textview];
     [_textview setFrame:NSMakeRect(0, VMARGIN, aSize.width, aSize.height - VMARGIN)];
@@ -2646,6 +2647,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
     [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
+    [self setTransparencyAffectsOnlyDefaultBackgroundColor:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR inProfile:aDict]];
 
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
@@ -3050,6 +3052,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setBlend:(float)blendVal {
     [_textview setBlend:blendVal];
+}
+
+- (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
+    [_textview setTransparencyAffectsOnlyDefaultBackgroundColor:value];
 }
 
 - (BOOL)antiIdle {
@@ -3734,7 +3740,7 @@ ITERM_WEAKLY_REFERENCEABLE
         self.currentMarkOrNotePosition = mark.entry.interval;
         offset += [_screen totalScrollbackOverflow];
         [_textview scrollToAbsoluteOffset:offset height:[_screen height]];
-        [_textview highlightMarkOnLine:VT100GridRangeMax(range)];
+        [_textview highlightMarkOnLine:VT100GridRangeMax(range) hasErrorCode:NO];
     }
 }
 
@@ -4155,7 +4161,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {
-        [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])];
+        BOOL hasErrorCode = NO;
+        if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+            hasErrorCode = mark.code != 0;
+        }
+        [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])
+                          hasErrorCode:hasErrorCode];
     } else {
         PTYNoteViewController *note = (PTYNoteViewController *)obj;
         [note setNoteHidden:NO];
@@ -6609,6 +6621,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [_variables removeObjectForKey:kVariableKeySessionUsername];
     }
+    [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
     [[_delegate realParentWindow] sessionHostDidChange:self to:host];

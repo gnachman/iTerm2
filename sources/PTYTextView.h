@@ -441,7 +441,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)updateNoteViewFrames;
 
 // Show a visual highlight of a mark on the given line number.
-- (void)highlightMarkOnLine:(int)line;
+- (void)highlightMarkOnLine:(int)line hasErrorCode:(BOOL)hasErrorCode;
 
 - (IBAction)installShellIntegration:(id)sender;
 
@@ -497,6 +497,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Undoes -refuseFirstResponderAtCurrentMouseLocation.
 - (void)resetMouseLocationToRefuseFirstResponderAt;
+
+- (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value;
 
 #pragma mark - Testing only
 

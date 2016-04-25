@@ -1497,6 +1497,7 @@ DQ
                 <outlet property="_spaceLabel" destination="4920" id="hZ0-FW-sxK"/>
                 <outlet property="_syncTitle" destination="5008" id="4VH-Th-Xwf"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
+                <outlet property="_transparencyAffectsOnlyDefaultBackgroundColor" destination="fwj-4Y-nja" id="caf-eb-abe"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
                 <outlet property="_windowStyle" destination="4916" id="HIG-WO-wce"/>
@@ -2801,7 +2802,7 @@ DQ
                     </connections>
                 </imageView>
                 <textField verticalHuggingPriority="750" id="4975">
-                    <rect key="frame" x="15" y="359" width="97" height="34"/>
+                    <rect key="frame" x="15" y="376" width="97" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Transparency:" id="4986">
                         <font key="font" metaFont="system"/>
@@ -2819,7 +2820,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4976">
-                    <rect key="frame" x="15" y="316" width="63" height="18"/>
+                    <rect key="frame" x="15" y="289" width="63" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Blur:" bezelStyle="regularSquare" imagePosition="left" alignment="left" continuous="YES" inset="2" id="4985">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2848,7 +2849,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <slider verticalHuggingPriority="750" id="4978">
-                    <rect key="frame" x="36" y="355" width="190" height="21"/>
+                    <rect key="frame" x="36" y="350" width="190" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.90000000000000002" tickMarkPosition="below" sliderType="linear" id="4983"/>
                     <connections>
@@ -2857,7 +2858,7 @@ DQ
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="4979">
-                    <rect key="frame" x="35" y="340" width="53" height="11"/>
+                    <rect key="frame" x="35" y="335" width="53" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Opaque" id="4982">
                         <font key="font" metaFont="miniSystem"/>
@@ -2866,7 +2867,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="4980">
-                    <rect key="frame" x="168" y="340" width="58" height="11"/>
+                    <rect key="frame" x="168" y="335" width="58" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Transparent" id="4981">
                         <font key="font" metaFont="miniSystem"/>
@@ -2875,7 +2876,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <slider verticalHuggingPriority="750" id="5363">
-                    <rect key="frame" x="36" y="291" width="190" height="21"/>
+                    <rect key="frame" x="36" y="264" width="190" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="30" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
                     <connections>
@@ -2884,7 +2885,7 @@ DQ
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="5364">
-                    <rect key="frame" x="35" y="276" width="61" height="11"/>
+                    <rect key="frame" x="35" y="249" width="61" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Small Radius" id="5367">
                         <font key="font" metaFont="miniSystem"/>
@@ -2893,7 +2894,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="5365">
-                    <rect key="frame" x="164" y="276" width="62" height="11"/>
+                    <rect key="frame" x="164" y="249" width="62" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="5366">
                         <font key="font" metaFont="miniSystem"/>
@@ -2910,7 +2911,7 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="VYD-F1-fDI"/>
-                        <outlet property="nextKeyView" destination="4978" id="6418"/>
+                        <outlet property="nextKeyView" destination="fwj-4Y-nja" id="u8P-d1-x0a"/>
                     </connections>
                 </button>
                 <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="5008">
@@ -2922,6 +2923,7 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="5jm-v3-jaw"/>
+                        <outlet property="nextKeyView" destination="6416" id="5hh-n9-L6w"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="5012">
@@ -2964,7 +2966,20 @@ DQ
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="62v-xZ-hBc"/>
                     </connections>
                 </button>
+                <button toolTip="Enable this to make non-default background colors always opaque. This is useful when using Powerline in a translucent window." id="fwj-4Y-nja">
+                    <rect key="frame" x="36" y="311" width="218" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Keep background colors opaque" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="sBm-XA-tIi">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="sGR-E1-876"/>
+                        <outlet property="nextKeyView" destination="4978" id="Tpo-gX-6bI"/>
+                    </connections>
+                </button>
             </subviews>
+            <point key="canvasLocation" x="1031.5" y="300"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="578" height="533"/>

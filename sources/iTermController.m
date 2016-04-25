@@ -34,6 +34,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -88,6 +89,22 @@ static iTermController *gSharedInstance;
 + (void)releaseSharedInstance {
     [gSharedInstance release];
     gSharedInstance = nil;
+}
+
++ (NSString *)installationId {
+    NSString *const kInstallationIdKey = @"NoSyncInstallationId";
+    NSString *installationId = [[NSUserDefaults standardUserDefaults] stringForKey:kInstallationIdKey];
+    if (!installationId) {
+        installationId = [NSString uuid];
+        [[NSUserDefaults standardUserDefaults] setObject:installationId forKey:kInstallationIdKey];
+    }
+    return installationId;
+}
+
++ (NSUInteger)shard {
+    static const NSUInteger kNumberOfShards = 100;
+    NSString *installationId = [iTermController installationId];
+    return [installationId hashWithDJB2] % kNumberOfShards;
 }
 
 - (instancetype)init {
@@ -1197,7 +1214,10 @@ static iTermController *gSharedInstance;
     NSString *appCast = checkForTestReleases ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
-    [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
+    NSURL *url = [NSURL URLWithString:appCast];
+    NSNumber *shard = @([iTermController shard]);
+    url = [url URLByAppendingQueryParameter:[NSString stringWithFormat:@"shard=%@", shard]];
+    [[NSUserDefaults standardUserDefaults] setObject:url.absoluteString forKey:@"SUFeedURL"];
     // Allow Sparkle to update from a zip file containing an "iTerm" directory,
     // even though our bundle name is now "iTerm2". I had to add this feature
     // to my fork of Sparkle so I could change the app's name without breaking

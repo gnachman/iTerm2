@@ -1507,6 +1507,18 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return compact;
 }
 
+// http://www.cse.yorku.ca/~oz/hash.html
+- (NSUInteger)hashWithDJB2 {
+    NSUInteger hash = 5381;
+    
+    for (NSUInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        hash = (hash * 33) ^ c;
+    }
+
+    return hash;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -216,7 +216,8 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
 }
 
-- (BOOL)importColorPresetFromFile:(NSString*)filename {
+- (BOOL)importColorPresetFromFile:(NSString *)filename {
+    DLog(@"Importing color presets from %@ using view controller %@", filename, _profilesViewController);
     return [_profilesViewController importColorPresetFromFile:filename];
 }
 
