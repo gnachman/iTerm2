@@ -3319,7 +3319,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                           kInlineFileHeightUnits: @(heightUnits),
                           kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
                           kInlineFileBase64String: [NSMutableString string],
-                          kInilineFileInset: [NSValue valueWithEdgeInsets:inset] } retain];
+                          kInilineFileInset: [NSValue futureValueWithEdgeInsets:inset] } retain];
 }
 
 - (void)appendImageAtCursorWithName:(NSString *)name
@@ -3455,7 +3455,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                    inset:[inlineFileInfo_[kInilineFileInset] edgeInsetsValue]
+                                    inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
                                     image:image
                                      data:data];
         [inlineFileInfo_ release];
