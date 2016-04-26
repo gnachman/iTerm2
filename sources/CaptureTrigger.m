@@ -84,6 +84,9 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 }
 
 - (void)showCapturedOutputToolNotVisibleAnnouncementInSession:(PTYSession *)aSession {
+    if ([aSession hasAnnouncementWithIdentifier:kSuppressCaptureOutputToolNotVisibleWarning]) {
+        return;
+    }
     NSString *theTitle = @"A Capture Output trigger fired, but the Captured Output tool is not visible.";
     [aSession retain];
     void (^completion)(int selection) = ^(int selection) {

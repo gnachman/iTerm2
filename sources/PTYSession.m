@@ -7078,6 +7078,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Announcements
 
+- (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {
+    return _announcements[identifier] != nil;
+}
+
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier {
     iTermAnnouncementViewController *announcement = _announcements[identifier];
     [announcement dismiss];
