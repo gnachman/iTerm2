@@ -196,7 +196,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
         }
 
         SessionView *oldView = [movingSession view];
-        [oldView retain];
+        [[oldView retain] autorelease];
         PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
         [theTab removeSession:movingSession];
         if ([[theTab sessions] count] == 0) {
@@ -208,7 +208,6 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
                                              addingSession:movingSession
                                              targetSession:dest
                                               performSetup:NO];
-        [oldView release];
         [destinationTab fitSessionToCurrentViewSize:movingSession];
     } else {
         [destinationTab swapSession:dest withSession:session_];
