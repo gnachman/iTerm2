@@ -802,7 +802,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         linesDropped = [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
         [self incrementOverflowBy:linesDropped];
     }
-    int lines = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    int lines __attribute__((unused)) = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSAssert(lines >= 0, @"Negative lines");
 
     // An immediate refresh is needed so that the size of textview can be
@@ -4185,11 +4185,12 @@ static void SwapInt(int *a, int *b) {
     screen_char_t* dummy = calloc(currentGrid_.size.width, sizeof(screen_char_t));
     for (i = 0; i < linesPushed; ++i) {
         int cont;
-        BOOL isOk = [linebuffer_ popAndCopyLastLineInto:dummy
-                                                  width:currentGrid_.size.width
-                                      includesEndOfLine:&cont
-                                              timestamp:NULL
-                                           continuation:NULL];
+        BOOL isOk __attribute__((unused)) =
+            [linebuffer_ popAndCopyLastLineInto:dummy
+                                          width:currentGrid_.size.width
+                              includesEndOfLine:&cont
+                                      timestamp:NULL
+                                   continuation:NULL];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);

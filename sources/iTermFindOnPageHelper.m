@@ -270,7 +270,7 @@
         }
     }
     BOOL found = NO;
-    VT100GridCoordRange selectedRange;
+    VT100GridCoordRange selectedRange = VT100GridCoordRangeMake(0, 0, 0, 0);
     int i = start;
     for (int j = 0; !found && j < [_searchResults count]; j++) {
         SearchResult* r = [_searchResults objectAtIndex:i];

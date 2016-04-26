@@ -3386,7 +3386,7 @@
 		A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectionScrollHelper.h; sourceTree = "<group>"; };
 		A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIndicatorsHelper.h; sourceTree = "<group>"; };
 		A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindOnPageHelper.h; sourceTree = "<group>"; };
-		A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelper.m; sourceTree = "<group>"; };
+		A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelper.m; sourceTree = "<group>"; };
 		A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSEvent+iTerm.h"; sourceTree = "<group>"; };
 		A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSEvent+iTerm.m"; sourceTree = "<group>"; };
 		A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteSpecialWindowController.h; sourceTree = "<group>"; };
