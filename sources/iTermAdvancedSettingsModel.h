@@ -134,5 +134,7 @@
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (BOOL)suppressRestartAnnouncement;
 + (void)setSuppressRestartAnnouncement:(BOOL)value;
++ (BOOL)useAdaptiveFrameRate;
++ (int)adaptiveFrameRateThroughputThreshold;
 
 @end
