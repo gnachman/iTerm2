@@ -131,10 +131,16 @@
     }
 
     if (self.path != nil) {
+        // Make sure path ends in a / so a path glob pattern "/foo/bar/*" will match a path of "/foo/bar".
+        NSString *pathForGlob = path;
+        if (![pathForGlob hasSuffix:@"/"]) {
+            pathForGlob = [pathForGlob stringByAppendingString:@"/"];
+        }
+        
         NSRange wildcardPos = [self.path rangeOfString:@"*"];
         if (wildcardPos.location == NSNotFound && [path isEqualToString:self.path]) {
             score += kPathExactMatchScore;
-        } else if ([path stringMatchesGlobPattern:self.path caseSensitive:YES]) {
+        } else if ([pathForGlob stringMatchesGlobPattern:self.path caseSensitive:YES]) {
             score += kPathPartialMatchScore + [self squash:self.path.length];
         } else if (self.path.length) {
             return 0;
