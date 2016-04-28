@@ -35,6 +35,10 @@
     return @{ KEY_NAME: @"path=dir1", KEY_GUID: @"3", KEY_BOUND_HOSTS: @[ @"/dir1" ] };
 }
 
+- (Profile *)profilePathDir1AndSubs {
+    return @{ KEY_NAME: @"path=dir1AndSubs", KEY_GUID: @"3", KEY_BOUND_HOSTS: @[ @"/dir1/*" ] };
+}
+
 - (Profile *)profilePathDir2 {
     return @{ KEY_NAME: @"path=dir2", KEY_GUID: @"4", KEY_BOUND_HOSTS: @[ @"/dir2" ] };
 }
@@ -85,6 +89,10 @@
 
 - (Profile *)profileHostAllDotCom {
     return @{ KEY_NAME: @"host=*.com", KEY_GUID: @"14", KEY_BOUND_HOSTS: @[ @"*.com" ] };
+}
+
+- (Profile *)profileAllPaths {
+    return @{ KEY_NAME: @"path=/*", KEY_GUID: @"15", KEY_BOUND_HOSTS: @[ @"/*" ] };
 }
 
 - (void)setUp {
@@ -187,6 +195,29 @@
 }
 
 #pragma mark Profile stack works
+
+// Regression test for issue 4581. Don't switch away from the current profile
+// to something on the stack if it still matches.
+- (void)testPreferSpecificRuleEvenIfStackHasMatch {
+    _profile = [self profileAllPaths];
+    _allProfiles = @[ [self profileAllPaths],
+                      [self profilePathDir1AndSubs] ];
+    
+    [_aps setHostname:@"iterm2.com"
+             username:@"george"
+                 path:@"/"];
+    XCTAssert([_profile isEqualToProfile:[self profileAllPaths]]);
+    
+    [_aps setHostname:@"iterm2.com"
+             username:@"george"
+                 path:@"/dir1/foo"];
+    XCTAssert([_profile isEqualToProfile:[self profilePathDir1AndSubs]]);
+    
+    [_aps setHostname:@"iterm2.com"
+             username:@"george"
+                 path:@"/dir1/foo/temp"];
+    XCTAssert([_profile isEqualToProfile:[self profilePathDir1AndSubs]]);
+}
 
 // Restore to profile in middle of stack
 - (void)testWalkUpStack {
@@ -291,6 +322,7 @@
 - (iTermSavedProfile *)automaticProfileSwitcherCurrentSavedProfile {
     iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] init] autorelease];
     savedProfile.originalProfile = _profile;
+    savedProfile.profile = _profile;
     return savedProfile;
 }
 
