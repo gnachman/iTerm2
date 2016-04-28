@@ -30,6 +30,7 @@
 #import "iTermSemanticHistoryController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermTextExtractor.h"
+#import "iTermThroughputEstimator.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -167,12 +168,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Timer period between updates when active (not idle, tab is visible or title bar is changing,
 // etc.)
-// Pull request 278 experimented with increasing this to 60fps but some people reported extreme
-// performance hits (as bad as 10x). I'd like to revisit this in version 3.1 when drawing is
-// redone with just NSAttributedString to see if there's enough performance win to increase the
-// frequency. Alterantively, we could revisit variable frequency updates, using 60fps for very
-// low-bandwidth cases.
 static const NSTimeInterval kActiveUpdateCadence = 1.0 / 30.0;
+
+// Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
+static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
 
 // Timer period for background sessions. This changes the tab item's color
 // so it must run often enough for that to be useful.
@@ -364,6 +363,9 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     // Cached advanced setting
     NSTimeInterval _idleTime;
+    
+    // Estimates throughput for adaptive framerate.
+    iTermThroughputEstimator *_throughputEstimator;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -427,6 +429,8 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         _automaticProfileSwitcher = [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
+        _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -509,6 +513,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_substitutions release];
     [_jobName release];
     [_automaticProfileSwitcher release];
+    [_throughputEstimator release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -1696,6 +1701,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self retain];
     dispatch_retain(_executionSemaphore);
     dispatch_async(dispatch_get_main_queue(), ^{
+        if ([iTermAdvancedSettingsModel useAdaptiveFrameRate]) {
+            [_throughputEstimator addByteCount:length];
+        }
         [self executeTokens:&vector bytesHandled:length];
 
         // Unblock the background thread; if it's ready, it can send the main thread more tokens
@@ -3436,7 +3444,18 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)changeCadenceIfNeeded {
     BOOL effectivelyActive = (_active || !self.isIdle || [NSApp isActive]);
     if (effectivelyActive && [_delegate sessionBelongsToVisibleTab]) {
-        [self setUpdateCadence:kActiveUpdateCadence];
+        if ([iTermAdvancedSettingsModel useAdaptiveFrameRate]) {
+            const NSInteger kThroughputLimit =
+                [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
+            const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
+            if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
+                [self setUpdateCadence:kFastUpdateCadence];
+            } else {
+                [self setUpdateCadence:kActiveUpdateCadence];
+            }
+        } else {
+            [self setUpdateCadence:kActiveUpdateCadence];
+        }
     } else {
         [self setUpdateCadence:kBackgroundUpdateCadence];
     }

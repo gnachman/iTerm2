@@ -1392,6 +1392,8 @@
 		A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66B71221C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */; };
 		A66B71231C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */; };
+		A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */; };
+		A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */; };
 		A66DB80E1C8E182B00233E88 /* Info.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB80C1C8E182B00233E88 /* Info.png */; };
 		A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB80D1C8E182B00233E88 /* Info@2x.png */; };
 		A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB8301C8E4C2E00233E88 /* ChangeProfile.png */; };
@@ -3016,6 +3018,8 @@
 		A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.m; sourceTree = "<group>"; };
 		A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermWindowShortcutAccessoryView.xib; path = Interfaces/iTermWindowShortcutAccessoryView.xib; sourceTree = "<group>"; };
 		A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextExtractorTest.m; sourceTree = "<group>"; };
+		A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermThroughputEstimator.h; sourceTree = "<group>"; };
+		A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermThroughputEstimator.m; sourceTree = "<group>"; };
 		A66DB80C1C8E182B00233E88 /* Info.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Info.png; path = images/Info.png; sourceTree = "<group>"; };
 		A66DB80D1C8E182B00233E88 /* Info@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Info@2x.png"; path = "images/Info@2x.png"; sourceTree = "<group>"; };
 		A66DB8301C8E4C2E00233E88 /* ChangeProfile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ChangeProfile.png; path = images/ChangeProfile.png; sourceTree = "<group>"; };
@@ -5041,6 +5045,8 @@
 				A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */,
 				A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */,
 				A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */,
+				A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */,
+				A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6035,6 +6041,7 @@
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
 				A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */,
 				1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */,
+				A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
 				A66DB8361C8E4CBB00233E88 /* iTermOpenQuicklyCommands.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
@@ -7545,6 +7552,7 @@
 				A6C763001B45C52B00E3C992 /* TransferrableFileMenuItemView.m in Sources */,
 				A6C763201B45C52B00E3C992 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */,
+				A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */,
 				A6C7631F1B45C52B00E3C992 /* iTermTextDrawingHelper.m in Sources */,
 				A6C7638C1B45C52B00E3C992 /* ProfileTableView.m in Sources */,
 				A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */,
