@@ -631,6 +631,8 @@ typedef enum {
 // Show an announcement explaining why a restored session is an orphan.
 - (void)showOrphanAnnouncement;
 
+- (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier;
+
 // Change the current profile but keep the name the same.
 - (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName;
 

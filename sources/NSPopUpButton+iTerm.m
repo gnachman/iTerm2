@@ -8,6 +8,7 @@
 
 #import "NSPopUpButton+iTerm.h"
 #import "ITAddressBookMgr.h"
+#import "iTermColorPresets.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfileModel.h"
 
@@ -44,7 +45,7 @@
     int selectedIndex = 0;
     [self removeAllItems];
     int i = 0;
-    NSDictionary* presetsDict = [ProfilesColorsPreferencesViewController builtInColorPresets];
+    NSDictionary* presetsDict = [iTermColorPresets builtInColorPresets];
     for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [self addItemWithTitle:key];
         if ([key isEqualToString:presetName]) {
@@ -53,7 +54,7 @@
         i++;
     }
 
-    NSDictionary* customPresets = [ProfilesColorsPreferencesViewController customColorPresets];
+    NSDictionary* customPresets = [iTermColorPresets customColorPresets];
     if (customPresets && [customPresets count] > 0) {
         [self.menu addItem:[NSMenuItem separatorItem]];
         i++;

@@ -13,6 +13,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermColorMap.h"
+#import "iTermColorPresets.h"
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
@@ -4762,9 +4763,9 @@ ITERM_WEAKLY_REFERENCEABLE
                     profile = self.profile;
                 }
                 BOOL ok =
-                [ProfilesColorsPreferencesViewController loadColorPresetWithName:keyBindingText
-                                                                       inProfile:profile
-                                                                           model:model];
+                    [iTermColorPresets loadColorPresetWithName:keyBindingText
+                                                     inProfile:profile
+                                                         model:model];
                 if (!ok) {
                     ELog(@"Color preset %@ not found", keyBindingText);
                     NSBeep();
@@ -7096,6 +7097,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 #pragma mark - Announcements
+
+- (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {
+    return _announcements[identifier] != nil;
+}
 
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier {
     iTermAnnouncementViewController *announcement = _announcements[identifier];

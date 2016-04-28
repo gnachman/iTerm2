@@ -31,6 +31,7 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
@@ -480,8 +481,13 @@ static BOOL hasBecomeActive = NO;
     DLog(@"application:%@ openFile:%@", theApplication, filename);
     if ([filename hasSuffix:@".itermcolors"]) {
         DLog(@"Importing color presets from %@", filename);
-        if ([[PreferencePanel sharedInstance] importColorPresetFromFile:filename]) {
-            NSRunAlertPanel(@"Colors Scheme Imported", @"The color scheme was imported and added to presets. You can find it under Preferences>Profiles>Colors>Load Presets….", @"OK", nil, nil);
+        if ([iTermColorPresets importColorPresetFromFile:filename]) {
+            NSRunAlertPanel(@"Colors Scheme Imported",
+                            @"The color scheme was imported and added to presets. You can find it "
+                             "under Preferences>Profiles>Colors>Load Presets….",
+                            @"OK",
+                            nil,
+                            nil);
         }
         return YES;
     }
