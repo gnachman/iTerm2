@@ -9,11 +9,11 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 
 @implementation iTermColorPresets
 
-+ (NSDictionary *)customColorPresets {
++ (iTermColorPresetDictionary *)customColorPresets {
     return [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
 }
 
-+ (NSDictionary *)builtInColorPresets {
++ (iTermColorPresetDictionary *)builtInColorPresets {
   NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ColorPresets"
                                                                          ofType:@"plist"];
   return [NSDictionary dictionaryWithContentsOfFile:plistFile];
@@ -52,36 +52,6 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     }
 }
 
-+ (NSArray *)colorKeys {
-    return @[ KEY_ANSI_0_COLOR,
-              KEY_ANSI_1_COLOR,
-              KEY_ANSI_2_COLOR,
-              KEY_ANSI_3_COLOR,
-              KEY_ANSI_4_COLOR,
-              KEY_ANSI_5_COLOR,
-              KEY_ANSI_6_COLOR,
-              KEY_ANSI_7_COLOR,
-              KEY_ANSI_8_COLOR,
-              KEY_ANSI_9_COLOR,
-              KEY_ANSI_10_COLOR,
-              KEY_ANSI_11_COLOR,
-              KEY_ANSI_12_COLOR,
-              KEY_ANSI_13_COLOR,
-              KEY_ANSI_14_COLOR,
-              KEY_ANSI_15_COLOR,
-              KEY_FOREGROUND_COLOR,
-              KEY_BACKGROUND_COLOR,
-              KEY_BOLD_COLOR,
-              KEY_LINK_COLOR,
-              KEY_SELECTION_COLOR,
-              KEY_SELECTED_TEXT_COLOR,
-              KEY_CURSOR_COLOR,
-              KEY_CURSOR_TEXT_COLOR,
-              KEY_TAB_COLOR,
-              KEY_CURSOR_GUIDE_COLOR,
-              KEY_BADGE_COLOR ];
-}
-
 + (void)deletePresetWithName:(NSString *)name {
     NSDictionary* customPresets = [iTermColorPresets customColorPresets];
     NSMutableDictionary* newCustom = [NSMutableDictionary dictionaryWithDictionary:customPresets];
@@ -92,16 +62,8 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
                                                         object:nil];
 }
 
-// This is an abuse of objectForKey:inProfile:, which expects the second arg to be a profile.
-// The preset dictionary looks just enough like a profile for this to work.
-+ (NSDictionary *)colorInPresetDictionary:(NSDictionary *)settings withName:(NSString *)colorName {
-  // If the preset is missing an entry, the default color will be used for that entry.
-  return [iTermProfilePreferences objectForKey:colorName
-                                     inProfile:settings];
-}
-
 // Checks built-ins for the name and, failing that, looks in custom presets.
-+ (NSDictionary *)presetWithName:(NSString *)presetName {
++ (iTermColorPreset *)presetWithName:(NSString *)presetName {
   NSDictionary *presetsDict = [self builtInColorPresets];
   NSDictionary *settings = [presetsDict objectForKey:presetName];
   if (!settings) {
@@ -111,39 +73,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
   return settings;
 }
 
-+ (BOOL)writePresets:(NSDictionary *)presets toFile:(NSString *)filename {
-    return [presets writeToFile:filename atomically:NO];
-}
-
 #pragma mark - Private
-
-+ (BOOL)loadColorPresetWithName:(NSString *)presetName
-                      inProfile:(Profile *)profile
-                          model:(ProfileModel *)model {
-    NSString *guid = profile[KEY_GUID];
-    assert(guid);
-
-    NSDictionary *settings = [self presetWithName:presetName];
-    if (!settings) {
-        return NO;
-    }
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
-
-    for (NSString *colorName in [self colorKeys]) {
-        NSDictionary *colorDict = [self colorInPresetDictionary:settings withName:colorName];
-        if (colorDict) {
-            newDict[colorName] = colorDict;
-        } else {
-            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
-        }
-    }
-
-    [model setBookmark:newDict withGuid:guid];
-    [model flush];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-    return YES;
-}
 
 + (NSString *)presetNameFromFilename:(NSString*)filename {
     return [[filename stringByDeletingPathExtension] lastPathComponent];
@@ -177,6 +107,83 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                         object:nil];
+}
+
+@end
+
+@implementation NSDictionary(iTermColorPreset)
+
+// This is an abuse of objectForKey:inProfile:, which expects the second arg to be a profile.
+// The preset dictionary looks just enough like a profile for this to work.
+- (iTermColorDictionary *)iterm_presetColorWithName:(NSString *)colorName {
+  // If the preset is missing an entry, the default color will be used for that entry.
+  return [iTermProfilePreferences objectForKey:colorName
+                                     inProfile:self];
+}
+
+
+- (BOOL)iterm_writePresetToFileWithName:(NSString *)filename {
+    return [self writeToFile:filename atomically:NO];
+}
+
+@end
+
+@implementation ProfileModel(iTermColorPresets)
+
++ (NSArray *)colorKeys {
+    return @[ KEY_ANSI_0_COLOR,
+              KEY_ANSI_1_COLOR,
+              KEY_ANSI_2_COLOR,
+              KEY_ANSI_3_COLOR,
+              KEY_ANSI_4_COLOR,
+              KEY_ANSI_5_COLOR,
+              KEY_ANSI_6_COLOR,
+              KEY_ANSI_7_COLOR,
+              KEY_ANSI_8_COLOR,
+              KEY_ANSI_9_COLOR,
+              KEY_ANSI_10_COLOR,
+              KEY_ANSI_11_COLOR,
+              KEY_ANSI_12_COLOR,
+              KEY_ANSI_13_COLOR,
+              KEY_ANSI_14_COLOR,
+              KEY_ANSI_15_COLOR,
+              KEY_FOREGROUND_COLOR,
+              KEY_BACKGROUND_COLOR,
+              KEY_BOLD_COLOR,
+              KEY_LINK_COLOR,
+              KEY_SELECTION_COLOR,
+              KEY_SELECTED_TEXT_COLOR,
+              KEY_CURSOR_COLOR,
+              KEY_CURSOR_TEXT_COLOR,
+              KEY_TAB_COLOR,
+              KEY_CURSOR_GUIDE_COLOR,
+              KEY_BADGE_COLOR ];
+}
+
+- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile {
+    NSString *guid = profile[KEY_GUID];
+    assert(guid);
+
+    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
+    if (!settings) {
+        return NO;
+    }
+    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
+
+    for (NSString *colorName in [ProfileModel colorKeys]) {
+        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
+        if (colorDict) {
+            newDict[colorName] = colorDict;
+        } else {
+            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
+        }
+    }
+
+    [self setBookmark:newDict withGuid:guid];
+    [self flush];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    return YES;
 }
 
 @end

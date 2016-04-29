@@ -4762,10 +4762,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 } else {
                     profile = self.profile;
                 }
-                BOOL ok =
-                    [iTermColorPresets loadColorPresetWithName:keyBindingText
-                                                     inProfile:profile
-                                                         model:model];
+                BOOL ok = [model addColorPresetNamed:keyBindingText toProfile:profile];
                 if (!ok) {
                     ELog(@"Color preset %@ not found", keyBindingText);
                     NSBeep();
