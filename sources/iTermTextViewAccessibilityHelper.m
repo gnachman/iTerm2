@@ -7,6 +7,7 @@
 //
 
 #import "iTermTextViewAccessibilityHelper.h"
+#import "DebugLogging.h"
 
 @implementation iTermTextViewAccessibilityHelper {
     // This is a giant string with the entire scrollback buffer plus screen
@@ -317,10 +318,6 @@
     VT100GridCoordRange coordRange = [_delegate accessibilityHelperSelectedRange];
     NSRange range = [self accessibilityRangeForCoordRange:coordRange];
 
-    if (range.length == 0) {
-      range.location = NSNotFound;
-    }
-
     return [NSValue valueWithRange:range];
 }
 
@@ -347,6 +344,7 @@
 #pragma mark - Public methods
 
 - (NSArray *)accessibilityAttributeNames {
+    DLog(@"Called");
     return @[ NSAccessibilityRoleAttribute,
               NSAccessibilityRoleDescriptionAttribute,
               NSAccessibilityHelpAttribute,
@@ -368,6 +366,7 @@
 }
 
 - (NSArray *)accessibilityParameterizedAttributeNames {
+    DLog(@"Called");
     return @[ NSAccessibilityLineForIndexParameterizedAttribute,
               NSAccessibilityRangeForLineParameterizedAttribute,
               NSAccessibilityStringForRangeParameterizedAttribute,
@@ -379,6 +378,14 @@
 - (id)accessibilityAttributeValue:(NSString *)attribute
                      forParameter:(id)parameter
                           handled:(BOOL *)handled {
+    id result = [self performAccessibilityAttributeValue:attribute forParameter:parameter handled:handled];
+    DLog(@"For attribute %@, parameter %@, return %@", attribute, parameter, result);
+    return result;
+}
+
+- (id)performAccessibilityAttributeValue:(NSString *)attribute
+                            forParameter:(id)parameter
+                                 handled:(BOOL *)handled {
     *handled = YES;
     if ([attribute isEqualToString:NSAccessibilityLineForIndexParameterizedAttribute]) {
         //(NSNumber *) - line# for char index; param:(NSNumber *)
@@ -410,6 +417,16 @@
 
 - (id)accessibilityAttributeValue:(NSString *)attribute
                           handled:(BOOL *)handled {
+    id result = [self performAccessibilityAttributeValue:attribute handled:handled];
+    if (handled) {
+        DLog(@"For attribute %@, returning %@", attribute, result);
+    } else {
+        DLog(@"Unhandled");
+    }
+    return result;
+}
+
+- (id)performAccessibilityAttributeValue:(NSString *)attribute handled:(BOOL *)handled {
     if (handled) {
         *handled = YES;
     }
@@ -447,6 +464,13 @@
 
 - (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute
                                  handled:(BOOL *)handled {
+    BOOL result = [self performAccessibilityIsAttributeSettable:attribute handled:handled];
+    DLog(@"Return %@", @(result));
+    return result;
+}
+
+- (BOOL)performAccessibilityIsAttributeSettable:(NSString *)attribute
+                                        handled:(BOOL *)handled {
     *handled = YES;
     if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
         return YES;
@@ -456,8 +480,10 @@
     }
 }
 
-- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute
+- (void)accessibilitySetValue:(id)value
+                 forAttribute:(NSString *)attribute
                       handled:(BOOL *)handled {
+    DLog(@"Set %@ to %@", attribute, value);
     *handled = YES;
     if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
         [self setSelectedTextRange:[(NSValue *)value rangeValue]];
