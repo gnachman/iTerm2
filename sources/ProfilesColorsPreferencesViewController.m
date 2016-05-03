@@ -173,10 +173,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         [_presetsMenu removeItemAtIndex:1];
     }
 
-    NSDictionary* presetsDict = [iTermColorPresets builtInColorPresets];
+    iTermColorPresetDictionary *presetsDict = [iTermColorPresets builtInColorPresets];
     [self addColorPresetsInDict:presetsDict toMenu:_presetsMenu];
 
-    NSDictionary* customPresets = [iTermColorPresets customColorPresets];
+    iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (customPresets && [customPresets count] > 0) {
         [_presetsMenu addItem:[NSMenuItem separatorItem]];
         [self addColorPresetsInDict:customPresets toMenu:_presetsMenu];
@@ -195,7 +195,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     item.target = self;
 }
 
-- (void)addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu {
+- (void)addColorPresetsInDict:(iTermColorPresetDictionary *)presetsDict toMenu:(NSMenu *)theMenu {
     for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key
                                                             action:@selector(loadColorPreset:)
@@ -240,7 +240,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (void)deleteColorPreset:(id)sender {
-    NSDictionary* customPresets = [iTermColorPresets customColorPresets];
+    iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (!customPresets || [customPresets count] == 0) {
         NSRunAlertPanel(@"No deletable color presets.",
                         @"You cannot erase the built-in presets and no custom presets have been imported.",
@@ -256,15 +256,15 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                                        otherButton:nil
                          informativeTextWithFormat:@""];
 
-    NSPopUpButton* pub = [[[NSPopUpButton alloc] init] autorelease];
-    for (NSString* key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
-        [pub addItemWithTitle:key];
+    NSPopUpButton *popUpButton = [[[NSPopUpButton alloc] init] autorelease];
+    for (NSString *key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        [popUpButton addItemWithTitle:key];
     }
-    [pub sizeToFit];
-    [alert setAccessoryView:pub];
+    [popUpButton sizeToFit];
+    [alert setAccessoryView:popUpButton];
     NSInteger button = [alert runModal];
     if (button == NSAlertDefaultReturn) {
-        [iTermColorPresets deletePresetWithName:[[pub selectedItem] title]];
+        [iTermColorPresets deletePresetWithName:[[popUpButton selectedItem] title]];
     }
 }
 
@@ -274,7 +274,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     for (NSString *key in colorWellDictionary) {
         theDict[key] = [[colorWellDictionary[key] color] dictionaryValue];
     }
-    if (![iTermColorPresets writePresets:theDict toFile:filename]) {
+    if (![theDict iterm_writePresetToFileWithName:filename]) {
         NSRunAlertPanel(@"Save Failed.",
                         @"Could not save to %@",
                         @"OK",
@@ -287,7 +287,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)loadColorPresetWithName:(NSString *)presetName {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [self.delegate profilePreferencesCurrentModel];
-    [iTermColorPresets loadColorPresetWithName:presetName inProfile:profile model:model];
+    [model addColorPresetNamed:presetName toProfile:profile];
 }
 
 - (void)loadColorPreset:(id)sender {
@@ -300,9 +300,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (BOOL)currentColorsEqualPreset:(NSDictionary *)preset {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
-    for (NSString *colorName in [iTermColorPresets colorKeys]) {
-        NSDictionary *presetColorDict = [iTermColorPresets colorInPresetDictionary:preset
-                                                                          withName:colorName];
+    for (NSString *colorName in [ProfileModel colorKeys]) {
+        iTermColorDictionary *presetColorDict = [preset iterm_presetColorWithName:colorName];
         NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:colorName
                                                                      inProfile:profile];
         if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
