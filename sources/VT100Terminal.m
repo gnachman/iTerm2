@@ -2044,7 +2044,7 @@ static const int kMaxScreenRows = 4096;
         // Value must be an integer. Bogusly, non-numbers are treated as 0.
         int shape = [value intValue];
         ITermCursorType shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
-        if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
+        if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(*shapeMap)) {
             [delegate_ terminalSetCursorType:shapeMap[shape]];
         }
     } else if ([key isEqualToString:@"ShellIntegrationVersion"]) {

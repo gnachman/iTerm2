@@ -375,6 +375,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         // it's not, add 10 and 13 to this character set.
         NSMutableCharacterSet *characterSet = [NSMutableCharacterSet characterSetWithRange:NSMakeRange(32, 127 - 32)];
         [characterSet addCharactersInRange:NSMakeRange(VT100CC_ESC, 1)];
+        // Keep going at BEL because the tmux OSC wrapper DCS tmux; OSC with double-escapes ST
+        // could end in a BEL.
+        [characterSet addCharactersInRange:NSMakeRange(VT100CC_BEL, 1)];
         [characterSet invert];
         garbageCharacterSet = [characterSet retain];
     });

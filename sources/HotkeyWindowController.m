@@ -297,6 +297,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)storePreviouslyActiveApp {
     NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+    HKWLog(@"Active app is %@", activeAppDict);
     if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
         self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
     } else {
@@ -414,9 +415,14 @@ void OnHotKeyEvent(void)
             HKWLog(@"already have a hotkey window created");
             if ([[hotkeyTerm window] alphaValue] == 1) {
                 HKWLog(@"hotkey window opaque");
-                if (![[hotkeyTerm window] isOnActiveSpace] ||
-                    (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
-                     ![[hotkeyTerm window] isKeyWindow])) {
+                const BOOL activateStickyHotkeyWindow = (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
+                                                         ![[hotkeyTerm window] isKeyWindow]);
+                if (activateStickyHotkeyWindow && ![NSApp isActive]) {
+                    HKWLog(@"Storing previously active app");
+                    [[HotkeyWindowController sharedInstance] storePreviouslyActiveApp];
+                }
+                const BOOL hotkeyWindowOnOtherSpace = ![[hotkeyTerm window] isOnActiveSpace];
+                if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
                     DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
                     [NSApp activateIgnoringOtherApps:YES];
                     [[hotkeyTerm window] makeKeyAndOrderFront:nil];

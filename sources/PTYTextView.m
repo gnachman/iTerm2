@@ -7071,8 +7071,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selection endLiveSelection];
 }
 
+- (VT100GridCoordRange)accessibilityRangeOfCursor {
+    VT100GridCoord coord = [self accessibilityHelperCursorCoord];
+    return VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
+}
+
 - (VT100GridCoordRange)accessibilityHelperSelectedRange {
     iTermSubSelection *sub = _selection.allSubSelections.lastObject;
+    
+    if (!sub) {
+        return [self accessibilityRangeOfCursor];
+    }
+
     VT100GridCoordRange coordRange = sub.range.coordRange;
     int minY = _dataSource.numberOfLines - _dataSource.height;
     if (coordRange.start.y < minY) {
@@ -7082,8 +7092,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         coordRange.start.y -= minY;
     }
     if (coordRange.end.y < minY) {
-        coordRange.end.y = 0;
-        coordRange.end.x = 0;
+        return [self accessibilityRangeOfCursor];
     } else {
         coordRange.end.y -= minY;
     }
