@@ -183,8 +183,8 @@
         // tokens were already added.
         if (token->type != DCS_TMUX_CODE_WRAP) {
             CVectorAppend(vector, token);
-            return YES;
         }
+        return YES;
     }
 
     [token recycleObject];
