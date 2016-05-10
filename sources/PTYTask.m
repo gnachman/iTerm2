@@ -825,7 +825,7 @@ static int MyForkPty(int *amaster,
 }
 
 - (BOOL)pidIsChild {
-    return _serverChildPid == 1 && _childPid != -1;
+    return _serverChildPid == -1 && _childPid != -1;
 }
 
 - (pid_t)serverPid {
