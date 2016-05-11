@@ -21,20 +21,18 @@
 
 @implementation PSMProgressIndicator {
     AMIndeterminateProgressIndicator *_lightIndicator;
-    NSProgressIndicator *_darkIndicator;
+    AMIndeterminateProgressIndicator *_darkIndicator;
     BOOL _light;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _darkIndicator = [[NSProgressIndicator alloc] initWithFrame:self.bounds];
-        [_darkIndicator setStyle:NSProgressIndicatorSpinningStyle];
-        [_darkIndicator setControlSize:NSSmallControlSize];
+        _darkIndicator = [[AMIndeterminateProgressIndicator alloc] initWithFrame:self.bounds];
+        _darkIndicator.color = [NSColor colorWithCalibratedWhite:0 alpha:1];
         [self addSubview:_darkIndicator];
 
-        _lightIndicator =
-            [[AMIndeterminateProgressIndicator alloc] initWithFrame:_darkIndicator.frame];
+        _lightIndicator = [[AMIndeterminateProgressIndicator alloc] initWithFrame:self.bounds];
         _lightIndicator.color = [NSColor colorWithCalibratedWhite:0.8 alpha:1];
         [self addSubview:_lightIndicator];
         _lightIndicator.hidden = YES;
