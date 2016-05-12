@@ -1564,6 +1564,8 @@ ITERM_WEAKLY_REFERENCEABLE
         _screen.terminal = _terminal;
         _terminal.delegate = _screen;
         _shell.paused = NO;
+        _view.findViewController.delegate = self;
+
         [_view autorelease];  // This balances a retain in -terminate prior to calling -makeTerminationUndoable
         return YES;
     } else {
