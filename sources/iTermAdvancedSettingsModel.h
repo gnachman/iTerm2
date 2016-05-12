@@ -136,5 +136,6 @@
 + (void)setSuppressRestartAnnouncement:(BOOL)value;
 + (BOOL)useAdaptiveFrameRate;
 + (int)adaptiveFrameRateThroughputThreshold;
++ (BOOL)includePasteHistoryInAdvancedPaste;
 
 @end

@@ -62,7 +62,6 @@ DEFINE_BOOL(navigatePanesInReadingOrder, YES, @"Tabs: Next Pane and Previous Pan
 DEFINE_BOOL(eliminateCloseButtons, NO, @"Tabs: Eliminate close buttons from tabs, even on mouse-over.");
 DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, @"Tabs: How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");
 DEFINE_BOOL(allowDragOfTabIntoNewWindow, YES, @"Tabs: Allow a tab to be dragged and dropped outside any existing tab bar to create a new window.");
-DEFINE_BOOL(tabTitlesUseSmartTruncation, NO, @"Tabs: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
 
 #pragma mark Mouse
 DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys when in alternate screen mode.");
@@ -97,7 +96,6 @@ DEFINE_BOOL(focusReportingEnabled, YES, @"Terminal: Apps may turn on Focus Repor
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation.\nWarning: reducing this value may cause problems if you have multiple displays.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"Hotkey: If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
 DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, @"Hotkey: The hotkey window floats above other windows even when another application is active.\nYou must disable “Prefs > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
-DEFINE_BOOL(hotkeyWindowIgnoresSpotlight, NO, @"Hotkey: Prevent opening Spotlight from auto-closing the hotkey window.\nThis feature is experimental and may have unexpected side-effects.");
 
 #pragma mark General
 DEFINE_STRING(searchCommand, @"https://google.com/search?q=%@", @"General: Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");
@@ -113,8 +111,6 @@ DEFINE_BOOL(hideFromDockAndAppSwitcher, NO, @"General: Hide iTerm2 from the dock
 DEFINE_BOOL(disablePotentiallyInsecureEscapeSequences, NO, @"General: Disable potentially insecure escape sequences.\nSome features of iTerm2 expand the surface area for security issues. Consider turning this on when viewing untrusted content. The following custom escape sequences will be disabled: RemoteHost, StealFocus, CurrentDir, SetProfile, CopyToClipboard, EndCopy, File, SetBackgroundImageFile. The following DEC sequences are disabled: DECRQCRA. The following xterm extensions are disabled: Window Title Reporting, Icon Title Reporting.");
 DEFINE_BOOL(performDictionaryLookupOnQuickLook, YES, @"General: Perform dictionary lookups on force press.\nIf this is NO, force press will still preview the Semantic History action; only dictionary lookups can be disabled.");
 DEFINE_BOOL(jiggleTTYSizeOnClearBuffer, NO, @"General: Redraw the screen after the Clear Buffer menu item is selected.\nWhen enabled, the TTY size is briefly changed after clearing the buffer to cause the shell or current app to redraw.");
-DEFINE_BOOL(useAdaptiveFrameRate, NO, @"General: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will update at 30 frames per second.");
-DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, @"General: Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
 
 #pragma mark - Semantic History
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlines for the purposes of locating URLs for Semantic History.\nIf a hard newline occurs at the end of a line then cmd-click will not see it all unless this setting is turned on. This is useful for some interactive applications.");
@@ -140,9 +136,7 @@ DEFINE_BOOL(disableWindowSizeSnap, NO, @"Windows: Terminal windows resize smooth
 DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, @"Windows: If the Profiles window is open, it always moves to join the active Space.\nYou must restart iTerm2 for a change in this setting to take effect.");
 
 #pragma mark tmux
-DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
 DEFINE_BOOL(noSyncNewWindowOrTabFromTmuxOpensTmux, NO, @"Tmux Integration: Suppress alert asking what kind of tab/window to open in tmux integration.");
-DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, NO, @"Tmux Integration: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled in Prefs>Profiles>Keys.");
@@ -188,4 +182,14 @@ DEFINE_FLOAT(badgeMaxWidthFraction, 0.5, @"Badge: Maximum width of the badge\nAs
 DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, @"Badge: Maximum height of the badge\nAs a fraction of the height of the terminal, between 0 and 1.0.");
 DEFINE_INT(badgeRightMargin, 10, @"Badge: Right Margin\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
 DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
+
+#pragma mark - Experimental Features
+DEFINE_BOOL(includePasteHistoryInAdvancedPaste, NO, @"Experimental Features: Include paste history in the advanced paste menu.");
+DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Experimental Features: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
+DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, NO, @"Experimental Features: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
+DEFINE_BOOL(useAdaptiveFrameRate, NO, @"Experimental Features: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will update at 30 frames per second.");
+DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, @"Experimental Features: Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
+DEFINE_BOOL(hotkeyWindowIgnoresSpotlight, NO, @"Experimental Features: Prevent opening Spotlight from auto-closing the hotkey window.\nThis feature is experimental and may have unexpected side-effects.");
+DEFINE_BOOL(tabTitlesUseSmartTruncation, NO, @"Experimental Features: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
+
 @end

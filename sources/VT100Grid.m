@@ -1603,8 +1603,10 @@ static NSString *const kGridSizeKey = @"Size";
     }
     VT100GridSize size = [dict[kGridSizeKey] gridSize];
 
-    // Saved values only make sense if the size is the same as when the state was saved.
-    if (VT100GridSizeEquals(size, size_)) {
+    // Saved values only make sense if the size is at least as large as when the state was saved.
+    // When restoring from a saved arrangement, the initial grid size is a guess which is a bit too
+    // wide when legacy scrollbars are in use.
+    if (size.width <= size_.width && size.height <= size_.height) {
         cursor_ = [dict[kGridCursorKey] gridCoord];
         scrollRegionRows_ = [dict[kGridScrollRegionRowsKey] gridRange];
         scrollRegionCols_ = [dict[kGridScrollRegionColumnsKey] gridRange];

@@ -48,7 +48,7 @@
 
 + (instancetype)sharedInstance;
 - (instancetype)initWithMaxEntries:(int)maxEntries;
-- (NSArray*)entries;
+- (NSArray<PasteboardEntry *> *)entries;
 - (void)save:(NSString*)value;
 
 // Erases persistent history, but not in-memory.

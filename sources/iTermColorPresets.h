@@ -1,5 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
+#import "ProfileModel.h"
+
 extern NSString *const kCustomColorPresetsKey;
 extern NSString *const kRebuildColorPresetsMenuNotification;
 
@@ -8,6 +10,7 @@ extern NSString *const kRebuildColorPresetsMenuNotification;
 
 typedef NSDictionary<NSString *, NSNumber *> iTermColorDictionary;
 typedef NSDictionary<NSString *, iTermColorDictionary *> iTermColorPreset;
+typedef NSDictionary<NSString *, iTermColorPreset *> iTermColorPresetDictionary;
 
 // This is a model for the color presets that are globally loaded into user defaults. It also
 // provides convenience methods for accessing and modifying profiles, exporting profiles, getting a
@@ -15,13 +18,10 @@ typedef NSDictionary<NSString *, iTermColorDictionary *> iTermColorPreset;
 @interface iTermColorPresets : NSObject
 
 // Loaded presets
-+ (NSDictionary<NSString *, iTermColorPreset *> *)customColorPresets;
++ (iTermColorPresetDictionary *)customColorPresets;
 
 // Factory-supplied presets
-+ (NSDictionary<NSString *, iTermColorPreset *> *)builtInColorPresets;
-
-// Keys in a preset dictionary
-+ (NSArray<NSString *> *)colorKeys;
++ (iTermColorPresetDictionary *)builtInColorPresets;
 
 // Loook up a loaded preset by name
 + (iTermColorPreset *)presetWithName:(NSString *)presetName;
@@ -32,16 +32,24 @@ typedef NSDictionary<NSString *, iTermColorDictionary *> iTermColorPreset;
 // Remove a loaded preset
 + (void)deletePresetWithName:(NSString *)name;
 
-// Add a loaded preset to a profile
-+ (BOOL)loadColorPresetWithName:(NSString *)presetName
-                      inProfile:(Profile *)profile
-                          model:(ProfileModel *)model;
+@end
+
+@interface NSDictionary(iTermColorPreset)
 
 // Extract a preset from a profile
-+ (iTermColorDictionary *)colorInPresetDictionary:(iTermColorPreset *)settings
-                                         withName:(NSString *)colorName;
+- (iTermColorDictionary *)iterm_presetColorWithName:(NSString *)colorName;
 
 // Save a preset to disk
-+ (BOOL)writePresets:(iTermColorPreset *)presets toFile:(NSString *)filename;
+- (BOOL)iterm_writePresetToFileWithName:(NSString *)filename;
+
+@end
+
+@interface ProfileModel(iTermColorPresets)
+
+// Keys in a preset dictionary
++ (NSArray<NSString *> *)colorKeys;
+
+// Add a loaded preset to a profile
+- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile;
 
 @end
