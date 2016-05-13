@@ -520,6 +520,11 @@ typedef enum {
 // a scrollbar.
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle;
 
+// Update the scrollbar's visibility and style. Returns YES if a change was made.
+// This is the one and only way that scrollbars should be changed after initialization. It ensures
+// the content view's frame is updated.
+- (BOOL)setScrollBarVisible:(BOOL)visible style:(NSScrollerStyle)style;
+
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
 
