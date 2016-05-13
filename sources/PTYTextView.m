@@ -4833,7 +4833,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // See comment in -keyDown:
         DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
         [gCurrentKeyEventTextView doCommandBySelector:aSelector];
-        [self.delegate keyDown:_keydownEvent];
         return;
     }
     [self.delegate keyDown:_keydownEvent];
