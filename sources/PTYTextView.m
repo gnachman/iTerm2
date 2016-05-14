@@ -142,7 +142,7 @@ static const int kDragThreshold = 3;
     double _charHeightWithoutSpacing;
 
     // NSTextInputClient support
-    BOOL _inputMethodIsInserting;
+    BOOL _keyPressHandled;
     NSDictionary *_markedTextAttributes;
 
     PTYFontInfo *_primaryFont;
@@ -1426,7 +1426,7 @@ static const int kDragThreshold = 3;
 
     if (!workAroundControlBug) {
         // Let the IME process key events
-        _inputMethodIsInserting = NO;
+        _keyPressHandled = NO;
         DLog(@"PTYTextView keyDown send to IME");
 
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
@@ -1439,7 +1439,7 @@ static const int kDragThreshold = 3;
 
         // If the IME didn't want it, pass it on to the delegate
         if (!prev &&
-            !_inputMethodIsInserting &&
+            !_keyPressHandled &&
             ![self hasMarkedText]) {
             DLog(@"PTYTextView keyDown IME no, send to delegate");
             [delegate keyDown:event];
@@ -4867,7 +4867,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [super insertText:aString];
         }
 
-        _inputMethodIsInserting = YES;
+        _keyPressHandled = YES;
     }
 
     if ([self hasMarkedText]) {
