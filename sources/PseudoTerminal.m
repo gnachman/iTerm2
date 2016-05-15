@@ -3170,19 +3170,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 // Returns YES if a change was made.
 - (BOOL)updateSessionScrollbars {
     BOOL changed = NO;
+    BOOL hasScrollbar = [self scrollbarShouldBeVisible];
+    NSScrollerStyle style = [self scrollerStyle];
     for (PTYSession *aSession in [self allSessions]) {
-        BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        if (aSession.view.scrollview.hasVerticalScroller != hasScrollbar) {
+        if ([aSession setScrollBarVisible:hasScrollbar style:style]) {
             changed = YES;
         }
-        [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
-
-        NSScrollerStyle style = [self scrollerStyle];
-        if (aSession.view.scrollview.scrollerStyle != style) {
-            changed = YES;
-        }
-        [[aSession.view scrollview] setScrollerStyle:style];
-        [[aSession textview] updateScrollerForBackgroundColor];
     }
 
     return changed;

@@ -162,8 +162,8 @@ DEFINE_BOOL(noSyncReplaceProfileWarning, NO, @"Warnings: Suppress warning about 
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard.");
-DEFINE_INT(quickPasteBytesPerCall, 1024, @"Pasteboard: Number of bytes to paste in each chunk when pasting normally.");
-DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01, @"Pasteboard: Delay in seconds between chunks when pasting normally.")
+DEFINE_INT(quickPasteBytesPerCall, 667, @"Pasteboard: Number of bytes to paste in each chunk when pasting normally.");
+DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01530456, @"Pasteboard: Delay in seconds between chunks when pasting normally.")
 DEFINE_INT(slowPasteBytesPerCall, 16, @"Pasteboard: Number of bytes to paste in each chunk when pasting slowly.");
 DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Pasteboard: Delay in seconds between chunks when pasting slowly");
 DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on selection includes color and font style.");

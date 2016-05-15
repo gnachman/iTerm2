@@ -127,6 +127,10 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize {
+    [self updateLayout];
+}
+
+- (void)updateLayout {
     if ([_delegate sessionViewShouldUpdateSubviewsFramesAutomatically]) {
         CGFloat titleHeight = 0;
         if (self.showTitle) {

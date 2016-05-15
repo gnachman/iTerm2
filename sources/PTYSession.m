@@ -2023,6 +2023,26 @@ ITERM_WEAKLY_REFERENCEABLE
     return outerSize;
 }
 
+- (BOOL)setScrollBarVisible:(BOOL)visible style:(NSScrollerStyle)style {
+    BOOL changed = NO;
+    if (self.view.scrollview.hasVerticalScroller != visible) {
+        changed = YES;
+    }
+    [[self.view scrollview] setHasVerticalScroller:visible];
+
+    if (self.view.scrollview.scrollerStyle != style) {
+        changed = YES;
+    }
+    [[self.view scrollview] setScrollerStyle:style];
+    [[self textview] updateScrollerForBackgroundColor];
+
+    if (changed) {
+        [self.view updateLayout];
+    }
+
+    return changed;
+}
+
 - (int)_keyBindingActionForEvent:(NSEvent*)event
 {
     unsigned int modflag;

@@ -149,6 +149,9 @@
 
 - (void)updateScrollViewFrame;
 
+// Layout subviews if automatic updates are allowed by the delegate.
+- (void)updateLayout;
+
 // The frame excluding the per-pane titlebar.
 - (NSRect)contentRect;
 

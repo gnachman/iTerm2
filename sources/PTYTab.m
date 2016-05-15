@@ -1971,8 +1971,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
-    BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
-    [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
+    [aSession setScrollBarVisible:[parentWindow_ scrollbarShouldBeVisible]
+                            style:[parentWindow_ scrollerStyle]];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
     int width = (size.width - MARGIN * 2) / [[aSession textview] charWidth];
