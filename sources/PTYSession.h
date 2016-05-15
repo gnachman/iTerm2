@@ -212,9 +212,6 @@ typedef enum {
 // Array of subprocessess names.
 @property(nonatomic, readonly) NSArray *childJobNames;
 
-// Time since reference date when last output was receivced.
-@property(nonatomic, readonly) NSTimeInterval lastOutput;
-
 // Is the session idle? Used by updateLabelAttributes to send a growl message when processing ends.
 @property(nonatomic, assign) BOOL havePostedIdleNotification;
 
