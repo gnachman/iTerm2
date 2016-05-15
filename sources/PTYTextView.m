@@ -142,8 +142,20 @@ static const int kDragThreshold = 3;
     double _charHeightWithoutSpacing;
 
     // NSTextInputClient support
+    
+    // When an event is passed to -handleEvent, it may get dispatched to -insertText:replacementRange:
+    // or -doCommandBySelector:. If one of these methods processes the input by sending it to the
+    // delegate then this will be set to YES to prevent it from being handled twice.
     BOOL _keyPressHandled;
+    
+    // This is used by the experimental feature guarded by [iTermAdvancedSettingsModel experimentalKeyHandling].
+    // Indicates if marked text existed before invoking -handleEvent: for a keypress. If the
+    // input method handles the keypress and causes the IME to finish then the keypress must not
+    // be passed to the delegate. -insertText:replacementRange: and -doCommandBySelector: need to
+    // know if marked text existed prior to -handleEvent so they can avoid passing the event to the
+    // delegate in this case.
     BOOL _hadMarkedTextBeforeHandlingKeypressEvent;
+
     NSDictionary *_markedTextAttributes;
 
     PTYFontInfo *_primaryFont;
@@ -1301,6 +1313,12 @@ static const int kDragThreshold = 3;
     return [super performKeyEquivalent:theEvent];
 }
 
+// I haven't figured out how to test this code automatically, but a few things to try:
+// * Repeats in US
+// * Repeats in AquaSKK's Hiragana
+// * Press L in AquaSKK's Hiragana to enter AquaSKK's ASCII
+// * "special" keys, like Enter which go through doCommandBySelector
+// * Repeated special keys
 - (void)keyDown:(NSEvent*)event {
     [_altScreenMouseScrollInferer keyDown:event];
     if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
@@ -1343,7 +1361,7 @@ static const int kDragThreshold = 3;
 
     _keyIsARepeat = [event isARepeat];
     DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-    DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent (int)_hadMarkedTextBeforeHandlingKeypressEvent);
+    DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent=%d", (int)_hadMarkedTextBeforeHandlingKeypressEvent);
     DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
     DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%lu", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
     DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
@@ -1369,7 +1387,7 @@ static const int kDragThreshold = 3;
     }
 
     // Should we process the event immediately in the delegate?
-    if ((!_hadMarkedTextBeforeHandlingKeypressEvent) &&
+    if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
         ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
@@ -1435,14 +1453,26 @@ static const int kDragThreshold = 3;
         // track the instance of PTYTextView that is currently handling a key event and rerouting
         // calls as needed in -insertText and -doCommandBySelector.
         gCurrentKeyEventTextView = [[self retain] autorelease];
-        [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+
+        if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
+          // This may cause -insertText:replacementRange: or -doCommandBySelector: to be called.
+          // These methods have a side-effect of setting _keyPressHandled if they dispatched the event
+          // to the delegate. They might not get called: for example, if you hold down certain keys
+          // then repeats might be ignored, or the IME might handle it internally (such as when you press
+          // "L" in AquaSKK's Hiragana mode to enter ASCII mode. See pull request 279 for more on this.
+          [self.inputContext handleEvent:event];
+        } else {
+          [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        }
         gCurrentKeyEventTextView = nil;
 
-        // If the IME didn't want it, pass it on to the delegate
-        if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
-            !_keyPressHandled &&
-            ![self hasMarkedText]) {
-            DLog(@"PTYTextView keyDown IME no, send to delegate");
+        // Handle repeats.
+        BOOL shouldPassToDelegate = (!_hadMarkedTextBeforeHandlingKeypressEvent && !_keyPressHandled && ![self hasMarkedText]);
+        if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
+            shouldPassToDelegate &= event.isARepeat;
+        }
+        if (shouldPassToDelegate) {
+            DLog(@"PTYTextView keyDown unhandled (likely repeated) keypress with no IME, send to delegate");
             [delegate keyDown:event];
         }
     }
@@ -4833,6 +4863,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
         [gCurrentKeyEventTextView doCommandBySelector:aSelector];
         return;
+    }
+    
+    if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
+        // Pass the event to the delegate since doCommandBySelector was called instead of
+        // insertText:replacementRange:, unless an IME is in use. An example of when this gets called
+        // but we should not pass the event to the delegate is when there is marked text and you press
+        // Enter.
+        if (![self hasMarkedText] && !_hadMarkedTextBeforeHandlingKeypressEvent) {
+            _keyPressHandled = YES;
+            [self.delegate keyDown:[NSApp currentEvent]];
+        }
     }
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 }

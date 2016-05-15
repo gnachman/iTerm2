@@ -137,5 +137,6 @@
 + (BOOL)useAdaptiveFrameRate;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)includePasteHistoryInAdvancedPaste;
++ (BOOL)experimentalKeyHandling;
 
 @end
