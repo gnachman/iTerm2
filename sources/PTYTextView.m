@@ -1560,8 +1560,8 @@ static const int kDragThreshold = 3;
         return NO;
     }
     BOOL alternateMouseScroll = [iTermAdvancedSettingsModel alternateMouseScroll];
-    NSString* alternateMouseScrollEscapeUp = [iTermAdvancedSettingsModel alternateMouseScrollEscapeUp];
-    NSString* alternateMouseScrollEscapeDown = [iTermAdvancedSettingsModel alternateMouseScrollEscapeDown];
+    NSString *alternateMouseScrollEscapeUp = [iTermAdvancedSettingsModel alternateMouseScrollEscapeUp];
+    NSString *alternateMouseScrollEscapeDown = [iTermAdvancedSettingsModel alternateMouseScrollEscapeDown];
     BOOL showingAlternateScreen = [self.dataSource showingAlternateScreen];
     if (!showingAlternateScreen) {
         return NO;
