@@ -143,6 +143,7 @@ static const int kDragThreshold = 3;
 
     // NSTextInputClient support
     BOOL _keyPressHandled;
+    BOOL _hadMarkedTextBeforeHandlingKeypressEvent;
     NSDictionary *_markedTextAttributes;
 
     PTYFontInfo *_primaryFont;
@@ -1336,13 +1337,13 @@ static const int kDragThreshold = 3;
     }
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
-    BOOL prev = [self hasMarkedText];
+    _hadMarkedTextBeforeHandlingKeypressEvent = [self hasMarkedText];
     BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
     BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     _keyIsARepeat = [event isARepeat];
     DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-    DLog(@"prev=%d", (int)prev);
+    DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent (int)_hadMarkedTextBeforeHandlingKeypressEvent);
     DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
     DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%lu", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
     DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
@@ -1368,7 +1369,7 @@ static const int kDragThreshold = 3;
     }
 
     // Should we process the event immediately in the delegate?
-    if ((!prev) &&
+    if ((!_hadMarkedTextBeforeHandlingKeypressEvent) &&
         ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
@@ -1393,7 +1394,7 @@ static const int kDragThreshold = 3;
     // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the
     // standard combinations.
     BOOL workAroundControlBug = NO;
-    if (!prev &&
+    if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
         DLog(@"Special ctrl+key handler running");
 
@@ -1438,7 +1439,7 @@ static const int kDragThreshold = 3;
         gCurrentKeyEventTextView = nil;
 
         // If the IME didn't want it, pass it on to the delegate
-        if (!prev &&
+        if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
             !_keyPressHandled &&
             ![self hasMarkedText]) {
             DLog(@"PTYTextView keyDown IME no, send to delegate");
