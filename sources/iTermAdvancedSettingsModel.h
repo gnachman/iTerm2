@@ -15,6 +15,8 @@
 + (int)minCompactTabWidth;
 + (int)optimumTabWidth;
 + (BOOL)alternateMouseScroll;
++ (NSString *)alternateMouseScrollEscapeUp;
++ (NSString *)alternateMouseScrollEscapeDown;
 + (BOOL)traditionalVisualBell;
 + (double)hotkeyTermAnimationDuration;
 + (BOOL)hotkeyWindowFloatsAboveOtherWindows;
