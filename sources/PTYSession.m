@@ -7103,7 +7103,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"This account's Shell Integration scripts are out of date."
+        [iTermAnnouncementViewController announcementWithTitle:@"This account’s Shell Integration scripts are out of date."
                                                          style:kiTermAnnouncementViewStyleWarning
                                                    withActions:@[ @"Upgrade", @"Silence Warning" ]
                                                     completion:^(int selection) {

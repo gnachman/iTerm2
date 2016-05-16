@@ -3723,10 +3723,35 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
    */
 }
 
+// version is formatted as
+// <version number>;<key>=<value>;<key>=<value>...
+// Older scripts may have only a version number and no key-value pairs.
+// The only defined key is "shell", and the value will be tcsh, bash, zsh, or fish.
 - (void)terminalSetShellIntegrationVersion:(NSString *)version {
-    int versionNumber = [version integerValue];
-    static int kLatestKnownVersion = 1;
-    if (versionNumber < kLatestKnownVersion) {
+    NSArray *parts = [version componentsSeparatedByString:@";"];
+    NSString *shell = nil;
+    NSInteger versionNumber = [parts[0] integerValue];
+    if (parts.count >= 2) {
+        NSMutableDictionary *params = [NSMutableDictionary dictionary];
+        for (NSString *kvp in [parts subarrayWithRange:NSMakeRange(1, parts.count - 1)]) {
+            NSRange equalsRange = [kvp rangeOfString:@"="];
+            if (equalsRange.location == NSNotFound) {
+                continue;
+            }
+            NSString *key = [kvp substringToIndex:equalsRange.location];
+            NSString *value = [kvp substringFromIndex:NSMaxRange(equalsRange)];
+            params[key] = value;
+        }
+        shell = params[@"shell"];
+    }
+    
+    NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
+        @{ @"tcsh": @2,
+           @"bash": @2,
+           @"zsh": @2,
+           @"fish": @2 };
+    NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
+    if (!shell || versionNumber < latestKnownVersion) {
         [delegate_ screenSuggestShellIntegrationUpgrade];
     }
 }
