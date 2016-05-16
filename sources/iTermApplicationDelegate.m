@@ -62,6 +62,7 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "Sparkle/SUStandardVersionComparator.h"
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
@@ -89,6 +90,7 @@ static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableS
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
 NSString *const kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt";
+static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 
@@ -286,7 +288,106 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (BOOL)shouldNotifyAboutIncompatibleSoftware {
+    // Pending discussions:
+    // Docker: https://github.com/docker/kitematic/pull/855
+    // LaunchBar: https://twitter.com/launchbar/status/620975715278790657?cn=cmVwbHk%3D&refsrc=email
+    // Pathfinder: https://twitter.com/gnachman/status/659409608642007041
+
+#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
+
+#ifdef SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
+    static NSString *const kTimeOfFirstLaunchForIncompatibilityWarnings = @"NoSyncTimeOfFirstLaunchForIncompatibilityWarnings";
+    static const NSTimeInterval kMinimumDelayBeforeWarningAboutIncompatibility = 24 * 60 * 60;
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval timeOfFirstLaunchForIncompatibilityWarnings =
+        [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfFirstLaunchForIncompatibilityWarnings];
+    if (!timeOfFirstLaunchForIncompatibilityWarnings) {
+        [[NSUserDefaults standardUserDefaults] setDouble:now
+                                                  forKey:kTimeOfFirstLaunchForIncompatibilityWarnings];
+    } else if (now - timeOfFirstLaunchForIncompatibilityWarnings > kMinimumDelayBeforeWarningAboutIncompatibility) {
+        return ![[NSUserDefaults standardUserDefaults] boolForKey:kHaveWarnedAboutIncompatibleSoftware];
+    }
+#endif
+    return NO;
+}
+
+- (NSString *)shortVersionStringOfAppWithBundleId:(NSString *)bundleId {
+    NSString *bundlePath =
+            [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
+    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+    NSDictionary *info = [bundle infoDictionary];
+    NSString *version = info[@"CFBundleShortVersionString"];
+    return version;
+}
+
+- (BOOL)version:(NSString *)version newerThan:(NSString *)otherVersion {
+    id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
+    NSInteger result = [comparator compareVersion:version toVersion:otherVersion];
+    return result == NSOrderedDescending;
+}
+
+- (void)notifyAboutIncompatibleVersionOf:(NSString *)name url:(NSString *)urlString upgradeAvailable:(BOOL)upgradeAvailable {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Incompatible Software Detected";
+    [alert addButtonWithTitle:@"OK"];
+    if (upgradeAvailable) {
+        alert.informativeText = [NSString stringWithFormat:@"You need to upgrade %@ to use it with this version of iTerm2.", name];
+    } else {
+        alert.informativeText = [NSString stringWithFormat:@"You have a version of %@ installed which is not compatible with this version of iTerm2.", name];
+        [alert addButtonWithTitle:@"Learn More"];
+    }
+
+    if ([alert runModal] == NSAlertSecondButtonReturn) {
+        NSURL *url = [NSURL URLWithString:urlString];
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
+- (BOOL)notifyAboutIncompatibleSoftware {
+    BOOL found = NO;
+
+    NSString *dockerVersion = [self shortVersionStringOfAppWithBundleId:@"com.apple.ScriptEditor.id.dockerquickstartterminalapp"];
+    if (dockerVersion && ![self version:dockerVersion newerThan:@"1.3.0"]) {
+        [self notifyAboutIncompatibleVersionOf:@"Docker Quickstart Terminal"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/dockerquickstartincompatible"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+
+    NSString *launchBarVersion = [self shortVersionStringOfAppWithBundleId:@"at.obdev.LaunchBar"];
+    if (launchBarVersion && ![self version:launchBarVersion newerThan:@"6.6.2"]) {
+        [self notifyAboutIncompatibleVersionOf:@"LaunchBar"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/dockerquickstartincompatible"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+
+    NSString *pathfinderVersion = [self shortVersionStringOfAppWithBundleId:@"com.cocoatech.PathFinder"];
+    if (pathfinderVersion && ![self version:pathfinderVersion newerThan:@"7.3.3"]) {
+        [self notifyAboutIncompatibleVersionOf:@"Pathfinder"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/pathfinder7compatibility"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutIncompatibleSoftware];
+    return found;
+}
+
+- (IBAction)checkForIncompatibleSoftware:(id)sender {
+    if (![self notifyAboutIncompatibleSoftware]) {
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"No Incompatible Software Detected";
+        alert.informativeText = @"No third-party software that is known to be incompatible with iTerm2’s new Applescript interfaces was found.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
+    }
+}
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    if ([self shouldNotifyAboutIncompatibleSoftware]) {
+        [self notifyAboutIncompatibleSoftware];
+    }
     if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
