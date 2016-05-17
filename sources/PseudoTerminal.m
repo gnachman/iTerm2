@@ -4549,6 +4549,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [_instantReplayWindowController.window setFrameOrigin:origin];
         _instantReplayWindowController.delegate = self;
         [_instantReplayWindowController.window orderFront:nil];
+        [_instantReplayWindowController updateInstantReplayView];
     }
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
