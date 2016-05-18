@@ -197,7 +197,6 @@ static NSString *const kStackKey = @"Profile Stack";
     
     // Find the best-matching rule.
     double bestScore = 0;
-    int longestHost = 0;
     Profile *bestProfile = nil;
 
     for (NSString *ruleString in ruleToProfileMap) {
@@ -205,7 +204,6 @@ static NSString *const kStackKey = @"Profile Stack";
         double score = [rule scoreForHostname:hostname username:username path:path];
         if (score > bestScore) {
             bestScore = score;
-            longestHost = [rule.hostname length];
             bestProfile = ruleToProfileMap[ruleString];
             if (sticky) {
                 *sticky = rule.isSticky;
