@@ -392,7 +392,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [tmuxController_ release];
     [parseTree_ release];
     [hiddenLiveViews_ release];
-    [self.viewToSessionMap release];
+    [_viewToSessionMap release];
     [super dealloc];
 }
 
