@@ -2714,15 +2714,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [[[FutureWKUserContentController alloc] init] autorelease];
         configuration.userContentController = userContentController;
         configuration.websiteDataStore = [FutureWKWebsiteDataStore defaultDataStore];
-        FutureWKWebView *webView = [[FutureWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
-                                                            configuration:configuration];
+        FutureWKWebView *webView = [[[FutureWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
+                                                             configuration:configuration] autorelease];
 
         NSURLRequest *request =
             [[[NSURLRequest alloc] initWithURL:url] autorelease];
         [webView loadRequest:request];
 
         NSPopover *popover = [[NSPopover alloc] init];
-        NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView];
+        NSViewController *viewController = [[[iTermWebViewWrapperViewController alloc] initWithWebView:webView] autorelease];
         popover.contentViewController = viewController;
         popover.contentSize = viewController.view.frame.size;
         NSRect rect = NSMakeRect(pointInWindow.x - _charWidth / 2,
