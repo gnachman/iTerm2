@@ -89,7 +89,7 @@
     NSAttributedString *patreonLink = [self attributedStringWithLinkToURL:@"https://patreon.com/gnachman"
                                                                     title:@"Patreon"];
     [attributedString appendAttributedString:patreonLink];
-    NSAttributedString *period = [[NSAttributedString alloc] initWithString:@"."];
+    NSAttributedString *period = [[[NSAttributedString alloc] initWithString:@"."] autorelease];
     [attributedString appendAttributedString:period];
 
     return attributedString;
