@@ -209,7 +209,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [NSImage imageNamed:@"important"];
 }
 
-+ (NSImage *)newOutputImage {
++ (NSImage *)imageForNewOutput {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
@@ -227,7 +227,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // There was a separate idle graphic, but I prefer NewOutput. The distinction is already drawn
     // because a spinner is present only while new output is being received. It's still in the git
     // repo, named "Idle.png".
-    return [self newOutputImage];
+    return [self imageForNewOutput];
 }
 
 + (NSImage *)deadImage {
@@ -512,7 +512,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setIcon:[PTYTab bellImage]];
     } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
                (_state & (kPTYTabNewOutputState))) {
-        [self setIcon:[PTYTab newOutputImage]];
+        [self setIcon:[PTYTab imageForNewOutput]];
     } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
                (_state & kPTYTabIdleState)) {
         [self setIcon:[PTYTab idleImage]];
