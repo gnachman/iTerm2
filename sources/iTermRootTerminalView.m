@@ -396,7 +396,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                                               dragHandleWidth,
                                                               NSHeight(self.tabBarControl.frame));
                 if (!self.leftTabBarDragHandle) {
-                    self.leftTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame];
+                    self.leftTabBarDragHandle = [[[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame] autorelease];
                     self.leftTabBarDragHandle.delegate = self;
                     [self addSubview:self.leftTabBarDragHandle];
                 } else {
