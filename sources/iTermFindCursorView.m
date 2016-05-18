@@ -170,9 +170,9 @@ const double kFindCursorHoleRadius = 30;
     [super setCursorPosition:cursorPosition];
     _emitterLayer.emitterPosition = cursorPosition;
 
-    CAShapeLayer *mask = [[CAShapeLayer alloc] init];
+    CAShapeLayer *mask = [[[CAShapeLayer alloc] init] autorelease];
 
-    NSBezierPath *outerPath = [NSBezierPath bezierPathWithRect:self.bounds];
+    NSBezierPath *outerPath = [NSBezierPath bezierPath];
     outerPath.windingRule = NSEvenOddWindingRule;
 
     NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(cursorPosition.x - 20,
@@ -180,10 +180,10 @@ const double kFindCursorHoleRadius = 30;
                                                                            40,
                                                                            40)];
     [outerPath appendBezierPath:path];
-
+    [outerPath appendBezierPath:[NSBezierPath bezierPathWithRect:self.bounds]];
     mask.fillRule = kCAFillRuleEvenOdd;
     mask.path = [outerPath iterm_CGPath];
-    mask.fillColor = [[NSColor blackColor] CGColor];
+    mask.fillColor = [[NSColor whiteColor] CGColor];
     self.layer.mask = mask;
 }
 

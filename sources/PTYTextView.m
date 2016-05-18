@@ -5391,7 +5391,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                            backing:NSBackingStoreBuffered
                                                              defer:YES] autorelease];
     [_findCursorWindow setLevel:NSFloatingWindowLevel];
-    [_findCursorWindow setFrame:[self cursorScreenFrame] display:YES];
+    NSRect screenFrame = [self cursorScreenFrame];
+    [_findCursorWindow setFrame:screenFrame display:YES];
     _findCursorWindow.backgroundColor = [NSColor clearColor];
     [_findCursorWindow setAlphaValue:0];
     [[_findCursorWindow animator] setAlphaValue:1];
@@ -5399,8 +5400,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_findCursorWindow makeKeyAndOrderFront:nil];
     self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
                                                                                 0,
-                                                                                [[self window] frame].size.width,
-                                                                                [[self window] frame].size.height)];
+                                                                                screenFrame.size.width,
+                                                                                screenFrame.size.height)];
     _findCursorView.delegate = self;
     NSPoint p = [self cursorCenterInFindCursorWindowCoords];
     _findCursorView.cursorPosition = p;
