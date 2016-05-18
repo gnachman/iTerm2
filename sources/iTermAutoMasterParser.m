@@ -32,7 +32,7 @@
         }
     }
     
-    NSScanner *scanner = [[NSScanner alloc] initWithString:line];
+    NSScanner *scanner = [[[NSScanner alloc] initWithString:line] autorelease];
     NSString *mountpoint = nil;
     NSString *map = nil;
     NSString *options = nil;
