@@ -45,7 +45,7 @@ static struct {
 
 + (void)initialize {
     if (self == [iTermNSKeyBindingEmulator self]) {
-        gRootKeyBindingsDictionary = [self keyBindingsDictionary];
+        gRootKeyBindingsDictionary = [[self keyBindingsDictionary] retain];
     }
 }
 
@@ -61,7 +61,7 @@ static struct {
         [paths[0] stringByAppendingPathComponent:@"KeyBindings/DefaultKeyBinding.dict"];
     NSDictionary *theDict = [NSDictionary dictionaryWithContentsOfFile:bindPath];
     DLog(@"Loaded key bindings dictionary:\n%@", theDict);
-    return [[self keyBindingDictionaryByPruningUselessBranches:[self keyBindingDictionaryByNormalizingModifiersInKeys:theDict]] retain];
+    return [self keyBindingDictionaryByPruningUselessBranches:[self keyBindingDictionaryByNormalizingModifiersInKeys:theDict]];
 }
 
 + (NSDictionary *)keyBindingDictionaryByPruningUselessBranches:(NSDictionary *)node {
