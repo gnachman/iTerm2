@@ -132,10 +132,8 @@ static NSDate* lastResizeDate_;
 
 - (void)updateLayout {
     if ([_delegate sessionViewShouldUpdateSubviewsFramesAutomatically]) {
-        CGFloat titleHeight = 0;
         if (self.showTitle) {
             [self updateTitleFrame];
-            titleHeight = NSHeight(_title.frame);
         } else {
             [self updateScrollViewFrame];
             [self updateFindViewFrame];
