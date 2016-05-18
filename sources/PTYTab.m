@@ -350,9 +350,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)commonInit {
-    self.viewToSessionMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
-                                                      valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
-                                                          capacity:1];
+    self.viewToSessionMap = [[[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
+                                                       valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
+                                                           capacity:1] autorelease];
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     tmuxWindow_ = -1;
