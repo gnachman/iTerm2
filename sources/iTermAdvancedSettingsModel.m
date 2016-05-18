@@ -64,6 +64,12 @@ DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, @"Tabs: How long in seconds to show tabs 
 DEFINE_BOOL(allowDragOfTabIntoNewWindow, YES, @"Tabs: Allow a tab to be dragged and dropped outside any existing tab bar to create a new window.");
 
 #pragma mark Mouse
+DEFINE_STRING(alternateMouseScrollStringForUp, @"",
+              @"Mouse: Scroll wheel up sends the specified text when in alternate screen mode.\n"
+              @"The value should use Vim syntax, such as \\e for escape.");
+DEFINE_STRING(alternateMouseScrollStringForDown, @"",
+              @"Mouse: Scroll wheel down sends the specified text when in alternate screen mode.\n"
+              @"The value should use Vim syntax, such as \\e for escape.");
 DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys when in alternate screen mode.");
 DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, @"Mouse: Disable changing font size in response to a pinch gesture.");
 DEFINE_BOOL(useSystemCursorWhenPossible, NO, @"Mouse: Use system cursor icons when possible.");

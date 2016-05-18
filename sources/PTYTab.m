@@ -510,10 +510,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setIcon:[PTYTab deadImage]];
     } else if (_state & kPTYTabBellState) {
         [self setIcon:[PTYTab bellImage]];
-    } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+    } else if ([iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator] &&
                (_state & (kPTYTabNewOutputState))) {
         [self setIcon:[PTYTab imageForNewOutput]];
-    } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+    } else if ([iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator] &&
                (_state & kPTYTabIdleState)) {
         [self setIcon:[PTYTab idleImage]];
     } else {

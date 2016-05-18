@@ -29,6 +29,9 @@
     // Hide activity indicator.
     IBOutlet NSButton *_hideActivityIndicator;
 
+    // Show new-output indicator
+    IBOutlet NSButton *_showNewOutputIndicator;
+
     // Show per-pane title bar with split panes.
     IBOutlet NSButton *_showPaneTitles;
 
@@ -104,6 +107,11 @@
     info = [self defineControl:_hideActivityIndicator
                            key:kPreferenceKeyHideTabActivityIndicator
                           type:kPreferenceInfoTypeInvertedCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_showNewOutputIndicator
+                           key:kPreferenceKeyShowNewOutputIndicator
+                          type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
     info = [self defineControl:_showPaneTitles

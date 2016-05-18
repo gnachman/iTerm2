@@ -59,6 +59,7 @@ NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
+NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
@@ -212,6 +213,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
+                  kPreferenceKeyShowNewOutputIndicator: @YES,
+
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
                   kPreferenceKeyFlashTabBarInFullscreen:@YES,

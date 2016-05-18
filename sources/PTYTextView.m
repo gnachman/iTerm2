@@ -1577,12 +1577,15 @@ static const int kDragThreshold = 3;
     [super rightMouseDragged:event];
 }
 
-- (BOOL)scrollWheelShouldSendArrowForEvent:(NSEvent *)event at:(NSPoint)point {
+- (BOOL)scrollWheelShouldSendDataForEvent:(NSEvent *)event at:(NSPoint)point {
     NSRect liveRect = [self liveRect];
     if (!NSPointInRect(point, liveRect)) {
         return NO;
     }
     if (event.type != NSScrollWheel) {
+        return NO;
+    }
+    if (![self.dataSource showingAlternateScreen]) {
         return NO;
     }
     if ([self shouldReportMouseEvent:event at:point] &&
@@ -1591,40 +1594,43 @@ static const int kDragThreshold = 3;
         return NO;
     }
     BOOL alternateMouseScroll = [iTermAdvancedSettingsModel alternateMouseScroll];
-    BOOL showingAlternateScreen = [self.dataSource showingAlternateScreen];
-    if (!alternateMouseScroll && showingAlternateScreen) {
+    NSString *upString = [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
+    NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
+
+    if (alternateMouseScroll || upString.length || downString.length) {
+        return YES;
+    } else {
         [_altScreenMouseScrollInferer scrollWheel:event];
-    }
-    if (!alternateMouseScroll) {
         return NO;
     }
-    if (!showingAlternateScreen) {
-        return NO;
-    }
-    return YES;
 }
 
+- (NSData *)dataToSendForScrollEvent:(NSEvent *)event deltaY:(CGFloat)deltaY {
+    const BOOL down = (deltaY < 0);
+
+    if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
+        return down ? [_dataSource.terminal.output keyArrowDown:event.modifierFlags] :
+                      [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+    } else {
+        NSString *string = down ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
+                                  [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
+        return [[string stringByExpandingVimSpecialCharacters] dataUsingEncoding:_delegate.textViewEncoding];
+    }
+}
 
 - (void)scrollWheel:(NSEvent *)event {
     DLog(@"scrollWheel:%@", event);
 
     NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-
-    if ([self scrollWheelShouldSendArrowForEvent:event at:point]) {
-        DLog(@"Scroll wheel sending arrow key");
+    if ([self scrollWheelShouldSendDataForEvent:event at:point]) {
+        DLog(@"Scroll wheel sending data");
 
         PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
         CGFloat deltaY = [scrollView accumulateVerticalScrollFromEvent:event];
-
-        NSData *arrowKeyData = nil;
-        if (deltaY > 0) {
-            arrowKeyData = [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
-        } else if (deltaY < 0) {
-            arrowKeyData = [_dataSource.terminal.output keyArrowDown:event.modifierFlags];
-        }
-        if (arrowKeyData) {
+        NSData *dataToSend = [self dataToSendForScrollEvent:event deltaY:deltaY];
+        if (dataToSend) {
             for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                [_delegate writeTask:arrowKeyData];
+                [_delegate writeTask:dataToSend];
             }
         }
     } else if (![self reportMouseEvent:event]) {
