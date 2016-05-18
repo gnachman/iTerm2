@@ -111,8 +111,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
     [_divisionView release];
     [_toolbelt release];
-    self.leftTabBarDragHandle.delegate = nil;
-    [self.leftTabBarDragHandle release];
+    _leftTabBarDragHandle.delegate = nil;
+    [_leftTabBarDragHandle release];
 
     [super dealloc];
 }
