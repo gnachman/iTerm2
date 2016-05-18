@@ -280,10 +280,6 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     // Time session was created
     NSDate *_creationDate;
 
-    // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
-    // changes in job name.
-    NSTimeInterval _updateDisplayUntil;
-
     // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
     // updated when this is set to nil.
     NSString *_pasteboard;
@@ -1804,7 +1800,6 @@ ITERM_WEAKLY_REFERENCEABLE
     _newOutput = YES;
 
     // Make sure the screen gets redrawn soonish
-    _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
     self.active = YES;
     [[ProcessCache sharedInstance] notifyNewOutput];
 }
@@ -3401,15 +3396,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateDisplay {
     DLog(@"updateDisplay session=%@", self);
     _timerRunning = YES;
-    BOOL active = !self.isIdle;
-
-    if (![NSApp isActive] &&
-        _updateDisplayUntil &&
-        [NSDate timeIntervalSinceReferenceDate] < _updateDisplayUntil) {
-        // We're still in the time window after the last output where updates are needed.
-        active = YES;
-    }
-
+    
     // Set attributes of tab to indicate idle, processing, etc.
     if (![self isTmuxGateway]) {
         [_delegate updateLabelAttributes];
