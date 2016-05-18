@@ -470,10 +470,6 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                                  leftMargin.origin.y + verticalSpacing,
                                  MARGIN,
                                  _cellSizeWithoutSpacing.height);
-        NSBezierPath *path;
-        
-        path = [NSBezierPath bezierPath];
-        
         const CGFloat kMaxHeight = 15;
         const CGFloat kMinMargin = 3;
         const CGFloat kMargin = MAX(kMinMargin, (_cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
@@ -482,7 +478,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         NSPoint bottom = NSMakePoint(NSMinX(rect), NSMaxY(rect) - kMargin);
 
         [[NSColor blackColor] set];
-        path = [NSBezierPath bezierPath];
+        NSBezierPath *path = [NSBezierPath bezierPath];
         [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
         [path lineToPoint:NSMakePoint(right.x, right.y)];
         [path setLineWidth:1.0];
