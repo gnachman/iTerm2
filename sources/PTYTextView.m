@@ -2721,7 +2721,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [[[NSURLRequest alloc] initWithURL:url] autorelease];
         [webView loadRequest:request];
 
-        NSPopover *popover = [[NSPopover alloc] init];
+        NSPopover *popover = [[[NSPopover alloc] init] autorelease];
         NSViewController *viewController = [[[iTermWebViewWrapperViewController alloc] initWithWebView:webView] autorelease];
         popover.contentViewController = viewController;
         popover.contentSize = viewController.view.frame.size;
