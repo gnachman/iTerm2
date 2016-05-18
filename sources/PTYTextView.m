@@ -2709,7 +2709,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         prefs.javaScriptEnabled = YES;
         prefs.javaScriptCanOpenWindowsAutomatically = NO;
         configuration.preferences = prefs;
-        configuration.processPool = [[FutureWKProcessPool alloc] init];
+        configuration.processPool = [[[FutureWKProcessPool alloc] init] autorelease];
         FutureWKUserContentController *userContentController =
             [[[FutureWKUserContentController alloc] init] autorelease];
         configuration.userContentController = userContentController;
