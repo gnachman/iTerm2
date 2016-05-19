@@ -333,12 +333,13 @@ end:
     [super makeKeyAndOrderFront:sender];
 }
 
+// Borderless windows cannot become key or main by default so we must override these methods.
 - (BOOL)canBecomeKeyWindow {
-    return self.alphaValue > 0;
+    return YES;
 }
 
 - (BOOL)canBecomeMainWindow {
-    return self.alphaValue > 0;
+    return YES;
 }
 
 - (double)approximateFractionOccluded {

@@ -73,26 +73,17 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     HKWLog(@"Roll in [show] hotkey window");
 
-//    [NSApp activateIgnoringOtherApps:YES];
-//    [[term window] makeKeyAndOrderFront:nil];
-//    [[term window] orderFrontRegardless];
-
-//    [term.window makeKeyAndOrderFront:nil];
-//    [term.window setHasShadow:YES];
-//    [NSApp activateIgnoringOtherApps:YES];
-    
-//    [NSAnimationContext beginGrouping];
-//    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
-//    [[NSAnimationContext currentContext] setCompletionHandler:^{
-//        [[HotkeyWindowController sharedInstance] rollInFinished];
-//    }];
-//    [[[term window] animator] setAlphaValue:1];
-    [[term window] setAlphaValue:1];
-//    [NSAnimationContext endGrouping];
-    
     [[term window] orderFront:term];
     [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     [[term window] makeKeyWindow];
+
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [[HotkeyWindowController sharedInstance] rollInFinished];
+    }];
+    [[[term window] animator] setAlphaValue:1];
+    [NSAnimationContext endGrouping];
 }
 
 - (instancetype)init {
@@ -146,11 +137,8 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     rollingIn_ = NO;
     PseudoTerminal* term = GetHotkeyWindow();
-//    [[term window] makeKeyWindow];
-//    [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
-//    [NSApp activateIgnoringOtherApps:YES];
-//    [[term window] makeKeyAndOrderFront:nil];
-//    [[term window] makeFirstResponder:[[term currentSession] textview]];
+    [[term window] makeKeyWindow];
+    [[term window] makeFirstResponder:[[term currentSession] textview]];
     [[[[HotkeyWindowController sharedInstance] hotKeyWindow] currentTab] recheckBlur];
 }
 
@@ -350,7 +338,6 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             i++;
         }
         HKWLog(@"Activate iterm2");
-//        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         rollingIn_ = YES;
         RollInHotkeyTerm(hotkeyTerm);
     } else {
