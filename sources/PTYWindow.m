@@ -334,7 +334,11 @@ end:
 }
 
 - (BOOL)canBecomeKeyWindow {
-    return YES;
+    return self.alphaValue > 0;
+}
+
+- (BOOL)canBecomeMainWindow {
+    return self.alphaValue > 0;
 }
 
 - (double)approximateFractionOccluded {

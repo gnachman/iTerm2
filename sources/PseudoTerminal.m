@@ -2775,7 +2775,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = NO;
 #endif
-    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
+    DLog(@"%s(%d):-[PseudoTerminal windowDidBecomeMain:%@]",
           __FILE__, __LINE__, aNotification);
     [self maybeHideHotkeyWindow];
 
