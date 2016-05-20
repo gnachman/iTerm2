@@ -242,7 +242,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotkeyOpened)
 {
     HKWLog(@"Roll out [hide] hotkey window");
-    if (![[term window] isVisible]) {
+    // Note: the test for alpha is because when you become an LSUIElement, the
+    // window's alpha could be 1 but it's still invisible.
+    if ([[term window] alphaValue] == 0) {
         HKWLog(@"RollOutHotkeyTerm returning because term isn't visible.");
         return;
     }
@@ -392,7 +394,9 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         [NSApp endSheet:hotkeyTerm.window.attachedSheet];
     }
     HKWLog(@"Hide hotkey window.");
-    if ([[hotkeyTerm window] isVisible]) {
+    // Note: the test for alpha is because when you become an LSUIElement, the
+    // window's alpha could be 1 but it's still invisible.
+    if ([[hotkeyTerm window] alphaValue] > 0) {
         HKWLog(@"key window is %@", [NSApp keyWindow]);
         NSWindow *theKeyWindow = [NSApp keyWindow];
         if (!theKeyWindow ||
@@ -402,6 +406,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             }
     }
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened_);
+}
+
+- (BOOL)haveHotkeyBoundToWindow {
+    return [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow] && [self profile] != nil;
 }
 
 void OnHotKeyEvent(void)

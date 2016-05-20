@@ -45,4 +45,7 @@
 // Like orderedWindows, but only PTYWindow objects are returned.
 - (NSArray *)orderedTerminalWindows;
 
+// Changes the process type.
+- (void)setIsUIElementApplication:(BOOL)uiElement;
+
 @end
