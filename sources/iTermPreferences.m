@@ -62,6 +62,7 @@ NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator
 NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
+NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
 NSString *const kPreferenceKeyShowJobName = @"JobName";
@@ -217,6 +218,7 @@ static NSMutableDictionary *gObservers;
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
+                  kPreferenceKeyUIElement: @NO,
                   kPreferenceKeyFlashTabBarInFullscreen:@YES,
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName: @YES,

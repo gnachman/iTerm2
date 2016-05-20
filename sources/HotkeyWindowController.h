@@ -40,6 +40,8 @@
 @property(nonatomic, readonly) int rightCommandRemapping;
 @property(nonatomic, readonly, getter=isAnyModifierRemapped) BOOL anyModifierRemapped;
 
+// Indicates if pressing some hotkey opens a dedicated window.
+@property(nonatomic, readonly) BOOL haveHotkeyBoundToWindow;
 
 + (instancetype)sharedInstance;
 + (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window;

@@ -27,6 +27,7 @@
 
 #import "iTermApplicationDelegate.h"
 
+#import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
@@ -153,17 +154,20 @@ static BOOL hasBecomeActive = NO;
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 }
 
+- (BOOL)shouldBeUIElementApplication {
+    return ([iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
+            [[HotkeyWindowController sharedInstance] haveHotkeyBoundToWindow]);
+}
+
+- (void)updateProcessType {
+    [[iTermApplication sharedApplication] setIsUIElementApplication:[self shouldBeUIElementApplication]];
+}
+
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
-    }
-
-    if ([iTermAdvancedSettingsModel hideFromDockAndAppSwitcher]) {
-        ProcessSerialNumber psn = { 0, kCurrentProcess };
-        TransformProcessType(&psn, kProcessTransformToUIElementApplication);
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
     [self buildScriptMenu:nil];
@@ -173,6 +177,10 @@ static BOOL hasBecomeActive = NO;
 
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
+
+    // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
+    // exists.
+    [self updateProcessType];
 
     [iTermToolbeltView populateMenu:toolbeltMenu];
 
@@ -452,6 +460,11 @@ static BOOL hasBecomeActive = NO;
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(processTypeDidChange:)
+                                                 name:iTermProcessTypeDidChangeNotification
+                                               object:nil];
+
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
@@ -472,6 +485,10 @@ static BOOL hasBecomeActive = NO;
     [NSApp invalidateRestorableState];
     [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
+}
+
+- (void)processTypeDidChange:(NSNotification *)notification {
+    [self updateProcessType];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {

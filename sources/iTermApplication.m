@@ -40,7 +40,9 @@
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 
-@implementation iTermApplication
+@implementation iTermApplication {
+    BOOL _isUIElement;
+}
 
 - (void)dealloc {
     [_fakeCurrentEvent release];
@@ -219,6 +221,25 @@
     return [[self orderedWindows] filteredArrayUsingBlock:^BOOL(id anObject) {
         return [anObject isKindOfClass:[PTYWindow class]];
     }];
+}
+
+- (void)setIsUIElementApplication:(BOOL)uiElement {
+    if (uiElement == _isUIElement) {
+        return;
+    }
+    _isUIElement = uiElement;
+
+    ProcessSerialNumber psn = { 0, kCurrentProcess };
+    TransformProcessType(&psn,
+                         uiElement ? kProcessTransformToUIElementApplication :
+                                     kProcessTransformToForegroundApplication);
+    if (uiElement) {
+        // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
+        // when toggling the preference because all the windows disappear.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        });
+    }
 }
 
 @end
