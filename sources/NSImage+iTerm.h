@@ -26,4 +26,6 @@
 
 - (NSBitmapImageRep *)bitmapImageRep;
 
+- (CGImageRef)CGImage;
+
 @end

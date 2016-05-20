@@ -54,6 +54,7 @@
 #import "NSApplication+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -384,7 +385,43 @@ static BOOL hasBecomeActive = NO;
         [alert runModal];
     }
 }
+
+- (void)ping:(NSView *)imageView {
+    CGRect endRect = CGRectMake(500, 500, 50, 50);
+    [imageView genieInTransitionWithDuration:10
+                             destinationRect:endRect
+                             destinationEdge:BCRectEdgeTop
+                                  completion:^{
+                                      [self pong:imageView];
+                                  }];
+}
+
+- (void)pong:(NSView *)imageView {
+    imageView.frame = NSMakeRect(0, 0, 155, 116);
+    CGRect startRect = CGRectMake(500, 500, 50, 50);
+    [imageView genieOutTransitionWithDuration:10
+                                    startRect:startRect
+                                    startEdge:BCRectEdgeLeft
+                                   completion:^{
+                                       [self ping:imageView];
+                                   }];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1000, 1000) styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];
+    NSView *view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1000, 1000)];
+    window.contentView = view;
+    
+    NSImageView *imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 155, 116)];
+    imageView.image = [[NSImage alloc] initWithContentsOfURL:[NSURL URLWithString:@"https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"]];
+    [view addSubview:imageView];
+    
+    [window orderFrontRegardless];
+    dispatch_async(dispatch_get_main_queue(), ^{
+            [self ping:imageView];
+        
+    });
+
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }

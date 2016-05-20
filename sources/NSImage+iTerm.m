@@ -165,4 +165,8 @@
     return [rep autorelease];
 }
 
+- (CGImageRef)CGImage {
+    return [self CGImageForProposedRect:nil context:nil hints:nil];
+}
+
 @end
