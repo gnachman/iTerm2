@@ -1,10 +1,10 @@
 #import "HotkeyWindowController.h"
 
 #import "DebugLogging.h"
-#import "GTMCarbonEvent.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
@@ -33,8 +33,27 @@
     // the proper window front when hiding "quickly" (when entering Expose
     // while a hotkey window is open). TODO: I'm not sure why this is necessary.
     NSInteger _savedIndexOfFrontTerminal;
-}
 
+    // Set while window is appearing.
+    BOOL rollingIn_;
+
+    // Set when iTerm was key at the time the hotkey window was opened.
+    BOOL itermWasActiveWhenHotkeyOpened_;
+
+    // The keycode that opens the hotkey window
+    int hotkeyCode_;
+
+    // Modifiers for the keypress that opens the hotkey window
+    int hotkeyModifiers_;
+
+    // The registered carbon hotkey that listens for hotkey presses.
+    iTermHotKey *_carbonHotKey;
+
+    // When using an event tap, these will be set:
+    CFMachPortRef machPortRef_;
+    CFRunLoopSourceRef eventSrc_;
+}
+    
 + (HotkeyWindowController *)sharedInstance {
     static HotkeyWindowController *instance;
     static dispatch_once_t once;
@@ -638,9 +657,9 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 {
     hotkeyCode_ = 0;
     hotkeyModifiers_ = 0;
-    [[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler] unregisterHotKey:carbonHotKey_];
-    [carbonHotKey_ release];
-    carbonHotKey_ = nil;
+    [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:_carbonHotKey];
+    [_carbonHotKey release];
+    _carbonHotKey = nil;
 }
 
 - (BOOL)haveEventTap
@@ -755,21 +774,18 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     return @"Open System Preferences";
 }
 
-- (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers
-{
-    if (carbonHotKey_) {
+- (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers {
+    if (_carbonHotKey) {
         [self unregisterHotkey];
     }
     hotkeyCode_ = keyCode;
     hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
 
-    carbonHotKey_ = [[[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler]
-                      registerHotKey:keyCode
-                      modifiers:hotkeyModifiers_
-                      target:self
-                      action:@selector(carbonHotkeyPressed:)
-                      userInfo:nil
-                      whenPressed:YES] retain];
+    _carbonHotKey = [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:keyCode
+                                                                         modifiers:hotkeyModifiers_
+                                                                            target:self
+                                                                          selector:@selector(carbonHotkeyPressed:)
+                                                                          userData:nil] retain];
     return YES;
 }
 

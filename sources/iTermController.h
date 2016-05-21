@@ -31,7 +31,6 @@
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
-@class GTMCarbonHotKey;
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;
