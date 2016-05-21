@@ -29,7 +29,6 @@
 
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
 #import "iTermColorPresets.h"
@@ -37,6 +36,7 @@
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
+#import "iTermHotKeyController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
@@ -156,7 +156,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)shouldBeUIElementApplication {
     return ([iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
-            [[HotkeyWindowController sharedInstance] haveHotkeyBoundToWindow]);
+            [[iTermHotKeyController sharedInstance] haveHotkeyBoundToWindow]);
 }
 
 - (void)updateProcessType {
@@ -423,14 +423,14 @@ static BOOL hasBecomeActive = NO;
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
          [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
-        [[HotkeyWindowController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
-                                                      modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
+        [[iTermHotKeyController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
+                                                     modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
-    if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped]) {
+    if ([[iTermHotKeyController sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
-        [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
-                                                      withObject:nil
-                                                      afterDelay:0.5];
+        [[iTermHotKeyController sharedInstance] performSelector:@selector(beginRemappingModifiers)
+                                                     withObject:nil
+                                                     afterDelay:0.5];
     }
     [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 
@@ -545,7 +545,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // Ensure [iTermController dealloc] is called before prefs are saved
-    [[HotkeyWindowController sharedInstance] stopEventTap];
+    [[iTermHotKeyController sharedInstance] stopEventTap];
 
     // Prevent sessions from making their termination undoable since we're quitting.
     [[iTermController sharedInstance] setApplicationIsQuitting:YES];
@@ -571,7 +571,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
-    [[HotkeyWindowController sharedInstance] stopEventTap];
+    [[iTermHotKeyController sharedInstance] stopEventTap];
          DLog(@"applicationWillTerminate returning");
 }
 
@@ -698,20 +698,20 @@ static BOOL hasBecomeActive = NO;
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         // The hotkey window is configured.
-        PseudoTerminal* hotkeyTerm = [[HotkeyWindowController sharedInstance] hotKeyWindow];
+        PseudoTerminal* hotkeyTerm = [[iTermHotKeyController sharedInstance] hotKeyWindow];
         if (hotkeyTerm) {
             // Hide the existing window or open it if enabled by preference.
             if ([[hotkeyTerm window] alphaValue] == 1) {
-                [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
+                [[iTermHotKeyController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 return NO;
             } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
-                [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+                [[iTermHotKeyController sharedInstance] showHotKeyWindow];
                 return NO;
             }
         } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
             // No existing hotkey window but preference is to toggle it by dock icon so open a new
             // one.
-            [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+            [[iTermHotKeyController sharedInstance] showHotKeyWindow];
             return NO;
         }
     }
@@ -1367,8 +1367,8 @@ static BOOL hasBecomeActive = NO;
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
 
-    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
-    NSDictionary *hotkeyWindowState = [[HotkeyWindowController sharedInstance] restorableState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
+    NSDictionary *hotkeyWindowState = [[iTermHotKeyController sharedInstance] restorableState];
     if (hotkeyWindowState) {
         [coder encodeObject:hotkeyWindowState
                      forKey:kHotkeyWindowRestorableState];
@@ -1389,11 +1389,11 @@ static BOOL hasBecomeActive = NO;
     NSDictionary *hotkeyWindowState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
     if (hotkeyWindowState &&
         [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        [[HotkeyWindowController sharedInstance] setRestorableState:hotkeyWindowState];
+        [[iTermHotKeyController sharedInstance] setRestorableState:hotkeyWindowState];
 
         // We have to create the hotkey window now because we need to attach to servers before
         // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-        [[HotkeyWindowController sharedInstance] createHiddenHotkeyWindow];
+        [[iTermHotKeyController sharedInstance] createHiddenHotkeyWindow];
     }
 }
 

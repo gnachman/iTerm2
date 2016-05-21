@@ -114,7 +114,7 @@
 
 #pragma mark - iTermShortcutInputViewDelegate
 
-// Note: This is called directly by HotkeyWindowController when the action requires key remapping
+// Note: This is called directly by iTermHotKeyController when the action requires key remapping
 // to be disabled so the shortcut can be input properly. In this case, |view| will be nil.
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     unsigned int keyMods;

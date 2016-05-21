@@ -26,8 +26,8 @@
  */
 
 #import "iTermApplication.h"
-#import "HotkeyWindowController.h"
 #import "iTermController.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
@@ -87,15 +87,15 @@
             return;
         }
 #endif
-        if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
-            (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
+        if ([[iTermHotKeyController sharedInstance] isAnyModifierRemapped] &&
+            (IsSecureEventInputEnabled() || ![[iTermHotKeyController sharedInstance] haveEventTap])) {
             // The event tap is not working, but we can still remap modifiers for non-system
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
             event = [iTermKeyBindingMgr remapModifiers:event];
         }
         if (IsSecureEventInputEnabled() &&
-            [[HotkeyWindowController sharedInstance] eventIsHotkey:event]) {
+            [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
             OnHotKeyEvent();
@@ -118,7 +118,7 @@
                 PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
                 if (termWithNumber) {
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+                        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
                     } else {
                         [[termWithNumber window] makeKeyAndOrderFront:self];
                     }

@@ -4,7 +4,7 @@
 
 @class PseudoTerminal;
 
-@interface HotkeyWindowController : NSObject
+@interface iTermHotKeyController : NSObject
 
 // Hotkey windows' restorable state is saved in the application delegate because these windows are
 // often ordered out, and ordered-out windows are not saved. This is assigned to when the app state

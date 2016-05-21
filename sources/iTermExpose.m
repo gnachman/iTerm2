@@ -28,7 +28,6 @@
 #import "iTermExpose.h"
 #import "FutureMethods.h"
 #import "GlobalSearch.h"
-#import "HotkeyWindowController.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
@@ -36,6 +35,7 @@
 #import "iTermExposeGridView.h"
 #import "iTermExposeView.h"
 #import "iTermExposeWindow.h"
+#import "iTermHotKeyController.h"
 
 const float kItermExposeThumbMargin = 25;
 
@@ -429,8 +429,8 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 - (void)_toggleOn
 {
     iTermController* controller = [iTermController sharedInstance];
-    if ([[HotkeyWindowController sharedInstance] isHotKeyWindowOpen]) {
-        [[HotkeyWindowController sharedInstance] fastHideHotKeyWindow];
+    if ([[iTermHotKeyController sharedInstance] isHotKeyWindowOpen]) {
+        [[iTermHotKeyController sharedInstance] fastHideHotKeyWindow];
     }
 
     // Crete parallel arrays with info needed to create subviews.
@@ -484,7 +484,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
     [window_ setOpaque:NO];
 
-    PseudoTerminal* hotKeyWindow = [[HotkeyWindowController sharedInstance] hotKeyWindow];
+    PseudoTerminal* hotKeyWindow = [[iTermHotKeyController sharedInstance] hotKeyWindow];
     BOOL isHot = NO;
     if (hotKeyWindow) {
         isHot = [hotKeyWindow isHotKeyWindow];

@@ -8,8 +8,8 @@
 
 #import "KeysPreferencesViewController.h"
 #import "DebugLogging.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermWarning.h"
@@ -157,7 +157,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)hotkeyProfileDidChange {
     [iTermPreferences setString:[[_hotkeyBookmark selectedItem] representedObject]
                          forKey:kPreferenceKeyHotkeyProfileGuid];
-    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
 }
 
 - (void)hotkeyTogglesWindowDidChange {
@@ -209,10 +209,10 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             [self setHotKeyChar:theChar code:code mods:modifiers];
         }
     } else {
-        [[HotkeyWindowController sharedInstance] unregisterHotkey];
+        [[iTermHotKeyController sharedInstance] unregisterHotkey];
         [self updateHotkeyViews];
     }
-    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
 }
 
 - (void)updateHotkeyViews {
@@ -241,8 +241,8 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)registerHotkey {
     int modifiers = [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
     int code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
-    [[HotkeyWindowController sharedInstance] registerHotkey:code
-                                                  modifiers:modifiers];
+    [[iTermHotKeyController sharedInstance] registerHotkey:code
+                                                 modifiers:modifiers];
 }
 
 
@@ -262,9 +262,9 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 
 - (void)startEventTapIfNecessary {
-    if (([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
-         ![[HotkeyWindowController sharedInstance] haveEventTap])) {
-        [[HotkeyWindowController sharedInstance] beginRemappingModifiers];
+    if (([[iTermHotKeyController sharedInstance] isAnyModifierRemapped] &&
+         ![[iTermHotKeyController sharedInstance] haveEventTap])) {
+        [[iTermHotKeyController sharedInstance] beginRemappingModifiers];
     }
 }
 

@@ -10,7 +10,6 @@
 #import "FindViewController.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAboutWindow.h"
@@ -22,6 +21,7 @@
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermHotKeyController.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPasswordManagerWindowController.h"
@@ -1386,7 +1386,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         return;
     }
     if ([self isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
     } else {
         [self.window makeKeyAndOrderFront:nil];
     }
@@ -1763,7 +1763,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 {
     BOOL isHotkeyWindow = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
     if (isHotkeyWindow) {
-        if ([[HotkeyWindowController sharedInstance] hotKeyWindow]) {
+        if ([[iTermHotKeyController sharedInstance] hotKeyWindow]) {
             // Already have a hotkey window.
             return nil;
         }
@@ -2225,7 +2225,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 {
     if (_isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
-        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+        [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
     }
     // Close popups.
     [pbHistoryView close];
@@ -2295,7 +2295,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[self retain] autorelease];
     
     if ([self isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] restorePreviouslyActiveApp];
+        [[iTermHotKeyController sharedInstance] restorePreviouslyActiveApp];
     }
 
     // This releases the last reference to self except for autorelease pools.
@@ -2335,7 +2335,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [itad updateBroadcastMenuState];
     if (_fullScreen) {
         if (![self isHotKeyWindow] ||
-            [[HotkeyWindowController sharedInstance] rollingInHotkeyTerm] ||
+            [[iTermHotKeyController sharedInstance] rollingInHotkeyTerm] ||
             [[self window] alphaValue] > 0) {
             // One of the following is true:
             // - This is a regular (non-hotkey) fullscreen window
@@ -2694,7 +2694,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         DLog(@"Autohide is disabled");
         return nil;
     }
-    if ([[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
+    if ([[iTermHotKeyController sharedInstance] rollingInHotkeyTerm]) {
         DLog(@"Currently rolling in hotkey window");
         return nil;
     }
@@ -2759,9 +2759,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (hotkeyTerminal) {
         PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
         if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
-            [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
+            [[iTermHotKeyController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
         }
-        [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerminal];
+        [[iTermHotKeyController sharedInstance] hideHotKeyWindow:hotkeyTerminal];
     }
 }
 
@@ -7168,7 +7168,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // they get a special path for restoration where the arrangement is saved in user defaults.
     if ([self isHotKeyWindow]) {
         [[self ptyWindow] setRestoreState:nil];
-        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+        [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
         return;
     }
 

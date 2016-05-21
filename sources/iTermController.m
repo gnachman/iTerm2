@@ -29,9 +29,9 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermHotKeyController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -154,7 +154,7 @@ static iTermController *gSharedInstance;
 
 - (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
-    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
     if (self.shouldLeaveSessionsRunningOnQuit) {

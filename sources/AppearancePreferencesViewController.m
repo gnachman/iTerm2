@@ -7,7 +7,7 @@
 //
 
 #import "AppearancePreferencesViewController.h"
-#import "HotkeyWindowController.h"
+#import "iTermHotKeyController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
@@ -252,7 +252,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 }
 
 - (void)updateUIElementEnabled {
-    _uiElement.enabled = [[HotkeyWindowController sharedInstance] haveHotkeyBoundToWindow];
+    _uiElement.enabled = [[iTermHotKeyController sharedInstance] haveHotkeyBoundToWindow];
 }
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {

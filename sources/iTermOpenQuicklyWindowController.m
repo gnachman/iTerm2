@@ -1,7 +1,7 @@
 #import "iTermOpenQuicklyWindowController.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermHotKeyController.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermOpenQuicklyModel.h"
 #import "iTermOpenQuicklyTableCellView.h"
@@ -162,7 +162,7 @@
 
 // Bound to the close button.
 - (IBAction)close:(id)sender {
-    [HotkeyWindowController closeWindowReturningToHotkeyWindowIfPossible:self.window];
+    [iTermHotKeyController closeWindowReturningToHotkeyWindowIfPossible:self.window];
 }
 
 // Switch to the session associated with the currently selected row, closing

@@ -4,7 +4,6 @@
 #import "CVector.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -17,6 +16,7 @@
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
@@ -6287,7 +6287,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
     } else {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         [[terminal window] makeKeyAndOrderFront:self];
