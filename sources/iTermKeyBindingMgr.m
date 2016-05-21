@@ -74,10 +74,10 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
-#import "HotkeyWindowController.h"
 #import "PTYTextView.h"   // For selection movement units
 #import <Carbon/Carbon.h>
 
@@ -860,62 +860,62 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 + (NSInteger)_cgMaskForLeftCommandKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
+    return [self _cgMaskForMod:[[iTermHotKeyController sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightCommandKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
+    return [self _cgMaskForMod:[[iTermHotKeyController sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftCommandKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermHotKeyController sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightCommandKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
+    return [self _nxMaskForRightMod:[[iTermHotKeyController sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftAlternateKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
+    return [self _cgMaskForMod:[[iTermHotKeyController sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightAlternateKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
+    return [self _cgMaskForMod:[[iTermHotKeyController sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftAlternateKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermHotKeyController sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightAlternateKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
+    return [self _nxMaskForRightMod:[[iTermHotKeyController sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftControlKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermHotKeyController sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightControlKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermHotKeyController sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftControlKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermHotKeyController sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightControlKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _nxMaskForRightMod:[[iTermHotKeyController sharedInstance] controlRemapping]];
 }
 
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent

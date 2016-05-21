@@ -8,7 +8,7 @@
 
 #import "iTermExposeTabView.h"
 #import "iTermController.h"
-#import "HotkeyWindowController.h"
+#import "iTermHotKeyController.h"
 #import "iTermExpose.h"
 #import "iTermExposeView.h"
 #import "PseudoTerminal.h"
@@ -153,7 +153,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
         iTermController* controller = [iTermController sharedInstance];
         PseudoTerminal* terminal = [[controller terminals] objectAtIndex:windowIndex_];
         if ([terminal isHotKeyWindow]) {
-            [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+            [[iTermHotKeyController sharedInstance] showHotKeyWindow];
         } else {
             [controller setCurrentTerminal:terminal];
             [[terminal window] makeKeyAndOrderFront:self];

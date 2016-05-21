@@ -4,7 +4,6 @@
 #import "CVector.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -17,6 +16,7 @@
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
@@ -6306,7 +6306,6 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
         DLog(@"Showing hotkey window");
-        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
     } else {
         DLog(@"Making window current");
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
