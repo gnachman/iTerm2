@@ -430,7 +430,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 {
     iTermController* controller = [iTermController sharedInstance];
     if ([[iTermHotKeyController sharedInstance] isHotKeyWindowOpen]) {
-        [[iTermHotKeyController sharedInstance] fastHideHotKeyWindow];
+        [[iTermHotKeyController sharedInstance] hideHotKeyWindowAnimated:NO suppressHideApp:NO];
     }
 
     // Crete parallel arrays with info needed to create subviews.

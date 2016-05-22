@@ -706,7 +706,7 @@ static BOOL hasBecomeActive = NO;
         if (hotkeyTerm) {
             // Hide the existing window or open it if enabled by preference.
             if ([[hotkeyTerm window] alphaValue] == 1) {
-                [[iTermHotKeyController sharedInstance] hideHotKeyWindow:hotkeyTerm];
+                [[iTermHotKeyController sharedInstance] hideHotKeyWindowAnimated:YES suppressHideApp:NO];
                 return NO;
             } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
                 [[iTermHotKeyController sharedInstance] showHotKeyWindow];
@@ -1397,7 +1397,14 @@ static BOOL hasBecomeActive = NO;
 
         // We have to create the hotkey window now because we need to attach to servers before
         // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-        [[iTermHotKeyController sharedInstance] createHiddenHotkeyWindow];
+        iTermHotKeyController *hotKeyController = [iTermHotKeyController sharedInstance];
+        if ([hotKeyController hotKeyWindow]) {
+            return;
+        }
+        PseudoTerminal *term = [hotKeyController createHotKeyWindow];
+        // Order out for issue 4065.
+        [[term window] orderOut:nil];
+
     }
 }
 
