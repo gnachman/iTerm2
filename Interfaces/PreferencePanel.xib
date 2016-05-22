@@ -1849,7 +1849,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="5035" userLabel="Schemes handled label">
-                    <rect key="frame" x="16" y="21" width="118" height="17"/>
+                    <rect key="frame" x="19" y="21" width="118" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Schemes handled:" id="5036">
                         <font key="font" metaFont="system"/>
