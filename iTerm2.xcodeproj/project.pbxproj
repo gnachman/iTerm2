@@ -2122,6 +2122,10 @@
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
 		A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */; };
+		A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */; };
+		A6FEA2601CF0F20B00376F28 /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
+		A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA2611CF0F33300376F28 /* iTermModifierRemapper.h */; };
+		A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2621CF0F33300376F28 /* iTermModifierRemapper.m */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
@@ -3408,6 +3412,10 @@
 		A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Hamburger@2x.png"; path = "images/Hamburger@2x.png"; sourceTree = "<group>"; };
 		A6FD85321B768B7800EB9DCE /* BigArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigArrow.png; path = images/BigArrow.png; sourceTree = "<group>"; };
 		A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BigArrow@2x.png"; path = "images/BigArrow@2x.png"; sourceTree = "<group>"; };
+		A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermEventTap.h; sourceTree = "<group>"; };
+		A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEventTap.m; sourceTree = "<group>"; };
+		A6FEA2611CF0F33300376F28 /* iTermModifierRemapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermModifierRemapper.h; sourceTree = "<group>"; };
+		A6FEA2621CF0F33300376F28 /* iTermModifierRemapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermModifierRemapper.m; sourceTree = "<group>"; };
 		AA2D5DC026C5FC41EB420E90 /* Pods-iTerm2XCTests.deployment.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.deployment.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.deployment.xcconfig"; sourceTree = "<group>"; };
 		AF8B17BA7B3B3CBFD29DA171 /* Pods-iTerm2XCTests.development.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.development.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.development.xcconfig"; sourceTree = "<group>"; };
 		C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectorSwizzler.h; sourceTree = "<group>"; };
@@ -5019,6 +5027,10 @@
 				A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */,
 				A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */,
 				A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */,
+				A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */,
+				A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */,
+				A6FEA2611CF0F33300376F28 /* iTermModifierRemapper.h */,
+				A6FEA2621CF0F33300376F28 /* iTermModifierRemapper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -5991,6 +6003,7 @@
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
 				1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */,
+				A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */,
 				A62C3B231BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				A62C3A911BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
@@ -6012,6 +6025,7 @@
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
+				A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */,
 				1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */,
 				A62C3B2F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
 				1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */,
@@ -7490,6 +7504,7 @@
 				A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */,
 				A66DB8371C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m in Sources */,
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
+				A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */,
 				A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */,
 				A6C762C21B45C52B00E3C992 /* NSView+iTerm.m in Sources */,
 				A6C762D31B45C52B00E3C992 /* LineBlock.m in Sources */,
@@ -7532,6 +7547,7 @@
 				A6C762EE1B45C52B00E3C992 /* IntervalTree.m in Sources */,
 				A62C3B3F1BD40DC900B5629D /* iTermCapturedOutputMark.m in Sources */,
 				A6C7634D1B45C52B00E3C992 /* PTYNoteView.m in Sources */,
+				A6FEA2601CF0F20B00376F28 /* iTermEventTap.m in Sources */,
 				A6C763961B45C52B00E3C992 /* iTermOrphanServerAdopter.m in Sources */,
 				A6C763CC1B45C52B00E3C992 /* VT100Token.m in Sources */,
 				A6C7637A1B45C52B00E3C992 /* ProfilePreferencesViewController.m in Sources */,

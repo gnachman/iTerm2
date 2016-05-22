@@ -12,13 +12,6 @@
 @property(nonatomic, retain) NSDictionary *restorableState;
 @property(nonatomic, readonly) BOOL rollingInHotkeyTerm;
 @property(nonatomic, readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
-@property(nonatomic, readonly) BOOL haveEventTap;
-@property(nonatomic, readonly) int controlRemapping;
-@property(nonatomic, readonly) int leftOptionRemapping;
-@property(nonatomic, readonly) int rightOptionRemapping;
-@property(nonatomic, readonly) int leftCommandRemapping;
-@property(nonatomic, readonly) int rightCommandRemapping;
-@property(nonatomic, readonly, getter=isAnyModifierRemapped) BOOL anyModifierRemapped;
 
 // Indicates if pressing some hotkey opens a dedicated window.
 @property(nonatomic, readonly) BOOL haveHotkeyBoundToWindow;
@@ -35,8 +28,6 @@
 - (BOOL)eventIsHotkey:(NSEvent*)e;
 - (void)unregisterHotkey;
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
-- (void)beginRemappingModifiers;
-- (void)stopEventTap;
 
 // Returns the profile to be used for new hotkey windows, or nil if none defined.
 - (Profile *)profile;

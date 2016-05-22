@@ -12,6 +12,7 @@
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
+#import "iTermModifierRemapper.h"
 #import "iTermWarning.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -262,9 +263,8 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 
 - (void)startEventTapIfNecessary {
-    if (([[iTermHotKeyController sharedInstance] isAnyModifierRemapped] &&
-         ![[iTermHotKeyController sharedInstance] haveEventTap])) {
-        [[iTermHotKeyController sharedInstance] beginRemappingModifiers];
+    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+        [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
     }
 }
 
