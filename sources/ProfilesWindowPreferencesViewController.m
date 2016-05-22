@@ -128,7 +128,7 @@
     info = [self defineControl:_syncTitle
                            key:KEY_SYNC_TITLE
                           type:kPreferenceInfoTypeCheckbox];
-    [self updateSyncTitleVisibility];
+    [self updateSyncTitleEnabled];
 
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
@@ -174,7 +174,7 @@
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
-- (void)updateSyncTitleVisibility {
+- (void)updateSyncTitleEnabled {
     _syncTitle.enabled = [iTermPreferences boolForKey:kPreferenceKeyShowProfileName];
 }
 
@@ -187,7 +187,7 @@
 }
 
 - (void)updateLabels:(NSNotification *)notification {
-    [self updateSyncTitleVisibility];
+    [self updateSyncTitleEnabled];
 }
 
 #pragma mark - Actions
