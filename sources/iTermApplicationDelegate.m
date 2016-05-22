@@ -39,6 +39,7 @@
 #import "iTermHotKeyController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
+#import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -426,11 +427,14 @@ static BOOL hasBecomeActive = NO;
         [[iTermHotKeyController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
                                                      modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
     }
-    if ([[iTermHotKeyController sharedInstance] isAnyModifierRemapped]) {
+    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
-        [[iTermHotKeyController sharedInstance] performSelector:@selector(beginRemappingModifiers)
-                                                     withObject:nil
-                                                     afterDelay:0.5];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+              [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
+            }
+        });
     }
     [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 
@@ -545,7 +549,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // Ensure [iTermController dealloc] is called before prefs are saved
-    [[iTermHotKeyController sharedInstance] stopEventTap];
+    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
 
     // Prevent sessions from making their termination undoable since we're quitting.
     [[iTermController sharedInstance] setApplicationIsQuitting:YES];
@@ -571,8 +575,8 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
-    [[iTermHotKeyController sharedInstance] stopEventTap];
-         DLog(@"applicationWillTerminate returning");
+    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
+    DLog(@"applicationWillTerminate returning");
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn

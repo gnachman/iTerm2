@@ -29,6 +29,7 @@
 #import "iTermController.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
 #import "NSArray+iTerm.h"
@@ -81,14 +82,9 @@
 - (void)sendEvent:(NSEvent*)event {
     if ([event type] == NSKeyDown) {
         iTermController* cont = [iTermController sharedInstance];
-#ifdef FAKE_EVENT_TAP
-        event = [cont runEventTapHandler:event];
-        if (!event) {
-            return;
-        }
-#endif
-        if ([[iTermHotKeyController sharedInstance] isAnyModifierRemapped] &&
-            (IsSecureEventInputEnabled() || ![[iTermHotKeyController sharedInstance] haveEventTap])) {
+
+        if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped] &&
+            (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers])) {
             // The event tap is not working, but we can still remap modifiers for non-system
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
