@@ -1350,8 +1350,8 @@ static iTermController *gSharedInstance;
 }
 
 // accessors for to-many relationships:
-- (NSArray*)terminals {
-    return (_terminalWindows);
+- (NSArray *)terminals {
+    return _terminalWindows;
 }
 
 - (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {

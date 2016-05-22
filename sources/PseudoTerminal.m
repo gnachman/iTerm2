@@ -2766,10 +2766,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     PseudoTerminal *hotkeyTerminal = [self hotkeyWindowToHide];
     if (hotkeyTerminal) {
         PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
-        if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
-            [[iTermHotKeyController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
-        }
-        [[iTermHotKeyController sharedInstance] hideHotKeyWindow:hotkeyTerminal];
+        BOOL suppressHide = [[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]];
+        [[iTermHotKeyController sharedInstance] hideHotKeyWindowAnimated:YES
+                                                         suppressHideApp:suppressHide];
     }
 }
 

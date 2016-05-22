@@ -141,7 +141,7 @@
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (void)killRestorableSessions;
 
-- (NSArray<PseudoTerminal *>*)terminals;
+- (NSArray<PseudoTerminal *> *)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 
 void OnHotKeyEvent(void);

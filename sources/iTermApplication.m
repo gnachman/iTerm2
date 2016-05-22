@@ -94,7 +94,7 @@
             [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
-            OnHotKeyEvent();
+            [[iTermHotKeyController sharedInstance] hotkeyPressed];
             return;
         }
         PseudoTerminal* currentTerminal = [cont currentTerminal];

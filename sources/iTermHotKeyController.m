@@ -22,6 +22,12 @@
 
 #define HKWLog DLog
 
+const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
+                                                  NSAlternateKeyMask |
+                                                  NSShiftKeyMask |
+                                                  NSControlKeyMask);
+
+
 @interface iTermHotKeyController()
 // For restoring previously active app when exiting hotkey window.
 @property(nonatomic, copy) NSNumber *previouslyActiveAppPID;
@@ -35,16 +41,19 @@
     NSInteger _savedIndexOfFrontTerminal;
 
     // Set while window is appearing.
-    BOOL rollingIn_;
+    BOOL _rollingIn;
+
+    // Set while window is disappearing.
+    BOOL _rollingOut;
 
     // Set when iTerm was key at the time the hotkey window was opened.
-    BOOL itermWasActiveWhenHotkeyOpened_;
+    BOOL _itermWasActiveWhenHotkeyOpened;
 
     // The keycode that opens the hotkey window
-    int hotkeyCode_;
+    int _hotkeyCode;
 
     // Modifiers for the keypress that opens the hotkey window
-    int hotkeyModifiers_;
+    int _hotkeyModifiers;
 
     // The registered carbon hotkey that listens for hotkey presses.
     iTermHotKey *_carbonHotKey;
@@ -57,47 +66,6 @@
         instance = [[self alloc] init];
     });
     return instance;
-}
-
-+ (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window {
-    PseudoTerminal *hotkeyTerm = GetHotkeyWindow();
-    if (hotkeyTerm && [[hotkeyTerm window] alphaValue]) {
-        [[hotkeyTerm window] makeKeyWindow];
-    }
-    [window close];
-}
-
-static PseudoTerminal* GetHotkeyWindow()
-{
-    iTermController* cont = [iTermController sharedInstance];
-    NSArray* terminals = [cont terminals];
-    for (PseudoTerminal* term in terminals) {
-        if ([term isHotKeyWindow]) {
-            return term;
-        }
-    }
-    return nil;
-}
-
-- (PseudoTerminal*)hotKeyWindow
-{
-    return GetHotkeyWindow();
-}
-
-static void RollInHotkeyTerm(PseudoTerminal* term)
-{
-    HKWLog(@"Roll in [show] hotkey window");
-
-    [NSApp activateIgnoringOtherApps:YES];
-    [[term window] makeKeyAndOrderFront:nil];
-    
-    [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
-    [[NSAnimationContext currentContext] setCompletionHandler:^{
-        [[iTermHotKeyController sharedInstance] rollInFinished];
-    }];
-    [[[term window] animator] setAlphaValue:1];
-    [NSAnimationContext endGrouping];
 }
 
 - (instancetype)init {
@@ -119,11 +87,165 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     [super dealloc];
 }
 
-- (void)bringHotkeyWindowToFore:(NSWindow *)window {
-    DLog(@"Bring hotkey window %@ to front", window);
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    [window makeKeyAndOrderFront:nil];
+#pragma mark - APIs
+
+- (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window {
+    PseudoTerminal *hotkeyTerm = [self hotKeyWindow];
+    if (hotkeyTerm && [[hotkeyTerm window] alphaValue]) {
+        [[hotkeyTerm window] makeKeyWindow];
+    }
+    [window close];
 }
+
+- (void)showHotKeyWindow {
+    [self storePreviouslyActiveApp];
+    _itermWasActiveWhenHotkeyOpened = [NSApp isActive];
+    _savedIndexOfFrontTerminal = [self indexOfFrontTerminal];
+
+    PseudoTerminal *hotkeyTerm = [self hotKeyWindow];
+    if (hotkeyTerm) {
+        HKWLog(@"Showing existing hotkey window");
+    } else {
+        HKWLog(@"Create new hotkey window");
+        hotkeyTerm = [self createHotKeyWindow];
+        if (!hotkeyTerm) {
+            HKWLog(@"Failed to create hotkey window");
+            return;
+        }
+    }
+    
+    [self rollInWindowController:hotkeyTerm];
+}
+
+- (PseudoTerminal *)createHotKeyWindow {
+    PseudoTerminal *term = [self hotKeyWindow];
+    if (term) {
+        return term;
+    }
+
+    HKWLog(@"Open hotkey window");
+    term = [self windowFromRestorableState];
+    if (!term) {
+        term = [self windowFromProfile:[self profile]];
+    }
+    if (!term) {
+        return nil;
+    }
+
+    if ([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
+        term.window.level = NSFloatingWindowLevel;
+    } else {
+        term.window.level = NSNormalWindowLevel;
+    }
+    [term setIsHotKeyWindow:YES];
+
+    [[term window] setAlphaValue:0];
+    if ([term windowType] != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+        [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
+    }
+    return term;
+}
+
+- (void)hideHotKeyWindowAnimated:(BOOL)animated
+                 suppressHideApp:(BOOL)suppressHideApp {
+    HKWLog(@"Hide hotkey window. animated=%@ suppressHideApp=%@", @(animated), @(suppressHideApp));
+
+    if (suppressHideApp) {
+        _itermWasActiveWhenHotkeyOpened = YES;
+    }
+    if (!animated) {
+        [self fastHideHotKeyWindow];
+    }
+
+    PseudoTerminal *hotkeyTerm = [self hotKeyWindow];
+    // This used to iterate over hotkeyTerm.window.sheets, which seemed to
+    // work, but sheets wasn't defined prior to 10.9. Consider going back to
+    // that technique if this doesn't work well.
+    while (hotkeyTerm.window.attachedSheet) {
+        [NSApp endSheet:hotkeyTerm.window.attachedSheet];
+    }
+    HKWLog(@"Hide hotkey window.");
+    // Note: the test for alpha is because when you become an LSUIElement, the
+    // window's alpha could be 1 but it's still invisible.
+    if ([[hotkeyTerm window] alphaValue] > 0) {
+        HKWLog(@"key window is %@", [NSApp keyWindow]);
+        NSWindow *theKeyWindow = [NSApp keyWindow];
+        if (!theKeyWindow ||
+            ([theKeyWindow isKindOfClass:[PTYWindow class]] &&
+             [(PseudoTerminal*)[theKeyWindow windowController] isHotKeyWindow])) {
+                [self restorePreviouslyActiveApp];
+            }
+    }
+    [self rollOut:hotkeyTerm];
+}
+
+- (BOOL)eventIsHotkey:(NSEvent *)event {
+    return (_hotkeyCode &&
+            ([event modifierFlags] & kHotKeyModifierMask) == (_hotkeyModifiers & kHotKeyModifierMask) &&
+            [event keyCode] == _hotkeyCode);
+}
+
+- (BOOL)registerHotkey:(NSUInteger)keyCode modifiers:(NSEventModifierFlags)modifiers {
+    if (_carbonHotKey) {
+        [self unregisterHotkey];
+    }
+    _hotkeyCode = keyCode;
+    _hotkeyModifiers = modifiers & kHotKeyModifierMask;
+
+    _carbonHotKey =
+        [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:keyCode
+                                                             modifiers:_hotkeyModifiers
+                                                                target:self
+                                                              selector:@selector(carbonHotkeyPressed:)
+                                                              userData:nil] retain];
+    return YES;
+}
+
+- (void)unregisterHotkey {
+    _hotkeyCode = 0;
+    _hotkeyModifiers = 0;
+    [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:_carbonHotKey];
+    [_carbonHotKey release];
+    _carbonHotKey = nil;
+}
+
+- (void)saveHotkeyWindowState {
+    PseudoTerminal *term = [self hotKeyWindow];
+    if (term) {
+        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+        self.restorableState = [term arrangementExcludingTmuxTabs:YES
+                                                includingContents:includeContents];
+    } else {
+        self.restorableState = nil;
+    }
+    [NSApp invalidateRestorableState];
+}
+
+- (void)restorePreviouslyActiveApp {
+    if (!_previouslyActiveAppPID) {
+        return;
+    }
+
+    NSRunningApplication *app =
+        [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
+
+    if (app) {
+        DLog(@"Restore app %@", app);
+        [app activateWithOptions:0];
+    }
+    self.previouslyActiveAppPID = nil;
+}
+
+- (void)hotkeyPressed {
+    HKWLog(@"hotkey pressed");
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
+        [self toggleHotKeyWindow];
+    } else {
+        [self toggleApp];
+    }
+}
+    
+#pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
     PseudoTerminal *term = [self hotKeyWindow];
@@ -147,240 +269,21 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     }
 }
 
-- (void)rollInFinished
-{
-    rollingIn_ = NO;
-    PseudoTerminal* term = GetHotkeyWindow();
-    [[term window] makeKeyAndOrderFront:nil];
-    [[term window] makeFirstResponder:[[term currentSession] textview]];
-    [[[[iTermHotKeyController sharedInstance] hotKeyWindow] currentTab] recheckBlur];
-}
+#pragma mark - Actions
 
-- (Profile *)profile {
-    NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
-    if (guid) {
-        return [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    } else {
-        return nil;
-    }
-}
-
-- (BOOL)openHotkeyWindowAndRollIn:(BOOL)rollIn {
-    HKWLog(@"Open hotkey window");
-    NSDictionary *arrangement = [[self.restorableState copy] autorelease];
-    if (!arrangement) {
-        // If the user had an arrangement saved in user defaults, restore it and delete it. This is
-        // how hotkey window state was preserved prior to 12/9/14 when it was moved into application-
-        // level restorable state. Eventually this migration code can be deleted.
-        NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";  // DEPRECATED
-        arrangement =
-            [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
-        if (arrangement) {
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
-        }
-    }
-    self.restorableState = nil;
-    PseudoTerminal *term = nil;
-    if (arrangement) {
-        term = [PseudoTerminal terminalWithArrangement:arrangement];
-        if (term) {
-            [[iTermController sharedInstance] addTerminalWindow:term];
-        }
-    }
-    
-    iTermController* cont = [iTermController sharedInstance];
-    Profile* bookmark = [self profile];
-    if (!term && bookmark) {
-        if ([[bookmark objectForKey:KEY_WINDOW_TYPE] intValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
-            // Lion fullscreen doesn't make sense with hotkey windows. Change
-            // window type to traditional fullscreen.
-            NSMutableDictionary* replacement = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-            [replacement setObject:[NSNumber numberWithInt:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN]
-                            forKey:KEY_WINDOW_TYPE];
-            bookmark = replacement;
-        }
-        PTYSession *session = [cont launchBookmark:bookmark
-                                        inTerminal:nil
-                                           withURL:nil
-                                          isHotkey:YES
-                                           makeKey:YES
-                                       canActivate:YES
-                                           command:nil
-                                             block:nil];
-        if (session) {
-            term = [[iTermController sharedInstance] terminalWithSession:session];
-        }
-    }
-    if (term) {
-        if ([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
-            term.window.level = NSFloatingWindowLevel;
-        } else {
-            term.window.level = NSNormalWindowLevel;
-        }
-        [term setIsHotKeyWindow:YES];
-
-        [[term window] setAlphaValue:0];
-        if ([term windowType] != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-            [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
-        }
-        if (rollIn) {
-            RollInHotkeyTerm(term);
-        } else {
-            // Order out for issue 4065.
-            [[term window] orderOut:nil];
-        }
-        return YES;
-    }
-    return NO;
-}
-
-- (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a {
-    PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
-    for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
-        [[term window] setAlphaValue:a];
-        if (term != hotkeyTerm) {
-            [[term window] makeKeyAndOrderFront:nil];
-        }
-    }
-    // Unhide all windows and bring the one that was at the top to the front.
-    NSInteger i = _savedIndexOfFrontTerminal;
-    if (i >= 0 && i < [[[iTermController sharedInstance] terminals] count]) {
-        [[[[[iTermController sharedInstance] terminals] objectAtIndex:i] window] makeKeyAndOrderFront:nil];
-    }
-}
-
-- (BOOL)rollingInHotkeyTerm
-{
-    return rollingIn_;
-}
-
-static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotkeyOpened)
-{
-    HKWLog(@"Roll out [hide] hotkey window");
-    // Note: the test for alpha is because when you become an LSUIElement, the
-    // window's alpha could be 1 but it's still invisible.
-    if ([[term window] alphaValue] == 0) {
-        HKWLog(@"RollOutHotkeyTerm returning because term isn't visible.");
-        return;
-    }
-    BOOL temp = [term isHotKeyWindow];
-    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
-    [[[term window] animator] setAlphaValue:0];
-
-    [[iTermHotKeyController sharedInstance] performSelector:@selector(restoreNormalcy:)
-                                                 withObject:term
-                                                 afterDelay:[[NSAnimationContext currentContext] duration]];
-    [term setIsHotKeyWindow:temp];
-}
-
-- (void)doNotOrderOutWhenHidingHotkeyWindow
-{
-    itermWasActiveWhenHotkeyOpened_ = YES;
-}
-
-- (void)restoreNormalcy:(PseudoTerminal*)term
-{
-    if (!itermWasActiveWhenHotkeyOpened_) {
-        [NSApp hide:nil];
-        [self performSelector:@selector(unhide) withObject:nil afterDelay:0.1];
-    } else {
-        PseudoTerminal* currentTerm = [[iTermController sharedInstance] currentTerminal];
-        if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
-            [currentTerm hideMenuBar];
-        } else {
-            [currentTerm showMenuBar];
-        }
-    }
-
-    // NOTE: There used be an option called "closing hotkey switches spaces". I've removed the
-    // "off" behavior and made the "on" behavior the only option. Various things didn't work
-    // right, and the worst one was in this thread: "[iterm2-discuss] Possible bug when using Hotkey window?"
-    // where clicks would be swallowed up by the invisible hotkey window. The "off" mode would do
-    // this:
-    // [[term window] orderWindow:NSWindowBelow relativeTo:0];
-    // And the window was invisible only because its alphaValue was set to 0 elsewhere.
-    [[term window] orderOut:self];
-}
-
-- (void)unhide
-{
-    [NSApp unhideWithoutActivation];
-    for (PseudoTerminal* t in [[iTermController sharedInstance] terminals]) {
-        if (![t isHotKeyWindow]) {
-            [[[t window] animator] setAlphaValue:1];
-        }
-    }
-}
-
-- (void)storePreviouslyActiveApp {
-    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-    HKWLog(@"Active app is %@", activeAppDict);
-    if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
-        self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
-    } else {
-        self.previouslyActiveAppPID = nil;
-    }
-}
-
-- (void)restorePreviouslyActiveApp {
-    if (!_previouslyActiveAppPID) {
+- (void)carbonHotkeyPressed:(NSDictionary *)userInfo {
+    if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
         return;
     }
 
-    NSRunningApplication *app =
-        [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
-
-    if (app) {
-        DLog(@"Restore app %@", app);
-        [app activateWithOptions:0];
-    }
-    self.previouslyActiveAppPID = nil;
+    [self hotkeyPressed];
 }
 
-- (void)showHotKeyWindow {
-    [self storePreviouslyActiveApp];
-    itermWasActiveWhenHotkeyOpened_ = [NSApp isActive];
-    PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
-    if (hotkeyTerm) {
-        HKWLog(@"Showing existing hotkey window");
-        NSInteger i = 0;
-        _savedIndexOfFrontTerminal = -1;
-        for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
-            if ([NSApp isActive]) {
-                if (term != hotkeyTerm && [[term window] isKeyWindow]) {
-                    _savedIndexOfFrontTerminal = i;
-                }
-            }
-            i++;
-        }
-        HKWLog(@"Activate iterm2");
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-        rollingIn_ = YES;
-        RollInHotkeyTerm(hotkeyTerm);
-    } else {
-        HKWLog(@"Open new hotkey window window");
-        if ([self openHotkeyWindowAndRollIn:YES]) {
-            rollingIn_ = YES;
-        }
-    }
-}
-
-- (void)createHiddenHotkeyWindow {
-    if (GetHotkeyWindow()) {
-        return;
-    }
-    [self openHotkeyWindowAndRollIn:NO];
-}
-
-- (BOOL)isHotKeyWindowOpen
-{
-    PseudoTerminal* term = GetHotkeyWindow();
-    return term && [[term window] isVisible];
-}
+#pragma mark - Private
 
 - (void)fastHideHotKeyWindow {
     HKWLog(@"fastHideHotKeyWindow");
-    PseudoTerminal* term = GetHotkeyWindow();
+    PseudoTerminal *term = [self hotKeyWindow];
     if (term) {
         HKWLog(@"fastHideHotKeyWindow - found a hot term");
         // Temporarily tell the hotkeywindow that it's not hot so that it doesn't try to hide itself
@@ -401,134 +304,273 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     }
 }
 
-- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm {
-    // This used to iterate over hotkeyTerm.window.sheets, which seemed to
-    // work, but sheets wasn't defined prior to 10.9. Consider going back to
-    // that technique if this doesn't work well.
-    while (hotkeyTerm.window.attachedSheet) {
-        [NSApp endSheet:hotkeyTerm.window.attachedSheet];
+- (NSInteger)indexOfFrontTerminal {
+    PseudoTerminal *hotkeyTerm = [self hotKeyWindow];
+    if (!hotkeyTerm || ![NSApp isActive]) {
+        return -1;
     }
-    HKWLog(@"Hide hotkey window.");
+
+    __block NSInteger result = -1;
+    [[[iTermController sharedInstance] terminals] enumerateObjectsUsingBlock:^(PseudoTerminal *_Nonnull term,
+                                                                               NSUInteger idx,
+                                                                               BOOL *_Nonnull stop) {
+        if (term != hotkeyTerm && [[term window] isKeyWindow]) {
+            result = idx;
+        }
+    }];
+    
+    return result;
+}
+
+- (PseudoTerminal *)windowFromRestorableState {
+    PseudoTerminal *term = nil;
+    NSDictionary *arrangement = [[self.restorableState copy] autorelease];
+    if (!arrangement) {
+        // If the user had an arrangement saved in user defaults, restore it and delete it. This is
+        // how hotkey window state was preserved prior to 12/9/14 when it was moved into application-
+        // level restorable state. Eventually this migration code can be deleted.
+        NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";  // DEPRECATED
+        arrangement =
+            [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
+        if (arrangement) {
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
+        }
+    }
+    self.restorableState = nil;
+    if (arrangement) {
+        term = [PseudoTerminal terminalWithArrangement:arrangement];
+        if (term) {
+            [[iTermController sharedInstance] addTerminalWindow:term];
+        }
+    }
+    return term;
+}
+
+- (PseudoTerminal *)windowFromProfile:(Profile *)hotkeyProfile {
+    if (!hotkeyProfile) {
+        return nil;
+    }
+    if ([[hotkeyProfile objectForKey:KEY_WINDOW_TYPE] intValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
+        // Lion fullscreen doesn't make sense with hotkey windows. Change
+        // window type to traditional fullscreen.
+        NSMutableDictionary *replacement = [[hotkeyProfile mutableCopy] autorelease];
+        replacement[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
+        hotkeyProfile = replacement;
+    }
+    PTYSession *session = [[iTermController sharedInstance] launchBookmark:hotkeyProfile
+                                                                inTerminal:nil
+                                                                   withURL:nil
+                                                                  isHotkey:YES
+                                                                   makeKey:YES
+                                                               canActivate:YES
+                                                                   command:nil
+                                                                     block:nil];
+    if (session) {
+        return [[iTermController sharedInstance] terminalWithSession:session];
+    } else {
+        return nil;
+    }
+}
+
+- (void)rollInWindowController:(PseudoTerminal *)term {
+    HKWLog(@"Roll in [show] hotkey window");
+
+    _rollingIn = YES;
+    [NSApp activateIgnoringOtherApps:YES];
+    [[term window] makeKeyAndOrderFront:nil];
+    
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [[iTermHotKeyController sharedInstance] rollInFinished];
+    }];
+    [[[term window] animator] setAlphaValue:1];
+    [NSAnimationContext endGrouping];
+}
+
+- (void)bringHotkeyWindowToFore:(NSWindow *)window {
+    DLog(@"Bring hotkey window %@ to front", window);
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    [window makeKeyAndOrderFront:nil];
+}
+
+- (void)rollInFinished {
+    _rollingIn = NO;
+    PseudoTerminal* term = [self hotKeyWindow];
+    [[term window] makeKeyAndOrderFront:nil];
+    [[term window] makeFirstResponder:[[term currentSession] textview]];
+    [[[[iTermHotKeyController sharedInstance] hotKeyWindow] currentTab] recheckBlur];
+}
+
+- (void)showNonHotKeyWindowsAndSetAlphaTo:(CGFloat)newAlphaValue {
+    PseudoTerminal *hotkeyTerm = [self hotKeyWindow];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        [[term window] setAlphaValue:newAlphaValue];
+        if (term != hotkeyTerm) {
+            [[term window] makeKeyAndOrderFront:nil];
+        }
+    }
+    // Unhide all windows and bring the one that was at the top to the front.
+    NSInteger i = _savedIndexOfFrontTerminal;
+    if (i >= 0 && i < [[[iTermController sharedInstance] terminals] count]) {
+        [[[[[iTermController sharedInstance] terminals] objectAtIndex:i] window] makeKeyAndOrderFront:nil];
+    }
+}
+
+- (void)rollOut:(PseudoTerminal *)term {
+    HKWLog(@"Roll out [hide] hotkey window");
+    if (_rollingOut) {
+        HKWLog(@"Already rolling out");
+        return;
+    }
     // Note: the test for alpha is because when you become an LSUIElement, the
     // window's alpha could be 1 but it's still invisible.
-    if ([[hotkeyTerm window] alphaValue] > 0) {
-        HKWLog(@"key window is %@", [NSApp keyWindow]);
-        NSWindow *theKeyWindow = [NSApp keyWindow];
-        if (!theKeyWindow ||
-            ([theKeyWindow isKindOfClass:[PTYWindow class]] &&
-             [(PseudoTerminal*)[theKeyWindow windowController] isHotKeyWindow])) {
-                [self restorePreviouslyActiveApp];
-            }
+    if ([[term window] alphaValue] == 0) {
+        HKWLog(@"RollOutHotkeyTerm returning because term isn't visible.");
+        return;
     }
-    RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened_);
+    BOOL temp = [term isHotKeyWindow];
+
+    _rollingOut = YES;
+
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        _rollingOut = NO;
+        [self didFinishRollingOutHotkeyWindow:term];
+    }];
+    [[[term window] animator] setAlphaValue:0];
+    [NSAnimationContext endGrouping];
+
+    [term setIsHotKeyWindow:temp];
 }
 
-- (BOOL)haveHotkeyBoundToWindow {
-    return [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow] && [self profile] != nil;
-}
-
-void OnHotKeyEvent(void)
-{
-    HKWLog(@"hotkey pressed");
-    PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-    if ([iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
-        HKWLog(@"hotkey window enabled");
-        PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
-        if (hotkeyTerm) {
-            HKWLog(@"already have a hotkey window created");
-            if ([[hotkeyTerm window] alphaValue] == 1) {
-                HKWLog(@"hotkey window opaque");
-                const BOOL activateStickyHotkeyWindow = (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
-                                                         ![[hotkeyTerm window] isKeyWindow]);
-                if (activateStickyHotkeyWindow && ![NSApp isActive]) {
-                    HKWLog(@"Storing previously active app");
-                    [[iTermHotKeyController sharedInstance] storePreviouslyActiveApp];
-                }
-                const BOOL hotkeyWindowOnOtherSpace = ![[hotkeyTerm window] isOnActiveSpace];
-                if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
-                    DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
-                    [NSApp activateIgnoringOtherApps:YES];
-                    [[hotkeyTerm window] makeKeyAndOrderFront:nil];
-                } else {
-                    DLog(@"Hide hotkey window");
-                    [[iTermHotKeyController sharedInstance] hideHotKeyWindow:hotkeyTerm];
-                }
-            } else {
-                HKWLog(@"hotkey window not opaque");
-                [[iTermHotKeyController sharedInstance] showHotKeyWindow];
-            }
+- (void)didFinishRollingOutHotkeyWindow:(PseudoTerminal *)hotKeyTerm {
+    if (!_itermWasActiveWhenHotkeyOpened) {
+        // TODO: This is weird. What is its purpose? After I fix the bug where non-hotkey windows
+        // get ordered front is this still necessary?
+        [NSApp hide:nil];
+        [self performSelector:@selector(unhide) withObject:nil afterDelay:0.1];
+    } else {
+        PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];
+        if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
+            [currentTerm hideMenuBar];
         } else {
-            HKWLog(@"no hotkey window created yet");
+            [currentTerm showMenuBar];
+        }
+    }
+
+    // NOTE: There used be an option called "closing hotkey switches spaces". I've removed the
+    // "off" behavior and made the "on" behavior the only option. Various things didn't work
+    // right, and the worst one was in this thread: "[iterm2-discuss] Possible bug when using Hotkey window?"
+    // where clicks would be swallowed up by the invisible hotkey window. The "off" mode would do
+    // this:
+    // [[term window] orderWindow:NSWindowBelow relativeTo:0];
+    // And the window was invisible only because its alphaValue was set to 0 elsewhere.
+    [[hotKeyTerm window] orderOut:self];
+}
+
+- (void)unhide {
+    [NSApp unhideWithoutActivation];
+    for (PseudoTerminal *terminal in [[iTermController sharedInstance] terminals]) {
+        if (![terminal isHotKeyWindow]) {
+            [[[terminal window] animator] setAlphaValue:1];
+        }
+    }
+}
+
+- (void)storePreviouslyActiveApp {
+    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+    HKWLog(@"Active app is %@", activeAppDict);
+    if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:[[NSBundle mainBundle] bundleIdentifier]]) {
+        self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
+    } else {
+        self.previouslyActiveAppPID = nil;
+    }
+}
+
+- (void)hideHotkeyWindow:(PseudoTerminal *)hotkeyTerm {
+    const BOOL activateStickyHotkeyWindow = (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
+                                             ![[hotkeyTerm window] isKeyWindow]);
+    if (activateStickyHotkeyWindow && ![NSApp isActive]) {
+        HKWLog(@"Storing previously active app");
+        [[iTermHotKeyController sharedInstance] storePreviouslyActiveApp];
+    }
+    const BOOL hotkeyWindowOnOtherSpace = ![[hotkeyTerm window] isOnActiveSpace];
+    if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
+        DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
+        [NSApp activateIgnoringOtherApps:YES];
+        [[hotkeyTerm window] makeKeyAndOrderFront:nil];
+    } else {
+        DLog(@"Hide hotkey window");
+        [[iTermHotKeyController sharedInstance] hideHotKeyWindowAnimated:YES suppressHideApp:NO];
+    }
+}
+
+- (void)toggleHotKeyWindow {
+    HKWLog(@"hotkey window enabled");
+    PseudoTerminal *hotkeyTerm = [self hotKeyWindow];
+    if (hotkeyTerm) {
+        HKWLog(@"already have a hotkey window created");
+        if ([[hotkeyTerm window] alphaValue] == 1) {
+            HKWLog(@"hotkey window opaque");
+            [self hideHotkeyWindow:hotkeyTerm];
+        } else {
+            HKWLog(@"hotkey window not opaque");
             [[iTermHotKeyController sharedInstance] showHotKeyWindow];
         }
-    } else if ([NSApp isActive]) {
-        NSWindow* prefWindow = [prefPanel window];
-        NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
-        if (prefWindow != appKeyWindow ||
-            ![[prefPanel hotkeyField] textFieldIsFirstResponder]) {
+    } else {
+        HKWLog(@"no hotkey window created yet");
+        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
+    }
+}
+
+- (void)toggleApp {
+    if ([NSApp isActive]) {
+        PreferencePanel *prefsWindowController = [PreferencePanel sharedInstance];
+        NSWindow *prefsWindow = [prefsWindowController window];
+        NSWindow *keyWindow = [[NSApplication sharedApplication] keyWindow];
+        if (prefsWindow != keyWindow ||
+            ![[prefsWindowController hotkeyField] textFieldIsFirstResponder]) {
             [NSApp hide:nil];
         }
     } else {
-        iTermController* controller = [iTermController sharedInstance];
-        int n = [controller numberOfTerminals];
+        iTermController *controller = [iTermController sharedInstance];
+        int numberOfTerminals = [controller numberOfTerminals];
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-        if (n == 0) {
+        if (numberOfTerminals == 0) {
             [controller newWindow:nil];
         }
     }
 }
 
-- (BOOL)eventIsHotkey:(NSEvent*)e
-{
-    const int mask = (NSCommandKeyMask | NSAlternateKeyMask | NSShiftKeyMask | NSControlKeyMask);
-    return (hotkeyCode_ &&
-            ([e modifierFlags] & mask) == (hotkeyModifiers_ & mask) &&
-            [e keyCode] == hotkeyCode_);
+#pragma mark - Accessors
+
+- (BOOL)isHotKeyWindowOpen {
+    return [[[self hotKeyWindow] window] alphaValue] > 0;
 }
 
-
-- (void)unregisterHotkey
-{
-    hotkeyCode_ = 0;
-    hotkeyModifiers_ = 0;
-    [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:_carbonHotKey];
-    [_carbonHotKey release];
-    _carbonHotKey = nil;
-}
-
-- (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers {
-    if (_carbonHotKey) {
-        [self unregisterHotkey];
+- (PseudoTerminal *)hotKeyWindow {
+    NSArray<PseudoTerminal *> *terminals = [[iTermController sharedInstance] terminals];
+    for (PseudoTerminal *term in terminals) {
+        if ([term isHotKeyWindow]) {
+            return term;
+        }
     }
-    hotkeyCode_ = keyCode;
-    hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
-
-    _carbonHotKey = [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:keyCode
-                                                                         modifiers:hotkeyModifiers_
-                                                                            target:self
-                                                                          selector:@selector(carbonHotkeyPressed:)
-                                                                          userData:nil] retain];
-    return YES;
+    return nil;
 }
 
-- (void)carbonHotkeyPressed:(id)handler {
-    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
-    if (!ad.workspaceSessionActive) {
-        return;
-    }
-    OnHotKeyEvent();
-}
-
-- (void)saveHotkeyWindowState {
-    PseudoTerminal *term = [self hotKeyWindow];
-    if (term) {
-        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
-        self.restorableState = [term arrangementExcludingTmuxTabs:YES
-                                                includingContents:includeContents];
+- (Profile *)profile {
+    NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
+    if (guid) {
+        return [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     } else {
-        self.restorableState = nil;
+        return nil;
     }
-    [NSApp invalidateRestorableState];
+}
+
+- (BOOL)haveHotkeyBoundToWindow {
+    return [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow] && [self profile] != nil;
 }
 
 @end

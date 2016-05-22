@@ -162,7 +162,7 @@
 
 // Bound to the close button.
 - (IBAction)close:(id)sender {
-    [iTermHotKeyController closeWindowReturningToHotkeyWindowIfPossible:self.window];
+    [[iTermHotKeyController sharedInstance] closeWindowReturningToHotkeyWindowIfPossible:self.window];
 }
 
 // Switch to the session associated with the currently selected row, closing
