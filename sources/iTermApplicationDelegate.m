@@ -294,7 +294,9 @@ static BOOL hasBecomeActive = NO;
     // LaunchBar: https://twitter.com/launchbar/status/620975715278790657?cn=cmVwbHk%3D&refsrc=email
     // Pathfinder: https://twitter.com/gnachman/status/659409608642007041
 
-#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
+    // This is disabled because it looks like everyone is there or almost there. I can remove this
+    // code soon.
+//#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
 
 #ifdef SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
     static NSString *const kTimeOfFirstLaunchForIncompatibilityWarnings = @"NoSyncTimeOfFirstLaunchForIncompatibilityWarnings";
