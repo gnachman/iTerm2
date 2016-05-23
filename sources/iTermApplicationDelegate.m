@@ -31,6 +31,7 @@
 #import "ColorsMenuItemView.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermAppHotKeyProvider.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
@@ -86,7 +87,8 @@ NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
-static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";
+static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
+static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
 
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
@@ -420,13 +422,12 @@ static BOOL hasBecomeActive = NO;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
-    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
-        ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
-         [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
-        [[iTermHotKeyController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
-                                                     modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
+    // Register the app hotkey.
+    [iTermAppHotKeyProvider sharedInstance];
+    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        // TODO: Register hotkey for profiles that have one defined.
     }
+
     if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
@@ -1371,11 +1372,11 @@ static BOOL hasBecomeActive = NO;
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
 
-    [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
-    NSDictionary *hotkeyWindowState = [[iTermHotKeyController sharedInstance] restorableState];
-    if (hotkeyWindowState) {
-        [coder encodeObject:hotkeyWindowState
-                     forKey:kHotkeyWindowRestorableState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
+    NSArray *hotkeyWindowsStates = [[iTermHotKeyController sharedInstance] restorableStates];
+    if (hotkeyWindowsStates) {
+        [coder encodeObject:hotkeyWindowsStates
+                     forKey:kHotkeyWindowsRestorableStates];
     }
     NSLog(@"Time to save app restorable state: %@",
           @([NSDate timeIntervalSinceReferenceDate] - start));
@@ -1390,22 +1391,15 @@ static BOOL hasBecomeActive = NO;
         ScreenCharDecodeRestorableState(screenCharState);
     }
 
-    NSDictionary *hotkeyWindowState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
-    if (hotkeyWindowState &&
+    NSArray *hotkeyWindowsStates = [coder decodeObjectForKey:kHotkeyWindowsRestorableStates];
+    if (hotkeyWindowsStates &&
         [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        [[iTermHotKeyController sharedInstance] setRestorableState:hotkeyWindowState];
-
         // We have to create the hotkey window now because we need to attach to servers before
         // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-        iTermHotKeyController *hotKeyController = [iTermHotKeyController sharedInstance];
-        if ([hotKeyController hotKeyWindow]) {
-            return;
-        }
-        PseudoTerminal *term = [hotKeyController createHotKeyWindow];
-        // Order out for issue 4065.
-        [[term window] orderOut:nil];
-
+        [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
     }
+
+#warning TODO: Handle migration from deprecated single-state
 }
 
 // Debug logging

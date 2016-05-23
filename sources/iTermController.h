@@ -112,6 +112,7 @@
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
+- (PseudoTerminal *)terminalForWindow:(NSWindow *)window;
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
 

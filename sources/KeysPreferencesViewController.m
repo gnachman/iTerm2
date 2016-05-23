@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermHotKeyController.h"
+#import "iTermAppHotKeyProvider.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermModifierRemapper.h"
@@ -153,7 +154,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             [self setHotKeyChar:theChar code:code mods:modifiers];
         }
     } else {
-        [[iTermHotKeyController sharedInstance] unregisterHotkey];
+        [[iTermAppHotKeyProvider sharedInstance] invalidate];
         [self updateHotkeyViews];
     }
 }
@@ -176,14 +177,6 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     _hotkeyLabel.labelEnabled = isEnabled;
 }
 
-- (void)registerHotkey {
-    int modifiers = [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
-    int code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
-    [[iTermHotKeyController sharedInstance] registerHotkey:code
-                                                 modifiers:modifiers];
-}
-
-
 // Set the local copy of the hotkey, update the pref panel, and register it after a delay.
 - (void)setHotKeyChar:(unsigned short)keyChar
                  code:(unsigned int)keyCode
@@ -195,7 +188,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     PreferencePanel *prefs = [PreferencePanel sharedInstance];
     [prefs.window makeFirstResponder:prefs.window];
     [self updateHotkeyViews];
-    [self performSelector:@selector(registerHotkey) withObject:self afterDelay:0.01];
+    [[iTermAppHotKeyProvider sharedInstance] invalidate];
 }
 
 

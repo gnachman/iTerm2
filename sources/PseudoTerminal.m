@@ -2295,7 +2295,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[self retain] autorelease];
     
     if ([self isHotKeyWindow]) {
-        [[iTermHotKeyController sharedInstance] restorePreviouslyActiveApp];
+        [[iTermHotKeyController sharedInstance] hotKeyWindowWillClose:self];
     }
 
     // This releases the last reference to self except for autorelease pools.
@@ -2335,7 +2335,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [itad updateBroadcastMenuState];
     if (_fullScreen) {
         if (![self isHotKeyWindow] ||
-            [[iTermHotKeyController sharedInstance] rollingInHotkeyTerm] ||
+            [[iTermHotKeyController sharedInstance] rollingIn] ||
             [[self window] alphaValue] > 0) {
             // One of the following is true:
             // - This is a regular (non-hotkey) fullscreen window
@@ -2694,7 +2694,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         DLog(@"Autohide is disabled");
         return nil;
     }
-    if ([[iTermHotKeyController sharedInstance] rollingInHotkeyTerm]) {
+    if ([[iTermHotKeyController sharedInstance] rollingIn]) {
         DLog(@"Currently rolling in hotkey window");
         return nil;
     }

@@ -154,7 +154,7 @@ static iTermController *gSharedInstance;
 
 - (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
-    [[iTermHotKeyController sharedInstance] saveHotkeyWindowState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
     if (self.shouldLeaveSessionsRunningOnQuit) {
@@ -1166,8 +1166,17 @@ static iTermController *gSharedInstance;
     return [_terminalWindows indexOfObject:terminal];
 }
 
--(PseudoTerminal*)terminalAtIndex:(int)i {
+-(PseudoTerminal *)terminalAtIndex:(int)i {
     return [_terminalWindows objectAtIndex:i];
+}
+
+- (PseudoTerminal *)terminalForWindow:(NSWindow *)window {
+    for (PseudoTerminal *term in _terminalWindows) {
+        if (term.window == window) {
+            return term;
+        }
+    }
+    return nil;
 }
 
 - (int)allocateWindowNumber {

@@ -79,7 +79,7 @@
 }
 
 // override to catch key press events very early on
-- (void)sendEvent:(NSEvent*)event {
+- (void)sendEvent:(NSEvent *)event {
     if ([event type] == NSKeyDown) {
         iTermController* cont = [iTermController sharedInstance];
 
@@ -94,7 +94,7 @@
             [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
-            [[iTermHotKeyController sharedInstance] hotkeyPressed];
+            [[iTermHotKeyController sharedInstance] hotkeyPressed:event];
             return;
         }
         PseudoTerminal* currentTerminal = [cont currentTerminal];
@@ -114,7 +114,9 @@
                 PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
                 if (termWithNumber) {
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
+                        iTermProfileHotKey *hotKey =
+                            [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:termWithNumber];
+                        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
                     } else {
                         [[termWithNumber window] makeKeyAndOrderFront:self];
                     }
