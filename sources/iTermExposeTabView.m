@@ -147,8 +147,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     }
 }
 
-- (void)bringTabToFore
-{
+- (void)bringTabToFore {
     if (windowIndex_ >= 0 && tabIndex_ >= 0) {
         iTermController *controller = [iTermController sharedInstance];
         PseudoTerminal *terminal = [[controller terminals] objectAtIndex:windowIndex_];

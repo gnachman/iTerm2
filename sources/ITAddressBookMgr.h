@@ -193,6 +193,8 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
+#define KEY_HOTKEY_KEY_CODE                   @"Hotkey Key Code"
+#define KEY_HOTKEY_MODIFIER_FLAGS             @"Modifier Flags"
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary

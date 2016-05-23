@@ -6287,7 +6287,8 @@ ITERM_WEAKLY_REFERENCEABLE
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
-        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
+        iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:terminal];
+        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
     } else {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         [[terminal window] makeKeyAndOrderFront:self];

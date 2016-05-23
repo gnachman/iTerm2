@@ -61,6 +61,10 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
     [self carbonHotkeyPressed:nil];
 }
 
+- (void)hotKeyPressed {
+    [NSException raise:NSInternalInconsistencyException format:@"Not implemented. Use a subclass."];
+}
+
 #pragma mark - Actions
 
 - (void)carbonHotkeyPressed:(NSDictionary *)userInfo {

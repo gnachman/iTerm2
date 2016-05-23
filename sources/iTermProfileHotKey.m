@@ -290,6 +290,10 @@ static NSString *const kArrangement = @"Arrangement";
     [self rollOut];
 }
 
+- (void)windowWillClose {
+    self.restorableState = nil;
+}
+
 - (void)fastHideHotKeyWindow {
     DLog(@"fastHideHotKeyWindow");
     if (self.windowController) {

@@ -11,6 +11,7 @@
 #import "iTermPreviousState.h"
 #import "iTermShortcutInputView.h"
 #import "iTermSystemVersion.h"
+#import "NSArray+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -73,6 +74,7 @@
 }
 
 - (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey {
+    DLog(@"Show window for profile hotkey %@", profileHotKey);
     [profileHotKey showHotKeyWindow];
 }
 
@@ -212,13 +214,29 @@
     }
 }
 
-- (BOOL)anyHotkeyBoundToProfile {
+- (NSArray *)hotKeyWindows {
+    NSMutableArray<PseudoTerminal *> *windowControllers = [NSMutableArray array];
     for (__kindof iTermBaseHotKey *hotKey in _hotKeys) {
-        if ([hotKey isKindOfClass:[iTermProfileHotKey class]] && [hotKey profile]) {
-            return YES;
+        if ([hotKey isKindOfClass:[iTermProfileHotKey class]]) {
+            iTermProfileHotKey *profileHotKey = hotKey;
+            [windowControllers addObject:profileHotKey.windowController];
         }
     }
-    return NO;
+    return windowControllers;
+}
+
+- (NSArray *)visibleWindowControllers {
+    NSArray *allWindowControllers = self.hotKeyWindows;
+    return [allWindowControllers filteredArrayUsingBlock:^BOOL(id anObject) {
+        PseudoTerminal *windowController = anObject;
+        return windowController.window.isVisible && windowController.window.alphaValue > 0;
+    }];
+}
+
+- (NSArray *)profileHotKeys {
+    return [_hotKeys filteredArrayUsingBlock:^BOOL(id anObject) {
+        return [anObject isKindOfClass:[iTermProfileHotKey class]];
+    }];
 }
 
 #pragma mark - iTermHotKeyDelegate

@@ -2,6 +2,7 @@
 
 #import "iTermProfileHotKey.h"
 #import "iTermAppHotKey.h"
+#import "PseudoTerminal.h"
 
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
@@ -14,9 +15,9 @@
 // Returns the designated hotkey window or nil if there is none.
 @property(nonatomic, readonly) NSArray<PseudoTerminal *> *hotKeyWindows;
 @property(nonatomic, readonly) NSArray<Profile *> *hotKeyWindowProfiles;
+@property(nonatomic, readonly) NSArray<PseudoTerminal *> *visibleWindowControllers;
+@property(nonatomic, readonly) NSArray<iTermProfileHotKey *> *profileHotKeys;
 
-// Indicates if pressing some hotkey opens a dedicated window.
-@property(nonatomic, readonly) BOOL anyHotkeyBoundToProfile;
 @property(nonatomic, readonly) PseudoTerminal *topMostVisibleHotKeyWindowController;
 
 + (instancetype)sharedInstance;
@@ -24,10 +25,6 @@
 
 // Reveal the hotkey window, creating it if needed.
 - (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey;
-
-// Create the hotkey window if it doesn't already exist. It will be hidden but ordered in.
-// You should not normally use this unless you know what you're doing.
-- (PseudoTerminal *)createHotKeyWindowForProfile:(Profile *)profile;
 
 // Hide the indicated hotkey window. If `suppressHideApp` is set then do not hide and then unhide
 // iTerm after the hotkey window is dismissed (which would normally happen if iTerm2 was not the

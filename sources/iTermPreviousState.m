@@ -1,5 +1,6 @@
 #import "iTermPreviousState.h"
 
+#import "DebugLogging.h"
 #import "iTermController.h"
 #import "PseudoTerminal.h"
 

@@ -31,6 +31,9 @@
 - (void)hideHotKeyWindowAnimated:(BOOL)animated
                  suppressHideApp:(BOOL)suppressHideApp;
 
+- (void)windowWillClose;
+
+
 @end
 
 @interface iTermProfileHotKey(Internal)

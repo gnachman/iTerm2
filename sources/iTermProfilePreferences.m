@@ -205,7 +205,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_PREVENT_TAB: @NO,
                   KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR: @NO,
                   KEY_OPEN_TOOLBELT: @NO,
-                  KEY_HAS_HOTKEY: @NO,
                   KEY_ASCII_ANTI_ALIASED: @NO,
                   KEY_NONASCII_ANTI_ALIASED: @NO,
                   KEY_SCROLLBACK_LINES: @1000,
@@ -243,6 +242,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
+                  KEY_HAS_HOTKEY: @NO,
+                  KEY_HOTKEY_MODIFIER_FLAGS: @0,
+                  KEY_HOTKEY_KEY_CODE: @0,
                   KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
                   KEY_SHOW_MARK_INDICATORS: @YES,
                 };

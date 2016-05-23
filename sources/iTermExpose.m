@@ -428,12 +428,16 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 
 - (void)_toggleOn
 {
-    iTermController* controller = [iTermController sharedInstance];
-    if ([[iTermHotKeyController sharedInstance] isHotKeyWindowOpen]) {
-        [[iTermHotKeyController sharedInstance] hideHotKeyWindowAnimated:NO suppressHideApp:NO];
+    
+    // Hide all open hotkey windows
+    iTermHotKeyController *hotKeyController = [iTermHotKeyController sharedInstance];
+    for (PseudoTerminal *term in [hotKeyController hotKeyWindows]) {
+        iTermProfileHotKey *hotKey = [hotKeyController profileHotKeyForWindowController:term];
+        [hotKey hideHotKeyWindowAnimated:NO suppressHideApp:NO];
     }
 
     // Crete parallel arrays with info needed to create subviews.
+    iTermController *controller = [iTermController sharedInstance];
     NSMutableArray* images = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
     NSMutableArray* labels = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
@@ -483,17 +487,10 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     [window_ setContentView:view_];
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
     [window_ setOpaque:NO];
-
-    PseudoTerminal* hotKeyWindow = [[iTermHotKeyController sharedInstance] hotKeyWindow];
-    BOOL isHot = NO;
-    if (hotKeyWindow) {
-        isHot = [hotKeyWindow isHotKeyWindow];
-        [hotKeyWindow setIsHotKeyWindow:NO];
-    }
+    
+    // Note: we used to tell the hotkey window it's not a hotkey window before making this window
+    // key but I can't see why.
     [window_ makeKeyAndOrderFront:self];
-    if (hotKeyWindow) {
-        [hotKeyWindow setIsHotKeyWindow:isHot];
-    }
 }
 
 - (int)_populateArrays:(NSMutableArray *)images

@@ -159,7 +159,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)shouldBeUIElementApplication {
     return ([iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
-            [[iTermHotKeyController sharedInstance] haveHotkeyBoundToWindow]);
+            [[[iTermHotKeyController sharedInstance] profileHotKeys] count] > 0);
 }
 
 - (void)updateProcessType {
@@ -424,9 +424,6 @@ static BOOL hasBecomeActive = NO;
 
     // Register the app hotkey.
     [iTermAppHotKeyProvider sharedInstance];
-    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        // TODO: Register hotkey for profiles that have one defined.
-    }
 
     if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
@@ -698,27 +695,28 @@ static BOOL hasBecomeActive = NO;
     return quittingBecauseLastWindowClosed_;
 }
 
-- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
-{
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication
+                    hasVisibleWindows:(BOOL)flag {
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
-        // The hotkey window is configured.
-        PseudoTerminal* hotkeyTerm = [[iTermHotKeyController sharedInstance] hotKeyWindow];
-        if (hotkeyTerm) {
-            // Hide the existing window or open it if enabled by preference.
-            if ([[hotkeyTerm window] alphaValue] == 1) {
-                [[iTermHotKeyController sharedInstance] hideHotKeyWindowAnimated:YES suppressHideApp:NO];
-                return NO;
-            } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
-                [[iTermHotKeyController sharedInstance] showHotKeyWindow];
-                return NO;
+        // The hotkey window is configured. If any is open, close all. If all are closed, open all.
+        
+        iTermHotKeyController *hotkeyController = [iTermHotKeyController sharedInstance];
+        NSArray<PseudoTerminal *> *visibleHotKeyWindowControllers = hotkeyController.visibleWindowControllers;
+        BOOL shouldHandle = YES;
+        if (visibleHotKeyWindowControllers.count) {
+            for (PseudoTerminal *windowController in visibleHotKeyWindowControllers) {
+                iTermProfileHotKey *hotKey = [hotkeyController profileHotKeyForWindowController:windowController];
+                [hotKey hideHotKeyWindowAnimated:YES suppressHideApp:NO];
             }
+            shouldHandle = NO;
         } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
-            // No existing hotkey window but preference is to toggle it by dock icon so open a new
-            // one.
-            [[iTermHotKeyController sharedInstance] showHotKeyWindow];
-            return NO;
+            for (iTermProfileHotKey *hotKey in hotkeyController.profileHotKeys) {
+                [hotkeyController showWindowForProfileHotKey:hotKey];
+            }
+            shouldHandle = NO;
         }
+        return shouldHandle;
     }
     return YES;
 }

@@ -43,8 +43,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // Used to make restoring fullscreen windows work on 10.11.
 @property(nonatomic, readonly) BOOL togglingLionFullScreen;
 
-// Up to one window may be the hotkey window, which is toggled with the system-wide
-// hotkey.
+// A window may be the hotkey window, which is toggled with a system-wide hotkey.
 @property(nonatomic, assign) BOOL isHotKeyWindow;
 
 // A unique string for this window. Used for tmux to remember which window
