@@ -24,6 +24,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSMatrix *_rightOptionKeySends;
     IBOutlet NSButton *_deleteSendsCtrlHButton;
     IBOutlet NSButton *_applicationKeypadAllowed;
+    IBOutlet NSButton *_hasHotkey;
 }
 
 - (void)dealloc {
@@ -50,6 +51,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     
     [self defineControl:_applicationKeypadAllowed
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_hasHotkey
+                    key:KEY_HAS_HOTKEY
                    type:kPreferenceInfoTypeCheckbox];
 
     [self updateDeleteSendsCtrlH];

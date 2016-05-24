@@ -44,7 +44,6 @@
     IBOutlet NSButton *_preventTab;
     IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
-    IBOutlet NSButton *_hasHotkey;
 }
 
 - (void)dealloc {
@@ -140,10 +139,6 @@
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT
-                   type:kPreferenceInfoTypeCheckbox];
-    
-    [self defineControl:_hasHotkey
-                    key:KEY_HAS_HOTKEY
                    type:kPreferenceInfoTypeCheckbox];
 }
 
