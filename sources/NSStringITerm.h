@@ -222,6 +222,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // A fast, non-cryto-quality hash.
 - (NSUInteger)hashWithDJB2;
 
+- (unichar)firstCharacter;
+
 @end
 
 @interface NSMutableString (iTerm)

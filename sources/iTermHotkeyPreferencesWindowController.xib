@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermHotkeyPreferencesWindowController">
+            <connections>
+                <outlet property="_alwaysShowOnDockClick" destination="siA-bI-HmC" id="puK-WS-qHL"/>
+                <outlet property="_animate" destination="r46-pU-MRA" id="gdk-fK-tlN"/>
+                <outlet property="_autoHide" destination="T3p-0Y-eeA" id="bOc-sP-EKr"/>
+                <outlet property="_doNotShowOnDockClick" destination="roD-me-xYz" id="BCa-6E-83g"/>
+                <outlet property="_hotKey" destination="ko0-9s-c1g" id="Pnt-LJ-atE"/>
+                <outlet property="_showAutoHiddenWindowOnAppActivation" destination="6tA-bg-olR" id="xeh-Kh-41E"/>
+                <outlet property="_showIfNoWindowsOpenOnDockClick" destination="ieU-bS-a2y" id="5dM-Ox-fcX"/>
+                <outlet property="window" destination="J17-Oy-pHl" id="awo-N1-1aW"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="HotKey Window Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="J17-Oy-pHl" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="272" y="172" width="573" height="280"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <view key="contentView" id="Hz6-mo-xeY">
+                <rect key="frame" x="0.0" y="0.0" width="573" height="280"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="0RI-Fh-yjL">
+                        <rect key="frame" x="18" y="204" width="190" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Hotkey:" id="4F4-bg-0BG">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="750" id="ko0-9s-c1g" customClass="iTermShortcutInputView">
+                        <rect key="frame" x="214" y="202" width="96" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="E8J-u2-HIs">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <outlet property="shortcutDelegate" destination="-2" id="EPa-gG-rV6"/>
+                        </connections>
+                    </textField>
+                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="96X-7E-xgf">
+                        <rect key="frame" x="18" y="232" width="537" height="28"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" id="dHI-y9-qMI">
+                            <font key="font" metaFont="smallSystem"/>
+                            <string key="title">When you press the hotkey bound to this profile a dedicated window will show or hide. Each profile with a hotkey controls its own Hotkey Window.</string>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button id="T3p-0Y-eeA">
+                        <rect key="frame" x="212" y="178" width="324" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Auto-hide the Hotkey Window when it loses focus" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3jk-f9-QFs">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="9dg-Qh-YnZ"/>
+                        </connections>
+                    </button>
+                    <button id="6tA-bg-olR">
+                        <rect key="frame" x="212" y="158" width="316" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Show when iTerm2 is activated after auto-hiding" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="mrJ-OA-dYl">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="i9U-52-0th"/>
+                        </connections>
+                    </button>
+                    <button id="r46-pU-MRA">
+                        <rect key="frame" x="212" y="138" width="193" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Animate showing and hiding" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="UCE-Hu-AKa">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="FOC-ST-yuC"/>
+                        </connections>
+                    </button>
+                    <button id="roD-me-xYz">
+                        <rect key="frame" x="213" y="104" width="222" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Do not show this Hotkey Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="EOt-Jx-9Xl">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="bKW-wF-rtu"/>
+                        </connections>
+                    </button>
+                    <button id="siA-bI-HmC">
+                        <rect key="frame" x="213" y="82" width="224" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Always show this Hotkey Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Hhf-xq-TzE">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="epX-4X-4ta"/>
+                        </connections>
+                    </button>
+                    <button id="ieU-bS-a2y">
+                        <rect key="frame" x="213" y="60" width="342" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Show this Hotkey Window if no other window is open" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Njf-zs-yLP">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="nFg-Kb-bXw"/>
+                        </connections>
+                    </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="YvN-7J-69i">
+                        <rect key="frame" x="18" y="105" width="190" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="When the Dock icon is clicked:" id="t4R-9R-8yk">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button verticalHuggingPriority="750" id="YEr-4l-tkF">
+                        <rect key="frame" x="500" y="13" width="59" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="UUQ-aq-rDa">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="ok:" target="-2" id="pBl-eI-0pV"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" id="TUb-CR-y4c">
+                        <rect key="frame" x="418" y="13" width="82" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OGS-mD-pmg">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="cancel:" target="-2" id="zoh-ro-DNS"/>
+                        </connections>
+                    </button>
+                </subviews>
+            </view>
+            <point key="canvasLocation" x="624.5" y="474"/>
+        </window>
+    </objects>
+</document>

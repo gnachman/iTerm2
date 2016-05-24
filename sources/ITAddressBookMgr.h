@@ -193,8 +193,13 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
-#define KEY_HOTKEY_KEY_CODE                   @"Hotkey Key Code"
-#define KEY_HOTKEY_MODIFIER_FLAGS             @"Modifier Flags"
+#define KEY_HOTKEY_KEY_CODE                   @"HotKey Key Code"
+#define KEY_HOTKEY_CHARACTER                  @"HotKey Character"
+#define KEY_HOTKEY_MODIFIER_FLAGS             @"HotKey Modifier Flags"
+#define KEY_HOTKEY_AUTOHIDE                   @"HotKey Window AutoHides"
+#define KEY_HOTKEY_REOPEN_ON_ACTIVATION       @"HotKey Window Reopens On Activation"
+#define KEY_HOTKEY_ANIMATE                    @"HotKey Window Animates"
+#define KEY_HOTKEY_DOCK_CLICK_ACTION          @"HotKey Window Dock Click Action"
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
@@ -247,6 +252,12 @@ typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
     iTermThinStrokesSettingNever,
     iTermThinStrokesSettingRetinaOnly,
     iTermThinStrokesSettingAlways,
+};
+
+typedef NS_ENUM(NSUInteger, iTermHotKeyDockPreference) {
+    iTermHotKeyDockPreferenceDoNotShow,
+    iTermHotKeyDockPreferenceAlwaysShow,
+    iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen,
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>

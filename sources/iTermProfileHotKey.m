@@ -114,11 +114,17 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)saveHotKeyWindowState {
-    BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
-    NSDictionary *arrangement = [self.windowController arrangementExcludingTmuxTabs:YES
-                                                                  includingContents:includeContents];
-    self.restorableState = @{ kGUID: self.profileGuid,
-                              kArrangement: arrangement };
+    if (self.windowController && self.profileGuid) {
+        DLog(@"Saving hotkey window state for %@", self);
+        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+        NSDictionary *arrangement = [self.windowController arrangementExcludingTmuxTabs:YES
+                                                                      includingContents:includeContents];
+        self.restorableState = @{ kGUID: self.profileGuid,
+                                  kArrangement: arrangement };
+    } else {
+        DLog(@"Not saving hotkey window state for %@", self);
+        self.restorableState = nil;
+    }
 }
 
 - (void)loadRestorableStateFromArray:(NSArray *)states {

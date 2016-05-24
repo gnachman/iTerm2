@@ -1519,6 +1519,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return hash;
 }
 
+- (unichar)firstCharacter {
+    if (self.length == 0) {
+        return 0;
+    } else {
+        return [self characterAtIndex:0];
+    }
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

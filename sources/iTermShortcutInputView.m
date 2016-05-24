@@ -7,6 +7,7 @@
 //
 
 #import "iTermShortcutInputView.h"
+#import "iTermKeyBindingMgr.h"
 
 @implementation iTermShortcutInputView
 
@@ -33,6 +34,27 @@
     [super setEnabled:flag];
     [self setEditable:flag];
     [self setSelectable:flag];
+}
+
+- (void)setKeyCode:(NSUInteger)code
+         modifiers:(NSEventModifierFlags)modifiers
+         character:(NSUInteger)character {
+    NSString *identifier = [self identifierForCode:code modifiers:modifiers character:character];
+    if (identifier) {
+        self.stringValue = [iTermKeyBindingMgr formatKeyCombination:identifier];
+    } else {
+        self.stringValue = @"";
+    }
+}
+
+- (NSString *)identifierForCode:(NSUInteger)code
+                      modifiers:(NSEventModifierFlags)modifiers
+                      character:(NSUInteger)character {
+    if (code || character) {
+        return [NSString stringWithFormat:@"0x%x-0x%x", (int)character, (int)modifiers];
+    } else {
+        return nil;
+    }
 }
 
 @end

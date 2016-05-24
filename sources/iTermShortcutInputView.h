@@ -31,4 +31,11 @@
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 
+- (void)setKeyCode:(NSUInteger)code
+         modifiers:(NSEventModifierFlags)modifiers
+         character:(NSUInteger)theChar;
+
+- (NSString *)identifierForCode:(NSUInteger)code
+                      modifiers:(NSEventModifierFlags)modifiers
+                      character:(NSUInteger)character;
 @end

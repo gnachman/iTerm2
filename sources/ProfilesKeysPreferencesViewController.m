@@ -8,6 +8,7 @@
 
 #import "ProfilesKeysPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermHotkeyPreferencesWindowController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermShortcutInputView.h"
@@ -69,6 +70,34 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [super reloadProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil];
+}
+
+#pragma mark - Actions
+
+- (IBAction)openHotKeyPanel:(id)sender {
+    iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
+    model.keyCode = [self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE];
+    model.modifiers = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS];
+    model.character = [self unsignedIntegerForKey:KEY_HOTKEY_CHARACTER];
+    model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
+    model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
+    model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];
+    model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
+
+    iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
+    panel.model = model;
+    
+    [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSModalResponseOK) {
+            [self setUnsignedInteger:model.keyCode forKey:KEY_HOTKEY_KEY_CODE];
+            [self setUnsignedInteger:model.character forKey:KEY_HOTKEY_CHARACTER];
+            [self setUnsignedInteger:model.modifiers forKey:KEY_HOTKEY_MODIFIER_FLAGS];
+            [self setBool:model.autoHide forKey:KEY_HOTKEY_AUTOHIDE];
+            [self setBool:model.showAutoHiddenWindowOnAppActivation forKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
+            [self setBool:model.animate forKey:KEY_HOTKEY_ANIMATE];
+            [self setInt:model.dockPreference forKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
+        }
+    }];
 }
 
 #pragma mark - Notifications
