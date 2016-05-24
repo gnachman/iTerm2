@@ -195,7 +195,7 @@ DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Experimental Features: Tole
 DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, NO, @"Experimental Features: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 DEFINE_BOOL(useAdaptiveFrameRate, NO, @"Experimental Features: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will update at 30 frames per second.");
 DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, @"Experimental Features: Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
-DEFINE_BOOL(hotkeyWindowIgnoresSpotlight, NO, @"Experimental Features: Prevent opening Spotlight from auto-closing the hotkey window.\nThis feature is experimental and may have unexpected side-effects.");
+DEFINE_BOOL(hotkeyWindowIgnoresSpotlight, NO, @"Experimental Features: Prevent Spotlight and Alfred from auto-closing the hotkey window.\nThis feature is experimental and may have unexpected side-effects.");
 DEFINE_BOOL(tabTitlesUseSmartTruncation, NO, @"Experimental Features: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
 DEFINE_BOOL(experimentalKeyHandling, NO, @"Experimental Features: Improved support for input method editors like AquaSKK.");
 

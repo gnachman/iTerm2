@@ -2734,10 +2734,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     // The hotkey window can co-exist with these apps.
-    static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";
+    static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";  // This doesn't seem to work on OS 10.11 but the spotlight experimental feature does.
     static NSString *kApptivateBundleId = @"se.cocoabeans.apptivate";
     NSArray *bundleIdsToNotDismissFor = @[ kAlfredBundleId, kApptivateBundleId ];
-    if ([bundleIdsToNotDismissFor containsObject:[[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier]]) {
+    NSString *frontmostAppBundleId = [[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier];
+    if ([bundleIdsToNotDismissFor containsObject:frontmostAppBundleId]) {
         DLog(@"The frontmost application is whitelisted");
         return nil;
     }
@@ -2745,7 +2746,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([iTermAdvancedSettingsModel hotkeyWindowIgnoresSpotlight]) {
         // This tries to detect if the Spotlight window is open.
         if ([[iTermController sharedInstance] keystrokesBeingStolen]) {
-            DLog(@"Keystrokes being stolen (spotlight open?)");
+            DLog(@"Keystrokes being stolen (spotlight or alfred open?)");
             return nil;
         }
     }
