@@ -11,6 +11,7 @@
 #import "iTermHotkeyPreferencesWindowController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermShortcutInputView.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
@@ -26,6 +27,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSButton *_deleteSendsCtrlHButton;
     IBOutlet NSButton *_applicationKeypadAllowed;
     IBOutlet NSButton *_hasHotkey;
+    IBOutlet NSButton *_configureHotKey;
+    IBOutlet NSView *_hotKeyContainerView;
 }
 
 - (void)dealloc {
@@ -54,11 +57,24 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_hasHotkey
-                    key:KEY_HAS_HOTKEY
-                   type:kPreferenceInfoTypeCheckbox];
-
+    PreferenceInfo *info = [self defineControl:_hasHotkey
+                                           key:KEY_HAS_HOTKEY
+                                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _configureHotKey.enabled = _hasHotkey.state == NSOnState;
+    };
+    
     [self updateDeleteSendsCtrlH];
+}
+
+- (void)layoutSubviewsForEditCurrentSessionMode {
+    _hotKeyContainerView.hidden = YES;
+
+    // Update the "original" size of the view.
+    iTermSizeRememberingView *sizeRememberingView = (iTermSizeRememberingView *)self.view;
+    CGSize size = sizeRememberingView.originalSize;
+    size.height -= _hotKeyContainerView.frame.size.height;
+    sizeRememberingView.originalSize = size;
 }
 
 - (NSArray *)keysForBulkCopy {

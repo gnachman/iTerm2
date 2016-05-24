@@ -217,6 +217,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
+    [_keysViewController layoutSubviewsForEditCurrentSessionMode];
     NSRect newFrame = _tabView.superview.bounds;
     newFrame.size.width -= 13;
 

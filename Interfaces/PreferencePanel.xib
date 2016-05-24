@@ -1557,11 +1557,13 @@ DQ
                 <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
             </connections>
         </customObject>
-        <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
+        <customObject id="kOZ-HN-eXg" userLabel="Profiles Keys View Controller" customClass="ProfilesKeysPreferencesViewController">
             <connections>
                 <outlet property="_applicationKeypadAllowed" destination="U4H-3c-nZg" id="eUF-jC-ElI"/>
+                <outlet property="_configureHotKey" destination="buI-gb-hoX" id="yAR-QQ-pnW"/>
                 <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
                 <outlet property="_hasHotkey" destination="he1-vO-4KV" id="kDr-tW-FQn"/>
+                <outlet property="_hotKeyContainerView" destination="Rmc-92-zTk" id="hRa-hQ-fI5"/>
                 <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
                 <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
@@ -3732,37 +3734,46 @@ DQ
                     <rect key="frame" x="16" y="157" width="621" height="253"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="he1-vO-4KV">
-                    <rect key="frame" x="14" y="18" width="341" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="A hotkey opens a dedicated window with this profile." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ah-hm-bWA">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="Lz7-Yf-9xL"/>
-                        <outlet property="nextKeyView" destination="6416" id="hN5-ci-YVf"/>
-                    </connections>
-                </button>
-                <textField verticalHuggingPriority="750" id="n5u-YT-WtN">
-                    <rect key="frame" x="14" y="46" width="111" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Hotkey Window" id="b95-Vc-gK8">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" id="buI-gb-hoX">
-                    <rect key="frame" x="355" y="10" width="192" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Configure Hotkey Window" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="s6P-D4-UdO">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
+                <customView id="Rmc-92-zTk">
+                    <rect key="frame" x="0.0" y="0.0" width="657" height="63"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <textField verticalHuggingPriority="750" id="n5u-YT-WtN">
+                            <rect key="frame" x="14" y="46" width="111" height="17"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Hotkey Window" id="b95-Vc-gK8">
+                                <font key="font" metaFont="systemBold"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="he1-vO-4KV">
+                            <rect key="frame" x="14" y="18" width="341" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="A hotkey opens a dedicated window with this profile." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ah-hm-bWA">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="kOZ-HN-eXg" id="Lz7-Yf-9xL"/>
+                                <outlet property="nextKeyView" destination="6416" id="hN5-ci-YVf"/>
+                            </connections>
+                        </button>
+                        <button verticalHuggingPriority="750" id="buI-gb-hoX">
+                            <rect key="frame" x="355" y="10" width="192" height="32"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="push" title="Configure Hotkey Window" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="s6P-D4-UdO">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="openHotKeyPanel:" target="kOZ-HN-eXg" id="zJx-6e-GGL"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </customView>
             </subviews>
-            <point key="canvasLocation" x="147.5" y="339"/>
+            <point key="canvasLocation" x="162.5" y="207"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="617"/>
@@ -5289,7 +5300,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="-215.5" y="327.5"/>
+            <point key="canvasLocation" x="698.5" y="-177.5"/>
         </customView>
         <customView id="rwh-oX-e8l" userLabel="Prefs - Arrangements" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="911" height="433"/>

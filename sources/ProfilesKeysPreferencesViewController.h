@@ -10,4 +10,6 @@
 
 @interface ProfilesKeysPreferencesViewController : iTermProfilePreferencesBaseViewController
 
+- (void)layoutSubviewsForEditCurrentSessionMode;
+
 @end

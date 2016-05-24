@@ -48,6 +48,10 @@
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(reloadProfiles:)
+                                                                   name:kReloadAllProfiles
+                                                                 object:nil];
         _hotKeys = [[NSMutableArray alloc] init];
     }
     return self;
@@ -179,6 +183,10 @@
         [term showMenuBar];
         [term hideMenuBar];
     }
+}
+
+- (void)reloadProfiles:(NSNotification *)notification {
+    
 }
 
 #pragma mark - Private
