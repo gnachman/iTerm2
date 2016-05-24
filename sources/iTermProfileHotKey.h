@@ -28,9 +28,15 @@
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers NS_UNAVAILABLE;
 
+// Hide the hotkey window. If `suppressHideApp` is set then do not hide and then unhide
+// iTerm after the hotkey window is dismissed (which would normally happen if iTerm2 was not the
+// active app when the hotkey window was shown). The hide-unhide cycles moves all the iTerm2 windows
+// behind the next app.
 - (void)hideHotKeyWindowAnimated:(BOOL)animated
                  suppressHideApp:(BOOL)suppressHideApp;
 
+// Erase the restorable state since it won't be needed after the last session is gone. We wouldn't
+// want to restore a defunct session.
 - (void)windowWillClose;
 
 

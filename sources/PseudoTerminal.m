@@ -2244,6 +2244,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         iTermProfileHotKey *hotKey =
             [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
         [hotKey windowWillClose];
+        [[self window] invalidateRestorableState];
     }
     // Close popups.
     [pbHistoryView close];

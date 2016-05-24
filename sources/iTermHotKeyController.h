@@ -26,14 +26,6 @@
 // Reveal the hotkey window, creating it if needed.
 - (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey;
 
-// Hide the indicated hotkey window. If `suppressHideApp` is set then do not hide and then unhide
-// iTerm after the hotkey window is dismissed (which would normally happen if iTerm2 was not the
-// active app when the hotkey window was shown). The hide-unhide cycles moves all the iTerm2 windows
-// behind the next app.
-- (void)hideWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey
-                          animated:(BOOL)animated
-                   suppressHideApp:(BOOL)suppressHideApp;
-
 // Indicates if the event is a hotkey event. Assumes the event is a keydown event.
 - (BOOL)eventIsHotkey:(NSEvent *)event;
 

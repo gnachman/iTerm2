@@ -252,7 +252,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 }
 
 - (void)updateUIElementEnabled {
-    _uiElement.enabled = [[iTermHotKeyController sharedInstance] anyHotkeyBoundToProfile];
+    _uiElement.enabled = [[[iTermHotKeyController sharedInstance] hotKeyWindowProfiles] count] > 0;
 }
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
