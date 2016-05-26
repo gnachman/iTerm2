@@ -1676,6 +1676,10 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (IBAction)showHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]];
+}
+
 - (IBAction)buildScriptMenu:(id)sender {
     static NSString *kScriptTitle = @"Scripts";
     static const int kScriptMenuItemIndex = 5;
