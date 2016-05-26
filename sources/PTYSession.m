@@ -4730,10 +4730,6 @@ ITERM_WEAKLY_REFERENCEABLE
             case KEY_ACTION_IGNORE:
                 break;
             case KEY_ACTION_IR_FORWARD:
-                if (isTmuxGateway) {
-                    return;
-                }
-                [[iTermController sharedInstance] irAdvance:1];
                 break;
             case KEY_ACTION_IR_BACKWARD:
                 if (isTmuxGateway) {
