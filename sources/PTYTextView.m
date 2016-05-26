@@ -3073,10 +3073,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     VT100GridCoord relativeStart =
         VT100GridCoordMake(range.start.x,
-                           range.start.y - [_dataSource totalScrollbackOverflow]);
+                           MAX(0, range.start.y - [_dataSource totalScrollbackOverflow]));
     VT100GridCoord relativeEnd =
         VT100GridCoordMake(range.end.x,
-                           range.end.y - [_dataSource totalScrollbackOverflow]);
+                           MAX(0, range.end.y - [_dataSource totalScrollbackOverflow]));
 
     DLog(@"The relative range is %@ to %@",
          VT100GridCoordDescription(relativeStart), VT100GridCoordDescription(relativeEnd));
