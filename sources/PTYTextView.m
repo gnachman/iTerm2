@@ -1933,7 +1933,7 @@ static const int kDragThreshold = 3;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
 
-    NSEvent *fakeEvent = isDown ? [event mouseDownEventFromGesture] : [event mouseUpEventFromGesture];
+    NSEvent *fakeEvent = [event eventWithButtonNumber:2];
 
     int saved = _numTouches;
     _numTouches = 1;
