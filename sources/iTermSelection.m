@@ -765,10 +765,19 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 }
 
 - (void)addSubSelection:(iTermSubSelection *)sub {
-    if (sub.selectionMode != kiTermSelectionModeBox) {
-        sub.range = [self rangeByExtendingRangePastNulls:sub.range];
+    [self addSubSelections:@[ sub ]];
+}
+
+- (void)addSubSelections:(NSArray<iTermSubSelection *> *)subSelectionArray {
+    if (subSelectionArray.count == 0) {
+        return;
     }
-    [_subSelections addObject:sub];
+    for (iTermSubSelection *sub in subSelectionArray) {
+        if (sub.selectionMode != kiTermSelectionModeBox) {
+            sub.range = [self rangeByExtendingRangePastNulls:sub.range];
+        }
+        [_subSelections addObject:sub];
+    }
     [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
@@ -1040,13 +1049,15 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 
 - (void)setFromDictionaryValue:(NSDictionary *)dict {
     [self clearSelection];
-    NSArray *subs = dict[kSelectionSubSelectionsKey];
+    NSArray<NSDictionary *> *subs = dict[kSelectionSubSelectionsKey];
+    NSMutableArray<iTermSubSelection *> *subSelectionsToAdd = [NSMutableArray array];
     for (NSDictionary *subDict in subs) {
         iTermSubSelection *sub = [iTermSubSelection subSelectinWithDictionary:subDict];
         if (sub) {
-            [self addSubSelection:sub];
+            [subSelectionsToAdd addObject:sub];
         }
     }
+    [self addSubSelections:subSelectionsToAdd];
 }
 
 @end

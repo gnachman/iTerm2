@@ -811,15 +811,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenNeedsRedraw];
     [selection clearSelection];
     if (couldHaveSelection) {
+        NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
         for (iTermSubSelection* sub in newSubSelections) {
             VT100GridCoordRange newSelection = sub.range.coordRange;
             if (newSelection.start.y >= linesDropped &&
                 newSelection.end.y >= linesDropped) {
                 newSelection.start.y -= linesDropped;
                 newSelection.end.y -= linesDropped;
-                [selection addSubSelection:sub];
+                [subSelectionsToAdd addObject:sub];
             }
         }
+        [selection addSubSelections:subSelectionsToAdd];
     }
 
     [self reloadMarkCache];
