@@ -2896,12 +2896,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         switch (initialOrder) {
             case NSOrderedAscending:
                 [_delegate writeTask:[terminal.output keyArrowRight:0]];
-                cursor = [extractor successorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                cursor = [extractor successorOfCoord:cursor];
                 break;
 
             case NSOrderedDescending:
                 [_delegate writeTask:[terminal.output keyArrowLeft:0]];
-                cursor = [extractor predecessorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                cursor = [extractor predecessorOfCoord:cursor];
                 break;
 
             case NSOrderedSame:
@@ -5952,7 +5952,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // This shouldn't happen, but better safe than sorry
             lastCoord = [[prefixCoords lastObject] gridCoordValue];
         }
-        range.coordRange.end = [extractor successorOfCoord:lastCoord skippingDoubleWidthExtensions:NO];
+        range.coordRange.end = [extractor successorOfCoord:lastCoord];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 

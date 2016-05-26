@@ -81,11 +81,11 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 - (VT100GridWindowedRange)rangeOfParentheticalSubstringAtLocation:(VT100GridCoord)location;
 
 // Returns next/previous coordinate. Returns first/last legal coord if none exists.
-- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip;
+- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord;
 // Won't go past the end of the line while skipping nulls.
 - (VT100GridCoord)successorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
 
-- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip;
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord;
 // Won't go past the start of the line while skipping nulls.
 - (VT100GridCoord)predecessorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
 
