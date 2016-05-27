@@ -35,7 +35,7 @@
                                     stop:(BOOL *)stop {
     NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                                                   count:captureCount];
-    [aSession writeTask:[message dataUsingEncoding:NSUTF8StringEncoding]];
+    [aSession writeTaskNoBroadcast:message];
     return YES;
 }
 

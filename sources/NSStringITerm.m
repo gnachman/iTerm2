@@ -1519,6 +1519,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return hash;
 }
 
+- (NSArray<NSNumber *> *)codePoints {
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    for (NSUInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        if (IsHighSurrogate(c) && i + 1 < self.length) {
+            i++;
+            unichar c2 = [self characterAtIndex:i];
+            [result addObject:@(DecodeSurrogatePair(c, c2))];
+        } else if (!IsHighSurrogate(c) && !IsLowSurrogate(c)) {
+            [result addObject:@(c)];
+        }
+    }
+    return result;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

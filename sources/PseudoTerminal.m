@@ -1493,13 +1493,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return sessions;
 }
 
-- (void)sendInputToAllSessions:(NSData *)data
-{
+- (void)sendInputToAllSessions:(NSString *)string
+                      encoding:(NSStringEncoding)optionalEncoding
+                 forceEncoding:(BOOL)forceEncoding {
     for (PTYSession *aSession in [self broadcastSessions]) {
-        if ([aSession isTmuxClient]) {
-            [aSession writeTaskNoBroadcast:data];
-        } else if (![aSession isTmuxGateway]) {
-            [aSession.shell writeTask:data];
+        if (![aSession isTmuxGateway]) {
+            [aSession writeTaskNoBroadcast:string encoding:optionalEncoding forceEncoding:forceEncoding];
         }
     }
 }

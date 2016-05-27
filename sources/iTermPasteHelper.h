@@ -14,7 +14,7 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 
 @protocol iTermPasteHelperDelegate <NSObject>
 
-- (void)pasteHelperWriteData:(NSData *)data;
+- (void)pasteHelperWriteString:(NSString *)string;
 
 // Handle a key-down event that was previously enequeued.
 - (void)pasteHelperKeyDown:(NSEvent *)event;
