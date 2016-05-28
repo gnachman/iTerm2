@@ -120,6 +120,7 @@
 - (int)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;
+- (Profile *)defaultBookmark;
 
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session;
