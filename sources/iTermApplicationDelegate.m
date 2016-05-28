@@ -100,7 +100,7 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate, SUUpdaterDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -449,11 +449,11 @@ static BOOL hasBecomeActive = NO;
                                                            selector:@selector(workspaceSessionDidResignActive:)
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(sparkleWillRestartApp:)
-                                                 name:SUUpdaterWillRestartNotification
-                                               object:nil];
-
+//    [[NSNotificationCenter defaultCenter] addObserver:self
+//                                             selector:@selector(sparkleWillRestartApp:)
+//                                                 name:SUUpdaterWillRestartNotification
+//                                               object:nil];
+    [[SUUpdater sharedUpdater] setDelegate:self];
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
@@ -470,10 +470,27 @@ static BOOL hasBecomeActive = NO;
     _workspaceSessionActive = NO;
 }
 
-- (void)sparkleWillRestartApp:(NSNotification *)notification {
+- (void)updaterWillRelaunchApplication:(SUUpdater *)updater {
+    NSLog(@"Will restart");
     [NSApp invalidateRestorableState];
     [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
+}
+
+- (BOOL)updater:(SUUpdater *)updater shouldPostponeRelaunchForUpdate:(SUAppcastItem *)item untilInvoking:(NSInvocation *)invocation {
+    NSLog(@"Should postpone?");
+    [NSApp invalidateRestorableState];
+    [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
+    NSLog(@"Hide");
+    [NSApp hide:nil];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSLog(@"Unhide");
+        [NSApp unhide:nil];
+        NSLog(@"Resume");
+        [invocation invoke];
+    });
+    NSLog(@"REturn yes");
+    return YES;
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
