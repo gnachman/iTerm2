@@ -130,6 +130,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 - (iTermWindowType)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;
+- (Profile *)defaultBookmark;
 
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session;

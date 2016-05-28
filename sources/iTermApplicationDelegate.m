@@ -76,6 +76,7 @@
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
+#import "iTermProfilePreferences.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -675,19 +676,27 @@ static BOOL hasBecomeActive = NO;
         // Verify whether filename is a script or a folder
         BOOL isDir;
         [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
-        if (!isDir) {
-            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", [filename stringWithEscapedShellCharacters]];
-            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
-            // Sleeping a while waiting for the login.
-            sleep(1);
-            [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
+        iTermController *controller = [iTermController sharedInstance];
+        NSMutableDictionary *bookmark = [[[controller defaultBookmark] mutableCopy] autorelease];
+
+        if (isDir) {
+            bookmark[KEY_WORKING_DIRECTORY] = filename;
+            bookmark[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
         } else {
-            NSString *aString = [NSString stringWithFormat:@"cd %@\n", [filename stringWithEscapedShellCharacters]];
-            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
-            // Sleeping a while waiting for the login.
-            sleep(1);
-            [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
+            // escape filename
+            filename = [filename stringWithEscapedShellCharacters];
+            if (filename) {
+                NSString *initialText = bookmark[KEY_INITIAL_TEXT];
+                if (initialText) {
+                    initialText = [initialText stringByAppendingFormat:@"\n%@; exit\n", filename];
+                } else {
+                    initialText = [NSString stringWithFormat:@"%@; exit\n", filename];
+                }
+                bookmark[KEY_INITIAL_TEXT] = initialText;
+            }
         }
+
+        [controller launchBookmark:bookmark inTerminal:[self terminalToOpenFileIn]];
     }
     return (YES);
 }
