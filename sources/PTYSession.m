@@ -3915,8 +3915,8 @@ ITERM_WEAKLY_REFERENCEABLE
         // Try to figure out if we're at a shell prompt. Send a space character and immediately
         // backspace over it. If no output is received within a specified timeout, then go ahead and
         // send the password. Otherwise, ask for confirmation.
-        [self writeTask:[@" " dataUsingEncoding:self.encoding]];
-        [self writeTask:backspace];
+        [self writeTaskNoBroadcast:[@" " dataUsingEncoding:self.encoding]];
+        [self writeTaskNoBroadcast:backspace];
         _bytesReceivedSinceSendingEchoProbe = 0;
         [self performSelector:@selector(enterPasswordIfEchoProbeOk:)
                    withObject:password
@@ -3943,8 +3943,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)enterPasswordNoProbe:(NSString *)password {
-    [self writeTask:[password dataUsingEncoding:self.encoding]];
-    [self writeTask:[@"\n" dataUsingEncoding:self.encoding]];
+    [self writeTaskNoBroadcast:[password dataUsingEncoding:self.encoding]];
+    [self writeTaskNoBroadcast:[@"\n" dataUsingEncoding:self.encoding]];
 }
 
 - (NSImage *)dragImage
