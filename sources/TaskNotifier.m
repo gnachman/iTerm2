@@ -389,7 +389,7 @@ void UnblockTaskNotifier(void) {
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
-                [task retain];
+                [[task retain] autorelease];
                 [handledFds addObject:@(fd)];
 
                 if ([self handleReadOnFileDescriptor:fd task:task fdSet:&rfds]) {
@@ -434,7 +434,6 @@ void UnblockTaskNotifier(void) {
                         }
                     }
                 }
-                [task release];
             }
         }
 
