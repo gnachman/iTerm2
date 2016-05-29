@@ -66,6 +66,7 @@
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
+#import "iTermProfilePreferences.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -603,18 +604,19 @@ static BOOL hasBecomeActive = NO;
         // Verify whether filename is a script or a folder
         BOOL isDir;
         [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
-        if (!isDir) {
-            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", [filename stringWithEscapedShellCharacters]];
-            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
-            // Sleeping a while waiting for the login.
-            sleep(1);
-            [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
+        iTermController *controller = [iTermController sharedInstance];
+
+        if (isDir) {
+            NSMutableDictionary *bookmark = [[[controller defaultBookmark] mutableCopy] autorelease];
+            bookmark[KEY_WORKING_DIRECTORY] = filename;
+            bookmark[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+            [controller launchBookmark:bookmark inTerminal:[self terminalToOpenFileIn]];
         } else {
-            NSString *aString = [NSString stringWithFormat:@"cd %@\n", [filename stringWithEscapedShellCharacters]];
-            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
-            // Sleeping a while waiting for the login.
+            [controller launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
             sleep(1);
-            [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
+            filename = [filename stringWithEscapedShellCharacters];
+            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", filename];
+            [[[controller currentTerminal] currentSession] insertText:aString];
         }
     }
     return (YES);
