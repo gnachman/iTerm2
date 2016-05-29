@@ -99,7 +99,6 @@
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
-NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
@@ -214,10 +213,6 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [self selectProfilesTab];
     [self run];
     [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
-}
-
-- (BOOL)importColorPresetFromFile:(NSString*)filename {
-    return [_profilesViewController importColorPresetFromFile:filename];
 }
 
 - (WindowArrangements *)arrangements {

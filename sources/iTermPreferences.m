@@ -59,6 +59,7 @@ NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
+NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
@@ -109,6 +110,10 @@ NSString *const kPreferenceKeyPasteSpecialConvertUnicodePunctuation = @"ConvertU
 NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines = @"ConvertDosNewlines";
 NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes = @"RemoveControlCodes";
 NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteMode";
+NSString *const kPreferencesKeyPasteSpecialUseRegexSubstitution = @"PasteSpecialUseRegexSubstitution";
+NSString *const kPreferencesKeyPasteSpecialRegex = @"PasteSpecialRegex";
+NSString *const kPreferencesKeyPasteSpecialSubstitution = @"PasteSpecialSubstitution";
+NSString *const kPreferenceKeyLeftTabBarWidth = @"LeftTabBarWidth";
 
 NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
 
@@ -208,6 +213,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
+                  kPreferenceKeyShowNewOutputIndicator: @YES,
+
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
                   kPreferenceKeyFlashTabBarInFullscreen:@YES,
@@ -257,9 +264,13 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyPasteSpecialConvertDosNewlines: @YES,
                   kPreferenceKeyPasteSpecialRemoveControlCodes: @YES,
                   kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,
+                  kPreferencesKeyPasteSpecialUseRegexSubstitution: @NO,
+                  kPreferencesKeyPasteSpecialRegex: @"",
+                  kPreferencesKeyPasteSpecialSubstitution: @"",
 
                   kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
-                  kPreferenceKeyShowFullscreenTabBar: @YES
+                  kPreferenceKeyShowFullscreenTabBar: @YES,
+                  kPreferenceKeyLeftTabBarWidth: @150,
               };
         [dict retain];
     }

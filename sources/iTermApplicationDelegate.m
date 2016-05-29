@@ -31,6 +31,7 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
@@ -61,6 +62,7 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "Sparkle/SUStandardVersionComparator.h"
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
@@ -89,6 +91,7 @@ static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableS
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
 NSString *const kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt";
+static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 
@@ -124,7 +127,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
 
-    IBOutlet NSMenuItem *secureInput;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
@@ -164,9 +166,6 @@ static BOOL hasBecomeActive = NO;
         TransformProcessType(&psn, kProcessTransformToUIElementApplication);
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
-
-    // set the TERM_PROGRAM environment variable
-    putenv("TERM_PROGRAM=iTerm.app");
 
     [self buildScriptMenu:nil];
 
@@ -225,22 +224,17 @@ static BOOL hasBecomeActive = NO;
             [self showBookmarkWindow:nil];
         }
 
-        if (![[iTermOrphanServerAdopter sharedInstance] haveOrphanServers]) {
-            // We don't respect the startup preference if orphan servers are present.
-            // PseudoTerminalRestorer contains similar logic and will restore sessions.
-            if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-                // Open the saved arrangement at startup.
-                [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-            } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-                if (![PseudoTerminalRestorer willOpenWindows]) {
-                    if ([[[iTermController sharedInstance] terminals] count] == 0 &&
-                        ![self isApplescriptTestApp]) {
-                        [self newWindow:nil];
-                    }
-                }
-            }
+        if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+            // Open the saved arrangement at startup.
+            [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
+        } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
+                   ![PseudoTerminalRestorer willOpenWindows] &&
+                   [[[iTermController sharedInstance] terminals] count] == 0 &&
+                   ![self isApplescriptTestApp]) {
+            [self newWindow:nil];
         }
     }
+
     [[iTermController sharedInstance] setStartingUp:NO];
     [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
@@ -295,7 +289,108 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (BOOL)shouldNotifyAboutIncompatibleSoftware {
+    // Pending discussions:
+    // Docker: https://github.com/docker/kitematic/pull/855
+    // LaunchBar: https://twitter.com/launchbar/status/620975715278790657?cn=cmVwbHk%3D&refsrc=email
+    // Pathfinder: https://twitter.com/gnachman/status/659409608642007041
+
+    // This is disabled because it looks like everyone is there or almost there. I can remove this
+    // code soon.
+//#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
+
+#ifdef SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
+    static NSString *const kTimeOfFirstLaunchForIncompatibilityWarnings = @"NoSyncTimeOfFirstLaunchForIncompatibilityWarnings";
+    static const NSTimeInterval kMinimumDelayBeforeWarningAboutIncompatibility = 24 * 60 * 60;
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval timeOfFirstLaunchForIncompatibilityWarnings =
+        [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfFirstLaunchForIncompatibilityWarnings];
+    if (!timeOfFirstLaunchForIncompatibilityWarnings) {
+        [[NSUserDefaults standardUserDefaults] setDouble:now
+                                                  forKey:kTimeOfFirstLaunchForIncompatibilityWarnings];
+    } else if (now - timeOfFirstLaunchForIncompatibilityWarnings > kMinimumDelayBeforeWarningAboutIncompatibility) {
+        return ![[NSUserDefaults standardUserDefaults] boolForKey:kHaveWarnedAboutIncompatibleSoftware];
+    }
+#endif
+    return NO;
+}
+
+- (NSString *)shortVersionStringOfAppWithBundleId:(NSString *)bundleId {
+    NSString *bundlePath =
+            [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
+    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+    NSDictionary *info = [bundle infoDictionary];
+    NSString *version = info[@"CFBundleShortVersionString"];
+    return version;
+}
+
+- (BOOL)version:(NSString *)version newerThan:(NSString *)otherVersion {
+    id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
+    NSInteger result = [comparator compareVersion:version toVersion:otherVersion];
+    return result == NSOrderedDescending;
+}
+
+- (void)notifyAboutIncompatibleVersionOf:(NSString *)name url:(NSString *)urlString upgradeAvailable:(BOOL)upgradeAvailable {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Incompatible Software Detected";
+    [alert addButtonWithTitle:@"OK"];
+    if (upgradeAvailable) {
+        alert.informativeText = [NSString stringWithFormat:@"You need to upgrade %@ to use it with this version of iTerm2.", name];
+    } else {
+        alert.informativeText = [NSString stringWithFormat:@"You have a version of %@ installed which is not compatible with this version of iTerm2.", name];
+        [alert addButtonWithTitle:@"Learn More"];
+    }
+
+    if ([alert runModal] == NSAlertSecondButtonReturn) {
+        NSURL *url = [NSURL URLWithString:urlString];
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
+- (BOOL)notifyAboutIncompatibleSoftware {
+    BOOL found = NO;
+
+    NSString *dockerVersion = [self shortVersionStringOfAppWithBundleId:@"com.apple.ScriptEditor.id.dockerquickstartterminalapp"];
+    if (dockerVersion && ![self version:dockerVersion newerThan:@"1.3.0"]) {
+        [self notifyAboutIncompatibleVersionOf:@"Docker Quickstart Terminal"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/dockerquickstartincompatible"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+
+    NSString *launchBarVersion = [self shortVersionStringOfAppWithBundleId:@"at.obdev.LaunchBar"];
+    if (launchBarVersion && ![self version:launchBarVersion newerThan:@"6.6.2"]) {
+        [self notifyAboutIncompatibleVersionOf:@"LaunchBar"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/dockerquickstartincompatible"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+
+    NSString *pathfinderVersion = [self shortVersionStringOfAppWithBundleId:@"com.cocoatech.PathFinder"];
+    if (pathfinderVersion && ![self version:pathfinderVersion newerThan:@"7.3.3"]) {
+        [self notifyAboutIncompatibleVersionOf:@"Pathfinder"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/pathfinder7compatibility"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutIncompatibleSoftware];
+    return found;
+}
+
+- (IBAction)checkForIncompatibleSoftware:(id)sender {
+    if (![self notifyAboutIncompatibleSoftware]) {
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"No Incompatible Software Detected";
+        alert.informativeText = @"No third-party software that is known to be incompatible with iTerm2’s new Applescript interfaces was found.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
+    }
+}
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    if ([self shouldNotifyAboutIncompatibleSoftware]) {
+        [self notifyAboutIncompatibleSoftware];
+    }
     if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
@@ -360,7 +455,8 @@ static BOOL hasBecomeActive = NO;
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
 
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
             [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
         }];
@@ -476,7 +572,7 @@ static BOOL hasBecomeActive = NO;
 
 /**
  * The following applescript invokes this method before
- * _performStartupActivites is run and prevents it from being run. Scripts can
+ * _performStartupActivities is run and prevents it from being run. Scripts can
  * use it to launch a command in a predictable way if iTerm2 isn't running (and
  * window arrangements won't be restored, etc.)
  *
@@ -485,11 +581,17 @@ static BOOL hasBecomeActive = NO;
  *    // create a terminal if needed, run commands, whatever.
  * end tell
  */
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
-{
+- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
+    DLog(@"application:%@ openFile:%@", theApplication, filename);
     if ([filename hasSuffix:@".itermcolors"]) {
-        if ([[PreferencePanel sharedInstance] importColorPresetFromFile:filename]) {
-            NSRunAlertPanel(@"Colors Scheme Imported", @"The color scheme was imported and added to presets. You can find it under Preferences>Profiles>Colors>Load Presets….", @"OK", nil, nil);
+        DLog(@"Importing color presets from %@", filename);
+        if ([iTermColorPresets importColorPresetFromFile:filename]) {
+            NSRunAlertPanel(@"Colors Scheme Imported",
+                            @"The color scheme was imported and added to presets. You can find it "
+                             "under Preferences>Profiles>Colors>Load Presets….",
+                            @"OK",
+                            nil,
+                            nil);
         }
         return YES;
     }
@@ -522,6 +624,11 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)isApplescriptTestApp {
     return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
+}
+
+- (BOOL)isRunningOnTravis {
+    NSString *travis = [[[NSProcessInfo processInfo] environment] objectForKey:@"TRAVIS"];
+    return [travis isEqualToString:@"true"];
 }
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
@@ -711,7 +818,7 @@ static BOOL hasBecomeActive = NO;
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
     id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
     if (session) {
-        term = session.tab.realParentWindow;
+        term = session.delegate.realParentWindow;
     }
     if (term) {
         return [term openPasswordManagerToAccountName:name inSession:session];
@@ -1149,6 +1256,24 @@ static BOOL hasBecomeActive = NO;
     return -1;
 }
 
+- (void)setSecureInput:(BOOL)secure {
+    DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+    if (secure) {
+        OSErr err = EnableSecureEventInput();
+        DLog(@"EnableSecureEventInput err=%d", (int)err);
+        if (err) {
+            NSLog(@"EnableSecureEventInput failed with error %d", (int)err);
+        }
+    } else {
+        OSErr err = DisableSecureEventInput();
+        DLog(@"DisableSecureEventInput err=%d", (int)err);
+        if (err) {
+            NSLog(@"DisableSecureEventInput failed with error %d", (int)err);
+        }
+    }
+    DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+}
+
 - (BOOL)warnBeforeMultiLinePaste {
     if ([iTermWarning warningHandler]) {
         // In a test.
@@ -1170,24 +1295,13 @@ static BOOL hasBecomeActive = NO;
     [self updateUseTransparencyMenuItem];
 }
 
-- (IBAction)toggleSecureInput:(id)sender
-{
+- (IBAction)toggleSecureInput:(id)sender {
     // Set secureInputDesired_ to the opposite of the current state.
-    secureInputDesired_ = [secureInput state] == NSOffState;
+    secureInputDesired_ = !IsSecureEventInputEnabled();
+    DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
 
     // Try to set the system's state of secure input to the desired state.
-    if (secureInputDesired_) {
-        if (EnableSecureEventInput() != noErr) {
-            NSLog(@"Failed to enable secure input.");
-        }
-    } else {
-        if (DisableSecureEventInput() != noErr) {
-            NSLog(@"Failed to disable secure input.");
-        }
-    }
-
-    // Set the state of the control to the new true state.
-    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
+    [self setSecureInput:secureInputDesired_];
 
     // Save the preference, independent of whether it succeeded or not.
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:secureInputDesired_]
@@ -1197,12 +1311,9 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
     if (secureInputDesired_) {
-        if (EnableSecureEventInput() != noErr) {
-            NSLog(@"Failed to enable secure input.");
-        }
+        DLog(@"Application becoming active. Enable secure input.");
+        [self setSecureInput:YES];
     }
-    // Set the state of the control to the new true state.
-    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 
     // If focus follows mouse is on, find the textview under the cursor and make it first responder.
     // Make its window key.
@@ -1231,15 +1342,11 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)applicationDidResignActive:(NSNotification *)aNotification
-{
+- (void)applicationDidResignActive:(NSNotification *)aNotification {
     if (secureInputDesired_) {
-        if (DisableSecureEventInput() != noErr) {
-            NSLog(@"Failed to disable secure input.");
-        }
+        DLog(@"Application resigning active. Disabling secure input.");
+        [self setSecureInput:NO];
     }
-    // Set the state of the control to the new true state.
-    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 }
 
 - (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
@@ -1258,6 +1365,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    if (self.isApplescriptTestApp) {
+        return;
+    }
     NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
@@ -1462,7 +1572,7 @@ static BOOL hasBecomeActive = NO;
     PseudoTerminal *currentTerminal = [self currentTerminal];
     PTYSession* aSession = [aNotification object];
 
-    if (currentTerminal != [[aSession tab] parentWindow] ||
+    if (currentTerminal != [[aSession delegate] parentWindow] ||
         ![[currentTerminal window] isKeyWindow]) {
         return;
     }
@@ -1516,8 +1626,7 @@ static BOOL hasBecomeActive = NO;
     return nil;
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
-{
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
@@ -1561,9 +1670,16 @@ static BOOL hasBecomeActive = NO;
         return YES;
     } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
         return ![[iTermTipController sharedInstance] showingTip];
+    } else if ([menuItem action] == @selector(toggleSecureInput:)) {
+        menuItem.state = IsSecureEventInputEnabled() ? NSOnState : NSOffState;
+        return YES;
     } else {
         return YES;
     }
+}
+
+- (IBAction)showHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]];
 }
 
 - (IBAction)buildScriptMenu:(id)sender {

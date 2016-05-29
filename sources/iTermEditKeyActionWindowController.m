@@ -112,6 +112,13 @@
     return @"";
 }
 
+- (void)setAction:(int)action {
+    if (action == KEY_ACTION_IR_FORWARD) {
+        action = KEY_ACTION_IGNORE;
+    }
+    _action = action;
+}
+
 #pragma mark - iTermShortcutInputViewDelegate
 
 // Note: This is called directly by HotkeyWindowController when the action requires key remapping

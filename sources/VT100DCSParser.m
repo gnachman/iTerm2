@@ -23,6 +23,11 @@
 #import "VT100StateMachine.h"
 #import "VT100TmuxParser.h"
 
+// Caps the amount of data to accumulate in _data before returning to the ground state. Prevents
+// a random ESC P from eating output forever by leaving us in the passthrough state until we get
+// an ST.
+static const NSUInteger kMaxDataLength = 1024 * 1024;
+
 // Creates a unique-enough encoding of a DCS sequence at compile time so it can
 // be a case in a switch.
 #define MAKE_COMPACT_SEQUENCE(private, intermediate, initialPassthrough) \
@@ -148,7 +153,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     // data. Some day if a well-behaved hook is added, this might change to redirect data to the
     // hook.
     VT100State *dcsPassthroughState = [VT100State stateWithName:@"dcs passthrough"
-                                       identifier:@(kVT100DCSStatePassthrough)];
+                                                     identifier:@(kVT100DCSStatePassthrough)];
 
     [stateMachine addState:dcsEntryState];
     [stateMachine addState:dcsIntermediateState];
@@ -306,7 +311,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Add transitions from passthrough state.
 
-    // On entry to passthrough, save the initial character.
+    // On entry to passthrough, save the initial character. Note that there could be ESC characters
+    // that cause us to re-enter passthrough after having already been in it so don't do anything
+    // destructive here.
     dcsPassthroughState.entryAction = ^(unsigned char c) {
         [_data appendCharacter:c];
         if (!_hook) {
@@ -360,6 +367,24 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     return [_hook hookDescription];
 }
 
+- (BOOL)dataLooksLikeBinaryGarbage {
+    static NSCharacterSet *garbageCharacterSet;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // This causes us to stop parsing DCS at a newline, which I hope is mostly harmless. But if
+        // it's not, add 10 and 13 to this character set.
+        NSMutableCharacterSet *characterSet = [NSMutableCharacterSet characterSetWithRange:NSMakeRange(32, 127 - 32)];
+        [characterSet addCharactersInRange:NSMakeRange(VT100CC_ESC, 1)];
+        // Keep going at BEL because the tmux OSC wrapper DCS tmux; OSC with double-escapes ST
+        // could end in a BEL.
+        [characterSet addCharactersInRange:NSMakeRange(VT100CC_BEL, 1)];
+        [characterSet invert];
+        garbageCharacterSet = [characterSet retain];
+    });
+    return (_data.length > kMaxDataLength ||
+            [_data rangeOfCharacterFromSet:garbageCharacterSet].location != NSNotFound);
+}
+
 - (void)decodeFromContext:(iTermParserContext *)context
                     token:(VT100Token *)result
                  encoding:(NSStringEncoding)encoding
@@ -377,6 +402,10 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             _hookFinished = [_hook handleInput:context token:result];
         } else {
             [_stateMachine handleCharacter:iTermParserConsume(context)];
+            if ([_stateMachine.currentState.identifier isEqual:@(kVT100DCSStatePassthrough)] &&
+                [self dataLooksLikeBinaryGarbage]) {
+                result->type = VT100_BINARY_GARBAGE;
+            }
         }
         if (_stateMachine.currentState == _stateMachine.groundState) {
             break;

@@ -199,7 +199,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns whether |self| is matched by |glob|, which is a shell-like glob pattern (e.g., *x or
 // x*y).
 // Only * is supported as a wildcard.
-- (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob;
+- (BOOL)stringMatchesGlobPattern:(NSString *)glob caseSensitive:(BOOL)caseSensitive;
 
 // Call |block| for each composed character in the string. If it is a single base character or a
 // high surrogate, then |simple| will be valid and |complex| will be nil. Otherwise, |complex| will
@@ -213,6 +213,14 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Returns modified attributes for drawing self fitting size within one point.
 - (NSDictionary *)attributesUsingFont:(NSFont *)font fittingSize:(NSSize)size attributes:(NSDictionary *)attributes;
+
+// Removes trailing zeros from a floating point value, leaving at most one.
+// 1.0000 -> 1.0
+// 1.0010 -> 1.001
+- (NSString *)stringByCompactingFloatingPointString;
+
+// A fast, non-cryto-quality hash.
+- (NSUInteger)hashWithDJB2;
 
 @end
 

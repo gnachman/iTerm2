@@ -25,6 +25,9 @@
 // Original filename
 @property(nonatomic, copy) NSString *filename;
 
+// Inset for the image within its area.
+@property(nonatomic, assign) NSEdgeInsets inset;
+
 // Image code
 @property(nonatomic, readonly) unichar code;
 
@@ -50,9 +53,9 @@
 // Used to create a new instance from a coded dictionary.
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
-// Returns an image of size |region| containing a scaled copy of |image| and
-// transparency around two edges if |region| != |image.size|.
-- (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region;
+// Returns an image whose size is self.size * cellSize. If the image is smaller and/or has an inset
+// there will be a transparent area around the edges.
+- (NSImage *)imageWithCellSize:(CGSize)cellSize;
 
 // Binds an image. Data is optional and only used for animated GIFs. Not to be used after
 // -initWithDictionary.

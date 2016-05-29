@@ -17,7 +17,9 @@
                         defaultDelay:(NSTimeInterval)defaultDelay
                             delayKey:(NSString *)delayKey
                         tabTransform:(iTermTabTransformTags)tabTransform
-                        spacesPerTab:(int)spacesPerTab {
+                        spacesPerTab:(int)spacesPerTab
+                               regex:(NSString *)regex
+                        substitution:(NSString *)substitution {
     PasteEvent *pasteEvent = [[[PasteEvent alloc] init] autorelease];
     pasteEvent.string = string;
     pasteEvent.flags = flags;
@@ -27,6 +29,8 @@
     pasteEvent.defaultDelay = defaultDelay;
     pasteEvent.tabTransform = tabTransform;
     pasteEvent.spacesPerTab = spacesPerTab;
+    pasteEvent.regex = regex;
+    pasteEvent.substitution = substitution;
     return pasteEvent;
 }
 
@@ -34,6 +38,8 @@
     [_string release];
     [_chunkKey release];
     [_delayKey release];
+    [_regex release];
+    [_substitution release];
     [super dealloc];
 }
 

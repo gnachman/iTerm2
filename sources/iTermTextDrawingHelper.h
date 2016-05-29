@@ -176,6 +176,9 @@
 // Amount to blend background color over background image, 0-1.
 @property(nonatomic, assign) float blend;
 
+// Should transparency not affect background colors other than the default?
+@property(nonatomic, assign) BOOL transparencyAffectsOnlyDefaultBackgroundColor;
+
 // Should the cursor guide be shown?
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
@@ -253,7 +256,9 @@
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount;
-- (void)drawTimestamps;
+
+// Draw timestamps. Returns the width of the widest timestamp.
+- (CGFloat)drawTimestamps;
 
 #pragma mark - Testing Only
 

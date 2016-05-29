@@ -150,6 +150,15 @@ static const CGFloat kButtonSize = 17;
                 whiteLevel = 0.70;
             }
             break;
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            if (![delegate_ sessionTitleViewIsFirstResponder]) {
+                // Not selected
+                whiteLevel = 0.68;
+            } else {
+                // selected
+                whiteLevel = 0.80;
+            }
+            break;
         case TAB_STYLE_DARK:
             if (![delegate_ sessionTitleViewIsFirstResponder]) {
                 // Not selected
@@ -159,13 +168,21 @@ static const CGFloat kButtonSize = 17;
                 whiteLevel = 0.27;
             }
             break;
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            if (![delegate_ sessionTitleViewIsFirstResponder]) {
+                // Not selected
+                whiteLevel = 0.08;
+            } else {
+                // selected
+                whiteLevel = 0.17;
+            }
+            break;
     }
 
     return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
 }
 
-- (void)drawRect:(NSRect)dirtyRect
-{
+- (void)drawRect:(NSRect)dirtyRect {
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
         CGFloat hue = tabColor.hueComponent;
@@ -179,10 +196,22 @@ static const CGFloat kButtonSize = 17;
                                                 brightness:MAX(0.7, brightness)
                                                      alpha:1];
                 break;
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                tabColor = [NSColor colorWithCalibratedHue:hue
+                                                saturation:saturation * .25
+                                                brightness:MAX(0.85, brightness)
+                                                     alpha:1];
+                break;
             case TAB_STYLE_DARK:
                 tabColor = [NSColor colorWithCalibratedHue:hue
                                                 saturation:saturation * .75
                                                 brightness:MIN(0.3, brightness)
+                                                     alpha:1];
+                break;
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                tabColor = [NSColor colorWithCalibratedHue:hue
+                                                saturation:saturation * .95
+                                                brightness:MIN(0.15, brightness)
                                                      alpha:1];
                 break;
         }
@@ -203,9 +232,13 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)setTitle:(NSString *)title {
+    if ([title isEqualToString:title_]) {
+        return;
+    }
     [title_ autorelease];
     title_ = [title copy];
     [self updateTitle];
+    [self setNeedsDisplay:YES];
 }
 
 - (NSString *)titleString {
@@ -257,6 +290,11 @@ static const CGFloat kButtonSize = 17;
                 whiteLevel = 0.2;
             }
             break;
+
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            whiteLevel = 0;
+            break;
+
         case TAB_STYLE_DARK:
             if (dimmingAmount_ > 0) {
                 // Not selected
@@ -265,6 +303,10 @@ static const CGFloat kButtonSize = 17;
                 // selected
                 whiteLevel = 0.8;
             }
+            break;
+
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            whiteLevel = 1;
             break;
     }
     [label_ setTextColor:[NSColor colorWithCalibratedWhite:whiteLevel alpha:1]];

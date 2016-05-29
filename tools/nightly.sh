@@ -25,12 +25,11 @@ function SparkleSign {
 
 
 set -x
-cd ~/server/nightly/iTerm2/
 # todo: git pull origin master
 rm -rf build/Nightly/iTerm2.app
 make clean || die "Make clean failed"
 make Nightly || die "Nightly build failed"
-./sign.sh
+tools/sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
@@ -46,7 +45,6 @@ zip -ry iTerm2-${NAME}.zip iTerm.app
 
 SparkleSign nightly.xml nightly_template.xml
 
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip
-ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip"
-
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml gnachman@iterm2.com:iterm2.com/appcasts/
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
+ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml gnachman@iterm2.com:iterm2.com/appcasts/ || die "scp appcasts"

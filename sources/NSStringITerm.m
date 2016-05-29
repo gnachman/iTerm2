@@ -1405,7 +1405,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return set;
 }
 
-- (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob {
+- (BOOL)stringMatchesGlobPattern:(NSString *)glob caseSensitive:(BOOL)caseSensitive {
     NSArray *parts = [glob componentsSeparatedByString:@"*"];
     const BOOL anchorToStart = ![glob hasPrefix:@"*"];
 
@@ -1418,7 +1418,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         assert(start <= self.length);
         NSRange searchRange = NSMakeRange(start, self.length - start);
         NSRange matchingRange = [self rangeOfString:part
-                                            options:NSCaseInsensitiveSearch
+                                            options:caseSensitive ? 0 : NSCaseInsensitiveSearch
                                               range:searchRange];
         if (matchingRange.location == NSNotFound) {
             return NO;
@@ -1493,6 +1493,30 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
     attributes[NSFontAttributeName] = [NSFont fontWithName:font.fontName size:points];
     return attributes;
+}
+
+- (NSString *)stringByCompactingFloatingPointString {
+    if ([self rangeOfString:@"."].location == NSNotFound) {
+        // Bogus input. Don't even try.
+        return self;
+    }
+    NSString *compact = [self stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"0"]];
+    if ([compact hasSuffix:@"."]) {
+        compact = [compact stringByAppendingString:@"0"];
+    }
+    return compact;
+}
+
+// http://www.cse.yorku.ca/~oz/hash.html
+- (NSUInteger)hashWithDJB2 {
+    NSUInteger hash = 5381;
+    
+    for (NSUInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        hash = (hash * 33) ^ c;
+    }
+
+    return hash;
 }
 
 @end

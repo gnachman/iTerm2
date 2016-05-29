@@ -43,15 +43,15 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 }
 
 - (BOOL)capturedOutputToolVisibleInSession:(PTYSession *)aSession {
-    if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
+    if (!aSession.delegate.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
     return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName];
 }
 
 - (void)showCaptureOutputToolInSession:(PTYSession *)aSession {
-    if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
-        [aSession.tab.realParentWindow toggleToolbeltVisibility:nil];
+    if (!aSession.delegate.realParentWindow.shouldShowToolbelt) {
+        [aSession.delegate.realParentWindow toggleToolbeltVisibility:nil];
     }
     if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName]) {
         [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
@@ -84,6 +84,9 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 }
 
 - (void)showCapturedOutputToolNotVisibleAnnouncementInSession:(PTYSession *)aSession {
+    if ([aSession hasAnnouncementWithIdentifier:kSuppressCaptureOutputToolNotVisibleWarning]) {
+        return;
+    }
     NSString *theTitle = @"A Capture Output trigger fired, but the Captured Output tool is not visible.";
     [aSession retain];
     void (^completion)(int selection) = ^(int selection) {

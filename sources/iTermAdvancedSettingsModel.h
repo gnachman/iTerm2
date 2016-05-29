@@ -15,6 +15,8 @@
 + (int)minCompactTabWidth;
 + (int)optimumTabWidth;
 + (BOOL)alternateMouseScroll;
++ (NSString *)alternateMouseScrollStringForUp;
++ (NSString *)alternateMouseScrollStringForDown;
 + (BOOL)traditionalVisualBell;
 + (double)hotkeyTermAnimationDuration;
 + (BOOL)hotkeyWindowFloatsAboveOtherWindows;
@@ -128,5 +130,15 @@
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
 + (int)maxSemanticHistoryPrefixOrSuffix;
++ (BOOL)performDictionaryLookupOnQuickLook;
++ (NSString *)pathsToIgnore;
++ (BOOL)jiggleTTYSizeOnClearBuffer;
++ (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
++ (BOOL)suppressRestartAnnouncement;
++ (void)setSuppressRestartAnnouncement:(BOOL)value;
++ (BOOL)useAdaptiveFrameRate;
++ (int)adaptiveFrameRateThroughputThreshold;
++ (BOOL)includePasteHistoryInAdvancedPaste;
++ (BOOL)experimentalKeyHandling;
 
 @end

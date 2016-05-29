@@ -50,7 +50,7 @@
 
     // Create a window and save convenience pointers to its various bits.
     _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
-    _windowController = (PseudoTerminal *)_session.tab.realParentWindow;
+    _windowController = (PseudoTerminal *)_session.delegate.realParentWindow;
     _view = (iTermRootTerminalView *)_windowController.window.contentView;
 
     // Make it big so all the tools fit.
@@ -511,6 +511,9 @@
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return @[];
+}
+
+- (void)toolbeltDidFinishGrowing {
 }
 
 @end

@@ -7,6 +7,9 @@ static NSString *const kCancel = @"Cancel";
 static id<iTermWarningHandler> gWarningHandler;
 static BOOL gShowingWarning;
 
+@interface iTermWarning()<NSAlertDelegate>
+@end
+
 @implementation iTermWarning
 
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler {
@@ -83,35 +86,48 @@ static BOOL gShowingWarning;
                                   silenceable:(iTermWarningType)warningType
                                       heading:(NSString *)heading
                                   cancelLabel:(NSString *)cancelLabel {
+    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    warning.title = title;
+    warning.actions = actions;
+    warning.actionToSelectionMap = actionToSelectionMap;
+    warning.accessory = accessory;
+    warning.identifier = identifier;
+    warning.warningType = warningType;
+    warning.heading = heading;
+    warning.cancelLabel = cancelLabel;
+    return [warning runModal];
+}
+
+- (iTermWarningSelection)runModal {
     if (!gWarningHandler &&
-        warningType != kiTermWarningTypePersistent &&
-        [self identifierIsSilenced:identifier]) {
-        return [self savedSelectionForIdentifier:identifier];
+        _warningType != kiTermWarningTypePersistent &&
+        [self.class identifierIsSilenced:_identifier]) {
+        return [self.class savedSelectionForIdentifier:_identifier];
     }
 
-    NSAlert *alert = [NSAlert alertWithMessageText:heading ?: @"Warning"
-                                     defaultButton:actions.count > 0 ? actions[0] : nil
-                                   alternateButton:actions.count > 1 ? actions[1] : nil
-                                       otherButton:actions.count > 2 ? actions[2] : nil
-                         informativeTextWithFormat:@"%@", title];
-    int numNonCancelActions = [actions count];
-    for (NSString *string in actions) {
-        if ([string isEqualToString:cancelLabel]) {
+    NSAlert *alert = [NSAlert alertWithMessageText:_heading ?: @"Warning"
+                                     defaultButton:_actions.count > 0 ? _actions[0] : nil
+                                   alternateButton:_actions.count > 1 ? _actions[1] : nil
+                                       otherButton:_actions.count > 2 ? _actions[2] : nil
+                         informativeTextWithFormat:@"%@", _title];
+    int numNonCancelActions = [_actions count];
+    for (NSString *string in _actions) {
+        if ([string isEqualToString:_cancelLabel]) {
             --numNonCancelActions;
         }
     }
     // If this is silenceable and at least one button is not "Cancel" then offer to remember the
     // selection. But a "Cancel" action is not remembered.
-    if (warningType == kiTermWarningTypeTemporarilySilenceable) {
-        assert(identifier);
+    if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
+        assert(_identifier);
         if (numNonCancelActions == 1) {
             alert.suppressionButton.title = @"Suppress this message for ten minutes";
         } else if (numNonCancelActions > 1) {
             alert.suppressionButton.title = @"Remember my choice for ten minutes";
         }
         alert.showsSuppressionButton = YES;
-    } else if (warningType == kiTermWarningTypePermanentlySilenceable) {
-        assert(identifier);
+    } else if (_warningType == kiTermWarningTypePermanentlySilenceable) {
+        assert(_identifier);
         if (numNonCancelActions == 1) {
             alert.suppressionButton.title = @"Suppress this message permanently";
         } else if (numNonCancelActions > 1) {
@@ -120,13 +136,17 @@ static BOOL gShowingWarning;
         alert.showsSuppressionButton = YES;
     }
 
-    if (accessory) {
-        [alert setAccessoryView:accessory];
+    if (_accessory) {
+        [alert setAccessoryView:_accessory];
+    }
+    if (_showHelpBlock) {
+        alert.showsHelp = YES;
+        alert.delegate = self;
     }
 
     NSInteger result;
     if (gWarningHandler) {
-        result = [gWarningHandler warningWouldShowAlert:alert identifier:identifier];
+        result = [gWarningHandler warningWouldShowAlert:alert identifier:_identifier];
     } else {
         gShowingWarning = YES;
         result = [alert runModal];
@@ -137,16 +157,16 @@ static BOOL gShowingWarning;
     iTermWarningSelection selection;
     switch (result) {
         case NSAlertDefaultReturn:
-            selection = [self remapSelection:kiTermWarningSelection0 withMapping:actionToSelectionMap];
-            remember = ![actions[0] isEqualToString:cancelLabel];
+            selection = [self.class remapSelection:kiTermWarningSelection0 withMapping:_actionToSelectionMap];
+            remember = ![_actions[0] isEqualToString:_cancelLabel];
             break;
         case NSAlertAlternateReturn:
-            selection = [self remapSelection:kiTermWarningSelection1 withMapping:actionToSelectionMap];
-            remember = ![actions[1] isEqualToString:cancelLabel];
+            selection = [self.class remapSelection:kiTermWarningSelection1 withMapping:_actionToSelectionMap];
+            remember = ![_actions[1] isEqualToString:_cancelLabel];
             break;
         case NSAlertOtherReturn:
-            selection = [self remapSelection:kiTermWarningSelection2 withMapping:actionToSelectionMap];
-            remember = ![actions[2] isEqualToString:cancelLabel];
+            selection = [self.class remapSelection:kiTermWarningSelection2 withMapping:_actionToSelectionMap];
+            remember = ![_actions[2] isEqualToString:_cancelLabel];
             break;
         default:
             selection = kItermWarningSelectionError;
@@ -155,16 +175,16 @@ static BOOL gShowingWarning;
     // Save info if suppression was enabled.
     if (remember && alert.suppressionButton.state == NSOnState) {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-        if (warningType == kiTermWarningTypeTemporarilySilenceable) {
-            NSString *theKey = [self temporarySilenceKeyForIdentifier:identifier];
+        if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
+            NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];
             [userDefaults setDouble:[NSDate timeIntervalSinceReferenceDate] + kTemporarySilenceTime
                              forKey:theKey];
         } else {
-            NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
+            NSString *theKey = [self.class permanentlySilenceKeyForIdentifier:_identifier];
             [userDefaults setBool:YES forKey:theKey];
         }
         [[NSUserDefaults standardUserDefaults] setObject:@(selection)
-                                                  forKey:[self selectionKeyForIdentifier:identifier]];
+                                                  forKey:[self.class selectionKeyForIdentifier:_identifier]];
     }
 
     return selection;
@@ -236,6 +256,13 @@ static BOOL gShowingWarning;
 
 + (BOOL)showingWarning {
     return gShowingWarning;
+}
+
+#pragma mark - NSAlertDelegate
+
+- (BOOL)alertShowHelp:(NSAlert *)alert {
+    self.showHelpBlock();
+    return YES;
 }
 
 @end

@@ -113,9 +113,13 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 }
 
 - (void)doubleClickOnTableView:(id)sender {
-    if (!_passwordBeingShown && [_tableView selectedRow] >= 0) {
-        [self setPasswordBeingShown:[self selectedPassword] onRow:[_tableView selectedRow]];
-        [_tableView reloadData];
+    if ([_tableView clickedColumn] == 1) {
+        if (!_passwordBeingShown && [_tableView selectedRow] >= 0) {
+            [self setPasswordBeingShown:[self selectedPassword] onRow:[_tableView selectedRow]];
+            [_tableView reloadData];
+        }
+    } else if ([_tableView selectedRow] >= 0) {
+        [self enterPassword:nil];
     }
 }
 

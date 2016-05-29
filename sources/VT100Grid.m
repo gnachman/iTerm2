@@ -92,6 +92,8 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
+    DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
+
     if (!dirty) {
         allDirty_ = NO;
     }
@@ -102,6 +104,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
+    DLog(@"Mark rect from %@ to %@ dirty=%@ delegate=%@", VT100GridCoordDescription(from), VT100GridCoordDescription(to), @(dirty), delegate_);
     if (!dirty) {
         allDirty_ = NO;
     }
@@ -114,6 +117,8 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markAllCharsDirty:(BOOL)dirty {
+    DLog(@"Mark all chars dirty=%@ delegate=%@", @(dirty), delegate_);
+
     allDirty_ = dirty;
     [self markCharsDirty:dirty
               inRectFrom:VT100GridCoordMake(0, 0)
@@ -121,6 +126,8 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRun:(VT100GridRun)run {
+    DLog(@"Mark chars in run (origin=%@, length=%@) dirty=%@ delegate=%@", VT100GridCoordDescription(run.origin), @(run.length), @(dirty), delegate_);
+
     if (!dirty) {
         allDirty_ = NO;
     }
@@ -1255,7 +1262,7 @@ static NSString *const kGridSizeKey = @"Size";
         line[x] = 0;
         dirtyline[x] = 0;
         [result appendFormat:@"%04d: %s %@\n", y, line, [self stringForContinuationMark:p[size_.width].code]];
-        [result appendFormat:@"dirty %s\n", dirtyline];
+        [result appendFormat:@"dirty %s%@\n", dirtyline, y == cursor_.y ? @" -cursor-" : @""];
     }
     return result;
 }
@@ -1596,8 +1603,10 @@ static NSString *const kGridSizeKey = @"Size";
     }
     VT100GridSize size = [dict[kGridSizeKey] gridSize];
 
-    // Saved values only make sense if the size is the same as when the state was saved.
-    if (VT100GridSizeEquals(size, size_)) {
+    // Saved values only make sense if the size is at least as large as when the state was saved.
+    // When restoring from a saved arrangement, the initial grid size is a guess which is a bit too
+    // wide when legacy scrollbars are in use.
+    if (size.width <= size_.width && size.height <= size_.height) {
         cursor_ = [dict[kGridCursorKey] gridCoord];
         scrollRegionRows_ = [dict[kGridScrollRegionRowsKey] gridRange];
         scrollRegionCols_ = [dict[kGridScrollRegionColumnsKey] gridRange];

@@ -11,5 +11,6 @@
 @interface NSPasteboard (iTerm)
 
 - (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape;
+- (NSData *)dataForFirstFile;
 
 @end

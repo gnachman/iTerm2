@@ -19,4 +19,10 @@
 - (int)separatorTolerantIntValue;
 - (NSUInteger)separatorTolerantUnsignedIntegerValue;
 
+// Remove this text field from the view hierarchy and replace it with an identical one that is a
+// clickable hyperlink. This works around a bug where changing a text field's attributed string to
+// have an underline shifts it down by one point in OS 10.11 (and maybe other versions, I didn't
+// check).
+- (NSTextField *)replaceWithHyperlinkTo:(NSURL *)url;
+
 @end

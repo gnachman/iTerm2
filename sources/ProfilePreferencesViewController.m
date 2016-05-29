@@ -269,10 +269,6 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
                            afterDelay:0];
 }
 
-- (BOOL)importColorPresetFromFile:(NSString*)filename {
-   return [_colorsViewController importColorPresetFromFile:filename];
-}
-
 - (void)changeFont:(id)fontManager {
     [_textViewController changeFont:fontManager];
 }

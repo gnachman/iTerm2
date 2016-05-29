@@ -27,6 +27,9 @@
 // Notification posted when a stored profile changes.
 extern NSString *const kReloadAddressBookNotification;
 
+// All profiles should be reloaded.
+extern NSString *const kReloadAllProfiles;
+
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
 #define Profile NSDictionary

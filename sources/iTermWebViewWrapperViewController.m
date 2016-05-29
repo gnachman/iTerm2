@@ -59,6 +59,7 @@
     NSURL *appUrl = (NSURL *)LSCopyDefaultApplicationURLForURL((CFURLRef)URL,
                                                                kLSRolesAll,
                                                                &error);
+    [appUrl autorelease];
     if (appUrl) {
         NSString *name = nil;
         [appUrl getResourceValue:&name forKey:NSURLLocalizedNameKey error:NULL];

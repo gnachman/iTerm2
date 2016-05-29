@@ -97,6 +97,22 @@ static const double kFloatingPointTolerance = 0.00001;
                  flags:(iTermPasteFlags)flags
           tabTransform:(iTermTabTransformTags)tabTransform
           spacesPerTab:(int)spacesPerTab {
+  [self sanitizeString:string
+                expect:expected
+                 flags:flags
+          tabTransform:tabTransform
+          spacesPerTab:spacesPerTab
+                 regex:nil
+          substitution:nil];
+}
+
+- (void)sanitizeString:(NSString *)string
+                expect:(NSString *)expected
+                 flags:(iTermPasteFlags)flags
+          tabTransform:(iTermTabTransformTags)tabTransform
+          spacesPerTab:(int)spacesPerTab
+                 regex:(NSString *)regex
+          substitution:(NSString *)substitution {
     PasteEvent *event = [PasteEvent pasteEventWithString:string
                                                    flags:flags
                                         defaultChunkSize:1
@@ -104,7 +120,9 @@ static const double kFloatingPointTolerance = 0.00001;
                                             defaultDelay:1
                                                 delayKey:nil
                                             tabTransform:tabTransform
-                                            spacesPerTab:spacesPerTab];
+                                            spacesPerTab:spacesPerTab
+                                                   regex:regex
+                                            substitution:substitution];
     [iTermPasteHelper sanitizePasteEvent:event encoding:NSUTF8StringEncoding];
     XCTAssert([expected isEqualToString:event.string]);
 }

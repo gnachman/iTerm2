@@ -34,16 +34,11 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 }
 
 - (void)dealloc {
-    if (_object) {
-        OSSpinLockLock(&lock);
-        _object = nil;
-        OSSpinLockUnlock(&lock);
-
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:iTermWeaklyReferenceableObjectWillDealloc
-                                                      object:_object];
-        [_class release];
-    }
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    OSSpinLockLock(&lock);
+    _object = nil;
+    OSSpinLockUnlock(&lock);
+    [_class release];
     [super dealloc];
 }
 
@@ -83,15 +78,21 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
     OSSpinLockLock(&lock);
     id theObject = [_object retain];
+    // Prefer to use the object's class in case it got dynamically changed, but if the object has
+    // already been deallocated used its cached class since we need to provide a non-nil signature.
+    Class theClass = _object.class ?: _class;
+    [theClass retain];
     OSSpinLockUnlock(&lock);
 
     NSMethodSignature *signature;
     if (theObject) {
         signature = [theObject methodSignatureForSelector:selector];
     } else {
-        signature = [_class instanceMethodSignatureForSelector:selector];
+        signature = [theClass instanceMethodSignatureForSelector:selector];
     }
+    [theClass release];
     [theObject release];
+
     return signature;
 }
 

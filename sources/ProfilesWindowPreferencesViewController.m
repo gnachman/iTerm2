@@ -41,6 +41,7 @@
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
     IBOutlet NSButton *_preventTab;
+    IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
 }
 
@@ -57,9 +58,15 @@
                                                object:nil];
 
     PreferenceInfo *info;
-    [self defineControl:_transparency
-                    key:KEY_TRANSPARENCY
-                   type:kPreferenceInfoTypeSlider];
+    info = [self defineControl:_transparency
+                           key:KEY_TRANSPARENCY
+                          type:kPreferenceInfoTypeSlider];
+    info.observer = ^() {
+        BOOL haveTransparency = (_transparency.doubleValue > 0);
+        _transparencyAffectsOnlyDefaultBackgroundColor.enabled = haveTransparency;
+        _blurRadius.enabled = haveTransparency;
+        _useBlur.enabled = haveTransparency;
+    };
     
     info = [self defineControl:_useBlur
                            key:KEY_BLUR
@@ -118,6 +125,10 @@
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
+
+   [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
+                   key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
+                  type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT

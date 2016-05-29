@@ -104,7 +104,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
     pid_t pid = task.pid;
     if (pid != -1 && task.pidIsChild) {
-        // Not a restored task.
+        // Not a task running in a server.
         [deadpool addObject:@([task pid])];
     } else if (task.serverPid != -1 && !task.pidIsChild) {
         // Prevent server from becoming a zombie.

@@ -97,23 +97,19 @@ static BOOL gWaitingForFullScreen;
         return;
     }
 
-    if (![[iTermOrphanServerAdopter sharedInstance] haveOrphanServers]) {
-        // We don't respect the startup preference if orphan servers are present. Just restore things
-        // as best we can.
-        if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-            DLog(@"Abort because opening arrangement at startup");
-            NSDictionary *arrangement =
-                [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
-            if (arrangement) {
-                [PseudoTerminal registerSessionsInArrangement:arrangement];
-            }
-            completionHandler(nil, nil);
-            return;
-        } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-            DLog(@"Abort because opening no windows at startup");
-            completionHandler(nil, nil);
-            return;
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        DLog(@"Abort because opening arrangement at startup");
+        NSDictionary *arrangement =
+            [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
+        if (arrangement) {
+            [PseudoTerminal registerSessionsInArrangement:arrangement];
         }
+        completionHandler(nil, nil);
+        return;
+    } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+        DLog(@"Abort because opening no windows at startup");
+        completionHandler(nil, nil);
+        return;
     }
 
     if (!queuedBlocks) {

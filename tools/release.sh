@@ -60,6 +60,8 @@ function Build {
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
+  echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   pushd $SVNDIR
   git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
@@ -81,6 +83,9 @@ make clean
 make release
 Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
+echo Update the linky in the version3 release notes page
+sleep 2
+vi ~/iterm2-website/source/version3.md
 #set -x
 
 git tag v${VERSION}
@@ -90,3 +95,4 @@ git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
 git push origin master
+

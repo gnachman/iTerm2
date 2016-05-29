@@ -3,6 +3,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
@@ -1771,6 +1772,7 @@ static const int kMaxScreenRows = 4096;
             // Handled prior to switch.
             break;
 
+        case VT100_BINARY_GARBAGE:
         case VT100CC_NULL:
         case VT100CC_SOH:
         case VT100_INVALID_SEQUENCE:
@@ -1983,18 +1985,30 @@ static const int kMaxScreenRows = 4096;
         heightUnits = kVT100TerminalUnitsPercentage;
     }
 
+    CGFloat insetTop = [dict[@"insetTop"] doubleValue];
+    CGFloat insetLeft = [dict[@"insetLeft"] doubleValue];
+    CGFloat insetBottom = [dict[@"insetBottom"] doubleValue];
+    CGFloat insetRight = [dict[@"insetRight"] doubleValue];
+
     NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
     if (!name) {
         name = @"Unnamed file";
     }
     if ([dict[@"inline"] boolValue]) {
+        NSEdgeInsets inset = {
+            .top = insetTop,
+            .left = insetLeft,
+            .bottom = insetBottom,
+            .right = insetRight
+        };
         [delegate_ terminalWillReceiveInlineFileNamed:name
                                                ofSize:[dict[@"size"] intValue]
                                                 width:width
                                                 units:widthUnits
                                                height:height
                                                 units:heightUnits
-                                  preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]];
+                                  preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
+                                                inset:inset];
     } else {
         [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
     }
@@ -2030,7 +2044,7 @@ static const int kMaxScreenRows = 4096;
         // Value must be an integer. Bogusly, non-numbers are treated as 0.
         int shape = [value intValue];
         ITermCursorType shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
-        if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
+        if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(*shapeMap)) {
             [delegate_ terminalSetCursorType:shapeMap[shape]];
         }
     } else if ([key isEqualToString:@"ShellIntegrationVersion"]) {
@@ -2085,11 +2099,22 @@ static const int kMaxScreenRows = 4096;
     } else if ([key isEqualToString:@"RequestAttention"]) {
         [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
-        [delegate_ terminalSetBackgroundImageFile:value];
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalSetBackgroundImageFile:value];
+        }
     } else if ([key isEqualToString:@"SetBadgeFormat"]) {
         [delegate_ terminalSetBadgeFormat:value];
     } else if ([key isEqualToString:@"SetUserVar"]) {
         [delegate_ terminalSetUserVar:value];
+    } else if ([key isEqualToString:@"ReportCellSize"]) {
+        if ([delegate_ terminalShouldSendReport]) {
+            NSSize size = [delegate_ terminalCellSizeInPoints];
+            NSString *width = [[NSString stringWithFormat:@"%0.2f", size.width] stringByCompactingFloatingPointString];
+            NSString *height = [[NSString stringWithFormat:@"%0.2f", size.height] stringByCompactingFloatingPointString];
+            NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@\033\\",
+                           height, width];
+            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+        }
     }
 }
 

@@ -88,7 +88,7 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
                                    dy:(int)dy {
     assert(dx == 0 || dy == 0);
     assert((dx == 0) ^ (dy == 0));
-    NSPoint p;
+    NSPoint p = frame.origin;
     if (dx > 0) {
         p.x = NSMaxX(frame) - radius;
         p.y = NSMinY(frame);
@@ -113,7 +113,7 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     assert(dx == 0 || dy == 0);
     assert((dx == 0) ^ (dy == 0));
 
-    NSPoint p;
+    NSPoint p = frame.origin;
     if (dx > 0) {
         p.x = NSMaxX(frame);
         p.y = NSMinY(frame) + radius;

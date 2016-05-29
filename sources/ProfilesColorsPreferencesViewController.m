@@ -7,7 +7,9 @@
 //
 
 #import "ProfilesColorsPreferencesViewController.h"
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermColorPresets.h"
 #import "iTermProfilePreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -15,8 +17,6 @@
 
 #import <ColorPicker/ColorPicker.h>
 
-NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
-static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @implementation ProfilesColorsPreferencesViewController {
@@ -62,63 +62,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_guideColor;
 
     IBOutlet NSPopUpButton *_presetsPopupButton;
-}
-
-+ (NSDictionary *)builtInColorPresets {
-    NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ColorPresets"
-                                                                           ofType:@"plist"];
-    return [NSDictionary dictionaryWithContentsOfFile:plistFile];
-}
-
-+ (NSDictionary *)customColorPresets {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-}
-
-// Checks built-ins for the name and, failing that, looks in custom presets.
-+ (NSDictionary *)presetWithName:(NSString *)presetName {
-    NSDictionary *presetsDict = [self builtInColorPresets];
-    NSDictionary *settings = [presetsDict objectForKey:presetName];
-    if (!settings) {
-        presetsDict = [self customColorPresets];
-        settings = [presetsDict objectForKey:presetName];
-    }
-    return settings;
-}
-
-// This is an abuse of objectForKey:inProfile:, which expects the second arg to be a profile.
-// The preset dictionary looks just enough like a profile for this to work.
-+ (NSDictionary *)colorInPresetDictionary:(NSDictionary *)settings withName:(NSString *)colorName {
-  // If the preset is missing an entry, the default color will be used for that entry.
-  return [iTermProfilePreferences objectForKey:colorName
-                                     inProfile:settings];
-}
-
-+ (BOOL)loadColorPresetWithName:(NSString *)presetName
-                      inProfile:(Profile *)profile
-                          model:(ProfileModel *)model {
-    NSString *guid = profile[KEY_GUID];
-    assert(guid);
-
-    NSDictionary *settings = [self presetWithName:presetName];
-    if (!settings) {
-        return NO;
-    }
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
-
-    for (NSString *colorName in [self colorKeys]) {
-      NSDictionary *colorDict = [self colorInPresetDictionary:settings withName:colorName];
-        if (colorDict) {
-            newDict[colorName] = colorDict;
-        } else {
-            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
-        }
-    }
-
-    [model setBookmark:newDict withGuid:guid];
-    [model flush];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-    return YES;
 }
 
 - (void)awakeFromNib {
@@ -193,36 +136,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _cursorTextColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
 }
 
-+ (NSArray *)colorKeys {
-    return @[ KEY_ANSI_0_COLOR,
-              KEY_ANSI_1_COLOR,
-              KEY_ANSI_2_COLOR,
-              KEY_ANSI_3_COLOR,
-              KEY_ANSI_4_COLOR,
-              KEY_ANSI_5_COLOR,
-              KEY_ANSI_6_COLOR,
-              KEY_ANSI_7_COLOR,
-              KEY_ANSI_8_COLOR,
-              KEY_ANSI_9_COLOR,
-              KEY_ANSI_10_COLOR,
-              KEY_ANSI_11_COLOR,
-              KEY_ANSI_12_COLOR,
-              KEY_ANSI_13_COLOR,
-              KEY_ANSI_14_COLOR,
-              KEY_ANSI_15_COLOR,
-              KEY_FOREGROUND_COLOR,
-              KEY_BACKGROUND_COLOR,
-              KEY_BOLD_COLOR,
-              KEY_LINK_COLOR,
-              KEY_SELECTION_COLOR,
-              KEY_SELECTED_TEXT_COLOR,
-              KEY_CURSOR_COLOR,
-              KEY_CURSOR_TEXT_COLOR,
-              KEY_TAB_COLOR,
-              KEY_CURSOR_GUIDE_COLOR,
-              KEY_BADGE_COLOR ];
-}
-
 - (NSDictionary *)colorWellDictionary {
     return @{ KEY_ANSI_0_COLOR: _ansi0Color,
               KEY_ANSI_1_COLOR: _ansi1Color,
@@ -260,12 +173,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         [_presetsMenu removeItemAtIndex:1];
     }
 
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
-                                                                            ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    iTermColorPresetDictionary *presetsDict = [iTermColorPresets builtInColorPresets];
     [self addColorPresetsInDict:presetsDict toMenu:_presetsMenu];
 
-    NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+    iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (customPresets && [customPresets count] > 0) {
         [_presetsMenu addItem:[NSMenuItem separatorItem]];
         [self addColorPresetsInDict:customPresets toMenu:_presetsMenu];
@@ -284,7 +195,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     item.target = self;
 }
 
-- (void)addColorPresetsInDict:(NSDictionary*)presetsDict toMenu:(NSMenu*)theMenu {
+- (void)addColorPresetsInDict:(iTermColorPresetDictionary *)presetsDict toMenu:(NSMenu *)theMenu {
     for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key
                                                             action:@selector(loadColorPreset:)
@@ -292,67 +203,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         presetItem.target = self;
         [theMenu addItem:presetItem];
         [presetItem release];
-    }
-}
-
-- (NSString*)presetNameFromFilename:(NSString*)filename {
-    return [[filename stringByDeletingPathExtension] lastPathComponent];
-}
-
-- (void)addColorPreset:(NSString*)presetName withColors:(NSDictionary*)theDict {
-    NSDictionary *presets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-    NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:presets];
-    if (!customPresets) {
-        customPresets = [NSMutableDictionary dictionaryWithCapacity:1];
-    }
-    int i = 1;
-    NSString* temp = presetName;
-    while ([customPresets objectForKey:temp]) {
-        ++i;
-        temp = [NSString stringWithFormat:@"%@ (%d)", presetName, i];
-    }
-    [customPresets setObject:theDict forKey:temp];
-    [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:kCustomColorPresetsKey];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
-                                                        object:nil];
-}
-
-- (NSString *)nameOfPresetsEqualTo:(NSDictionary *)dict {
-    NSDictionary *presets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-    for (NSString *name in presets) {
-        if ([presets[name] isEqualTo:dict]) {
-            return name;
-        }
-    }
-    return nil;
-}
-
-- (BOOL)importColorPresetFromFile:(NSString*)filename {
-    NSDictionary* aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
-    if (!aDict) {
-        NSRunAlertPanel(@"Import Failed.",
-                        @"The selected file could not be read or did not contain a valid color scheme.",
-                        @"OK",
-                        nil,
-                        nil);
-        return NO;
-    } else {
-        NSString *dup = [self nameOfPresetsEqualTo:aDict];
-        if (dup) {
-            NSAlert *alert = [NSAlert alertWithMessageText:@"Add duplicate color preset?"
-                                             defaultButton:@"Cancel"
-                                           alternateButton:@"Add it anyway"
-                                               otherButton:nil
-                                 informativeTextWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
-            if ([alert runModal] == NSAlertDefaultReturn) {
-                return NO;
-            }
-        }
-
-        [self addColorPreset:[self presetNameFromFilename:filename]
-                  withColors:aDict];
-        return YES;
     }
 }
 
@@ -372,7 +222,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         // Get an array containing the full filenames of all
         // files and directories selected.
         for (NSString* filename in [openPanel legacyFilenames]) {
-            [self importColorPresetFromFile:filename];
+            [iTermColorPresets importColorPresetFromFile:filename];
         }
     }
 }
@@ -390,8 +240,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (void)deleteColorPreset:(id)sender {
-    NSDictionary* customPresets =
-        [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+    iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (!customPresets || [customPresets count] == 0) {
         NSRunAlertPanel(@"No deletable color presets.",
                         @"You cannot erase the built-in presets and no custom presets have been imported.",
@@ -407,20 +256,15 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                                        otherButton:nil
                          informativeTextWithFormat:@""];
 
-    NSPopUpButton* pub = [[[NSPopUpButton alloc] init] autorelease];
-    for (NSString* key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
-        [pub addItemWithTitle:key];
+    NSPopUpButton *popUpButton = [[[NSPopUpButton alloc] init] autorelease];
+    for (NSString *key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        [popUpButton addItemWithTitle:key];
     }
-    [pub sizeToFit];
-    [alert setAccessoryView:pub];
+    [popUpButton sizeToFit];
+    [alert setAccessoryView:popUpButton];
     NSInteger button = [alert runModal];
     if (button == NSAlertDefaultReturn) {
-        NSMutableDictionary* newCustom = [NSMutableDictionary dictionaryWithDictionary:customPresets];
-        [newCustom removeObjectForKey:[[pub selectedItem] title]];
-        [[NSUserDefaults standardUserDefaults] setObject:newCustom
-                                                  forKey:kCustomColorPresetsKey];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
-                                                            object:nil];
+        [iTermColorPresets deletePresetWithName:[[popUpButton selectedItem] title]];
     }
 }
 
@@ -430,7 +274,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     for (NSString *key in colorWellDictionary) {
         theDict[key] = [[colorWellDictionary[key] color] dictionaryValue];
     }
-    if (![theDict writeToFile:filename atomically:NO]) {
+    if (![theDict iterm_writePresetToFileWithName:filename]) {
         NSRunAlertPanel(@"Save Failed.",
                         @"Could not save to %@",
                         @"OK",
@@ -443,7 +287,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)loadColorPresetWithName:(NSString *)presetName {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [self.delegate profilePreferencesCurrentModel];
-    [[self class] loadColorPresetWithName:presetName inProfile:profile model:model];
+    [model addColorPresetNamed:presetName toProfile:profile];
 }
 
 - (void)loadColorPreset:(id)sender {
@@ -456,9 +300,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (BOOL)currentColorsEqualPreset:(NSDictionary *)preset {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
-    for (NSString *colorName in [self.class colorKeys]) {
-        NSDictionary *presetColorDict = [self.class colorInPresetDictionary:preset
-                                                                   withName:colorName];
+    for (NSString *colorName in [ProfileModel colorKeys]) {
+        iTermColorDictionary *presetColorDict = [preset iterm_presetColorWithName:colorName];
         NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:colorName
                                                                      inProfile:profile];
         if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
@@ -475,7 +318,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     for (NSMenuItem *item in _presetsMenu.itemArray) {
         if (item.action == @selector(loadColorPreset:)) {
             NSString *name = item.title;
-            if (!found && [self currentColorsEqualPreset:[self.class presetWithName:name]]) {
+            if (!found && [self currentColorsEqualPreset:[iTermColorPresets presetWithName:name]]) {
                 item.state = NSOnState;
                 found = YES;
             } else {

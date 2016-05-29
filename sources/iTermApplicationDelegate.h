@@ -49,6 +49,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
 @property(nonatomic, readonly) BOOL isApplescriptTestApp;
+@property(nonatomic, readonly) BOOL isRunningOnTravis;
 
 // Returns one of the kMarkAlertAction strings defined above.
 @property(nonatomic, readonly) NSString *markAlertAction;

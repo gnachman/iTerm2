@@ -8,6 +8,7 @@
 
 #import "iTermImageInfo.h"
 #import "iTermAnimatedImageInfo.h"
+#import "FutureMethods.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSWorkspace+iTerm.h"
@@ -16,6 +17,7 @@ static NSString *const kImageInfoSizeKey = @"Size";
 static NSString *const kImageInfoImageKey = @"Image";  // data
 static NSString *const kImageInfoPreserveAspectRatioKey = @"Preserve Aspect Ratio";
 static NSString *const kImageInfoFilenameKey = @"Filename";
+static NSString *const kImageInfoInsetKey = @"Edge Insets";
 static NSString *const kImageInfoCodeKey = @"Code";
 
 @interface iTermImageInfo ()
@@ -41,6 +43,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
     self = [super init];
     if (self) {
         _size = [dictionary[kImageInfoSizeKey] sizeValue];
+        _inset = [dictionary[kImageInfoInsetKey] futureEdgeInsetsValue];
         _data = [dictionary[kImageInfoImageKey] retain];
         _animatedImage = [[iTermAnimatedImageInfo alloc] initWithData:_data];
         if (!_animatedImage) {
@@ -90,6 +93,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
 
 - (NSDictionary *)dictionary {
     return @{ kImageInfoSizeKey: [NSValue valueWithSize:_size],
+              kImageInfoInsetKey: [NSValue futureValueWithEdgeInsets:_inset],
               kImageInfoImageKey: _data ?: [NSData data],
               kImageInfoPreserveAspectRatioKey: @(_preserveAspectRatio),
               kImageInfoFilenameKey: _filename ?: @"",
@@ -109,7 +113,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
     }
 }
 
-- (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region {
+- (NSImage *)imageWithCellSize:(CGSize)cellSize {
     if (!_image && !_animatedImage) {
         return nil;
     }
@@ -119,6 +123,8 @@ static NSString *const kImageInfoCodeKey = @"Code";
     int frame = _animatedImage.currentFrame;  // 0 if not animated
     NSImage *embeddedImage = _embeddedImages[@(frame)];
 
+    NSSize region = NSMakeSize(cellSize.width * _size.width,
+                               cellSize.height * _size.height);
     if (!NSEqualSizes(embeddedImage.size, region)) {
         NSImage *canvas = [[[NSImage alloc] init] autorelease];
         NSSize size;
@@ -143,10 +149,15 @@ static NSString *const kImageInfoCodeKey = @"Code";
         }
         [canvas setSize:region];
         [canvas lockFocus];
-        [theImage drawInRect:NSMakeRect((region.width - size.width) / 2,
-                                        (region.height - size.height) / 2,
-                                        size.width,
-                                        size.height)];
+        NSEdgeInsets inset = _inset;
+        inset.top *= cellSize.height;
+        inset.bottom *= cellSize.height;
+        inset.left *= cellSize.width;
+        inset.right *= cellSize.width;
+        [theImage drawInRect:NSMakeRect((region.width - size.width) / 2 + inset.left,
+                                        (region.height - size.height) / 2 + inset.bottom,
+                                        MAX(0, size.width - inset.left - inset.right),
+                                        MAX(0, size.height - inset.top - inset.bottom))];
         [canvas unlockFocus];
 
         self.embeddedImages[@(frame)] = canvas;

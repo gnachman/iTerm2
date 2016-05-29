@@ -10,6 +10,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class PTYSession;
+
 typedef NS_ENUM(NSInteger, SplitSessionHalf) {
     kNoHalf,
     kNorthHalf,
@@ -24,7 +26,7 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
 @protocol SplitSelectionViewDelegate <NSObject>
 
 // dest will be null when canceling.
-- (void)didSelectDestinationSession:(PTYSession *)dest
+- (void)didSelectDestinationSession:(PTYSession *)session
                                half:(SplitSessionHalf)half;
 @end
 
@@ -40,7 +42,7 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
 // the delegate gets called when a selection is made.
 - (instancetype)initAsCancelOnly:(BOOL)cancelOnly
                        withFrame:(NSRect)frame
-                     withSession:(PTYSession *)session
+                         session:(PTYSession *)session
                         delegate:(id<SplitSelectionViewDelegate>)delegate
                             move:(BOOL)move;
 

@@ -81,11 +81,11 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 - (VT100GridWindowedRange)rangeOfParentheticalSubstringAtLocation:(VT100GridCoord)location;
 
 // Returns next/previous coordinate. Returns first/last legal coord if none exists.
-- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord;
+- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip;
 // Won't go past the end of the line while skipping nulls.
 - (VT100GridCoord)successorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
 
-- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord;
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip;
 // Won't go past the start of the line while skipping nulls.
 - (VT100GridCoord)predecessorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
 
@@ -144,5 +144,12 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
                        coords:(NSMutableArray *)coords;
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
+
+// Returns a subset of `range` by removing leading and trailing whitespace.
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
+
+// Checks if two coordinates are equal. Either they are the same coordinate or they are adjacent
+// on the same DWC.
+- (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2;
 
 @end

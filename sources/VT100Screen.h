@@ -64,14 +64,15 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 @property(nonatomic, readonly) NSIndexSet *animatedLines;
 
+// Assigning to `size` resizes the session and tty. Its contents are reflowed. The alternate grid's
+// contents are reflowed, and the selection is updated. It is a little slow so be judicious.
+@property(nonatomic, assign) VT100GridSize size;
+
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal;
 
 // Destructively sets the screen size.
 - (void)destructivelySetScreenWidth:(int)width height:(int)height;
-
-// Resize the screen, preserving its contents, alt-grid's contents, and selection.
-- (void)resizeWidth:(int)new_width height:(int)height;
 
 // Convert a run to one without nulls on either end.
 - (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
@@ -149,6 +150,7 @@ extern int kVT100ScreenMinRows;
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
+                              inset:(NSEdgeInsets)inset
                               image:(NSImage *)image
                                data:(NSData *)data;  // data is optional and only used by animated GIFs
 

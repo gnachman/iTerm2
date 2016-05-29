@@ -552,8 +552,9 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 }
 
 + (NSString *)shellLauncherCommand {
-    return [NSString stringWithFormat:@"/usr/bin/login -fpl %@ %@ --launch_shell",
-            NSUserName(),
+    return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell",
+            [self hushlogin] ? @"q" : @"",
+            [NSUserName() stringWithEscapedShellCharacters],
             [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
 }
 
@@ -591,8 +592,14 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     }
 }
 
+// See issue 4425 for why we do this.
++ (BOOL)hushlogin {
+    NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@".hushlogin"];
+    return [[NSFileManager defaultManager] fileExistsAtPath:path];
+}
+
 + (NSString *)standardLoginCommand {
-    return [NSString stringWithFormat:@"login -fp \"%@\"", NSUserName()];
+    return [NSString stringWithFormat:@"login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"", NSUserName()];
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark

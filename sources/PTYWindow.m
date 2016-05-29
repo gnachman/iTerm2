@@ -55,14 +55,64 @@
     NSInteger _uniqueNumber;
 }
 
+- (instancetype)initWithContentRect:(NSRect)contentRect styleMask:(NSUInteger)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag {
+    self = [super initWithContentRect:contentRect styleMask:aStyle backing:bufferingType defer:flag];
+    if (self) {
+        [self registerForNotifications];
+    }
+    return self;
+}
+
+- (instancetype)initWithContentRect:(NSRect)contentRect
+                          styleMask:(NSUInteger)aStyle
+                            backing:(NSBackingStoreType)bufferingType
+                              defer:(BOOL)flag
+                             screen:(nullable NSScreen *)screen {
+    self = [super initWithContentRect:contentRect
+                            styleMask:aStyle
+                              backing:bufferingType
+                                defer:flag
+                               screen:screen];
+    if (self) {
+        [self registerForNotifications];
+    }
+    return self;
+}
+
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [restoreState_ release];
     _titleSetter.window = nil;
     [_titleSetter release];
     [super dealloc];
 
+}
+
+- (void)registerForNotifications {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(delayedSetTitleNotification:)
+                                                 name:kDelayedTitleSetterSetTitle
+                                               object:self];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (item.action == @selector(performMiniaturize:)) {
+        // This makes borderless windows miniaturizable.
+        return ![_delegate anyFullScreen];
+    } else {
+        return [super validateMenuItem:item];
+    }
+}
+
+- (void)performMiniaturize:(id)sender {
+    if ([_delegate anyFullScreen]) {
+        [super performMiniaturize:sender];
+    } else {
+        // NSWindow's performMiniaturize gates miniaturization on the presence of a miniaturize button.
+        [self miniaturize:self];
+    }
 }
 
 - (NSString *)description {
@@ -363,5 +413,14 @@ end:
     [_titleSetter setTitle:title];
 }
 
-@end
+#pragma mark - Notifications
 
+- (void)delayedSetTitleNotification:(NSNotification *)notification {
+    NSDictionary *userInfo = [notification userInfo];
+    NSString *title = userInfo[kDelayedTitleSetterTitleKey];
+    if (title) {
+        self.title = title;
+    }
+}
+
+@end

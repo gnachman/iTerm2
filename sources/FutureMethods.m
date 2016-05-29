@@ -190,3 +190,17 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 }
 
 @end
+
+@implementation NSValue(Future)
+
++ (NSValue *)futureValueWithEdgeInsets:(NSEdgeInsets)edgeInsets {
+    return [[[NSValue alloc] initWithBytes:&edgeInsets objCType:@encode(NSEdgeInsets)] autorelease];
+}
+
+- (NSEdgeInsets)futureEdgeInsetsValue {
+    NSEdgeInsets edgeInsets;
+    [self getValue:&edgeInsets];
+    return edgeInsets;
+}
+
+@end

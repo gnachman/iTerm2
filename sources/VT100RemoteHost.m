@@ -50,8 +50,8 @@ static NSString *gLocalHostName;
             NSPipe *pipe = task.standardOutput;
             NSFileHandle *fileHandle = pipe.fileHandleForReading;
             NSData *data = [fileHandle readDataToEndOfFile];
-            NSString *name = [[NSString alloc] initWithData:data
-                                                   encoding:NSUTF8StringEncoding];
+            NSString *name = [[[NSString alloc] initWithData:data
+                                                    encoding:NSUTF8StringEncoding] autorelease];
             @synchronized(self) {
                 gLocalHostName = [[name stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] copy];
             }

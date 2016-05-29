@@ -9,12 +9,21 @@
 #import "PTYTextView.h"
 #import "SessionView.h"
 #import "VT100LineInfo.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import <objc/runtime.h>
 #import <XCTest/XCTest.h>
 #import <OCHamcrest/OCHamcrest.h>
 #import <OCMockito/OCMockito.h>
+
+#define NUM_DIFF_BUCKETS 10
+typedef struct {
+    CGFloat variance;
+    CGFloat maxDiff;
+    int buckets[NUM_DIFF_BUCKETS];
+} iTermDiffStats;
 
 @interface PTYTextViewTest : XCTestCase
 @end
@@ -45,7 +54,6 @@
     iTermColorMap *_colorMap;
     NSString *_pasteboardString;
     NSMutableDictionary *_methodsCalled;
-    BOOL _canPasteFile;
     screen_char_t _buffer[4];
 }
 
@@ -55,7 +63,6 @@
     _textView.delegate = self;
     _textView.dataSource = self;
     _methodsCalled = [[NSMutableDictionary alloc] init];
-    _canPasteFile = NO;
 }
 
 - (void)tearDown {
@@ -226,6 +233,10 @@
     return NO;
 }
 
+- (BOOL)textViewCanSelectCurrentCommand {
+    return NO;
+}
+
 - (void)textViewCloseWithConfirmation {
 }
 
@@ -359,14 +370,14 @@
 - (void)saveToDvr {
 }
 
-- (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other {
-    return YES;
-}
-
 - (void)removeInaccessibleNotes {
 }
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
+    return VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+}
+
+- (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand {
     return VT100GridAbsCoordRangeMake(0, 0, 0, 0);
 }
 
@@ -429,9 +440,6 @@
     return NO;
 }
 
-- (void)textViewSizeDidChange {
-}
-
 - (void)textViewSelectNextTab {
 }
 
@@ -487,6 +495,9 @@
 }
 
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying {
+}
+
+- (void)textViewResizeFrameIfNeeded {
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
@@ -548,12 +559,6 @@
     XCTAssert([_methodsCalled[@"textViewPasteFromSessionWithMostRecentSelection:1"] intValue] == 1);
 }
 
-- (void)testPasteBase64Encoded {
-    _canPasteFile = YES;
-    [self invokeMenuItemWithSelector:@selector(pasteBase64Encoded:)];
-    XCTAssert([_methodsCalled[@"textViewPasteFileWithBase64Encoding"] intValue] == 1);
-}
-
 - (PTYSession *)sessionWithProfileOverrides:(NSDictionary *)profileOverrides
                                        size:(VT100GridSize)size {
     PTYSession *session = [[[PTYSession alloc] init] autorelease];
@@ -569,7 +574,7 @@
 
     XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
     [session setPreferencesFromAddressBookEntry:profile];
-    [session setWidth:size.width height:size.height];
+    [session setSize:size];
     NSRect theFrame = NSMakeRect(0,
                                  0,
                                  size.width * session.textview.charWidth + MARGIN * 2,
@@ -596,7 +601,19 @@
 }
 
 - (NSString *)pathForGoldenWithName:(NSString *)name {
-    return [self pathForTestResourceNamed:[NSString stringWithFormat:@"PTYTextViewTest-golden-%@.png", name]];
+    return [self pathForTestResourceNamed:[self shortNameForGolden:name]];
+}
+
+- (NSString *)shortNameForGolden:(NSString *)name {
+    NSString *domain = @"";
+    if ([[[iTermApplication sharedApplication] delegate] isRunningOnTravis]) {
+        // Travis runs in a VM that renders text a little differently than a retina device running
+        // the app in low-res mode.
+        domain = @"travis-";
+    } else if ([[NSScreen mainScreen] backingScaleFactor] == 1.0) {
+        domain = @"nonretina-";
+    }
+    return [NSString stringWithFormat:@"PTYTextViewTest-golden-%@%@.png", domain, name];
 }
 
 - (NSString *)pathForTestResourceNamed:(NSString *)name {
@@ -604,25 +621,46 @@
     return [resourcePath stringByAppendingPathComponent:name];
 }
 
-// Minor differences in anti-aliasing cause false failures with golden images, so we'll ignore tiny
-// differences in brightness (less than 5%).
-- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 {
+// Minor differences in anti-aliasing on different machines (even running the same version of the
+// OS) cause false failures with golden images, so we'll ignore tiny differences in brightness.
+- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 stats:(iTermDiffStats *)stats {
     if (image1.length != image2.length) {
         return NO;
     }
     unsigned char *bytes1 = (unsigned char *)image1.bytes;
     unsigned char *bytes2 = (unsigned char *)image2.bytes;
-    CGFloat threshold = 0.05;
+    const CGFloat threshold = 0.1;
+    CGFloat sumOfSquares = 0;
+    CGFloat maxDiff = 0;
+    CGFloat sum = 0;
+    for (int j = 0; j < NUM_DIFF_BUCKETS; j++) {
+        stats->buckets[j] = 0;
+    }
     for (int i = 0; i < image1.length; i+= 4) {
-        CGFloat brightness1 = PerceivedBrightness(bytes1[0] / 255.0, bytes1[1] / 255.0, bytes1[2] / 255.0);
-        CGFloat brightness2 = PerceivedBrightness(bytes2[0] / 255.0, bytes2[1] / 255.0, bytes2[2] / 255.0);
-        if (fabs(brightness1 - brightness2) > threshold) {
-            return NO;
+        CGFloat brightness1 = PerceivedBrightness(bytes1[i + 0] / 255.0, bytes1[i + 1] / 255.0, bytes1[i + 2] / 255.0);
+        CGFloat brightness2 = PerceivedBrightness(bytes2[i + 0] / 255.0, bytes2[i + 1] / 255.0, bytes2[i + 2] / 255.0);
+        CGFloat diff = fabs(brightness1 - brightness2);
+        sumOfSquares += diff*diff;
+        sum += diff;
+        maxDiff = MAX(maxDiff, diff);
+        if (diff > 0) {
+            int bucket = MIN((NUM_DIFF_BUCKETS - 1), MAX(0, diff * NUM_DIFF_BUCKETS));
+            stats->buckets[bucket]++;
         }
     }
-    return YES;
+    CGFloat N = image1.length / 4;
+    stats->variance = sumOfSquares/N - (sum/N)*(sum/N);
+    stats->maxDiff = maxDiff;
+    return maxDiff < threshold;
 }
 
+- (NSString *)decilesInStats:(iTermDiffStats)stats {
+    NSMutableArray *array = [NSMutableArray array];
+    for (int i = 0; i < NUM_DIFF_BUCKETS; i++) {
+        [array addObject:[@(stats.buckets[i]) description]];
+    }
+    return [array componentsJoinedByString:@", "];
+}
 
 - (void)doGoldenTestForInput:(NSString *)input
                         name:(NSString *)name
@@ -630,7 +668,15 @@
             profileOverrides:(NSDictionary *)profileOverrides
                 createGolden:(BOOL)createGolden
                         size:(VT100GridSize)size {
-    NSImage *actual = [self imageForInput:input hook:hook profileOverrides:profileOverrides size:size];
+    NSImage *actual = [self imageForInput:input
+                                     hook:^(PTYTextView *textView) {
+                                         textView.thinStrokes = iTermThinStrokesSettingNever;
+                                         if (hook) {
+                                             hook(textView);
+                                         }
+                                     }
+                         profileOverrides:profileOverrides
+                                     size:size];
     NSString *goldenName = [self pathForGoldenWithName:name];
     if (createGolden) {
         NSData *pngData = [actual dataForFileOfType:NSPNGFileType];
@@ -638,16 +684,25 @@
         NSLog(@"Wrote to golden file at %@", goldenName);
     } else {
         NSImage *golden = [[NSImage alloc] initWithContentsOfFile:goldenName];
+        if (!golden) {
+            golden = [NSImage imageNamed:[self shortNameForGolden:name]];
+        }
+        XCTAssertNotNil(golden, @"Failed to load golden image with name %@, short name %@", goldenName, [self shortNameForGolden:name]);
         NSData *goldenData = [golden rawPixelsInRGBColorSpace];
+        XCTAssertNotNil(goldenData, @"Failed to extract pixels from golden image");
         NSData *actualData = [actual rawPixelsInRGBColorSpace];
-        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData];
-        if (!ok) {
-            NSString *failPath = @"/tmp/failed-test.png";
+        XCTAssertEqual(goldenData.length, actualData.length, @"Different number of pixels between %@ and %@", golden, actual);
+        iTermDiffStats stats = { 0 };
+        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData stats:&stats];
+        if (ok) {
+            NSLog(@"Tests “%@” ok with variance: %f. Max diff: %f", name, stats.variance, stats.maxDiff);
+        } else {
+            NSString *failPath = [NSString stringWithFormat:@"/tmp/failed-%@.png", name];
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
             NSLog(@"Test “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
         }
-        XCTAssert(ok);
+        XCTAssert(ok, @"variance=%f maxdiff=%f deciles=%@", stats.variance, stats.maxDiff, [self decilesInStats:stats]);
     }
 }
 
@@ -2254,7 +2309,7 @@
                               line[0].code = DWC_RIGHT;
                           }
               profileOverrides:nil
-                  createGolden:YES
+                  createGolden:NO
                           size:VT100GridSizeMake(5, 3)];
 }
 
@@ -2463,15 +2518,7 @@
     [self registerCall:_cmd argument:@(flags)];
 }
 
-- (void)textViewPasteFileWithBase64Encoding {
-    [self registerCall:_cmd];
-}
-
-- (BOOL)textViewCanPasteFile {
-    return _canPasteFile;
-}
-
-- (void)refreshAndStartTimerIfNeeded {
+- (void)refresh {
     [self registerCall:_cmd];
 }
 

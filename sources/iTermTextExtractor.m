@@ -82,7 +82,7 @@ static const int kNumCharsToSearchForDivider = 8;
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
     if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
-        VT100GridCoord predecessor = [self predecessorOfCoord:location];
+        VT100GridCoord predecessor = [self predecessorOfCoord:location skippingDoubleWidthExtensions:NO];
         if (predecessor.x != location.x || predecessor.y != location.y) {
             return [self rangeForWordAt:predecessor];
         }
@@ -102,6 +102,11 @@ static const int kNumCharsToSearchForDivider = 8;
     const int width = [_dataSource width];
     const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
     const BOOL windowTouchesRightMargin = (xLimit == width);
+    int numberOfLines = [_dataSource numberOfLines];
+    if (location.y >= numberOfLines) {
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                          _logicalWindow.location, _logicalWindow.length);
+    }
     VT100GridCoordRange theRange = VT100GridCoordRangeMake(location.x,
                                                            location.y,
                                                            width,
@@ -325,7 +330,7 @@ static const int kNumCharsToSearchForDivider = 8;
                         VT100GridCoord startCoord = [coords[i + temp.location] gridCoordValue];
                         VT100GridCoord endCoord = [coords[MIN(numCoords - 1,
                                                               i + temp.location + temp.length - 1)] gridCoordValue];
-                        endCoord = [self successorOfCoord:endCoord];
+                        endCoord = [self successorOfCoord:endCoord skippingDoubleWidthExtensions:NO];
                         match.startX = startCoord.x;
                         match.absStartY = startCoord.y + [_dataSource totalScrollbackOverflow];
                         match.endX = endCoord.x;
@@ -472,14 +477,22 @@ static const int kNumCharsToSearchForDivider = 8;
     }
 }
 
-- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord {
+- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip {
     coord.x++;
     int xLimit = [self xLimit];
+    BOOL checkedForDWC = NO;
+    if (coord.x < xLimit && [self haveDoubleWidthExtensionAt:coord]) {
+        coord.x++;
+        checkedForDWC = YES;
+    }
     if (coord.x >= xLimit) {
         coord.x = _logicalWindow.location;
         coord.y++;
         if (coord.y >= [_dataSource numberOfLines]) {
             return VT100GridCoordMake(xLimit - 1, [_dataSource numberOfLines] - 1);
+        }
+        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            coord.x++;
         }
     }
     return coord;
@@ -502,13 +515,21 @@ static const int kNumCharsToSearchForDivider = 8;
     return coord;
 }
 
-- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip {
     coord.x--;
+    BOOL checkedForDWC = NO;
+    if (coord.x >= 0 && [self haveDoubleWidthExtensionAt:coord]) {
+        checkedForDWC = YES;
+        coord.x--;
+    }
     if (coord.x < _logicalWindow.location) {
         coord.x = [self xLimit] - 1;
         coord.y--;
         if (coord.y < 0) {
             return VT100GridCoordMake(_logicalWindow.location, 0);
+        }
+        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            coord.x--;
         }
     }
 
@@ -639,9 +660,9 @@ static const int kNumCharsToSearchForDivider = 8;
         }
         VT100GridCoord prev = coord;
         if (forward) {
-            coord = [self successorOfCoord:coord];
+            coord = [self successorOfCoord:coord skippingDoubleWidthExtensions:NO];
         } else {
-            coord = [self predecessorOfCoord:coord];
+            coord = [self predecessorOfCoord:coord skippingDoubleWidthExtensions:NO];
         }
         if (VT100GridCoordEquals(coord, prev)) {
             return VT100GridCoordMake(-1, -1);
@@ -904,6 +925,86 @@ static const int kNumCharsToSearchForDivider = 8;
                                                  lengthBeforeTrimming - [result length])];
     }
     return result;
+}
+
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range {
+    __block VT100GridAbsCoordRange trimmedRange = range;
+    __block BOOL foundNonWhitespace = NO;
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceCharacterSet];
+    NSCharacterSet *nonWhitespace = [whitespace invertedSet];
+    long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
+    VT100GridCoordRange localRange = VT100GridCoordRangeMake(range.start.x,
+                                                             range.start.y - totalScrollbackOverflow,
+                                                             range.end.x,
+                                                             range.end.y - totalScrollbackOverflow);
+    if (range.start.y < totalScrollbackOverflow) {
+        localRange.start.y = 0;
+        localRange.start.x = 0;
+    }
+    if (range.end.y < totalScrollbackOverflow) {
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    }
+
+    VT100GridWindowedRange windowedRange =
+            VT100GridWindowedRangeMake(localRange, _logicalWindow.location, _logicalWindow.length);
+    [self enumerateCharsInRange:windowedRange
+                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                          NSString *string = ScreenCharToStr(&theChar);
+                          if ([string rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
+                              trimmedRange.start.x = coord.x;
+                              trimmedRange.start.y = coord.y + totalScrollbackOverflow;
+                              foundNonWhitespace = YES;
+                              return YES;
+                          } else {
+                              return NO;
+                          }
+                      }
+                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                           return NO;
+                       }];
+    if (!foundNonWhitespace) {
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    }
+    [self enumerateInReverseCharsInRange:windowedRange
+                               charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                                   NSString *string = ScreenCharToStr(&theChar);
+                                   if ([string rangeOfCharacterFromSet:whitespace].location != NSNotFound) {
+                                       trimmedRange.end.x = coord.x;
+                                       trimmedRange.end.y = coord.y + totalScrollbackOverflow;
+                                       return NO;
+                                   } else {
+                                       return YES;
+                                   }
+                               }
+                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                    return NO;
+                                }];
+
+    return trimmedRange;
+}
+
+- (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
+    screen_char_t sct = [self characterAt:coord];
+    return !sct.complexChar && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
+}
+
+- (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2 {
+    if (coord1.x == coord2.x && coord1.y == coord2.y) {
+        return YES;
+    }
+    if (coord1.y != coord2.y) {
+        return NO;
+    }
+    if (abs(coord1.x - coord2.x) > 1) {
+        return NO;
+    }
+
+    int large = MAX(coord1.x, coord2.x);
+    if ([self haveDoubleWidthExtensionAt:VT100GridCoordMake(large, coord1.y)]) {
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 #pragma mark - Private

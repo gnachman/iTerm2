@@ -93,3 +93,9 @@ CPSReleaseKeyFocusFunction *GetCPSReleaseKeyFocusFunction(void);
 - (NSURL *)URL;
 @end
 
+@interface NSValue (Future)
+
++ (NSValue *)futureValueWithEdgeInsets:(NSEdgeInsets)edgeInsets;
+- (NSEdgeInsets)futureEdgeInsetsValue;
+
+@end

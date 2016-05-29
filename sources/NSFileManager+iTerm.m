@@ -1,4 +1,4 @@
-//
+ //
 //  NSFileManager+DirectoryLocations.m
 //
 //  Created by Matt Gallagher on 06 May 2010
@@ -23,6 +23,10 @@
 
 
 #import "NSFileManager+iTerm.h"
+
+#import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermAutoMasterParser.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 
@@ -173,7 +177,26 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return YES;
 }
 
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename {
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+    DLog(@"Additional network paths are: %@", additionalNetworkPaths);
+    // Augment list of additional paths with nfs automounter mount points.
+    NSMutableArray *networkPaths = [[additionalNetworkPaths mutableCopy] autorelease];
+    [networkPaths addObjectsFromArray:[[iTermAutoMasterParser sharedInstance] mountpointsWithMap:@"auto_nfs"]];
+    
+    for (NSString *path in networkPaths) {
+        if (!path.length) {
+            continue;
+        }
+        if (![path hasSuffix:@"/"]) {
+            path = [path stringByAppendingString:@"/"];
+        }
+        if ([filename hasPrefix:path]) {
+            DLog(@"Filename %@ has prefix of ignored path %@", filename, path);
+            return NO;
+        }
+    }
+
     struct statfs buf;
     int rc = statfs([filename UTF8String], &buf);
     if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {

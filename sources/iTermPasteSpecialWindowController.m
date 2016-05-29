@@ -7,12 +7,15 @@
 //
 
 #import "iTermPasteSpecialWindowController.h"
+
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
+#import "PasteboardHistory.h"
 #import "RegexKitLite.h"
 
 @interface iTermFileReference : NSObject
@@ -105,6 +108,32 @@
         _isAtShellPrompt = isAtShellPrompt;
         NSMutableArray *values = [NSMutableArray array];
         NSMutableArray *labels = [NSMutableArray array];
+
+        if ([iTermAdvancedSettingsModel includePasteHistoryInAdvancedPaste]) {
+            NSArray<PasteboardEntry *> *historyEntries = [[PasteboardHistory sharedInstance] entries];
+            if (historyEntries.count > 1) {
+                for (PasteboardEntry *entry in historyEntries) {
+                    if (values.count && [values.lastObject isEqual:entry.mainValue]) {
+                        // Remove consecutive duplicates, which happen if you copy and then paste.
+                        continue;
+                    }
+                    if (entry == historyEntries.lastObject) {
+                        // This is better handled by examining the pasteboard.
+                        continue;
+                    }
+                    NSString *title = entry.mainValue;
+                    static const NSUInteger kMaxLength = 50;
+                    if (title.length > kMaxLength) {
+                        title = [[title substringToIndex:kMaxLength] stringByAppendingString:@"…"];
+                    }
+                    [labels addObject:[NSString stringWithFormat:@"Text: “%@”", title]];
+                    [values addObject:entry.mainValue];
+                }
+                [labels addObject:[NSNull null]];
+                [values addObject:@""];
+           }
+        }
+
         [self getLabels:labels andValues:values];
         _labels = [labels retain];
         _originalValues = [values retain];
@@ -133,13 +162,34 @@
     _preview.automaticLinkDetectionEnabled = NO;
     _preview.smartInsertDeleteEnabled = NO;
 
-    for (NSString *label in _labels) {
-        [_itemList addItemWithTitle:label];
+    __block NSUInteger indexToSelect = 0;
+    if ([iTermAdvancedSettingsModel includePasteHistoryInAdvancedPaste]) {
+        [_labels enumerateObjectsUsingBlock:^(id  _Nonnull label, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([label isKindOfClass:[NSNull class]]) {
+                indexToSelect = idx + 1;
+                [_itemList.menu addItem:[NSMenuItem separatorItem]];
+            } else {
+                NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:label
+                                                               action:nil
+                                                        keyEquivalent:@""] autorelease];
+                [_itemList.menu addItem:item];
+            }
+        }];
+    } else {
+        for (NSString *label in _labels) {
+            [_itemList addItemWithTitle:label];
+        }
     }
+
     [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
     _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
 
-    [self selectValueAtIndex:0];
+    if ([iTermAdvancedSettingsModel includePasteHistoryInAdvancedPaste]) {
+        [_itemList selectItemAtIndex:indexToSelect];
+        [self selectValueAtIndex:indexToSelect];
+    } else {
+        [self selectValueAtIndex:0];
+    }
 }
 
 - (void)getLabels:(NSMutableArray *)labels andValues:(NSMutableArray *)values {
@@ -289,6 +339,10 @@
     _pasteSpecialViewController.shouldUseBracketedPasteMode = (_bracketingEnabled && shouldBracket);
     _pasteSpecialViewController.enableBase64 = !_base64only;
     _pasteSpecialViewController.shouldBase64Encode = _base64only;
+    _pasteSpecialViewController.enableUseRegexSubstitution = !_base64only;  // Binary data can't be regexed
+    _pasteSpecialViewController.shouldUseRegexSubstitution = !_base64only && [iTermPreferences boolForKey:kPreferencesKeyPasteSpecialUseRegexSubstitution];
+    _pasteSpecialViewController.regexString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialRegex];
+    _pasteSpecialViewController.substitutionString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialSubstitution];
     _pasteSpecialViewController.enableWaitForPrompt = _canWaitForPrompt;
     _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt;
 
@@ -412,6 +466,14 @@
         [iTermPreferences setBool:_pasteSpecialViewController.shouldConvertUnicodePunctuation
                            forKey:kPreferenceKeyPasteSpecialConvertUnicodePunctuation];
     }
+    if (_pasteSpecialViewController.isUseRegexSubstitutionEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldUseRegexSubstitution
+                           forKey:kPreferencesKeyPasteSpecialUseRegexSubstitution];
+        [iTermPreferences setString:_pasteSpecialViewController.regexString
+                             forKey:kPreferencesKeyPasteSpecialRegex];
+        [iTermPreferences setString:_pasteSpecialViewController.substitutionString
+                             forKey:kPreferencesKeyPasteSpecialSubstitution];
+    }
 }
 
 - (PasteEvent *)pasteEvent {
@@ -434,6 +496,7 @@
         // Other operations are idempotent.
         flags &= ~kPasteFlagsEscapeSpecialCharacters;
         flags &= ~kPasteFlagsBase64Encode;
+        flags &= ~kPasteFlagsUseRegexSubstitution;
     }
     return [PasteEvent pasteEventWithString:string
                                       flags:flags
@@ -442,7 +505,9 @@
                                defaultDelay:self.delayBetweenChunks
                                    delayKey:nil
                                tabTransform:tabTransform
-                               spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab];
+                               spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab
+                                      regex:_pasteSpecialViewController.regexString
+                               substitution:_pasteSpecialViewController.substitutionString];
 }
 
 #pragma mark - Actions

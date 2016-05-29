@@ -390,7 +390,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             actionString = @"Ignore";
             break;
         case KEY_ACTION_IR_FORWARD:
-            actionString = @"Forward in Time";
+            actionString = @"Unsupported Command";
             break;
         case KEY_ACTION_IR_BACKWARD:
             actionString = @"Backward in Time";
