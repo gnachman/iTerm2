@@ -83,6 +83,18 @@
                            extraWordCharacters:@"-"];
 }
 
+- (void)testSurrogatePairWordSelection {
+    NSString *line = @"𦍌次";
+    NSArray *words = @[ @"𦍌",
+                        @"𦍌",  // DWC_RIGHT
+                        @"次",
+                        @"次"];  // DWC_RIGHT
+    [self performTestForWordSelectionUsingLine:line
+                          wordForEachCharacter:words
+                           extraWordCharacters:@"-"];
+}
+
+
 - (void)performTestForWordSelectionUsingLine:(NSString *)line
                         wordForEachCharacter:(NSArray<NSString *> *)expected
                          extraWordCharacters:(NSString *)extraWordCharacters {
