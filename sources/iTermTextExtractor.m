@@ -82,7 +82,7 @@ static const int kNumCharsToSearchForDivider = 8;
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
     if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
-        VT100GridCoord predecessor = [self predecessorOfCoord:location skippingDoubleWidthExtensions:NO];
+        VT100GridCoord predecessor = [self predecessorOfCoord:location];
         if (predecessor.x != location.x || predecessor.y != location.y) {
             return [self rangeForWordAt:predecessor];
         }
@@ -97,6 +97,15 @@ static const int kNumCharsToSearchForDivider = 8;
     // String composed of the characters found to be in the word, excluding private range characters.
     NSMutableString *stringFromLocation = [NSMutableString string];
     NSMutableArray *coords = [NSMutableArray array];
+
+    // Has one entry for each cell in the word before `location`. Stores the
+    // length of the string at that cell. Typically 1, but can be long for
+    // surrogate pair and composed characters.
+    NSMutableArray<NSNumber *> *stringLengthsInPrefix = [NSMutableArray array];
+
+    // Has one entry for each cell in the word after `location`. Stores the
+    // index into `stringFromLocation` where that cell's string begins.
+    NSMutableArray<NSNumber *> *indexesInSuffix = [NSMutableArray array];
 
     const int xLimit = [self xLimit];
     const int width = [_dataSource width];
@@ -123,6 +132,7 @@ static const int kNumCharsToSearchForDivider = 8;
                               if (theChar.complexChar ||
                                   theChar.code < ITERM2_PRIVATE_BEGIN ||
                                   theChar.code > ITERM2_PRIVATE_END) {
+                                  [indexesInSuffix addObject:@(stringFromLocation.length)];
                                   [stringFromLocation appendString:ScreenCharToStr(&theChar)];
                                   [coords addObject:[NSValue valueWithGridCoord:coord]];
                               }
@@ -150,8 +160,10 @@ static const int kNumCharsToSearchForDivider = 8;
                                    if (isInWord) {
                                        if (theChar.complexChar ||
                                            theChar.code < ITERM2_PRIVATE_BEGIN || theChar.code > ITERM2_PRIVATE_END) {
-                                           [stringBeforeLocation insertString:ScreenCharToStr(&theChar) atIndex:0];
+                                           NSString *theString = ScreenCharToStr(&theChar);
+                                           [stringBeforeLocation insertString:theString atIndex:0];
                                            [coords insertObject:[NSValue valueWithGridCoord:coord] atIndex:0];
+                                           [stringLengthsInPrefix insertObject:@(theString.length) atIndex:0];
                                        }
                                    }
                                    return !isInWord;
@@ -192,18 +204,36 @@ static const int kNumCharsToSearchForDivider = 8;
 
     NSString *string = [stringBeforeLocation stringByAppendingString:stringFromLocation];
     NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:string attributes:@{}] autorelease];
+    
+    // Will be in 1:1 correspondence with `coords`.
+    // The string in the cell at `coords[i]` starts at index `indexes[i]`.
+    NSMutableArray<NSNumber *> *indexes = [NSMutableArray array];
+    NSInteger prefixLength = 0;
+    for (NSNumber *length in stringLengthsInPrefix) {
+        [indexes addObject:@(prefixLength)];
+        prefixLength += length.integerValue;
+    }
+    for (NSNumber *index in indexesInSuffix) {
+        [indexes addObject:@(prefixLength + index.integerValue)];
+    }
 
-    // Set end to an index that is not in the middle of an OS-defined-words. It will be at the start
+    // Set end to an index that is not in the middle of an OS-defined-word. It will be at the start
     // of a word or on a whitelisted character.
     BOOL previousCharacterWasWhitelisted = YES;
-    NSInteger end = stringBeforeLocation.length;
-    while (end < string.length) {
+
+    // `end` can index into `coords` and `indexes`.
+    NSInteger end = stringLengthsInPrefix.count;
+    while (end < coords.count) {
         if ([self isWhitelistedAlphanumericAtCoord:[coords[end] gridCoordValue]]) {
             ++end;
             previousCharacterWasWhitelisted = YES;
         } else if (previousCharacterWasWhitelisted) {
-            NSRange range = [attributedString doubleClickAtIndex:end];
-            end = NSMaxRange(range);
+            NSInteger index = [indexes[end] integerValue];
+            NSRange range = [attributedString doubleClickAtIndex:index];
+
+            end = [self indexInSortedArray:indexes
+                 withValueGreaterOrEqualTo:NSMaxRange(range)
+                      searchingForwardFrom:end];
             previousCharacterWasWhitelisted = NO;
         } else {
             break;
@@ -212,15 +242,36 @@ static const int kNumCharsToSearchForDivider = 8;
     
     // Same thing but in reverse.
     
+    NSInteger start;
+    const NSUInteger numberOfCellsInPrefix = stringLengthsInPrefix.count;
+
+    // `provisionalStart` is an initial place to begin looking for the start of the word. This is
+    // used to compute the initial value of `start`, later on. If there is a suffix it is the index
+    // of the first character of the suffix. Otherwise it is the index of the last character of
+    // the prefix.
+    NSUInteger provisionalStart = numberOfCellsInPrefix;
+    if (coords.count == numberOfCellsInPrefix) {
+        // Earlier, we bailed out if `coords.count` was 0. Since `coords.count` > 0 and
+        // `coords.count` equals `numberOfCellsInPrefix` and
+        // `numberOfCellsInPrefix` equals `provisionalStart`,
+       //  then transitively `provisionalStart` > 0.
+        provisionalStart -= 1;
+    }
+
     // First, ensure that start is either at the start of a word (as defined by the OS) or on a
     // whitelisted character.
-    NSInteger start;
-    if ([self isWhitelistedAlphanumericAtCoord:[coords[stringBeforeLocation.length] gridCoordValue]]) {
+    if ([self isWhitelistedAlphanumericAtCoord:[coords[provisionalStart] gridCoordValue]]) {
+        // On a whitelisted character. We'll search back past all of them.
         previousCharacterWasWhitelisted = YES;
-        start = stringBeforeLocation.length;
+        start = provisionalStart;
     } else {
+        // Not on a whitelisted character. Set start to the index of the cell of the first character
+        // of the word enclosing the cell indexed to by `provisionalStart`.
         previousCharacterWasWhitelisted = NO;
-        start = [attributedString doubleClickAtIndex:stringBeforeLocation.length].location;
+        NSUInteger location = [attributedString doubleClickAtIndex:[indexes[provisionalStart] integerValue]].location;
+        start = [self indexInSortedArray:indexes
+              withValueLessThanOrEqualTo:location
+                   searchingBackwardFrom:provisionalStart];
     }
     
     //  Move back until two consecutive OS-defined words are found or we reach the start of the string.
@@ -229,8 +280,11 @@ static const int kNumCharsToSearchForDivider = 8;
             --start;
             previousCharacterWasWhitelisted = YES;
         } else if (previousCharacterWasWhitelisted) {
-            start = [attributedString doubleClickAtIndex:start - 1].location;
-            previousCharacterWasWhitelisted = YES;
+            NSUInteger location = [attributedString doubleClickAtIndex:[indexes[start - 1] integerValue]].location;
+            start = [self indexInSortedArray:indexes
+                  withValueLessThanOrEqualTo:location
+                       searchingBackwardFrom:provisionalStart];
+            previousCharacterWasWhitelisted = NO;
         } else {
             break;
         }
@@ -238,11 +292,43 @@ static const int kNumCharsToSearchForDivider = 8;
 
     VT100GridCoord startCoord = [coords[start] gridCoordValue];
     VT100GridCoord endCoord = [coords[end - 1] gridCoordValue];
-    
+
+    // It's a half open interval so advance endCoord by one.
+    endCoord.x += 1;
+
+    // Make sure to include the DWC_RIGHT after the last character to be selected.
+    if (endCoord.x < [self xLimit] && [self haveDoubleWidthExtensionAt:endCoord]) {
+        endCoord.x += 1;
+    }
+
     return [self windowedRangeWithRange:VT100GridCoordRangeMake(startCoord.x,
                                                                 startCoord.y,
-                                                                endCoord.x + 1,
+                                                                endCoord.x,
                                                                 endCoord.y)];
+}
+
+// Returns 0 if no value can be found less than or equal to `maximumValue`.
+// This could be a binary search but it's better to keep it simple.
+- (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
+     withValueLessThanOrEqualTo:(NSInteger)maximumValue
+          searchingBackwardFrom:(NSInteger)start {
+    NSInteger i = start;
+    while (i > 0 && [indexes[i] integerValue] > maximumValue) {
+        i--;
+    }
+    return i;
+}
+
+// Returns indexes.count if no value can be found greater or equal to `minimumValue`.
+// This could be a binary search but it's better to keep it simple.
+- (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
+      withValueGreaterOrEqualTo:(NSInteger)minimumValue
+           searchingForwardFrom:(NSInteger)startIndex {
+    NSUInteger i = startIndex;
+    while (i < indexes.count && [indexes[i] integerValue] < minimumValue) {
+        ++i;
+    }
+    return i;
 }
 
 - (BOOL)isWhitelistedAlphanumericAtCoord:(VT100GridCoord)coord {
@@ -330,7 +416,7 @@ static const int kNumCharsToSearchForDivider = 8;
                         VT100GridCoord startCoord = [coords[i + temp.location] gridCoordValue];
                         VT100GridCoord endCoord = [coords[MIN(numCoords - 1,
                                                               i + temp.location + temp.length - 1)] gridCoordValue];
-                        endCoord = [self successorOfCoord:endCoord skippingDoubleWidthExtensions:NO];
+                        endCoord = [self successorOfCoord:endCoord];
                         match.startX = startCoord.x;
                         match.absStartY = startCoord.y + [_dataSource totalScrollbackOverflow];
                         match.endX = endCoord.x;
@@ -477,7 +563,7 @@ static const int kNumCharsToSearchForDivider = 8;
     }
 }
 
-- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip {
+- (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord {
     coord.x++;
     int xLimit = [self xLimit];
     BOOL checkedForDWC = NO;
@@ -515,7 +601,7 @@ static const int kNumCharsToSearchForDivider = 8;
     return coord;
 }
 
-- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord skippingDoubleWidthExtensions:(BOOL)skip {
+- (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
     coord.x--;
     BOOL checkedForDWC = NO;
     if (coord.x >= 0 && [self haveDoubleWidthExtensionAt:coord]) {
@@ -660,9 +746,9 @@ static const int kNumCharsToSearchForDivider = 8;
         }
         VT100GridCoord prev = coord;
         if (forward) {
-            coord = [self successorOfCoord:coord skippingDoubleWidthExtensions:NO];
+            coord = [self successorOfCoord:coord];
         } else {
-            coord = [self predecessorOfCoord:coord skippingDoubleWidthExtensions:NO];
+            coord = [self predecessorOfCoord:coord];
         }
         if (VT100GridCoordEquals(coord, prev)) {
             return VT100GridCoordMake(-1, -1);

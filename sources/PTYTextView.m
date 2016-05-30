@@ -1933,7 +1933,7 @@ static const int kDragThreshold = 3;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
 
-    NSEvent *fakeEvent = isDown ? [event mouseDownEventFromGesture] : [event mouseUpEventFromGesture];
+    NSEvent *fakeEvent = [event eventWithButtonNumber:2];
 
     int saved = _numTouches;
     _numTouches = 1;
@@ -2896,12 +2896,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         switch (initialOrder) {
             case NSOrderedAscending:
                 [_delegate writeTask:[terminal.output keyArrowRight:0]];
-                cursor = [extractor successorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                cursor = [extractor successorOfCoord:cursor];
                 break;
 
             case NSOrderedDescending:
                 [_delegate writeTask:[terminal.output keyArrowLeft:0]];
-                cursor = [extractor predecessorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                cursor = [extractor predecessorOfCoord:cursor];
                 break;
 
             case NSOrderedSame:
@@ -3073,10 +3073,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     VT100GridCoord relativeStart =
         VT100GridCoordMake(range.start.x,
-                           range.start.y - [_dataSource totalScrollbackOverflow]);
+                           MAX(0, range.start.y - [_dataSource totalScrollbackOverflow]));
     VT100GridCoord relativeEnd =
         VT100GridCoordMake(range.end.x,
-                           range.end.y - [_dataSource totalScrollbackOverflow]);
+                           MAX(0, range.end.y - [_dataSource totalScrollbackOverflow]));
 
     DLog(@"The relative range is %@ to %@",
          VT100GridCoordDescription(relativeStart), VT100GridCoordDescription(relativeEnd));
@@ -5952,7 +5952,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // This shouldn't happen, but better safe than sorry
             lastCoord = [[prefixCoords lastObject] gridCoordValue];
         }
-        range.coordRange.end = [extractor successorOfCoord:lastCoord skippingDoubleWidthExtensions:NO];
+        range.coordRange.end = [extractor successorOfCoord:lastCoord];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 

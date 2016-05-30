@@ -24,7 +24,7 @@
                                                      eventType,
                                                      globalCoord,
                                                      2);
-    int clickCount = 1;
+    int64_t clickCount = 1;
     if (self.type == NSLeftMouseDown || self.type == NSLeftMouseUp ||
         self.type == NSRightMouseDown || self.type == NSRightMouseUp ||
         self.type == NSOtherMouseDown || self.type == NSOtherMouseUp) {
@@ -43,6 +43,15 @@
 
 - (NSEvent *)mouseDownEventFromGesture {
     return [self eventWithEventType:kCGEventLeftMouseDown];
+}
+
+- (NSEvent *)eventWithButtonNumber:(NSInteger)buttonNumber {
+    CGEventRef cgEvent = [self CGEvent];
+    CGEventRef modifiedCGEvent = CGEventCreateCopy(cgEvent);
+    CGEventSetIntegerValueField(modifiedCGEvent, kCGMouseEventButtonNumber, buttonNumber);
+    NSEvent *fakeEvent = [NSEvent eventWithCGEvent:modifiedCGEvent];
+    CFRelease(modifiedCGEvent);
+    return fakeEvent;
 }
 
 @end
