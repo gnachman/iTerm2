@@ -385,7 +385,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
-                [task retain];
+                [[task retain] autorelease];
                 [handledFds addObject:@(fd)];
 
                 if ([self handleReadOnFileDescriptor:fd task:task fdSet:&rfds]) {
@@ -430,7 +430,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                         }
                     }
                 }
-                [task release];
             }
         }
 
