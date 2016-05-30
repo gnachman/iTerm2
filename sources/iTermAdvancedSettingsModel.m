@@ -198,5 +198,6 @@ DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, @"Experimental Features:
 DEFINE_BOOL(hotkeyWindowIgnoresSpotlight, NO, @"Experimental Features: Prevent Spotlight and Alfred from auto-closing the hotkey window.\nThis feature is experimental and may have unexpected side-effects.");
 DEFINE_BOOL(tabTitlesUseSmartTruncation, NO, @"Experimental Features: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
 DEFINE_BOOL(experimentalKeyHandling, NO, @"Experimental Features: Improved support for input method editors like AquaSKK.");
+DEFINE_BOOL(hideStuckTooltips, NO, @"Experimental Features: Hide stuck tooltips.\nWhen you hide iTerm2 using a hotkey while a tooltip is fading out it gets stuck because of an OS bug. Work around it with a nasty hack by enabling this feature.")
 
 @end
