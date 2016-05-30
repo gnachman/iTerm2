@@ -1052,6 +1052,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell setDelegate:self];
 
     // initialize the screen
+    // TODO: Shouldn't this take the scrollbar into account?
     int width = (aSize.width - MARGIN*2) / [_textview charWidth];
     int height = (aSize.height - VMARGIN*2) / [_textview lineHeight];
     // NB: In the bad old days, this returned whether setup succeeded because it would allocate an
