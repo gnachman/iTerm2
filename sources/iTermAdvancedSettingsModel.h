@@ -140,5 +140,6 @@
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)experimentalKeyHandling;
++ (BOOL)hideStuckTooltips;
 
 @end

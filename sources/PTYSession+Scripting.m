@@ -55,7 +55,6 @@
     NSString *text = [args objectForKey:@"text"];
     // optional argument follows (might be nil; if so, defaults to true):
     BOOL newline = ( [args objectForKey:@"newline"] ? [[args objectForKey:@"newline"] boolValue] : YES );
-    NSData *data = nil;
     NSString *aString = nil;
 
     if (text && contentsOfFile) {
@@ -75,9 +74,8 @@
     if (text != nil) {
         if (newline) {
             aString = [NSString stringWithFormat:@"%@\r", text];
-            data = [aString dataUsingEncoding:[self.terminal encoding]];
         } else {
-            data = [text dataUsingEncoding:[self.terminal encoding]];
+            aString = text;
         }
     }
 
@@ -85,12 +83,11 @@
         aString = [NSString stringWithContentsOfFile:contentsOfFile
                                             encoding:NSUTF8StringEncoding
                                                error:nil];
-        data = [aString dataUsingEncoding:[self.terminal encoding]];
     }
 
     if (self.tmuxMode == TMUX_CLIENT) {
-        [self writeTask:data];
-    } else if (data != nil && [self.shell pid] > 0) {
+        [self writeTask:aString];
+    } else if (aString != nil && [self.shell pid] > 0) {
         int i = 0;
         // wait here until we have had some output
         while ([self.shell hasOutput] == NO && i < 1000000) {
@@ -98,7 +95,7 @@
             i += 50000;
         }
 
-        [self writeTask:data];
+        [self writeTask:aString];
     }
 }
 

@@ -1493,13 +1493,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return sessions;
 }
 
-- (void)sendInputToAllSessions:(NSData *)data
-{
+- (void)sendInputToAllSessions:(NSString *)string
+                      encoding:(NSStringEncoding)optionalEncoding
+                 forceEncoding:(BOOL)forceEncoding {
     for (PTYSession *aSession in [self broadcastSessions]) {
-        if ([aSession isTmuxClient]) {
-            [aSession writeTaskNoBroadcast:data];
-        } else if (![aSession isTmuxGateway]) {
-            [aSession.shell writeTask:data];
+        if (![aSession isTmuxGateway]) {
+            [aSession writeTaskNoBroadcast:string encoding:optionalEncoding forceEncoding:forceEncoding];
         }
     }
 }
@@ -4334,12 +4333,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return YES;
 }
 
-- (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem
-{
+- (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
         PTYSession *session = [[aTabViewItem identifier] activeSession];
         return  [NSString stringWithFormat:@"Profile: %@\nCommand: %@",
                                 [[session profile] objectForKey:KEY_NAME],
-                                [session.shell command]];
+                                [session.shell command] ?: @"None"];
 }
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem

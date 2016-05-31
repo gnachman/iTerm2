@@ -425,6 +425,7 @@ typedef enum {
     static char buf[64]; // This should be enough for all formats.
     switch (self.mouseFormat) {
         case MOUSE_FORMAT_XTERM_EXT:
+            // TODO: This doesn' thandle positions greater than 223 correctly. It should use UTF-8.
             snprintf(buf, sizeof(buf), "\033[M%c%lc%lc",
                      (wint_t) (32 + button),
                      (wint_t) (32 + x),

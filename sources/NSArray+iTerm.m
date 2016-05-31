@@ -61,6 +61,19 @@
     return NO;
 }
 
+- (NSString *)numbersAsHexStrings {
+    NSMutableString *result = [NSMutableString string];
+    NSString *separator = @"";
+    for (NSNumber *number in self) {
+        if (![number isKindOfClass:[NSNumber class]]) {
+            continue;
+        }
+        [result appendFormat:@"%@0x%x", separator, number.intValue];
+        separator = @" ";
+    }
+    return result;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)
