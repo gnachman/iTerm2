@@ -36,36 +36,36 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Growl.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/NMSSH.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/ColorPicker.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
-  codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
+# codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Growl.framework"
+# codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/NMSSH.framework"
+# codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework"
+# codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/ColorPicker.framework"
+# codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
+# codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
-
-  # Create the zip file
-  # For the purposes of auto-update, the app's folder must be named iTerm.app
-  # since Sparkle won't accept a name change.
-  rm -rf iTerm.app
-  mv iTerm2.app iTerm.app
-  zip -ry iTerm2-${NAME}.zip iTerm.app
-
-  # Update the list of changes
-  vi $SVNDIR/source/appcasts/testing_changes.txt
-
-  # Place files in website git.
-  cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
-
-  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
-  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
-  vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
-  echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  pushd $SVNDIR
-  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing.xml source/appcasts/testing_changes.txt
-  popd
+#
+# # Create the zip file
+# # For the purposes of auto-update, the app's folder must be named iTerm.app
+# # since Sparkle won't accept a name change.
+# rm -rf iTerm.app
+# mv iTerm2.app iTerm.app
+# zip -ry iTerm2-${NAME}.zip iTerm.app
+#
+# # Update the list of changes
+# vi $SVNDIR/source/appcasts/testing_changes.txt
+#
+# # Place files in website git.
+# cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
+#
+# test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
+# test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
+# vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
+# echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+# shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+# vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+# pushd $SVNDIR
+# git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing.xml source/appcasts/testing_changes.txt
+# popd
 
   # Prepare the sparkle xml file
   SparkleSign ${SPARKLE_PREFIX}testing.xml ${SPARKLE_PREFIX}template.xml
@@ -81,7 +81,7 @@ ORIG_DIR=`pwd`
 echo "Build deployment release"
 #make clean
 #make release
-#Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 echo Update the linky in the version3 release notes page
 sleep 2
