@@ -62,7 +62,7 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
     id theObject = [_object retain];
     OSSpinLockUnlock(&lock);
 
-    return [[theObject retain] autorelease];
+    return [theObject autorelease];
 }
 
 #pragma mark - Notifications

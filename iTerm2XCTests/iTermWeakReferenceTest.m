@@ -74,6 +74,18 @@ ITERM_WEAKLY_REFERENCEABLE
     XCTAssertEqual(weakReference.weaklyReferencedObject, nil);
 }
 
+- (void)testWeaklyReferencedObjectDoesNotLeak {
+    iTermWeaklyReferenceableObject *object = [[iTermWeaklyReferenceableObject alloc] init];
+    iTermWeaklyReferenceableObject<iTermWeakReference> *weakReference = [object weakSelf];
+
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    XCTAssertEqual(weakReference.weaklyReferencedObject, object);
+    [object release];
+    [pool drain];
+    
+    XCTAssertEqual(weakReference.weaklyReferencedObject, nil);
+}
+
 - (void)testTwoWeakRefsToSameObject {
     iTermWeaklyReferenceableObject *object = [[iTermWeaklyReferenceableObject alloc] init];
     XCTAssert(object.retainCount == 1);
