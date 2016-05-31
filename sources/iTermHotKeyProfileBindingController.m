@@ -44,9 +44,12 @@
         
         // Unregister. If the key has changed, we'll re-register. If the profile no longer has a hotkey
         // it will stay unregistered.
-        [self unregisterHotKeyForProfileWithGuid:guid];
         if (hasHotKey && !_guidToHotKeyMap[guid]) {
             [self registerHotKeyForProfile:profile];
+        } else if (!hasHotKey && _guidToHotKeyMap[guid]) {
+            [self unregisterHotKeyForProfileWithGuid:guid];
+        } else if (hasHotKey && _guidToHotKeyMap[guid]) {
+            [self updateRegistrationForProfile:profile];
         }
     }
     
@@ -76,6 +79,25 @@
         [[iTermHotKeyController sharedInstance] removeHotKey:hotKey];
         [_guidToHotKeyMap removeObjectForKey:guid];
     }
+}
+
+- (void)updateRegistrationForProfile:(Profile *)profile {
+    NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
+    NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
+    NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
+    iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
+    
+    if (hotKey.keyCode == keyCode && hotKey.modifiers == modifiers) {
+        // No change
+        return;
+    }
+
+    // Update the keycode and modifier and re-register.
+    NSLog(@"Update registration for %@", hotKey);
+    [hotKey unregister];
+    hotKey.keyCode = keyCode;
+    hotKey.modifiers = modifiers;
+    [hotKey register];
 }
 
 #pragma mark - Notifications

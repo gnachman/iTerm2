@@ -42,8 +42,8 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p keycode=%@ modifiers=%x profile=%@>",
-            [self class], self, @(self.keyCode), (int)self.modifiers, self.profile[KEY_GUID]];
+    return [NSString stringWithFormat:@"<%@: %p keycode=%@ modifiers=%x profile.name=%@ profile.guid=%@>",
+            [self class], self, @(self.keyCode), (int)self.modifiers, self.profile[KEY_NAME], self.profile[KEY_GUID]];
 }
 
 #pragma mark - APIs

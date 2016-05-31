@@ -20,8 +20,8 @@
 // Abstract base class.
 @interface iTermBaseHotKey : NSObject
 
-@property(nonatomic, readonly) NSUInteger keyCode;
-@property(nonatomic, readonly) NSEventModifierFlags modifiers;
+@property(nonatomic, assign) NSUInteger keyCode;
+@property(nonatomic, assign) NSEventModifierFlags modifiers;
 @property(nonatomic, assign) id<iTermHotKeyDelegate> delegate;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
