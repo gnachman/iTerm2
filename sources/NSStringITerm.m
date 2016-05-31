@@ -1519,11 +1519,19 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return hash;
 }
 
-- (unichar)firstCharacter {
+- (NSUInteger)firstCharacter {
     if (self.length == 0) {
         return 0;
     } else {
-        return [self characterAtIndex:0];
+        unichar firstUTF16 = [self characterAtIndex:0];
+        if (self.length == 1 || !IsHighSurrogate(firstUTF16)) {
+            return firstUTF16;
+        }
+        unichar secondUTF16 = [self characterAtIndex:1];
+        if (!IsLowSurrogate(secondUTF16)) {
+            return 0;
+        }
+        return DecodeSurrogatePair(firstUTF16, secondUTF16);
     }
 }
 

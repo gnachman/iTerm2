@@ -39,9 +39,19 @@
     [_model autorelease];
     _model = [model retain];
     [self modelDidChange];
+    [self updateViewsEnabled];
 }
 
 #pragma mark - Private
+
+- (void)updateViewsEnabled {
+    NSArray<NSView *> *buttons =
+        @[ _autoHide, _showAutoHiddenWindowOnAppActivation, _animate, _doNotShowOnDockClick,
+           _alwaysShowOnDockClick, _showIfNoWindowsOpenOnDockClick ];
+    for (NSButton *button in buttons) {
+        button.enabled = self.model.hotKeyAssigned;
+    }
+}
 
 - (void)modelDidChange {
     [_hotKey setKeyCode:_model.keyCode modifiers:_model.modifiers character:_model.character];
@@ -63,6 +73,7 @@
             _showIfNoWindowsOpenOnDockClick.state = NSOnState;
             break;
     }
+    [self updateViewsEnabled];
 }
 
 #pragma mark - Actions
@@ -98,7 +109,8 @@
     _model.keyCode = event.keyCode;
     _model.character = [[event charactersIgnoringModifiers] firstCharacter];
     _model.modifiers = event.modifierFlags;
-    
+    _model.hotKeyAssigned = YES;
+
     [self modelDidChange];
 }
 

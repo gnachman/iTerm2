@@ -681,7 +681,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)dealloc {
+ITERM_WEAKLY_REFERENCEABLE
+
+- (void)iterm_dealloc {
     [_contentView shutdown];
 
     [self closeInstantReplayWindow];

@@ -1,5 +1,7 @@
 #import "iTermBaseHotKey.h"
+#import "iTermWeakReference.h"
 #import "ProfileModel.h"
+#import "PseudoTerminal.h"
 
 @class PseudoTerminal;
 
@@ -19,7 +21,7 @@
 // Is there a visible hotkey window right now?
 @property(nonatomic, readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
 
-@property(nonatomic, readonly) PseudoTerminal *windowController;
+@property(nonatomic, readonly) PseudoTerminal<iTermWeakReference> *windowController;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers

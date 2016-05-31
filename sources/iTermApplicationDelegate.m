@@ -38,6 +38,7 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermHotKeyController.h"
+#import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
 #import "iTermModifierRemapper.h"
@@ -422,8 +423,9 @@ static BOOL hasBecomeActive = NO;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    // Register the app hotkey.
+    // Ensure hotkeys are registered.
     [iTermAppHotKeyProvider sharedInstance];
+    [iTermHotKeyProfileBindingController sharedInstance];
 
     if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
@@ -1371,6 +1373,7 @@ static BOOL hasBecomeActive = NO;
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
 
     [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
+
     NSArray *hotkeyWindowsStates = [[iTermHotKeyController sharedInstance] restorableStates];
     if (hotkeyWindowsStates) {
         [coder encodeObject:hotkeyWindowsStates

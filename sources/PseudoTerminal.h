@@ -5,12 +5,14 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPopupWindowController.h"
 #import "iTermToolbeltView.h"
+#import "iTermWeakReference.h"
 #import "PasteboardHistory.h"
 #import "ProfileListView.h"
 #import "PSMTabBarControl.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
 #import "WindowControllerInterface.h"
+
 #include "iTermFileDescriptorClient.h"
 
 @class PTYSession;
@@ -28,6 +30,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // or window-initiated).
 @interface PseudoTerminal : NSWindowController <
   iTermInstantReplayDelegate,
+  iTermWeaklyReferenceable,
   iTermWindowController,
   NSWindowDelegate,
   PSMTabBarControlDelegate,

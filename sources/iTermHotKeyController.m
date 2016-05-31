@@ -9,6 +9,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermPreviousState.h"
+#import "iTermProfilePreferences.h"
 #import "iTermShortcutInputView.h"
 #import "iTermSystemVersion.h"
 #import "NSArray+iTerm.h"
@@ -47,10 +48,6 @@
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
-                                                                 object:nil];
-        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                               selector:@selector(reloadProfiles:)
-                                                                   name:kReloadAllProfiles
                                                                  object:nil];
         _hotKeys = [[NSMutableArray alloc] init];
     }
@@ -100,6 +97,7 @@
 - (void)removeHotKey:(iTermBaseHotKey *)hotKey {
     assert([_hotKeys containsObject:hotKey]);
     [_hotKeys removeObject:hotKey];
+    [hotKey unregister];
 }
 
 - (void)saveHotkeyWindowStates {
@@ -155,7 +153,10 @@
     NSMutableArray *array = [NSMutableArray array];
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
-            [array addObject:[hotkey restorableState]];
+            NSDictionary *state = [hotkey restorableState];
+            if (state) {
+                [array addObject:state];
+            }
         }
     }
     return array;
@@ -183,10 +184,6 @@
         [term showMenuBar];
         [term hideMenuBar];
     }
-}
-
-- (void)reloadProfiles:(NSNotification *)notification {
-    
 }
 
 #pragma mark - Private
@@ -270,3 +267,4 @@
 }
 
 @end
+

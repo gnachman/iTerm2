@@ -1,5 +1,7 @@
 #import "iTermCarbonHotKeyController.h"
+
 #import <AppKit/AppKit.h>
+#import "iTermShortcutInputView.h"
 
 @interface NSEvent(Carbon)
 + (UInt32)carbonModifiersForCocoaModifiers:(NSEventModifierFlags)flags;
@@ -205,6 +207,15 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
 }
 
 - (BOOL)handleEvent:(EventRef)event {
+    NSWindow *keyWindow = [NSApp keyWindow];
+    NSResponder *firstResponder = [keyWindow firstResponder];
+    if ([firstResponder isKindOfClass:[NSTextView class]] &&
+        [keyWindow fieldEditor:NO forObject:nil] !=nil &&
+        [[(NSTextView *)firstResponder delegate] isKindOfClass:[iTermShortcutInputView class]]) {
+        // The first responder is the field editor for a shortcut input view. Let it handle it.
+        return NO;
+    }
+    
     EventHotKeyID hotKeyID;
     if (GetEventParameter(event,
                           kEventParamDirectObject,

@@ -6,6 +6,7 @@
 @property(nonatomic, assign) NSUInteger keyCode;
 @property(nonatomic, assign) NSEventModifierFlags modifiers;
 @property(nonatomic, assign) NSUInteger character;
+@property(nonatomic, assign) BOOL hotKeyAssigned;
 
 @property(nonatomic, assign) BOOL autoHide;
 @property(nonatomic, assign) BOOL showAutoHiddenWindowOnAppActivation;

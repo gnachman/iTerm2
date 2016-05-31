@@ -18,7 +18,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 @property(nonatomic, readwrite, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
 
-@property(nonatomic, retain) PseudoTerminal *windowController;
+@property(nonatomic, assign) PseudoTerminal<iTermWeakReference> *windowController;
 
 @end
 
@@ -37,7 +37,13 @@ static NSString *const kArrangement = @"Arrangement";
 - (void)dealloc {
     [_restorableState release];
     [_profileGuid release];
+    [_windowController release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p keycode=%@ modifiers=%x profile=%@>",
+            [self class], self, @(self.keyCode), (int)self.modifiers, self.profile[KEY_GUID]];
 }
 
 #pragma mark - APIs
@@ -47,16 +53,16 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)createWindow {
-    if (self.windowController) {
+    if (self.windowController.weaklyReferencedObject) {
         return;
     }
 
     DLog(@"Create new window controller for profile hotkey");
-    self.windowController = [self windowControllerFromRestorableState];
-    if (!self.windowController) {
-        self.windowController = [self windowControllerFromProfile:[self profile]];
+    self.windowController = [[self windowControllerFromRestorableState] weakSelf];
+    if (!self.windowController.weaklyReferencedObject) {
+        self.windowController = [[self windowControllerFromProfile:[self profile]] weakSelf];
     }
-    if (!self.windowController) {
+    if (!self.windowController.weaklyReferencedObject) {
         return;
     }
 
@@ -114,13 +120,17 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)saveHotKeyWindowState {
-    if (self.windowController && self.profileGuid) {
+    if (self.windowController.weaklyReferencedObject && self.profileGuid) {
         DLog(@"Saving hotkey window state for %@", self);
         BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
         NSDictionary *arrangement = [self.windowController arrangementExcludingTmuxTabs:YES
                                                                       includingContents:includeContents];
-        self.restorableState = @{ kGUID: self.profileGuid,
-                                  kArrangement: arrangement };
+        if (arrangement) {
+            self.restorableState = @{ kGUID: self.profileGuid,
+                                      kArrangement: arrangement };
+        } else {
+            self.restorableState = nil;
+        }
     } else {
         DLog(@"Not saving hotkey window state for %@", self);
         self.restorableState = nil;
@@ -140,7 +150,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (void)hotKeyPressed {
     DLog(@"toggle window");
-    if (self.windowController) {
+    if (self.windowController.weaklyReferencedObject) {
         DLog(@"already have a hotkey window created");
         if (self.windowController.window.alphaValue == 1) {
             DLog(@"hotkey window opaque");
@@ -257,7 +267,7 @@ static NSString *const kArrangement = @"Arrangement";
     DLog(@"showHotKeyWindow: %@", self);
     [self.delegate storePreviouslyActiveApp];
 
-    if (!self.windowController) {
+    if (!self.windowController.weaklyReferencedObject) {
         DLog(@"Create new hotkey window");
         [self createWindow];
     }
@@ -302,7 +312,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (void)fastHideHotKeyWindow {
     DLog(@"fastHideHotKeyWindow");
-    if (self.windowController) {
+    if (self.windowController.weaklyReferencedObject) {
         DLog(@"fastHideHotKeyWindow - found a hot term");
         // Temporarily tell the hotkeywindow that it's not hot so that it doesn't try to hide itself
         // when losing key status.
