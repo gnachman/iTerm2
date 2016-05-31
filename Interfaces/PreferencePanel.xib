@@ -3627,7 +3627,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <matrix toolTip="+Esc is the preferred setting for users who don't need the option key to enter diacritics or other special character." verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
-                    <rect key="frame" x="256" y="71" width="68" height="58"/>
+                    <rect key="frame" x="360" y="101" width="212" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="68" height="18"/>
@@ -3642,11 +3642,15 @@ DQ
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
-                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="ymL-1K-GKk">
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="lOQ-eq-loC">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
-                            <buttonCell type="radio" title="+Esc" imagePosition="left" alignment="left" tag="2" inset="2" id="4kU-NX-Oex">
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="Esc+" imagePosition="left" alignment="left" tag="2" inset="2" id="gor-ss-qJ0">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
@@ -3658,56 +3662,25 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" id="4292">
-                    <rect key="frame" x="254" y="131" width="189" height="18"/>
+                    <rect key="frame" x="263" y="101" width="91" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Left option (⌥) key acts as:" id="4300">
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Left ⌥ Key:" id="4300">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4293">
-                    <rect key="frame" x="452" y="71" width="68" height="58"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    <size key="cellSize" width="68" height="18"/>
-                    <size key="intercellSpacing" width="4" height="2"/>
-                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4296">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <cells>
-                        <column>
-                            <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4299">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="vMF-iV-CAz">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <buttonCell type="radio" title="+Esc" imagePosition="left" alignment="left" tag="2" inset="2" id="dX1-Ga-q4e">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                    </cells>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hco-9M-B7p"/>
-                        <outlet property="nextKeyView" destination="5074" id="5287"/>
-                    </connections>
-                </matrix>
                 <textField verticalHuggingPriority="750" id="4294">
-                    <rect key="frame" x="450" y="131" width="189" height="18"/>
+                    <rect key="frame" x="263" y="81" width="91" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Right option (⌥) key acts as:" id="4295">
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Right ⌥ Key:" id="4295">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <button id="5074">
-                    <rect key="frame" x="14" y="129" width="151" height="18"/>
+                    <rect key="frame" x="14" y="99" width="151" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">You probably don't want this; most systems use ^? (ASCII 127) for backspace. Changing this setting affects the key mappings in the table above.</string>
                     <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5075">
@@ -3719,7 +3692,7 @@ DQ
                     </connections>
                 </button>
                 <button id="U4H-3c-nZg">
-                    <rect key="frame" x="14" y="109" width="219" height="18"/>
+                    <rect key="frame" x="14" y="79" width="219" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
                     <buttonCell key="cell" type="check" title="Allow application keypad mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
@@ -3731,7 +3704,7 @@ DQ
                     </connections>
                 </button>
                 <customView id="6sa-Ma-Wvi">
-                    <rect key="frame" x="16" y="157" width="621" height="253"/>
+                    <rect key="frame" x="16" y="123" width="621" height="287"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <customView id="Rmc-92-zTk">
@@ -3772,6 +3745,41 @@ DQ
                         </button>
                     </subviews>
                 </customView>
+                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4293">
+                    <rect key="frame" x="360" y="81" width="212" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    <size key="cellSize" width="68" height="18"/>
+                    <size key="intercellSpacing" width="4" height="2"/>
+                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4296">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <cells>
+                        <column>
+                            <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4299">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="kdT-sk-axY">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                        <column>
+                            <buttonCell type="radio" title="Esc+" imagePosition="left" alignment="left" tag="2" inset="2" id="0Ys-TQ-i5E">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </column>
+                    </cells>
+                    <connections>
+                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hco-9M-B7p"/>
+                        <outlet property="nextKeyView" destination="5074" id="5287"/>
+                    </connections>
+                </matrix>
             </subviews>
             <point key="canvasLocation" x="162.5" y="207"/>
         </customView>
