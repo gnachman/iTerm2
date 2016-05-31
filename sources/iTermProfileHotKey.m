@@ -18,7 +18,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 @property(nonatomic, readwrite, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
 
-@property(nonatomic, assign) PseudoTerminal<iTermWeakReference> *windowController;
+@property(nonatomic, retain) PseudoTerminal<iTermWeakReference> *windowController;
 
 @end
 
