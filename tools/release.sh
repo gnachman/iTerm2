@@ -52,7 +52,7 @@ function Build {
   zip -ry iTerm2-${NAME}.zip iTerm.app
 
   # Update the list of changes
-  vi $SVNDIR/source/appcasts/testing_changes3.txt
+  vi $SVNDIR/source/appcasts/testing_changes.txt
 
   # Place files in website git.
   cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
@@ -64,11 +64,11 @@ function Build {
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   pushd $SVNDIR
-  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
+  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing.xml source/appcasts/testing_changes.txt
   popd
 
   # Prepare the sparkle xml file
-  SparkleSign ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template3.xml
+  SparkleSign ${SPARKLE_PREFIX}testing.xml ${SPARKLE_PREFIX}template.xml
 
   popd
 }
@@ -79,9 +79,9 @@ SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
 echo "Build deployment release"
-make clean
-make release
-Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+#make clean
+#make release
+#Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 echo Update the linky in the version3 release notes page
 sleep 2
