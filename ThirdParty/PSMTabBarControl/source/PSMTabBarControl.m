@@ -173,10 +173,6 @@ const NSInteger kPSMStartResizeAnimation = 0;
                                                  selector:@selector(modifierChanged:)
                                                      name:kPSMModifierChangedNotification
                                                    object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(applicationWillHide:)
-                                                     name:NSApplicationWillHideNotification
-                                                   object:nil];
     }
     [self setTarget:self];
     return self;
@@ -2123,10 +2119,6 @@ const NSInteger kPSMStartResizeAnimation = 0;
 - (void)modifierChanged:(NSNotification *)aNotification {
     int mask = ([[[aNotification userInfo] objectForKey:kPSMTabModifierKey] intValue]);
     [self setModifier:mask];
-}
-
-- (void)applicationWillHide:(NSNotification *)notification {
-    [self removeAllToolTips];  // Issue 4666
 }
 
 - (NSString*)_modifierString {
