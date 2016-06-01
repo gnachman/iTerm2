@@ -1404,6 +1404,7 @@
 		A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */; };
 		A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */; };
 		A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */; };
+		A67778B71CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */; };
 		A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
 		A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
@@ -3029,6 +3030,7 @@
 		A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAltScreenMouseScrollInferer.m; sourceTree = "<group>"; };
 		A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAutoMasterParser.h; sourceTree = "<group>"; };
 		A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutoMasterParser.m; sourceTree = "<group>"; };
+		A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSArrayCategoryTest.m; sourceTree = "<group>"; };
 		A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AboutWindow.xib; path = Interfaces/AboutWindow.xib; sourceTree = "<group>"; };
 		A67D0D121A2EE12A003A8B35 /* AddressBook.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = AddressBook.strings; path = Interfaces/AddressBook.strings; sourceTree = "<group>"; };
 		A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AdvancedWorkingDirectoryWindow.xib; path = Interfaces/AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
@@ -5157,6 +5159,7 @@
 				A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */,
 				A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */,
 				A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */,
+				A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -7729,6 +7732,7 @@
 				A6BDB04C1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m in Sources */,
 				A6BDB0501B45FBCB00F511E6 /* PTYTextViewTest.m in Sources */,
 				A667F3871B48615900705186 /* iTermToolbeltTest.m in Sources */,
+				A67778B71CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m in Sources */,
 				C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */,
 				A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */,
 				A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */,

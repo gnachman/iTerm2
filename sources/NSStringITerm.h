@@ -226,6 +226,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // get combined. Combining marks do not.
 - (NSArray<NSNumber *> *)codePoints;
 
+// Returns a person's surname.
+- (NSString *)surname;
+
 @end
 
 @interface NSMutableString (iTerm)

@@ -1534,6 +1534,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
+- (NSString *)surname {
+    return [[self componentsSeparatedByString:@" "] lastObject];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
