@@ -441,11 +441,18 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRectFill(cellFrame);
 
     if (tabColor) {
+        if (horizontal) {
+            // Draw the tab color over the top line. Looks better.
+            cellFrame.size.height += 1;
+            cellFrame.origin.y -= 1;
+        }
+
+        // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
+        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.8 : 0.5;
+        [[tabColor colorWithAlphaComponent:alpha] set];
         if (selected) {
-            [[tabColor colorWithAlphaComponent:0.8] set];
             NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
         } else {
-            [[tabColor colorWithAlphaComponent:0.8] set];
             NSRect colorRect = cellFrame;
 
             CGRect unscaledRect = CGRectMake(0, 0, 1, 1);
@@ -457,7 +464,6 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
             } else {
                 colorRect.size.width = 6;
             }
-            [[tabColor colorWithAlphaComponent:0.8] set];
             NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
 
             [[self topLineColorSelected:selected] set];
