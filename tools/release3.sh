@@ -83,9 +83,6 @@ make clean
 make release
 Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
-echo Update the linky in the version3 release notes page
-sleep 2
-vi ~/iterm2-website/source/version3.md
 #set -x
 
 git tag v${VERSION}
