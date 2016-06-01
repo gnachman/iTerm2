@@ -80,7 +80,7 @@ ORIG_DIR=`pwd`
 
 echo "Build deployment release"
 make clean
-make release
+make preview
 Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 #set -x
