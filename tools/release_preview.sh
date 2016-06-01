@@ -81,15 +81,15 @@ ORIG_DIR=`pwd`
 echo "Build deployment release"
 make clean
 make preview
-Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+Build Deployment "-preview" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 #set -x
 
-git tag v${VERSION}
-git commit -am ${VERSION}
+git tag v${VERSION}-preview
+git commit -am ${VERSION}-preview
 git push origin master
 git push --tags
 cd $SVNDIR
-git commit -am v${VERSION}
+git commit -am v${VERSION}-preview
 git push origin master
 
