@@ -2747,6 +2747,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [tmuxWindowName_ autorelease];
     tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
+    [self nameOfSession:self.activeSession didChangeTo:self.activeSession.name];
 }
 
 + (Profile *)tmuxBookmark
