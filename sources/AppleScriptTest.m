@@ -114,9 +114,9 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     [iterm activate];
     [iterm createWindowWithDefaultProfileCommand:nil];
     iTerm2Window *terminal = [iterm currentWindow];
-    [terminal.currentSession writeContentsOfFile:nil text:@"echo Testing123"];
+    [terminal.currentSession writeContentsOfFile:nil text:@"echo Testing123" newline:NO];
     for (int i = 0; i < 10; i++) {
-        NSString *contents = [terminal.currentSession contents];
+        NSString *contents = [terminal.currentSession text];
         if ([contents containsString:@"Testing123"]) {
             return;
         }
@@ -183,9 +183,9 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"  write text \"echo NUMBER TWO\"",
                            @"end tell",
                            @"delay 0.2",  // Give write text time to echo result back
-                           @"set secondWindowContents to (contents of current session of current window)",
+                           @"set secondWindowContents to (text of current session of current window)",
                            @"select second window",
-                           @"set firstWindowContents to (contents of current session of current window)" ];
+                           @"set firstWindowContents to (text of current session of current window)" ];
     NSArray *outputs = @[ @"firstWindowContents", @"secondWindowContents" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -209,11 +209,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"  write text \"echo NUMBER TWO\"",
                            @"end tell",
                            @"delay 0.2",  // Give write text time to echo result back
-                           @"set secondTabContents to (contents of current session of current window)",
+                           @"set secondTabContents to (text of current session of current window)",
                            @"tell first tab of current window",
                            @"  select",
                            @"end tell",
-                           @"set firstTabContents to (contents of current session of current window)" ];
+                           @"set firstTabContents to (text of current session of current window)" ];
     NSArray *outputs = @[ @"firstTabContents", @"secondTabContents" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -237,11 +237,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"  write text \"echo NUMBER TWO\"",
                            @"end tell",
                            @"delay 0.2",  // Give write text time to echo result back
-                           @"set secondSessionContents to (contents of current session of current window)",
+                           @"set secondSessionContents to (text of current session of current window)",
                            @"tell first session of current tab of current window",
                            @"  select",
                            @"end tell",
-                           @"set firstSessionContents to (contents of current session of current window)" ];
+                           @"set firstSessionContents to (text of current session of current window)" ];
     NSArray *outputs = @[ @"firstSessionContents", @"secondSessionContents" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -358,7 +358,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"  write contents of file \"/tmp/testFile\"",
                            @"end tell",
                            @"delay 0.2",  // Give write text time to echo result back
-                           @"set sessionContents to (contents of current session of current window)" ];
+                           @"set sessionContents to (text of current session of current window)" ];
     NSArray *outputs = @[ @"sessionContents" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];

@@ -297,7 +297,7 @@
     [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
 }
 
-- (NSString *)contents {
+- (NSString *)text {
     return [self.textview content];
 }
 
