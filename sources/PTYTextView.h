@@ -95,7 +95,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)selectPaneRightInCurrentTerminal;
 - (void)selectPaneAboveInCurrentTerminal;
 - (void)selectPaneBelowInCurrentTerminal;
-- (void)writeTask:(NSData*)data;
+- (void)writeTask:(NSString *)string;
+- (void)writeStringWithLatin1Encoding:(NSString *)string;
 - (void)textViewDidBecomeFirstResponder;
 - (void)refresh;
 - (BOOL)textViewIsActiveSession;

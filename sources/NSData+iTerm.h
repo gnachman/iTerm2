@@ -31,4 +31,7 @@
 // encoding, but it gets the job done.
 - (BOOL)appendToFile:(NSString *)path addLineBreakIfNeeded:(BOOL)addNewline;
 
+// Converts data into a string using the given encoding.
+- (NSString *)stringWithEncoding:(NSStringEncoding)encoding;
+
 @end

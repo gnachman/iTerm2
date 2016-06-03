@@ -1605,16 +1605,19 @@ static const int kDragThreshold = 3;
     }
 }
 
-- (NSData *)dataToSendForScrollEvent:(NSEvent *)event deltaY:(CGFloat)deltaY {
+- (NSString *)stringToSendForScrollEvent:(NSEvent *)event deltaY:(CGFloat)deltaY forceLatin1:(BOOL *)forceLatin1 {
     const BOOL down = (deltaY < 0);
 
     if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
-        return down ? [_dataSource.terminal.output keyArrowDown:event.modifierFlags] :
-                      [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+        *forceLatin1 = YES;
+        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:event.modifierFlags] :
+                              [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+        return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     } else {
+        *forceLatin1 = NO;
         NSString *string = down ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
                                   [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
-        return [[string stringByExpandingVimSpecialCharacters] dataUsingEncoding:_delegate.textViewEncoding];
+        return [string stringByExpandingVimSpecialCharacters];
     }
 }
 
@@ -1627,10 +1630,15 @@ static const int kDragThreshold = 3;
 
         PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
         CGFloat deltaY = [scrollView accumulateVerticalScrollFromEvent:event];
-        NSData *dataToSend = [self dataToSendForScrollEvent:event deltaY:deltaY];
-        if (dataToSend) {
+        BOOL forceLatin1 = NO;
+        NSString *stringToSend = [self stringToSendForScrollEvent:event deltaY:deltaY forceLatin1:&forceLatin1];
+        if (stringToSend) {
             for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                [_delegate writeTask:dataToSend];
+                if (forceLatin1) {
+                    [_delegate writeStringWithLatin1Encoding:stringToSend];
+                } else {
+                    [_delegate writeTask:stringToSend];
+                }
             }
         }
     } else if (![self reportMouseEvent:event]) {
@@ -2895,12 +2903,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     while (![extractor coord:cursor isEqualToCoord:target]) {
         switch (initialOrder) {
             case NSOrderedAscending:
-                [_delegate writeTask:[terminal.output keyArrowRight:0]];
+                [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding]];
                 cursor = [extractor successorOfCoord:cursor];
                 break;
 
             case NSOrderedDescending:
-                [_delegate writeTask:[terminal.output keyArrowLeft:0]];
+                [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding]];
                 cursor = [extractor predecessorOfCoord:cursor];
                 break;
 
@@ -2940,10 +2948,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Move cursor vertically from %@ to y=%d", VT100GridCoordDescription(cursor), target.y);
     while (cursor.y != target.y) {
         if (cursor.y > target.y) {
-            [_delegate writeTask:[terminal.output keyArrowUp:0]];
+            [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowUp:0] stringWithEncoding:NSISOLatin1StringEncoding]];
             cursor.y--;
         } else {
-            [_delegate writeTask:[terminal.output keyArrowDown:0]];
+            [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowDown:0] stringWithEncoding:NSISOLatin1StringEncoding]];
             cursor.y++;
         }
     }
@@ -3030,7 +3038,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             assert(false);
     }
     if (theCommand) {
-        [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
+        [_delegate writeTask:theCommand];
     } else {
         assert(false);
     }
