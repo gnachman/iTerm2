@@ -7,6 +7,8 @@
 //
 
 #import "iTermApplicationDelegate.h"
+
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPasteHelper.h"
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
@@ -74,7 +76,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [iTermWarning setWarningHandler:self];
     [[PasteboardHistory sharedInstance] clear];
     _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
-        if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
+        if ([identifier isEqualToString:[iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey]]) {
             return 1;  /* deprecated NSAlertDefaultReturn; */
         }
         XCTAssert(false);
@@ -268,7 +270,7 @@ static const double kFloatingPointTolerance = 0.00001;
     __block BOOL warned = NO;
     [_warningBlock release];
     _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
-        XCTAssert([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]);
+        XCTAssert([identifier isEqualToString:[iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey]]);
         warned = YES;
         return 1;  /* deprecated NSAlertDefaultReturn; */
     } copy];
