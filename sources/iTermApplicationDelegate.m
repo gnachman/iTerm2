@@ -290,7 +290,8 @@ static BOOL hasBecomeActive = NO;
     // Docker: https://github.com/docker/kitematic/pull/855
     // LaunchBar: https://twitter.com/launchbar/status/620975715278790657?cn=cmVwbHk%3D&refsrc=email
     // Pathfinder: https://twitter.com/gnachman/status/659409608642007041
-
+    // Tower: Filed a bug. Tracking with issue 4722 on my side
+    
     // This is disabled because it looks like everyone is there or almost there. I can remove this
     // code soon.
 //#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
@@ -370,6 +371,14 @@ static BOOL hasBecomeActive = NO;
         found = YES;
     }
 
+    NSString *towerVersion = [self shortVersionStringOfAppWithBundleId:@"com.fournova.Tower2"];
+    if (towerVersion && ![self version:towerVersion newerThan:@"2.3.4"]) {
+        [self notifyAboutIncompatibleVersionOf:@"Tower"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/towercompatibility"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+    
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutIncompatibleSoftware];
     return found;
 }
