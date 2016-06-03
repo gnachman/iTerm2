@@ -487,7 +487,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     NSMutableArray *actions = [NSMutableArray array];
     [actions addObject:@"Paste"];
     [actions addObject:@"Cancel"];
-    NSString *identifier = kMultiLinePasteWarningUserDefaultsKey;
+    NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
     if (lines.count > 1) {
         if (atShellPrompt) {
             theTitle = [NSString stringWithFormat:@"OK to paste %d lines at shell prompt?",
@@ -499,7 +499,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     } else {
         if (atShellPrompt) {
             [actions insertObject:@"Paste Without Newline" atIndex:1];
-            identifier = kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey;
+            identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey];
             theTitle = @"OK to paste one line ending in a newline at shell prompt?";
         } else {
             theTitle = @"OK to paste one line ending in a newline?";
@@ -515,7 +515,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
             return YES;
             
         case kiTermWarningSelection1:
-            if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
+            if ([identifier isEqualToString:[iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey]]) {
                 // cancel
                 return NO;
             } else {

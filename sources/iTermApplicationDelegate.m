@@ -31,6 +31,7 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
@@ -86,10 +87,6 @@ NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSetti
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";
 
-// There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
-// This was changed for compatibility with the iTermWarning mechanism.
-NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
-NSString *const kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt";
 static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
@@ -1228,9 +1225,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)toggleMultiLinePasteWarning:(id)sender {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setBool:![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey]
-                   forKey:kMultiLinePasteWarningUserDefaultsKey];
+    [iTermAdvancedSettingsModel setNoSyncDoNotWarnBeforeMultilinePaste:![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste]];
 }
 
 - (int)promptForNumberOfSpacesToConverTabsToWithDefault:(int)defaultValue {
@@ -1277,8 +1272,7 @@ static BOOL hasBecomeActive = NO;
         // In a test.
         return YES;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    return ![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
+    return ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste];
 }
 
 - (IBAction)maximizePane:(id)sender

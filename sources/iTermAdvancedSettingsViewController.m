@@ -202,7 +202,9 @@ static NSDictionary *gIntrospection;
             SEL name = method_getName(methods[i]);
             NSString *stringName = NSStringFromSelector(name);
             // Ignore selectors ending with : because they are setters.
-            if (![internalMethods containsObject:stringName] && ![stringName hasSuffix:@":"]) {
+            if (![internalMethods containsObject:stringName] &&
+                ![stringName hasSuffix:@":"] &&
+                ![stringName hasSuffix:@"UserDefaultsKey"]) {
                 [iTermAdvancedSettingsModel performSelector:name withObject:nil];
                 assert(gIntrospection != nil);
                 [settings addObject:gIntrospection];

@@ -100,6 +100,11 @@
 + (BOOL)killJobsInServersOnQuit;
 
 + (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
++ (NSString *)noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey;
++ (void)setNoSyncDoNotWarnBeforeMultilinePaste:(BOOL)value;
++ (BOOL)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt;
++ (NSString *)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey;
++ (void)setNoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt:(BOOL)value;
 
 + (BOOL)noSyncTipsDisabled;
 + (int)numberOfLinesForAccessibility;
