@@ -3666,9 +3666,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
          session2.view, session2.view.superview);
 
     // Update the sessions maps.
+    [[session1 retain] autorelease];
+    [[session2 retain] autorelease];
     [session1Tab.viewToSessionMap removeObjectForKey:session1.view];
-    [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap removeObjectForKey:session2.view];
+
+    
+    [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 }
 
