@@ -6924,6 +6924,7 @@ ITERM_WEAKLY_REFERENCEABLE
         ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
         iTermAnnouncementViewController *announcement = nil;
         if (audible || visible) {
+            DLog(@"Want to show a bell announcement. The bell is either audible or visible");
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
                                                                  style:kiTermAnnouncementViewStyleQuestion
@@ -6937,32 +6938,39 @@ ITERM_WEAKLY_REFERENCEABLE
                         _bellRate = nil;
                         switch (selection) {
                             case -2:  // Dismiss programmatically
+                                DLog(@"Dismiss programatically");
                                 break;
 
                             case -1: // No
+                                DLog(@"Dismiss temporarily");
                                 _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
                                 break;
 
                             case 0: // Suppress bell temporarily
+                                DLog(@"Suppress bell temporarily");
                                 _ignoreBellUntil = now + 60;
                                 break;
 
                             case 1: // Suppress all output
+                                DLog(@"Suppress all output");
                                 _suppressAllOutput = YES;
                                 break;
 
                             case 2: // Never offer again
+                                DLog(@"Never offer again");
                                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                                         forKey:kSuppressAnnoyingBellOffer];
                                 break;
 
                             case 3:  // Silence automatically
+                                DLog(@"Silence automatically");
                                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                                         forKey:kSilenceAnnoyingBellAutomatically];
                                 break;
                         }
                     }];
         } else {
+            DLog(@"Want to show a bell announcement. The bell is imperceptible");
             // Neither audible nor visible.
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Want to suppress all output until things calm down?"
@@ -6975,17 +6983,21 @@ ITERM_WEAKLY_REFERENCEABLE
                         _bellRate = nil;
                         switch (selection) {
                             case -2:  // Dismiss programmatically
+                                DLog(@"Dismiss programatically");
                                 break;
 
                             case -1: // No
+                                DLog(@"Dismiss temporarily");
                                 _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
                                 break;
 
                             case 0: // Suppress all output
+                                DLog(@"Suppress all output");
                                 _suppressAllOutput = YES;
                                 break;
 
-                            case 2: // Never offer again
+                            case 1: // Never offer again
+                                DLog(@"Don't offer again");
                                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                                         forKey:kSuppressAnnoyingBellOffer];
                                 break;

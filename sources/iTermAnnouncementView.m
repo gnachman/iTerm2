@@ -7,6 +7,7 @@
 //
 
 #import "iTermAnnouncementView.h"
+#import "DebugLogging.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -293,7 +294,9 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)buttonPressed:(id)sender {
+    DLog(@"Button with tag %d pressed in view %@", (int)[sender tag], self);
     if (_block) {
+        DLog(@"Invoking its block");
         _block([sender tag]);
     }
 }
