@@ -28,7 +28,11 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 // View in which to show the paste indicator.
 - (NSView *)pasteHelperViewForIndicator;
 
+// Are you currently at a shell prompt? Implies shell integration.
 - (BOOL)pasteHelperIsAtShellPrompt;
+
+// Returns YES if we know we're NOT at a shell prompt. If uncertain, returns NO.
+- (BOOL)pasteHelperShouldWaitForPrompt;
 
 // Is shell integration installed?
 - (BOOL)pasteHelperCanWaitForPrompt;

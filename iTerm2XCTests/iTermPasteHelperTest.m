@@ -473,6 +473,10 @@ static const double kFloatingPointTolerance = 0.00001;
     return nil;
 }
 
+- (BOOL)pasteHelperShouldWaitForPrompt {
+    return !_isAtShellPrompt;
+}
+
 - (BOOL)pasteHelperIsAtShellPrompt {
     return _isAtShellPrompt;
 }

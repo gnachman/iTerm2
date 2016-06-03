@@ -77,7 +77,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
                                           canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
-                                           isAtShellPrompt:[_delegate pasteHelperIsAtShellPrompt]
+                                           isAtShellPrompt:![_delegate pasteHelperShouldWaitForPrompt]
                                                 completion:^(PasteEvent *event) {
                                                     [self tryToPasteEvent:event];
                                                     [iTermPreferences setInt:event.defaultChunkSize
@@ -456,7 +456,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
     }
 
-    if (_pasteContext.blockAtNewline && ![_delegate pasteHelperIsAtShellPrompt]) {
+    if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {
         DLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
         return;
