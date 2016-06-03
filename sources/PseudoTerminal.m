@@ -7013,8 +7013,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return kValidModesForFontPanel;
 }
 
-- (void)incrementBadge
-{
+- (void)incrementBadge {
+    if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {
+        return;
+    }
+
     NSDockTile *dockTile;
     if (self.window.isMiniaturized) {
       dockTile = self.window.dockTile;
