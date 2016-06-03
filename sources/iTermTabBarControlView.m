@@ -19,8 +19,6 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     kFlashFadingOut,
 };
 
-static const NSTimeInterval kAnimationDuration = 0.25;
-
 @interface iTermTabBarControlView ()
 @property(nonatomic, assign) iTermTabBarFlashState flashState;
 @end
@@ -92,7 +90,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     // Schedule a fade out. This can be canceled.
     [self retain];
     __block BOOL aborted = NO;
-    _flashDelayedPerform = [NSView animateWithDuration:kAnimationDuration
+    _flashDelayedPerform = [NSView animateWithDuration:[iTermAdvancedSettingsModel tabFlashAnimationDuration]
                                                  delay:[iTermAdvancedSettingsModel tabAutoShowHoldTime]
                                             animations:^{
                                                 if (!_cmdPressed) {
@@ -138,7 +136,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     _flashDelayedPerform = nil;
 
     [self retain];
-    [NSView animateWithDuration:kAnimationDuration
+    [NSView animateWithDuration:[iTermAdvancedSettingsModel tabFlashAnimationDuration]
                      animations:^{
                          self.flashState = kFlashFadingOut;
                          [self.animator setAlphaValue:0];

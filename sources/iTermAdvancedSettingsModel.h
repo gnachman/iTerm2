@@ -147,5 +147,6 @@
 + (BOOL)experimentalKeyHandling;
 + (BOOL)hideStuckTooltips;
 + (BOOL)indicateBellsInDockBadgeLabel;
++ (double)tabFlashAnimationDuration;
 
 @end
