@@ -156,6 +156,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                     return;
                 }
             }
+            DLog(@"Tab's root splitter is oversize. Fit layout to windows");
             [controller_ fitLayoutToWindows];
         }
     }
@@ -336,6 +337,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                          tmuxController:controller_
                                  zoomed:NO];
             if ([tabToUpdate_ layoutIsTooLarge]) {
+                DLog(@"layout is too large! fit the layout to windows");
                 [controller_ fitLayoutToWindows];
             }
         } else {
@@ -357,6 +359,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                 // This is to handle the case where we couldn't create a window as
                 // large as we were asked to (for instance, if the gateway is full-
                 // screen).
+                DLog(@"Calling windowDidResize: in case the window was smaller than we'd hoped");
                 [controller_ windowDidResize:term];
 
                 // Check the window flags

@@ -1460,6 +1460,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (n == 0) {
             // The last session in this tab closed so check if the client has
             // changed size
+            DLog(@"Last session in tab closed. Check if the client has changed size");
             [_tmuxController fitLayoutToWindows];
         }
     } else if (self.tmuxMode == TMUX_GATEWAY) {
@@ -2884,6 +2885,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                 withPane:_tmuxPane
                                 inWindow:[_delegate tmuxWindow]];
     }
+    DLog(@"Fit layout to window on session delegate change");
     [_tmuxController fitLayoutToWindows];
 }
 

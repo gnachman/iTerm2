@@ -326,6 +326,7 @@ error:
         }
     }
     if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
+        DLog(@"Begin accepting notifications");
         acceptNotifications_ = YES;
     }
     if (!_initialized) {
@@ -413,7 +414,9 @@ error:
     } else if (currentCommand_) {
         TmuxLog(@"Read command response: \"%@\"", command);
     }
-
+    if (!acceptNotifications_) {
+        TmuxLog(@"  Not accepting notifications");
+    }
     // Work around a bug in tmux 1.8: if unlink-window causes the current
     // session to be destroyed, no end guard is printed but %exit may be
     // received.

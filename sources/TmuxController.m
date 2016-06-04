@@ -158,6 +158,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
                 zoomed:(NSNumber *)zoomed {
+    DLog(@"setLayoutInTab:%@ toLayout:%@ zoomed:%@", tab, layout, zoomed);
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.layout = layout;
@@ -464,22 +465,24 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                  forClient:self.clientName];
 }
 
-- (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term
-{
+- (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term {
     NSSize size = [term tmuxCompatibleSize];
+    DLog(@"The tmux-compatible size of the window is %@", NSStringFromSize(size));
     if (size.width == 0 || size.height == 0) {
         // After the last session closes a size of 0 is reported.
         return YES;
     }
+    DLog(@"The last known size of tmux windows is %@", NSStringFromSize(lastSize_));
     if (NSEqualSizes(size, lastSize_)) {
         return NO;
     }
+    
+    DLog(@"Looks like the window resize is legit. Change client size to %@", NSStringFromSize(size));
     [self setClientSize:size];
     return YES;
 }
 
-- (void)fitLayoutToWindows
-{
+- (void)fitLayoutToWindows {
     if (!windows_.count) {
         return;
     }
@@ -497,10 +500,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (NSEqualSizes(minSize, lastSize_)) {
         return;
     }
+    DLog(@"fitLayoutToWindows setting client size to %@", NSStringFromSize(minSize));
     [self setClientSize:minSize];
 }
 
 - (void)setClientSize:(NSSize)size {
+    DLog(@"Set client size to %@", NSStringFromSize(size));
+    DLog(@"%@", [NSThread callStackSymbols]);
     assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
