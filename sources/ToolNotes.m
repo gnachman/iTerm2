@@ -41,6 +41,17 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [[textView_ textContainer] setContainerSize:NSMakeSize(contentSize.width, FLT_MAX)];
         [[textView_ textContainer] setWidthTracksTextView:YES];
         [textView_ setDelegate:self];
+        
+        // Migrate notes to the new location. Prior to 3.0 (and its preceding betas in the 2.9 series)
+        // it was in App Support/iTerm, not App Support/iTerm2.
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            if ([fileManager fileExistsAtPath:[self legacyFilename]] && ![fileManager fileExistsAtPath:[self filename]]) {
+                [fileManager moveItemAtPath:[self legacyFilename] toPath:[self filename] error:nil];
+            }
+        });
+
         [textView_ readRTFDFromFile:[self filename]];
         textView_.automaticSpellingCorrectionEnabled = NO;
         textView_.automaticDashSubstitutionEnabled = NO;
@@ -69,8 +80,11 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
     [super dealloc];
 }
 
-- (NSString *)filename
-{
+- (NSString *)legacyFilename {
+    return [NSString stringWithFormat:@"%@/notes.rtfd", [filemanager_ legacyApplicationSupportDirectory]];
+}
+
+- (NSString *)filename {
     return [NSString stringWithFormat:@"%@/notes.rtfd", [filemanager_ applicationSupportDirectory]];
 }
          
