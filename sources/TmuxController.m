@@ -544,6 +544,24 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (void)guessVersion {
+    [gateway_ sendCommand:@"list-windows -F \"#{socket_path}\""
+           responseTarget:self
+         responseSelector:@selector(guessVersionResponse:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)guessVersionResponse:(NSString *)response {
+    if (response.length == 0) {
+        DLog(@"Looks like tmux 2.1 or earlier");
+        gateway_.maximumServerVersion = @2.1;
+    } else {
+        DLog(@"Looks like tmux 2.2 or later");
+        gateway_.minimumServerVersion = @2.2;
+    }
+}
+
 // Show an error and terminate the connection because tmux has an unsupported option turned on.
 - (void)optionValidationFailedForOption:(NSString *)option
 {

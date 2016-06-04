@@ -4325,6 +4325,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tmuxInitialCommandDidCompleteSuccessfully {
     // This kicks off a chain reaction that leads to windows being opened.
     [_tmuxController validateOptions];
+    [_tmuxController guessVersion];
 }
 
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error {

@@ -18,6 +18,7 @@
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 const int kTmuxGatewayCommandShouldTolerateErrors = (1 << 0);
 const int kTmuxGatewayCommandWantsData = (1 << 1);
+static const double kVersionNumberComparisonEpsilon = 0.00001;
 
 #define NEWLINE @"\r"
 
@@ -78,6 +79,8 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [currentCommandResponse_ release];
     [currentCommandData_ release];
     [strayMessages_ release];
+    [_minimumServerVersion release];
+    [_maximumServerVersion release];
 
     [super dealloc];
 }
@@ -520,7 +523,15 @@ error:
 }
 
 - (void)sendKeys:(NSString *)string toWindowPane:(int)windowPane {
-    [self sendCodePoints:[string codePoints] toWindowPane:windowPane];
+    if ([self serverSupportsUTF8]) {
+        // Send the actual code point of each character.
+        [self sendCodePoints:[string codePoints] toWindowPane:windowPane];
+    } else {
+        // Send each byte of UTF-8 as a separate "keystroke". For tmux 2.1 and earlier.
+        NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+        NSString *temp = [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
+        [self sendCodePoints:[temp codePoints] toWindowPane:windowPane];
+    }
 }
 
 - (void)sendCodePoints:(NSArray<NSNumber *> *)codePoints toWindowPane:(int)windowPane {
@@ -541,6 +552,14 @@ error:
     [delegate_ tmuxSetSecureLogging:YES];
     [self sendCommandList:commands];
     [delegate_ tmuxSetSecureLogging:NO];
+}
+
+- (BOOL)doubleValue:(double)value1 isGreaterOrEqualTo:(double)value2 epsilon:(double)epsilon {
+    return value1 - value2 >= -epsilon;
+}
+- (BOOL)serverSupportsUTF8 {
+    return (self.minimumServerVersion &&
+            [self doubleValue:self.minimumServerVersion.doubleValue isGreaterOrEqualTo:2.2 epsilon:kVersionNumberComparisonEpsilon]);
 }
 
 - (NSDictionary *)dictionaryForSendKeysCommandWithCodePoints:(NSArray<NSNumber *> *)codePoints
