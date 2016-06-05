@@ -99,9 +99,20 @@
          _fillColor,
          NSStringFromSize(_viewSize),
          [NSThread callStackSymbols]);
+    float maxFont = [iTermAdvancedSettingsModel badgeMaxFontSize];
+    float minFont = [iTermAdvancedSettingsModel badgeMinFontSize];
+
+    if (maxFont == minFont) 
+	return [self imageWithPointSize:maxFont];
 
     if ([_stringValue length]) {
-        return [self imageWithPointSize:self.idealPointSize];
+        if (self.idealPointSize < minFont) {
+            return [self imageWithPointSize:minFont];
+        } else if (self.idealPointSize > maxFont) {
+            return [self imageWithPointSize:maxFont];
+        } else {
+            return [self imageWithPointSize:self.idealPointSize];
+        }
     }
 
     return nil;
