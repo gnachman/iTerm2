@@ -148,5 +148,6 @@
 + (BOOL)hideStuckTooltips;
 + (BOOL)indicateBellsInDockBadgeLabel;
 + (double)tabFlashAnimationDuration;
++ (NSString *)downloadsDirectory;
 
 @end

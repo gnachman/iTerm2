@@ -24,6 +24,7 @@
 
 #import "NSFileManager+iTerm.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAutoMasterParser.h"
@@ -154,6 +155,11 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)downloadsDirectory {
+    NSString *override = [iTermAdvancedSettingsModel downloadsDirectory];
+    if (override.length && [self isWritableFileAtPath:override]) {
+        return override;
+    }
+
     NSArray<NSString *> *paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
                                                                      NSUserDomainMask,
                                                                      YES);
