@@ -441,38 +441,18 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRectFill(cellFrame);
 
     if (tabColor) {
-        if (horizontal) {
-            // Draw the tab color over the top line. Looks better.
-            cellFrame.size.height += 1;
-            cellFrame.origin.y -= 1;
-        }
-
         // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
-        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.8 : 0.5;
-        [[tabColor colorWithAlphaComponent:alpha] set];
+        CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.8 : 0.6;
+        
+        // Alpha the inactive tab's colors a bit to make it clear which tab is active.
         if (selected) {
+            [[tabColor colorWithAlphaComponent:alpha] set];
             NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
         } else {
-            NSRect colorRect = cellFrame;
-
-            CGRect unscaledRect = CGRectMake(0, 0, 1, 1);
-            CGRect scaledRect = CGContextConvertRectToDeviceSpace([[NSGraphicsContext currentContext] graphicsPort], unscaledRect);
-            BOOL isRetina = (scaledRect.size.width >= 2);
-
-            if (horizontal) {
-                colorRect.size.height = isRetina ? 3.5 : 3;
-            } else {
-                colorRect.size.width = 6;
-            }
-            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
-
-            [[self topLineColorSelected:selected] set];
-            CGFloat stroke = 1;
-            if (horizontal) {
-                NSRectFill(NSMakeRect(NSMinX(colorRect), NSMaxY(colorRect), NSWidth(colorRect), stroke));
-            } else {
-                NSRectFill(NSMakeRect(NSMaxX(colorRect), NSMinY(colorRect), stroke, NSHeight(colorRect)));
-            }
+            NSColor *startingColor = [tabColor colorWithAlphaComponent:alpha - 0.2];
+            NSColor *endingColor = [tabColor colorWithAlphaComponent:0];
+            NSGradient *gradient = [[[NSGradient alloc] initWithStartingColor:startingColor endingColor:endingColor] autorelease];
+            [gradient drawInRect:cellFrame angle:-90];
         }
     }
 
