@@ -153,6 +153,19 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return path;
 }
 
+- (NSString *)downloadsDirectory {
+    NSArray<NSString *> *paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
+                                                                     NSUserDomainMask,
+                                                                     YES);
+    for (NSString *path in paths) {
+        if ([self isWritableFileAtPath:path]) {
+            return path;
+        }
+    }
+    
+    return nil;
+}
+
 - (NSString *)desktopDirectory {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDesktopDirectory, NSUserDomainMask, YES);
     return [paths firstObject];

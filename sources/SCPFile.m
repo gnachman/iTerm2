@@ -428,22 +428,15 @@ static NSError *SCPFileError(NSString *description) {
     }
 
     if (isDownload) {
-        NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
-                                                             NSUserDomainMask,
-                                                             YES);
-        NSString *downloadDirectory = nil;
+        NSString *downloadDirectory = [[NSFileManager defaultManager] downloadsDirectory];
         NSString *tempfile = nil;
         NSString *tempFileName = [self tempFileName];
-        for (NSString *path in paths) {
-            if ([[NSFileManager defaultManager] isWritableFileAtPath:path]) {
-                tempfile = [path stringByAppendingPathComponent:tempFileName];
-                downloadDirectory = path;
-                break;
-            }
+        if (downloadDirectory) {
+            tempfile = [downloadDirectory stringByAppendingPathComponent:tempFileName];
         }
         if (!tempfile) {
-            self.error = [NSString stringWithFormat:@"Downloads folder not writable. Tried: %@",
-                          paths];
+            self.error = [NSString stringWithFormat:@"Downloads folder not writable. Tried %@",
+                          downloadDirectory];
             dispatch_sync(dispatch_get_main_queue(), ^() {
                 [[FileTransferManager sharedInstance] transferrableFile:self
                                          didFinishTransmissionWithError:SCPFileError(@"Downloads folder not writable")];
