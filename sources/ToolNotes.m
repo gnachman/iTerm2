@@ -11,6 +11,17 @@
 
 static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification";
 
+@interface iTermUnformattedTextView : NSTextView
+@end
+
+@implementation iTermUnformattedTextView
+
+- (void)paste:(id)sender {
+    [self pasteAsPlainText:sender];
+}
+
+@end
+
 @interface ToolNotes ()
 - (NSString *)filename;
 @end
@@ -30,8 +41,10 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [scrollview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
         NSSize contentSize = [scrollview contentSize];
-        textView_ = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+        textView_ = [[iTermUnformattedTextView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         [textView_ setAllowsUndo:YES];
+        [textView_ setRichText:NO];
+        [textView_ setImportsGraphics:NO];
         [textView_ setMinSize:NSMakeSize(0.0, contentSize.height)];
         [textView_ setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
         [textView_ setVerticallyResizable:YES];
