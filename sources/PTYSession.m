@@ -6884,28 +6884,36 @@ ITERM_WEAKLY_REFERENCEABLE
     if (now < _ignoreBellUntil) {
         return YES;
     }
-    if (now < _lastBell + 1) {
-        // Don't sample bells more than once per second
+    
+    // Only sample every X seconds.
+    static const NSTimeInterval kMaximumTimeBetweenSamples = 0.01;
+    if (now < _lastBell + kMaximumTimeBetweenSamples) {
         return NO;
     }
     _lastBell = now;
 
-    // If the bell rings more often than once every 4 seconds, you will eventually get an offer to
+    // If the bell rings more often than once every X seconds, you will eventually get an offer to
     // silence it.
-    static const NSTimeInterval kThresholdForBellMovingAverageToInferAnnoyance = 4;
+    static const NSTimeInterval kThresholdForBellMovingAverageToInferAnnoyance = 0.02;
 
     // Initial value that will require a reasonable amount of bell-ringing to overcome. This value
     // was chosen so that one bell per second will cause the moving average's value to fall below 4
     // after 3 seconds.
-    const NSTimeInterval kMaxDuration = 48;
+    const NSTimeInterval kMaxDuration = 20;
 
     if (!_bellRate) {
         _bellRate = [[MovingAverage alloc] init];
+        _bellRate.alpha = 0.95;
     }
     // Keep a moving average of the time between bells
-    [_bellRate addValue:MIN(kMaxDuration, [_bellRate timeSinceTimerStarted])];
+    static const NSTimeInterval kTimeBeforeReset = 1;
+    if (_bellRate.timerStarted && _bellRate.timeSinceTimerStarted > kTimeBeforeReset) {
+        _bellRate.value = kMaxDuration * _bellRate.alpha;
+    } else {
+        [_bellRate addValue:MIN(kMaxDuration, [_bellRate timeSinceTimerStarted])];
+    }
+    DLog(@"Bell. dt=%@ rate=%@", @(_bellRate.timeSinceTimerStarted), @(_bellRate.value));
     [_bellRate startTimer];
-
     // If you decline the offer to silence the bell, we'll stop asking for this many seconds.
     static const NSTimeInterval kTimeToWaitAfterDecline = 10;
     NSString *const identifier = @"Annoying Bell Announcement Identifier";
@@ -6926,8 +6934,8 @@ ITERM_WEAKLY_REFERENCEABLE
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
         ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
         iTermAnnouncementViewController *announcement = nil;
-        if (audible || visible) {
-            DLog(@"Want to show a bell announcement. The bell is either audible or visible");
+        if (audible) {
+            DLog(@"Want to show a bell announcement. The bell is audible.");
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
                                                                  style:kiTermAnnouncementViewStyleQuestion
@@ -6972,8 +6980,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                 break;
                         }
                     }];
-        } else {
-            DLog(@"Want to show a bell announcement. The bell is imperceptible");
+        } else if (visible) {
+            DLog(@"Want to show a bell announcement. The bell is visible but inaudible.");
             // Neither audible nor visible.
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Want to suppress all output until things calm down?"
@@ -7008,9 +7016,11 @@ ITERM_WEAKLY_REFERENCEABLE
                     }];
         }
 
-        // Set the auto-dismiss timeout.
-        announcement.timeout = 10;
-        [self queueAnnouncement:announcement identifier:identifier];
+        if (announcement) {
+            // Set the auto-dismiss timeout.
+            announcement.timeout = 10;
+            [self queueAnnouncement:announcement identifier:identifier];
+        }
     }
     return NO;
 }
