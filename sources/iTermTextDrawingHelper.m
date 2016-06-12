@@ -870,7 +870,11 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     // Draw underline
     if (currentRun->attrs.underline) {
-        [self drawUnderlineOfColor:currentRun->attrs.color
+
+        NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
+        NSColor *color = (underline ? underline : currentRun->attrs.color);
+
+        [self drawUnderlineOfColor:color
                       atCellOrigin:startPoint
                               font:currentRun->attrs.fontInfo.font
                              width:runWidth];

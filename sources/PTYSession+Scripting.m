@@ -284,6 +284,14 @@
     [self setSessionSpecificProfileValues:@{ KEY_FOREGROUND_COLOR: [color dictionaryValue] }];
 }
 
+- (NSColor *)underlineColor {
+    return [self.colorMap colorForKey:kColorMapUnderline];
+}
+
+- (void)setUnderlineColor:(NSColor *)color {
+    [self setSessionSpecificProfileValues:@{ KEY_UNDERLINE_COLOR: [color dictionaryValue] }];
+}
+
 - (NSColor *)selectedTextColor {
     return [self.colorMap colorForKey:kColorMapSelectedText];
 }
