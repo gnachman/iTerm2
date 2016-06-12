@@ -653,20 +653,22 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByRemovingEnclosingBrackets {
-    int index;
-    for (index = 0; 2*index < self.length; index++) {
-      unichar start = [self characterAtIndex:index];
-      unichar end = [self characterAtIndex:self.length-index-1];
-      if (!((start == '(' && end == ')') ||
-            (start == '<' && end == '>') ||
-            (start == '[' && end == ']') ||
-            (start == '{' && end == '}') ||
-            (start == '\'' && end == '\'') ||
-            (start == '"' && end == '"'))) {
-          break;
-      }
+    if (self.length < 2) {
+        return self;
     }
-    return [self substringWithRange:NSMakeRange(index, self.length-2*index)];
+    NSString *trimmed = [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSArray *pairs = @[ @[ @"(", @")" ],
+                        @[ @"<", @">" ],
+                        @[ @"[", @"]" ],
+                        @[ @"{", @"}", ],
+                        @[ @"\'", @"\'" ],
+                        @[ @"\"", @"\"" ] ];
+    for (NSArray *pair in pairs) {
+        if ([trimmed hasPrefix:pair[0]] && [trimmed hasSuffix:pair[1]]) {
+            return [[self substringWithRange:NSMakeRange(1, self.length - 2)] stringByRemovingEnclosingBrackets];
+        }
+    }
+    return self;
 }
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
