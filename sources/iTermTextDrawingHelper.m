@@ -1057,14 +1057,16 @@ typedef struct iTermTextColorContext {
     CFRelease(lineRef);
     [ctx restoreGraphicsState];
     
+
     [attributedString enumerateAttribute:NSUnderlineStyleAttributeName
                                  inRange:NSMakeRange(0, attributedString.length)
                                  options:0
                               usingBlock:^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
                                   if (value.integerValue) {
                                       NSDictionary *attributes = [attributedString attributesAtIndex:range.location effectiveRange:nil];
-#warning TODO: Support custom underline color when merging in 3.1 branch
-                                      [self drawUnderlineOfColor:attributes[NSForegroundColorAttributeName]
+                                      NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
+                                      NSColor *color = (underline ? underline : attributes[NSForegroundColorAttributeName]);
+                                      [self drawUnderlineOfColor:color
                                                     atCellOrigin:NSMakePoint(origin.x + [stringPositions[range.location] doubleValue], origin.y)
                                                             font:attributes[NSFontAttributeName]
                                                            width:[stringPositions[NSMaxRange(range) - 1] doubleValue] + self.cellSize.width - [stringPositions[range.location] doubleValue]];
