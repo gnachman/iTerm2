@@ -2509,14 +2509,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             case kURLActionOpenExistingFile: {
                 NSString *extendedPrefix = [extractor wrappedStringAt:coord
                                                               forward:NO
-                                                  respectHardNewlines:NO
+                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                                              maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
                 NSString *extendedSuffix = [extractor wrappedStringAt:coord
                                                               forward:YES
-                                                  respectHardNewlines:NO
+                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                                              maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
