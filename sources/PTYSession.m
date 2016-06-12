@@ -4945,8 +4945,15 @@ ITERM_WEAKLY_REFERENCEABLE
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
-        } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
-                   (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
+        } else if (((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
+                    (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) && ![unmodkeystr isEqualToString:@"¥"]) {
+            // A note on the weird ¥ exception:
+            // On some Japanese keyboards, there is no backslash. It's replaced with ¥, or else
+            // option-¥ gives you backslash.
+            // Users like option to do esc+ and option-¥ to give backslash, which they're used to
+            // because iTerm (pre iTerm2, even) always did that. esc+¥ is not used much, so we
+            // make an accommodation. If a user really wants esc+¥ they'll have to add a key
+            // binding. See issue 4778 for more.
             DLog(@"PTYSession keyDown opt + key -> modkey");
             // A key was pressed while holding down option and the option key
             // is not behaving normally. Apply the modified behavior.
