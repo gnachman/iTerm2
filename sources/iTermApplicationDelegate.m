@@ -283,13 +283,7 @@ static BOOL hasBecomeActive = NO;
     [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
 
-    // Wait until startup activity has settled down so there's enough CPU for the animation to
-    // look good.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(),
-                   ^{
-                       [[iTermTipController sharedInstance] applicationDidFinishLaunching];
-                   });
+    [[iTermTipController sharedInstance] applicationDidFinishLaunching];
 }
 
 - (void)createVersionFile {
