@@ -549,6 +549,13 @@
         <cocoa key="ansiBrightWhiteColor" />
       </property>
 
+      <property name="underline color" code="Co23" type="RGB color">
+        <cocoa key="underlineColor" />
+      <property name="use underline color" code="Undl" type="boolean"
+        description="Whether the use a dedicated color for underlining.">
+        <cocoa key="useUnderlineColor"/>
+      </property>
+
       <property name="background image" code="Bgim" type="text">
         <cocoa key="backgroundImagePath" />
       </property>

@@ -1444,9 +1444,11 @@ DQ
                 <outlet property="_selectedTextColor" destination="2277" id="jqd-jg-i3Y"/>
                 <outlet property="_selectionColor" destination="2282" id="OO4-S4-aaD"/>
                 <outlet property="_tabColor" destination="Wzz-9B-zqB" id="gfq-Eg-jc0"/>
+                <outlet property="_underlineColor" destination="rSL-fL-hpc" id="gfq-Eg-xxx"/>
                 <outlet property="_useGuide" destination="Rpk-o3-4ec" id="nKd-1M-jBQ"/>
                 <outlet property="_useSmartCursorColor" destination="4889" id="GhQ-EU-ndl"/>
                 <outlet property="_useTabColor" destination="j7F-r8-oes" id="HoY-6m-E99"/>
+                <outlet property="_useUnderlineColor" destination="Cqf-RZ-UnO" id="HoY-6m-xxx"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="NFg-pP-EcM"/>
                 <outlet property="view" destination="SCN-fS-hNB" id="yvb-17-eJa"/>
             </connections>
@@ -2016,8 +2018,26 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
                     </connections>
                 </button>
+
+                <customView id="rSL-fL-hpc" customClass="CPKColorWell">
+                    <rect key="frame" x="284" y="149" width="32" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </customView>
+                <button id="Cqf-RZ-UnO">
+                    <rect key="frame" x="161" y="150" width="117" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Underline Color" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="FlU-a8-6X7">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="p8i-eM-oBc" id="OYG-pP-g9a"/>
+                        <outlet property="nextKeyView" destination="4896" id="acz-bU-TQP"/>
+                    </connections>
+                </button>
+
                 <slider verticalHuggingPriority="750" id="4896">
-                    <rect key="frame" x="141" y="149" width="179" height="20"/>
+                    <rect key="frame" x="141" y="125" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or whtie.</string>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
@@ -2027,7 +2047,7 @@ DQ
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="4899">
-                    <rect key="frame" x="10" y="151" width="128" height="17"/>
+                    <rect key="frame" x="10" y="127" width="128" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Minimum contrast:" id="4900">
                         <font key="font" metaFont="system"/>
