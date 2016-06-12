@@ -7090,12 +7090,12 @@ ITERM_WEAKLY_REFERENCEABLE
             host.username, host.hostname];
 }
 
-- (void)tryToRunShellIntegrationInstaller {
+- (void)tryToRunShellIntegrationInstallerWithPromptCheck:(BOOL)promptCheck {
     if (_exited) {
         return;
     }
     NSString *currentCommand = [self currentCommand];
-    if (currentCommand != nil) {
+    if (!promptCheck || currentCommand != nil) {
         [_textview installShellIntegration:nil];
     } else {
         iTermWarningSelection selection =
@@ -7135,7 +7135,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         break;
 
                     case 0: // Yes
-                        [self tryToRunShellIntegrationInstaller];
+                        [self tryToRunShellIntegrationInstallerWithPromptCheck:YES];
                         break;
 
                     case 1: // Never for this account

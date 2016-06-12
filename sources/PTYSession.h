@@ -624,7 +624,7 @@ typedef enum {
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 
-- (void)tryToRunShellIntegrationInstaller;
+- (void)tryToRunShellIntegrationInstallerWithPromptCheck:(BOOL)promptCheck;
 
 - (NSDictionary *)arrangementWithContents:(BOOL)includeContents;
 
