@@ -1855,6 +1855,29 @@ typedef struct {
                           size:VT100GridSizeMake(2, 2)];
 }
 
+- (void)testCustomUnderline {
+    [self doGoldenTestForInput:@"A\e[4mB\e[36mCC\e[39mDE\e[m"
+                          name:NSStringFromSelector(_cmd)
+                          hook: nil
+              profileOverrides:@{ KEY_USE_UNDERLINE_COLOR: @YES,
+                                  KEY_UNDERLINE_COLOR: [[NSColor colorWithCalibratedRed:1.0
+                                                                                  green:1.0
+                                                                                   blue:.0
+                                                                                  alpha:1] dictionaryValue] }
+                  createGolden:NO
+                          size:VT100GridSizeMake(7, 1)];
+}
+
+- (void)testUnderline {
+    [self doGoldenTestForInput:@"A\e[4mB\e[36mCC\e[39mDE\e[m"
+                          name:NSStringFromSelector(_cmd)
+                          hook: nil
+              profileOverrides:@{ KEY_USE_UNDERLINE_COLOR: @NO }
+                  createGolden:NO
+                          size:VT100GridSizeMake(7, 1)];
+}
+
+
 // Should render a black x on green background.
 - (void)testMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"%@%@x",

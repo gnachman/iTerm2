@@ -174,6 +174,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_USE_CURSOR_GUIDE: @NO,
                   KEY_TAB_COLOR: [NSNull null],
                   KEY_USE_TAB_COLOR: @NO,
+                  KEY_UNDERLINE_COLOR: [NSNull null],
+                  KEY_USE_UNDERLINE_COLOR: @NO,
                   KEY_SMART_CURSOR_COLOR: @NO,
                   KEY_MINIMUM_CONTRAST: @0.0,
                   KEY_CURSOR_BOOST: @0.0,
