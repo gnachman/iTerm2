@@ -39,7 +39,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, readonly) int fd;
 @property(atomic, readonly) pid_t pid;
 @property(atomic, readonly) int status;
-@property(atomic, readonly) NSString *tty;
+// Externally, only PTYSession should assign to this when reattaching to a server.
+@property(atomic, copy) NSString *tty;
 @property(atomic, readonly) NSString *path;
 @property(atomic, readonly) NSString *getWorkingDirectory;
 @property(atomic, readonly) NSString *description;

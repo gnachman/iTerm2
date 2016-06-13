@@ -119,6 +119,8 @@ static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // I
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
 static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
+// TODO: Make server report the TTY to us since orphans will end up with a nil tty.
+static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when using restoration to connect to a restored server.
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
@@ -779,6 +781,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     DLog(@"Success!");
                     runCommand = NO;
                     attachedToServer = YES;
+                    aSession.shell.tty = arrangement[SESSION_ARRANGEMENT_TTY];
                     shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
@@ -3339,6 +3342,9 @@ ITERM_WEAKLY_REFERENCEABLE
         // These values are used for restoring sessions after a crash.
         if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
             result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
+            if (self.tty) {
+                result[SESSION_ARRANGEMENT_TTY] = self.tty;
+            }
         }
     }
     if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {

@@ -95,7 +95,6 @@ setup_tty_param(struct termios* term,
     pid_t _childPid;  // -1 when servers are in use; otherwise is pid of child.
     int fd;
     int status;
-    NSString* tty;
     NSString* path;
     BOOL hasOutput;
 
@@ -149,7 +148,7 @@ setup_tty_param(struct termios* term,
     [_logHandle release];
     [writeLock release];
     [writeBuffer release];
-    [tty release];
+    [_tty release];
     [path release];
     [command_ release];
 
@@ -592,7 +591,7 @@ static int MyForkPty(int *amaster,
             // Connect this task to the server's PIDs and file descriptor.
             [self attachToServer:serverConnection];
 
-            tty = [[NSString stringWithUTF8String:theTtyname] retain];
+            self.tty = [NSString stringWithUTF8String:theTtyname];
             fcntl(fd, F_SETFL, O_NONBLOCK);
         } else {
             close(fd);
@@ -601,7 +600,7 @@ static int MyForkPty(int *amaster,
         }
     } else {
         // Jobs are direct children of iTerm2
-        tty = [[NSString stringWithUTF8String:theTtyname] retain];
+        self.tty = [NSString stringWithUTF8String:theTtyname];
         fcntl(fd, F_SETFL, O_NONBLOCK);
         [[TaskNotifier sharedInstance] registerTask:self];
     }
@@ -899,11 +898,6 @@ static int MyForkPty(int *amaster,
 - (int)status
 {
     return status;
-}
-
-- (NSString*)tty
-{
-    return tty;
 }
 
 - (NSString*)path
