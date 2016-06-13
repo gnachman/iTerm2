@@ -1,0 +1,5 @@
+tell application "iTerm2"
+        set mySession to (current session of current window)
+        text of mySession
+end tell
+

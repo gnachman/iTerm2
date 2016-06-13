@@ -473,7 +473,10 @@
       <property name="tty" code="Stty" type="text" access="r">
         <cocoa key="tty" />
       </property>
-      <property name="text" code="Cntt" type="text">
+      <property name="contents" code="Cntt" type="text" description="The currently visible contents of the session.">
+        <cocoa key="text" />
+      </property>
+      <property name="text" description="The currently visible contents of the session." code="pcnt" type="text" access="r">
         <cocoa key="text" />
       </property>
       <property name="background color" code="Co00" type="RGB color">

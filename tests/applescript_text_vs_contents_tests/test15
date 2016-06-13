@@ -1,0 +1,10 @@
+on waitForResponse(sessionToWatch, expectedText)
+        set myTextObject to contents of sessionToWatch
+        log myTextObject
+end waitForResponse
+
+tell application "iTerm2"
+        set aSession to current session of current window
+        my waitForResponse(aSession, "foo")
+end tell
+
