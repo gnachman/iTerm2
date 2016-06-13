@@ -580,7 +580,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     BOOL repeat = [theTimestamp isEqualToString:previousTimestamp];
 
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
-    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:10] }];
+    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
     int w = size.width + MARGIN;
     int x = MAX(0, _frame.size.width - w);
     CGFloat y = line * _cellSize.height;
@@ -613,11 +613,11 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     NSDictionary *attributes;
     if (self.isRetina) {
-        attributes = @{ NSFontAttributeName: [NSFont userFixedPitchFontOfSize:10],
+        attributes = @{ NSFontAttributeName: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]],
                         NSForegroundColorAttributeName: fgColor,
                         NSShadowAttributeName: shadow };
     } else {
-        NSFont *font = [NSFont userFixedPitchFontOfSize:10];    
+        NSFont *font = [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]];
         attributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] fontWithFamily:font.familyName
                                                                                         traits:NSBoldFontMask
                                                                                         weight:0
