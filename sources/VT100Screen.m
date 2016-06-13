@@ -156,7 +156,7 @@ static const double kInterBellQuietPeriod = 0.1;
 static NSString *const kInlineFileName = @"name";  // NSString
 static NSString *const kInlineFileWidth = @"width";  // NSNumber
 static NSString *const kInlineFileWidthUnits = @"width units";  // NSNumber of VT100TerminalUnits
-static NSString *const kInlineFileHeight = @"height";  // NSNumber
+static NSString *const kInlineFileHeight = @"height";  // NSNumb    er
 static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
 static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
 static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
@@ -811,15 +811,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenNeedsRedraw];
     [selection clearSelection];
     if (couldHaveSelection) {
+        NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
         for (iTermSubSelection* sub in newSubSelections) {
             VT100GridCoordRange newSelection = sub.range.coordRange;
             if (newSelection.start.y >= linesDropped &&
                 newSelection.end.y >= linesDropped) {
                 newSelection.start.y -= linesDropped;
                 newSelection.end.y -= linesDropped;
-                [selection addSubSelection:sub];
+                [subSelectionsToAdd addObject:sub];
             }
         }
+        [selection addSubSelections:subSelectionsToAdd];
     }
 
     [self reloadMarkCache];

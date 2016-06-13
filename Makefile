@@ -79,4 +79,10 @@ release:
 	cp plists/release-iTerm2.plist plists/iTerm2.plist
 	make Deployment
 
+preview:
+	echo "You need to unlock your keychain for signing to work."
+	security unlock-keychain ~/Library/Keychains/login.keychain
+	cp plists/preview-iTerm2.plist plists/iTerm2.plist
+	make Deployment
+
 force:

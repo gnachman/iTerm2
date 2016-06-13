@@ -653,20 +653,22 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByRemovingEnclosingBrackets {
-    int index;
-    for (index = 0; 2*index < self.length; index++) {
-      unichar start = [self characterAtIndex:index];
-      unichar end = [self characterAtIndex:self.length-index-1];
-      if (!((start == '(' && end == ')') ||
-            (start == '<' && end == '>') ||
-            (start == '[' && end == ']') ||
-            (start == '{' && end == '}') ||
-            (start == '\'' && end == '\'') ||
-            (start == '"' && end == '"'))) {
-          break;
-      }
+    if (self.length < 2) {
+        return self;
     }
-    return [self substringWithRange:NSMakeRange(index, self.length-2*index)];
+    NSString *trimmed = [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSArray *pairs = @[ @[ @"(", @")" ],
+                        @[ @"<", @">" ],
+                        @[ @"[", @"]" ],
+                        @[ @"{", @"}", ],
+                        @[ @"\'", @"\'" ],
+                        @[ @"\"", @"\"" ] ];
+    for (NSArray *pair in pairs) {
+        if ([trimmed hasPrefix:pair[0]] && [trimmed hasSuffix:pair[1]]) {
+            return [[self substringWithRange:NSMakeRange(1, self.length - 2)] stringByRemovingEnclosingBrackets];
+        }
+    }
+    return self;
 }
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
@@ -1517,6 +1519,25 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 
     return hash;
+}
+
+- (NSArray<NSNumber *> *)codePoints {
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    for (NSUInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        if (IsHighSurrogate(c) && i + 1 < self.length) {
+            i++;
+            unichar c2 = [self characterAtIndex:i];
+            [result addObject:@(DecodeSurrogatePair(c, c2))];
+        } else if (!IsHighSurrogate(c) && !IsLowSurrogate(c)) {
+            [result addObject:@(c)];
+        }
+    }
+    return result;
+}
+
+- (NSString *)surname {
+    return [[self componentsSeparatedByString:@" "] lastObject];
 }
 
 @end

@@ -26,6 +26,10 @@
     _timePaused = 0;
 }
 
+- (BOOL)timerStarted {
+    return _time > 0;
+}
+
 - (NSTimeInterval)timeSinceTimerStarted {
     if (_timePaused) {
         return _timePaused - _time;

@@ -28,7 +28,7 @@
             @"0002": @{ kTipTitleKey: @"Password Manager",
                         kTipBodyKey: @"Did you know iTerm2 has a password manager? Open it with “Window > Password Manager.” You can define a Trigger to open it for you at a password prompt in “Prefs > Profiles > Advanced > Triggers.”" },
             @"0003": @{ kTipTitleKey: @"Open Quickly",
-                        kTipBodyKey: @"You can quickly search through your sessions with “View > Open Quickly” (⇧⌘O). You can type a query and sessions whose name, badge, current hostname, current user name, recent commands, and recent working directories match will be surfaced. It best with Shell Integration so the user name, hostname, command, and directories can be known even while sshed.",
+                        kTipBodyKey: @"You can quickly search through your sessions with “View > Open Quickly” (⇧⌘O). You can type a query and sessions whose name, badge, current hostname, current user name, recent commands, and recent working directories match will be surfaced. It works best with Shell Integration so the user name, hostname, command, and directories can be known even while sshed.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0004": @{ kTipTitleKey: @"Undo Close",

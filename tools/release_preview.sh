@@ -43,20 +43,20 @@ function Build {
   codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
-
+ 
   # Create the zip file
   # For the purposes of auto-update, the app's folder must be named iTerm.app
   # since Sparkle won't accept a name change.
   rm -rf iTerm.app
   mv iTerm2.app iTerm.app
   zip -ry iTerm2-${NAME}.zip iTerm.app
-
+ 
   # Update the list of changes
   vi $SVNDIR/source/appcasts/testing_changes3.txt
-
+ 
   # Place files in website git.
   cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
-
+ 
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
@@ -80,19 +80,16 @@ ORIG_DIR=`pwd`
 
 echo "Build deployment release"
 make clean
-make release
-Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+make preview
+Build Deployment "-preview" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
-echo Update the linky in the version3 release notes page
-sleep 2
-vi ~/iterm2-website/source/version3.md
 #set -x
 
-git tag v${VERSION}
-git commit -am ${VERSION}
+git tag v${VERSION}-preview
+git commit -am ${VERSION}-preview
 git push origin master
 git push --tags
 cd $SVNDIR
-git commit -am v${VERSION}
+git commit -am v${VERSION}-preview
 git push origin master
 

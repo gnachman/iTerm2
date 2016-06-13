@@ -40,6 +40,7 @@
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSPasteboard+iTerm.h"
@@ -1605,16 +1606,19 @@ static const int kDragThreshold = 3;
     }
 }
 
-- (NSData *)dataToSendForScrollEvent:(NSEvent *)event deltaY:(CGFloat)deltaY {
+- (NSString *)stringToSendForScrollEvent:(NSEvent *)event deltaY:(CGFloat)deltaY forceLatin1:(BOOL *)forceLatin1 {
     const BOOL down = (deltaY < 0);
 
     if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
-        return down ? [_dataSource.terminal.output keyArrowDown:event.modifierFlags] :
-                      [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+        *forceLatin1 = YES;
+        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:event.modifierFlags] :
+                              [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+        return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     } else {
+        *forceLatin1 = NO;
         NSString *string = down ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
                                   [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
-        return [[string stringByExpandingVimSpecialCharacters] dataUsingEncoding:_delegate.textViewEncoding];
+        return [string stringByExpandingVimSpecialCharacters];
     }
 }
 
@@ -1627,10 +1631,15 @@ static const int kDragThreshold = 3;
 
         PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
         CGFloat deltaY = [scrollView accumulateVerticalScrollFromEvent:event];
-        NSData *dataToSend = [self dataToSendForScrollEvent:event deltaY:deltaY];
-        if (dataToSend) {
+        BOOL forceLatin1 = NO;
+        NSString *stringToSend = [self stringToSendForScrollEvent:event deltaY:deltaY forceLatin1:&forceLatin1];
+        if (stringToSend) {
             for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                [_delegate writeTask:dataToSend];
+                if (forceLatin1) {
+                    [_delegate writeStringWithLatin1Encoding:stringToSend];
+                } else {
+                    [_delegate writeTask:stringToSend];
+                }
             }
         }
     } else if (![self reportMouseEvent:event]) {
@@ -1933,7 +1942,7 @@ static const int kDragThreshold = 3;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
 
-    NSEvent *fakeEvent = isDown ? [event mouseDownEventFromGesture] : [event mouseUpEventFromGesture];
+    NSEvent *fakeEvent = [event eventWithButtonNumber:2];
 
     int saved = _numTouches;
     _numTouches = 1;
@@ -2895,13 +2904,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     while (![extractor coord:cursor isEqualToCoord:target]) {
         switch (initialOrder) {
             case NSOrderedAscending:
-                [_delegate writeTask:[terminal.output keyArrowRight:0]];
-                cursor = [extractor successorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+                cursor = [extractor successorOfCoord:cursor];
                 break;
 
             case NSOrderedDescending:
-                [_delegate writeTask:[terminal.output keyArrowLeft:0]];
-                cursor = [extractor predecessorOfCoord:cursor skippingDoubleWidthExtensions:YES];
+                [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+                cursor = [extractor predecessorOfCoord:cursor];
                 break;
 
             case NSOrderedSame:
@@ -2940,10 +2949,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Move cursor vertically from %@ to y=%d", VT100GridCoordDescription(cursor), target.y);
     while (cursor.y != target.y) {
         if (cursor.y > target.y) {
-            [_delegate writeTask:[terminal.output keyArrowUp:0]];
+            [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowUp:0] stringWithEncoding:NSISOLatin1StringEncoding]];
             cursor.y--;
         } else {
-            [_delegate writeTask:[terminal.output keyArrowDown:0]];
+            [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowDown:0] stringWithEncoding:NSISOLatin1StringEncoding]];
             cursor.y++;
         }
     }
@@ -3030,7 +3039,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             assert(false);
     }
     if (theCommand) {
-        [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
+        [_delegate writeTask:theCommand];
     } else {
         assert(false);
     }
@@ -3073,10 +3082,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     VT100GridCoord relativeStart =
         VT100GridCoordMake(range.start.x,
-                           range.start.y - [_dataSource totalScrollbackOverflow]);
+                           MAX(0, range.start.y - [_dataSource totalScrollbackOverflow]));
     VT100GridCoord relativeEnd =
         VT100GridCoordMake(range.end.x,
-                           range.end.y - [_dataSource totalScrollbackOverflow]);
+                           MAX(0, range.end.y - [_dataSource totalScrollbackOverflow]));
 
     DLog(@"The relative range is %@ to %@",
          VT100GridCoordDescription(relativeStart), VT100GridCoordDescription(relativeEnd));
@@ -4149,15 +4158,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     iTermImageInfo *imageInfo = [sender representedObject];
     NSSavePanel* panel = [NSSavePanel savePanel];
 
-    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
-                                                         NSUserDomainMask,
-                                                         YES);
-    NSString *directory;
-    if (paths.count > 0) {
-        directory = paths[0];
-    } else {
-        directory = NSHomeDirectory();
-    }
+    NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
 
     panel.directoryURL = [NSURL fileURLWithPath:directory];
     panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
@@ -5952,7 +5953,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // This shouldn't happen, but better safe than sorry
             lastCoord = [[prefixCoords lastObject] gridCoordValue];
         }
-        range.coordRange.end = [extractor successorOfCoord:lastCoord skippingDoubleWidthExtensions:NO];
+        range.coordRange.end = [extractor successorOfCoord:lastCoord];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 

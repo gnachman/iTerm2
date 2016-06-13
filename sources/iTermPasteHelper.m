@@ -35,7 +35,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     PasteContext *_pasteContext;
 
     // Paste from the head of this string from a timer until it's empty.
-    NSMutableData *_buffer;
+    NSMutableString *_buffer;
     NSTimer *_timer;
 
 }
@@ -52,7 +52,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     self = [super init];
     if (self) {
         _eventQueue = [[NSMutableArray alloc] init];
-        _buffer = [[NSMutableData alloc] init];
+        _buffer = [[NSMutableString alloc] init];
     }
     return self;
 }
@@ -77,7 +77,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
                                           canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
-                                           isAtShellPrompt:[_delegate pasteHelperIsAtShellPrompt]
+                                           isAtShellPrompt:![_delegate pasteHelperShouldWaitForPrompt]
                                                 completion:^(PasteEvent *event) {
                                                     [self tryToPasteEvent:event];
                                                     [iTermPreferences setInt:event.defaultChunkSize
@@ -278,7 +278,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         return;
     }
 
-    [_buffer appendData:[pasteEvent.string dataUsingEncoding:[_delegate pasteHelperEncoding]]];
+    [_buffer appendString:pasteEvent.string];
     [self pasteWithBytePerCallPrefKey:pasteEvent.chunkKey
                          defaultValue:pasteEvent.defaultChunkSize
              delayBetweenCallsPrefKey:pasteEvent.delayKey
@@ -290,7 +290,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
 // Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
 - (void)pasteSlowly:(NSString *)theString {
     DLog(@"pasteSlowly length=%@", @(theString.length));
-    [_buffer appendData:[theString dataUsingEncoding:[_delegate pasteHelperEncoding]]];
+    [_buffer appendString:theString];
     [self pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                          defaultValue:16
              delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
@@ -303,7 +303,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     // This is the "normal" way of pasting. It's fast but tends not to
     // outrun a shell's ability to read from its buffer. Why this crazy
     // thing? See bug 1031.
-    [_buffer appendData:[aString dataUsingEncoding:[_delegate pasteHelperEncoding]]];
+    [_buffer appendString:aString];
     [self pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
                          defaultValue:1024
              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
@@ -385,20 +385,18 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         if (_pasteContext.blockAtNewline) {
             // If there is a newline in the range about to be pasted, only paste up to and including
             // it and the block to YES.
-            NSData *newlineData = [NSData dataWithBytes:"\n" length:1];
-            NSRange newlineRange = [_buffer rangeOfData:newlineData options:0 range:range];
+            NSRange newlineRange = [_buffer rangeOfString:@"\n"];
             if (newlineRange.location == NSNotFound) {
-                newlineData = [NSData dataWithBytes:"\r" length:1];
-                newlineRange = [_buffer rangeOfData:newlineData options:0 range:range];
+                newlineRange = [_buffer rangeOfString:@"\r"];
             }
             if (newlineRange.location != NSNotFound) {
                 range.length = newlineRange.location + newlineRange.length;
                 block = YES;
             }
         }
-        [_delegate pasteHelperWriteData:[_buffer subdataWithRange:range]];
+        [_delegate pasteHelperWriteString:[_buffer substringWithRange:range]];
     }
-    [_buffer replaceBytesInRange:range withBytes:"" length:0];
+    [_buffer replaceCharactersInRange:range withString:@""];
 
     [self updatePasteIndicator];
     if ([_buffer length] > 0) {
@@ -458,7 +456,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
     }
 
-    if (_pasteContext.blockAtNewline && ![_delegate pasteHelperIsAtShellPrompt]) {
+    if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {
         DLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
         return;
@@ -489,7 +487,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     NSMutableArray *actions = [NSMutableArray array];
     [actions addObject:@"Paste"];
     [actions addObject:@"Cancel"];
-    NSString *identifier = kMultiLinePasteWarningUserDefaultsKey;
+    NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
     if (lines.count > 1) {
         if (atShellPrompt) {
             theTitle = [NSString stringWithFormat:@"OK to paste %d lines at shell prompt?",
@@ -501,7 +499,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     } else {
         if (atShellPrompt) {
             [actions insertObject:@"Paste Without Newline" atIndex:1];
-            identifier = kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey;
+            identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey];
             theTitle = @"OK to paste one line ending in a newline at shell prompt?";
         } else {
             theTitle = @"OK to paste one line ending in a newline?";
@@ -517,7 +515,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
             return YES;
             
         case kiTermWarningSelection1:
-            if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
+            if ([identifier isEqualToString:[iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey]]) {
                 // cancel
                 return NO;
             } else {
@@ -573,7 +571,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     [_timer invalidate];
     _timer = nil;
     [_buffer release];
-    _buffer = [[NSMutableData alloc] init];
+    _buffer = [[NSMutableString alloc] init];
     [_pasteContext release];
     _pasteContext = nil;
     [self dequeueEvents];

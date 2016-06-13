@@ -7,6 +7,7 @@
 //
 
 #import "iTermAnnouncementViewController.h"
+#import "DebugLogging.h"
 #import "SolidColorView.h"
 
 @interface iTermAnnouncementViewController ()
@@ -40,13 +41,20 @@
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p title=\"%@\" dismissing=%d>",
+            self.class, self, self.title, (int)_dismissing];
+}
+
 - (void)loadView {
     [self retain];
     self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
                                                            style:_style
                                                          actions:self.actions
                                                            block:^(int index) {
+                                                               DLog(@"Outer completion block invoked for announcement %@", self);
                                                                if (!_dismissing) {
+                                                                   DLog(@"Invoking inner completion block with index %d", index);
                                                                    self.completion(index);
                                                                    [self dismiss];
                                                                }
@@ -66,6 +74,7 @@
 }
 
 - (void)dismiss {
+    DLog(@"Dismiss announcment %@ from\n%@", self, [NSThread callStackSymbols]);
     if (!_dismissing) {
         _dismissing = YES;
         _visible = NO;

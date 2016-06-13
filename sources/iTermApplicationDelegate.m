@@ -31,6 +31,7 @@
 #import "ColorsMenuItemView.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
@@ -89,10 +90,6 @@ NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSetti
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";
 
-// There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
-// This was changed for compatibility with the iTermWarning mechanism.
-NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
-NSString *const kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt";
 static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
@@ -186,12 +183,60 @@ static BOOL hasBecomeActive = NO;
 
     [iTermToolbeltView populateMenu:toolbeltMenu];
 
+    // Users used to be opted into the beta by default. Make sure the user is cool with that.
+    [self promptAboutRemainingInBetaIfNeeded];
+
     // Set the Appcast URL and when it changes update it.
     [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
     [iTermPreferences addObserverForKey:kPreferenceKeyCheckForTestReleases
                                   block:^(id before, id after) {
                                       [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
                                   }];
+}
+
+- (void)promptAboutRemainingInBetaIfNeeded {
+    // For a long time—too long—users were opted into the beta program. There are too many of them
+    // and they don't know it and some of them feel bad feelings. So we'll help them get out. I
+    // don't like spamming you with crap so let's just do this for a few weeks and that'll fix
+    // almost all of the problem.
+    if ([NSDate timeIntervalSinceReferenceDate] > 489542400) {  // Midnight GMT July 7 2016
+        return;
+    }
+    static NSString *kHaveAskedAboutBetaKey = @"NoSyncConfirmBeta";
+    const BOOL haveAsked = [[NSUserDefaults standardUserDefaults] boolForKey:kHaveAskedAboutBetaKey];
+    if (haveAsked) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveAskedAboutBetaKey];
+
+    NSString *testingFeed = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"];
+    const BOOL nightlyChannel = [testingFeed containsString:@"nightly"];
+    if (nightlyChannel) {
+        return;
+    }
+    
+    const BOOL inBeta = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
+    if (!inBeta) {
+        return;
+    }
+
+    const BOOL isEarlyAdopter = [testingFeed containsString:@"testing3.xml"];
+    if (isEarlyAdopter) {
+        // Early adopters who are already beta testers won't get prompted.
+        // They are the new "real" beta testers.
+        return;
+    }
+
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Beta Test Program";
+    alert.informativeText = @"Would you like to beta test versions of iTerm2 when it updates?";
+    [alert addButtonWithTitle:@"Yes, I Want Beta Test Versions"];
+    [alert addButtonWithTitle:@"No, Release Versions Only"];
+    const NSModalResponse response = [alert runModal];
+
+    const BOOL wantBeta = (response == NSAlertFirstButtonReturn);
+    [[NSUserDefaults standardUserDefaults] setBool:wantBeta
+                                            forKey:kPreferenceKeyCheckForTestReleases];
 }
 
 // This performs startup activities as long as they haven't been run before.
@@ -248,13 +293,7 @@ static BOOL hasBecomeActive = NO;
     [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
 
-    // Wait until startup activity has settled down so there's enough CPU for the animation to
-    // look good.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(),
-                   ^{
-                       [[iTermTipController sharedInstance] applicationDidFinishLaunching];
-                   });
+    [[iTermTipController sharedInstance] applicationDidFinishLaunching];
 }
 
 - (void)createVersionFile {
@@ -303,8 +342,11 @@ static BOOL hasBecomeActive = NO;
     // Docker: https://github.com/docker/kitematic/pull/855
     // LaunchBar: https://twitter.com/launchbar/status/620975715278790657?cn=cmVwbHk%3D&refsrc=email
     // Pathfinder: https://twitter.com/gnachman/status/659409608642007041
-
-#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
+    // Tower: Filed a bug. Tracking with issue 4722 on my side
+    
+    // This is disabled because it looks like everyone is there or almost there. I can remove this
+    // code soon.
+//#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
 
 #ifdef SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
     static NSString *const kTimeOfFirstLaunchForIncompatibilityWarnings = @"NoSyncTimeOfFirstLaunchForIncompatibilityWarnings";
@@ -381,6 +423,14 @@ static BOOL hasBecomeActive = NO;
         found = YES;
     }
 
+    NSString *towerVersion = [self shortVersionStringOfAppWithBundleId:@"com.fournova.Tower2"];
+    if (towerVersion && ![self version:towerVersion newerThan:@"2.3.4"]) {
+        [self notifyAboutIncompatibleVersionOf:@"Tower"
+                                           url:@"https://gitlab.com/gnachman/iterm2/wikis/towercompatibility"
+                              upgradeAvailable:NO];
+        found = YES;
+    }
+    
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutIncompatibleSoftware];
     return found;
 }
@@ -1256,9 +1306,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)toggleMultiLinePasteWarning:(id)sender {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setBool:![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey]
-                   forKey:kMultiLinePasteWarningUserDefaultsKey];
+    [iTermAdvancedSettingsModel setNoSyncDoNotWarnBeforeMultilinePaste:![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste]];
 }
 
 - (int)promptForNumberOfSpacesToConverTabsToWithDefault:(int)defaultValue {
@@ -1305,8 +1353,7 @@ static BOOL hasBecomeActive = NO;
         // In a test.
         return YES;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    return ![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
+    return ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste];
 }
 
 - (IBAction)maximizePane:(id)sender
@@ -1363,6 +1410,18 @@ static BOOL hasBecomeActive = NO;
                     [window makeFirstResponder:view];
                     break;
                 }
+            }
+        }
+    }
+    
+    [self hideStuckToolTips];
+}
+
+- (void)hideStuckToolTips {
+    if ([iTermAdvancedSettingsModel hideStuckTooltips]) {
+        for (NSWindow *window in [NSApp windows]) {
+            if ([NSStringFromClass([window class]) isEqualToString:@"NSToolTipPanel"]) {
+                [window close];
             }
         }
     }
@@ -1709,6 +1768,10 @@ static BOOL hasBecomeActive = NO;
     } else {
         return YES;
     }
+}
+
+- (IBAction)showHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]];
 }
 
 - (IBAction)buildScriptMenu:(id)sender {

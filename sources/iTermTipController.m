@@ -70,6 +70,25 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 }
 
 - (void)applicationDidFinishLaunching {
+    // This must be done before the delay. If it's called at the wrong time while a window is
+    // becoming fullscreen, the app becomes unresponsive to mouse and keyboard events. Issue 4775.
+    [self askForPermissionIfNeeded];
+
+    // Wait until startup activity has settled down so there's enough CPU for the animation to
+    // look good.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(),
+                   ^{
+                       [self tryToShowTip];
+                       
+                       [[NSNotificationCenter defaultCenter] addObserver:self
+                                                                selector:@selector(applicationDidBecomeActive:)
+                                                                    name:NSApplicationDidBecomeActiveNotification
+                                                                  object:nil];
+                   });
+}
+
+- (void)askForPermissionIfNeeded {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval timeOfFirstLaunchOfVersionWithTip =
         [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfFirstLaunchOfVersionWithTip];
@@ -83,13 +102,6 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
             [self askForPermission];
         }
     }
-
-    [self tryToShowTip];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationDidBecomeActive:)
-                                                 name:NSApplicationDidBecomeActiveNotification
-                                               object:nil];
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {

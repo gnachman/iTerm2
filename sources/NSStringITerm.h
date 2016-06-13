@@ -222,6 +222,13 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // A fast, non-cryto-quality hash.
 - (NSUInteger)hashWithDJB2;
 
+// Returns an array of numbers giving code points for each character in the string. Surrogate pairs
+// get combined. Combining marks do not.
+- (NSArray<NSNumber *> *)codePoints;
+
+// Returns a person's surname.
+- (NSString *)surname;
+
 @end
 
 @interface NSMutableString (iTerm)

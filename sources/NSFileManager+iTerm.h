@@ -31,6 +31,8 @@
 
 - (NSString *)temporaryDirectory;
 
+- (NSString *)downloadsDirectory;
+
 - (BOOL)directoryIsWritable:(NSString *)dir;
 
 // Returns YES if the file exists on a local (non-network) filesystem.

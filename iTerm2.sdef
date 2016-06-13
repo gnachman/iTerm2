@@ -473,8 +473,8 @@
       <property name="tty" code="Stty" type="text" access="r">
         <cocoa key="tty" />
       </property>
-      <property name="contents" code="Cntt" type="text">
-        <cocoa key="contents" />
+      <property name="text" code="Cntt" type="text">
+        <cocoa key="text" />
       </property>
       <property name="background color" code="Co00" type="RGB color">
         <cocoa key="backgroundColor" />

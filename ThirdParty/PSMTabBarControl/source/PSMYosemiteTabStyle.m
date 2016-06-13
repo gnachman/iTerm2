@@ -441,32 +441,18 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRectFill(cellFrame);
 
     if (tabColor) {
+        // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
+        CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.8 : 0.6;
+        
+        // Alpha the inactive tab's colors a bit to make it clear which tab is active.
         if (selected) {
-            [[tabColor colorWithAlphaComponent:0.8] set];
+            [[tabColor colorWithAlphaComponent:alpha] set];
             NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
         } else {
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRect colorRect = cellFrame;
-
-            CGRect unscaledRect = CGRectMake(0, 0, 1, 1);
-            CGRect scaledRect = CGContextConvertRectToDeviceSpace([[NSGraphicsContext currentContext] graphicsPort], unscaledRect);
-            BOOL isRetina = (scaledRect.size.width >= 2);
-
-            if (horizontal) {
-                colorRect.size.height = isRetina ? 3.5 : 3;
-            } else {
-                colorRect.size.width = 6;
-            }
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
-
-            [[self topLineColorSelected:selected] set];
-            CGFloat stroke = 1;
-            if (horizontal) {
-                NSRectFill(NSMakeRect(NSMinX(colorRect), NSMaxY(colorRect), NSWidth(colorRect), stroke));
-            } else {
-                NSRectFill(NSMakeRect(NSMaxX(colorRect), NSMinY(colorRect), stroke, NSHeight(colorRect)));
-            }
+            NSColor *startingColor = [tabColor colorWithAlphaComponent:alpha - 0.2];
+            NSColor *endingColor = [tabColor colorWithAlphaComponent:0];
+            NSGradient *gradient = [[[NSGradient alloc] initWithStartingColor:startingColor endingColor:endingColor] autorelease];
+            [gradient drawInRect:cellFrame angle:-90];
         }
     }
 

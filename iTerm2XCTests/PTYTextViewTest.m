@@ -407,7 +407,10 @@ typedef struct {
 - (void)selectPaneBelowInCurrentTerminal {
 }
 
-- (void)writeTask:(NSData *)data {
+- (void)writeTask:(NSString *)string {
+}
+
+- (void)writeStringWithLatin1Encoding:(NSString *)string {
 }
 
 - (void)textViewSelectNextWindow {

@@ -661,6 +661,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 #endif
+    
+    DLog(@"Done initializing PseudoTerminal %@", self);
 }
 
 - (void)finishToolbeltInitialization {
@@ -764,8 +766,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self toggleBroadcastingInputToSession:[self currentSession]];
 }
 
-- (void)notifyTmuxOfWindowResize
-{
+- (void)notifyTmuxOfWindowResize {
+    DLog(@"notifyTmuxOfWindowResize from:\n%@", [NSThread callStackSymbols]);
     NSArray *tmuxControllers = [self uniqueTmuxControllers];
     if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
         for (TmuxController *controller in tmuxControllers) {
@@ -1493,13 +1495,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return sessions;
 }
 
-- (void)sendInputToAllSessions:(NSData *)data
-{
+- (void)sendInputToAllSessions:(NSString *)string
+                      encoding:(NSStringEncoding)optionalEncoding
+                 forceEncoding:(BOOL)forceEncoding {
     for (PTYSession *aSession in [self broadcastSessions]) {
-        if ([aSession isTmuxClient]) {
-            [aSession writeTaskNoBroadcast:data];
-        } else if (![aSession isTmuxGateway]) {
-            [aSession.shell writeTask:data];
+        if (![aSession isTmuxGateway]) {
+            [aSession writeTaskNoBroadcast:string encoding:optionalEncoding forceEncoding:forceEncoding];
         }
     }
 }
@@ -1903,16 +1904,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]];
 }
 
-- (NSSize)tmuxCompatibleSize
-{
+- (NSSize)tmuxCompatibleSize {
+    DLog(@"Computing the tmux-compatible size...");
     NSSize tmuxSize = NSMakeSize(INT_MAX, INT_MAX);
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab]) {
             NSSize tabSize = [aTab tmuxSize];
+            DLog(@"tab %@ size is %@", aTab, NSStringFromSize(tabSize));
+            
             tmuxSize.width = (int) MIN(tmuxSize.width, tabSize.width);
             tmuxSize.height = (int) MIN(tmuxSize.height, tabSize.height);
         }
     }
+    DLog(@"tmux-compatible size is %@", NSStringFromSize(tmuxSize));
     return tmuxSize;
 }
 
@@ -1920,6 +1924,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name {
+    DLog(@"begin loadTmuxLayout");
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
                                      inTerminal:self
@@ -1928,6 +1933,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self setWindowTitle:name];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
+    DLog(@"loadTmuxLayout invoking fitWindowToTabs.");
     [self fitWindowToTabs];
     [tab setReportIdealSizeAsCurrent:NO];
 
@@ -1941,6 +1947,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // the tab. This must be done after setting the tmux controller.
     [tab loadTitleFromSession];
     [self endTmuxOriginatedResize];
+    DLog(@"end loadTmuxLayout");
 }
 
 - (void)beginTmuxOriginatedResize
@@ -2734,10 +2741,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     // The hotkey window can co-exist with these apps.
-    static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";
+    static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";  // This doesn't seem to work on OS 10.11 but the spotlight experimental feature does.
     static NSString *kApptivateBundleId = @"se.cocoabeans.apptivate";
     NSArray *bundleIdsToNotDismissFor = @[ kAlfredBundleId, kApptivateBundleId ];
-    if ([bundleIdsToNotDismissFor containsObject:[[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier]]) {
+    NSString *frontmostAppBundleId = [[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier];
+    if ([bundleIdsToNotDismissFor containsObject:frontmostAppBundleId]) {
         DLog(@"The frontmost application is whitelisted");
         return nil;
     }
@@ -2745,7 +2753,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([iTermAdvancedSettingsModel hotkeyWindowIgnoresSpotlight]) {
         // This tries to detect if the Spotlight window is open.
         if ([[iTermController sharedInstance] keystrokesBeingStolen]) {
-            DLog(@"Keystrokes being stolen (spotlight open?)");
+            DLog(@"Keystrokes being stolen (spotlight or alfred open?)");
             return nil;
         }
     }
@@ -3001,6 +3009,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
+    PtyLog(@"%@", [NSThread callStackSymbols]);
+
     [SessionView windowDidResize];
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResize returning because togglingFullScreen.");
@@ -3894,13 +3904,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (void)tabView:(NSTabView *)tabView
     willInsertTabViewItem:(NSTabViewItem *)tabViewItem
         atIndex:(int)anIndex {
+    DLog(@"%@: tabView:%@ willInsertTabViewItem:%@ atIndex:%d", self, tabView, tabViewItem, anIndex);
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
     theTab.delegate = self;
     if ([theTab isTmuxTab]) {
-      [theTab recompact];
-      [theTab notifyWindowChanged];
-      [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
+        [theTab recompact];
+        [theTab notifyWindowChanged];
+        DLog(@"Update client size");
+        [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
     iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
@@ -4332,12 +4344,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return YES;
 }
 
-- (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem
-{
+- (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
         PTYSession *session = [[aTabViewItem identifier] activeSession];
         return  [NSString stringWithFormat:@"Profile: %@\nCommand: %@",
                                 [[session profile] objectForKey:KEY_NAME],
-                                [session.shell command]];
+                                [session.shell command] ?: @"None"];
 }
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
@@ -5226,13 +5237,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 
-- (void)fitWindowToTabs
-{
+- (void)fitWindowToTabs {
     [self fitWindowToTabsExcludingTmuxTabs:NO];
 }
 
-- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
-{
+- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux {
     if (togglingFullScreen_) {
         return;
     }
@@ -5246,7 +5255,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             continue;
         }
         NSSize tabSize = [tab currentSize];
-        PtyLog(@"The natural size of this tab is %lf", tabSize.height);
+        PtyLog(@"The natural size of this tab is %@", NSStringFromSize(tabSize));
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }
@@ -5255,7 +5264,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
 
         tabSize = [tab minSize];
-        PtyLog(@"The min size of this tab is %lf", tabSize.height);
+        PtyLog(@"The min size of this tab is %@", NSStringFromSize(tabSize));
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }
@@ -5275,19 +5284,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (BOOL)fitWindowToTabSize:(NSSize)tabSize
-{
-    PtyLog(@"fitWindowToTabSize %@", [NSValue valueWithSize:tabSize]);
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize {
+    PtyLog(@"fitWindowToTabSize %@", NSStringFromSize(tabSize));
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
         return NO;
     }
     // Set the window size to be large enough to encompass that tab plus its decorations.
     NSSize decorationSize = [self windowDecorationSize];
+    DLog(@"decorationSize=%@", NSStringFromSize(decorationSize));
     NSSize winSize = tabSize;
     winSize.width += decorationSize.width;
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
+    DLog(@"Pre-adjustment frame: %@", NSStringFromRect(frame));
 
     if (_contentView.shouldShowToolbelt) {
         winSize.width += floor(_contentView.toolbeltWidth);
@@ -5404,6 +5414,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
+    DLog(@"Set window frame to %@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
 
     if (bugFixView) {
@@ -5904,6 +5915,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // If updatePaneTitles caused any session to change dimensions, then tell tmux
     // controllers that our capacity has changed.
     if (needResize) {
+        DLog(@"refrshTerminal needs resize");
         NSArray *tmuxControllers = [self uniqueTmuxControllers];
         for (TmuxController *c in tmuxControllers) {
             [c windowDidResize:self];
@@ -7013,8 +7025,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return kValidModesForFontPanel;
 }
 
-- (void)incrementBadge
-{
+- (void)incrementBadge {
+    if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {
+        return;
+    }
+
     NSDockTile *dockTile;
     if (self.window.isMiniaturized) {
       dockTile = self.window.dockTile;

@@ -7,6 +7,8 @@
 //
 
 #import "TransferrableFile.h"
+
+#import "NSFileManager+iTerm.h"
 #import "iTermGrowlDelegate.h"
 
 @implementation TransferrableFile {
@@ -93,17 +95,7 @@
 }
 
 - (NSString *)downloadsDirectory {
-    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
-                                                         NSUserDomainMask,
-                                                         YES);
-    NSString *directory;
-    if (paths.count > 0) {
-        directory = paths[0];
-    } else {
-        directory = NSHomeDirectory();
-    }
-
-    return directory;
+    return [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
 }
 
 - (void)setSuccessor:(TransferrableFile *)successor {

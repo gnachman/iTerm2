@@ -34,8 +34,6 @@
 @class PseudoTerminal;
 
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
-extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
-extern NSString *const kPasteOneLineWithNewlineAtShellWarningUserDefaultsKey;
 extern NSString *const kSavedArrangementDidChangeNotification;
 extern NSString *const kNonTerminalWindowBecameKeyNotification;
 

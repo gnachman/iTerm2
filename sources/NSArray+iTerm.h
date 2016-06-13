@@ -23,6 +23,17 @@
 // Does the array contain at least one object not equal to @c anObject?
 - (BOOL)containsObjectBesides:(id)anObject;
 
+// This must be an array of NSNumber*s with 32-bit int values.
+// If self is @[ 1, 18 ] the output is @"0x1 0x12"
+- (NSString *)numbersAsHexStrings;
+
+// Returns one of:
+// For N > 2 elements: @"element1, element2, ..., elementN-1, and elementN"
+// For N=2 elements:   @"element1 and element2"
+// For N=1 element:    @"element1"
+// For N=0 elements:   @""
+- (NSString *)componentsJoinedWithOxfordComma;
+
 @end
 
 @interface NSMutableArray (iTerm)

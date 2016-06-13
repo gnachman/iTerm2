@@ -11,6 +11,7 @@
 #import "MovePaneController.h"
 #import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
@@ -436,6 +437,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)numberOfSessionsDidChange {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
+        DLog(@"PTTab numberOfSessionsDidChange triggering windowDidResize");
         [tmuxController_ windowDidResize:realParentWindow_];
     }
     int i = 1;
@@ -1368,6 +1370,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
     if ([session isTmuxClient]) {
+        DLog(@"font size change triggering windowDidResize:");
         [session.tmuxController windowDidResize:[self realParentWindow]];
     } else {
         [self fitSessionToCurrentViewSize:session];
@@ -1556,10 +1559,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     double charWidth = cellSize.width;
     double lineHeight = cellSize.height;
     NSSize size;
-    PtyLog(@"    session size based on %d rows", rows);
+    PtyLog(@"    calculating session size based on %dx%d cells", columns, rows);
+    DLog(@"    cell size is %@", NSStringFromSize(NSMakeSize(charWidth, lineHeight)));
     size.width = columns * charWidth + MARGIN * 2;
     size.height = rows * lineHeight + VMARGIN * 2;
-
+    DLog(@"    size for content is %@", NSStringFromSize(size));
     BOOL hasScrollbar = [term scrollbarShouldBeVisible];
     NSSize outerSize =
         [PTYScrollView frameSizeForContentSize:size
@@ -1571,12 +1575,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (showTitles) {
         outerSize.height += [SessionView titleHeight];
     }
-    PtyLog(@"session size with %d rows is %@", rows, NSStringFromSize(outerSize));
+    PtyLog(@"session size, including space for the scrollview's decoration, is %@", NSStringFromSize(outerSize));
     return outerSize;
 }
 
 - (NSSize)_sessionSize:(SessionView *)sessionView {
     PTYSession *session = [self sessionForSessionView:sessionView];
+    DLog(@"Compute size of session %@", session);
     return [PTYTab _sessionSizeWithCellSize:NSMakeSize([[session textview] charWidth], [[session textview] lineHeight])
                                  dimensions:NSMakeSize([session columns], [session rows])
                                  showTitles:[sessionView showTitle]
@@ -1689,6 +1694,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             haveFoundLock = YES;
         }
     }
+    
+    DLog(@"Size is %@", NSStringFromSize(size));
     return size;
 }
 
@@ -1759,14 +1766,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setReportIdealSizeAsCurrent:(BOOL)v {
+    DLog(@"set reportIdealSizeAsCurrent=%@ for tab %@", @(v), self);
     reportIdeal_ = v;
 }
 
 // This returns the current size
 - (NSSize)currentSize {
     if (reportIdeal_) {
+        DLog(@"Reporting ideal size for tab %@", self);
         return [self size];
     } else {
+        DLog(@"Reporting size of root frame for tab %@", self);
         return [root_ frame].size;
     }
 }
@@ -1964,6 +1974,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)recompact {
     NSSize size = [self _recursiveRecompact:root_];
+    DLog(@"Change size of root frame from %@ to %@", NSStringFromSize(root_.frame.size), NSStringFromSize(size));
     [root_ setFrame:NSMakeRect(0, 0, size.width, size.height)];
     [self fitSubviewsToRoot];
 }
@@ -2602,15 +2613,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
                                    bookmark:(Profile *)bookmark
-                                 inTerminal:(NSWindowController<iTermWindowController> *)term
-{
+                                 inTerminal:(NSWindowController<iTermWindowController> *)term {
     double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
     NSSize totalSize = NSZeroSize;
     NSSize size;
 
+    DLog(@"recursiveSetSizesInTmuxParseTree for node:\n%@", parseTree);
+    
     BOOL isVertical = NO;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
         case kLeafLayoutNode:
+            DLog(@"Leafe node. Compute size of session");
             size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:bookmark]
                                          dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
                                                                [[parseTree objectForKey:kLayoutDictHeightKey] intValue])
@@ -2747,6 +2760,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [tmuxWindowName_ autorelease];
     tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
+    [self nameOfSession:self.activeSession didChangeTo:self.activeSession.name];
 }
 
 + (Profile *)tmuxBookmark
@@ -2999,8 +3013,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 // Returns the size (in characters) of the largest layout that can fit in this tab.
-- (NSSize)maxTmuxSize
-{
+- (NSSize)maxTmuxSize {
+    DLog(@"Computing the size fo the largest layout that can fit in this tab");
+    
     NSSize rootSize = root_.frame.size;
     NSSize containerSize = flexibleView_.frame.size;
     NSSize overage = NSMakeSize(MAX(0, rootSize.width - containerSize.width),
@@ -3009,16 +3024,26 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     overage.width = ceil(overage.width / charSize.width);
     overage.height = ceil(overage.height / charSize.height);
     NSSize tmuxSize = [self tmuxSize];
-    return NSMakeSize(tmuxSize.width - overage.width,
-                      tmuxSize.height - overage.height);
+    
+    NSSize result = NSMakeSize(tmuxSize.width - overage.width,
+                               tmuxSize.height - overage.height);
+    DLog(@"rootSize=%@ containerSize=%@ overage=%@ charSize=%@ tmuxSize=%@ result=%@",
+         NSStringFromSize(rootSize),
+         NSStringFromSize(containerSize),
+         NSStringFromSize(overage),
+         NSStringFromSize(charSize),
+         NSStringFromSize(tmuxSize),
+         NSStringFromSize(result));
+    return result;
 }
 
 // Returns the size (in characters) of the window size that fits this tab's
 // contents, while going over as little as possible.  It picks the smallest
 // height that can contain every column and every row (counting characters and
 // dividers as 1).
-- (NSSize)tmuxSize
-{
+- (NSSize)tmuxSize {
+    DLog(@"Compute size in characters of the window that fits this tab's contents");
+    
     // The current size of the sessions in this tab in characters
     // ** BUG **
     // This rounds off fractional parts. We really need to know the maximum capacity, and fractional parts can add up to more than one whole char.
@@ -3070,8 +3095,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return tmuxSize;
 }
 
-- (BOOL)_recursiveParseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
-{
+- (BOOL)_recursiveParseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view {
     LayoutNodeType layoutNodeType = [[parseTree objectForKey:kLayoutDictNodeType] intValue];
     LayoutNodeType typeOfView;
     if ([view isKindOfClass:[NSSplitView class]]) {
@@ -3108,8 +3132,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return YES;
 }
 
-- (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
-{
+- (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view {
+    DLog(@"Checking if a parse tree matches a view hierarchy.\nParse tree:\n%@\nView hierarchy:\n%@",
+         parseTree,
+         [view iterm_recursiveDescription]);
     return [self _recursiveParseTree:parseTree matchesViewHierarchy:view];
 }
 
@@ -3272,6 +3298,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_];
+    DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
@@ -3396,6 +3423,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)resizeTmuxSessionView:(SessionView *)sessionView toGridSize:(VT100GridSize)gridSize {
+    DLog(@"resize view %@ to grid size %@", sessionView, VT100GridSizeDescription(gridSize));
     const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
     NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]]
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
@@ -3665,9 +3693,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
          session2.view, session2.view.superview);
 
     // Update the sessions maps.
+    [[session1 retain] autorelease];
+    [[session2 retain] autorelease];
     [session1Tab.viewToSessionMap removeObjectForKey:session1.view];
-    [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap removeObjectForKey:session2.view];
+
+    
+    [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 }
 
