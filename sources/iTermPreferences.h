@@ -82,6 +82,7 @@ extern NSString *const kPreferenceKeyHideTabActivityIndicator;
 extern NSString *const kPreferenceKeyShowNewOutputIndicator;
 extern NSString *const kPreferenceKeyShowPaneTitles;
 extern NSString *const kPreferenceKeyHideMenuBarInFullscreen;
+extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyShowWindowNumber;
 extern NSString *const kPreferenceKeyShowJobName;

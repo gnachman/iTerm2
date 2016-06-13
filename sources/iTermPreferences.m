@@ -62,6 +62,7 @@ NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator
 NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
+NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
 NSString *const kPreferenceKeyShowJobName = @"JobName";
@@ -86,9 +87,9 @@ NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";  // Nonzero if hotkey char is set.
 NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
-NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";
-NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";
-NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";
+NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";  // deprecated
+NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";  // deprecated
+NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";  // deprecated
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
@@ -217,6 +218,7 @@ static NSMutableDictionary *gObservers;
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
+                  kPreferenceKeyUIElement: @NO,
                   kPreferenceKeyFlashTabBarInFullscreen:@YES,
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName: @YES,

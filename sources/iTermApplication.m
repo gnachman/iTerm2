@@ -26,9 +26,10 @@
  */
 
 #import "iTermApplication.h"
-#import "HotkeyWindowController.h"
 #import "iTermController.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
 #import "NSArray+iTerm.h"
@@ -40,7 +41,9 @@
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 
-@implementation iTermApplication
+@implementation iTermApplication {
+    BOOL _isUIElement;
+}
 
 - (void)dealloc {
     [_fakeCurrentEvent release];
@@ -79,24 +82,19 @@
 - (void)sendEvent:(NSEvent*)event {
     if ([event type] == NSKeyDown) {
         iTermController* cont = [iTermController sharedInstance];
-#ifdef FAKE_EVENT_TAP
-        event = [cont runEventTapHandler:event];
-        if (!event) {
-            return;
-        }
-#endif
-        if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
-            (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
+
+        if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped] &&
+            (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers])) {
             // The event tap is not working, but we can still remap modifiers for non-system
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
             event = [iTermKeyBindingMgr remapModifiers:event];
         }
         if (IsSecureEventInputEnabled() &&
-            [[HotkeyWindowController sharedInstance] eventIsHotkey:event]) {
+            [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
-            OnHotKeyEvent();
+            [[iTermHotKeyController sharedInstance] hotkeyPressed];
             return;
         }
         PseudoTerminal* currentTerminal = [cont currentTerminal];
@@ -116,7 +114,7 @@
                 PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
                 if (termWithNumber) {
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+                        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
                     } else {
                         [[termWithNumber window] makeKeyAndOrderFront:self];
                     }
@@ -219,6 +217,25 @@
     return [[self orderedWindows] filteredArrayUsingBlock:^BOOL(id anObject) {
         return [anObject isKindOfClass:[PTYWindow class]];
     }];
+}
+
+- (void)setIsUIElementApplication:(BOOL)uiElement {
+    if (uiElement == _isUIElement) {
+        return;
+    }
+    _isUIElement = uiElement;
+
+    ProcessSerialNumber psn = { 0, kCurrentProcess };
+    TransformProcessType(&psn,
+                         uiElement ? kProcessTransformToUIElementApplication :
+                                     kProcessTransformToForegroundApplication);
+    if (uiElement) {
+        // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
+        // when toggling the preference because all the windows disappear.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        });
+    }
 }
 
 @end

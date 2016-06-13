@@ -31,7 +31,6 @@
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
-@class GTMCarbonHotKey;
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;
@@ -121,6 +120,7 @@
 - (int)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;
+- (Profile *)defaultBookmark;
 
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session;
@@ -142,7 +142,7 @@
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (void)killRestorableSessions;
 
-- (NSArray<PseudoTerminal *>*)terminals;
+- (NSArray<PseudoTerminal *> *)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 
 void OnHotKeyEvent(void);

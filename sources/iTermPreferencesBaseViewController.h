@@ -10,6 +10,9 @@
 #import "iTermPreferences.h"
 #import "PreferenceInfo.h"
 
+// Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
+extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
+
 // View controllers for tabs in the Preferences dialog inherit from this class. Consider it
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
@@ -86,5 +89,8 @@
 // If this returns YES, then changes to this panel will post a notification causing other panels to
 // update their values for the affected preference.
 - (BOOL)shouldUpdateOtherPanels;
+
+// Override this to handle updates of preferences from other panels.
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification NS_REQUIRES_SUPER;
 
 @end

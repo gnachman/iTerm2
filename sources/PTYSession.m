@@ -4,7 +4,6 @@
 #import "CVector.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -17,6 +16,7 @@
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
@@ -2656,6 +2656,8 @@ ITERM_WEAKLY_REFERENCEABLE
         _tmuxTitleOutOfSync = YES;
     }
 
+    BOOL use_underline = [iTermProfilePreferences boolForKey:KEY_USE_UNDERLINE_COLOR inProfile:aDict];
+
     NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
                               @(kColorMapBackground): KEY_BACKGROUND_COLOR,
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
@@ -2663,7 +2665,10 @@ ITERM_WEAKLY_REFERENCEABLE
                               @(kColorMapBold): KEY_BOLD_COLOR,
                               @(kColorMapLink): KEY_LINK_COLOR,
                               @(kColorMapCursor): KEY_CURSOR_COLOR,
-                              @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR };
+                              @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR,
+                              @(kColorMapUnderline): (use_underline ? KEY_UNDERLINE_COLOR : [NSNull null])
+                              };
+
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
         NSColor *theColor = [[iTermProfilePreferences objectForKey:profileKey
@@ -6305,7 +6310,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
     } else {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         [[terminal window] makeKeyAndOrderFront:self];

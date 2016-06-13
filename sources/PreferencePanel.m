@@ -351,7 +351,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 #pragma mark - Hotkey Window
 
-// This is used by HotkeyWindowController to not activate the hotkey while the field for typing
+// This is used by iTermHotKeyController to not activate the hotkey while the field for typing
 // the hotkey into is the first responder.
 - (NSTextField*)hotkeyField {
     return _keysViewController.hotkeyField;
