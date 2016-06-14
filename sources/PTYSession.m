@@ -6301,17 +6301,24 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)reveal {
+    DLog(@"Reveal session %@", self);
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
+        DLog(@"Showing hotkey window");
         [[HotkeyWindowController sharedInstance] showHotKeyWindow];
     } else {
+        DLog(@"Making window current");
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
+        DLog(@"Making window key and ordering front");
         [[terminal window] makeKeyAndOrderFront:self];
+        DLog(@"Selecting tab from delegate %@", _delegate);
         [_delegate sessionSelectContainingTab];
     }
+    DLog(@"Activate the app");
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
 
+    DLog(@"Make this session active in delegate %@", _delegate);
     [_delegate setActiveSession:self];
 }
 

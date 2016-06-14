@@ -4438,6 +4438,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
+    DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
     [session reveal];
     if (self.window.sheets.count > 0) {
         DLog(@"This window has sheets so not opening pw manager: %@", self.window.sheets);

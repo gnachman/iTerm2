@@ -868,7 +868,7 @@ static BOOL hasBecomeActive = NO;
         term = session.delegate.realParentWindow;
     }
     if (term) {
-        DLog(@"Open password manager as sheet");
+        DLog(@"Open password manager as sheet in terminal %@", term);
         return [term openPasswordManagerToAccountName:name inSession:session];
     } else {
         DLog(@"Open password manager as standalone window");
