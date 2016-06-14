@@ -49,6 +49,9 @@ function Build {
   # since Sparkle won't accept a name change.
   rm -rf iTerm.app
   mv iTerm2.app iTerm.app
+  pushd iTerm.app/Contents/MacOS
+  ln -s iTerm2 iTerm
+  popd
   zip -ry iTerm2-${NAME}.zip iTerm.app
  
   # Update the list of changes
