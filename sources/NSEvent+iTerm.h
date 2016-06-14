@@ -16,5 +16,6 @@
 // Returns a new event with the mouse button number set to `buttonNumber`, and
 // other values the same as self.
 - (NSEvent *)eventWithButtonNumber:(NSInteger)buttonNumber;
+- (NSEvent *)eventByChangingYenToBackslash;
 
 @end

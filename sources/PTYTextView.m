@@ -1320,7 +1320,8 @@ static const int kDragThreshold = 3;
 // * Press L in AquaSKK's Hiragana to enter AquaSKK's ASCII
 // * "special" keys, like Enter which go through doCommandBySelector
 // * Repeated special keys
-- (void)keyDown:(NSEvent*)event {
+- (void)keyDown:(NSEvent *)event {
+    event = [event eventByChangingYenToBackslash];
     [_altScreenMouseScrollInferer keyDown:event];
     if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
         return;
