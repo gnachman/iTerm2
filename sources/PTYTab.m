@@ -2236,7 +2236,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
             if (windowPaneNumber && idMap[windowPaneNumber]) {
                 // Creating splitters for a tmux tab. The arrangement is marked
-                // up with window pane IDs, whcih may or may not already exist.
+                // up with window pane IDs, which may or may not already exist.
                 // When restoring a tmux tab, then all session dicts in the
                 // arrangement have a window pane. The presence of a
                 // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is

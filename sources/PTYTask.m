@@ -1024,7 +1024,7 @@ static int MyForkPty(int *amaster,
         }
     }
     if (ret <= 0) {
-        // An error occured
+        // An error occurred
         DLog(@"Failed with error %d", ret);
         return nil;
     } else if (ret != sizeof(vpi)) {

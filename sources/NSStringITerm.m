@@ -335,7 +335,7 @@ static int maximal_subpart_of_row(const unsigned char *datap,
     return bytesInRow;
 }
 
-// This function finds the longest intial sequence of bytes that look like a valid UTF-8 sequence.
+// This function finds the longest initial sequence of bytes that look like a valid UTF-8 sequence.
 // It's used to gobble them up and replace them with a <?> replacement mark in an invalid sequence.
 static int minimal_subpart(const unsigned char *datap, int datalen)
 {

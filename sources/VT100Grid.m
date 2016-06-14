@@ -2002,7 +2002,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             [self class], self, size_.width, size_.height, cursor_.x, cursor_.y];
 }
 
-// Returns NSString representation of line. This exists to faciliate debugging only.
+// Returns NSString representation of line. This exists to facilitate debugging only.
 + (NSString *)stringForScreenChars:(screen_char_t *)theLine length:(int)length
 {
     NSMutableString* result = [NSMutableString stringWithCapacity:length];

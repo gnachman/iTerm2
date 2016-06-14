@@ -206,7 +206,7 @@ static NSDate* lastResizeDate_;
 
 // It's very expensive for PTYTextView to own its own tracking events because its frame changes
 // constantly, plus it can miss mouse exit events and spurious mouse enter events (issue 3345).
-// I beleive it also caused hangs (issue 3974).
+// I believe it also caused hangs (issue 3974).
 - (void)updateTrackingAreas {
     if ([self window]) {
         int trackingOptions;

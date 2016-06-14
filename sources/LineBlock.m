@@ -747,8 +747,8 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     // Convert $ in a context where it refers to the end of string to kSuffixChar
     // ^ is NOT start-of-string when:
     //   - it is escaped
-    //   - it is preceeded by an unescaped [
-    //   - it is preceeded by an unescaped [:
+    //   - it is preceded by an unescaped [
+    //   - it is preceded by an unescaped [:
     // $ is NOT end-of-string when:
     //   - it is escaped
     //
