@@ -858,6 +858,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)openPasswordManager:(id)sender {
+    DLog(@"Menu item selected");
     [self openPasswordManagerToAccountName:nil inSession:nil];
 }
 
@@ -867,8 +868,10 @@ static BOOL hasBecomeActive = NO;
         term = session.delegate.realParentWindow;
     }
     if (term) {
+        DLog(@"Open password manager as sheet");
         return [term openPasswordManagerToAccountName:name inSession:session];
     } else {
+        DLog(@"Open password manager as standalone window");
         if (!_passwordManagerWindowController) {
             _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
             _passwordManagerWindowController.delegate = self;

@@ -4440,8 +4440,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                inSession:(PTYSession *)session {
     [session reveal];
     if (self.window.sheets.count > 0) {
+        DLog(@"This window has sheets so not opening pw manager: %@", self.window.sheets);
+        DLog(@"The last sheet's view hierarchy:\n%@", [[[self.window.sheets lastObject] contentView] iterm_recursiveDescription]);
         return;
     }
+    DLog(@"Show the password manager as a sheet");
     iTermPasswordManagerWindowController *passwordManagerWindowController =
         [[iTermPasswordManagerWindowController alloc] init];
     passwordManagerWindowController.delegate = self;
