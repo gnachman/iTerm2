@@ -49,9 +49,6 @@ function Build {
   # since Sparkle won't accept a name change.
   rm -rf iTerm.app
   mv iTerm2.app iTerm.app
-  pushd iTerm.app/Contents/MacOS
-  ln -s iTerm2 iTerm
-  popd
   zip -ry iTerm2-${NAME}.zip iTerm.app
  
   # Update the list of changes
@@ -84,7 +81,13 @@ ORIG_DIR=`pwd`
 echo "Build deployment release"
 make clean
 make preview
-Build Deployment "-preview" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+
+BUILDTYPE=Deployment
+pushd build/$BUILDTYPE/iTerm.app/Contents/MacOS
+ln -s iTerm2 iTerm
+popd
+
+Build $BUILDTYPE "-preview" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 #set -x
 
