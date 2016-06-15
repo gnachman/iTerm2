@@ -5209,6 +5209,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // instance bookmark with a unique GUID.
         NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
         temp[KEY_GUID] = [ProfileModel freshGuid];
+        temp[KEY_ORIGINAL_GUID] = [[originalBookmark[KEY_GUID] copy] autorelease];
         [[ProfileModel sessionsInstance] addBookmark:temp];
         theBookmark = temp;
     }
