@@ -31,8 +31,10 @@ function SparkleSign {
 # Fifth arg is a prefix for sparkle files.
 # Sixth arg is extra args for codesign
 function Build {
-  pushd iTerm2.app/Contents/MacOS
+  pushd build/$BUILDTYPE/iTerm2.app/Contents/MacOS
+  echo Making link
   ln -s iTerm2 iTerm
+  ls -l
   popd
 
   BUILDTYPE=$1
