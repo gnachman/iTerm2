@@ -112,11 +112,7 @@ const int kColorMapAnsiBrightModifier = 8;
         int red = (n >> 16) & 0xff;
         return [NSColor colorWith8BitRed:red green:green blue:blue];
     } else {
-        NSColor *result = _map[@(theKey)];
-        if (!result) {
-            result = [NSColor colorWithCalibratedRed:1 green:0 blue:0 alpha:1];
-        }
-        return result;
+        return _map[@(theKey)];
     }
 }
 
@@ -143,6 +139,9 @@ const int kColorMapAnsiBrightModifier = 8;
 // spaces. The effects are generally subtle.
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
                         overBackgroundColor:(NSColor *)backgroundColor {
+    if (!textColor) {
+        return nil;
+    }
     // Fist apply minimum contrast, then muting, then dimming (as needed).
     CGFloat textRgb[4];
     [textColor getComponents:textRgb];
@@ -257,6 +256,9 @@ const int kColorMapAnsiBrightModifier = 8;
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle.
 - (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)backgroundColor {
+    if (!backgroundColor) {
+        return nil;
+    }
     // Fist apply muting then dimming (as needed).
     CGFloat backgroundRgb[4];
     [backgroundColor getComponents:backgroundRgb];
