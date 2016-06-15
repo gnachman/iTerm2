@@ -31,6 +31,10 @@ function SparkleSign {
 # Fifth arg is a prefix for sparkle files.
 # Sixth arg is extra args for codesign
 function Build {
+  pushd iTerm2.app/Contents/MacOS
+  ln -s iTerm2 iTerm
+  popd
+
   BUILDTYPE=$1
   NAME=$(echo $VERSION | sed -e "s/\\./_/g")$2
   SUMMARY=$3
@@ -49,10 +53,6 @@ function Build {
   # since Sparkle won't accept a name change.
   rm -rf iTerm.app
   mv iTerm2.app iTerm.app
-
-  pushd iTerm.app/Contents/MacOS
-  ln -s iTerm2 iTerm
-  popd
 
   zip -ry iTerm2-${NAME}.zip iTerm.app
  
