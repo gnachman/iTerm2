@@ -105,7 +105,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenIndex;
 
-// isHotkey indicates if this is a hotkey window, which recieves special
+// isHotkey indicates if this is a hotkey window, which receives special
 // treatment and must be unique.
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType

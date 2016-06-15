@@ -122,7 +122,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         XCTAssert([s length] == 0);
     }
 
-    // Append some stuff to it to make sure we can retreive it.
+    // Append some stuff to it to make sure we can retrieve it.
     for (int i = 0; i < [screen height] - 1; i++) {
         [screen terminalAppendString:[NSString stringWithFormat:@"Line %d", i]];
         [screen terminalLineFeed];

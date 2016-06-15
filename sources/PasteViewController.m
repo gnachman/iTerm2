@@ -30,7 +30,7 @@ static float kAnimationDuration = 0.25;
     if (self) {
         [self view];
 
-        // Fix up frames beacuse the view is flipped.
+        // Fix up frames because the view is flipped.
         for (NSView *view in [self.view subviews]) {
             NSRect frame = [view frame];
             frame.origin.y = NSMaxY([self.view bounds]) - NSMaxY([view frame]);

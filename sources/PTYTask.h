@@ -91,7 +91,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid;
 
 // Wire up the server as the task's file descriptor and process. The caller
-// will ahve connected to the server to get this info. Requires
+// will have connected to the server to get this info. Requires
 // [iTermAdvancedSettingsModel runJobsInServers].
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection;
 

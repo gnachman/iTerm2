@@ -1093,7 +1093,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                        // more cooperation between VT100Screen and PTYTextView than is currently in place because
                                        // the selection could become truncated, and regardless, will need to move up a line in terms
                                        // of absolute Y position (normally when the screen scrolls the absolute Y position of the
-                                       // selection stays the same and the viewport moves down, or else there is soem scrollback
+                                       // selection stays the same and the viewport moves down, or else there is some scrollback
                                        // overflow and PTYTextView -refresh bumps the selection's Y position, but because in this
                                        // case we don't append to the line buffer, scrollback overflow will not increment).
                                        [delegate_ screenRemoveSelection];

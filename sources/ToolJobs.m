@@ -126,7 +126,7 @@ static const CGFloat kMargin = 4;
 }
 - (NSUInteger)comboBox:(NSComboBox *)aComboBox indexOfItemWithStringValue:(NSString *)aString {
     if ([aString intValue] > 0) {
-        return NSNotFound;  // Without this, "1", "2", and "3" get replaced immediatly!
+        return NSNotFound;  // Without this, "1", "2", and "3" get replaced immediately!
     }
 
     int sig = [[self class] signalForName:aString];

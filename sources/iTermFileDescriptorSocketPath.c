@@ -37,7 +37,7 @@ const char *iTermFileDescriptorSocketNamePrefix = "iTerm2.socket.";
 //
 // Based on that, we don't want /var/folders. That site makes another point about home directories:
 //   "There is a user cache in ~/Library/Caches and the only advantage I can see for '/var/folders'
-//   is to have a cache that is not in the home folder, for example, to avoid transfering data over
+//   is to have a cache that is not in the home folder, for example, to avoid transferring data over
 //   a network when using network homes"
 //
 // Obviously, a unix domain socket on a network path sounds like a bad idea (does it even work?)

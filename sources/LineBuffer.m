@@ -454,7 +454,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
     }
     NSLog(@"Couldn't find line %d", lineNum);
-    NSAssert(NO, @"Tried to get non-existant line");
+    NSAssert(NO, @"Tried to get non-existent line");
     return NO;
 }
 
@@ -507,7 +507,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
     }
     NSLog(@"Couldn't find line %d", lineNum);
-    NSAssert(NO, @"Tried to get non-existant line");
+    NSAssert(NO, @"Tried to get non-existent line");
     return nil;
 }
 
