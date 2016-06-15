@@ -156,6 +156,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
               KEY_CURSOR_COLOR,
               KEY_CURSOR_TEXT_COLOR,
               KEY_TAB_COLOR,
+              KEY_UNDERLINE_COLOR,
               KEY_CURSOR_GUIDE_COLOR,
               KEY_BADGE_COLOR ];
 }
@@ -175,7 +176,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         if (colorDict) {
             newDict[colorName] = colorDict;
         } else {
-            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
+            [newDict removeObjectForKey:colorName];  // Can happen for tab color and underline color, which are optional
         }
     }
 

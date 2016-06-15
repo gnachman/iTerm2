@@ -45,12 +45,14 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_cursorColor;
     IBOutlet CPKColorWell *_cursorTextColor;
     IBOutlet CPKColorWell *_tabColor;
+    IBOutlet CPKColorWell *_underlineColor;
     IBOutlet CPKColorWell *_badgeColor;
 
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
 
     IBOutlet NSButton *_useTabColor;
+    IBOutlet NSButton *_useUnderlineColor;
     IBOutlet NSButton *_useSmartCursorColor;
 
     IBOutlet NSSlider *_minimumContrast;
@@ -108,6 +110,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [self updateColorControlsEnabled]; };
 
+    info = [self defineControl:_useUnderlineColor
+                           key:KEY_USE_UNDERLINE_COLOR
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [self updateColorControlsEnabled]; };
+
     info = [self defineControl:_useSmartCursorColor
                            key:KEY_SMART_CURSOR_COLOR
                           type:kPreferenceInfoTypeCheckbox];
@@ -130,6 +137,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)updateColorControlsEnabled {
     _tabColor.enabled = [self boolForKey:KEY_USE_TAB_COLOR];
+    _underlineColor.enabled = [self boolForKey:KEY_USE_UNDERLINE_COLOR];
     _cursorColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorTextColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
@@ -162,6 +170,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
               KEY_CURSOR_COLOR: _cursorColor,
               KEY_CURSOR_TEXT_COLOR: _cursorTextColor,
               KEY_TAB_COLOR: _tabColor,
+              KEY_UNDERLINE_COLOR: _underlineColor,
               KEY_CURSOR_GUIDE_COLOR: _guideColor,
               KEY_BADGE_COLOR: _badgeColor };
 }
