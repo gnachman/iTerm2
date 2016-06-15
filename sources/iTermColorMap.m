@@ -90,7 +90,7 @@ const int kColorMapAnsiBrightModifier = 8;
     if (theKey >= kColorMap24bitBase)
         return;
 
-    if ( !theColor ) {
+    if (!theColor) {
         [_map removeObjectForKey:@(theKey)];
         return;
     }
@@ -104,11 +104,12 @@ const int kColorMapAnsiBrightModifier = 8;
         _backgroundBlue = [theColor blueComponent];
     }
 
+    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];
     }
 
-    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     _map[@(theKey)] = theColor;
 
     [_delegate colorMap:self didChangeColorForKey:theKey];

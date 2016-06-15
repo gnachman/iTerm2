@@ -2635,7 +2635,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _tmuxTitleOutOfSync = YES;
     }
 
-    BOOL use_underline = [iTermProfilePreferences boolForKey:KEY_USE_UNDERLINE_COLOR inProfile:aDict];
+    BOOL useUnderline = [iTermProfilePreferences boolForKey:KEY_USE_UNDERLINE_COLOR inProfile:aDict];
 
     NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
                               @(kColorMapBackground): KEY_BACKGROUND_COLOR,
@@ -2645,13 +2645,18 @@ ITERM_WEAKLY_REFERENCEABLE
                               @(kColorMapLink): KEY_LINK_COLOR,
                               @(kColorMapCursor): KEY_CURSOR_COLOR,
                               @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR,
-                              @(kColorMapUnderline): (use_underline ? KEY_UNDERLINE_COLOR : [NSNull null])
+                              @(kColorMapUnderline): (useUnderline ? KEY_UNDERLINE_COLOR : [NSNull null])
                               };
 
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
-        NSColor *theColor = [[iTermProfilePreferences objectForKey:profileKey
-                                                         inProfile:aDict] colorValue];
+
+        NSColor *theColor = nil;
+        if ([profileKey isKindOfClass:[NSString class]]) {
+            theColor = [[iTermProfilePreferences objectForKey:profileKey
+                                                    inProfile:aDict] colorValue];
+            }
+
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
 
@@ -6590,6 +6595,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetColor:(NSColor *)color forKey:(int)key {
+    if (!color) {
+        return;
+    }
+
     NSString *profileKey = [_colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
