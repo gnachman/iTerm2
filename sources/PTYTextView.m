@@ -464,8 +464,8 @@ static const int kDragThreshold = 3;
     // During initialization, this may be called before the non-ascii font is set so we use a system
     // font as a placeholder.
     NSDictionary *theAttributes =
-        @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor],
-           NSForegroundColorAttributeName: [self defaultTextColor],
+        @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor] ?: [NSColor blackColor],
+           NSForegroundColorAttributeName: [self defaultTextColor] ?: [NSColor whiteColor],
            NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
@@ -2493,14 +2493,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             case kURLActionOpenExistingFile: {
                 NSString *extendedPrefix = [extractor wrappedStringAt:coord
                                                               forward:NO
-                                                  respectHardNewlines:NO
+                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                                              maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
                 NSString *extendedSuffix = [extractor wrappedStringAt:coord
                                                               forward:YES
-                                                  respectHardNewlines:NO
+                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                                              maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
