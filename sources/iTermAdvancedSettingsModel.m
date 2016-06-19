@@ -187,6 +187,8 @@ DEFINE_FLOAT(badgeMaxWidthFraction, 0.5, @"Badge: Maximum width of the badge\nAs
 DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, @"Badge: Maximum height of the badge\nAs a fraction of the height of the terminal, between 0 and 1.0.");
 DEFINE_INT(badgeRightMargin, 10, @"Badge: Right Margin\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
 DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
+DEFINE_FLOAT(badgeMinFontSize,10.0, @"Badge: Minimum font size that's going to be used in a badge");
+DEFINE_FLOAT(badgeMaxFontSize,100.0, @"Badge: Maximum font size that's going to be used in a badge");
 
 #pragma mark - Experimental Features
 DEFINE_BOOL(includePasteHistoryInAdvancedPaste, NO, @"Experimental Features: Include paste history in the advanced paste menu.");

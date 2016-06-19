@@ -115,6 +115,8 @@
 + (double)badgeMaxHeightFraction;
 + (int)badgeRightMargin;
 + (int)badgeTopMargin;
++ (double)badgeMinFontSize;
++ (double)badgeMaxFontSize;
 + (BOOL)noSyncReplaceProfileWarning;
 + (BOOL)requireCmdForDraggingText;
 + (double)tabAutoShowHoldTime;
