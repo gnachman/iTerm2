@@ -628,6 +628,10 @@ static NSDate* lastResizeDate_;
     [_delegate sessionViewBeginDrag];
 }
 
+- (void)doubleClickOnTitleView {
+    [_delegate sessionViewDoubleClickOnTitleBar];
+}
+
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {
     [_announcements addObject:announcement];
     announcement.delegate = self;

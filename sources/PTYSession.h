@@ -169,6 +169,9 @@ typedef enum {
 // Indicates if the splits are currently being dragged. Affects how resizing works for tmux tabs.
 - (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged;
 
+// User double clicked on title bar
+- (void)sessionDoubleClickOnTitleBar;
+
 @end
 
 @class SessionView;

@@ -318,6 +318,14 @@ static const CGFloat kButtonSize = 17;
     [delegate_ beginDrag];
 }
 
+- (void)mouseUp:(NSEvent *)theEvent {
+    if (theEvent.clickCount == 2) {
+        [self.delegate doubleClickOnTitleView];
+    } else {
+        [super mouseUp:theEvent];
+    }
+}
+
 - (void)setOrdinal:(int)ordinal {
     _ordinal = ordinal;
     [self updateTitle];

@@ -107,6 +107,9 @@
 // Returns the accepted size.
 - (NSSize)sessionViewScrollViewWillResize:(NSSize)proposedSize;
 
+// User double clicked on title view.
+- (void)sessionViewDoubleClickOnTitleBar;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

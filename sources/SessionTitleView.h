@@ -15,6 +15,7 @@
 - (void)close;
 - (void)beginDrag;
 - (BOOL)sessionTitleViewIsFirstResponder;
+- (void)doubleClickOnTitleView;
 
 @end
 
