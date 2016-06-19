@@ -3468,6 +3468,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     [[root_ window] makeFirstResponder:[activeSession_ textview]];
     [realParentWindow_ invalidateRestorableState];
+    
+    for (SessionView *sessionView in self.sessionViews) {
+        // I don't know why, but this doesn't get called automatically and so focus follows mouse
+        // breaks. Issue 4810.
+        [sessionView updateTrackingAreas];
+    }
 }
 
 - (BOOL)promptOnClose {
