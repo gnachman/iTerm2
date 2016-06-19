@@ -1208,7 +1208,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         if (siblings.count == 1) {
             // This is a wee hack. If a tmux Window is in a native window with one tab
             // then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
-            // The equivalence class's existance signals not to apply the default mode for
+            // The equivalence class's existence signals not to apply the default mode for
             // unrecognized windows.
             exemplar = [exemplar stringByAppendingString:@"_ph"];
         }

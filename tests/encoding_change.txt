@@ -1,3 +1,3 @@
 C3+A5 in current encoding: å
-Latin-1: Capital A with tilde, Captial Y with double stroke: %@å
+Latin-1: Capital A with tilde, Capital Y with double stroke: %@å
 UTF-8: Lowercase a with ring: %Gå

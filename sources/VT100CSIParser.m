@@ -118,7 +118,7 @@ static BOOL ParseCSIPrefix(iTermParserContext *context, CVector *incidentals, CS
     //
     //        This description suggests that if the first byte of parameter bytes is one of
     //        '<', '=', '>', '?' (\x3c-\x3f), it's well-formed and could be considered
-    //        as private CSI extention.
+    //        as private CSI extension.
     //
     //        Example:
     //

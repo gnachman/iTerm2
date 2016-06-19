@@ -98,7 +98,7 @@ static CFStringRef _strip_trailing_slash_from_path(CFStringRef path);
  * Flushes the event stream synchronously by sending events that have already 
  * occurred but not yet delivered.
  *
- * @return A BOOL indicating the sucess or failure
+ * @return A BOOL indicating the success or failure
  */
 - (BOOL)flushEventStreamSync
 {
@@ -121,7 +121,7 @@ static CFStringRef _strip_trailing_slash_from_path(CFStringRef path);
  * Flushes the event stream asynchronously by sending events that have already 
  * occurred but not yet delivered.
  *
- * @return A BOOL indicating the sucess or failure
+ * @return A BOOL indicating the success or failure
  */
 - (BOOL)flushEventStreamAsync
 {

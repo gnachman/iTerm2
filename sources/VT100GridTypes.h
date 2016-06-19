@@ -268,7 +268,7 @@ NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, i
         int numFullLines = MAX(0, (range.coordRange.end.y - range.coordRange.start.y - 1));
         return ((right - VT100GridWindowedRangeStart(range).x) +  // Chars on first line
                 (VT100GridWindowedRangeEnd(range).x - left) +  // Chars on second line
-                range.columnWindow.length * numFullLines);  // Chars inbetween
+                range.columnWindow.length * numFullLines);  // Chars between
     }
 }
 

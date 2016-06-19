@@ -32,7 +32,7 @@ const int kMaxResultContextWords = 4;
     // Words before the word at the cursor.
     NSMutableArray* context_;
     
-    // x,y coords where prefix occured.
+    // x,y coords where prefix occurred.
     int startX_;
     long long startY_;  // absolute coord
     

@@ -171,7 +171,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
     didSplit_ = YES;
 
     if ([self.session isTmuxClient]) {
-        // Do this after setting didSplit becasue a second call to this method
+        // Do this after setting didSplit because a second call to this method
         // will happen no matter what and we want it to do nothing if we get
         // here.
         if (isMove_) {

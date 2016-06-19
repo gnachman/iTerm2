@@ -171,7 +171,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 }
 
 - (void)testSelectWindow {
-    // Beccause windows are ordered by their z-position, the first window is
+    // Because windows are ordered by their z-position, the first window is
     // the most recently created one. In the past, there was a "terminal
     // windows" property that was ordered by creation time.
     NSArray *commands = @[ @"create window with default profile",

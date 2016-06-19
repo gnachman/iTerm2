@@ -2845,7 +2845,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
       snapWidth = snapHeight = NO;
     }
 
-    // If resizing a full-width/height X-of-screen window in a direction perpindicular to the screen
+    // If resizing a full-width/height X-of-screen window in a direction perpendicular to the screen
     // edge it's attached to, turn off snapping in the direction parallel to the edge.
     if (windowType_ == WINDOW_TYPE_RIGHT || windowType_ == WINDOW_TYPE_LEFT) {
         if (proposedFrameSize.height == self.window.frame.size.height) {

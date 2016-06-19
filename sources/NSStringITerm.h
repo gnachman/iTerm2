@@ -2,7 +2,7 @@
 //
 //  NSStringJTerminal.h
 //
-//  Additional fucntion to NSString Class by Category
+//  Additional function to NSString Class by Category
 //  2001.11.13 by Y.Hanahara
 //  2002.05.18 by Kiichi Kusama
 /*

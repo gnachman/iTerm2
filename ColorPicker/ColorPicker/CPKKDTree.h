@@ -35,7 +35,7 @@
  *
  * @param key An array of NSNumber objects with as many elements as the tree has dimensions.
  *
- * @return The object assoicated with the point closest to |key| by Euclidean distance.
+ * @return The object associated with the point closest to |key| by Euclidean distance.
  */
 - (id)nearestNeighborTo:(NSArray *)key;
 
