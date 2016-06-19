@@ -30,7 +30,7 @@ function print_image() {
     if [[ -n "$1" ]]; then
       printf 'name='`echo -n "$1" | base64`";"
     fi
-    if $(base64 --version 2>&1 | grep GNU > /dev/null)
+    if $(base64 --version 2>&1 | egrep 'fourmilab|GNU' > /dev/null)
     then
       BASE64ARG=-d
     else
