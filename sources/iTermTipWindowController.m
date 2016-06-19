@@ -270,7 +270,7 @@ static const CGFloat kWindowWidth = 400;
     frame.origin = NSZeroPoint;
 
     static const CGFloat kWindowLeftMargin = 8;
-    static const CGFloat kWindowTopMargin = 24;
+    static const CGFloat kWindowTopMargin = 8;
     NSRect screenFrame = self.window.screen.visibleFrame;
     NSRect windowFrame = NSMakeRect(NSMinX(screenFrame) + kWindowLeftMargin,
                                     NSMaxY(screenFrame) - NSHeight(frame) - kWindowTopMargin,  // In case menu bar is hidden and later becomes visible
