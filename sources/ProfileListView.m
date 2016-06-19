@@ -778,6 +778,18 @@ const CGFloat kDefaultTagsWidth = 80;
     [self updateResultsForSearch];
 }
 
+- (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
+    if (commandSelector == @selector(cancelOperation:)) {
+        searchField_.stringValue = @"";
+        dataSource_.lockedGuid = nil;
+        [self updateResultsForSearch];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+
 - (NSArray *)control:(NSControl *)control
             textView:(NSTextView *)textView
          completions:(NSArray *)words
