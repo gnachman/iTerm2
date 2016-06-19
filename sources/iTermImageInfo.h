@@ -34,6 +34,9 @@
 // Is animated?
 @property(nonatomic, readonly) BOOL animated;
 
+// If animated, set this to stop animation.
+@property(nonatomic) BOOL paused;
+
 // Raw data for image.
 @property(nonatomic, readonly) NSData *data;
 
