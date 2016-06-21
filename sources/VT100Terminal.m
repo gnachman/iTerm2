@@ -1346,10 +1346,27 @@ static const int kMaxScreenRows = 4096;
             [self saveCursor];
             break;
 
-        case VT100CSI_DECSTBM:
-            [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == -1 ? 0 : token.csi->p[0] - 1
-                                           bottom:token.csi->p[1] == -1 ? [delegate_ terminalHeight] - 1 : token.csi->p[1] - 1];
+        case VT100CSI_DECSTBM: {
+            int top;
+            if (token.csi->count == 0 || token.csi->p[0] < 0) {
+                top = 0;
+            } else {
+                top = MAX(1, token.csi->p[0]) - 1;
+            }
+
+            int bottom;
+            if (token.csi->count < 2 || token.csi->p[1] <= 0) {
+                bottom = delegate_.terminalHeight - 1;
+            } else {
+                bottom = MIN(delegate_.terminalHeight, token.csi->p[1]) - 1;
+            }
+
+            [delegate_ terminalSetScrollRegionTop:top
+                                           bottom:bottom];
+            // http://www.vt100.net/docs/vt510-rm/DECSTBM.html says:
+            // ÒDECSTBM moves the cursor to column 1, line 1 of the page.Ó
             break;
+        }
         case VT100CSI_DSR:
             [self handleDeviceStatusReportWithToken:token withQuestion:NO];
             break;

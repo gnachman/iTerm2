@@ -103,4 +103,32 @@ class DECSTBMTests(object):
     # Verify the cursor is at the last line on the page.
     AssertEQ(GetCursorPosition().y(), size.height())
 
+  def test_DECSTBM_TopOfZeroIsTopOfScreen(self):
+    """A zero value for the top arg gives the top of the screen."""
+    esccmd.DECSTBM(0, 3)
+    esccmd.CUP(Point(1, 2))
+    escio.Write("1" + CR + LF)
+    escio.Write("2" + CR + LF)
+    escio.Write("3" + CR + LF)
+    escio.Write("4")
+    AssertScreenCharsInRectEqual(Rect(1, 1, 1, 3), [ "2", "3", "4" ])
 
+  def test_DECSTBM_BottomOfZeroIsBottomOfScreen(self):
+    """A zero value for the bottom arg gives the bottom of the screen."""
+    # Write "x" at line 3
+    esccmd.CUP(Point(1, 3))
+    escio.Write("x")
+
+    # Set the scroll bottom to below the screen.
+    size = GetScreenSize()
+    esccmd.DECSTBM(2, 0)
+
+    # Move the cursor to the last line and write a newline.
+    esccmd.CUP(Point(1, size.height()))
+    escio.Write(CR + LF)
+
+    # Verify that line 3 scrolled up to line 2.
+    AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "x", NUL ])
+
+    # Verify the cursor is at the last line on the page.
+    AssertEQ(GetCursorPosition().y(), size.height())
