@@ -31,6 +31,7 @@
 #import "iTermDynamicProfileManager.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermHotKeyProfileBindingController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "PreferencePanel.h"
@@ -135,7 +136,7 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
             [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
         }
         
-        [self registerHotKeys];
+        [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 
     return self;
@@ -152,24 +153,6 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     [ftpBonjourBrowser release];
     [telnetBonjourBrowser release];
     [super dealloc];
-}
-
-- (void)registerHotKeys {
-    // Dispatch once just out of paranoia.
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-            if (![iTermProfilePreferences boolForKey:KEY_HAS_HOTKEY inProfile:profile]) {
-                continue;
-            }
-            NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
-            NSEventModifierFlags modifierFlags = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
-            iTermProfileHotKey *hotKey = [[[iTermProfileHotKey alloc] initWithKeyCode:keyCode
-                                                                            modifiers:modifierFlags
-                                                                              profile:profile] autorelease];
-            [[iTermHotKeyController sharedInstance] addHotKey:hotKey];
-        }
-    });
 }
 
 - (void)removeBonjourProfiles {

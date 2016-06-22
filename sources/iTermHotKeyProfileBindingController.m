@@ -32,8 +32,6 @@
     return self;
 }
 
-#pragma mark - Private
-
 - (void)refresh {
     NSMutableSet<NSString *> *guidsOfProfileHotKeys = [NSMutableSet setWithArray:[_guidToHotKeyMap allKeys]];
 
@@ -57,6 +55,8 @@
         [self unregisterHotKeyForProfileWithGuid:guid];
     }
 }
+
+#pragma mark - Private
 
 - (void)registerHotKeyForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];

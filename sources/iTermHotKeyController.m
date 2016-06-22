@@ -264,6 +264,7 @@
 
 - (void)didFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey {
     [self.previousState restore];
+    self.previousState = nil;
 }
 
 @end
