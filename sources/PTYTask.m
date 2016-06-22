@@ -179,11 +179,12 @@ setup_tty_param(struct termios* term,
     [[TaskNotifier sharedInstance] unblock];
 }
 
-static void HandleSigChld(int n)
-{
+static void HandleSigChld(int n) {
     // This is safe to do because write(2) is listed in the sigaction(2) man page
-    // as allowed in a signal handler.
-    [[TaskNotifier sharedInstance] unblock];
+    // as allowed in a signal handler. Calling a method is *NOT* safe since something might
+    // be fiddling with the runtime. I saw a lot of crashes where CoreData got interrupted by
+    // a sigchild while doing class_addMethod and that caused a crash because of a method call.
+    UnblockTaskNotifier();
 }
 
 - (NSString *)command

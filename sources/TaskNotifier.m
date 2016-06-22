@@ -14,6 +14,8 @@
 #define PtyTaskDebugLog(args...)
 
 NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
+static int unblockPipeR;
+static int unblockPipeW;
 
 @implementation TaskNotifier
 {
@@ -26,8 +28,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 
     // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
     NSMutableSet* deadpool;
-    int unblockPipeR;
-    int unblockPipeW;
 }
 
 
@@ -135,6 +135,10 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 
 - (void)unblock
 {
+    UnblockTaskNotifier();
+}
+
+void UnblockTaskNotifier(void) {
     // This is called in a signal handler and must only call functions listed
     // as safe in sigaction(2)'s man page.
     char dummy = 0;
