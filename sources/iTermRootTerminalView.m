@@ -19,7 +19,6 @@
 const CGFloat kHorizontalTabBarHeight = 22;
 const CGFloat kDivisionViewHeight = 1;
 
-static const CGFloat kDefaultToolbeltWidth = 250;
 static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
@@ -36,6 +35,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 @implementation iTermRootTerminalView {
     BOOL _tabViewFrameReduced;
+    BOOL _haveShownToolbelt;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -88,9 +88,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _tabBarControl.delegate = tabBarDelegate;
         _tabBarControl.hideForSingleTab = NO;
 
-        // Create the toolbelt
-        // A decent default value.
-        _toolbeltWidth = kDefaultToolbeltWidth;
+        // Create the toolbelt with its current default size.
+        _toolbeltWidth = [iTermPreferences floatForKey:kPreferenceKeyDefaultToolbeltWidth];
         [self constrainToolbeltWidth];
 
         self.toolbelt = [[[iTermToolbeltView alloc] initWithFrame:self.toolbeltFrame
@@ -177,7 +176,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     if (shouldShowToolbelt == _shouldShowToolbelt) {
         return;
     }
-
+    if (shouldShowToolbelt && !_haveShownToolbelt) {
+        _toolbeltWidth = [iTermPreferences floatForKey:kPreferenceKeyDefaultToolbeltWidth];
+        _haveShownToolbelt = YES;
+    }
     _shouldShowToolbelt = shouldShowToolbelt;
     _toolbelt.hidden = !shouldShowToolbelt;
     if (shouldShowToolbelt) {

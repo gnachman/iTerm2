@@ -145,6 +145,7 @@ extern NSString *const kPreferenceKeyLeftTabBarWidth;
 extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 
 extern NSString *const kPreferenceKeyShowFullscreenTabBar;
+extern NSString *const kPreferenceKeyDefaultToolbeltWidth;
 
 @interface iTermPreferences : NSObject
 
