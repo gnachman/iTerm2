@@ -4,6 +4,13 @@
 #import "NSStringITerm.h"
 
 @implementation iTermHotkeyPreferencesModel
+
+- (void)dealloc {
+    [_characters release];
+    [_charactersIgnoringModifiers release];
+    [super dealloc];
+}
+
 @end
 
 @interface iTermHotkeyPreferencesWindowController()<iTermShortcutInputViewDelegate>
@@ -54,7 +61,9 @@
 }
 
 - (void)modelDidChange {
-    [_hotKey setKeyCode:_model.keyCode modifiers:_model.modifiers character:_model.character];
+    [_hotKey setKeyCode:_model.keyCode
+              modifiers:_model.modifiers
+              character:[_model.charactersIgnoringModifiers firstCharacter]];
     _autoHide.state = _model.autoHide ? NSOnState : NSOffState;
     _showAutoHiddenWindowOnAppActivation.enabled = _model.autoHide;
     _showAutoHiddenWindowOnAppActivation.state = _model.showAutoHiddenWindowOnAppActivation ? NSOnState : NSOffState;
@@ -107,7 +116,8 @@
 
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     _model.keyCode = event.keyCode;
-    _model.character = [[event charactersIgnoringModifiers] firstCharacter];
+    _model.characters = [event characters];
+    _model.charactersIgnoringModifiers = [event charactersIgnoringModifiers];
     _model.modifiers = event.modifierFlags;
     _model.hotKeyAssigned = YES;
 

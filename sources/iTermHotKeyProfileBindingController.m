@@ -63,8 +63,12 @@
     NSLog(@"Register hotkey for guid %@", guid);
     NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
     NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
+    NSString *characters = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS inProfile:profile];
+    NSString *charactersIgnoringModifiers = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS inProfile:profile];
     iTermProfileHotKey *hotKey = [[[iTermProfileHotKey alloc] initWithKeyCode:keyCode
                                                                     modifiers:modifiers
+                                                                   characters:characters
+                                                  charactersIgnoringModifiers:charactersIgnoringModifiers
                                                                       profile:profile] autorelease];
     NSLog(@"Registered %@", hotKey);
     _guidToHotKeyMap[guid] = hotKey;
@@ -86,7 +90,7 @@
     NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
     NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
     iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
-    
+
     if (hotKey.keyCode == keyCode && hotKey.modifiers == modifiers) {
         // No change
         return;

@@ -13,7 +13,7 @@
 @interface iTermHotKeyController : NSObject
 
 // Returns the designated hotkey window or nil if there is none.
-@property(nonatomic, readonly) NSArray<PseudoTerminal *> *hotKeyWindows;
+@property(nonatomic, readonly) NSArray<PseudoTerminal *> *hotKeyWindowControllers;
 @property(nonatomic, readonly) NSArray<Profile *> *hotKeyWindowProfiles;
 @property(nonatomic, readonly) NSArray<PseudoTerminal *> *visibleWindowControllers;
 @property(nonatomic, readonly) NSArray<iTermProfileHotKey *> *profileHotKeys;
@@ -48,5 +48,14 @@
 
 - (void)createHiddenWindowsFromRestorableStates:(NSArray *)states;
 - (NSArray *)restorableStates;
+
+// Auto hide all hotkey windows, if needed and possible.
+- (void)autoHideHotKeyWindows;
+
+// Auto hide a single hotkey window, if needed and possible. Called when `windowController` resigns key.
+- (void)autoHideHotKeyWindow:(NSWindowController *)windowController;
+
+// Auto hide all hotkey windows but for `exception`. Called when `exception` becomes key.
+- (void)autoHideHotKeyWindowsExcept:(NSWindowController *)exception;
 
 @end

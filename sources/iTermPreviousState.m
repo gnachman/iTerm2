@@ -37,6 +37,7 @@
 }
 
 - (void)restore {
+    [self restorePreviouslyActiveApp];
     if (!self.itermWasActiveWhenHotkeyOpened) {
         // TODO: This is weird. What is its purpose? After I fix the bug where non-hotkey windows
         // get ordered front is this still necessary?

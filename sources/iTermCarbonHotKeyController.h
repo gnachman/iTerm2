@@ -13,6 +13,8 @@
 // use the same keycode and modifiers.
 - (iTermHotKey *)registerKeyCode:(NSUInteger)keyCode
                        modifiers:(NSEventModifierFlags)modifiers
+                      characters:(NSString *)characters
+     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
                           target:(id)target
                         selector:(SEL)selector
                         userData:(NSDictionary *)userData;

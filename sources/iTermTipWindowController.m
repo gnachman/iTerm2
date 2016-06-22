@@ -248,6 +248,8 @@ static const CGFloat kWindowWidth = 400;
     if (!_hotKey) {
         _hotKey = [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:kVK_Escape
                                                                        modifiers:0
+                                                                      characters:[NSString stringWithFormat:@"%c", 27]
+                                                     charactersIgnoringModifiers:[NSString stringWithFormat:@"%c", 27]
                                                                           target:self
                                                                         selector:@selector(dismissByKeyboard:)
                                                                         userData:nil] retain];

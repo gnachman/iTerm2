@@ -21,13 +21,23 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
-                      modifiers:(NSEventModifierFlags)modifiers {
+                      modifiers:(NSEventModifierFlags)modifiers
+                     characters:(NSString *)characters
+    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
     self = [super init];
     if (self) {
         _keyCode = keyCode;
         _modifiers = modifiers & kHotKeyModifierMask;
+        _characters = [characters copy];
+        _charactersIgnoringModifiers = [charactersIgnoringModifiers copy];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_characters release];
+    [_charactersIgnoringModifiers release];
+    [super dealloc];
 }
 
 - (BOOL)keyDownEventTriggers:(NSEvent *)event {
@@ -43,6 +53,8 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
     _carbonHotKey =
         [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:_keyCode
                                                              modifiers:_modifiers
+                                                            characters:_characters
+                                           charactersIgnoringModifiers:_charactersIgnoringModifiers
                                                                 target:self
                                                               selector:@selector(carbonHotkeyPressed:)
                                                               userData:nil] retain];

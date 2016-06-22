@@ -141,7 +141,6 @@
 #define KEY_PREVENT_TAB                       @"Prevent Opening in a Tab"
 #define KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR @"Only The Default BG Color Uses Transparency"
 #define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
-#define KEY_HAS_HOTKEY                        @"Has Hotkey"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
 #define KEY_SYNC_TITLE                        @"Sync Title"
 #define KEY_CLOSE_SESSIONS_ON_END             @"Close Sessions On End"
@@ -193,8 +192,10 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
+#define KEY_HAS_HOTKEY                        @"Has Hotkey"  // This determines whether the "has a hotkey" box is checked. See also KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS.
 #define KEY_HOTKEY_KEY_CODE                   @"HotKey Key Code"
-#define KEY_HOTKEY_CHARACTER                  @"HotKey Character"
+#define KEY_HOTKEY_CHARACTERS                 @"HotKey Characters"
+#define KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS @"HotKey Characters Ignoring Modifiers"  // If this is non-empty then a hotkey is assigned, but see also KEY_HAS_HOTKEY.
 #define KEY_HOTKEY_MODIFIER_FLAGS             @"HotKey Modifier Flags"
 #define KEY_HOTKEY_AUTOHIDE                   @"HotKey Window AutoHides"
 #define KEY_HOTKEY_REOPEN_ON_ACTIVATION       @"HotKey Window Reopens On Activation"

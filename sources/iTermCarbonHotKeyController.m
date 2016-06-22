@@ -1,7 +1,9 @@
 #import "iTermCarbonHotKeyController.h"
 
-#import <AppKit/AppKit.h>
+#import "DebugLogging.h"
 #import "iTermShortcutInputView.h"
+
+#import <AppKit/AppKit.h>
 
 @interface NSEvent(Carbon)
 + (UInt32)carbonModifiersForCocoaModifiers:(NSEventModifierFlags)flags;
@@ -26,6 +28,23 @@
     return carbon;
 }
 
++ (NSEventModifierFlags)cocoaModifiersForCarbonModifiers:(UInt32)carbonModifiers {
+    __block UInt32 x = 0;
+    NSDictionary<NSNumber *, NSNumber *> *map =
+    @{ @(alphaLock): @(NSAlphaShiftKeyMask),
+       @(optionKey): @(NSAlternateKeyMask),
+       @(cmdKey): @(NSCommandKeyMask),
+       @(controlKey): @(NSControlKeyMask),
+       @(shiftKey): @(NSShiftKeyMask),
+       };
+    [map enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+        if (carbonModifiers & [key integerValue]) {
+            x |= [obj intValue];
+        }
+    }];
+    return x;
+}
+
 @end
 
 @interface iTermHotKey : NSObject
@@ -36,6 +55,8 @@
 @property(nonatomic, readonly) EventHotKeyID hotKeyID;
 @property(nonatomic, readonly) NSUInteger keyCode;
 @property(nonatomic, readonly) UInt32 modifiers;
+@property(nonatomic, readonly) NSString *characters;
+@property(nonatomic, readonly) NSString *charactersIgnoringModifiers;
 @end
 
 @implementation iTermHotKey
@@ -44,6 +65,8 @@
                                  id:(EventHotKeyID)hotKeyID
                             keyCode:(NSUInteger)keyCode
                           modifiers:(UInt32)modifiers
+                         characters:(NSString *)characters
+        charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
                            userData:(NSDictionary *)userData
                              target:(id)target
                            selector:(SEL)selector {
@@ -53,6 +76,8 @@
         _hotKeyID = hotKeyID;
         _keyCode = keyCode;
         _modifiers = modifiers;
+        _characters = [characters copy];
+        _charactersIgnoringModifiers = [charactersIgnoringModifiers copy];
         _target = [target retain];
         _selector = selector;
         _userData = [userData copy];
@@ -63,6 +88,8 @@
 - (void)dealloc {
     [_target release];
     [_userData release];
+    [_characters release];
+    [_charactersIgnoringModifiers release];
     [super dealloc];
 }
 
@@ -116,6 +143,8 @@
 
 - (iTermHotKey *)registerKeyCode:(NSUInteger)keyCode
                        modifiers:(NSEventModifierFlags)modifiers
+                      characters:(NSString *)characters
+     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
                           target:(id)target
                         selector:(SEL)selector
                         userData:(NSDictionary *)userData {
@@ -145,6 +174,8 @@
                                                                  id:hotKeyID
                                                             keyCode:keyCode
                                                           modifiers:carbonModifiers
+                                                         characters:characters
+                                        charactersIgnoringModifiers:charactersIgnoringModifiers
                                                            userData:userData
                                                              target:target
                                                            selector:selector] autorelease];
@@ -200,22 +231,15 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
                              EventRef inEvent,
                              void *inUserData) {
     if ([[iTermCarbonHotKeyController sharedInstance] handleEvent:inEvent]) {
+        DLog(@"Handled hotkey event");
         return noErr;
     } else {
+        DLog(@"Did not handle hotkey event");
         return eventNotHandledErr;
     }
 }
 
 - (BOOL)handleEvent:(EventRef)event {
-    NSWindow *keyWindow = [NSApp keyWindow];
-    NSResponder *firstResponder = [keyWindow firstResponder];
-    if ([firstResponder isKindOfClass:[NSTextView class]] &&
-        [keyWindow fieldEditor:NO forObject:nil] !=nil &&
-        [[(NSTextView *)firstResponder delegate] isKindOfClass:[iTermShortcutInputView class]]) {
-        // The first responder is the field editor for a shortcut input view. Let it handle it.
-        return NO;
-    }
-    
     EventHotKeyID hotKeyID;
     if (GetEventParameter(event,
                           kEventParamDirectObject,
@@ -228,7 +252,34 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
     }
 
     NSArray<iTermHotKey *> *hotkeys = [self hotKeysWithID:hotKeyID];
-    
+
+    NSWindow *keyWindow = [NSApp keyWindow];
+    NSResponder *firstResponder = [keyWindow firstResponder];
+    if ([NSApp isActive] &&
+        [firstResponder isKindOfClass:[NSTextView class]] &&
+        [keyWindow fieldEditor:NO forObject:nil] !=nil &&
+        [[(NSTextView *)firstResponder delegate] isKindOfClass:[iTermShortcutInputView class]]) {
+        // The first responder is the field editor for a shortcut input view. Let it handle it.
+
+        iTermHotKey *hotKey = hotkeys.firstObject;
+        if (!hotKey) {
+            return NO;
+        }
+        NSEvent *fakeEvent = [NSEvent keyEventWithType:NSKeyDown
+                                              location:[NSEvent mouseLocation]
+                                         modifierFlags:[NSEvent cocoaModifiersForCarbonModifiers:hotKey.modifiers]
+                                             timestamp:0
+                                          windowNumber:[[NSApp keyWindow] windowNumber]
+                                               context:nil
+                                            characters:hotKey.characters
+                           charactersIgnoringModifiers:hotKey.charactersIgnoringModifiers
+                                             isARepeat:NO
+                                               keyCode:hotKey.keyCode];
+        iTermShortcutInputView *shortcutInputView = (iTermShortcutInputView *)[(NSTextView *)firstResponder delegate];
+        [shortcutInputView handleShortcutEvent:fakeEvent];
+        return YES;
+    }
+
     for (iTermHotKey *hotkey in hotkeys) {
         [hotkey.target performSelector:hotkey.selector withObject:hotkey.userData];
     }

@@ -171,6 +171,10 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     return self;
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 #pragma mark - View layout
 
 - (void)awakeFromNib {

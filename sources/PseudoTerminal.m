@@ -2343,9 +2343,8 @@ ITERM_WEAKLY_REFERENCEABLE
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
 #endif
-    if (!_isHotKeyWindow) {
-        [self maybeHideHotkeyWindow];
-    }
+    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:self];
+
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
 
@@ -2640,7 +2639,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    [self maybeHideHotkeyWindow];
+    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindow:self];
 
     [_contentView.tabBarControl setFlashing:NO];
     _contentView.tabBarControl.cmdPressed = NO;
@@ -2676,118 +2675,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView updateDivisionView];
 }
 
-// Returns the hotkey window that should be hidden or nil if the hotkey window
-// shouldn't be hidden right now.
-- (PseudoTerminal *)hotkeyWindowToHide {
-    DLog(@"Checking if hotkey window should be hidden.");
-
-    if (togglingFullScreen_) {
-        // I can't get this code path to execute. Candidate for removal.
-        DLog(@"Currently toggling fullscreen");
-        return nil;
-    }
-
-    // Check if a terminal that isn't the hotkey window is the key window.
-    PseudoTerminal *hotkeyTerminal = [[iTermController sharedInstance] hotkeyWindow];
-
-    if (!hotkeyTerminal) {
-        DLog(@"Failed to find a hotkey window");
-        return nil;
-    }
-    
-    NSArray<PTYWindow *> *keyTerminalWindows = [[iTermController sharedInstance] keyTerminalWindows];
-
-    BOOL nonHotkeyTerminalIsKey = [keyTerminalWindows containsObjectBesides:[hotkeyTerminal ptyWindow]];
-    BOOL haveMain = [[iTermController sharedInstance] anyWindowIsMain];
-    
-    if (haveMain && !nonHotkeyTerminalIsKey) {
-        // Issue 1251: we can take this path when a "clipboard manager" window is open.
-        DLog(@"Some non-terminal window is now main. Key terminal windows are %@",
-             [[iTermController sharedInstance] keyTerminalWindows]);
-        return nil;
-    }
-    if ([[hotkeyTerminal window] alphaValue] == 0) {
-        // Hotkey window not visible. This path is taken when there is a hidden hotkey window.
-        DLog(@"Hotkey window's alpha value is 0.");
-        return nil;
-    }
-    if (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
-        DLog(@"Autohide is disabled");
-        return nil;
-    }
-    for (iTermProfileHotKey *hotKey in [[iTermHotKeyController sharedInstance] profileHotKeys]) {
-        if (hotKey.rollingIn) {
-            DLog(@"Currently rolling in hotkey window %@", hotKey);
-            return nil;
-        }
-    }
-    DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
-
-    // We want to dismiss the hotkey window when some other window
-    // becomes key. Note that if a popup closes this function shouldn't
-    // be called at all because it makes us key before closing itself.
-    // If a popup is opening, though, we shouldn't close ourselves.
-    if ([[NSApp keyWindow] isKindOfClass:[PopupWindow class]]) {
-        DLog(@"Key window is a popup");
-        return nil;
-    }
-    if ([[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]]) {
-        DLog(@"Key window is Open Quickly");
-        return nil;
-    }
-    if ([[NSApp keyWindow] isKindOfClass:[iTermAboutWindow class]]) {
-        DLog(@"Key window is About");
-        return nil;
-    }
-    if ([[[NSApp keyWindow] windowController] isKindOfClass:[iTermProfilesWindowController class]]) {
-        DLog(@"Key window is Profiles");
-        return nil;
-    }
-    if ([iTermWarning showingWarning]) {
-        DLog(@"A warning is showing");
-        return nil;
-    }
-    if ([[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
-        DLog(@"Key window is prefs");
-        return nil;
-    }
-    if ([self.window.sheets containsObject:[NSApp keyWindow]]) {
-        DLog(@"A sheet is being shown");
-        return nil;
-    }
-
-    // The hotkey window can co-exist with these apps.
-    static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";
-    static NSString *kApptivateBundleId = @"se.cocoabeans.apptivate";
-    NSArray *bundleIdsToNotDismissFor = @[ kAlfredBundleId, kApptivateBundleId ];
-    if ([bundleIdsToNotDismissFor containsObject:[[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier]]) {
-        DLog(@"The frontmost application is whitelisted");
-        return nil;
-    }
-
-    if ([iTermAdvancedSettingsModel hotkeyWindowIgnoresSpotlight]) {
-        // This tries to detect if the Spotlight window is open.
-        if ([[iTermController sharedInstance] keystrokesBeingStolen]) {
-            DLog(@"Keystrokes being stolen (spotlight open?)");
-            return nil;
-        }
-    }
-
-    DLog(@"Should hide hotkey terminal %@", hotkeyTerminal);
-    return hotkeyTerminal;
-}
-
-- (void)maybeHideHotkeyWindow {
-    PseudoTerminal *hotkeyTerminal = [self hotkeyWindowToHide];
-    if (hotkeyTerminal) {
-        PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
-        BOOL suppressHide =
-            [[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]];
-        iTermProfileHotKey *hotKey =
-            [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
-        [hotKey hideHotKeyWindowAnimated:YES suppressHideApp:suppressHide];
-    }
-}
 
 - (void)windowDidBecomeMain:(NSNotification *)notification {
 #if ENABLE_SHORTCUT_ACCESSORY
@@ -2801,7 +2688,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    [self maybeHideHotkeyWindow];
+    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindow:self];
 
     // update the cursor
     [[[self currentSession] textview] refresh];

@@ -8,6 +8,7 @@
 
 #import "ProfilesKeysPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermHotKeyController.h"
 #import "iTermHotkeyPreferencesWindowController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
@@ -61,7 +62,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                            key:KEY_HAS_HOTKEY
                                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
-        if ([self unsignedIntegerForKey:KEY_HOTKEY_CHARACTER]) {
+        if ([[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS] length]) {
             [self setBool:([sender state] == NSOnState) forKey:KEY_HAS_HOTKEY];
         } else {
             [self openHotKeyPanel:nil];
@@ -101,8 +102,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
     model.keyCode = [self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE];
     model.modifiers = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS];
-    model.character = [self unsignedIntegerForKey:KEY_HOTKEY_CHARACTER];
-    model.hotKeyAssigned = (model.character != 0);
+    model.characters = [self stringForKey:KEY_HOTKEY_CHARACTERS];
+    model.charactersIgnoringModifiers = [self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS];
+    model.hotKeyAssigned = (model.charactersIgnoringModifiers.length != 0);
     model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
     model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
     model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];
@@ -114,7 +116,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSModalResponseOK && model.hotKeyAssigned) {
             [self setUnsignedInteger:model.keyCode forKey:KEY_HOTKEY_KEY_CODE];
-            [self setUnsignedInteger:model.character forKey:KEY_HOTKEY_CHARACTER];
+            [self setString:model.characters forKey:KEY_HOTKEY_CHARACTERS];
+            [self setString:model.charactersIgnoringModifiers forKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS];
             [self setUnsignedInteger:model.modifiers forKey:KEY_HOTKEY_MODIFIER_FLAGS];
             [self setBool:model.autoHide forKey:KEY_HOTKEY_AUTOHIDE];
             [self setBool:model.showAutoHiddenWindowOnAppActivation forKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];

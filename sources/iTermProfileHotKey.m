@@ -4,6 +4,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "PseudoTerminal.h"
 
 static NSString *const kGUID = @"GUID";
@@ -26,8 +27,13 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers
+                     characters:(NSString *)characters
+    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
                         profile:(Profile *)profile {
-    self = [super initWithKeyCode:keyCode modifiers:modifiers];
+    self = [super initWithKeyCode:keyCode
+                        modifiers:modifiers
+                       characters:characters
+      charactersIgnoringModifiers:charactersIgnoringModifiers];
     if (self) {
         _profileGuid = [profile[KEY_GUID] copy];
     }
@@ -226,10 +232,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)didFinishRollingOut {
-    _rollingOut = NO;
-    
-    [self.delegate didFinishRollingOutProfileHotKey:self];
-
+    DLog(@"didFinishRollingOut");
     // NOTE: There used be an option called "closing hotkey switches spaces". I've removed the
     // "off" behavior and made the "on" behavior the only option. Various things didn't work
     // right, and the worst one was in this thread: "[iterm2-discuss] Possible bug when using Hotkey window?"
@@ -237,12 +240,21 @@ static NSString *const kArrangement = @"Arrangement";
     // this:
     // [[term window] orderWindow:NSWindowBelow relativeTo:0];
     // And the window was invisible only because its alphaValue was set to 0 elsewhere.
+    
+    DLog(@"Call orderOut: on terminal %@", self.windowController);
     [self.windowController.window orderOut:self];
+    DLog(@"Returned from orderOut:. Set _rollingOut=NO");
+    
+    // This must be done after orderOut: so autoHideHotKeyWindowsExcept: will know to throw out the
+    // previous state.
+    _rollingOut = NO;
+
+    DLog(@"Invoke didFinishRollingOutProfileHotKey:");
+    [self.delegate didFinishRollingOutProfileHotKey:self];
 }
 
 - (BOOL)autoHides {
-    // TODO: Add a new pref and return that from the profile.
-    return [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides];
+    return [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
 }
 
 - (void)hideHotKeyWindow {
@@ -290,18 +302,6 @@ static NSString *const kArrangement = @"Arrangement";
     // that technique if this doesn't work well.
     while (self.windowController.window.attachedSheet) {
         [NSApp endSheet:self.windowController.window.attachedSheet];
-    }
-    DLog(@"Hide hotkey window.");
-    // Note: the test for alpha is because when you become an LSUIElement, the
-    // window's alpha could be 1 but it's still invisible.
-    if (self.windowController.window.alphaValue > 0) {
-        DLog(@"key window is %@", [NSApp keyWindow]);
-        NSWindow *theKeyWindow = [NSApp keyWindow];
-        if (!theKeyWindow ||
-            ([theKeyWindow isKindOfClass:[PTYWindow class]] &&
-             [(PseudoTerminal*)[theKeyWindow windowController] isHotKeyWindow])) {
-                [self.delegate willHideOrCloseProfileHotKey:self];
-            }
     }
     [self rollOut];
 }

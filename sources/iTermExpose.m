@@ -429,7 +429,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 - (void)_toggleOn { 
     // Hide all open hotkey windows
     iTermHotKeyController *hotKeyController = [iTermHotKeyController sharedInstance];
-    for (PseudoTerminal *term in [hotKeyController hotKeyWindows]) {
+    for (PseudoTerminal *term in [hotKeyController hotKeyWindowControllers]) {
         iTermProfileHotKey *hotKey = [hotKeyController profileHotKeyForWindowController:term];
         [hotKey hideHotKeyWindowAnimated:NO suppressHideApp:NO];
     }

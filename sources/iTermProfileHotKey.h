@@ -18,6 +18,8 @@
 @property(nonatomic, readonly) BOOL rollingIn;
 @property(nonatomic, readonly) BOOL rollingOut;
 
+@property(nonatomic, readonly) BOOL autoHides;
+
 // Is there a visible hotkey window right now?
 @property(nonatomic, readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
 
@@ -25,10 +27,14 @@
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers
+                     characters:(NSString *)characters
+    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
                         profile:(Profile *)profile NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
-                      modifiers:(NSEventModifierFlags)modifiers NS_UNAVAILABLE;
+                      modifiers:(NSEventModifierFlags)modifiers
+                     characters:(NSString *)characters
+    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers NS_UNAVAILABLE;
 
 // Hide the hotkey window. If `suppressHideApp` is set then do not hide and then unhide
 // iTerm after the hotkey window is dismissed (which would normally happen if iTerm2 was not the

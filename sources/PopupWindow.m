@@ -81,4 +81,8 @@
     [parentWindow_ makeKeyAndOrderFront:self];
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 @end
