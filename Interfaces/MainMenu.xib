@@ -828,6 +828,12 @@ DQ
                                     <action selector="toggleToolbeltVisibility:" target="-1" id="v3c-uP-c8Q"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Set Default Width" id="81r-Vc-nVm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="setDefaultToolbeltWidth:" target="-1" id="QNN-Mh-iac"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1298"/>
                         </items>
                     </menu>
@@ -1078,6 +1084,11 @@ DQ
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
         <menuItem title="Item" id="Zmu-o3-jVG">
             <modifierMask key="keyEquivalentModifierMask"/>
+        </menuItem>
+        <menuItem title="Show Toolbelt" keyEquivalent="B" id="Ocw-a0-xZu">
+            <connections>
+                <action selector="toggleToolbeltVisibility:" target="-1" id="p4r-A4-cZD"/>
+            </connections>
         </menuItem>
     </objects>
 </document>

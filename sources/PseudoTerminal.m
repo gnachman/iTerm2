@@ -824,6 +824,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (IBAction)setDefaultToolbeltWidth:(id)sender {
+    [iTermPreferences setFloat:_contentView.toolbelt.frame.size.width
+                        forKey:kPreferenceKeyDefaultToolbeltWidth];
+}
+
 - (IBAction)toggleToolbeltVisibility:(id)sender {
     _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
     BOOL didResizeWindow = NO;
@@ -6594,6 +6599,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
+    } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
+        return _contentView.shouldShowToolbelt;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSOnState : NSOffState];
         return [[iTermToolbeltView configuredTools] count] > 0;
