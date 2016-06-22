@@ -6316,6 +6316,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermController *controller = [iTermController sharedInstance];
     if ([terminal isHotKeyWindow]) {
         DLog(@"Showing hotkey window");
+        [[iTermHotKeyController sharedInstance] showHotKeyWindow];
     } else {
         DLog(@"Making window current");
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];

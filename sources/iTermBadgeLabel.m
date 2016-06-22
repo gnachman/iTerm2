@@ -99,11 +99,11 @@
          _fillColor,
          NSStringFromSize(_viewSize),
          [NSThread callStackSymbols]);
-
+    
     if ([_stringValue length]) {
         return [self imageWithPointSize:self.idealPointSize];
     }
-
+    
     return nil;
 }
 
@@ -182,8 +182,8 @@
     NSSize maxSize = self.maxSize;
 
     // Perform a binary search for the point size that best fits |maxSize|.
-    CGFloat min = 4;
-    CGFloat max = 100;
+    CGFloat min = [iTermAdvancedSettingsModel badgeMinFontSize];
+    CGFloat max = [iTermAdvancedSettingsModel badgeMaxFontSize];
     int points = (min + max) / 2;
     int prevPoints = -1;
     NSSize sizeWithFont = NSZeroSize;
