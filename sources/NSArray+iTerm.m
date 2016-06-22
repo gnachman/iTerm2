@@ -38,7 +38,10 @@
 - (NSArray *)mapWithBlock:(id (^)(id anObject))block {
     NSMutableArray *temp = [NSMutableArray array];
     for (id anObject in self) {
-        [temp addObject:block(anObject)];
+        id mappedObject = block(anObject);
+        if (mappedObject) {
+            [temp addObject:mappedObject];
+        }
     }
     return temp;
 }
@@ -52,9 +55,27 @@
     return [self objectsAtIndexes:indexes];
 }
 
+- (BOOL)anyWithBlock:(BOOL (^)(id anObject))block {
+    for (id object in self) {
+        if (block(object)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (BOOL)containsObjectBesides:(id)anObject {
     for (id object in self) {
         if (![object isEqual:anObject]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)containsObjectBesidesObjectsInArray:(NSArray *)array {
+    for (id object in self) {
+        if (![array containsObject:object]) {
             return YES;
         }
     }
