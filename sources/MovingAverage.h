@@ -20,6 +20,5 @@
 - (void)resumeTimer;
 - (void)addValue:(double)value;
 - (BOOL)haveStartedTimer;
-- (void)reset;
 
 @end
