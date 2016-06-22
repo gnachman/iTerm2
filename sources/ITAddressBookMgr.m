@@ -680,12 +680,12 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     return YES;
 }
 
-+ (void)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
++ (BOOL)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
     NSString *guid = profile[KEY_GUID];
     DLog(@"Remove profile with guid %@...", guid);
     if ([model numberOfBookmarks] == 1) {
         DLog(@"Refusing to remove only profile");
-        return;
+        return NO;
     }
 
     DLog(@"Removing key bindings that reference the guid being removed");
@@ -698,6 +698,7 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     [[NSNotificationCenter defaultCenter] postNotificationName:kProfileWasDeletedNotification
                                                         object:nil];
     [model flush];
+    return YES;
 }
 
 + (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {

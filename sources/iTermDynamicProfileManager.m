@@ -90,12 +90,11 @@
     // Update changes to existing dynamic profiles and add ones whose guids are
     // not known.
     NSArray *oldProfiles = [self dynamicProfiles];
-    BOOL shouldReload = NO;
+    BOOL shouldReload = newProfiles.count > 0;
     for (Profile *profile in newProfiles) {
         Profile *existingProfile = [self profileWithGuid:profile[KEY_GUID] inArray:oldProfiles];
         if (existingProfile) {
             [self updateDynamicProfile:profile];
-            shouldReload = YES;
         } else {
             [self addDynamicProfile:profile];
         }
@@ -106,7 +105,9 @@
     for (Profile *profile in oldProfiles) {
         DLog(@"Check profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
         if (![self profileWithGuid:profile[KEY_GUID] inArray:newProfiles]) {
-            [self removeDynamicProfile:profile];
+            if ([self removeDynamicProfile:profile]) {
+                shouldReload = YES;
+            }
         }
     }
     DLog(@"Remove phase is done");
@@ -259,12 +260,13 @@
 
 // Remove a dynamic profile from the model. Updates displays of profiles,
 // references to the profile, etc.
-- (void)removeDynamicProfile:(Profile *)profile {
+- (BOOL)removeDynamicProfile:(Profile *)profile {
     DLog(@"Remove dynamic profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
     ProfileModel *model = [ProfileModel sharedInstance];
     if ([ITAddressBookMgr canRemoveProfile:profile fromModel:model]) {
-        [ITAddressBookMgr removeProfile:profile fromModel:model];
+        return [ITAddressBookMgr removeProfile:profile fromModel:model];
     }
+    return NO;
 }
 
 #pragma mark - SCEventListenerProtocol

@@ -283,6 +283,6 @@ typedef NS_ENUM(NSUInteger, iTermHotKeyDockPreference) {
 
 // Removes the profile from the model, removes key mappings that reference this profile, and posts a
 // kProfileWasDeletedNotification notification, then flushes the model to backing store.
-+ (void)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
++ (BOOL)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
 
 @end
