@@ -144,6 +144,7 @@
 #define KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR @"Only The Default BG Color Uses Transparency"
 #define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
 #define KEY_HAS_HOTKEY                        @"Has Hotkey"
+#define KEY_HOTKEY_SETTINGS                   @"Hotkey Settings"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
 #define KEY_SYNC_TITLE                        @"Sync Title"
 #define KEY_CLOSE_SESSIONS_ON_END             @"Close Sessions On End"

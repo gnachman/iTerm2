@@ -1487,8 +1487,10 @@ DQ
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
+                <outlet property="_configureHotkeyWindow" destination="OiK-if-Q52" id="448-jB-7w1"/>
                 <outlet property="_hasHotkey" destination="hlf-wJ-2jS" id="y0P-1i-g48"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
+                <outlet property="_hotkeyWindowController" destination="h2B-af-Ywb" id="cI4-oJ-PgO"/>
                 <outlet property="_openToolbelt" destination="hmf-ta-TMb" id="nOK-vG-n8c"/>
                 <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
@@ -2018,7 +2020,6 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
                     </connections>
                 </button>
-
                 <customView id="rSL-fL-hpc" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="149" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2035,7 +2036,6 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="acz-bU-TQP"/>
                     </connections>
                 </button>
-
                 <slider verticalHuggingPriority="750" id="4896">
                     <rect key="frame" x="141" y="125" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3026,6 +3026,9 @@ DQ
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="openHotkeySettings:" target="BMA-OA-Kzc" id="nJI-v5-IfF"/>
+                    </connections>
                 </button>
             </subviews>
             <point key="canvasLocation" x="-39.5" y="-109.5"/>
@@ -5888,6 +5891,11 @@ DQ
                 </subviews>
             </view>
         </window>
+        <customObject id="h2B-af-Ywb" userLabel="Hotkey Window Controller" customClass="iTermHotkeyWindowController">
+            <connections>
+                <outlet property="delegate" destination="BMA-OA-Kzc" id="wV0-wj-08R"/>
+            </connections>
+        </customObject>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>

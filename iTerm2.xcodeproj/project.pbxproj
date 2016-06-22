@@ -2110,6 +2110,13 @@
 		A6EEA6681C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */; };
 		A6EEA6691C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEA6671C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m */; };
 		A6EEA66C1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */; };
+		A6EFF2111D1A42CE00806EEF /* iTermHotkeyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF20E1D1A42CE00806EEF /* iTermHotkeyWindowController.h */; };
+		A6EFF2121D1A42CE00806EEF /* iTermHotkeyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF20F1D1A42CE00806EEF /* iTermHotkeyWindowController.m */; };
+		A6EFF2151D1A44FF00806EEF /* iTermHotkeyModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2131D1A44FF00806EEF /* iTermHotkeyModel.h */; };
+		A6EFF2161D1A44FF00806EEF /* iTermHotkeyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF2141D1A44FF00806EEF /* iTermHotkeyModel.m */; };
+		A6EFF2171D1A50C800806EEF /* iTermHotkeyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2101D1A42CE00806EEF /* iTermHotkeyWindowController.xib */; };
+		A6EFF2181D1A514E00806EEF /* iTermHotkeyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2101D1A42CE00806EEF /* iTermHotkeyWindowController.xib */; };
+		A6EFF2191D1A514F00806EEF /* iTermHotkeyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2101D1A42CE00806EEF /* iTermHotkeyWindowController.xib */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
@@ -3401,6 +3408,11 @@
 		A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAutomaticProfileSwitcher.h; sourceTree = "<group>"; };
 		A6EEA6671C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutomaticProfileSwitcher.m; sourceTree = "<group>"; };
 		A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutomaticProfileSwitcherTest.m; sourceTree = "<group>"; };
+		A6EFF20E1D1A42CE00806EEF /* iTermHotkeyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyWindowController.h; sourceTree = "<group>"; };
+		A6EFF20F1D1A42CE00806EEF /* iTermHotkeyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyWindowController.m; sourceTree = "<group>"; };
+		A6EFF2101D1A42CE00806EEF /* iTermHotkeyWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHotkeyWindowController.xib; sourceTree = "<group>"; };
+		A6EFF2131D1A44FF00806EEF /* iTermHotkeyModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyModel.h; sourceTree = "<group>"; };
+		A6EFF2141D1A44FF00806EEF /* iTermHotkeyModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyModel.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
@@ -4236,6 +4248,11 @@
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 				1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */,
 				1D027C101CD1867000B0FBFF /* iTermColorPresets.m */,
+				A6EFF20E1D1A42CE00806EEF /* iTermHotkeyWindowController.h */,
+				A6EFF20F1D1A42CE00806EEF /* iTermHotkeyWindowController.m */,
+				A6EFF2101D1A42CE00806EEF /* iTermHotkeyWindowController.xib */,
+				A6EFF2131D1A44FF00806EEF /* iTermHotkeyModel.h */,
+				A6EFF2141D1A44FF00806EEF /* iTermHotkeyModel.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -6004,6 +6021,7 @@
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
 				1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */,
 				A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */,
+				A6EFF2111D1A42CE00806EEF /* iTermHotkeyWindowController.h in Headers */,
 				A62C3B231BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				A62C3A911BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
@@ -6020,6 +6038,7 @@
 				1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */,
 				A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
+				A6EFF2151D1A44FF00806EEF /* iTermHotkeyModel.h in Headers */,
 				A66DB8361C8E4CBB00233E88 /* iTermOpenQuicklyCommands.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
@@ -6332,6 +6351,7 @@
 				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
+				A6EFF2191D1A514F00806EEF /* iTermHotkeyWindowController.xib in Resources */,
 				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
@@ -6410,6 +6430,7 @@
 				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
 				1D44D0491CC7F5A600BE5630 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */,
 				1D44CF9E1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png in Resources */,
+				A6EFF2181D1A514E00806EEF /* iTermHotkeyWindowController.xib in Resources */,
 				1D44CF881CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-test24BitColor.png in Resources */,
 				1D44CFD61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png in Resources */,
 				1D44D0131CC7F5A600BE5630 /* PTYTextViewTest-golden-testEmoji.png in Resources */,
@@ -6804,6 +6825,7 @@
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
+				A6EFF2171D1A50C800806EEF /* iTermHotkeyWindowController.xib in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */,
 				1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */,
@@ -7354,6 +7376,7 @@
 				A6C763B51B45C52B00E3C992 /* SendTextTrigger.m in Sources */,
 				A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */,
 				1D0EA5A21CA5DAA2005FCF8B /* PSMLightHighContrastTabStyle.m in Sources */,
+				A6EFF2161D1A44FF00806EEF /* iTermHotkeyModel.m in Sources */,
 				A6C7639E1B45C52B00E3C992 /* TmuxStateParser.m in Sources */,
 				A6C763771B45C52B00E3C992 /* PointerPrefsController.m in Sources */,
 				A6C763481B45C52B00E3C992 /* iTermShortcutInputView.m in Sources */,
@@ -7367,6 +7390,7 @@
 				A6C763171B45C52B00E3C992 /* iTermMouseCursor.m in Sources */,
 				A6C7639B1B45C52B00E3C992 /* TmuxHistoryParser.m in Sources */,
 				A6C763761B45C52B00E3C992 /* PointerPreferencesViewController.m in Sources */,
+				A6EFF2121D1A42CE00806EEF /* iTermHotkeyWindowController.m in Sources */,
 				A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */,
 				A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */,
 				A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */,

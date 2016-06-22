@@ -9,6 +9,8 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTermHotkeyWindowController.h"
+#import "iTermHotkeyModel.h"
 #import "iTermImageWell.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
@@ -45,6 +47,8 @@
     IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
     IBOutlet NSButton *_hasHotkey;
+    IBOutlet NSButton *_configureHotkeyWindow;
+    IBOutlet iTermHotkeyWindowController *_hotkeyWindowController;
 }
 
 - (void)dealloc {
@@ -142,9 +146,12 @@
                     key:KEY_OPEN_TOOLBELT
                    type:kPreferenceInfoTypeCheckbox];
     
-    [self defineControl:_hasHotkey
-                    key:KEY_HAS_HOTKEY
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_hasHotkey
+                           key:KEY_HAS_HOTKEY
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _configureHotkeyWindow.enabled = (_hasHotkey.state == NSOnState);
+    };
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
@@ -219,6 +226,23 @@
             [self loadBackgroundImageWithFilename:previous];
         }
     }];
+}
+
+- (IBAction)openHotkeySettings:(id)sender {
+    NSDictionary *dictionary = [self objectForKey:KEY_HOTKEY_SETTINGS];
+    iTermHotKeyModel *model = [[[iTermHotKeyModel alloc] initWithDictionary:dictionary] autorelease];
+    _hotkeyWindowController.model = model;
+    [NSApp beginSheet:[_hotkeyWindowController window]
+       modalForWindow:[self.view window]
+        modalDelegate:self
+       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (void)advancedTabCloseSheet:(NSWindow *)sheet
+                   returnCode:(int)returnCode
+                  contextInfo:(void *)contextInfo {
+    [sheet close];
 }
 
 #pragma mark - iTermImageWellDelegate
@@ -302,5 +326,13 @@
                            silenceable:kiTermWarningTypePermanentlySilenceable];
 }
 
+#pragma mark - iTermHotKeyWindowControllerDelegate
+
+- (void)hotKeyWindowController:(iTermHotkeyWindowController *)sender didFinishWithOK:(BOOL)ok {
+    if (ok) {
+        [self setObject:sender.model.dictionaryValue forKey:KEY_HOTKEY_SETTINGS];
+    }
+    [NSApp endSheet:_hotkeyWindowController.window];
+}
 
 @end

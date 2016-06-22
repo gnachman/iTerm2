@@ -15,6 +15,4 @@
 
 @property(nonatomic, readonly) NSTextField *hotkeyField;
 
-- (void)populateHotKeyProfilesMenu;
-
 @end
