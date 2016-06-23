@@ -190,12 +190,16 @@ static NSError *SCPFileError(NSString *description) {
 - (NSArray *)configs {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *appSupport = [fileManager applicationSupportDirectory];
-    NSArray *paths = @[ [appSupport stringByAppendingPathExtension:@"iTerm/ssh_config"],
-                        [@"~/.ssh/config" stringByExpandingTildeInPath],
+    NSArray *paths = @[ [appSupport stringByAppendingPathExtension:@"iTerm/ssh_config"] ?: @"",
+                        [@"~/.ssh/config" stringByExpandingTildeInPath] ?: @"",
                         @"/etc/ssh/ssh_config",
                         @"/etc/ssh_config" ];
     NSMutableArray *configs = [NSMutableArray array];
     for (NSString *path in paths) {
+        if (path.length == 0) {
+            DLog(@"Zero length path in configs paths %@", paths);
+            continue;
+        }
         if ([fileManager fileExistsAtPath:path]) {
             NMSSHConfig *config = [NMSSHConfig configFromFile:path];
             if (config) {
