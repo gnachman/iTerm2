@@ -86,6 +86,10 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
     return self;
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (NSArray *)cannedFavorites {
     return
     @[ [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.0 green:0.0 blue:0.0 alpha:1] name:@"Black"],

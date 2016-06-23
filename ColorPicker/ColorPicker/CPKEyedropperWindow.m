@@ -55,6 +55,10 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     }
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)grabScreenshots {
     self.screenshots = [NSMutableArray array];
     for (NSScreen *screen in [NSScreen screens]) {
