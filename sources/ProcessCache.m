@@ -191,6 +191,9 @@ NSString *PID_INFO_NAME = @"name";
 {
     BOOL isForeground = NO;
     NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
+    if (!name) {
+        return nil;
+    }
     return [NSDictionary dictionaryWithObjectsAndKeys:
             [NSNumber numberWithBool:isForeground], PID_INFO_IS_FOREGROUND,
             name, PID_INFO_NAME,

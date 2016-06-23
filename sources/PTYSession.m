@@ -1213,7 +1213,10 @@ ITERM_WEAKLY_REFERENCEABLE
     for (NSNumber *n in [[ProcessCache sharedInstance] childrenOfPid:thePid levelsToSkip:skip]) {
         pid_t pid = [n intValue];
         NSDictionary *info = [[ProcessCache sharedInstance] dictionaryOfTaskInfoForPid:pid];
-        [names addObject:[info objectForKey:PID_INFO_NAME]];
+        NSString *jobName = [info objectForKey:PID_INFO_NAME];
+        if (jobName) {
+            [names addObject:jobName];
+        }
     }
     return names;
 }
