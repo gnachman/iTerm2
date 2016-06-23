@@ -93,9 +93,17 @@
       </element> 
     </class> 
     <class name="window" code="cwin" description="A window."> 
-      <cocoa class="PTYWindow"/> 
-      <property name="id" code="ID  " description="The unique identifier of the session." type="text" access="r">
-        <cocoa key="windowIdentifier"/>
+      <cocoa class="PTYWindow"/>
+      <!-- Prior to 3.0.4, id was a string with code "ID  " that had a value like "window-1" which
+       coincides with the unique identifier used in a window's object specifier. Issue 4825 points 
+       out this is problematic because integral window IDs are useful as arguments to 
+       screencapture -l. So the old id is now available as "alternate identifier" and id is now the
+       standard integer value. -->
+      <property name="id" code="ID  " description="The unique identifier of the session." type="integer" access="r">
+        <cocoa key="uniqueID"/>
+      </property>
+      <property name="alternate identifier" code="Twid" description="The alternate unique identifier of the session." type="text" access="r">
+          <cocoa key="windowIdentifier"/>
       </property>
       <property name="name" code="pnam" type="text" access="r"
         description="The full title of the window."> 
