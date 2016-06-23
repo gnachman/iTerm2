@@ -64,7 +64,10 @@
     NSPasteboard *board;
 
     board = [NSPasteboard generalPasteboard];
-    assert(board != nil);
+    if (!board) {
+        DLog(@"Failed to get the general pasteboard!");
+        return nil;
+    }
 
     NSArray *supportedTypes = @[ NSFilenamesPboardType, NSStringPboardType ];
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
