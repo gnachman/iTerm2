@@ -468,7 +468,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term {
     NSSize size = [term tmuxCompatibleSize];
     DLog(@"The tmux-compatible size of the window is %@", NSStringFromSize(size));
-    if (size.width == 0 || size.height == 0) {
+    if (size.width <= 0 || size.height <= 0) {
         // After the last session closes a size of 0 is reported.
         return YES;
     }
