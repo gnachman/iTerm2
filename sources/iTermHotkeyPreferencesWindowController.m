@@ -1,5 +1,7 @@
 #import "iTermHotkeyPreferencesWindowController.h"
 
+#import "iTermCarbonHotKeyController.h"
+#import "iTermKeyBindingMgr.h"
 #import "iTermShortcutInputView.h"
 #import "NSStringITerm.h"
 
@@ -46,6 +48,7 @@
     IBOutlet iTermShortcutInputView *_hotKey;
     IBOutlet NSButton *_ok;
     IBOutlet NSTextField *_explanation;
+    IBOutlet NSTextField *_duplicateWarning;
 
     // Check boxes
     IBOutlet NSButton *_autoHide;
@@ -102,6 +105,13 @@
     for (NSButton *button in buttons) {
         button.enabled = self.model.hotKeyAssigned;
     }
+    _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.descriptor];
+}
+
+- (iTermHotKeyDescriptor *)descriptor {
+    return [iTermHotKeyDescriptor descriptorWithKeyCode:self.model.keyCode
+                                             characters:self.model.charactersIgnoringModifiers
+                                              modifiers:self.model.modifiers];
 }
 
 - (void)modelDidChange {
@@ -162,7 +172,7 @@
     _model.keyCode = event.keyCode;
     _model.characters = [event characters];
     _model.charactersIgnoringModifiers = [event charactersIgnoringModifiers];
-    _model.modifiers = event.modifierFlags;
+    _model.modifiers = (event.modifierFlags & kCarbonHotKeyModifiersMask);
     _model.hotKeyAssigned = YES;
 
     [self modelDidChange];

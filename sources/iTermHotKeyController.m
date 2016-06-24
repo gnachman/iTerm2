@@ -6,7 +6,6 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermPreviousState.h"
 #import "iTermProfilePreferences.h"
@@ -14,6 +13,7 @@
 #import "iTermSystemVersion.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -229,6 +229,25 @@
             [[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]];
         [profileHotKey hideHotKeyWindowAnimated:YES suppressHideApp:suppressHide];
     }
+}
+
+- (NSArray<iTermHotKeyDescriptor *> *)descriptorsForProfileHotKeysExcept:(Profile *)profile {
+    return [self.profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
+        if (![profileHotKey.profile[KEY_GUID] isEqualToString:profile[KEY_GUID]] &&
+            [iTermProfilePreferences stringForKey:KEY_HAS_HOTKEY inProfile:profileHotKey.profile]) {
+            NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE
+                                                                      inProfile:profileHotKey.profile];
+            NSString *characters = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS
+                                                               inProfile:profileHotKey.profile];
+            NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS
+                                                                                  inProfile:profileHotKey.profile];
+            return [iTermHotKeyDescriptor descriptorWithKeyCode:keyCode
+                                                     characters:characters
+                                                      modifiers:modifiers];
+        } else {
+            return nil;
+        }
+    }];
 }
 
 #pragma mark - Notifications

@@ -2,6 +2,7 @@
 
 #import "iTermProfileHotKey.h"
 #import "iTermAppHotKey.h"
+#import "NSDictionary+iTerm.h"
 #import "PseudoTerminal.h"
 
 #import <Cocoa/Cocoa.h>
@@ -57,5 +58,7 @@
 
 // Auto hide all hotkey windows but for `exception`. Called when `exception` becomes key.
 - (void)autoHideHotKeyWindowsExcept:(NSWindowController *)exception;
+
+- (NSArray<iTermHotKeyDescriptor *> *)descriptorsForProfileHotKeysExcept:(Profile *)profile;
 
 @end

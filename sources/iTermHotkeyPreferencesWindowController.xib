@@ -11,6 +11,7 @@
                 <outlet property="_animate" destination="r46-pU-MRA" id="gdk-fK-tlN"/>
                 <outlet property="_autoHide" destination="T3p-0Y-eeA" id="bOc-sP-EKr"/>
                 <outlet property="_doNotShowOnDockClick" destination="roD-me-xYz" id="BCa-6E-83g"/>
+                <outlet property="_duplicateWarning" destination="jS4-oY-dcH" id="9vK-Vu-MHf"/>
                 <outlet property="_explanation" destination="96X-7E-xgf" id="SiF-hd-Yuj"/>
                 <outlet property="_hotKey" destination="ko0-9s-c1g" id="Pnt-LJ-atE"/>
                 <outlet property="_ok" destination="YEr-4l-tkF" id="yt0-Mr-n0r"/>
@@ -164,6 +165,15 @@ Gw
                             <action selector="cancel:" target="-2" id="zoh-ro-DNS"/>
                         </connections>
                     </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="jS4-oY-dcH">
+                        <rect key="frame" x="316" y="205" width="239" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ Another profile uses this hotkey" id="kMo-jN-Ngc">
+                            <font key="font" metaFont="systemBold"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                 </subviews>
             </view>
             <point key="canvasLocation" x="624.5" y="474"/>

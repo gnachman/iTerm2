@@ -41,3 +41,17 @@
 - (NSDictionary *)dictionaryByRemovingNullValues;
 
 @end
+
+// A handy way of describing a hotkey. Really just a triple of keycode,
+// characters, and modifier flags. The modifier flags should be masked before
+// the creation of the dictionary.
+typedef NSDictionary iTermHotKeyDescriptor;
+
+@interface NSDictionary(HotKey)
++ (iTermHotKeyDescriptor *)descriptorWithKeyCode:(NSUInteger)keyCode
+                                      characters:(NSString *)characters
+                                       modifiers:(NSEventModifierFlags)modifiers;
+- (NSUInteger)hotKeyKeyCode;
+- (NSString *)hotKeyCharacters;
+- (NSEventModifierFlags)hotKeyModifiers;
+@end

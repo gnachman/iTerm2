@@ -513,25 +513,33 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     return [dict objectForKey:keyString] != nil;
 }
 
-+ (int)localActionForKeyCode:(unichar)keyCode
-                   modifiers:(unsigned int) keyMods
-                        text:(NSString **) text
-                 keyMappings:(NSDictionary *)keyMappings
-{
-    NSString *keyString;
-    NSDictionary *theKeyMapping;
-    int retCode = -1;
-    unsigned int theModifiers;
-
-    // turn off all the other modifier bits we don't care about
-    theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
-
++ (NSEventModifierFlags)modifiersForKeyCode:(int)keyCode modifiers:(NSEventModifierFlags)keyMods {
+    NSEventModifierFlags theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
+    
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
     }
+    return theModifiers;
+}
 
-    keyString = [NSString stringWithFormat: @"0x%x-0x%x", keyCode, theModifiers];
++ (NSString *)identifierForCharacterIgnoringModifiers:(unichar)characterIgnoringModifiers
+                                            modifiers:(NSEventModifierFlags)keyMods {
+    // turn off all the other modifier bits we don't care about
+    unsigned int theModifiers = [self modifiersForKeyCode:characterIgnoringModifiers modifiers:keyMods];
+    return [NSString stringWithFormat: @"0x%x-0x%x", characterIgnoringModifiers, theModifiers];
+}
+
++ (int)localActionForKeyCode:(unichar)keyCode
+                   modifiers:(unsigned int)keyMods
+                        text:(NSString **)text
+                 keyMappings:(NSDictionary *)keyMappings
+{
+    NSString *keyString = [self identifierForCharacterIgnoringModifiers:keyCode modifiers:keyMods];
+    
+    NSDictionary *theKeyMapping;
+    int retCode = -1;
+
     theKeyMapping = [keyMappings objectForKey: keyString];
     if (theKeyMapping == nil) {
         if (text) {

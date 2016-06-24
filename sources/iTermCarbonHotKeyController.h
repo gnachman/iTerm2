@@ -4,6 +4,9 @@
 // An opaque representation of a binding of (keyCode, modifiers) -> (target, selector, userData).
 @class iTermHotKey;
 
+// Modifiers that aren't ignored.
+extern NSEventModifierFlags kCarbonHotKeyModifiersMask;
+
 @interface iTermCarbonHotKeyController : NSObject
 
 + (instancetype)sharedInstance;

@@ -111,6 +111,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
 
     iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
+    panel.descriptorsInUseByOtherProfiles =
+        [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:self.delegate.profilePreferencesCurrentProfile];
     panel.model = model;
     
     [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {

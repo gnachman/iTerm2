@@ -5,6 +5,12 @@
 
 #import <AppKit/AppKit.h>
 
+NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
+                                                   NSAlternateKeyMask |
+                                                   NSCommandKeyMask |
+                                                   NSControlKeyMask |
+                                                   NSShiftKeyMask);
+
 @interface NSEvent(Carbon)
 + (UInt32)carbonModifiersForCocoaModifiers:(NSEventModifierFlags)flags;
 @end
