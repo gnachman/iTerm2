@@ -206,6 +206,13 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 #pragma mark - API
 
+- (void)configureHotkeyForProfile:(Profile *)profile {
+    [self window];
+    [self selectProfilesTab];
+    [self run];
+    [_profilesViewController openToProfileWithGuidAndEditHotKey:profile[KEY_GUID]];
+}
+
 - (void)selectProfilesTab {
     [_tabView selectTabViewItem:_bookmarksTabViewItem];
     [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];

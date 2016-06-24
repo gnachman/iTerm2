@@ -27,6 +27,10 @@
                                                  selector:@selector(reloadProfiles:)
                                                      name:kReloadAllProfiles
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadProfiles:)
+                                                     name:kReloadAddressBookNotification
+                                                   object:nil];
         [self refresh];
     }
     return self;

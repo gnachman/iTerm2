@@ -26,6 +26,16 @@
 - (BOOL)containsObjectBesides:(ObjectType)anObject;
 - (BOOL)containsObjectBesidesObjectsInArray:(NSArray *)array;
 
+// Joins array components with commas. If there are three or more elements then
+// an "and" is inserted before the last element. If elements are quoted and the
+// locale places commas inside quotation marks then commas are inserted inside
+// the quotation marks.
+- (NSString *)componentsJoinedWithOxfordComma;
+
+// Returns an array by taking this one and removing the last object, if there
+// is one.
+- (NSArray<ObjectType> *)arrayByRemovingLastObject;
+
 @end
 
 @interface NSMutableArray (iTerm)

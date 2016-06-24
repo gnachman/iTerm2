@@ -10,11 +10,13 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermHotKeyController.h"
+#import "iTermHotkeyPreferencesWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermModifierRemapper.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -40,6 +42,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSButton *_hotkeyEnabled;
     IBOutlet NSTextField *_hotkeyField;
     IBOutlet NSTextField *_hotkeyLabel;
+    IBOutlet NSButton *_configureHotKeyWindow;
 }
 
 - (void)awakeFromNib {
@@ -124,22 +127,92 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (void)generateHotkeyWindowProfile {
-    NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithDictionary:[[ProfileModel sharedInstance] defaultBookmark]];
-    [dict setObject:[NSNumber numberWithInt:WINDOW_TYPE_TOP] forKey:KEY_WINDOW_TYPE];
-    [dict setObject:[NSNumber numberWithInt:25] forKey:KEY_ROWS];
-    [dict setObject:[NSNumber numberWithFloat:0.3] forKey:KEY_TRANSPARENCY];
-    [dict setObject:[NSNumber numberWithFloat:0.5] forKey:KEY_BLEND];
-    [dict setObject:[NSNumber numberWithFloat:2.0] forKey:KEY_BLUR_RADIUS];
-    [dict setObject:[NSNumber numberWithBool:YES] forKey:KEY_BLUR];
-    [dict setObject:[NSNumber numberWithInt:-1] forKey:KEY_SCREEN];
-    [dict setObject:[NSNumber numberWithInt:-1] forKey:KEY_SPACE];
-    [dict setObject:@"" forKey:KEY_SHORTCUT];
-    [dict setObject:kHotkeyWindowGeneratedProfileNameKey forKey:KEY_NAME];
-    [dict removeObjectForKey:KEY_TAGS];
-    [dict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-    [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-    [[ProfileModel sharedInstance] addBookmark:dict];
-    [[ProfileModel sharedInstance] flush];
+    NSArray<iTermProfileHotKey *> *profileHotKeys = [[iTermHotKeyController sharedInstance] profileHotKeys];
+    if (profileHotKeys.count > 0) {
+        NSArray<NSString *> *names = [profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
+            return [NSString stringWithFormat:@"“%@”", profileHotKey.profile[KEY_NAME]];
+        }];
+        NSString *joinedNames = [names componentsJoinedWithOxfordComma];
+        NSString *namesSentence = nil;
+        NSArray *actions = @[ @"OK", @"Cancel"];
+        
+        iTermWarningSelection cancel = kiTermWarningSelection1;
+        iTermWarningSelection edit = kItermWarningSelectionError;
+        
+        if (profileHotKeys.count == 1) {
+            namesSentence = [NSString stringWithFormat:@"You already have a Profile with a Hotkey Window named %@", joinedNames];
+            actions = @[ @"OK", @"Configure Existing Profile", @"Cancel"];
+            edit = kiTermWarningSelection1;
+            cancel = kiTermWarningSelection2;
+        } else {
+            namesSentence = [NSString stringWithFormat:@"You already have Profiles with Hotkey Windows named %@", joinedNames];
+        }
+        namesSentence = [namesSentence stringByInsertingTerminalPunctuation:@"."];
+        
+        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@", namesSentence]
+                                                                     actions:actions
+                                                                   accessory:nil
+                                                                  identifier:@"NoSyncSuppressAddAnotherHotkeyProfileWarning"
+                                                                 silenceable:kiTermWarningTypePersistent
+                                                                     heading:@"Add Another Hotkey Window Profile?"];
+        if (selection == cancel) {
+            return;
+        } else if (selection == edit) {
+            [[PreferencePanel sharedInstance] configureHotkeyForProfile:[profileHotKeys.firstObject profile]];
+        }
+    }
+    iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
+    iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
+    [panel setExplanation:@"This panel helps you configure a new profile that will be bound to a keystroke you assign. Pressing the hotkey (even when iTerm2 is not active) will toggle a special window."];
+    panel.model = model;
+
+    [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSModalResponseOK) {
+            if (!model.hotKeyAssigned) {
+                return;
+            }
+            NSMutableDictionary *dict = [[[[ProfileModel sharedInstance] defaultBookmark] mutableCopy] autorelease];
+            dict[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_TOP);
+            dict[KEY_ROWS] = @25;
+            dict[KEY_TRANSPARENCY] = @0.3;
+            dict[KEY_BLEND] = @0.5;
+            dict[KEY_BLUR_RADIUS] = @2.0;
+            dict[KEY_BLUR] = @YES;
+            dict[KEY_SCREEN] = @-1;
+            dict[KEY_SPACE] = @-1;
+            dict[KEY_SHORTCUT] = @"";
+            NSString *newProfileName = kHotkeyWindowGeneratedProfileNameKey;
+            NSInteger number = 1;
+            while ([[ProfileModel sharedInstance] bookmarkWithName:newProfileName]) {
+                newProfileName = [NSString stringWithFormat:@"%@ (%@)", kHotkeyWindowGeneratedProfileNameKey, @(number)];
+                number++;
+            }
+            dict[KEY_NAME] = newProfileName;
+            dict[KEY_DEFAULT_BOOKMARK] = @"No";
+            dict[KEY_GUID] = [ProfileModel freshGuid];
+            [dict removeObjectForKey:KEY_TAGS];
+
+            // Copy values from the profile model's generated dictionary.
+            [model.dictionaryValue enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull key,
+                                                                       id _Nonnull obj,
+                                                                       BOOL *_Nonnull stop) {
+                [dict setObject:obj forKey:key];
+            }];
+            [[ProfileModel sharedInstance] addBookmark:dict];
+            [[ProfileModel sharedInstance] flush];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                                object:nil
+                                                              userInfo:nil];
+
+            NSRunAlertPanel(@"Hotkey Window Successfully Configured",
+                            @"A new profile called “%@” was created for you. It is tuned to work well "
+                            @"for the Hotkey Window feature and it can be customized in the Profiles tab.",
+                            @"OK",
+                            nil,
+                            nil,
+                            newProfileName);
+        }
+    }];
 }
 
 - (void)hotkeyEnabledDidChange {
@@ -204,6 +277,12 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [[NSNotificationCenter defaultCenter] postNotificationName:kPSMModifierChangedNotification
                                                         object:nil
                                                       userInfo:userInfo];
+}
+
+#pragma mark - Actions
+
+- (IBAction)configureHotKeyWindow:(id)sender {
+    [self generateHotkeyWindowProfile];
 }
 
 #pragma mark - iTermShortcutInputViewDelegate

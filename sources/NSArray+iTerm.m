@@ -7,7 +7,9 @@
 //
 
 #import "NSArray+iTerm.h"
+#import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSStringITerm.h"
 
 @implementation NSArray (iTerm)
 
@@ -80,6 +82,29 @@
         }
     }
     return NO;
+}
+
+- (NSArray *)arrayByRemovingLastObject {
+    if (self.count <= 1) {
+        return @[];
+    } else {
+        return [self subarrayWithRange:NSMakeRange(0, self.count - 1)];
+    }
+}
+
+- (NSString *)componentsJoinedWithOxfordComma {
+    if (self.count <= 1) {
+        return [self firstObject];
+    } else if (self.count == 2) {
+        return [NSString stringWithFormat:@"%@ and %@", self[0], self[1]];
+    } else {
+        NSArray *namesWithCommas = [[self arrayByRemovingLastObject] mapWithBlock:^id(NSString *name) {
+            return [name stringByInsertingTerminalPunctuation:@","];
+        }];
+        // Given an input of A B C and “x” “y” “z” then namesWithCommas will be
+        // A, B, and “x,” “y,”
+        return [[[namesWithCommas componentsJoinedByString:@" "] stringByAppendingString:@" and "] stringByAppendingString:self.lastObject];
+    }
 }
 
 @end

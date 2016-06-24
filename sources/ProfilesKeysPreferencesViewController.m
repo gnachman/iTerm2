@@ -114,21 +114,13 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     panel.model = model;
     
     [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
-        if (returnCode == NSModalResponseOK && model.hotKeyAssigned) {
-            [self setUnsignedInteger:model.keyCode forKey:KEY_HOTKEY_KEY_CODE];
-            [self setString:model.characters forKey:KEY_HOTKEY_CHARACTERS];
-            [self setString:model.charactersIgnoringModifiers forKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS];
-            [self setUnsignedInteger:model.modifiers forKey:KEY_HOTKEY_MODIFIER_FLAGS];
-            [self setBool:model.autoHide forKey:KEY_HOTKEY_AUTOHIDE];
-            [self setBool:model.showAutoHiddenWindowOnAppActivation forKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
-            [self setBool:model.animate forKey:KEY_HOTKEY_ANIMATE];
-            [self setInt:model.dockPreference forKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
-            
-            // Do this last because it will trigger registration using previously set values.
-            [self setBool:YES forKey:KEY_HAS_HOTKEY];
-            [_hasHotkey setState:NSOnState];
-        } else if (!model.hotKeyAssigned) {
-            [self setBool:NO forKey:KEY_HAS_HOTKEY];
+        if (returnCode == NSModalResponseOK) {
+            [model.dictionaryValue enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull key,
+                                                                       id _Nonnull obj,
+                                                                       BOOL *_Nonnull stop) {
+                [self setObject:obj forKey:key];
+            }];
+            _hasHotkey.state = [self boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
         }
         _configureHotKey.enabled = [self boolForKey:KEY_HAS_HOTKEY];
     }];

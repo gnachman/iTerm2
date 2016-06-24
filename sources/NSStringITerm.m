@@ -27,6 +27,7 @@
 
 #import "DebugLogging.h"
 #import "NSData+iTerm.h"
+#import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
@@ -1532,6 +1533,29 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
             return 0;
         }
         return DecodeSurrogatePair(firstUTF16, secondUTF16);
+    }
+}
+
+- (BOOL)startsWithQuotationMark {
+    return [self hasPrefix:[[NSLocale currentLocale] objectForKey:NSLocaleQuotationBeginDelimiterKey]];
+}
+
+- (BOOL)endsWithQuotationMark {
+    return [self hasSuffix:[[NSLocale currentLocale] objectForKey:NSLocaleQuotationEndDelimiterKey]];
+}
+
+- (BOOL)isInQuotationMarks {
+    return [self startsWithQuotationMark] && [self endsWithQuotationMark];
+}
+
+- (NSString *)stringByInsertingTerminalPunctuation:(NSString *)punctuation {
+    if ([[NSLocale currentLocale] commasAndPeriodsGoInsideQuotationMarks] && [self endsWithQuotationMark]) {
+        NSString *endQuote = [[NSLocale currentLocale] objectForKey:NSLocaleQuotationEndDelimiterKey];
+        NSInteger quotationLength = [endQuote length];
+        NSString *stringWithoutEndQuote = [self substringToIndex:self.length - quotationLength];
+        return [[stringWithoutEndQuote stringByAppendingString:punctuation] stringByAppendingString:endQuote];
+    } else {
+        return [self stringByAppendingString:punctuation];
     }
 }
 

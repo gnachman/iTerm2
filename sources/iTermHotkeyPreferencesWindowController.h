@@ -16,6 +16,8 @@
 // Radio buttons
 @property(nonatomic, assign) iTermHotKeyDockPreference dockPreference;
 
+@property(nonatomic, readonly) NSDictionary<NSString *, id> *dictionaryValue;
+
 @end
 
 @interface iTermHotkeyPreferencesWindowController : NSWindowController
@@ -23,5 +25,7 @@
 // Assign to this before using it. UI will be updated on assignemnt. Model will be updated when
 // the user interacts with the UI.
 @property(nonatomic, retain) iTermHotkeyPreferencesModel *model;
+
+- (void)setExplanation:(NSString *)explanation;
 
 @end

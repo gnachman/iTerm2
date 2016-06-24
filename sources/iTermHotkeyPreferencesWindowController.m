@@ -5,20 +5,48 @@
 
 @implementation iTermHotkeyPreferencesModel
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _autoHide = YES;
+        _animate = YES;
+    }
+    return self;
+}
+
 - (void)dealloc {
     [_characters release];
     [_charactersIgnoringModifiers release];
     [super dealloc];
 }
 
+- (NSDictionary<NSString *, id> *)dictionaryValue {
+    if (self.hotKeyAssigned) {
+        return @{ KEY_HOTKEY_KEY_CODE: @(self.keyCode),
+                  KEY_HOTKEY_CHARACTERS: self.characters ?: @"",
+                  KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS: self.charactersIgnoringModifiers ?: @"",
+                  KEY_HOTKEY_MODIFIER_FLAGS: @(self.modifiers),
+                  KEY_HOTKEY_AUTOHIDE: @(self.autoHide),
+                  KEY_HOTKEY_REOPEN_ON_ACTIVATION: @(self.showAutoHiddenWindowOnAppActivation),
+                  KEY_HOTKEY_ANIMATE: @(self.animate),
+                  KEY_HOTKEY_DOCK_CLICK_ACTION: @(self.dockPreference),
+                  KEY_HAS_HOTKEY: @YES };
+    } else {
+        return @{ KEY_HAS_HOTKEY: @NO };
+    }
+}
+
 @end
 
 @interface iTermHotkeyPreferencesWindowController()<iTermShortcutInputViewDelegate>
+@property(nonatomic, copy) NSString *pendingExplanation;
 @end
 
 @implementation iTermHotkeyPreferencesWindowController {
     IBOutlet iTermShortcutInputView *_hotKey;
-    
+    IBOutlet NSButton *_ok;
+    IBOutlet NSTextField *_explanation;
+
     // Check boxes
     IBOutlet NSButton *_autoHide;
     IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
@@ -36,7 +64,15 @@
 
 - (void)dealloc {
     [_model release];
+    [_pendingExplanation release];
     [super dealloc];
+}
+
+- (void)awakeFromNib {
+    if (_pendingExplanation) {
+        _explanation.stringValue = _pendingExplanation;
+        self.pendingExplanation = nil;
+    }
 }
 
 #pragma mark - APIs
@@ -49,12 +85,20 @@
     [self updateViewsEnabled];
 }
 
+- (void)setExplanation:(NSString *)explanation {
+    if (_explanation) {
+        _explanation.stringValue = explanation;
+    } else {
+        self.pendingExplanation = explanation;
+    }
+}
+
 #pragma mark - Private
 
 - (void)updateViewsEnabled {
     NSArray<NSView *> *buttons =
         @[ _autoHide, _showAutoHiddenWindowOnAppActivation, _animate, _doNotShowOnDockClick,
-           _alwaysShowOnDockClick, _showIfNoWindowsOpenOnDockClick ];
+           _alwaysShowOnDockClick, _showIfNoWindowsOpenOnDockClick, _ok ];
     for (NSButton *button in buttons) {
         button.enabled = self.model.hotKeyAssigned;
     }
