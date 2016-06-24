@@ -48,6 +48,17 @@
     return temp;
 }
 
+- (NSArray *)flatMapWithBlock:(NSArray *(^)(id anObject))block {
+    NSMutableArray *temp = [NSMutableArray array];
+    for (id anObject in self) {
+        NSArray *mappedObjects = block(anObject);
+        if (mappedObjects) {
+            [temp addObjectsFromArray:mappedObjects];
+        }
+    }
+    return temp;
+}
+
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block {
     NSIndexSet *indexes = [self indexesOfObjectsPassingTest:^BOOL(id  _Nonnull obj,
                                                                   NSUInteger idx,
@@ -64,6 +75,17 @@
         }
     }
     return NO;
+}
+
+- (BOOL)allWithBlock:(BOOL (^)(id anObject))block {
+    BOOL foundException = NO;
+    for (id object in self) {
+        if (!block(object)) {
+            foundException = YES;
+            break;
+        }
+    }
+    return !foundException;
 }
 
 - (BOOL)containsObjectBesides:(id)anObject {
@@ -107,6 +129,29 @@
     }
 }
 
+- (NSArray *)subarrayToIndex:(NSUInteger)index {
+    return [self subarrayWithRange:NSMakeRange(0, index)];
+}
+
+- (NSArray *)subarrayFromIndex:(NSUInteger)index {
+    NSUInteger length;
+    if (self.count >= index) {
+        length = self.count - index;
+    } else {
+        length = 0;
+    }
+    return [self subarrayWithRange:NSMakeRange(index, length)];
+}
+
+- (NSArray *)arrayByRemovingObject:(id)objectToRemove {
+    NSUInteger index = [self indexOfObject:objectToRemove];
+    if (index == NSNotFound) {
+        return self;
+    } else {
+        return [[self subarrayToIndex:index] arrayByAddingObjectsFromArray:[self subarrayFromIndex:index + 1]];
+    }
+
+}
 @end
 
 @implementation NSMutableArray (iTerm)
