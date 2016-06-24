@@ -23,7 +23,6 @@ static NSString *const kGridSizeHeight = @"Height";
 
 // Keys for hotkey dictionary
 static NSString *const kHotKeyKeyCode = @"keyCode";
-static NSString *const kHotKeyCharacters = @"characters";
 static NSString *const kHotKeyModifiers = @"modifiers";
 
 
@@ -152,19 +151,13 @@ static NSString *const kHotKeyModifiers = @"modifiers";
 }
 
 + (NSDictionary *)descriptorWithKeyCode:(NSUInteger)keyCode
-                             characters:(NSString *)characters
                               modifiers:(NSEventModifierFlags)modifiers {
     return @{ kHotKeyKeyCode: @(keyCode),
-              kHotKeyCharacters: characters ?: @"",
               kHotKeyModifiers: @(modifiers) };
 }
 
 - (NSUInteger)hotKeyKeyCode {
     return [self[kHotKeyKeyCode] unsignedIntegerValue];
-}
-
-- (NSString *)hotKeyCharacters {
-    return self[kHotKeyCharacters] ?: @"";
 }
 
 - (NSEventModifierFlags)hotKeyModifiers {

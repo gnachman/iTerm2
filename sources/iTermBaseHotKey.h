@@ -8,12 +8,17 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "NSDictionary+iTerm.h"
+
 @class iTermProfileHotKey;
+@class iTermBaseHotKey;
 
 @protocol iTermHotKeyDelegate<NSObject>
 - (void)didFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey;
 - (void)suppressHideApp;
 - (void)storePreviouslyActiveApp;
+- (void)hotKeyWillCreateWindow:(iTermBaseHotKey *)hotKey;
+- (void)hotKeyDidCreateWindow:(iTermBaseHotKey *)hotKey;
 @end
 
 // Abstract base class.
@@ -23,6 +28,7 @@
 @property(nonatomic, assign) NSEventModifierFlags modifiers;
 @property(nonatomic, copy) NSString *characters;
 @property(nonatomic, copy) NSString *charactersIgnoringModifiers;
+@property(nonatomic, readonly) iTermHotKeyDescriptor *descriptor;
 @property(nonatomic, assign) id<iTermHotKeyDelegate> delegate;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode

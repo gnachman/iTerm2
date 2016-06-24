@@ -39,9 +39,6 @@
 // Updates -restorableState and invalidates the app's restorable state.
 - (void)saveHotkeyWindowStates;
 
-// Make the app that was active before the hotkey window was opened active.
-- (void)hotKeyWindowWillClose:(PseudoTerminal *)windowController;
-
 // Simulate pressing the hotkey.
 - (void)hotkeyPressed:(NSEvent *)event;
 
@@ -54,11 +51,15 @@
 - (void)autoHideHotKeyWindows;
 
 // Auto hide a single hotkey window, if needed and possible. Called when `windowController` resigns key.
-- (void)autoHideHotKeyWindow:(NSWindowController *)windowController;
+- (void)autoHideHotKeyWindows:(NSArray<NSWindowController *> *)windowControllersToConsiderHiding;
 
-// Auto hide all hotkey windows but for `exception`. Called when `exception` becomes key.
-- (void)autoHideHotKeyWindowsExcept:(NSWindowController *)exception;
+// Call this before calling autoHideHotKeyWindowsExcept:
+- (void)nonHotKeyWindowDidBecomeKey;
+
+// Auto hide all hotkey windows but for `exception`. Called when a window belonging to `exceptions` becomes key.
+- (void)autoHideHotKeyWindowsExcept:(NSArray<NSWindowController *> *)exceptions;
 
 - (NSArray<iTermHotKeyDescriptor *> *)descriptorsForProfileHotKeysExcept:(Profile *)profile;
+- (NSArray<PseudoTerminal *> *)siblingWindowControllersOf:(PseudoTerminal *)windowController;
 
 @end

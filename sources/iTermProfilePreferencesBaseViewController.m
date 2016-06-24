@@ -11,6 +11,12 @@
 
 @implementation iTermProfilePreferencesBaseViewController
 
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    ProfileModel *model = [_delegate profilePreferencesCurrentModel];
+    [iTermProfilePreferences setObjectsFromDictionary:dictionary inProfile:profile model:model];
+}
+
 - (NSObject *)objectForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences objectForKey:key inProfile:profile];

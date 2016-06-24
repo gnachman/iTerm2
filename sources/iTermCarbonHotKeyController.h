@@ -7,6 +7,18 @@
 // Modifiers that aren't ignored.
 extern NSEventModifierFlags kCarbonHotKeyModifiersMask;
 
+@interface iTermHotKey : NSObject
+@property(nonatomic, readonly) id target;
+@property(nonatomic, readonly) SEL selector;
+@property(nonatomic, readonly) NSDictionary *userData;
+@property(nonatomic, readonly) EventHotKeyRef eventHotKey;
+@property(nonatomic, readonly) EventHotKeyID hotKeyID;
+@property(nonatomic, readonly) NSUInteger keyCode;
+@property(nonatomic, readonly) UInt32 modifiers;
+@property(nonatomic, readonly) NSString *characters;
+@property(nonatomic, readonly) NSString *charactersIgnoringModifiers;
+@end
+
 @interface iTermCarbonHotKeyController : NSObject
 
 + (instancetype)sharedInstance;

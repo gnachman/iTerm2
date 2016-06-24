@@ -10,8 +10,9 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 
 @interface iTermBaseHotKey()
 
-// Override this to do a thing that needs to be done.
-- (void)hotKeyPressed;
+// Override this to do a thing that needs to be done. `siblings` are other hotkeys (besides the one
+// this call was made for) that have the same keypress.
+- (void)hotKeyPressedWithSiblings:(NSArray<iTermHotKey *> *)siblings;
 
 @end
 
@@ -40,6 +41,16 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p keyCode=%@ modifiers=%@ charactersIgnoringModifiers=“%@”>",
+            NSStringFromClass([self class]), self, @(_keyCode), @(_modifiers), _charactersIgnoringModifiers];
+}
+
+- (iTermHotKeyDescriptor *)descriptor {
+    return [iTermHotKeyDescriptor descriptorWithKeyCode:self.keyCode
+                                              modifiers:(self.modifiers & kCarbonHotKeyModifiersMask)];
+}
+            
 - (BOOL)keyDownEventTriggers:(NSEvent *)event {
     return (([event modifierFlags] & kHotKeyModifierMask) == (_modifiers & kHotKeyModifierMask) &&
             [event keyCode] == _keyCode);
@@ -56,7 +67,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
                                                             characters:_characters
                                            charactersIgnoringModifiers:_charactersIgnoringModifiers
                                                                 target:self
-                                                              selector:@selector(carbonHotkeyPressed:)
+                                                              selector:@selector(carbonHotkeyPressed:siblings:)
                                                               userData:nil] retain];
 
 }
@@ -70,21 +81,21 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 - (void)simulatePress {
-    [self carbonHotkeyPressed:nil];
+    [self carbonHotkeyPressed:nil siblings:@[]];
 }
 
-- (void)hotKeyPressed {
+- (void)hotKeyPressedWithSiblings:(NSArray<iTermHotKey *> *)siblings {
     [NSException raise:NSInternalInconsistencyException format:@"Not implemented. Use a subclass."];
 }
 
 #pragma mark - Actions
 
-- (void)carbonHotkeyPressed:(NSDictionary *)userInfo {
+- (void)carbonHotkeyPressed:(NSDictionary *)userInfo siblings:(NSArray<iTermHotKey *> *)siblings {
     if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
         return;
     }
     
-    [self hotKeyPressed];
+    [self hotKeyPressedWithSiblings:siblings];
 }
 
 @end

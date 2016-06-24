@@ -278,6 +278,16 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                                                       userInfo:nil];
 }
 
++ (void)setObjectsFromDictionary:(NSDictionary *)dictionary
+                       inProfile:(Profile *)profile
+                           model:(ProfileModel *)model {
+    [model setObjectsFromDictionary:dictionary inProfile:profile];
+    [model flush];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                        object:nil
+                                                      userInfo:nil];
+}
+
 + (id)defaultObjectForKey:(NSString *)key {
     id obj = [self defaultValueMap][key];
     if ([obj isKindOfClass:[NSNull class]]) {

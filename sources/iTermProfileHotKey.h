@@ -1,5 +1,6 @@
 #import "iTermBaseHotKey.h"
 #import "iTermWeakReference.h"
+#import "NSDictionary+iTerm.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
 
@@ -22,6 +23,11 @@
 
 // Is there a visible hotkey window right now?
 @property(nonatomic, readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
+
+// When the pressing of a hotkey causes a new window to be created, the window controller is stored
+// here temporarily before the window is fully created. This is used for finding siblings of such a
+// partially formed window so that when it becomes key its sibilings don't get hidden.
+@property(nonatomic, readonly) NSWindowController *windowControllerBeingBorn;
 
 @property(nonatomic, readonly) PseudoTerminal<iTermWeakReference> *windowController;
 

@@ -3,8 +3,10 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCarbonHotKeyController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
 
 static NSString *const kGUID = @"GUID";
@@ -12,15 +14,11 @@ static NSString *const kArrangement = @"Arrangement";
 
 @interface iTermProfileHotKey()
 @property(nonatomic, copy) NSString *profileGuid;
-
 @property(nonatomic, retain) NSDictionary *restorableState;
-
 @property(nonatomic, readwrite) BOOL rollingIn;
-
-@property(nonatomic, readwrite, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
-
 @property(nonatomic, retain) PseudoTerminal<iTermWeakReference> *windowController;
-
+@property(nonatomic) BOOL birthingWindow;
+@property(nonatomic, retain) NSWindowController *windowControllerBeingBorn;
 @end
 
 @implementation iTermProfileHotKey
@@ -36,20 +34,26 @@ static NSString *const kArrangement = @"Arrangement";
       charactersIgnoringModifiers:charactersIgnoringModifiers];
     if (self) {
         _profileGuid = [profile[KEY_GUID] copy];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(terminalWindowControllerCreated:)
+                                                     name:kTerminalWindowControllerWasCreatedNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_restorableState release];
     [_profileGuid release];
     [_windowController release];
+    [_windowControllerBeingBorn release];
     [super dealloc];
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p keycode=%@ modifiers=%x profile.name=%@ profile.guid=%@>",
-            [self class], self, @(self.keyCode), (int)self.modifiers, self.profile[KEY_NAME], self.profile[KEY_GUID]];
+    return [NSString stringWithFormat:@"<%@: %p keycode=%@ charactersIgnoringModifiers=%@ modifiers=%x profile.name=%@ profile.guid=%@ open=%@>",
+            [self class], self, @(self.keyCode), self.charactersIgnoringModifiers, (int)self.modifiers, self.profile[KEY_NAME], self.profile[KEY_GUID], @(self.isHotKeyWindowOpen)];
 }
 
 #pragma mark - APIs
@@ -152,14 +156,30 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+- (BOOL)isHotKeyWindowOpen {
+    return self.windowController.window.alphaValue > 0;
+}
+
 #pragma mark - Protected
 
-- (void)hotKeyPressed {
-    DLog(@"toggle window");
+- (void)hotKeyPressedWithSiblings:(NSArray<iTermHotKey *> *)siblings {
+    DLog(@"toggle window %@. siblings=%@", self, siblings);
+    BOOL allSiblingsOpen = [siblings allWithBlock:^BOOL(iTermHotKey *sibling) {
+        if ([sibling.target isKindOfClass:[self class]]) {
+            iTermProfileHotKey *other = sibling.target;
+            return other.isHotKeyWindowOpen;
+        } else {
+            return NO;
+        }
+    }];
     if (self.windowController.weaklyReferencedObject) {
         DLog(@"already have a hotkey window created");
         if (self.windowController.window.alphaValue == 1) {
             DLog(@"hotkey window opaque");
+            if (!allSiblingsOpen) {
+                DLog(@"Not all siblings open. Doing nothing.");
+                return;
+            }
             [self hideHotKeyWindow];
         } else {
             DLog(@"hotkey window not opaque");
@@ -209,6 +229,8 @@ static NSString *const kArrangement = @"Arrangement";
         replacement[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
         hotkeyProfile = replacement;
     }
+    [self.delegate hotKeyWillCreateWindow:self];
+    self.birthingWindow = YES;
     PTYSession *session = [[iTermController sharedInstance] launchBookmark:hotkeyProfile
                                                                 inTerminal:nil
                                                                    withURL:nil
@@ -217,11 +239,15 @@ static NSString *const kArrangement = @"Arrangement";
                                                                canActivate:YES
                                                                    command:nil
                                                                      block:nil];
+    self.birthingWindow = NO;
+
+    [self.delegate hotKeyDidCreateWindow:self];
+    PseudoTerminal *result = nil;
     if (session) {
-        return [[iTermController sharedInstance] terminalWithSession:session];
-    } else {
-        return nil;
+        result = [[iTermController sharedInstance] terminalWithSession:session];
     }
+    self.windowControllerBeingBorn = nil;
+    return result;
 }
 
 - (void)rollInFinished {
@@ -307,6 +333,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)windowWillClose {
+    self.windowController = nil;
     self.restorableState = nil;
 }
 
@@ -324,6 +351,14 @@ static NSString *const kArrangement = @"Arrangement";
 
         // Restore hotkey window's status.
         self.windowController.isHotKeyWindow = YES;
+    }
+}
+
+#pragma mark - Notifications
+
+- (void)terminalWindowControllerCreated:(NSNotification *)notification {
+    if (self.birthingWindow) {
+        self.windowControllerBeingBorn = notification.object;
     }
 }
 

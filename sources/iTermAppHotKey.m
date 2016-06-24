@@ -6,9 +6,11 @@
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
+@class iTermHotKey;
+
 @implementation iTermAppHotKey
 
-- (void)hotKeyPressed {
+- (void)hotKeyPressedWithSiblings:(NSArray<iTermHotKey *> *)siblings {
     DLog(@"hotkey pressed");
 
     if ([NSApp isActive]) {

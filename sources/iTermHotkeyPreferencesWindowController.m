@@ -110,7 +110,6 @@
 
 - (iTermHotKeyDescriptor *)descriptor {
     return [iTermHotKeyDescriptor descriptorWithKeyCode:self.model.keyCode
-                                             characters:self.model.charactersIgnoringModifiers
                                               modifiers:self.model.modifiers];
 }
 
@@ -176,6 +175,9 @@
     _model.hotKeyAssigned = YES;
 
     [self modelDidChange];
+    NSString *identifier = [iTermKeyBindingMgr identifierForCharacterIgnoringModifiers:[event.charactersIgnoringModifiers firstCharacter]
+                                                                             modifiers:event.modifierFlags];
+    [view setStringValue:[iTermKeyBindingMgr formatKeyCombination:identifier]];
 }
 
 @end

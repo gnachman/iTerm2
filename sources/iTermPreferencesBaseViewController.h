@@ -60,6 +60,9 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 
 #pragma mark - Methods to override
 
+// Just a convenience method in the base class, but subclasses can use this to be "more atomic".
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary;
+
 // By default, this class uses iTermPreferences class methods to change settings. Override these
 // methods to use a different model.
 - (BOOL)boolForKey:(NSString *)key;

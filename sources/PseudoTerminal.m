@@ -82,6 +82,7 @@
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
+NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -662,6 +663,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 #endif
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
 }
 
 - (void)finishToolbeltInitialization {
@@ -2315,10 +2317,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[self retain] autorelease];
     
-    if ([self isHotKeyWindow]) {
-        [[iTermHotKeyController sharedInstance] hotKeyWindowWillClose:self];
-    }
-
     // This releases the last reference to self except for autorelease pools.
     [[iTermController sharedInstance] terminalWillClose:self];
 
@@ -2343,7 +2341,10 @@ ITERM_WEAKLY_REFERENCEABLE
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
 #endif
-    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:self];
+    if (!self.isHotKeyWindow) {
+        [[iTermHotKeyController sharedInstance] nonHotKeyWindowDidBecomeKey];
+    }
+    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:[[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self]];
 
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
@@ -2639,7 +2640,11 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindow:self];
+    NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
+    NSWindowController *newKeyWindowController = [[NSApp keyWindow] windowController];
+    if (![siblings containsObject:newKeyWindowController]) {
+        [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+    }
 
     [_contentView.tabBarControl setFlashing:NO];
     _contentView.tabBarControl.cmdPressed = NO;
@@ -2688,8 +2693,12 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindow:self];
-
+    NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
+    NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
+    if (![siblings containsObject:newMainWindowController]) {
+        [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+    }
+    
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];

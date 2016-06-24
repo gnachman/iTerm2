@@ -40,6 +40,7 @@
 
 @implementation iTermHotKeyController {
     NSMutableArray<iTermBaseHotKey *> *_hotKeys;
+    NSMutableArray<iTermProfileHotKey *> *_profileHotKeysBirthingWindows;
 }
 
 + (iTermHotKeyController *)sharedInstance {
@@ -59,6 +60,7 @@
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
         _hotKeys = [[NSMutableArray alloc] init];
+        _profileHotKeysBirthingWindows = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -67,6 +69,7 @@
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_hotKeys release];
     [_previousState release];
+    [_profileHotKeysBirthingWindows release];
     [super dealloc];
 }
 
@@ -98,12 +101,14 @@
 }
 
 - (void)addHotKey:(iTermBaseHotKey *)hotKey {
+    DLog(@"Add %@ from %@", hotKey, [NSThread callStackSymbols]);
     hotKey.delegate = self;
     [_hotKeys addObject:hotKey];
     [hotKey register];
 }
 
 - (void)removeHotKey:(iTermBaseHotKey *)hotKey {
+    DLog(@"Remove %@ from %@", hotKey, [NSThread callStackSymbols]);
     assert([_hotKeys containsObject:hotKey]);
     [_hotKeys removeObject:hotKey];
     [hotKey unregister];
@@ -122,19 +127,13 @@
 - (iTermProfileHotKey *)profileHotKeyForWindowController:(PseudoTerminal *)windowController {
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
-            if ([[hotkey windowController] weaklyReferencedObject] == windowController) {
+            if ([[hotkey windowController] weaklyReferencedObject] == windowController ||
+                [hotkey windowControllerBeingBorn] == windowController) {
                 return hotkey;
             }
         }
     }
     return nil;
-}
-
-- (void)hotKeyWindowWillClose:(PseudoTerminal *)windowController {
-    iTermProfileHotKey *hotKey = [self profileHotKeyForWindowController:windowController];
-    if (hotKey) {
-        [_hotKeys removeObject:hotKey];
-    }
 }
 
 - (void)hotkeyPressed:(NSEvent *)event {
@@ -173,27 +172,23 @@
     [self autoHideHotKeyWindows:self.hotKeyWindowControllers];
 }
 
-- (void)autoHideHotKeyWindowsExcept:(NSWindowController *)exception {
-    if ([exception isKindOfClass:[PseudoTerminal class]]) {
-        PseudoTerminal *term = (PseudoTerminal *)exception;
-        BOOL anyWindowRollingOut = [[self profileHotKeys] anyWithBlock:^BOOL(iTermProfileHotKey *anObject) {
-            return [anObject rollingOut];
-        }];
-        if (![term isHotKeyWindow] && !anyWindowRollingOut) {
-            // Going from hotkey window to non-hotkey window. Forget the previous state because
-            // there's no need to ever return to it now. This happens when navigating explicitly from
-            // a hotkey window to a non-hotkey terminal.
-            self.previousState = nil;
-        }
+- (void)nonHotKeyWindowDidBecomeKey {
+    BOOL anyWindowRollingOut = [[self profileHotKeys] anyWithBlock:^BOOL(iTermProfileHotKey *anObject) {
+        return [anObject rollingOut];
+    }];
+    if (!anyWindowRollingOut) {
+        // If there is previous state:
+        // Going from hotkey window to non-hotkey window. Forget the previous state because
+        // there's no need to ever return to it now. This happens when navigating explicitly from
+        // a hotkey window to a non-hotkey terminal.
+        self.previousState = nil;
     }
-
-    NSMutableArray *controllers = [[[self hotKeyWindowControllers] mutableCopy] autorelease];
-    [controllers removeObject:exception];
-    [self autoHideHotKeyWindows:controllers];
 }
 
-- (void)autoHideHotKeyWindow:(NSWindowController *)windowController {
-    [self autoHideHotKeyWindows:@[ windowController ]];
+- (void)autoHideHotKeyWindowsExcept:(NSArray<NSWindowController *> *)exceptions {
+    NSMutableArray *controllers = [[[self hotKeyWindowControllers] mutableCopy] autorelease];
+    [controllers removeObjectsInArray:exceptions];
+    [self autoHideHotKeyWindows:controllers];
 }
 
 - (void)autoHideHotKeyWindows:(NSArray<NSWindowController *> *)windowControllersToConsiderHiding {
@@ -237,13 +232,26 @@
             [iTermProfilePreferences stringForKey:KEY_HAS_HOTKEY inProfile:profileHotKey.profile]) {
             NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE
                                                                       inProfile:profileHotKey.profile];
-            NSString *characters = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS
-                                                               inProfile:profileHotKey.profile];
             NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS
                                                                                   inProfile:profileHotKey.profile];
             return [iTermHotKeyDescriptor descriptorWithKeyCode:keyCode
-                                                     characters:characters
                                                       modifiers:modifiers];
+        } else {
+            return nil;
+        }
+    }];
+}
+
+- (NSArray<PseudoTerminal *> *)siblingWindowControllersOf:(PseudoTerminal *)windowController {
+    iTermHotKeyDescriptor *referenceDescriptor = [[self profileHotKeyForWindowController:windowController] descriptor];
+    return [self.profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
+        if ([profileHotKey.descriptor isEqual:referenceDescriptor]) {
+            NSWindowController *windowController = profileHotKey.windowController.weaklyReferencedObject;
+            if (windowController) {
+                return windowController;
+            } else {
+                return profileHotKey.windowControllerBeingBorn;
+            }
         } else {
             return nil;
         }
@@ -253,24 +261,26 @@
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    PseudoTerminal *term = [self hotKeyWindow];
-    NSWindow *window = [term window];
-    // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
-    // another app key, leaving the hotkey window open underneath other windows.
-    if ([window isVisible] &&
-        window.isOnActiveSpace &&
-        ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
-        ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
-      DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
-        [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
-    }
-    if ([window isVisible] && window.isOnActiveSpace && [term fullScreen]) {
-        // Issue 4136: If you press the hotkey while in a fullscreen app, the
-        // dock stays up. Looks like the OS doesn't respect the window's
-        // presentation option when switching from a fullscreen app, so we have
-        // to toggle it after the switch is complete.
-        [term showMenuBar];
-        [term hideMenuBar];
+#warning Test this
+    for (PseudoTerminal *term in [self hotKeyWindowControllers]) {
+        NSWindow *window = [term window];
+        // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
+        // another app key, leaving the hotkey window open underneath other windows.
+        if ([window isVisible] &&
+            window.isOnActiveSpace &&
+            ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
+            ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
+          DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
+            [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
+        }
+        if ([window isVisible] && window.isOnActiveSpace && [term fullScreen]) {
+            // Issue 4136: If you press the hotkey while in a fullscreen app, the
+            // dock stays up. Looks like the OS doesn't respect the window's
+            // presentation option when switching from a fullscreen app, so we have
+            // to toggle it after the switch is complete.
+            [term showMenuBar];
+            [term hideMenuBar];
+        }
     }
 }
 
@@ -345,36 +355,19 @@
              [[iTermController sharedInstance] keyTerminalWindows]);
         return NO;
     }
-    
-//    if ([keyTerminalWindows anyWithBlock:^BOOL(PTYWindow *window) { return [window.windowController isHotKeyWindow]; }]) {
-//        DLog(@"A hotkey window is key");
-//        return NO;
-//    }
+
     return YES;
 }
 
 #pragma mark - Accessors
 
+// NOTE: This does not return window controllers that are still being born.
 - (NSArray<PseudoTerminal *> *)hotKeyWindowControllers {
     NSArray<iTermProfileHotKey *> *profileHotKeys = [self profileHotKeys];
     NSArray<PseudoTerminal *> *hotKeyWindowControllers = [profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
         return profileHotKey.windowController.weaklyReferencedObject;
     }];
     return hotKeyWindowControllers;
-}
-
-- (BOOL)isHotKeyWindowOpen {
-    return [[[self hotKeyWindow] window] alphaValue] > 0;
-}
-
-- (PseudoTerminal *)hotKeyWindow {
-    NSArray<PseudoTerminal *> *terminals = [[iTermController sharedInstance] terminals];
-    for (PseudoTerminal *term in terminals) {
-        if ([term isHotKeyWindow]) {
-            return term;
-        }
-    }
-    return nil;
 }
 
 - (Profile *)profile {
@@ -430,6 +423,18 @@
         DLog(@"Restoring the previous state");
         [self.previousState restore];
         self.previousState = nil;
+    }
+}
+
+- (void)hotKeyWillCreateWindow:(iTermBaseHotKey *)hotKey {
+    if ([hotKey isKindOfClass:[iTermProfileHotKey class]]) {
+        [_profileHotKeysBirthingWindows addObject:(iTermProfileHotKey *)hotKey];
+    }
+}
+
+- (void)hotKeyDidCreateWindow:(iTermBaseHotKey *)hotKey {
+    if ([hotKey isKindOfClass:[iTermProfileHotKey class]]) {
+        [_profileHotKeysBirthingWindows removeLastObject];
     }
 }
 

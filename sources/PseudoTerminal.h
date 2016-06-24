@@ -21,6 +21,9 @@
 @class iTermController;
 @class TmuxController;
 
+// Posted when a new window controller is created. It's not ready to use at this point, though.
+extern NSString *const kTerminalWindowControllerWasCreatedNotification;
+
 extern NSString *const kCurrentSessionDidChange;
 // The key used for a window's arrangement in encoding restorable state.
 extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;

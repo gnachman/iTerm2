@@ -2,7 +2,7 @@
 
 #import "DebugLogging.h"
 #import "iTermShortcutInputView.h"
-
+#import "NSArray+iTerm.h"
 #import <AppKit/AppKit.h>
 
 NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
@@ -53,18 +53,6 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
 
 @end
 
-@interface iTermHotKey : NSObject
-@property(nonatomic, readonly) id target;
-@property(nonatomic, readonly) SEL selector;
-@property(nonatomic, readonly) NSDictionary *userData;
-@property(nonatomic, readonly) EventHotKeyRef eventHotKey;
-@property(nonatomic, readonly) EventHotKeyID hotKeyID;
-@property(nonatomic, readonly) NSUInteger keyCode;
-@property(nonatomic, readonly) UInt32 modifiers;
-@property(nonatomic, readonly) NSString *characters;
-@property(nonatomic, readonly) NSString *charactersIgnoringModifiers;
-@end
-
 @implementation iTermHotKey
 
 - (instancetype)initWithEventHotKey:(EventHotKeyRef)eventHotKey
@@ -97,6 +85,10 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
     [_characters release];
     [_charactersIgnoringModifiers release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p target=%@>", NSStringFromClass([self class]), self, _target];
 }
 
 - (BOOL)hotKeyIDEquals:(EventHotKeyID)hotKeyID {
@@ -185,13 +177,16 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
                                                            userData:userData
                                                              target:target
                                                            selector:selector] autorelease];
+    DLog(@"Register %@", hotkey);
     [_hotKeys addObject:hotkey];
-    
+    DLog(@"Hotkeys are now:\n%@", _hotKeys);
     return hotkey;
 }
 
 - (void)unregisterHotKey:(iTermHotKey *)hotKey {
+    DLog(@"Unregister %@", hotKey);
     [_hotKeys removeObject:hotKey];
+    DLog(@"Hotkeys are now:\n%@", _hotKeys);
     if ([[self hotKeysWithID:hotKey.hotKeyID] count] == 0) {
         UnregisterEventHotKey(hotKey.eventHotKey);
     }
@@ -258,7 +253,8 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
     }
 
     NSArray<iTermHotKey *> *hotkeys = [self hotKeysWithID:hotKeyID];
-
+    DLog(@"You pressed a hotkey. The registered events for this are:\n%@", hotkeys);
+    
     NSWindow *keyWindow = [NSApp keyWindow];
     NSResponder *firstResponder = [keyWindow firstResponder];
     if ([NSApp isActive] &&
@@ -287,7 +283,9 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
     }
 
     for (iTermHotKey *hotkey in hotkeys) {
-        [hotkey.target performSelector:hotkey.selector withObject:hotkey.userData];
+        [hotkey.target performSelector:hotkey.selector
+                            withObject:hotkey.userData
+                            withObject:[hotkeys arrayByRemovingObject:hotkey]];
     }
 
     return hotkeys.count > 0;

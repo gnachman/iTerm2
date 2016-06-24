@@ -102,6 +102,12 @@
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
+        iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
+        if (shortcutView) {
+            [shortcutView handleShortcutEvent:event];
+            return;
+        }
+
         const NSUInteger allModifiers =
             (NSShiftKeyMask | NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask);
         if (([event modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
@@ -124,11 +130,8 @@
                 return;
             }
         }
-        iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
-        if (shortcutView) {
-            [shortcutView handleShortcutEvent:event];
-            return;
-        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+
+        if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];

@@ -92,10 +92,16 @@
 - (void)updateRegistrationForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
     NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
+    NSString *charactersIgnoringModifiers = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS inProfile:profile];
     NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
     iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
 
-    if (hotKey.keyCode == keyCode && hotKey.modifiers == modifiers) {
+    // It's important to detect changes to charactersIgnoringModifiers because if it's not up-to-date
+    // in the carbon hotkey then keypresses while a shortcut input field is first responder will send
+    // the wrong 'characters' field to it.
+    if (hotKey.keyCode == keyCode &&
+        hotKey.modifiers == modifiers &&
+        [hotKey.charactersIgnoringModifiers isEqualToString:charactersIgnoringModifiers]) {
         // No change
         return;
     }
@@ -104,6 +110,7 @@
     NSLog(@"Update registration for %@", hotKey);
     [hotKey unregister];
     hotKey.keyCode = keyCode;
+    hotKey.charactersIgnoringModifiers = charactersIgnoringModifiers;
     hotKey.modifiers = modifiers;
     [hotKey register];
 }

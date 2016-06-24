@@ -68,6 +68,12 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 #pragma mark - Methods to override
 
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [self setObject:obj forKey:key];
+    }];
+}
+
 - (BOOL)boolForKey:(NSString *)key {
     return [iTermPreferences boolForKey:key];
 }
