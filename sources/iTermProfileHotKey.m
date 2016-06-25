@@ -96,13 +96,18 @@ static NSString *const kArrangement = @"Arrangement";
     [NSApp activateIgnoringOtherApps:YES];
     [self.windowController.window makeKeyAndOrderFront:nil];
     
-    [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
-    [[NSAnimationContext currentContext] setCompletionHandler:^{
+    if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
+        [NSAnimationContext beginGrouping];
+        [[NSAnimationContext currentContext] setDuration:0.25];
+        [[NSAnimationContext currentContext] setCompletionHandler:^{
+            [self rollInFinished];
+        }];
+        [[self.windowController.window animator] setAlphaValue:1];
+        [NSAnimationContext endGrouping];
+    } else {
+        self.windowController.window.alphaValue = 1;
         [self rollInFinished];
-    }];
-    [[self.windowController.window animator] setAlphaValue:1];
-    [NSAnimationContext endGrouping];
+    }
 }
 
 - (void)rollOut {
@@ -120,13 +125,18 @@ static NSString *const kArrangement = @"Arrangement";
 
     _rollingOut = YES;
 
-    [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
-    [[NSAnimationContext currentContext] setCompletionHandler:^{
+    if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
+        [NSAnimationContext beginGrouping];
+        [[NSAnimationContext currentContext] setDuration:0.25];
+        [[NSAnimationContext currentContext] setCompletionHandler:^{
+            [self didFinishRollingOut];
+        }];
+        self.windowController.window.animator.alphaValue = 0;
+        [NSAnimationContext endGrouping];
+    } else {
+        self.windowController.window.alphaValue = 0;
         [self didFinishRollingOut];
-    }];
-    self.windowController.window.animator.alphaValue = 0;
-    [NSAnimationContext endGrouping];
+    }
 }
 
 - (void)saveHotKeyWindowState {
