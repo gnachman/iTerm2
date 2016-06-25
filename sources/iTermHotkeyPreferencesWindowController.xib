@@ -63,9 +63,9 @@
                         </textFieldCell>
                     </textField>
                     <button id="T3p-0Y-eeA">
-                        <rect key="frame" x="212" y="178" width="324" height="18"/>
+                        <rect key="frame" x="212" y="178" width="242" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Auto-hide the Hotkey Window when it loses focus" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3jk-f9-QFs">
+                        <buttonCell key="cell" type="check" title="Auto-hide on loss of keyboard focus" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3jk-f9-QFs">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -74,9 +74,9 @@
                         </connections>
                     </button>
                     <button id="6tA-bg-olR">
-                        <rect key="frame" x="212" y="158" width="316" height="18"/>
+                        <rect key="frame" x="212" y="158" width="258" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Show when iTerm2 is activated after auto-hiding" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="mrJ-OA-dYl">
+                        <buttonCell key="cell" type="check" title="Automatically reopen on app activation" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="mrJ-OA-dYl">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -96,9 +96,9 @@
                         </connections>
                     </button>
                     <button id="roD-me-xYz">
-                        <rect key="frame" x="213" y="104" width="222" height="18"/>
+                        <rect key="frame" x="213" y="104" width="176" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="radio" title="Do not show this Hotkey Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="EOt-Jx-9Xl">
+                        <buttonCell key="cell" type="radio" title="Don’t do anything special" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="EOt-Jx-9Xl">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -107,9 +107,9 @@
                         </connections>
                     </button>
                     <button id="siA-bI-HmC">
-                        <rect key="frame" x="213" y="82" width="224" height="18"/>
+                        <rect key="frame" x="213" y="82" width="180" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="radio" title="Always show this Hotkey Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Hhf-xq-TzE">
+                        <buttonCell key="cell" type="radio" title="Show this Hotkey Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Hhf-xq-TzE">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>

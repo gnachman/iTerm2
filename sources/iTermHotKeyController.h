@@ -62,4 +62,7 @@
 - (NSArray<iTermHotKeyDescriptor *> *)descriptorsForProfileHotKeysExcept:(Profile *)profile;
 - (NSArray<PseudoTerminal *> *)siblingWindowControllersOf:(PseudoTerminal *)windowController;
 
+// Returns YES if an action as taken.
+- (BOOL)dockIconClicked;
+
 @end

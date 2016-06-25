@@ -270,6 +270,43 @@
     }];
 }
 
+- (BOOL)dockIconClicked {
+    __block BOOL handled = NO;
+    if (self.visibleWindowControllers.count > 0) {
+        [self.profileHotKeys enumerateObjectsUsingBlock:^(iTermProfileHotKey  *_Nonnull profileHotKey,
+                                                          NSUInteger idx,
+                                                          BOOL *_Nonnull stop) {
+            if (profileHotKey.hotKeyWindowOpen) {
+                [profileHotKey hideHotKeyWindowAnimated:YES suppressHideApp:NO];
+                handled = YES;
+            }
+        }];
+    } else {
+        NSUInteger numberOfTerminalWindowsOpen = [[[NSApp orderedWindows] filteredArrayUsingBlock:^BOOL(NSWindow *window) {
+            return [window.windowController isKindOfClass:[PseudoTerminal class]] && [window isVisible];
+        }] count];
+        [self.profileHotKeys enumerateObjectsUsingBlock:^(iTermProfileHotKey  *_Nonnull profileHotKey,
+                                                          NSUInteger idx,
+                                                          BOOL *_Nonnull stop) {
+            switch ([iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_DOCK_CLICK_ACTION inProfile:profileHotKey.profile]) {
+                case iTermHotKeyDockPreferenceDoNotShow:
+                    break;
+                case iTermHotKeyDockPreferenceAlwaysShow:
+                    [profileHotKey showHotKeyWindow];
+                    handled = YES;
+                    break;
+                case iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen:
+                    if (numberOfTerminalWindowsOpen == 0) {
+                        [profileHotKey showHotKeyWindow];
+                        handled = YES;
+                    }
+                    break;
+            }
+        }];
+    }
+    return handled;
+}
+
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {

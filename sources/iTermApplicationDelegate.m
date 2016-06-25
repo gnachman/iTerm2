@@ -697,31 +697,10 @@ static BOOL hasBecomeActive = NO;
     return quittingBecauseLastWindowClosed_;
 }
 
+// User clicked on the dock icon.
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication
                     hasVisibleWindows:(BOOL)flag {
-#warning Migrate this to the new multi-hotkey infra
-    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
-        [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
-        // The hotkey window is configured. If any is open, close all. If all are closed, open all.
-        
-        iTermHotKeyController *hotkeyController = [iTermHotKeyController sharedInstance];
-        NSArray<PseudoTerminal *> *visibleHotKeyWindowControllers = hotkeyController.visibleWindowControllers;
-        BOOL shouldHandle = YES;
-        if (visibleHotKeyWindowControllers.count) {
-            for (PseudoTerminal *windowController in visibleHotKeyWindowControllers) {
-                iTermProfileHotKey *hotKey = [hotkeyController profileHotKeyForWindowController:windowController];
-                [hotKey hideHotKeyWindowAnimated:YES suppressHideApp:NO];
-            }
-            shouldHandle = NO;
-        } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
-            for (iTermProfileHotKey *hotKey in hotkeyController.profileHotKeys) {
-                [hotkeyController showWindowForProfileHotKey:hotKey];
-            }
-            shouldHandle = NO;
-        }
-        return shouldHandle;
-    }
-    return YES;
+    return ![[iTermHotKeyController sharedInstance] dockIconClicked];
 }
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
