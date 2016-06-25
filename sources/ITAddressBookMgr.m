@@ -31,6 +31,7 @@
 #import "iTermDynamicProfileManager.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermHotKeyMigrationHelper.h"
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -136,6 +137,7 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
             [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
         }
         
+        [[iTermHotKeyMigrationHelper sharedInstance] migrateSingleHotkeyToMulti];
         [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 

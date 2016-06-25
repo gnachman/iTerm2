@@ -147,6 +147,15 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+- (void)setLegacyState:(NSDictionary *)state {
+    if (self.profileGuid && state) {
+        self.restorableState = @{ kGUID: self.profileGuid,
+                                  kArrangement: state };
+    } else {
+        DLog(@"Not setting legacy state. profileGuid=%@, state=%@", self.profileGuid, state);
+    }
+}
+
 - (void)loadRestorableStateFromArray:(NSArray *)states {
     for (NSDictionary *state in states) {
         if ([state[kGUID] isEqualToString:self.profileGuid]) {

@@ -1559,6 +1559,22 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (NSString *)stringByEscapingForJSON {
+    // Escape backslash and " with unicode literals.
+    NSString *escaped =
+	[[self stringByReplacingOccurrencesOfString:@"\\" withString:@"\\u005c"]
+               stringByReplacingOccurrencesOfString:@"\"" withString:@"\\u0022"];
+    return [NSString stringWithFormat:@"\"%@\"", escaped];
+}
+
+- (NSString *)stringByEscapingForXML {
+    return [[[[[self stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"]
+                     stringByReplacingOccurrencesOfString:@"\"" withString:@"&quot;"]
+                     stringByReplacingOccurrencesOfString:@"'" withString:@"&#39;"]
+                     stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"]
+                     stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -256,6 +256,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 }
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
+#warning Migrate this LSUI safety valve to thew new infra
     NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
     NSArray *interestingKeys = @[ kPreferenceKeyHotkeyEnabled,
                                   kPreferenceKeyHotKeyTogglesWindow,

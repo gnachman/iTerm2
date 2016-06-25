@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "VT100GridTypes.h"
 
-@interface NSDictionary (iTerm)
+@interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
 + (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord;
 - (VT100GridCoord)gridCoord;
@@ -39,6 +39,9 @@
 - (NSColor *)colorValueWithDefaultAlpha:(CGFloat)alpha;
 
 - (NSDictionary *)dictionaryByRemovingNullValues;
+- (NSDictionary *)dictionaryBySettingObject:(ObjectType)object forKey:(KeyType)key;
+
+- (NSData *)propertyListData;
 
 @end
 

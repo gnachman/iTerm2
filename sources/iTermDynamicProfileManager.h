@@ -7,10 +7,23 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ProfileModel.h"
+
+typedef NS_ENUM(NSUInteger, iTermDynamicProfileFileType) {
+    kDynamicProfileFileTypeJSON,
+    kDynamicProfileFileTypePropertyList,
+};
 
 @interface iTermDynamicProfileManager : NSObject
 
 + (instancetype)sharedInstance;
+
+// Reads profiles from a dyamic profiles file.
+- (NSArray<Profile *> *)profilesInFile:(NSString *)filename
+                              fileType:(iTermDynamicProfileFileType *)fileType;
+
+// Returns a JSON/Plist root element for a dynamic profiles file that contains `profiles`.
+- (NSDictionary *)dictionaryForProfiles:(NSArray<Profile *> *)profiles;
 
 // Load the profiles from |filename| and add valid profiles into |profiles|.
 // Add their guids to |guids|.

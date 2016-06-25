@@ -22,6 +22,7 @@
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermHotKeyController.h"
+#import "iTermHotKeyMigrationHelper.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPasswordManagerWindowController.h"
@@ -1770,10 +1771,16 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *guid = arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID];
     if (isHotkeyWindow) {
         if (!guid) {
-            // Something went wrong and we don't know the GUID. Or it's an upgrade and we're screwing
-            // the user.
-#warning TODO: Don't screw the user. Migrate to the new arrangement.
-            return nil;
+            // Something went wrong and we don't know the GUID. Or you just upgraded and a GUID wasn't
+            // saved because it's new.
+            if ([[iTermHotKeyMigrationHelper sharedInstance] didMigration] && [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 1) {
+                iTermProfileHotKey *profileHotKey = [[[iTermHotKeyController sharedInstance] profileHotKeys] firstObject];
+                guid = profileHotKey.profile[KEY_GUID];
+                DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. Guessing that it's the profile named %@ because there is only one hotkey profile", profileHotKey.profile[KEY_NAME]);
+            } else {
+                DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. There is more than one hotkey profile so I give up.");
+                return nil;
+            }
         }
         BOOL foundHotKey = NO;
         for (iTermProfileHotKey *hotKey in [[iTermHotKeyController sharedInstance] profileHotKeys]) {

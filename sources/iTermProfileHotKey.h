@@ -53,7 +53,6 @@
 // want to restore a defunct session.
 - (void)windowWillClose;
 
-
 @end
 
 @interface iTermProfileHotKey(Internal)
@@ -62,5 +61,6 @@
 - (void)showHotKeyWindow;
 - (void)saveHotKeyWindowState;
 - (void)loadRestorableStateFromArray:(NSArray *)states;
+- (void)setLegacyState:(NSDictionary *)state;
 
 @end

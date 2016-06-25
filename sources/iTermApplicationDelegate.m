@@ -699,6 +699,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication
                     hasVisibleWindows:(BOOL)flag {
+#warning Migrate this to the new multi-hotkey infra
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
         // The hotkey window is configured. If any is open, close all. If all are closed, open all.
@@ -1392,12 +1393,19 @@ static BOOL hasBecomeActive = NO;
         ScreenCharDecodeRestorableState(screenCharState);
     }
 
-    NSArray *hotkeyWindowsStates = [coder decodeObjectForKey:kHotkeyWindowsRestorableStates];
-    if (hotkeyWindowsStates &&
-        [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        // We have to create the hotkey window now because we need to attach to servers before
-        // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-        [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
+        NSArray *hotkeyWindowsStates = [coder decodeObjectForKey:kHotkeyWindowsRestorableStates];
+        if (hotkeyWindowsStates) {
+            // We have to create the hotkey window now because we need to attach to servers before
+            // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+            [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
+        } else {
+            // Restore hotkey window from pre-3.1 version.
+            NSDictionary *legacyState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
+            if (legacyState) {
+                [[iTermHotKeyController sharedInstance] createHiddenWindowFromLegacyRestorableState:legacyState];
+            }
+        }
     }
 
 #warning TODO: Handle migration from deprecated single-state

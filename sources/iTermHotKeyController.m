@@ -155,6 +155,18 @@
     }
 }
 
+- (void)createHiddenWindowFromLegacyRestorableState:(NSDictionary *)legacyState {
+    for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
+        if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
+            iTermProfileHotKey *profileHotKey = hotkey;
+            [profileHotKey setLegacyState:legacyState];
+            [profileHotKey createWindow];
+            [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
+            break;
+        }
+    }
+}
+
 - (NSArray *)restorableStates {
     NSMutableArray *array = [NSMutableArray array];
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {

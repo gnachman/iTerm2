@@ -8,6 +8,7 @@
 
 #import "NSDictionary+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 
 static NSString *const kGridCoordXKey = @"x";
 static NSString *const kGridCoordYKey = @"y";
@@ -150,6 +151,12 @@ static NSString *const kHotKeyModifiers = @"modifiers";
     return temp;
 }
 
+- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(id)key {
+    NSMutableDictionary *temp = [self mutableCopy];
+    temp[key] = object;
+    return temp;
+}
+
 + (NSDictionary *)descriptorWithKeyCode:(NSUInteger)keyCode
                               modifiers:(NSEventModifierFlags)modifiers {
     return @{ kHotKeyKeyCode: @(keyCode),
@@ -162,6 +169,14 @@ static NSString *const kHotKeyModifiers = @"modifiers";
 
 - (NSEventModifierFlags)hotKeyModifiers {
     return [self[kHotKeyModifiers] unsignedIntegerValue];
+}
+
+- (NSData *)propertyListData {
+    NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
+    [self writeToFile:filename atomically:NO];
+    NSData *data = [NSData dataWithContentsOfFile:filename];
+    [[NSFileManager defaultManager] removeItemAtPath:filename error:nil];
+    return data;
 }
 
 @end

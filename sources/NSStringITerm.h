@@ -229,6 +229,13 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Stick punctuation (should be a comma or a period) at the end, placing it
 // before the terminal quotation mark if needed.
 - (NSString *)stringByInsertingTerminalPunctuation:(NSString *)punctuation;
+
+// Escape special characters and wrap result in quotes.
+- (NSString *)stringByEscapingForJSON;
+
+// Escape special characters.
+- (NSString *)stringByEscapingForXML;
+
 @end
 
 @interface NSMutableString (iTerm)

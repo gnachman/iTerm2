@@ -18,8 +18,8 @@
 @property(nonatomic, readonly) NSArray<Profile *> *hotKeyWindowProfiles;
 @property(nonatomic, readonly) NSArray<PseudoTerminal *> *visibleWindowControllers;
 @property(nonatomic, readonly) NSArray<iTermProfileHotKey *> *profileHotKeys;
-
 @property(nonatomic, readonly) PseudoTerminal *topMostVisibleHotKeyWindowController;
+@property(nonatomic, readonly) NSArray *restorableStates;
 
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;
@@ -45,7 +45,7 @@
 - (iTermProfileHotKey *)profileHotKeyForWindowController:(PseudoTerminal *)windowController;
 
 - (void)createHiddenWindowsFromRestorableStates:(NSArray *)states;
-- (NSArray *)restorableStates;
+- (void)createHiddenWindowFromLegacyRestorableState:(NSDictionary *)legacyState;
 
 // Auto hide all hotkey windows, if needed and possible.
 - (void)autoHideHotKeyWindows;

@@ -210,6 +210,7 @@
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
+#define KEY_DYNAMIC_PROFILE_FILENAME         @"Dynamic Profile Filename"
 
 // Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 extern const NSTimeInterval kMinimumAntiIdlePeriod;

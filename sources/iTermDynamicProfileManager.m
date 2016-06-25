@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSDictionary+iTerm.h"
 #import "NSDictionary+Profile.h"
 #import "NSFileManager+iTerm.h"
 #import "NSMutableDictionary+Profile.h"
@@ -120,18 +121,20 @@
     }
 }
 
-- (BOOL)loadDynamicProfilesFromFile:(NSString *)filename
-                          intoArray:(NSMutableArray *)profiles
-                              guids:(NSMutableSet *)guids {
+- (NSArray<Profile *> *)profilesInFile:(NSString *)filename fileType:(iTermDynamicProfileFileType *)fileType {
     DLog(@"Loading dynamic profiles from file %@", filename);
     // First, try xml and binary.
     NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:filename];
-    if (!dict) {
+    if (dict) {
+        if (fileType) {
+            *fileType = kDynamicProfileFileTypePropertyList;
+        }
+    } else {
         // Try JSON
         NSData *data = [NSData dataWithContentsOfFile:filename];
         if (!data) {
             ELog(@"Dynamic Profiles file %@ is unreadable", filename);
-            return NO;
+            return nil;
         }
         NSError *error = nil;
         dict = [NSJSONSerialization JSONObjectWithData:data
@@ -139,14 +142,19 @@
                                                  error:&error];
         if (!dict) {
             ELog(@"Dynamic Profiles file %@ doesn't contain a valid property list", filename);
-            return NO;
+            return nil;
+        }
+        if (fileType) {
+            *fileType = kDynamicProfileFileTypeJSON;
         }
     }
     NSArray *entries = dict[@"Profiles"];
     if (!entries) {
         ELog(@"Property list in %@ has no entries", entries);
-        return NO;
+        return nil;
     }
+    
+    NSMutableArray *profiles = [NSMutableArray array];
     for (Profile *profile in entries) {
         if (![profile[KEY_GUID] isKindOfClass:[NSString class]]) {
             ELog(@"Dynamic profile is missing the Guid field in file %@", filename);
@@ -161,11 +169,30 @@
                  profile[KEY_GUID]);
             continue;
         }
+        [profiles addObject:profile];
+    }
+    return profiles;
+}
+
+- (NSDictionary *)dictionaryForProfiles:(NSArray<Profile *> *)profiles {
+    return @{ @"Profiles": profiles };
+}
+
+- (BOOL)loadDynamicProfilesFromFile:(NSString *)filename
+                          intoArray:(NSMutableArray *)profiles
+                              guids:(NSMutableSet *)guids {
+    NSArray<Profile *> *allProfiles = [self profilesInFile:filename fileType:nil];
+    if (!allProfiles) {
+        return NO;
+    }
+    
+    for (Profile *profile in allProfiles) {
         if ([guids containsObject:profile[KEY_GUID]]) {
             ELog(@"Two dynamic profiles have the same guid: %@", profile[KEY_GUID]);
             continue;
         }
         DLog(@"Read profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
+        profile = [profile dictionaryBySettingObject:filename forKey:KEY_DYNAMIC_PROFILE_FILENAME];
         [profiles addObject:profile];
         [guids addObject:profile[KEY_GUID]];
     }
