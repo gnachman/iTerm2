@@ -888,7 +888,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (int)windowTypeForBookmark:(Profile *)aDict {
+- (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&

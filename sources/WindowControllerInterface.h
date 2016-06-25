@@ -1,6 +1,7 @@
 // Defines a protocol shared by PseudoTerminal and FakeWindow.
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 #import "ProfileModel.h"
 #import "PTYTabDelegate.h"
 #import "PTYWindow.h"
@@ -145,7 +146,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (BOOL)lionFullScreen;
 
 // Get the window type
-- (int)windowType;
+- (iTermWindowType)windowType;
 
 // Returns a new terminal at the given screen coordinate. The
 // "wasDraggedFromAnotherWindow_" flag is set on the returned window.

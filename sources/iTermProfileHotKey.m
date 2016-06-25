@@ -6,11 +6,15 @@
 #import "iTermCarbonHotKeyController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermRollAnimationWindow.h"
 #import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
+#import "SolidColorView.h"
+#import <QuartzCore/QuartzCore.h>
 
 static NSString *const kGUID = @"GUID";
 static NSString *const kArrangement = @"Arrangement";
+static const NSTimeInterval kAnimationDuration = 0.25;
 
 @interface iTermProfileHotKey()
 @property(nonatomic, copy) NSString *profileGuid;
@@ -89,6 +93,80 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+- (void)rollInAnimatingInDirection:(iTermAnimationDirection)direction {
+    iTermRollAnimationWindow *animationWindow = [[iTermRollAnimationWindow rollAnimationWindowForWindow:self.windowController.window] retain];
+    self.windowController.window.alphaValue = 0.01;
+    
+    const NSTimeInterval duration = kAnimationDuration;
+    [animationWindow animateInWithDirection:direction duration:duration completion:^() {
+        self.windowController.window.alphaValue = 1;
+        [self rollInFinished];
+        [animationWindow release];
+    }];
+}
+
+- (void)rollOutAnimatingInDirection:(iTermAnimationDirection)direction {
+    iTermRollAnimationWindow *animationWindow = [[iTermRollAnimationWindow rollAnimationWindowForWindow:self.windowController.window] retain];
+    self.windowController.window.alphaValue = 0.01;
+    
+    const NSTimeInterval duration = kAnimationDuration;
+    [animationWindow animateOutWithDirection:direction duration:duration completion:^() {
+        self.windowController.window.alphaValue = 0;
+        [self didFinishRollingOut];
+        [animationWindow release];
+    }];
+}
+
+- (void)fadeIn {
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [self rollInFinished];
+    }];
+    [[self.windowController.window animator] setAlphaValue:1];
+    [NSAnimationContext endGrouping];
+}
+
+- (void)fadeOut {
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [self didFinishRollingOut];
+    }];
+    self.windowController.window.animator.alphaValue = 0;
+    [NSAnimationContext endGrouping];
+}
+
+- (iTermAnimationDirection)animateInDirectionForWindowType:(iTermWindowType)windowType {
+    switch (windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PARTIAL:
+            return kAnimationDirectionDown;
+            break;
+            
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            return kAnimationDirectionRight;
+            break;
+            
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            return kAnimationDirectionLeft;
+            break;
+            
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            return kAnimationDirectionUp;
+            break;
+            
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            assert(false);
+    }
+}
+
 - (void)rollIn {
     DLog(@"Roll in [show] hotkey window");
 
@@ -97,13 +175,27 @@ static NSString *const kArrangement = @"Arrangement";
     [self.windowController.window makeKeyAndOrderFront:nil];
     
     if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
-        [NSAnimationContext beginGrouping];
-        [[NSAnimationContext currentContext] setDuration:0.25];
-        [[NSAnimationContext currentContext] setCompletionHandler:^{
-            [self rollInFinished];
-        }];
-        [[self.windowController.window animator] setAlphaValue:1];
-        [NSAnimationContext endGrouping];
+        switch (self.windowController.windowType) {
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+                [self rollInAnimatingInDirection:[self animateInDirectionForWindowType:self.windowController.windowType]];
+                break;
+                
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+                [self fadeIn];
+                break;
+                
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+                assert(false);
+        }
     } else {
         self.windowController.window.alphaValue = 1;
         [self rollInFinished];
@@ -126,13 +218,30 @@ static NSString *const kArrangement = @"Arrangement";
     _rollingOut = YES;
 
     if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
-        [NSAnimationContext beginGrouping];
-        [[NSAnimationContext currentContext] setDuration:0.25];
-        [[NSAnimationContext currentContext] setCompletionHandler:^{
-            [self didFinishRollingOut];
-        }];
-        self.windowController.window.animator.alphaValue = 0;
-        [NSAnimationContext endGrouping];
+        switch (self.windowController.windowType) {
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_BOTTOM_PARTIAL: {
+                iTermAnimationDirection inDirection = [self animateInDirectionForWindowType:self.windowController.windowType];
+                iTermAnimationDirection outDireciton = iTermAnimationDirectionOpposite(inDirection);
+                [self rollOutAnimatingInDirection:outDireciton];
+                break;
+            }
+                
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+                [self fadeOut];
+                break;
+                
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+                assert(false);
+        }
     } else {
         self.windowController.window.alphaValue = 0;
         [self didFinishRollingOut];

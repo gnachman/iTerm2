@@ -2118,6 +2118,8 @@
 		A6EFF21D1D1CA9F800806EEF /* NSLocale+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */; };
 		A6EFF2201D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF21E1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h */; };
 		A6EFF2211D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */; };
+		A6EFF22D1D1F39B600806EEF /* iTermRollAnimationWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */; };
+		A6EFF22E1D1F39B600806EEF /* iTermRollAnimationWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
@@ -3430,6 +3432,8 @@
 		A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSLocale+iTerm.m"; sourceTree = "<group>"; };
 		A6EFF21E1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotKeyMigrationHelper.h; sourceTree = "<group>"; };
 		A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotKeyMigrationHelper.m; sourceTree = "<group>"; };
+		A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRollAnimationWindow.h; sourceTree = "<group>"; };
+		A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRollAnimationWindow.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
@@ -5258,6 +5262,8 @@
 				A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */,
 				A67778B21CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h */,
 				A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */,
+				A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */,
+				A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */,
 			);
 			name = Hotkey;
 			sourceTree = "<group>";
@@ -6064,6 +6070,7 @@
 				A66DB83A1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h in Headers */,
 				A6FEA2681CF2C83700376F28 /* iTermPreviousState.h in Headers */,
 				A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */,
+				A6EFF22D1D1F39B600806EEF /* iTermRollAnimationWindow.h in Headers */,
 				A6FEA2781CF2CBCC00376F28 /* iTermAppHotKeyProvider.h in Headers */,
 				A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
@@ -7711,6 +7718,7 @@
 				A6BDB0BC1B470CBE00F511E6 /* iTermRootTerminalView.m in Sources */,
 				A6C762B71B45C52B00E3C992 /* NSFont+iTerm.m in Sources */,
 				A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */,
+				A6EFF22E1D1F39B600806EEF /* iTermRollAnimationWindow.m in Sources */,
 				A6C7632D1B45C52B00E3C992 /* ThreeFingerTapGestureRecognizer.m in Sources */,
 				A6C762BC1B45C52B00E3C992 /* NSObject+iTerm.m in Sources */,
 				A6C762CE1B45C52B00E3C992 /* iTermKeyBindingMgr.m in Sources */,

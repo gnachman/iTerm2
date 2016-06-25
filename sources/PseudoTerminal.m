@@ -211,9 +211,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     int nextSessionRows_;
     int nextSessionColumns_;
 
-    int windowType_;
+    iTermWindowType windowType_;
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
-    int savedWindowType_;
+    iTermWindowType savedWindowType_;
     BOOL haveScreenPreference_;
     int screenNumber_;
 
@@ -1040,8 +1040,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self closeSession:aSession soft:YES];
 }
 
-- (int)windowType
-{
+- (iTermWindowType)windowType {
     return windowType_;
 }
 
@@ -5328,6 +5327,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_RIGHT_PARTIAL:
             frame.origin.x = self.screen.visibleFrameIgnoringHiddenDock.origin.x + self.screen.visibleFrameIgnoringHiddenDock.size.width - frame.size.width;
+            break;
+            
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_NO_TITLE_BAR:
             break;
     }
 

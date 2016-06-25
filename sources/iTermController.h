@@ -118,7 +118,7 @@
 
 - (void)dumpViewHierarchy;
 
-- (int)windowTypeForBookmark:(Profile*)aDict;
+- (iTermWindowType)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;
 
