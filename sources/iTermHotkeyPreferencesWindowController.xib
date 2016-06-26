@@ -74,9 +74,9 @@
                         </connections>
                     </button>
                     <button id="6tA-bg-olR">
-                        <rect key="frame" x="212" y="158" width="258" height="18"/>
+                        <rect key="frame" x="212" y="158" width="270" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Automatically reopen on app activation" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="mrJ-OA-dYl">
+                        <buttonCell key="cell" type="check" title="Automatically reopen on app reactivation" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="mrJ-OA-dYl">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
