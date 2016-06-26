@@ -13,6 +13,7 @@
                 <outlet property="_autoHide" destination="T3p-0Y-eeA" id="bOc-sP-EKr"/>
                 <outlet property="_doNotShowOnDockClick" destination="roD-me-xYz" id="BCa-6E-83g"/>
                 <outlet property="_duplicateWarning" destination="jS4-oY-dcH" id="9vK-Vu-MHf"/>
+                <outlet property="_duplicateWarningForModifierActivation" destination="0iX-Ti-IRV" id="fGG-14-RCh"/>
                 <outlet property="_explanation" destination="96X-7E-xgf" id="SiF-hd-Yuj"/>
                 <outlet property="_hotKey" destination="ko0-9s-c1g" id="Pnt-LJ-atE"/>
                 <outlet property="_modifierActivation" destination="rbU-t8-k9N" id="fh6-E4-2LJ"/>
@@ -27,10 +28,10 @@
         <window title="HotKey Window Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="J17-Oy-pHl" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="272" y="172" width="573" height="314"/>
+            <rect key="contentRect" x="272" y="172" width="597" height="314"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="Hz6-mo-xeY">
-                <rect key="frame" x="0.0" y="0.0" width="573" height="314"/>
+                <rect key="frame" x="0.0" y="0.0" width="597" height="314"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="0RI-Fh-yjL">
@@ -43,7 +44,7 @@
                         </textFieldCell>
                     </textField>
                     <textField verticalHuggingPriority="750" id="ko0-9s-c1g" customClass="iTermShortcutInputView">
-                        <rect key="frame" x="214" y="236" width="96" height="22"/>
+                        <rect key="frame" x="214" y="236" width="116" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="E8J-u2-HIs">
                             <font key="font" metaFont="system"/>
@@ -151,7 +152,7 @@
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" id="YEr-4l-tkF">
-                        <rect key="frame" x="500" y="13" width="59" height="32"/>
+                        <rect key="frame" x="524" y="13" width="59" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="UUQ-aq-rDa">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -165,7 +166,7 @@ DQ
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" id="TUb-CR-y4c">
-                        <rect key="frame" x="418" y="13" width="82" height="32"/>
+                        <rect key="frame" x="442" y="13" width="82" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OGS-mD-pmg">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -178,10 +179,10 @@ Gw
                             <action selector="cancel:" target="-2" id="zoh-ro-DNS"/>
                         </connections>
                     </button>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="jS4-oY-dcH">
-                        <rect key="frame" x="316" y="239" width="239" height="17"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="0iX-Ti-IRV">
+                        <rect key="frame" x="340" y="211" width="239" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ Another profile uses this hotkey" id="kMo-jN-Ngc">
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ Another profile uses this hotkey" id="mtg-a1-mt3">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -202,10 +203,22 @@ Gw
                                 </items>
                             </menu>
                         </popUpButtonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="-2" id="ERj-VU-TqQ"/>
+                        </connections>
                     </popUpButton>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="jS4-oY-dcH">
+                        <rect key="frame" x="340" y="239" width="239" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ Another profile uses this hotkey" id="kMo-jN-Ngc">
+                            <font key="font" metaFont="systemBold"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="624.5" y="491"/>
+            <point key="canvasLocation" x="636.5" y="491"/>
         </window>
     </objects>
 </document>

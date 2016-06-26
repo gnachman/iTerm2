@@ -47,6 +47,7 @@
     IBOutlet NSButton *_ok;
     IBOutlet NSTextField *_explanation;
     IBOutlet NSTextField *_duplicateWarning;
+    IBOutlet NSTextField *_duplicateWarningForModifierActivation;
 
     IBOutlet NSButton *_activateWithModifier;
     IBOutlet NSPopUpButton *_modifierActivation;
@@ -107,6 +108,7 @@
         button.enabled = self.model.hotKeyAssigned;
     }
     _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.hotKeyDescriptor];
+    _duplicateWarningForModifierActivation.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.modifierActivationDescriptor];
     _showAutoHiddenWindowOnAppActivation.enabled = (_autoHide.state == NSOnState);
     _modifierActivation.enabled = (_activateWithModifier.state == NSOnState);
 }
