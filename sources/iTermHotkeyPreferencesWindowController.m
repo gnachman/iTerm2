@@ -106,6 +106,7 @@
         button.enabled = self.model.hotKeyAssigned;
     }
     _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.descriptor];
+    _showAutoHiddenWindowOnAppActivation.enabled = (_autoHide.state == NSOnState);
 }
 
 - (iTermHotKeyDescriptor *)descriptor {

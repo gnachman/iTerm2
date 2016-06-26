@@ -66,7 +66,6 @@ iTermAnimationDirection iTermAnimationDirectionOpposite(iTermAnimationDirection 
 
     // Finish window initialization.
     [animationWindow makeKeyAndOrderFront:nil];
-    animationWindow.level = NSFloatingWindowLevel - 1;
     
     // Set up layer that will animate by setting its contents to the snapshot
     // and adding it as a sublayer.

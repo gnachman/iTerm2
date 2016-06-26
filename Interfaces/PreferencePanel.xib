@@ -2982,7 +2982,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="-39.5" y="-138"/>
+            <point key="canvasLocation" x="-29.5" y="648"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="578" height="533"/>

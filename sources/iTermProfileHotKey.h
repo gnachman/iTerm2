@@ -30,6 +30,7 @@
 @property(nonatomic, readonly) NSWindowController *windowControllerBeingBorn;
 
 @property(nonatomic, readonly) PseudoTerminal<iTermWeakReference> *windowController;
+@property(nonatomic) BOOL wasAutoHidden;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers

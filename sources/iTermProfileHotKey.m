@@ -169,7 +169,10 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (void)rollIn {
     DLog(@"Roll in [show] hotkey window");
-
+    if (_rollingIn) {
+        DLog(@"Already rolling in");
+        return;
+    }
     _rollingIn = YES;
     [NSApp activateIgnoringOtherApps:YES];
     [self.windowController.window makeKeyAndOrderFront:nil];
@@ -308,6 +311,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                 DLog(@"Not all siblings open. Doing nothing.");
                 return;
             }
+            self.wasAutoHidden = NO;
             [self hideHotKeyWindow];
         } else {
             DLog(@"hotkey window not opaque");
@@ -379,6 +383,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)rollInFinished {
+    DLog(@"Roll-in finished for %@", self);
     _rollingIn = NO;
     [self.windowController.window makeKeyAndOrderFront:nil];
     [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];

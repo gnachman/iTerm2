@@ -59,6 +59,10 @@
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
         _hotKeys = [[NSMutableArray alloc] init];
         _profileHotKeysBirthingWindows = [[NSMutableArray alloc] init];
     }
@@ -67,6 +71,7 @@
 
 - (void)dealloc {
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_hotKeys release];
     [_previousState release];
     [_profileHotKeysBirthingWindows release];
@@ -195,6 +200,13 @@
         // a hotkey window to a non-hotkey terminal.
         self.previousState = nil;
     }
+    
+    // Clear the `wasAutoHidden` flag if the auto-hide was not due to the application resigning
+    // active state. We can detect this because the only other way a window would auto-hide is if
+    // another window becomes key.
+    for (iTermProfileHotKey *profileHotKey in self.profileHotKeys) {
+        profileHotKey.wasAutoHidden = NO;
+    }
 }
 
 - (void)autoHideHotKeyWindowsExcept:(NSArray<NSWindowController *> *)exceptions {
@@ -235,6 +247,7 @@
         BOOL suppressHide =
             [[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]];
         [profileHotKey hideHotKeyWindowAnimated:YES suppressHideApp:suppressHide];
+        profileHotKey.wasAutoHidden = YES;
     }
 }
 
@@ -278,6 +291,7 @@
                                                           BOOL *_Nonnull stop) {
             if (profileHotKey.hotKeyWindowOpen) {
                 [profileHotKey hideHotKeyWindowAnimated:YES suppressHideApp:NO];
+                profileHotKey.wasAutoHidden = NO;
                 handled = YES;
             }
         }];
@@ -484,6 +498,16 @@
 - (void)hotKeyDidCreateWindow:(iTermBaseHotKey *)hotKey {
     if ([hotKey isKindOfClass:[iTermProfileHotKey class]]) {
         [_profileHotKeysBirthingWindows removeLastObject];
+    }
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    for (iTermProfileHotKey *profileHotKey in self.profileHotKeys) {
+        if (profileHotKey.windowController.weaklyReferencedObject &&
+            profileHotKey.wasAutoHidden &&
+            [iTermProfilePreferences boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION inProfile:profileHotKey.profile]) {
+            [profileHotKey showHotKeyWindow];
+        }
     }
 }
 
