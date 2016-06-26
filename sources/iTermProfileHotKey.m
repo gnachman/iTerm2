@@ -31,11 +31,16 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                       modifiers:(NSEventModifierFlags)modifiers
                      characters:(NSString *)characters
     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
+          hasModifierActivation:(BOOL)hasModifierActivation
+             modifierActivation:(iTermHotKeyModifierActivation)modifierActivation
                         profile:(Profile *)profile {
     self = [super initWithKeyCode:keyCode
                         modifiers:modifiers
                        characters:characters
-      charactersIgnoringModifiers:charactersIgnoringModifiers];
+      charactersIgnoringModifiers:charactersIgnoringModifiers
+            hasModifierActivation:hasModifierActivation
+               modifierActivation:modifierActivation];
+
     if (self) {
         _profileGuid = [profile[KEY_GUID] copy];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -56,8 +61,10 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p keycode=%@ charactersIgnoringModifiers=%@ modifiers=%x profile.name=%@ profile.guid=%@ open=%@>",
-            [self class], self, @(self.keyCode), self.charactersIgnoringModifiers, (int)self.modifiers, self.profile[KEY_NAME], self.profile[KEY_GUID], @(self.isHotKeyWindowOpen)];
+    return [NSString stringWithFormat:@"<%@: %p keycode=%@ charactersIgnoringModifiers=%@ modifiers=%x hasModAct=%@ modAct=%@ profile.name=%@ profile.guid=%@ open=%@>",
+            [self class], self, @(self.keyCode), self.charactersIgnoringModifiers, (int)self.modifiers,
+            @(self.hasModifierActivation), @(self.modifierActivation),
+            self.profile[KEY_NAME], self.profile[KEY_GUID], @(self.isHotKeyWindowOpen)];
 }
 
 #pragma mark - APIs
@@ -293,11 +300,11 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 #pragma mark - Protected
 
-- (void)hotKeyPressedWithSiblings:(NSArray<iTermHotKey *> *)siblings {
+- (void)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings {
     DLog(@"toggle window %@. siblings=%@", self, siblings);
-    BOOL allSiblingsOpen = [siblings allWithBlock:^BOOL(iTermHotKey *sibling) {
-        if ([sibling.target isKindOfClass:[self class]]) {
-            iTermProfileHotKey *other = sibling.target;
+    BOOL allSiblingsOpen = [siblings allWithBlock:^BOOL(iTermBaseHotKey *sibling) {
+        if ([sibling isKindOfClass:[iTermProfileHotKey class]]) {
+            iTermProfileHotKey *other = (iTermProfileHotKey *)sibling;
             return other.isHotKeyWindowOpen;
         } else {
             return NO;

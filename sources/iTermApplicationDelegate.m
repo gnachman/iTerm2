@@ -1386,8 +1386,6 @@ static BOOL hasBecomeActive = NO;
             }
         }
     }
-
-#warning TODO: Handle migration from deprecated single-state
 }
 
 // Debug logging

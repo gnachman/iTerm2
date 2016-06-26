@@ -25,7 +25,7 @@ static NSString *const kGridSizeHeight = @"Height";
 // Keys for hotkey dictionary
 static NSString *const kHotKeyKeyCode = @"keyCode";
 static NSString *const kHotKeyModifiers = @"modifiers";
-
+static NSString *const kHotKeyModifierActivation = @"modifier activation";
 
 @implementation NSDictionary (iTerm)
 
@@ -157,10 +157,26 @@ static NSString *const kHotKeyModifiers = @"modifiers";
     return temp;
 }
 
+- (NSData *)propertyListData {
+    NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
+    [self writeToFile:filename atomically:NO];
+    NSData *data = [NSData dataWithContentsOfFile:filename];
+    [[NSFileManager defaultManager] removeItemAtPath:filename error:nil];
+    return data;
+}
+
+@end
+
+@implementation NSDictionary(HotKey)
+
 + (NSDictionary *)descriptorWithKeyCode:(NSUInteger)keyCode
                               modifiers:(NSEventModifierFlags)modifiers {
     return @{ kHotKeyKeyCode: @(keyCode),
               kHotKeyModifiers: @(modifiers) };
+}
+
++ (iTermHotKeyDescriptor *)descriptorWithModifierActivation:(iTermHotKeyModifierActivation)activation {
+    return @{ kHotKeyModifierActivation: @(activation) };
 }
 
 - (NSUInteger)hotKeyKeyCode {
@@ -171,12 +187,8 @@ static NSString *const kHotKeyModifiers = @"modifiers";
     return [self[kHotKeyModifiers] unsignedIntegerValue];
 }
 
-- (NSData *)propertyListData {
-    NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
-    [self writeToFile:filename atomically:NO];
-    NSData *data = [NSData dataWithContentsOfFile:filename];
-    [[NSFileManager defaultManager] removeItemAtPath:filename error:nil];
-    return data;
+- (iTermHotKeyModifierActivation)hotKeyModifierActivation {
+    return [self[kHotKeyModifierActivation] unsignedIntegerValue];
 }
 
 @end

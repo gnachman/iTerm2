@@ -151,6 +151,15 @@ static BOOL gWaitingForFullScreen;
                                withObject:nil
                                afterDelay:0];
                     break;
+                    
+                case WINDOW_TYPE_LEFT:
+                case WINDOW_TYPE_RIGHT:
+                case WINDOW_TYPE_NORMAL:
+                case WINDOW_TYPE_LEFT_PARTIAL:
+                case WINDOW_TYPE_NO_TITLE_BAR:
+                case WINDOW_TYPE_RIGHT_PARTIAL:
+                case WINDOW_TYPE_LION_FULL_SCREEN:
+                    break;
             }
 
             DLog(@"Invoking completion handler");

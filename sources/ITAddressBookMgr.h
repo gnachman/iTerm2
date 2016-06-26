@@ -201,6 +201,8 @@
 #define KEY_HOTKEY_REOPEN_ON_ACTIVATION       @"HotKey Window Reopens On Activation"
 #define KEY_HOTKEY_ANIMATE                    @"HotKey Window Animates"
 #define KEY_HOTKEY_DOCK_CLICK_ACTION          @"HotKey Window Dock Click Action"
+#define KEY_HOTKEY_ACTIVATE_WITH_MODIFIER     @"HotKey Activated By Modifier"
+#define KEY_HOTKEY_MODIFIER_ACTIVATION        @"HotKey Modifier Activation"
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
@@ -260,6 +262,14 @@ typedef NS_ENUM(NSUInteger, iTermHotKeyDockPreference) {
     iTermHotKeyDockPreferenceDoNotShow,
     iTermHotKeyDockPreferenceAlwaysShow,
     iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen,
+};
+
+// Do not renumber. These are tag numbers and also saved in prefs.
+typedef NS_ENUM(NSUInteger, iTermHotKeyModifierActivation) {
+    iTermHotKeyModifierActivationControl = 0,
+    iTermHotKeyModifierActivationShift = 1,
+    iTermHotKeyModifierActivationOption = 2,
+    iTermHotKeyModifierActivationCommand = 3,
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>

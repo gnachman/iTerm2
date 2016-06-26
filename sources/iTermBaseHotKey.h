@@ -28,13 +28,20 @@
 @property(nonatomic, assign) NSEventModifierFlags modifiers;
 @property(nonatomic, copy) NSString *characters;
 @property(nonatomic, copy) NSString *charactersIgnoringModifiers;
-@property(nonatomic, readonly) iTermHotKeyDescriptor *descriptor;
+
+@property(nonatomic, assign) BOOL hasModifierActivation;
+@property(nonatomic, assign) iTermHotKeyModifierActivation modifierActivation;
+
+@property(nonatomic, readonly) iTermHotKeyDescriptor *hotKeyDescriptor;
+@property(nonatomic, readonly) iTermHotKeyDescriptor *modifierActivationDescriptor;
 @property(nonatomic, assign) id<iTermHotKeyDelegate> delegate;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers
                      characters:(NSString *)characters
-    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers NS_DESIGNATED_INITIALIZER;
+    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
+          hasModifierActivation:(BOOL)hasModifierActivation
+             modifierActivation:(iTermHotKeyModifierActivation)modifierActivation NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

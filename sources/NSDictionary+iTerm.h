@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 #import "VT100GridTypes.h"
 
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
@@ -53,6 +54,10 @@ typedef NSDictionary iTermHotKeyDescriptor;
 @interface NSDictionary(HotKey)
 + (iTermHotKeyDescriptor *)descriptorWithKeyCode:(NSUInteger)keyCode
                                        modifiers:(NSEventModifierFlags)modifiers;
++ (iTermHotKeyDescriptor *)descriptorWithModifierActivation:(iTermHotKeyModifierActivation)activation;
+
 - (NSUInteger)hotKeyKeyCode;
 - (NSEventModifierFlags)hotKeyModifiers;
+- (iTermHotKeyModifierActivation)hotKeyModifierActivation;
+
 @end

@@ -169,4 +169,14 @@
     }
 }
 
+- (void)removeObjectsPassingTest:(BOOL (^)(id anObject))block {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (block(obj)) {
+            [indexes addIndex:idx];
+        }
+    }];
+    [self removeObjectsAtIndexes:indexes];
+}
+
 @end

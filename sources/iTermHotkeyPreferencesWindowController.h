@@ -10,6 +10,9 @@
 @property(nonatomic, copy) NSString *charactersIgnoringModifiers;
 @property(nonatomic, assign) BOOL hotKeyAssigned;
 
+@property(nonatomic, assign) BOOL hasModifierActivation;
+@property(nonatomic, assign) iTermHotKeyModifierActivation modifierActivation;
+
 @property(nonatomic, assign) BOOL autoHide;
 @property(nonatomic, assign) BOOL showAutoHiddenWindowOnAppActivation;
 @property(nonatomic, assign) BOOL animate;

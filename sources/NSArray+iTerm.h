@@ -42,6 +42,7 @@
 
 @end
 
-@interface NSMutableArray (iTerm)
+@interface NSMutableArray<ObjectType> (iTerm)
 - (void)reverse;
+- (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
 @end

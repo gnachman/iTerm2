@@ -100,6 +100,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 - (IBAction)openHotKeyPanel:(id)sender {
     iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
+    model.hasModifierActivation = [self boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER];
+    model.modifierActivation = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION];
     model.keyCode = [self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE];
     model.modifiers = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS];
     model.characters = [self stringForKey:KEY_HOTKEY_CHARACTERS];

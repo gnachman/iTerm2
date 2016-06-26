@@ -65,15 +65,21 @@
 - (void)registerHotKeyForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
     NSLog(@"Register hotkey for guid %@", guid);
+    
+    BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
+    iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
     NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
     NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
     NSString *characters = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS inProfile:profile];
     NSString *charactersIgnoringModifiers = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS inProfile:profile];
-    iTermProfileHotKey *hotKey = [[[iTermProfileHotKey alloc] initWithKeyCode:keyCode
-                                                                    modifiers:modifiers
-                                                                   characters:characters
-                                                  charactersIgnoringModifiers:charactersIgnoringModifiers
-                                                                      profile:profile] autorelease];
+    iTermProfileHotKey *hotKey;
+    hotKey = [[[iTermProfileHotKey alloc] initWithKeyCode:keyCode
+                                                modifiers:modifiers
+                                               characters:characters
+                              charactersIgnoringModifiers:charactersIgnoringModifiers
+                                    hasModifierActivation:hasModifierActivation
+                                       modifierActivation:modifierActivation
+                                                  profile:profile] autorelease];
     NSLog(@"Registered %@", hotKey);
     _guidToHotKeyMap[guid] = hotKey;
     [[iTermHotKeyController sharedInstance] addHotKey:hotKey];
@@ -91,15 +97,21 @@
 
 - (void)updateRegistrationForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
+
+    BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
+    iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
     NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
     NSString *charactersIgnoringModifiers = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS inProfile:profile];
     NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
+
     iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
 
     // It's important to detect changes to charactersIgnoringModifiers because if it's not up-to-date
     // in the carbon hotkey then keypresses while a shortcut input field is first responder will send
     // the wrong 'characters' field to it.
-    if (hotKey.keyCode == keyCode &&
+    if (hotKey.hasModifierActivation == hasModifierActivation &&
+        hotKey.modifierActivation == modifierActivation &&
+        hotKey.keyCode == keyCode &&
         hotKey.modifiers == modifiers &&
         [hotKey.charactersIgnoringModifiers isEqualToString:charactersIgnoringModifiers]) {
         // No change
@@ -109,6 +121,8 @@
     // Update the keycode and modifier and re-register.
     NSLog(@"Update registration for %@", hotKey);
     [hotKey unregister];
+    hotKey.hasModifierActivation = hasModifierActivation;
+    hotKey.modifierActivation = modifierActivation;
     hotKey.keyCode = keyCode;
     hotKey.charactersIgnoringModifiers = charactersIgnoringModifiers;
     hotKey.modifiers = modifiers;

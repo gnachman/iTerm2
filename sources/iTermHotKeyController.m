@@ -1,6 +1,7 @@
 #import "iTermHotKeyController.h"
 
 #import "DebugLogging.h"
+#import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -252,15 +253,25 @@
 }
 
 - (NSArray<iTermHotKeyDescriptor *> *)descriptorsForProfileHotKeysExcept:(Profile *)profile {
-    return [self.profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
-        if (![profileHotKey.profile[KEY_GUID] isEqualToString:profile[KEY_GUID]] &&
-            [iTermProfilePreferences stringForKey:KEY_HAS_HOTKEY inProfile:profileHotKey.profile]) {
-            NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE
-                                                                      inProfile:profileHotKey.profile];
-            NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS
-                                                                                  inProfile:profileHotKey.profile];
-            return [iTermHotKeyDescriptor descriptorWithKeyCode:keyCode
-                                                      modifiers:modifiers];
+    return [self.profileHotKeys flatMapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
+        if (![profileHotKey.profile[KEY_GUID] isEqualToString:profile[KEY_GUID]]) {
+            NSMutableArray *result = [NSMutableArray array];
+            if ([iTermProfilePreferences stringForKey:KEY_HAS_HOTKEY inProfile:profileHotKey.profile]) {
+                NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE
+                                                                          inProfile:profileHotKey.profile];
+                NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS
+                                                                                      inProfile:profileHotKey.profile];
+                [result addObject:[iTermHotKeyDescriptor descriptorWithKeyCode:keyCode
+                                                                     modifiers:modifiers]];
+            }
+            
+            if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profileHotKey.profile]) {
+                iTermHotKeyModifierActivation modifierActivation =
+                    [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION
+                                                         inProfile:profileHotKey.profile];;
+                [result addObject:[iTermHotKeyDescriptor descriptorWithModifierActivation:modifierActivation]];
+            }
+            return result;
         } else {
             return nil;
         }
@@ -268,9 +279,11 @@
 }
 
 - (NSArray<PseudoTerminal *> *)siblingWindowControllersOf:(PseudoTerminal *)windowController {
-    iTermHotKeyDescriptor *referenceDescriptor = [[self profileHotKeyForWindowController:windowController] descriptor];
+    iTermHotKeyDescriptor *referenceHotKeyDescriptor = [[self profileHotKeyForWindowController:windowController] hotKeyDescriptor];
+    iTermHotKeyDescriptor *referenceModifierActivationDescriptor = [[self profileHotKeyForWindowController:windowController] modifierActivationDescriptor];
     return [self.profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
-        if ([profileHotKey.descriptor isEqual:referenceDescriptor]) {
+        if ([profileHotKey.hotKeyDescriptor isEqual:referenceHotKeyDescriptor] ||
+            [profileHotKey.modifierActivationDescriptor isEqual:referenceModifierActivationDescriptor]) {
             NSWindowController *windowController = profileHotKey.windowController.weaklyReferencedObject;
             if (windowController) {
                 return windowController;

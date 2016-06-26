@@ -23,19 +23,17 @@
 }
 
 - (NSDictionary<NSString *, id> *)dictionaryValue {
-    if (self.hotKeyAssigned) {
-        return @{ KEY_HOTKEY_KEY_CODE: @(self.keyCode),
-                  KEY_HOTKEY_CHARACTERS: self.characters ?: @"",
-                  KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS: self.charactersIgnoringModifiers ?: @"",
-                  KEY_HOTKEY_MODIFIER_FLAGS: @(self.modifiers),
-                  KEY_HOTKEY_AUTOHIDE: @(self.autoHide),
-                  KEY_HOTKEY_REOPEN_ON_ACTIVATION: @(self.showAutoHiddenWindowOnAppActivation),
-                  KEY_HOTKEY_ANIMATE: @(self.animate),
-                  KEY_HOTKEY_DOCK_CLICK_ACTION: @(self.dockPreference),
-                  KEY_HAS_HOTKEY: @YES };
-    } else {
-        return @{ KEY_HAS_HOTKEY: @NO };
-    }
+    return @{ KEY_HAS_HOTKEY: @(self.hotKeyAssigned),
+              KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @(self.hasModifierActivation),
+              KEY_HOTKEY_MODIFIER_ACTIVATION: @(self.modifierActivation),
+              KEY_HOTKEY_KEY_CODE: @(self.keyCode),
+              KEY_HOTKEY_CHARACTERS: self.characters ?: @"",
+              KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS: self.charactersIgnoringModifiers ?: @"",
+              KEY_HOTKEY_MODIFIER_FLAGS: @(self.modifiers),
+              KEY_HOTKEY_AUTOHIDE: @(self.autoHide),
+              KEY_HOTKEY_REOPEN_ON_ACTIVATION: @(self.showAutoHiddenWindowOnAppActivation),
+              KEY_HOTKEY_ANIMATE: @(self.animate),
+              KEY_HOTKEY_DOCK_CLICK_ACTION: @(self.dockPreference) };
 }
 
 @end
@@ -49,6 +47,9 @@
     IBOutlet NSButton *_ok;
     IBOutlet NSTextField *_explanation;
     IBOutlet NSTextField *_duplicateWarning;
+
+    IBOutlet NSButton *_activateWithModifier;
+    IBOutlet NSPopUpButton *_modifierActivation;
 
     // Check boxes
     IBOutlet NSButton *_autoHide;
@@ -105,16 +106,28 @@
     for (NSButton *button in buttons) {
         button.enabled = self.model.hotKeyAssigned;
     }
-    _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.descriptor];
+    _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.hotKeyDescriptor];
     _showAutoHiddenWindowOnAppActivation.enabled = (_autoHide.state == NSOnState);
+    _modifierActivation.enabled = (_activateWithModifier.state == NSOnState);
 }
 
-- (iTermHotKeyDescriptor *)descriptor {
+- (iTermHotKeyDescriptor *)hotKeyDescriptor {
     return [iTermHotKeyDescriptor descriptorWithKeyCode:self.model.keyCode
                                               modifiers:self.model.modifiers];
 }
 
+- (iTermHotKeyDescriptor *)modifierActivationDescriptor {
+    if (self.model.hasModifierActivation) {
+        return [iTermHotKeyDescriptor descriptorWithModifierActivation:self.model.modifierActivation];
+    } else {
+        return nil;
+    }
+}
+
 - (void)modelDidChange {
+    _activateWithModifier.state = _model.hasModifierActivation ? NSOnState : NSOffState;
+    [_modifierActivation selectItemWithTag:_model.modifierActivation];
+    
     [_hotKey setKeyCode:_model.keyCode
               modifiers:_model.modifiers
               character:[_model.charactersIgnoringModifiers firstCharacter]];
@@ -142,11 +155,14 @@
 #pragma mark - Actions
 
 - (IBAction)settingChanged:(id)sender {
+    _model.hasModifierActivation = _activateWithModifier.state == NSOnState;
+    _model.modifierActivation = [_modifierActivation selectedTag];
+
     _model.autoHide = _autoHide.state == NSOnState;
     _model.showAutoHiddenWindowOnAppActivation = _showAutoHiddenWindowOnAppActivation.state == NSOnState;
     _model.animate = _animate.state == NSOnState;
 
-    
+   
     if (_showIfNoWindowsOpenOnDockClick.state == NSOnState) {
         _model.dockPreference = iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen;
     } else if (_alwaysShowOnDockClick.state == NSOnState) {

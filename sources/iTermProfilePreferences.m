@@ -242,6 +242,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
+                  KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
+                  KEY_SHOW_MARK_INDICATORS: @YES,
                   KEY_HAS_HOTKEY: @NO,
                   KEY_HOTKEY_MODIFIER_FLAGS: @0,
                   KEY_HOTKEY_CHARACTERS: @"",
@@ -251,8 +253,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_REOPEN_ON_ACTIVATION: @NO,
                   KEY_HOTKEY_ANIMATE: @YES,
                   KEY_HOTKEY_DOCK_CLICK_ACTION: @(iTermHotKeyDockPreferenceDoNotShow),
-                  KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
-                  KEY_SHOW_MARK_INDICATORS: @YES,
+                  KEY_HOTKEY_MODIFIER_ACTIVATION: @0,
+                  KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,
                 };
         [dict retain];
     }

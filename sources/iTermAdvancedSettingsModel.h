@@ -139,5 +139,6 @@
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)experimentalKeyHandling;
++ (double)hotKeyDoubleTapMaxDelay;
 
 @end

@@ -36,12 +36,16 @@
                       modifiers:(NSEventModifierFlags)modifiers
                      characters:(NSString *)characters
     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
+          hasModifierActivation:(BOOL)hasModifierActivation
+             modifierActivation:(iTermHotKeyModifierActivation)modifierActivation
                         profile:(Profile *)profile NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithKeyCode:(NSUInteger)keyCode
                       modifiers:(NSEventModifierFlags)modifiers
                      characters:(NSString *)characters
-    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers NS_UNAVAILABLE;
+    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
+          hasModifierActivation:(BOOL)hasModifierActivation
+             modifierActivation:(iTermHotKeyModifierActivation)modifierActivation NS_UNAVAILABLE;
 
 // Hide the hotkey window. If `suppressHideApp` is set then do not hide and then unhide
 // iTerm after the hotkey window is dismissed (which would normally happen if iTerm2 was not the

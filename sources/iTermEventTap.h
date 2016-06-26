@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
+#import "iTermWeakReference.h"
 
-@protocol iTermEventTapDelegate<NSObject>
+@protocol iTermEventTapRemappingDelegate<NSObject>
 
 // Called on every keypress when the event tap is enabled.
 //
@@ -9,8 +10,12 @@
 //
 // The type may indicate the event tap was cancelled and the delegate  may call
 // -reEnable to start it up again.
-- (CGEventRef)eventTappedWithType:(CGEventType)type event:(CGEventRef)event;
+- (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event;
 
+@end
+
+@protocol iTermEventTapObserver<NSObject, iTermWeaklyReferenceable>
+- (void)eventTappedWithType:(CGEventType)type event:(CGEventRef)event;
 @end
 
 /**
@@ -18,16 +23,20 @@
  */
 @interface iTermEventTap : NSObject
 
-// Assign to start or stop the event tap. The getter indicates if the event tap was started.
-@property(nonatomic, getter=isEnabled) BOOL enabled;
+// Indicates if the event tap ahs started. When a remapping delegate or observers are present it will
+// be enabled.
+@property(nonatomic, getter=isEnabled, readonly) BOOL enabled;
 
 // While the event tap is enabled the delegate's method is invoked on each key-down.
-@property(nonatomic, assign) id<iTermEventTapDelegate> delegate;
+@property(nonatomic, assign) id<iTermEventTapRemappingDelegate> remappingDelegate;
+
+@property(nonatomic, readonly) NSArray<iTermWeakReference<id<iTermEventTapObserver>> *> *observers;
 
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)reEnable;
+- (void)addObserver:(id<iTermEventTapObserver>)observer;
+- (void)removeObserver:(id<iTermEventTapObserver>)observer;
 
 // For testing. Returns the transformed event.
 - (NSEvent *)runEventTapHandler:(NSEvent *)event;
