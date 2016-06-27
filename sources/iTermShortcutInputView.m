@@ -11,7 +11,7 @@
 #import "NSStringITerm.h"
 
 @interface iTermShortcutInputView()
-@property(nonatomic, copy) NSString *newHotKey;
+@property(nonatomic, copy) NSString *hotkeyBeingRecorded;
 @end
 
 @implementation iTermShortcutInputView {
@@ -38,7 +38,7 @@
 
 - (void)dealloc {
     [_clearButton release];
-    [_newHotKey release];
+    [_hotkeyBeingRecorded release];
     [super dealloc];
 }
 
@@ -108,10 +108,10 @@
     frame = self.bounds;
     frame.size.height -= 3;
     NSString *string;
-    if (isFirstResponder && self.newHotKey.length == 0) {
+    if (isFirstResponder && self.hotkeyBeingRecorded.length == 0) {
         string = @"Recording";
     } else if (isFirstResponder) {
-        string = self.newHotKey;
+        string = self.hotkeyBeingRecorded;
     } else if (self.stringValue.length == 0) {
         string = @"Click to Set";
     } else {
@@ -143,7 +143,7 @@
     _mouseDown = NO;
     if (theEvent.clickCount == 1 && self.isEnabled) {
         _acceptFirstResponder = YES;
-        self.newHotKey = nil;
+        self.hotkeyBeingRecorded = nil;
         [self.window makeFirstResponder:self];
         _acceptFirstResponder = NO;
     }
@@ -175,11 +175,11 @@
 
 - (void)handleShortcutEvent:(NSEvent *)event {
     if (event.type == NSKeyDown) {
-        self.newHotKey = nil;
+        self.hotkeyBeingRecorded = nil;
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         [[self window] makeFirstResponder:[self window]];
     } else if (event.type == NSFlagsChanged) {
-        self.newHotKey = [NSString stringForModifiersWithMask:event.modifierFlags];
+        self.hotkeyBeingRecorded = [NSString stringForModifiersWithMask:event.modifierFlags];
     }
     [self setNeedsDisplay:YES];
 }
