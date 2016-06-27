@@ -106,14 +106,17 @@
                                                   NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
                                                   NSParagraphStyleAttributeName: paragraphStyle };
     frame = self.bounds;
-    frame.size.height -= 3;
+    frame.size.height -= 2;
+    if (!_clearButton.hidden) {
+        frame.size.width = NSMinX(_clearButton.frame) - 1;
+    }
     NSString *string;
     if (isFirstResponder && self.hotkeyBeingRecorded.length == 0) {
         string = @"Recording";
     } else if (isFirstResponder) {
         string = self.hotkeyBeingRecorded;
     } else if (self.stringValue.length == 0) {
-        string = @"Click to Set";
+        string = self.isEnabled ? @"Click to Set" : @"";
     } else {
         string = self.stringValue;
     }
@@ -142,10 +145,15 @@
 - (void)mouseUp:(NSEvent *)theEvent {
     _mouseDown = NO;
     if (theEvent.clickCount == 1 && self.isEnabled) {
-        _acceptFirstResponder = YES;
-        self.hotkeyBeingRecorded = nil;
-        [self.window makeFirstResponder:self];
-        _acceptFirstResponder = NO;
+        if (self.window.firstResponder == self) {
+            [self.window makeFirstResponder:self.window];
+            self.hotkeyBeingRecorded = nil;
+        } else {
+            _acceptFirstResponder = YES;
+            self.hotkeyBeingRecorded = nil;
+            [self.window makeFirstResponder:self];
+            _acceptFirstResponder = NO;
+        }
     }
     [self setNeedsDisplay:YES];
 }

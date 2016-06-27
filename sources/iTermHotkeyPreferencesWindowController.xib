@@ -196,10 +196,10 @@ Gw
                             <font key="font" metaFont="menu"/>
                             <menu key="menu" id="mPm-WW-jsh">
                                 <items>
-                                    <menuItem title="^⃣ Control" id="wp1-Sh-ht3"/>
-                                    <menuItem title="⇧⃣ Shift" tag="1" id="l57-vU-TNJ"/>
-                                    <menuItem title="⌥⃣ Option" tag="2" id="2Tz-89-YHl"/>
-                                    <menuItem title="⌘⃣ Command" tag="3" id="Jg9-HV-xDm"/>
+                                    <menuItem title="^ Control" id="wp1-Sh-ht3"/>
+                                    <menuItem title="⇧ Shift" tag="1" id="l57-vU-TNJ"/>
+                                    <menuItem title="⌥ Option" tag="2" id="2Tz-89-YHl"/>
+                                    <menuItem title="⌘ Command" tag="3" id="Jg9-HV-xDm"/>
                                 </items>
                             </menu>
                         </popUpButtonCell>
