@@ -255,6 +255,12 @@
     }
 }
 
+- (void)setShortcut:(iTermShortcut *)shortcut {
+    [self setKeyCode:shortcut.keyCode
+           modifiers:shortcut.modifiers
+           character:shortcut.charactersIgnoringModifiers.firstCharacter];
+}
+
 - (NSString *)identifierForCode:(NSUInteger)code
                       modifiers:(NSEventModifierFlags)modifiers
                       character:(NSUInteger)character {

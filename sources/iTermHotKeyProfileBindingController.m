@@ -1,9 +1,12 @@
 #import "iTermHotKeyProfileBindingController.h"
 
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermHotKeyController.h"
 #import "iTermProfileHotKey.h"
 #import "iTermProfilePreferences.h"
+#import "iTermShortcut.h"
+#import "NSArray+iTerm.h"
 #import "ProfileModel.h"
 
 @implementation iTermHotKeyProfileBindingController {
@@ -47,45 +50,46 @@
         // Unregister. If the key has changed, we'll re-register. If the profile no longer has a hotkey
         // it will stay unregistered.
         if (hasHotKey && !_guidToHotKeyMap[guid]) {
-            [self registerHotKeyForProfile:profile];
+            [self registerHotKeysForProfile:profile];
         } else if (!hasHotKey && _guidToHotKeyMap[guid]) {
-            [self unregisterHotKeyForProfileWithGuid:guid];
+            [self unregisterHotKeysForProfileWithGuid:guid];
         } else if (hasHotKey && _guidToHotKeyMap[guid]) {
             [self updateRegistrationForProfile:profile];
         }
     }
     
     for (NSString *guid in guidsOfProfileHotKeys) {
-        [self unregisterHotKeyForProfileWithGuid:guid];
+        [self unregisterHotKeysForProfileWithGuid:guid];
     }
 }
 
 #pragma mark - Private
 
-- (void)registerHotKeyForProfile:(Profile *)profile {
+- (void)registerHotKeysForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
-    NSLog(@"Register hotkey for guid %@", guid);
+    DLog(@"Register hotkey for guid %@ (%@)", guid, profile[KEY_NAME]);
     
     BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
-    NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
-    NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
-    NSString *characters = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS inProfile:profile];
-    NSString *charactersIgnoringModifiers = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS inProfile:profile];
-    iTermProfileHotKey *hotKey;
-    hotKey = [[[iTermProfileHotKey alloc] initWithKeyCode:keyCode
-                                                modifiers:modifiers
-                                               characters:characters
-                              charactersIgnoringModifiers:charactersIgnoringModifiers
-                                    hasModifierActivation:hasModifierActivation
-                                       modifierActivation:modifierActivation
-                                                  profile:profile] autorelease];
-    NSLog(@"Registered %@", hotKey);
+    NSArray<iTermShortcut *> *shortcuts = [[iTermShortcut shortcutsForProfile:profile] filteredArrayUsingBlock:^BOOL(iTermShortcut *anObject) {
+        return anObject.isAssigned;
+    }];
+    if (!shortcuts.count) {
+        DLog(@"None of the shortcuts in profile %@ are assigned", profile[KEY_NAME]);
+        return;
+    }
+    
+    iTermProfileHotKey *hotKey =
+        [[[iTermProfileHotKey alloc] initWithShortcuts:shortcuts
+                                 hasModifierActivation:hasModifierActivation
+                                    modifierActivation:modifierActivation
+                                               profile:profile] autorelease];
+    DLog(@"Registered %@", hotKey);
     _guidToHotKeyMap[guid] = hotKey;
     [[iTermHotKeyController sharedInstance] addHotKey:hotKey];
 }
 
-- (void)unregisterHotKeyForProfileWithGuid:(NSString *)guid {
+- (void)unregisterHotKeysForProfileWithGuid:(NSString *)guid {
     NSLog(@"Unregister for guid %@", guid);
     iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
     if (hotKey) {
@@ -97,36 +101,15 @@
 
 - (void)updateRegistrationForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
-
+    iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
     BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
-    NSUInteger keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
-    NSString *charactersIgnoringModifiers = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS inProfile:profile];
-    NSEventModifierFlags modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
-
-    iTermProfileHotKey *hotKey = _guidToHotKeyMap[guid];
-
-    // It's important to detect changes to charactersIgnoringModifiers because if it's not up-to-date
-    // in the carbon hotkey then keypresses while a shortcut input field is first responder will send
-    // the wrong 'characters' field to it.
-    if (hotKey.hasModifierActivation == hasModifierActivation &&
-        hotKey.modifierActivation == modifierActivation &&
-        hotKey.keyCode == keyCode &&
-        hotKey.modifiers == modifiers &&
-        [hotKey.charactersIgnoringModifiers isEqualToString:charactersIgnoringModifiers]) {
-        // No change
-        return;
-    }
 
     // Update the keycode and modifier and re-register.
     NSLog(@"Update registration for %@", hotKey);
-    [hotKey unregister];
-    hotKey.hasModifierActivation = hasModifierActivation;
-    hotKey.modifierActivation = modifierActivation;
-    hotKey.keyCode = keyCode;
-    hotKey.charactersIgnoringModifiers = charactersIgnoringModifiers;
-    hotKey.modifiers = modifiers;
-    [hotKey register];
+    [hotKey setShortcuts:[iTermShortcut shortcutsForProfile:profile]
+        hasModifierActivation:hasModifierActivation
+           modifierActivation:modifierActivation];
 }
 
 #pragma mark - Notifications

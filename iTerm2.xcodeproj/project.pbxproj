@@ -2130,6 +2130,8 @@
 		A6EFF23A1D20F6BF00806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
 		A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
 		A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
+		A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF23D1D21949D00806EEF /* iTermShortcut.h */; };
+		A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF23E1D21949D00806EEF /* iTermShortcut.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
@@ -3448,6 +3450,8 @@
 		A6EFF2301D20499700806EEF /* Erase@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Erase@2x.png"; path = "images/Erase@2x.png"; sourceTree = "<group>"; };
 		A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = EraseDarkBackground.png; path = images/EraseDarkBackground.png; sourceTree = "<group>"; };
 		A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "EraseDarkBackground@2x.png"; path = "images/EraseDarkBackground@2x.png"; sourceTree = "<group>"; };
+		A6EFF23D1D21949D00806EEF /* iTermShortcut.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShortcut.h; sourceTree = "<group>"; };
+		A6EFF23E1D21949D00806EEF /* iTermShortcut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcut.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
@@ -5282,6 +5286,8 @@
 				A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */,
 				A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */,
 				A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */,
+				A6EFF23D1D21949D00806EEF /* iTermShortcut.h */,
+				A6EFF23E1D21949D00806EEF /* iTermShortcut.m */,
 			);
 			name = Hotkey;
 			sourceTree = "<group>";
@@ -6093,6 +6099,7 @@
 				A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				A6FEA26C1CF2C86800376F28 /* iTermBaseHotKey.h in Headers */,
+				A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */,
 				1DF121091C344DF100E39F1F /* iTermDynamicProfileManager.h in Headers */,
 				A6FEA2741CF2C9D400376F28 /* iTermAppHotKey.h in Headers */,
 				A6EFF2201D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h in Headers */,
@@ -7624,6 +7631,7 @@
 				A6C763261B45C52B00E3C992 /* PasteEvent.m in Sources */,
 				A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */,
 				A66DB8371C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m in Sources */,
+				A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */,
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
 				A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */,
 				A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */,

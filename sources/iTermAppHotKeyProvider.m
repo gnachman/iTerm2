@@ -3,6 +3,7 @@
 #import "iTermAppHotKey.h"
 #import "iTermHotKeyController.h"
 #import "iTermPreferences.h"
+#import "iTermShortcut.h"
 
 @interface iTermAppHotKeyProvider()
 @property(nonatomic, retain) iTermAppHotKey *appHotKey;
@@ -37,12 +38,16 @@
         NSEventModifierFlags modifiers = [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
         NSUInteger code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
         unichar character = [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter];
-        self.appHotKey = [[[iTermAppHotKey alloc] initWithKeyCode:code
-                                                        modifiers:modifiers
-                                                       characters:[NSString stringWithFormat:@"%C", character]
-                                      charactersIgnoringModifiers:[NSString stringWithFormat:@"%C", character]
-                                            hasModifierActivation:NO
-                                               modifierActivation:0] autorelease];
+        NSString *characters = [NSString stringWithFormat:@"%C", character];
+        
+        iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:code
+                                                                modifiers:modifiers
+                                                               characters:characters
+                                              charactersIgnoringModifiers:characters] autorelease];
+        self.appHotKey = [[[iTermAppHotKey alloc] initWithShortcuts:@[ shortcut ]
+                                              hasModifierActivation:NO
+                                                 modifierActivation:0] autorelease];
+        
         [[iTermHotKeyController sharedInstance] addHotKey:self.appHotKey];
     } else {
         self.appHotKey = nil;

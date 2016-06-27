@@ -3721,7 +3721,7 @@ DQ
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="he1-vO-4KV">
+                        <button id="he1-vO-4KV">
                             <rect key="frame" x="14" y="18" width="341" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="A hotkey opens a dedicated window with this profile." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ah-hm-bWA">

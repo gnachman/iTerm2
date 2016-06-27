@@ -102,10 +102,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
     model.hasModifierActivation = [self boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER];
     model.modifierActivation = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION];
-    model.keyCode = [self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE];
-    model.modifiers = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS];
-    model.characters = [self stringForKey:KEY_HOTKEY_CHARACTERS];
-    model.charactersIgnoringModifiers = [self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS];
+    model.primaryShortcut = [[[iTermShortcut alloc] initWithKeyCode:[self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE]
+                                                          modifiers:[self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS]
+                                                         characters:[self stringForKey:KEY_HOTKEY_CHARACTERS]
+                                        charactersIgnoringModifiers:[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS]] autorelease];
     model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
     model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
     model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];

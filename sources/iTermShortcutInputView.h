@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermShortcut.h"
 
 @class iTermShortcutInputView;
 
@@ -32,7 +33,9 @@
 
 - (void)setKeyCode:(NSUInteger)code
          modifiers:(NSEventModifierFlags)modifiers
-         character:(NSUInteger)theChar;
+         character:(NSUInteger)theChar DEPRECATED_ATTRIBUTE;
+
+- (void)setShortcut:(iTermShortcut *)shortcut;
 
 - (NSString *)identifierForCode:(NSUInteger)code
                       modifiers:(NSEventModifierFlags)modifiers

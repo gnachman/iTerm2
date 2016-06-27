@@ -27,19 +27,13 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 @implementation iTermProfileHotKey
 
-- (instancetype)initWithKeyCode:(NSUInteger)keyCode
-                      modifiers:(NSEventModifierFlags)modifiers
-                     characters:(NSString *)characters
-    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
+- (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
           hasModifierActivation:(BOOL)hasModifierActivation
              modifierActivation:(iTermHotKeyModifierActivation)modifierActivation
                         profile:(Profile *)profile {
-    self = [super initWithKeyCode:keyCode
-                        modifiers:modifiers
-                       characters:characters
-      charactersIgnoringModifiers:charactersIgnoringModifiers
-            hasModifierActivation:hasModifierActivation
-               modifierActivation:modifierActivation];
+    self = [super initWithShortcuts:shortcuts
+              hasModifierActivation:hasModifierActivation
+                 modifierActivation:modifierActivation];
 
     if (self) {
         _profileGuid = [profile[KEY_GUID] copy];
@@ -61,8 +55,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p keycode=%@ charactersIgnoringModifiers=%@ modifiers=%x hasModAct=%@ modAct=%@ profile.name=%@ profile.guid=%@ open=%@>",
-            [self class], self, @(self.keyCode), self.charactersIgnoringModifiers, (int)self.modifiers,
+    return [NSString stringWithFormat:@"<%@: %p shortcuts=%@ hasModAct=%@ modAct=%@ profile.name=%@ profile.guid=%@ open=%@>",
+            [self class], self, self.shortcuts,
             @(self.hasModifierActivation), @(self.modifierActivation),
             self.profile[KEY_NAME], self.profile[KEY_GUID], @(self.isHotKeyWindowOpen)];
 }

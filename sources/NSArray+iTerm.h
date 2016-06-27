@@ -41,6 +41,14 @@
 
 - (NSArray<ObjectType> *)arrayByRemovingObject:(ObjectType)objectToRemove;
 
+// Hashes elements of class NSArray, NSString, NSNumber, and any other element
+// that responds to hashWithDJB2. Other elements do not modify the hash.
+- (NSUInteger)hashWithDJB2;
+- (BOOL)isEqualIgnoringOrder:(NSArray *)other;
+
+// May reorder the whole array.
+- (NSArray<ObjectType> *)arrayByRemovingDuplicates;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)

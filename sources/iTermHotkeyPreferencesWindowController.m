@@ -8,56 +8,7 @@
 #import "NSStringITerm.h"
 
 #warning TODO: Split this into many more files.
-static NSString *const kKeyCode = @"keyCode";
-static NSString *const kModifiers = @"modifiers";
-static NSString *const kCharacters = @"characters";
-static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifiers";
 
-@implementation iTermShortcut
-
-+ (instancetype)shortcutWithDictionary:(NSDictionary *)dictionary {
-    iTermShortcut *shortcut = [[[iTermShortcut alloc] init] autorelease];
-    shortcut.keyCode = [dictionary[kKeyCode] unsignedIntegerValue];
-    shortcut.modifiers = [dictionary[kModifiers] unsignedIntegerValue];
-    shortcut.characters = dictionary[kCharacters];
-    shortcut.charactersIgnoringModifiers = dictionary[kCharactersIgnoringModifiers];
-    return shortcut;
-}
-
-- (void)dealloc {
-    [_characters release];
-    [_charactersIgnoringModifiers release];
-    [super dealloc];
-}
-
-- (NSDictionary *)dictionaryValue {
-    return @{ kKeyCode: @(self.keyCode),
-              kModifiers: @(self.modifiers),
-              kCharacters: self.characters ?: @"",
-              kCharactersIgnoringModifiers: self.charactersIgnoringModifiers ?: @"" };
-}
-
-- (NSString *)identifier {
-    return [iTermKeyBindingMgr identifierForCharacterIgnoringModifiers:[self.charactersIgnoringModifiers firstCharacter]
-                                                             modifiers:self.modifiers];
-}
-
-- (NSString *)stringValue {
-    return self.charactersIgnoringModifiers.length > 0 ? [iTermKeyBindingMgr formatKeyCombination:self.identifier] : @"";
-}
-
-- (void)setFromEvent:(NSEvent *)event {
-    self.keyCode = event.keyCode;
-    self.characters = [event characters];
-    self.charactersIgnoringModifiers = [event charactersIgnoringModifiers];
-    self.modifiers = (event.modifierFlags & kCarbonHotKeyModifiersMask);
-}
-
-- (iTermHotKeyDescriptor *)descriptor {
-    return _charactersIgnoringModifiers.length > 0 ? [NSDictionary descriptorWithKeyCode:self.keyCode modifiers:self.modifiers] : nil;
-}
-
-@end
 
 @interface iTermAdditionalHotKeyObjectValue : NSObject
 @property(nonatomic, retain) iTermShortcut *shortcut;
@@ -120,6 +71,7 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     [_objectValue.shortcut setFromEvent:event];
     _shortcut.stringValue = _objectValue.shortcut.stringValue;
+    _duplicateWarning.hidden = !_objectValue.isDuplicate;
 }
 
 @end
@@ -136,8 +88,7 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
 }
 
 - (void)dealloc {
-    [_characters release];
-    [_charactersIgnoringModifiers release];
+    [_primaryShortcut release];
     [_alternateShortcuts release];
     [super dealloc];
 }
@@ -146,10 +97,10 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
     return @{ KEY_HAS_HOTKEY: @(self.hotKeyAssigned),
               KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @(self.hasModifierActivation),
               KEY_HOTKEY_MODIFIER_ACTIVATION: @(self.modifierActivation),
-              KEY_HOTKEY_KEY_CODE: @(self.keyCode),
-              KEY_HOTKEY_CHARACTERS: self.characters ?: @"",
-              KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS: self.charactersIgnoringModifiers ?: @"",
-              KEY_HOTKEY_MODIFIER_FLAGS: @(self.modifiers),
+              KEY_HOTKEY_KEY_CODE: @(_primaryShortcut.keyCode),
+              KEY_HOTKEY_CHARACTERS: _primaryShortcut.characters ?: @"",
+              KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS: _primaryShortcut.charactersIgnoringModifiers ?: @"",
+              KEY_HOTKEY_MODIFIER_FLAGS: @(_primaryShortcut.modifiers),
               KEY_HOTKEY_AUTOHIDE: @(self.autoHide),
               KEY_HOTKEY_REOPEN_ON_ACTIVATION: @(self.showAutoHiddenWindowOnAppActivation),
               KEY_HOTKEY_ANIMATE: @(self.animate),
@@ -173,7 +124,7 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
     BOOL hasAlternate = [self.alternateShortcuts anyWithBlock:^BOOL(iTermShortcut *shortcut) {
         return shortcut.charactersIgnoringModifiers.length > 0;
     }];
-    return (self.charactersIgnoringModifiers.length > 0 ||
+    return (_primaryShortcut.isAssigned ||
             self.hasModifierActivation ||
             hasAlternate);
 }
@@ -255,16 +206,11 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
     for (NSButton *button in buttons) {
         button.enabled = self.model.hotKeyAssigned;
     }
-    _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.hotKeyDescriptor];
+    _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.model.primaryShortcut.descriptor];
     _duplicateWarningForModifierActivation.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.modifierActivationDescriptor];
     _showAutoHiddenWindowOnAppActivation.enabled = (self.model.hotKeyAssigned && _autoHide.state == NSOnState);
     _modifierActivation.enabled = (_activateWithModifier.state == NSOnState);
-    _editAdditionalButton.enabled = _model.charactersIgnoringModifiers.length > 0;
-}
-
-- (iTermHotKeyDescriptor *)hotKeyDescriptor {
-    return [iTermHotKeyDescriptor descriptorWithKeyCode:self.model.keyCode
-                                              modifiers:self.model.modifiers];
+    _editAdditionalButton.enabled = self.model.primaryShortcut.isAssigned;
 }
 
 - (iTermHotKeyDescriptor *)modifierActivationDescriptor {
@@ -278,10 +224,8 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
 - (void)modelDidChange {
     _activateWithModifier.state = _model.hasModifierActivation ? NSOnState : NSOffState;
     [_modifierActivation selectItemWithTag:_model.modifierActivation];
-    
-    [_hotKey setKeyCode:_model.keyCode
-              modifiers:_model.modifiers
-              character:[_model.charactersIgnoringModifiers firstCharacter]];
+    [_hotKey setShortcut:_model.primaryShortcut];
+
     _autoHide.state = _model.autoHide ? NSOnState : NSOffState;
     _showAutoHiddenWindowOnAppActivation.enabled = _model.autoHide;
     _showAutoHiddenWindowOnAppActivation.state = _model.showAutoHiddenWindowOnAppActivation ? NSOnState : NSOffState;
@@ -303,6 +247,10 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
     [self updateViewsEnabled];
 }
 
+- (void)updateAdditionalHotKeysViews {
+    _removeAdditional.enabled = _tableView.numberOfSelectedRows > 0;
+}
+
 #pragma mark - Actions
 
 - (IBAction)settingChanged:(id)sender {
@@ -312,7 +260,6 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
     _model.autoHide = _autoHide.state == NSOnState;
     _model.showAutoHiddenWindowOnAppActivation = _showAutoHiddenWindowOnAppActivation.state == NSOnState;
     _model.animate = _animate.state == NSOnState;
-
    
     if (_showIfNoWindowsOpenOnDockClick.state == NSOnState) {
         _model.dockPreference = iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen;
@@ -343,36 +290,31 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
         [_mutableShortcuts release];
         _mutableShortcuts = nil;
     }];
+    [self updateAdditionalHotKeysViews];
 }
 
 - (IBAction)addAdditionalShortcut:(id)sender {
     [_mutableShortcuts addObject:[[[iTermShortcut alloc] init] autorelease]];
     [_tableView reloadData];
+    [self updateAdditionalHotKeysViews];
 }
 
 - (IBAction)removeAdditionalShortcut:(id)sender {
-    [_mutableShortcuts removeObjectAtIndex:[_tableView selectedRow]];
+    [_mutableShortcuts removeObjectsAtIndexes:_tableView.selectedRowIndexes];
     [_tableView reloadData];
+    [self updateAdditionalHotKeysViews];
 }
 
 #pragma mark - iTermShortcutInputViewDelegate
 
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     if (!event && _model.alternateShortcuts.count) {
-        iTermShortcut *shortcut = _model.alternateShortcuts.firstObject;
-        _model.keyCode = shortcut.keyCode;
-        _model.characters = shortcut.characters;
-        _model.charactersIgnoringModifiers = shortcut.charactersIgnoringModifiers;
-        _model.modifiers = shortcut.modifiers;
-        [view setStringValue:shortcut.stringValue];
+        _model.primaryShortcut = _model.alternateShortcuts.firstObject;
+        [view setStringValue:_model.primaryShortcut.stringValue];
         _model.alternateShortcuts = [_model.alternateShortcuts arrayByRemovingFirstObject];
         [self modelDidChange];
     } else {
-        _model.keyCode = event.keyCode;
-        _model.characters = [event characters];
-        _model.charactersIgnoringModifiers = [event charactersIgnoringModifiers];
-        _model.modifiers = (event.modifierFlags & kCarbonHotKeyModifiersMask);
-
+        _model.primaryShortcut = [iTermShortcut shortcutWithEvent:event];
         [self modelDidChange];
         NSString *identifier = [iTermKeyBindingMgr identifierForCharacterIgnoringModifiers:[event.charactersIgnoringModifiers firstCharacter]
                                                                                  modifiers:event.modifierFlags];
@@ -385,6 +327,7 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     _removeAdditional.enabled = _tableView.selectedRow != -1;
+    [self updateAdditionalHotKeysViews];
 }
 
 #pragma mark - NSTableViewDatasource

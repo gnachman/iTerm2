@@ -99,7 +99,7 @@
 
 - (BOOL)eventIsHotkey:(NSEvent *)event {
     for (iTermBaseHotKey *hotKey in _hotKeys) {
-        if ([hotKey keyDownEventTriggers:event]) {
+        if ([hotKey keyDownEventIsHotKeyShortcutPress:event]) {
             return YES;
         }
     }
@@ -144,7 +144,7 @@
 
 - (void)hotkeyPressed:(NSEvent *)event {
     for (iTermBaseHotKey *hotkey in _hotKeys) {
-        if ([hotkey keyDownEventTriggers:event]) {
+        if ([hotkey keyDownEventIsHotKeyShortcutPress:event]) {
             [hotkey simulatePress];
         }
     }
@@ -279,10 +279,10 @@
 }
 
 - (NSArray<PseudoTerminal *> *)siblingWindowControllersOf:(PseudoTerminal *)windowController {
-    iTermHotKeyDescriptor *referenceHotKeyDescriptor = [[self profileHotKeyForWindowController:windowController] hotKeyDescriptor];
+    NSArray<iTermHotKeyDescriptor *> *referenceHotKeyDescriptors = [[self profileHotKeyForWindowController:windowController] hotKeyDescriptors];
     iTermHotKeyDescriptor *referenceModifierActivationDescriptor = [[self profileHotKeyForWindowController:windowController] modifierActivationDescriptor];
     return [self.profileHotKeys mapWithBlock:^id(iTermProfileHotKey *profileHotKey) {
-        if ([profileHotKey.hotKeyDescriptor isEqual:referenceHotKeyDescriptor] ||
+        if ([profileHotKey.hotKeyDescriptors isEqual:referenceHotKeyDescriptors] ||
             [profileHotKey.modifierActivationDescriptor isEqual:referenceModifierActivationDescriptor]) {
             NSWindowController *windowController = profileHotKey.windowController.weaklyReferencedObject;
             if (windowController) {

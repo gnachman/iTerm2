@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "NSDictionary+iTerm.h"
+#import "iTermShortcut.h"
 
 @class iTermProfileHotKey;
 @class iTermBaseHotKey;
@@ -24,33 +25,27 @@
 // Abstract base class.
 @interface iTermBaseHotKey : NSObject
 
-@property(nonatomic, assign) NSUInteger keyCode;
-@property(nonatomic, assign) NSEventModifierFlags modifiers;
-@property(nonatomic, copy) NSString *characters;
-@property(nonatomic, copy) NSString *charactersIgnoringModifiers;
-
-@property(nonatomic, assign) BOOL hasModifierActivation;
-@property(nonatomic, assign) iTermHotKeyModifierActivation modifierActivation;
-
-@property(nonatomic, readonly) iTermHotKeyDescriptor *hotKeyDescriptor;
+@property(nonatomic, readonly) NSArray<iTermShortcut *> *shortcuts;
+@property(nonatomic, readonly) BOOL hasModifierActivation;
+@property(nonatomic, readonly) iTermHotKeyModifierActivation modifierActivation;
+@property(nonatomic, readonly) NSArray<iTermHotKeyDescriptor *> *hotKeyDescriptors;
 @property(nonatomic, readonly) iTermHotKeyDescriptor *modifierActivationDescriptor;
 @property(nonatomic, assign) id<iTermHotKeyDelegate> delegate;
 
-- (instancetype)initWithKeyCode:(NSUInteger)keyCode
-                      modifiers:(NSEventModifierFlags)modifiers
-                     characters:(NSString *)characters
-    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
-          hasModifierActivation:(BOOL)hasModifierActivation
-             modifierActivation:(iTermHotKeyModifierActivation)modifierActivation NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
+            hasModifierActivation:(BOOL)hasModifierActivation
+               modifierActivation:(iTermHotKeyModifierActivation)modifierActivation NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)register;
 - (void)unregister;
-
+- (void)setShortcuts:(NSArray<iTermShortcut *> *)shortcuts
+    hasModifierActivation:(BOOL)hasModifierActivation
+      modifierActivation:(iTermHotKeyModifierActivation)modifierActivation;
 @end
 
 @interface iTermBaseHotKey(Internal)
-- (BOOL)keyDownEventTriggers:(NSEvent *)event;
+- (BOOL)keyDownEventIsHotKeyShortcutPress:(NSEvent *)event;
 - (void)simulatePress;
 @end

@@ -246,13 +246,15 @@ static const CGFloat kWindowWidth = 400;
     [self present];
 
     if (!_hotKey) {
-        _hotKey = [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:kVK_Escape
-                                                                       modifiers:0
-                                                                      characters:[NSString stringWithFormat:@"%c", 27]
-                                                     charactersIgnoringModifiers:[NSString stringWithFormat:@"%c", 27]
-                                                                          target:self
-                                                                        selector:@selector(dismissByKeyboard:)
-                                                                        userData:nil] retain];
+        NSString *characters = [NSString stringWithFormat:@"%c", 27];
+        iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:kVK_Escape
+                                                                modifiers:0
+                                                               characters:characters
+                                              charactersIgnoringModifiers:characters] autorelease];
+        _hotKey = [[[iTermCarbonHotKeyController sharedInstance] registerShortcut:shortcut
+                                                                           target:self
+                                                                         selector:@selector(dismissByKeyboard:)
+                                                                         userData:nil] retain];
     }
 }
 

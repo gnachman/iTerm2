@@ -160,6 +160,32 @@
     }
 
 }
+
+- (NSUInteger)hashWithDJB2 {
+    NSUInteger hash = 5381;
+    for (id object in self) {
+        NSUInteger objectHash = 0;
+        if ([object respondsToSelector:@selector(hashWithDJB2)]) {
+            // This handles string and other arrays, at least.
+            objectHash = [object hashWithDJB2];
+        } else if ([object isKindOfClass:[NSNumber class]]) {
+            objectHash = [object unsignedIntegerValue];
+        }
+        hash = (hash * 33) ^ objectHash;
+    }
+    return hash;
+}
+
+- (BOOL)isEqualIgnoringOrder:(NSArray *)other {
+    NSSet *mySet = [[[NSCountedSet alloc] initWithArray:self] autorelease];
+    NSSet *otherSet = [[[NSCountedSet alloc] initWithArray:other] autorelease];
+    return [mySet isEqual:otherSet];
+}
+
+- (NSArray *)arrayByRemovingDuplicates {
+    return [[[[NSSet alloc] initWithArray:self] autorelease] allObjects];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

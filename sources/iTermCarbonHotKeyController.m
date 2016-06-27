@@ -5,12 +5,6 @@
 #import "NSArray+iTerm.h"
 #import <AppKit/AppKit.h>
 
-NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
-                                                   NSAlternateKeyMask |
-                                                   NSCommandKeyMask |
-                                                   NSControlKeyMask |
-                                                   NSShiftKeyMask);
-
 @interface NSEvent(Carbon)
 + (UInt32)carbonModifiersForCocoaModifiers:(NSEventModifierFlags)flags;
 @end
@@ -57,10 +51,7 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
 
 - (instancetype)initWithEventHotKey:(EventHotKeyRef)eventHotKey
                                  id:(EventHotKeyID)hotKeyID
-                            keyCode:(NSUInteger)keyCode
-                          modifiers:(UInt32)modifiers
-                         characters:(NSString *)characters
-        charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
+                           shortcut:(iTermShortcut *)shortcut
                            userData:(NSDictionary *)userData
                              target:(id)target
                            selector:(SEL)selector {
@@ -68,10 +59,7 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
     if (self) {
         _eventHotKey = eventHotKey;
         _hotKeyID = hotKeyID;
-        _keyCode = keyCode;
-        _modifiers = modifiers;
-        _characters = [characters copy];
-        _charactersIgnoringModifiers = [charactersIgnoringModifiers copy];
+        _shortcut = [shortcut copy];
         _target = [target retain];
         _selector = selector;
         _userData = [userData copy];
@@ -82,8 +70,7 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
 - (void)dealloc {
     [_target release];
     [_userData release];
-    [_characters release];
-    [_charactersIgnoringModifiers release];
+    [_shortcut release];
     [super dealloc];
 }
 
@@ -139,23 +126,22 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
 
 #pragma mark - APIs
 
-- (iTermHotKey *)registerKeyCode:(NSUInteger)keyCode
-                       modifiers:(NSEventModifierFlags)modifiers
-                      characters:(NSString *)characters
-     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
-                          target:(id)target
-                        selector:(SEL)selector
-                        userData:(NSDictionary *)userData {
+- (iTermHotKey *)registerShortcut:(iTermShortcut *)shortcut
+                           target:(id)target
+                         selector:(SEL)selector
+                         userData:(NSDictionary *)userData {
+    DLog(@"Register %@ from\n%@", shortcut, [NSThread callStackSymbols]);
+    
     EventHotKeyRef eventHotKey = NULL;
 
-    const UInt32 carbonModifiers = [NSEvent carbonModifiersForCocoaModifiers:modifiers];
+    const UInt32 carbonModifiers = [NSEvent carbonModifiersForCocoaModifiers:shortcut.modifiers];
     iTermHotKey *existingHotKey =
-        [[self hotKeysWithKeyCode:keyCode modifiers:carbonModifiers] firstObject];
-
+        [[self hotKeysWithKeyCode:shortcut.keyCode modifiers:shortcut.modifiers] firstObject];
+    DLog(@"Registering shortcut %@. Existing hotkeys: %@", shortcut, existingHotKey);
     EventHotKeyID hotKeyID;
     if (!existingHotKey) {
         hotKeyID = [self nextHotKeyID];
-        if (RegisterEventHotKey((UInt32)keyCode,
+        if (RegisterEventHotKey((UInt32)shortcut.keyCode,
                                 carbonModifiers,
                                 hotKeyID,
                                 GetEventDispatcherTarget(),
@@ -170,10 +156,7 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
 
     iTermHotKey *hotkey = [[[iTermHotKey alloc] initWithEventHotKey:eventHotKey
                                                                  id:hotKeyID
-                                                            keyCode:keyCode
-                                                          modifiers:carbonModifiers
-                                                         characters:characters
-                                        charactersIgnoringModifiers:charactersIgnoringModifiers
+                                                           shortcut:shortcut
                                                            userData:userData
                                                              target:target
                                                            selector:selector] autorelease];
@@ -205,10 +188,11 @@ NSEventModifierFlags kCarbonHotKeyModifiersMask = (NSAlphaShiftKeyMask |
     return keyID;
 }
 
-- (NSArray<iTermHotKey *> *)hotKeysWithKeyCode:(NSUInteger)keyCode modifiers:(UInt32)modifiers {
+- (NSArray<iTermHotKey *> *)hotKeysWithKeyCode:(NSUInteger)keyCode
+                                     modifiers:(NSEventModifierFlags)modifiers {
     NSMutableArray<iTermHotKey *> *result = [NSMutableArray array];
     for (iTermHotKey *hotkey in _hotKeys) {
-        if (hotkey.keyCode == keyCode && hotkey.modifiers == modifiers) {
+        if (hotkey.shortcut.keyCode == keyCode && hotkey.shortcut.modifiers == modifiers) {
             [result addObject:hotkey];
         }
     }
@@ -267,14 +251,14 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
         }
         NSEvent *fakeEvent = [NSEvent keyEventWithType:NSKeyDown
                                               location:[NSEvent mouseLocation]
-                                         modifierFlags:[NSEvent cocoaModifiersForCarbonModifiers:hotKey.modifiers]
+                                         modifierFlags:hotKey.shortcut.modifiers
                                              timestamp:0
                                           windowNumber:[[NSApp keyWindow] windowNumber]
                                                context:nil
-                                            characters:hotKey.characters
-                           charactersIgnoringModifiers:hotKey.charactersIgnoringModifiers
+                                            characters:hotKey.shortcut.characters
+                           charactersIgnoringModifiers:hotKey.shortcut.charactersIgnoringModifiers
                                              isARepeat:NO
-                                               keyCode:hotKey.keyCode];
+                                               keyCode:hotKey.shortcut.keyCode];
         iTermShortcutInputView *shortcutInputView = (iTermShortcutInputView *)firstResponder;
         [shortcutInputView handleShortcutEvent:fakeEvent];
         return YES;

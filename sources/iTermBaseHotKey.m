@@ -11,10 +11,6 @@ static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskAlphaShi
                                                         kCGEventFlagMaskCommand |
                                                         kCGEventFlagMaskControl);
 
-const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
-                                                  NSAlternateKeyMask |
-                                                  NSShiftKeyMask |
-                                                  NSControlKeyMask);
 
 @interface iTermBaseHotKey()<iTermEventTapObserver>
 
@@ -26,26 +22,22 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 
 @implementation iTermBaseHotKey {
     // The registered carbon hotkey that listens for hotkey presses.
-    iTermHotKey *_carbonHotKey;
+    NSMutableArray<iTermHotKey *> *_carbonHotKeys;
     BOOL _observingEventTap;
     NSTimeInterval _lastModifierTapTime;
     BOOL _modifierWasPressed;
+    BOOL _registered;
 }
 
-- (instancetype)initWithKeyCode:(NSUInteger)keyCode
-                      modifiers:(NSEventModifierFlags)modifiers
-                     characters:(NSString *)characters
-    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
-          hasModifierActivation:(BOOL)hasModifierActivation
-             modifierActivation:(iTermHotKeyModifierActivation)modifierActivation {
+- (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
+            hasModifierActivation:(BOOL)hasModifierActivation
+               modifierActivation:(iTermHotKeyModifierActivation)modifierActivation {
     self = [super init];
     if (self) {
-        _keyCode = keyCode;
-        _modifiers = modifiers & kHotKeyModifierMask;
-        _characters = [characters copy];
-        _charactersIgnoringModifiers = [charactersIgnoringModifiers copy];
+        _shortcuts = [[shortcuts arrayByRemovingDuplicates] copy];
         _hasModifierActivation = hasModifierActivation;
         _modifierActivation = modifierActivation;
+        _carbonHotKeys = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -53,19 +45,20 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
-    [_characters release];
-    [_charactersIgnoringModifiers release];
+    [_shortcuts release];
+    [_carbonHotKeys release];
     [super dealloc];
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p keyCode=%@ modifiers=%@ charactersIgnoringModifiers=“%@”>",
-            NSStringFromClass([self class]), self, @(_keyCode), @(_modifiers), _charactersIgnoringModifiers];
+    return [NSString stringWithFormat:@"<%@: %p shortcuts=%@ modifierActivation=%@,%@>",
+            NSStringFromClass([self class]), self, _shortcuts, @(self.hasModifierActivation), @(self.modifierActivation)];
 }
 
-- (iTermHotKeyDescriptor *)hotKeyDescriptor {
-    return [iTermHotKeyDescriptor descriptorWithKeyCode:self.keyCode
-                                              modifiers:(self.modifiers & kCarbonHotKeyModifiersMask)];
+- (NSArray<iTermHotKeyDescriptor *> *)hotKeyDescriptors {
+    return [_shortcuts mapWithBlock:^id(iTermShortcut *anObject) {
+        return [anObject descriptor];
+    }];
 }
 
 - (iTermHotKeyDescriptor *)modifierActivationDescriptor {
@@ -76,45 +69,92 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)keyDownEventTriggers:(NSEvent *)event {
-    return (([event modifierFlags] & kHotKeyModifierMask) == (_modifiers & kHotKeyModifierMask) &&
-            [event keyCode] == _keyCode);
+- (BOOL)keyDownEventIsHotKeyShortcutPress:(NSEvent *)event {
+    return [_shortcuts anyWithBlock:^BOOL(iTermShortcut *anObject) {
+        return [anObject eventIsShortcutPress:event];
+    }];
 }
 
 - (void)register {
-    if (_charactersIgnoringModifiers.length) {
-        if (_carbonHotKey) {
-            [self unregisterCarbonHotKey];
-        }
-
-        _carbonHotKey =
-            [[[iTermCarbonHotKeyController sharedInstance] registerKeyCode:_keyCode
-                                                                 modifiers:_modifiers
-                                                                characters:_characters
-                                               charactersIgnoringModifiers:_charactersIgnoringModifiers
-                                                                    target:self
-                                                                  selector:@selector(carbonHotkeyPressed:siblings:)
-                                                                  userData:nil] retain];
+    DLog(@"register %@", self);
+    for (iTermShortcut *shortcut in self.shortcuts) {
+        [self registerShortcut:shortcut];
     }
-
     if (_hasModifierActivation && !_observingEventTap) {
         [[iTermEventTap sharedInstance] addObserver:self];
     }
+    _registered = YES;
+}
+
+- (void)registerShortcut:(iTermShortcut *)shortcut {
+    if (shortcut.isAssigned) {
+        NSUInteger index = [_carbonHotKeys indexOfObjectPassingTest:^BOOL(iTermHotKey * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            // Just test if they would map to the same keycode+modifier, ignore niceties like how it displays.
+            return [obj.shortcut.descriptor isEqual:shortcut.descriptor];
+        }];
+        if (index != NSNotFound) {
+            [self unregisterCarbonHotKey:_carbonHotKeys[index]];
+        }
+
+        iTermHotKey *newHotkey =
+            [[[iTermCarbonHotKeyController sharedInstance] registerShortcut:shortcut
+                                                                     target:self
+                                                                   selector:@selector(carbonHotkeyPressed:siblings:)
+                                                                   userData:nil] retain];
+        [_carbonHotKeys addObject:newHotkey];
+    }
+
 }
 
 - (void)unregister {
-    if (_carbonHotKey) {
-        [self unregisterCarbonHotKey];
+    DLog(@"Unregister %@", self);
+    while (_carbonHotKeys.count) {
+        [self unregisterCarbonHotKey:_carbonHotKeys.firstObject];
     }
     if (_observingEventTap) {
         [[iTermEventTap sharedInstance] removeObserver:self];
     }
+    _registered = NO;
 }
 
-- (void)unregisterCarbonHotKey {
-    [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:_carbonHotKey];
-    [_carbonHotKey release];
-    _carbonHotKey = nil;
+- (void)setShortcuts:(NSArray<iTermShortcut *> *)shortcuts
+    hasModifierActivation:(BOOL)hasModifierActivation
+       modifierActivation:(iTermHotKeyModifierActivation)modifierActivation {
+    NSSet<iTermShortcut *> *newShortcuts = [[[NSSet alloc] initWithArray:shortcuts] autorelease];
+    NSSet<iTermShortcut *> *oldShortcuts = [[[NSSet alloc] initWithArray:self.shortcuts] autorelease];
+    
+    // NOTE:
+    // It's important to detect changes to charactersIgnoringModifiers because if it's not up-to-date
+    // in the carbon hotkey then keypresses while a shortcut input field is first responder will send
+    // the wrong 'characters' field to it.
+    if (self.hasModifierActivation == hasModifierActivation &&
+        self.modifierActivation == modifierActivation &&
+        [newShortcuts isEqual:oldShortcuts]) {
+        // No change
+        DLog(@"Attempt to change shortcuts is a no-op");
+        return;
+    }
+    
+    DLog(@"Changing shortcuts.");
+    
+    BOOL wasRegistered = _registered;
+    if (wasRegistered) {
+        [self unregister];
+    }
+
+    [_shortcuts release];
+    _shortcuts = [newShortcuts.allObjects copy];
+    _hasModifierActivation = hasModifierActivation;
+    _modifierActivation = modifierActivation;
+
+    if (wasRegistered) {
+        [self register];
+    }
+}
+
+- (void)unregisterCarbonHotKey:(iTermHotKey *)hotKey {
+    [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:hotKey];
+    [_carbonHotKeys removeObject:hotKey];
 }
 
 - (void)simulatePress {
@@ -185,7 +225,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     
     NSArray *siblingBaseHotKeys = [siblings mapWithBlock:^id(iTermHotKey *anObject) {
-        return anObject.target;
+        id target = anObject.target;
+        if ([target isKindOfClass:[iTermBaseHotKey class]]) {
+            return target;
+        } else {
+            return nil;
+        }
     }];
     [self hotKeyPressedWithSiblings:siblingBaseHotKeys];
 }
