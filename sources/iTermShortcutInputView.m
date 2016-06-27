@@ -113,7 +113,7 @@
     } else if (isFirstResponder) {
         string = self.newHotKey;
     } else if (self.stringValue.length == 0) {
-        string = @"No Hotkey";
+        string = @"Click to Set";
     } else {
         string = self.stringValue;
     }
@@ -196,6 +196,7 @@
 - (void)setStringValue:(NSString *)stringValue {
     [_stringValue autorelease];
     _stringValue = [stringValue copy];
+    _clearButton.hidden = stringValue.length == 0;
     [self setNeedsDisplay:YES];
 }
 
