@@ -111,9 +111,9 @@ extern NSString *const kPreferenceKeyHotkeyCharacter;
 extern NSString *const kPreferenceKeyHotkeyModifiers;
 
 // Migration to multi-hotkey window will move these settings into a profile.
-extern NSString *const kPreferenceKeyHotKeyTogglesWindow;  // Deprecated
-extern NSString *const kPreferenceKeyHotkeyProfileGuid;  // Deprecated
-extern NSString *const kPreferenceKeyHotkeyAutoHides;  // Deprecated
+extern NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated;  // Deprecated
+extern NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated;  // Deprecated
+extern NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated;  // Deprecated
 
 // Pointer
 extern NSString *const kPreferenceKeyCmdClickOpensURLs;

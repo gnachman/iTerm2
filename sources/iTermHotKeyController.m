@@ -338,14 +338,15 @@
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
 #warning Test this
-    for (PseudoTerminal *term in [self hotKeyWindowControllers]) {
+    for (iTermProfileHotKey *profileHotKey in self.profileHotKeys) {
+        PseudoTerminal *term = profileHotKey.windowController;
         NSWindow *window = [term window];
         // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
         // another app key, leaving the hotkey window open underneath other windows.
         if ([window isVisible] &&
             window.isOnActiveSpace &&
             ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
-            ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
+            !profileHotKey.autoHides) {
           DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
             [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
         }
@@ -444,15 +445,6 @@
         return profileHotKey.windowController.weaklyReferencedObject;
     }];
     return hotKeyWindowControllers;
-}
-
-- (Profile *)profile {
-    NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
-    if (guid) {
-        return [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    } else {
-        return nil;
-    }
 }
 
 - (NSArray *)visibleWindowControllers {

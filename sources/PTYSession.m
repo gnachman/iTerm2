@@ -4819,8 +4819,14 @@ ITERM_WEAKLY_REFERENCEABLE
             }
                 
             case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING: {
-                [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]
-                                   forKey:kPreferenceKeyHotkeyAutoHides];
+                DLog(@"Toggle pinning");
+                BOOL autoHid = [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
+                DLog(@"Getting profile with guid %@ from originalProfile %p", self.originalProfile[KEY_GUID], self.originalProfile);
+                Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:self.originalProfile[KEY_GUID]];
+                if (profile) {
+                    DLog(@"Found a profile");
+                    [iTermProfilePreferences setBool:!autoHid forKey:KEY_HOTKEY_AUTOHIDE inProfile:profile model:[ProfileModel sharedInstance]];
+                }
                 break;
             }
             case KEY_ACTION_UNDO:

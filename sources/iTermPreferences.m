@@ -87,9 +87,10 @@ NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";  // Nonzero if hotkey char is set.
 NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
-NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";  // deprecated
-NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";  // deprecated
-NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";  // deprecated
+
+NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
+NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
+NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated = @"HotkeyAutoHides";  // deprecated
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
@@ -244,9 +245,9 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
                   kPreferenceKeyHotkeyModifiers: @0,
-                  kPreferenceKeyHotKeyTogglesWindow: @NO,
-                  kPreferenceKeyHotkeyProfileGuid: [NSNull null],
-                  kPreferenceKeyHotkeyAutoHides: @YES,
+                  kPreferenceKeyHotKeyTogglesWindow_Deprecated: @NO,
+                  kPreferenceKeyHotkeyProfileGuid_Deprecated: [NSNull null],
+                  kPreferenceKeyHotkeyAutoHides_Deprecated: @YES,
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,

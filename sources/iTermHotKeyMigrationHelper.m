@@ -39,10 +39,10 @@
     
     DLog(@"Migrating hotkey prefs…");
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
-        [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
+        [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow_Deprecated]) {
         DLog(@"Legacy preferences have a dedicated window");
         
-        NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid];
+        NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid_Deprecated];
         // There is something to migrate
         Profile *profile = guid ? [[ProfileModel sharedInstance] bookmarkWithGuid:guid] : nil;
         if (profile) {
@@ -258,7 +258,7 @@
     unichar character = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyHotkeyCharacter];
     NSString *characters = character ? [NSString stringWithFormat:@"%C", character] : @"";
     NSEventModifierFlags modifiers = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyHotkeyModifiers];
-    BOOL autohides = [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides];
+    BOOL autohides = [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides_Deprecated];
     BOOL animate = [iTermAdvancedSettingsModel hotkeyTermAnimationDuration] > 0;
     BOOL dockIconTogglesWindow = [iTermAdvancedSettingsModel dockIconTogglesWindow];
     iTermHotKeyDockPreference dockAction = dockIconTogglesWindow ? iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen : iTermHotKeyDockPreferenceDoNotShow;
