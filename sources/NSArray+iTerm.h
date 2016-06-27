@@ -37,6 +37,7 @@
 // Returns an array by taking this one and removing the last object, if there
 // is one.
 - (NSArray<ObjectType> *)arrayByRemovingLastObject;
+- (NSArray<ObjectType> *)arrayByRemovingFirstObject;
 
 - (NSArray<ObjectType> *)arrayByRemovingObject:(ObjectType)objectToRemove;
 

@@ -203,6 +203,7 @@
 #define KEY_HOTKEY_DOCK_CLICK_ACTION          @"HotKey Window Dock Click Action"
 #define KEY_HOTKEY_ACTIVATE_WITH_MODIFIER     @"HotKey Activated By Modifier"
 #define KEY_HOTKEY_MODIFIER_ACTIVATION        @"HotKey Modifier Activation"
+#define KEY_HOTKEY_ALTERNATE_SHORTCUTS        @"HotKey Alternate Shortcuts"
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary

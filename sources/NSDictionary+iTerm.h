@@ -46,8 +46,7 @@
 
 @end
 
-// A handy way of describing a hotkey. Really just a triple of keycode,
-// characters, and modifier flags. The modifier flags should be masked before
+// A handy way of describing a hotkey. The modifier flags should be masked before
 // the creation of the dictionary.
 typedef NSDictionary iTermHotKeyDescriptor;
 

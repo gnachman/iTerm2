@@ -42,21 +42,66 @@
     [super dealloc];
 }
 
+- (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
+    if (backgroundStyle == NSBackgroundStyleLight) {
+        [_clearButton setImage:[NSImage imageNamed:@"Erase"]];
+    } else {
+        [_clearButton setImage:[NSImage imageNamed:@"EraseDarkBackground"]];
+    }
+    _backgroundStyle = backgroundStyle;
+    [self setNeedsDisplay:YES];
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor clearColor] set];
     NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
     
+    BOOL isFirstResponder = ([self.window firstResponder] == self);
+
     NSColor *outerLineColor;
     NSColor *innerLineColor;
     NSColor *textColor;
-    if (self.isEnabled) {
-        outerLineColor = [NSColor colorWithWhite:169.0/255.0 alpha:1];
-        innerLineColor = [NSColor colorWithWhite:240.0/255.0 alpha:1];
-        textColor = [NSColor controlTextColor];
+    NSColor *fieldColor;
+    if (self.backgroundStyle == NSBackgroundStyleLight) {
+        if (self.isEnabled) {
+            outerLineColor = [NSColor colorWithWhite:169.0/255.0 alpha:1];
+            innerLineColor = [NSColor colorWithWhite:240.0/255.0 alpha:1];
+            textColor = [NSColor controlTextColor];
+        } else {
+            outerLineColor = [NSColor colorWithWhite:207.0/255.0 alpha:1];
+            innerLineColor = [NSColor colorWithWhite:242.0/255.0 alpha:1];
+            textColor = [NSColor disabledControlTextColor];
+        }
+        if (isFirstResponder) {
+            fieldColor = [NSColor selectedControlColor];
+        } else {
+            if (_mouseDown && self.enabled) {
+                fieldColor = [NSColor colorWithWhite:0.9 alpha:1];
+            } else {
+                fieldColor = [NSColor controlBackgroundColor];
+            }
+        }
     } else {
-        outerLineColor = [NSColor colorWithWhite:207.0/255.0 alpha:1];
-        innerLineColor = [NSColor colorWithWhite:242.0/255.0 alpha:1];
-        textColor = [NSColor disabledControlTextColor];
+        if (self.isEnabled) {
+            outerLineColor = [NSColor colorWithWhite:169.0/255.0 alpha:1];
+            innerLineColor = [NSColor colorWithWhite:240.0/255.0 alpha:1];
+            textColor = [NSColor whiteColor];
+        } else {
+            outerLineColor = [NSColor colorWithWhite:207.0/255.0 alpha:1];
+            innerLineColor = [NSColor colorWithWhite:242.0/255.0 alpha:1];
+            textColor = [NSColor grayColor];
+        }
+        if (isFirstResponder) {
+            fieldColor = [NSColor selectedControlColor];
+            textColor = [NSColor controlTextColor];
+        } else {
+            if (_mouseDown && self.enabled) {
+                fieldColor = [NSColor colorWithWhite:0.9 alpha:1];
+                textColor = [NSColor controlTextColor];
+            } else {
+                fieldColor = [NSColor clearColor];
+            }
+        }
     }
 
     
@@ -83,21 +128,12 @@
     [path setLineWidth:0.5];
     [path stroke];
 
-    BOOL isFirstResponder = ([self.window firstResponder] == self);
-    if (isFirstResponder) {
-        [[NSColor selectedControlColor] set];
-    } else {
-        if (_mouseDown && self.enabled) {
-            [[NSColor colorWithWhite:0.9 alpha:1] set];
-        } else {
-            [[NSColor controlBackgroundColor] set];
-        }
-    }
+    [fieldColor set];
     frame.origin.x += 0.5;
     frame.origin.y += 0.5;
     frame.size.width -= 0.5;
     frame.size.height -= 0.5;
-    NSRectFill(frame);
+    NSRectFillUsingOperation(frame, NSCompositeSourceOver);
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
     
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];

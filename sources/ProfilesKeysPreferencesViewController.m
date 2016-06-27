@@ -106,12 +106,12 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     model.modifiers = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS];
     model.characters = [self stringForKey:KEY_HOTKEY_CHARACTERS];
     model.charactersIgnoringModifiers = [self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS];
-    model.hotKeyAssigned = (model.charactersIgnoringModifiers.length != 0);
     model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
     model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
     model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];
     model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
-
+    [model setAlternateShortcutDictionaries:(id)[self objectForKey:KEY_HOTKEY_ALTERNATE_SHORTCUTS]];
+    
     iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
     panel.descriptorsInUseByOtherProfiles =
         [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:self.delegate.profilePreferencesCurrentProfile];
@@ -120,9 +120,6 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSModalResponseOK) {
             [self setObjectsFromDictionary:model.dictionaryValue];
-            if (!model.charactersIgnoringModifiers.length && !model.hasModifierActivation) {
-                [self setBool:NO forKey:KEY_HAS_HOTKEY];
-            }
             _hasHotkey.state = [self boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
         }
         _configureHotKey.enabled = [self boolForKey:KEY_HAS_HOTKEY];

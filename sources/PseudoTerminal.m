@@ -1800,12 +1800,15 @@ ITERM_WEAKLY_REFERENCEABLE
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
+    // const BOOL isHotkey = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
+#warning TODO: Restoring a fullscreen hotkey window hides the dock and the above commented out line of code does not fix it.
+    const BOOL isHotkey = NO;
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                                   isHotkey:NO] autorelease];
+                                                   isHotkey:isHotkey] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
@@ -1822,7 +1825,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                                   isHotkey:NO] autorelease];
+                                                   isHotkey:isHotkey] autorelease];
         [term delayedEnterFullscreen];
     } else {
         // Support legacy edge-spanning flag by adjusting the
@@ -1850,7 +1853,8 @@ ITERM_WEAKLY_REFERENCEABLE
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:windowType
                                             savedWindowType:WINDOW_TYPE_NORMAL
-                                                     screen:-1] autorelease];
+                                                     screen:-1
+                                                   isHotkey:isHotkey] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];

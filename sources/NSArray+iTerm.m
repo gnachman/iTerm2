@@ -114,6 +114,14 @@
     }
 }
 
+- (NSArray *)arrayByRemovingFirstObject {
+    if (self.count <= 1) {
+        return @[];
+    } else {
+        return [self subarrayWithRange:NSMakeRange(1, self.count - 1)];
+    }
+}
+
 - (NSString *)componentsJoinedWithOxfordComma {
     if (self.count <= 1) {
         return [self firstObject];

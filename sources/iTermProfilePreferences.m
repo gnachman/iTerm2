@@ -255,6 +255,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_DOCK_CLICK_ACTION: @(iTermHotKeyDockPreferenceDoNotShow),
                   KEY_HOTKEY_MODIFIER_ACTIVATION: @0,
                   KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,
+                  KEY_HOTKEY_ALTERNATE_SHORTCUTS: @[],
                 };
         [dict retain];
     }

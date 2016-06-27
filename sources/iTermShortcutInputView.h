@@ -26,6 +26,7 @@
 @property(nonatomic, assign) BOOL disableKeyRemapping;
 @property(nonatomic, assign, getter=isEnabled) BOOL enabled;
 @property(nonatomic, copy) NSString *stringValue;
+@property(nonatomic, assign) NSBackgroundStyle backgroundStyle;
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 

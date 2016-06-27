@@ -2124,6 +2124,12 @@
 		A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
 		A6EFF2331D2049A400806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
 		A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
+		A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
+		A6EFF2381D20F6BE00806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
+		A6EFF2391D20F6BF00806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
+		A6EFF23A1D20F6BF00806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
+		A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */; };
+		A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
@@ -3440,6 +3446,8 @@
 		A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRollAnimationWindow.m; sourceTree = "<group>"; };
 		A6EFF22F1D20499700806EEF /* Erase.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Erase.png; path = images/Erase.png; sourceTree = "<group>"; };
 		A6EFF2301D20499700806EEF /* Erase@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Erase@2x.png"; path = "images/Erase@2x.png"; sourceTree = "<group>"; };
+		A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = EraseDarkBackground.png; path = images/EraseDarkBackground.png; sourceTree = "<group>"; };
+		A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "EraseDarkBackground@2x.png"; path = "images/EraseDarkBackground@2x.png"; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
@@ -4143,6 +4151,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */,
+				A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */,
 				A6EFF22F1D20499700806EEF /* Erase.png */,
 				A6EFF2301D20499700806EEF /* Erase@2x.png */,
 				1D44CCD91CC6A1DE00BE5630 /* Loupe.png */,
@@ -6412,6 +6422,7 @@
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
+				A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */,
 				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
 				1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */,
@@ -6433,6 +6444,7 @@
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
 				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
 				1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */,
+				A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */,
 				1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
@@ -6552,6 +6564,7 @@
 				1D44D06A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingText.png in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				1D44D07D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
+				A6EFF23A1D20F6BF00806EEF /* EraseDarkBackground@2x.png in Resources */,
 				1D44D0891CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testRegionStartingWithDWCRight.png in Resources */,
 				1D44D05B1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlinkingTextVisible.png in Resources */,
 				A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
@@ -6632,6 +6645,7 @@
 				1D8BBA791B30FD230005A852 /* Later.png in Resources */,
 				1D8BBA691B30F5C30005A852 /* Navigate.png in Resources */,
 				1D44CFA91CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBg.png in Resources */,
+				A6EFF2391D20F6BF00806EEF /* EraseDarkBackground.png in Resources */,
 				1D44D0031CC7F5A600BE5630 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				1D44CFD21CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
@@ -6914,6 +6928,7 @@
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
+				A6EFF2381D20F6BE00806EEF /* EraseDarkBackground@2x.png in Resources */,
 				1DE922E61AC3709200965876 /* BackgroundStripes.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
@@ -6928,6 +6943,7 @@
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
+				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
