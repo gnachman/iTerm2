@@ -6,6 +6,11 @@
 #import "iTermEventTap.h"
 #import "NSArray+iTerm.h"
 
+static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskAlphaShift |
+                                                        kCGEventFlagMaskAlternate |
+                                                        kCGEventFlagMaskCommand |
+                                                        kCGEventFlagMaskControl);
+
 const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
                                                   NSAlternateKeyMask |
                                                   NSShiftKeyMask |
@@ -150,11 +155,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!self.hasModifierActivation) {
         return NO;
     }
-    CGEventFlags mask = (kCGEventFlagMaskAlphaShift |
-                         kCGEventFlagMaskAlternate |
-                         kCGEventFlagMaskCommand |
-                         kCGEventFlagMaskControl);
-    CGEventFlags maskedFlags = (flags & mask);
+    CGEventFlags maskedFlags = (flags & kCGEventHotKeyModifierMask);
 
     switch (self.modifierActivation) {
         case iTermHotKeyModifierActivationShift:
@@ -170,6 +171,10 @@ ITERM_WEAKLY_REFERENCEABLE
             return maskedFlags == kCGEventFlagMaskControl;
     }
     assert(false);
+}
+
+- (void)cancelDoubleTap {
+    _lastModifierTapTime = 0;
 }
 
 #pragma mark - Actions
@@ -192,12 +197,18 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     
-    CGEventFlags flags = CGEventGetFlags(event);
-    BOOL modifierIsPressed = [self activationModifierPressedInFlags:flags];
-    if (!_modifierWasPressed && modifierIsPressed) {
-        [self handleActivationModifierPress];
+    if (type == kCGEventFlagsChanged) {
+        CGEventFlags flags = CGEventGetFlags(event);
+        BOOL modifierIsPressed = [self activationModifierPressedInFlags:flags];
+        if (!_modifierWasPressed && modifierIsPressed) {
+            [self handleActivationModifierPress];
+        } else if (_modifierWasPressed && (flags & kCGEventHotKeyModifierMask)) {
+            [self cancelDoubleTap];
+        }
+        _modifierWasPressed = modifierIsPressed;
+    } else {
+        [self cancelDoubleTap];
     }
-    _modifierWasPressed = modifierIsPressed;
 }
 
 @end
