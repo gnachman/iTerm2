@@ -2120,6 +2120,10 @@
 		A6EFF2211D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */; };
 		A6EFF22D1D1F39B600806EEF /* iTermRollAnimationWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */; };
 		A6EFF22E1D1F39B600806EEF /* iTermRollAnimationWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */; };
+		A6EFF2311D2049A300806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
+		A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
+		A6EFF2331D2049A400806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
+		A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
@@ -3434,6 +3438,8 @@
 		A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotKeyMigrationHelper.m; sourceTree = "<group>"; };
 		A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRollAnimationWindow.h; sourceTree = "<group>"; };
 		A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRollAnimationWindow.m; sourceTree = "<group>"; };
+		A6EFF22F1D20499700806EEF /* Erase.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Erase.png; path = images/Erase.png; sourceTree = "<group>"; };
+		A6EFF2301D20499700806EEF /* Erase@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Erase@2x.png"; path = "images/Erase@2x.png"; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
@@ -4137,6 +4143,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6EFF22F1D20499700806EEF /* Erase.png */,
+				A6EFF2301D20499700806EEF /* Erase@2x.png */,
 				1D44CCD91CC6A1DE00BE5630 /* Loupe.png */,
 				1D44CCDA1CC6A1DE00BE5630 /* Loupe@2x.png */,
 				A66DB8301C8E4C2E00233E88 /* ChangeProfile.png */,
@@ -6335,6 +6343,7 @@
 				1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */,
 				A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
+				A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */,
 				A65B72AE1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
@@ -6383,6 +6392,7 @@
 				A67D0D7F1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				1D6ED9C319AEA20D005A7799 /* Maximized@2x.png in Resources */,
 				1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */,
+				A6EFF2331D2049A400806EEF /* Erase.png in Resources */,
 				A686A1191C86A6DE0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A67D0D821A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D611A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
@@ -6852,6 +6862,7 @@
 				A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A66DB8331C8E4C2E00233E88 /* ChangeProfile@2x.png in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
+				A6EFF2311D2049A300806EEF /* Erase.png in Resources */,
 				1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
@@ -6859,6 +6870,7 @@
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
+				A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,

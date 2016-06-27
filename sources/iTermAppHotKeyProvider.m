@@ -37,10 +37,12 @@
         NSEventModifierFlags modifiers = [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
         NSUInteger code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
         unichar character = [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter];
-        self.appHotKey = [[iTermAppHotKey alloc] initWithKeyCode:code
-                                                       modifiers:modifiers
-                                                      characters:[NSString stringWithFormat:@"%C", character]
-                                     charactersIgnoringModifiers:[NSString stringWithFormat:@"%C", character]];
+        self.appHotKey = [[[iTermAppHotKey alloc] initWithKeyCode:code
+                                                        modifiers:modifiers
+                                                       characters:[NSString stringWithFormat:@"%C", character]
+                                      charactersIgnoringModifiers:[NSString stringWithFormat:@"%C", character]
+                                            hasModifierActivation:NO
+                                               modifierActivation:0] autorelease];
         [[iTermHotKeyController sharedInstance] addHotKey:self.appHotKey];
     } else {
         self.appHotKey = nil;

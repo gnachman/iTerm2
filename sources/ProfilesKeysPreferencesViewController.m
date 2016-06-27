@@ -120,6 +120,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSModalResponseOK) {
             [self setObjectsFromDictionary:model.dictionaryValue];
+            if (!model.charactersIgnoringModifiers.length && !model.hasModifierActivation) {
+                [self setBool:NO forKey:KEY_HAS_HOTKEY];
+            }
             _hasHotkey.state = [self boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
         }
         _configureHotKey.enabled = [self boolForKey:KEY_HAS_HOTKEY];

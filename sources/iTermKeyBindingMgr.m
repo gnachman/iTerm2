@@ -79,6 +79,7 @@
 #import "iTermModifierRemapper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
+#import "NSStringITerm.h"
 #import "PTYTextView.h"   // For selection movement units
 #import <Carbon/Carbon.h>
 
@@ -261,24 +262,12 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             break;
     }
 
-    theKeyString = [[NSMutableString alloc] initWithString: @""];
-    if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
-    }
-    if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"⌥"];
-    }
-    if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"⇧"];
-    }
-    if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
-    }
+    theKeyString = [[[NSString stringForModifiersWithMask:keyMods] mutableCopy] autorelease];
     if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
         [theKeyString appendString: @"num-"];
     }
-    [theKeyString appendString: aString];
-    return [theKeyString autorelease];
+    [theKeyString appendString:aString];
+    return theKeyString;
 }
 
 + (NSString*)_bookmarkNameForGuid:(NSString*)guid

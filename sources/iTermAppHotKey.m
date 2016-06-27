@@ -18,7 +18,7 @@
         NSWindow *prefsWindow = [prefsWindowController window];
         NSWindow *keyWindow = [[NSApplication sharedApplication] keyWindow];
         if (prefsWindow != keyWindow ||
-            ![[prefsWindowController hotkeyField] textFieldIsFirstResponder]) {
+            prefsWindowController.window.firstResponder != prefsWindowController.hotkeyField) {
             [NSApp hide:nil];
         }
     } else {

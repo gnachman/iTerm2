@@ -298,6 +298,15 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     unsigned int keyCode = [event keyCode];
 
     [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
+    
+    if (!event) {
+        BOOL wasEnabled = [self boolForKey:kPreferenceKeyHotkeyEnabled];
+        [self setBool:NO forKey:kPreferenceKeyHotkeyEnabled];
+        if (wasEnabled) {
+            [self hotkeyEnabledDidChange];
+            _hotkeyEnabled.state = NSOffState;
+        }
+    }
 }
 
 - (BOOL)anyBookmarkHasKeyMapping:(NSString*)theString {

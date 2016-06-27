@@ -196,7 +196,7 @@
     [self modelDidChange];
     NSString *identifier = [iTermKeyBindingMgr identifierForCharacterIgnoringModifiers:[event.charactersIgnoringModifiers firstCharacter]
                                                                              modifiers:event.modifierFlags];
-    [view setStringValue:[iTermKeyBindingMgr formatKeyCombination:identifier]];
+    [view setStringValue:event ? [iTermKeyBindingMgr formatKeyCombination:identifier] : @""];
 }
 
 @end

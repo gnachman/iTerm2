@@ -136,7 +136,7 @@
     }
     self.currentKeyCombination = [NSString stringWithFormat:@"0x%x-0x%x", keyCode, theModifiers];
 
-    [_shortcutField setStringValue:[iTermKeyBindingMgr formatKeyCombination:self.currentKeyCombination]];
+    [_shortcutField setStringValue:keyCode ? [iTermKeyBindingMgr formatKeyCombination:self.currentKeyCombination] : @""];
 }
 
 #pragma mark - Private

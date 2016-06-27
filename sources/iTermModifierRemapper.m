@@ -134,7 +134,11 @@
 // Only called when the app is active.
 - (CGEventRef)eventByRemappingEvent:(CGEventRef)event {
   NSEvent *cocoaEvent = [NSEvent eventWithCGEvent:event];
-  iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
+  iTermShortcutInputView *shortcutView = nil;
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
+        shortcutView = (iTermShortcutInputView *)firstResponder;
+    }
 
   if (shortcutView.disableKeyRemapping) {
       // Send keystroke directly to preference panel when setting do-not-remap for a key; for

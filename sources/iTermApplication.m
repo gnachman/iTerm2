@@ -78,18 +78,40 @@
     }
 }
 
+- (NSEvent *)eventByRemappingForSecureInput:(NSEvent *)event {
+    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped] &&
+        (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers])) {
+        // The event tap is not working, but we can still remap modifiers for non-system
+        // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
+        // the event tap performs the remapping.
+        event = [iTermKeyBindingMgr remapModifiers:event];
+    }
+    return event;
+}
+
+- (BOOL)routeEventToShortcutInputView:(NSEvent *)event {
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
+        iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)firstResponder;
+        if (shortcutView) {
+            [shortcutView handleShortcutEvent:event];
+            return YES;
+        }
+    }
+    return NO;
+}
+
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
-    if ([event type] == NSKeyDown) {
+    if ([event type] == NSFlagsChanged) {
+        event = [self eventByRemappingForSecureInput:event];
+        if ([self routeEventToShortcutInputView:event]) {
+            return;
+        }
+    } else if ([event type] == NSKeyDown) {
         iTermController* cont = [iTermController sharedInstance];
 
-        if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped] &&
-            (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers])) {
-            // The event tap is not working, but we can still remap modifiers for non-system
-            // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
-            // the event tap performs the remapping.
-            event = [iTermKeyBindingMgr remapModifiers:event];
-        }
+        event = [self eventByRemappingForSecureInput:event];
         if (IsSecureEventInputEnabled() &&
             [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
@@ -102,9 +124,7 @@
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
-        iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
-        if (shortcutView) {
-            [shortcutView handleShortcutEvent:event];
+        if ([self routeEventToShortcutInputView:event]) {
             return;
         }
 
