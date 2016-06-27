@@ -258,10 +258,8 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
     NSWindow *keyWindow = [NSApp keyWindow];
     NSResponder *firstResponder = [keyWindow firstResponder];
     if ([NSApp isActive] &&
-        [firstResponder isKindOfClass:[NSTextView class]] &&
-        [keyWindow fieldEditor:NO forObject:nil] !=nil &&
-        [[(NSTextView *)firstResponder delegate] isKindOfClass:[iTermShortcutInputView class]]) {
-        // The first responder is the field editor for a shortcut input view. Let it handle it.
+        [keyWindow.firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
+        // The first responder is a shortcut input view. Let it handle it.
 
         iTermHotKey *hotKey = hotkeys.firstObject;
         if (!hotKey) {
@@ -277,7 +275,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
                            charactersIgnoringModifiers:hotKey.charactersIgnoringModifiers
                                              isARepeat:NO
                                                keyCode:hotKey.keyCode];
-        iTermShortcutInputView *shortcutInputView = (iTermShortcutInputView *)[(NSTextView *)firstResponder delegate];
+        iTermShortcutInputView *shortcutInputView = (iTermShortcutInputView *)firstResponder;
         [shortcutInputView handleShortcutEvent:fakeEvent];
         return YES;
     }
