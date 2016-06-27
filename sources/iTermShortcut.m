@@ -18,6 +18,8 @@ static NSString *const kModifiers = @"modifiers";
 static NSString *const kCharacters = @"characters";
 static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifiers";
 
+CGFloat kShortcutPreferredHeight = 22;
+
 const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
                                                   NSAlternateKeyMask |
                                                   NSShiftKeyMask |

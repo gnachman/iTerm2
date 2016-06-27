@@ -3782,7 +3782,7 @@ DQ
                     </connections>
                 </matrix>
             </subviews>
-            <point key="canvasLocation" x="162.5" y="207"/>
+            <point key="canvasLocation" x="-4.5" y="35"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="617"/>

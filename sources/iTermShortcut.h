@@ -11,6 +11,7 @@
 #import "ProfileModel.h"
 
 extern const NSEventModifierFlags kHotKeyModifierMask;
+extern CGFloat kShortcutPreferredHeight;
 
 // Describes a keyboard shortcut for opening a hotkey window.
 @interface iTermShortcut : NSObject<NSCopying>

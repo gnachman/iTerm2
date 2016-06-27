@@ -787,23 +787,32 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
 }
 
+- (NSMenu *)topLevelViewNamed:(NSString *)menuName {
+    NSMenu *appMenu = [NSApp mainMenu];
+    NSMenuItem *topLevelMenuItem = [appMenu itemWithTitle:menuName];
+    NSMenu *menu = [topLevelMenuItem submenu];
+    return menu;
+}
+
+- (void)addMenuItemView:(NSView *)view toMenu:(NSMenu *)menu title:(NSString *)title {
+    NSMenuItem *newItem;
+    newItem = [[[NSMenuItem alloc] initWithTitle:title
+                                       action:@selector(changeTabColorToMenuAction:)
+                                keyEquivalent:@""] autorelease];
+    [newItem setView:view];
+    [menu addItem:newItem];
+}
+
 - (void)awakeFromNib {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
 
-    NSMenu *appMenu = [NSApp mainMenu];
-    NSMenuItem *viewMenuItem = [appMenu itemWithTitle:@"View"];
-    NSMenu *viewMenu = [viewMenuItem submenu];
+    NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
+    [viewMenu addItem:[NSMenuItem separatorItem]];
 
-    [viewMenu addItem: [NSMenuItem separatorItem]];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                            initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
-    NSMenuItem *item;
-    item = [[[NSMenuItem alloc] initWithTitle:@"Current Tab Color"
-                                       action:@selector(changeTabColorToMenuAction:)
-                                keyEquivalent:@""] autorelease];
-    [item setView:labelTrackView];
-    [viewMenu addItem:item];
-
+    [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
+    
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
     }
