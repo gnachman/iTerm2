@@ -3710,7 +3710,7 @@ DQ
                 </customView>
                 <customView id="Rmc-92-zTk">
                     <rect key="frame" x="0.0" y="0.0" width="657" height="63"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField verticalHuggingPriority="750" id="n5u-YT-WtN">
                             <rect key="frame" x="14" y="46" width="111" height="17"/>
