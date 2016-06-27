@@ -398,7 +398,7 @@ Gw
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <tabView initialItem="2101" id="2100" userLabel="Profiles Tab View">
+                                        <tabView allowsTruncatedLabels="NO" initialItem="2101" id="2100" userLabel="Profiles Tab View">
                                             <rect key="frame" x="320" y="10" width="579" height="450"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <font key="font" metaFont="system"/>
