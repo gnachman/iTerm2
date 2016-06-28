@@ -45,7 +45,7 @@ extern NSString *const kShowFullscreenTabsSettingDidChange;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
-@interface iTermApplicationDelegate : NSObject<NSApplicationDelegate>
+@interface iTermApplicationDelegate : NSObject<iTermApplicationDelegate>
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
 @property(nonatomic, readonly) BOOL isApplescriptTestApp;

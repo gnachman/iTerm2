@@ -138,9 +138,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         BOOL isOn = [sender state] == NSOnState;
         if (isOn) {
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"When iTerm2 is excluded from the dock and the "
-                    @"Application Switcher, the only way to get back to iTerm2 (including this "
-                    @"preferences panel) is to press the hotkey. "
+                [iTermWarning showWarningWithTitle:@"When iTerm2 is excluded from the dock, you can "
+                                                   @"always get back to Preferences using the status "
+                                                   @"bar item. Look for an iTerm2 icon on the right "
+                                                   @"side of your menu bar."
                                            actions:@[ @"Exclude From Dock and App Switcher", @"Cancel" ]
                                         identifier:nil
                                        silenceable:kiTermWarningTypePersistent];

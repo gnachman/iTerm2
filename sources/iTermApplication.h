@@ -32,15 +32,20 @@
 
 @class iTermApplicationDelegate;
 
+@protocol iTermApplicationDelegate<NSApplicationDelegate>
+- (NSMenu *)statusBarMenu;
+@end
+
 @interface iTermApplication : NSApplication
 
 + (iTermApplication *)sharedApplication;
 
 // Sets the return value for -currentEvent. Only for testing.
 @property(atomic, retain) NSEvent *fakeCurrentEvent;
+@property(nonatomic, readonly) NSStatusItem *statusBarItem;
 
 - (void)sendEvent:(NSEvent *)anEvent;
-- (iTermApplicationDelegate *)delegate;
+- (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
 
 // Like orderedWindows, but only PTYWindow objects are returned.
 - (NSArray *)orderedTerminalWindows;

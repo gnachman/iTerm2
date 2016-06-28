@@ -971,6 +971,11 @@ static BOOL hasBecomeActive = NO;
     [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:self];
 }
 
+- (IBAction)showAndOrderFrontRegardlessPrefWindow:(id)sender {
+    [self showPrefWindow:sender];
+    [[[PreferencePanel sharedInstance] window] orderFrontRegardless];
+}
+
 - (IBAction)showBookmarkWindow:(id)sender
 {
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
@@ -1825,6 +1830,28 @@ static BOOL hasBecomeActive = NO;
 
 - (NSArray*)terminals {
     return [[iTermController sharedInstance] terminals];
+}
+
+#pragma mark - iTermApplicationDelegate
+
+- (NSMenu *)statusBarMenu {
+    NSMenu *menu = [[NSMenu alloc] init];
+    NSMenuItem *item;
+    item = [[[NSMenuItem alloc] initWithTitle:@"Preferences"
+                                       action:@selector(showAndOrderFrontRegardlessPrefWindow:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+    
+    item = [[[NSMenuItem alloc] initWithTitle:@"Bring All Windows to Front"
+                                       action:@selector(arrangeInFront:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+
+    item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
+                                       action:@selector(terminate:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+return menu;
 }
 
 @end
