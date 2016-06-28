@@ -42,6 +42,7 @@
 @implementation iTermHotKeyController {
     NSMutableArray<iTermBaseHotKey *> *_hotKeys;
     NSMutableArray<iTermProfileHotKey *> *_profileHotKeysBirthingWindows;
+    BOOL _disableAutoHide;
 }
 
 + (iTermHotKeyController *)sharedInstance {
@@ -371,6 +372,15 @@
     }
 }
 
+- (void)fastHideAllHotKeyWindows {
+    _disableAutoHide = YES;
+    for (PseudoTerminal *term in [self hotKeyWindowControllers]) {
+        iTermProfileHotKey *hotKey = [self profileHotKeyForWindowController:term];
+        [hotKey hideHotKeyWindowAnimated:NO suppressHideApp:NO];
+    }
+    _disableAutoHide = NO;
+}
+
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
@@ -407,6 +417,10 @@
 }
 
 - (BOOL)shouldAutoHide {
+    if (_disableAutoHide) {
+        DLog(@"Auto-hide temporarily disabled");
+        return NO;
+    }
     NSWindow *keyWindow = [NSApp keyWindow];
     if ([keyWindow respondsToSelector:@selector(autoHidesHotKeyWindow)] &&
         ![keyWindow autoHidesHotKeyWindow]) {

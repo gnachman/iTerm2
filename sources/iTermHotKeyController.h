@@ -78,4 +78,7 @@
                       withProfile:(Profile *)profile
                              show:(BOOL)show;
 
+// Hide all hotkey windows without animation. Used by Exposé All Tabs.
+- (void)fastHideAllHotKeyWindows;
+
 @end

@@ -515,20 +515,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (void)fastHideHotKeyWindow {
     DLog(@"fastHideHotKeyWindow");
-    if (self.windowController.weaklyReferencedObject) {
-#warning TODO This is a gross hack and probably doesn't work
-        DLog(@"fastHideHotKeyWindow - found a hot term");
-        // Temporarily tell the hotkeywindow that it's not hot so that it doesn't try to hide itself
-        // when losing key status.
-        self.windowController.isHotKeyWindow = NO;
-
-        // Immediately hide the hotkey window.
-        [self.windowController.window orderOut:nil];
-        self.windowController.window.alphaValue = 0;
-
-        // Restore hotkey window's status.
-        self.windowController.isHotKeyWindow = YES;
-    }
+    [self.windowController.window orderOut:nil];
+    self.windowController.window.alphaValue = 0;
 }
 
 #pragma mark - Notifications
