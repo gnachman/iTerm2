@@ -1880,7 +1880,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                sessions:(NSArray *)sessions {
     PseudoTerminal* term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
     for (PTYSession *session in sessions) {
-        assert([session revive]);  // TODO(georgen): This isn't guarantted
+        assert([session revive]);  // TODO(georgen): This isn't guaranteed
     }
     if ([term loadArrangement:arrangement sessions:sessions]) {
         return term;
