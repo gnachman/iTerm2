@@ -95,8 +95,11 @@
                 startingAt:(int)startingAt;
 
 // Does not enter fullscreen automatically; that is left to the caller, since tmux has special
-// logic around this.
+// logic around this. Call -didFinishCreatingTmuxWindow: after it is doing being set up.
 - (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile;
+
+// This is called when the window created by -openTmuxIntegrationWindowUsingProfile is done being initialized.
+- (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController;
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional

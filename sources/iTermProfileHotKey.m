@@ -20,7 +20,6 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 @property(nonatomic, copy) NSString *profileGuid;
 @property(nonatomic, retain) NSDictionary *restorableState;
 @property(nonatomic, readwrite) BOOL rollingIn;
-@property(nonatomic, retain) PseudoTerminal<iTermWeakReference> *windowController;
 @property(nonatomic) BOOL birthingWindow;
 @property(nonatomic, retain) NSWindowController *windowControllerBeingBorn;
 @end
@@ -36,6 +35,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                  modifierActivation:modifierActivation];
 
     if (self) {
+        _allowsStateRestoration = YES;
         _profileGuid = [profile[KEY_GUID] copy];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(terminalWindowControllerCreated:)
@@ -67,13 +67,6 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     return [[ProfileModel sharedInstance] bookmarkWithGuid:_profileGuid];
 }
 
-- (void)reviveWindowController:(PseudoTerminal *)windowController {
-    if (self.windowController.weaklyReferencedObject) {
-        return;
-    }
-    [self setWindowController:windowController.weakSelf];
-}
-
 - (void)createWindow {
     if (self.windowController.weaklyReferencedObject) {
         return;
@@ -84,10 +77,17 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     if (!windowController) {
         windowController = [self windowControllerFromProfile:[self profile]];
     }
+    [_windowController release];
+    _windowController = nil;
     self.windowController = [windowController weakSelf];
 }
 
 - (void)setWindowController:(PseudoTerminal<iTermWeakReference> *)windowController {
+    // Since this is public and we don't want to accidentally change an
+    // existing window controller, we assert that it's nil. This complicates
+    // internal calls, unfortunately, but better to catch the bugs.
+    assert(!_windowController.weaklyReferencedObject);
+    
     [_windowController release];
     _windowController = [windowController.weakSelf retain];
     if (!_windowController.weaklyReferencedObject) {
@@ -292,13 +292,14 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
-- (void)loadRestorableStateFromArray:(NSArray *)states {
+- (BOOL)loadRestorableStateFromArray:(NSArray *)states {
     for (NSDictionary *state in states) {
         if ([state[kGUID] isEqualToString:self.profileGuid]) {
             self.restorableState = state;
-            return;
+            return YES;
         }
     }
+    return NO;
 }
 
 - (BOOL)isHotKeyWindowOpen {
@@ -507,13 +508,15 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)windowWillClose {
-    self.windowController = nil;
+    [_windowController release];
+    _windowController = nil;
     self.restorableState = nil;
 }
 
 - (void)fastHideHotKeyWindow {
     DLog(@"fastHideHotKeyWindow");
     if (self.windowController.weaklyReferencedObject) {
+#warning TODO This is a gross hack and probably doesn't work
         DLog(@"fastHideHotKeyWindow - found a hot term");
         // Temporarily tell the hotkeywindow that it's not hot so that it doesn't try to hide itself
         // when losing key status.

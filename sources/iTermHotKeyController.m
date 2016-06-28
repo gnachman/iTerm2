@@ -154,9 +154,10 @@
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
             iTermProfileHotKey *profileHotKey = hotkey;
-            [profileHotKey loadRestorableStateFromArray:states];
-            [profileHotKey createWindow];
-            [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
+            if ([profileHotKey loadRestorableStateFromArray:states]) {
+                [profileHotKey createWindow];
+                [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
+            }
         }
     }
 }
@@ -177,6 +178,10 @@
     NSMutableArray *array = [NSMutableArray array];
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
+            iTermProfileHotKey *profileHotKey = (iTermProfileHotKey *)hotkey;
+            if (!profileHotKey.allowsStateRestoration) {
+                continue;
+            }
             NSDictionary *state = [hotkey restorableState];
             if (state) {
                 [array addObject:state];
@@ -343,8 +348,27 @@
     if (!profileHotKey || profileHotKey.windowController.weaklyReferencedObject) {
         return NO;
     }
-    [profileHotKey reviveWindowController:windowController];
+    profileHotKey.windowController = windowController.weakSelf;
     return YES;
+}
+
+- (BOOL)didCreateWindowController:(PseudoTerminal *)windowController
+                      withProfile:(Profile *)profile
+                             show:(BOOL)show {
+    iTermProfileHotKey *profileHotKey = [_hotKeys objectOfClass:[iTermProfileHotKey class]
+                                                    passingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+                                                        return [[element profile][KEY_GUID] isEqualToString:profile[KEY_GUID]];
+                                                    }];
+    if (!profileHotKey.windowController.weaklyReferencedObject) {
+        profileHotKey.windowController = windowController.weakSelf;
+        windowController.isHotKeyWindow = YES;
+        if (show) {
+            [profileHotKey showHotKeyWindow];
+        }
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 #pragma mark - Notifications

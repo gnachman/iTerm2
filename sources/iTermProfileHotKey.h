@@ -13,6 +13,10 @@
 // is decoded and updated from saveHotkeyWindowState.
 @property(nonatomic, readonly) NSDictionary *restorableState;
 
+// This is designed to be set when a window is a tmux integration window. It prevents it from getting
+// restored by state restoration.
+@property(nonatomic, assign) BOOL allowsStateRestoration;
+
 @property(nonatomic, readonly) Profile *profile;
 
 // Is the hotkey window in the process of opening right now?
@@ -29,7 +33,8 @@
 // partially formed window so that when it becomes key its sibilings don't get hidden.
 @property(nonatomic, readonly) NSWindowController *windowControllerBeingBorn;
 
-@property(nonatomic, readonly) PseudoTerminal<iTermWeakReference> *windowController;
+// You may only set the window controller if there is not a weakly referenced object.
+@property(nonatomic, retain) PseudoTerminal<iTermWeakReference> *windowController;
 @property(nonatomic) BOOL wasAutoHidden;
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
@@ -52,9 +57,6 @@
 // want to restore a defunct session.
 - (void)windowWillClose;
 
-// Set the window controller. Used when reviving a previously closed window.
-- (void)reviveWindowController:(PseudoTerminal *)windowController;
-
 @end
 
 @interface iTermProfileHotKey(Internal)
@@ -62,7 +64,7 @@
 - (void)createWindow;
 - (void)showHotKeyWindow;
 - (void)saveHotKeyWindowState;
-- (void)loadRestorableStateFromArray:(NSArray *)states;
+- (BOOL)loadRestorableStateFromArray:(NSArray *)states;
 - (void)setLegacyState:(NSDictionary *)state;
 
 @end

@@ -71,4 +71,11 @@
 - (BOOL)addRevivedHotkeyWindowController:(PseudoTerminal *)windowController
                       forProfileWithGUID:(NSString *)guid;
 
+// Use this when creating a window that might be a hotkey window. Generally iTermProfileHotkey creates
+// its own windows, but that's not the case for e.g. tmux windows. Returns YES if it was accepted
+// as a hotkey window.
+- (BOOL)didCreateWindowController:(PseudoTerminal *)windowController
+                      withProfile:(Profile *)profile
+                             show:(BOOL)show;
+
 @end

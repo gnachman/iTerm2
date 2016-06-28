@@ -940,8 +940,17 @@ static iTermController *gSharedInstance;
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
+    [[iTermHotKeyController sharedInstance] didCreateWindowController:term
+                                                          withProfile:profile
+                                                                 show:NO];
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term] setAllowsStateRestoration:NO];
+    
     [self addTerminalWindow:term];
     return term;
+}
+
+- (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController {
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:windowController] showHotKeyWindow];
 }
 
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {

@@ -22,6 +22,9 @@
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(ObjectType anObject))block;
 - (ObjectType)objectPassingTest:(BOOL (^)(ObjectType element, NSUInteger index, BOOL *stop))block;
 
+// Returns the first object that is a kind of `theClass` for which block returns YES.
+- (id)objectOfClass:(Class)theClass passingTest:(BOOL (^)(id element, NSUInteger index, BOOL *stop))block;
+
 - (BOOL)anyWithBlock:(BOOL (^)(ObjectType anObject))block;
 - (BOOL)allWithBlock:(BOOL (^)(ObjectType anObject))block;
 

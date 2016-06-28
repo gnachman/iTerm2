@@ -77,6 +77,23 @@
     }
 }
 
+- (id)objectOfClass:(Class)theClass
+        passingTest:(BOOL (^)(id element, NSUInteger index, BOOL *stop))block {
+    NSUInteger index = [self indexOfObjectPassingTest:^BOOL(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([obj isKindOfClass:theClass]) {
+            return block(obj, idx, stop);
+        } else {
+            return NO;
+        }
+    }];
+    if (index == NSNotFound) {
+        return nil;
+    } else {
+        return self[index];
+    }
+}
+
+
 - (BOOL)anyWithBlock:(BOOL (^)(id anObject))block {
     for (id object in self) {
         if (block(object)) {

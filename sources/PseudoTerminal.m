@@ -135,9 +135,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
 
-    // This is a weak reference to the window's content view, here for convenience because it has
+    // This is a reference to the window's content view, here for convenience because it has
     // the right type.
-    iTermRootTerminalView *_contentView;
+    __unsafe_unretained iTermRootTerminalView *_contentView;
 
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel
@@ -635,17 +635,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self hideMenuBar];
     }
 
-    if (isHotkey) {
-        // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
-    } else {
-        // This allows the window to enter Lion fullscreen.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
-    }
-    if (isHotkey) {
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
-    }
+    [self setIsHotKeyWindow:isHotkey];
 
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
@@ -665,6 +655,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 #endif
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
+}
+
+- (void)setIsHotKeyWindow:(BOOL)isHotKeyWindow {
+    _isHotKeyWindow = isHotKeyWindow;
+    if (_isHotKeyWindow) {
+        // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
+    } else {
+        // This allows the window to enter Lion fullscreen.
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+    }
 }
 
 - (void)finishToolbeltInitialization {
@@ -1809,9 +1812,8 @@ ITERM_WEAKLY_REFERENCEABLE
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
-    // const BOOL isHotkey = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
-#warning TODO: Restoring a fullscreen hotkey window hides the dock and the above commented out line of code does not fix it.
-    const BOOL isHotkey = NO;
+    const BOOL isHotkey = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
+#warning TODO: Restoring a fullscreen hotkey window hides the dock.
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
@@ -1877,7 +1879,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
         [term hideAfterOpening];
     }
-    term.isHotKeyWindow = isHotkeyWindow;
     if (isHotkeyWindow) {
         BOOL ok = YES;
         if (force) {
