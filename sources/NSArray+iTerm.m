@@ -68,6 +68,15 @@
     return [self objectsAtIndexes:indexes];
 }
 
+- (id)objectPassingTest:(BOOL (^)(id element, NSUInteger index, BOOL *stop))block {
+    NSUInteger index = [self indexOfObjectPassingTest:block];
+    if (index == NSNotFound) {
+        return nil;
+    } else {
+        return self[index];
+    }
+}
+
 - (BOOL)anyWithBlock:(BOOL (^)(id anObject))block {
     for (id object in self) {
         if (block(object)) {

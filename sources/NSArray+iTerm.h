@@ -20,6 +20,7 @@
 // Returns those elements of the array for which block(element) returns YES.
 // block is called on every element in order.
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(ObjectType anObject))block;
+- (ObjectType)objectPassingTest:(BOOL (^)(ObjectType element, NSUInteger index, BOOL *stop))block;
 
 - (BOOL)anyWithBlock:(BOOL (^)(ObjectType anObject))block;
 - (BOOL)allWithBlock:(BOOL (^)(ObjectType anObject))block;
