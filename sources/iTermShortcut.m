@@ -20,12 +20,17 @@ static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifi
 
 CGFloat kShortcutPreferredHeight = 22;
 
+// The numeric keypad mask is here so we can disambiguate between keys that
+// exist in both the numeric keypad and outside of it.
 const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
                                                   NSAlternateKeyMask |
                                                   NSShiftKeyMask |
-                                                  NSControlKeyMask);
+                                                  NSControlKeyMask |
+                                                  NSNumericPadKeyMask);
 
-@implementation iTermShortcut
+@implementation iTermShortcut {
+    NSEventModifierFlags _modifiers;
+}
 
 + (NSArray<iTermShortcut *> *)shortcutsForProfile:(Profile *)profile {
     iTermShortcut *main = [[[iTermShortcut alloc] init] autorelease];
@@ -44,6 +49,10 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 + (instancetype)shortcutWithDictionary:(NSDictionary *)dictionary {
+    // Empty dict is the default for a profile; can't specify nil default because objc.
+    if (!dictionary || !dictionary.count) {
+        return nil;
+    }
     iTermShortcut *shortcut = [[[iTermShortcut alloc] init] autorelease];
     shortcut.keyCode = [dictionary[kKeyCode] unsignedIntegerValue];
     shortcut.modifiers = [dictionary[kModifiers] unsignedIntegerValue];
@@ -140,6 +149,15 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 
 - (void)setModifiers:(NSEventModifierFlags)modifiers {
     _modifiers = (modifiers & kHotKeyModifierMask);
+}
+
+- (NSEventModifierFlags)modifiers {
+    // On some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't.
+    if (self.keyCode >= NSUpArrowFunctionKey && self.keyCode <= NSRightArrowFunctionKey) {
+        return _modifiers | NSNumericPadKeyMask;
+    } else {
+        return _modifiers;
+    }
 }
 
 #pragma mark - APIs
