@@ -1277,8 +1277,6 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     int bound = [_dataSource numberOfLines] - 1;
     BOOL fullWidth = ((range.columnWindow.location == 0 && range.columnWindow.length == width) ||
                       range.columnWindow.length <= 0);
-    BOOL rightAligned = (range.columnWindow.location + range.columnWindow.length == width &&
-                         range.columnWindow.location > 0);
     int left = range.columnWindow.length ? range.columnWindow.location : 0;
     for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
         if (y == range.coordRange.end.y) {
@@ -1292,11 +1290,13 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
         int numNulls = 0;
         for (int x = endx - 1; x >= range.columnWindow.location; x--) {
             BOOL isNull;
-            // If right-aligned then treat terminal spaces as nulls.
-            if (rightAligned) {
-                isNull = theLine[x].code == 0 || theLine[x].code == ' ';
-            } else {
+            // If not full-width then treat terminal spaces as nulls. This makes soft selection
+            // find newlines more reliably, but can occasionally insert newlines where they
+            // don't belong.
+            if (fullWidth) {
                 isNull = theLine[x].code == 0;
+            } else {
+                isNull = theLine[x].code == 0 || theLine[x].code == ' ';
             }
             if (!theLine[x].complexChar && isNull) {
                 ++numNulls;
