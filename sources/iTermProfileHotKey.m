@@ -313,7 +313,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                 return;
             }
             self.wasAutoHidden = NO;
-            [self hideHotKeyWindow];
+            [self handleHotKeyForOpqueHotKeyWindow];
         } else {
             DLog(@"hotkey window not opaque");
             [self showHotKeyWindow];
@@ -417,7 +417,11 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     return [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
 }
 
-- (void)hideHotKeyWindow {
+// If there's a visible hotkey window that is either not key or is on another space, switch to it.
+// Save the previously active app unless switching spaces (why the exception? Not sure.)
+// Return YES if it was switched to, or NO if the window isn't suitable for switching to.
+- (BOOL)switchToVisibleHotKeyWindowIfPossible {
+    DLog(@"switchToVisibleHotKeyWindowIfPossible");
     const BOOL activateStickyHotkeyWindow = (!self.autoHides &&
                                              !self.windowController.window.isKeyWindow);
     if (activateStickyHotkeyWindow && ![NSApp isActive]) {
@@ -429,7 +433,23 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
         [NSApp activateIgnoringOtherApps:YES];
         [self.windowController.window makeKeyAndOrderFront:nil];
+        return YES;
     } else {
+        return NO;
+    }
+}
+
+- (void)showAlreadyVisibleHotKeyWindow {
+    DLog(@"showAlreadyVisibleHotKeyWindow");
+    if (![self switchToVisibleHotKeyWindowIfPossible]) {
+        DLog(@"Make window key, make textview first responder.");
+        [self.windowController.window makeKeyAndOrderFront:nil];
+        [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];
+    }
+}
+
+- (void)handleHotKeyForOpqueHotKeyWindow {
+    if (![self switchToVisibleHotKeyWindowIfPossible]) {
         DLog(@"Hide hotkey window");
         [self hideHotKeyWindowAnimated:YES suppressHideApp:NO];
     }
@@ -437,6 +457,12 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (void)showHotKeyWindow {
     DLog(@"showHotKeyWindow: %@", self);
+    
+    if (self.windowController.window.alphaValue == 1 && self.windowController.window.isVisible) {
+        // This path is taken when you use a session hotkey to navigate to an already-open hotkey window.
+        [self showAlreadyVisibleHotKeyWindow];
+        return;
+    }
     [self.delegate storePreviouslyActiveApp];
 
     if (!self.windowController.weaklyReferencedObject) {

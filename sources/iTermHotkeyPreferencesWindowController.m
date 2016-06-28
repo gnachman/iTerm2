@@ -70,7 +70,6 @@
 
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     [_objectValue.shortcut setFromEvent:event];
-    _shortcut.stringValue = _objectValue.shortcut.stringValue;
     _duplicateWarning.hidden = !_objectValue.isDuplicate;
 }
 
@@ -314,11 +313,8 @@
         _model.alternateShortcuts = [_model.alternateShortcuts arrayByRemovingFirstObject];
         [self modelDidChange];
     } else {
-        _model.primaryShortcut = [iTermShortcut shortcutWithEvent:event];
+        _model.primaryShortcut = event ? [iTermShortcut shortcutWithEvent:event] : nil;
         [self modelDidChange];
-        NSString *identifier = [iTermKeyBindingMgr identifierForCharacterIgnoringModifiers:[event.charactersIgnoringModifiers firstCharacter]
-                                                                                 modifiers:event.modifierFlags];
-        [view setStringValue:event ? [iTermKeyBindingMgr formatKeyCombination:identifier] : @""];
     }
     [self updateViewsEnabled];
 }

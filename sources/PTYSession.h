@@ -107,6 +107,10 @@ typedef enum {
 // isn't necessarily selected.
 - (BOOL)sessionIsActiveInTab:(PTYSession *)session;
 
+// Is this session active in a currently selected tab? This ignores whether the
+// window is key.
+- (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session;
+
 // Session-initiated name change.
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
 

@@ -214,12 +214,15 @@
 }
 
 - (void)clear:(id)sender {
+    self.shortcut = nil;
+    self.stringValue = @"";
     [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:nil];
 }
 
 - (void)handleShortcutEvent:(NSEvent *)event {
     if (event.type == NSKeyDown) {
         self.hotkeyBeingRecorded = nil;
+        self.shortcut = [iTermShortcut shortcutWithEvent:event];
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         [[self window] makeFirstResponder:[self window]];
     } else if (event.type == NSFlagsChanged) {
@@ -244,21 +247,10 @@
     [self setNeedsDisplay:YES];
 }
 
-- (void)setKeyCode:(NSUInteger)code
-         modifiers:(NSEventModifierFlags)modifiers
-         character:(NSUInteger)character {
-    NSString *identifier = [self identifierForCode:code modifiers:modifiers character:character];
-    if (identifier) {
-        self.stringValue = [iTermKeyBindingMgr formatKeyCombination:identifier];
-    } else {
-        self.stringValue = @"";
-    }
-}
-
 - (void)setShortcut:(iTermShortcut *)shortcut {
-    [self setKeyCode:shortcut.keyCode
-           modifiers:shortcut.modifiers
-           character:shortcut.charactersIgnoringModifiers.firstCharacter];
+    [_shortcut autorelease];
+    _shortcut = [shortcut retain];
+    self.stringValue = self.shortcut.stringValue;
 }
 
 - (NSString *)identifierForCode:(NSUInteger)code

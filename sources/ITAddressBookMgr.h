@@ -215,6 +215,9 @@
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
 #define KEY_DYNAMIC_PROFILE_FILENAME         @"Dynamic Profile Filename"
 
+// Session-only key
+#define KEY_SESSION_HOTKEY                   @"Session Hotkey"
+
 // Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 extern const NSTimeInterval kMinimumAntiIdlePeriod;
 

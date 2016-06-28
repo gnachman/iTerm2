@@ -11,6 +11,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
+#import "iTermCarbonHotKeyController.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
@@ -28,7 +29,10 @@
 #import "iTermSavePanel.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
+#import "iTermSessionHotkeyController.h"
 #import "iTermShellHistoryController.h"
+#import "iTermShortcut.h"
+#import "iTermShortcutInputView.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermWarning.h"
@@ -49,6 +53,7 @@
 #import "ProcessCache.h"
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
+#import "ProfilesGeneralPreferencesViewController.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "SCPFile.h"
@@ -134,6 +139,7 @@ static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";
 static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Dictionary. See kProgram constants below.
 static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
 static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
+static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDictionary iTermShortcut dictionaryValue
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -180,6 +186,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
+    iTermHotKeyNavigableSession,
     iTermPasteHelperDelegate,
     iTermSessionViewDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
@@ -736,6 +743,13 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
     } else {
         haveSavedProgramData = NO;
+    }
+
+
+    NSDictionary *shortcutDictionary = arrangement[SESSION_ARRANGEMENT_HOTKEY];
+    if (shortcutDictionary) {
+        [[iTermSessionHotkeyController sharedInstance] setShortcut:[iTermShortcut shortcutWithDictionary:shortcutDictionary]
+                                                        forSession:aSession];
     }
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
@@ -1494,6 +1508,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [self hardStop];
     }
+    [[iTermSessionHotkeyController sharedInstance] removeSession:self];
 
     // final update of display
     [self updateDisplay];
@@ -1568,6 +1583,10 @@ ITERM_WEAKLY_REFERENCEABLE
         _terminal.delegate = _screen;
         _shell.paused = NO;
         _view.findViewController.delegate = self;
+
+        NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:self.profile];
+        iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
+        [[iTermSessionHotkeyController sharedInstance] setShortcut:shortcut forSession:self];
 
         [_view autorelease];  // This balances a retain in -terminate prior to calling -makeTerminationUndoable
         return YES;
@@ -2765,6 +2784,11 @@ ITERM_WEAKLY_REFERENCEABLE
         verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
     [_screen setSaveToScrollbackInAlternateScreen:[iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
                                                                             inProfile:aDict]];
+    
+    NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:aDict];
+    iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
+    [[iTermSessionHotkeyController sharedInstance] setShortcut:shortcut
+                                                    forSession:self];
     [[_delegate realParentWindow] invalidateRestorableState];
 }
 
@@ -2791,7 +2815,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return (now - _lastOutputIgnoringOutputAfterResizing) > (_idleTime + 1);
 }
 
-- (NSString*)formattedName:(NSString*)base {
+- (NSString *)formattedName:(NSString*)base {
     if ([self isTmuxGateway]) {
         return [NSString stringWithFormat:@"[↣ %@ %@]", base, _tmuxController.clientName];
     }
@@ -3293,6 +3317,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
+    
+    NSDictionary *shortcutDictionary = [[[iTermSessionHotkeyController sharedInstance] shortcutForSession:self] dictionaryValue];
+    if (shortcutDictionary) {
+        result[SESSION_ARRANGEMENT_HOTKEY] = shortcutDictionary;
+    }
 
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
@@ -7419,6 +7448,26 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return proposedSize;
     }
+}
+
+#pragma mark - iTermHotkeyNavigableSession
+
+- (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {
+    [self reveal];
+}
+
+- (BOOL)sessionHotkeyIsAlreadyFirstResponder {
+    return ([NSApp isActive] &&
+            [NSApp keyWindow] == self.textview.window &&
+            self.textview.window.firstResponder == self.textview);
+}
+
+- (BOOL)sessionHotkeyIsAlreadyActiveInNonkeyWindow {
+    if ([NSApp isActive] &&
+        [NSApp keyWindow] == self.textview.window) {
+        return NO;
+    }
+    return [self.delegate sessionIsActiveInSelectedTab:self];
 }
 
 @end

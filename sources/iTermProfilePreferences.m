@@ -256,6 +256,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_MODIFIER_ACTIVATION: @0,
                   KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,
                   KEY_HOTKEY_ALTERNATE_SHORTCUTS: @[],
+                  KEY_SESSION_HOTKEY: @{},
                 };
         [dict retain];
     }

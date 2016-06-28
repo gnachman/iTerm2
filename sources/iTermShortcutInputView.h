@@ -28,12 +28,9 @@
 @property(nonatomic, assign, getter=isEnabled) BOOL enabled;
 @property(nonatomic, copy) NSString *stringValue;
 @property(nonatomic, assign) NSBackgroundStyle backgroundStyle;
+@property(nonatomic, retain) iTermShortcut *shortcut;
 
 - (void)handleShortcutEvent:(NSEvent *)event;
-
-- (void)setKeyCode:(NSUInteger)code
-         modifiers:(NSEventModifierFlags)modifiers
-         character:(NSUInteger)theChar DEPRECATED_ATTRIBUTE;
 
 - (void)setShortcut:(iTermShortcut *)shortcut;
 

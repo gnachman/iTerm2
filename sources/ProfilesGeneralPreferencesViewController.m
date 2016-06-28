@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
@@ -26,7 +27,7 @@ static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
-@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate, ProfileListViewDelegate>
+@interface ProfilesGeneralPreferencesViewController () <iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -58,6 +59,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
+    IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
 
     IBOutlet NSView *_editCurrentSessionView;
     IBOutlet NSButton *_copySettingsToProfile;
@@ -163,6 +165,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+    _sessionHotkeyInputView.shortcut = [iTermShortcut shortcutWithDictionary:(NSDictionary *)[self objectForKey:KEY_SESSION_HOTKEY]];
 }
 
 - (NSString *)selectedGuid {
@@ -461,6 +464,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 - (void)profileTableRowSelected:(id)profileTable {
     [self changeProfile:self];
+}
+
+#pragma mark - iTermShortcutInputViewDelegate
+
+- (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
+    [self setObject:view.shortcut.dictionaryValue forKey:KEY_SESSION_HOTKEY];
 }
 
 @end
