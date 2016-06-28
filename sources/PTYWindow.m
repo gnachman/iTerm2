@@ -337,6 +337,10 @@ end:
     return YES;
 }
 
+- (BOOL)canBecomeMainWindow {
+    return YES;
+}
+
 - (double)approximateFractionOccluded {
     NSArray *orderedWindows = [[NSApplication sharedApplication] orderedWindows];
     NSUInteger myIndex = [orderedWindows indexOfObject:self];
