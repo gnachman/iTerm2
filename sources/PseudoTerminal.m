@@ -528,6 +528,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else {
         styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
     }
+    if (isHotkey) {
+        styleMask |= NSNonactivatingPanelMask;
+    }
     savedWindowType_ = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);

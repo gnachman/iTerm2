@@ -65,10 +65,37 @@
 
 @end
 
-@interface PTYWindow (Private)
+@interface iTermPanel : NSPanel<iTermWeaklyReferenceable>
+
+@property(nonatomic, readonly) int screenNumber;
+@property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
+// A unique identifier that does not get recycled during the program's lifetime.
+@property(nonatomic, readonly) NSString *windowIdentifier;
+
+- (void)smartLayout;
+- (void)setLayoutDone;
+
+- (void)enableBlur:(double)radius;
+- (void)disableBlur;
+
+- (void)setRestoreState:(NSObject *)restoreState;
+
+// Returns the approximate fraction of this window that is occluded by other windows in this app.
+- (double)approximateFractionOccluded;
+
+// See comments in iTermDelayedTitleSetter for why this is so.
+- (void)delayedSetTitle:(NSString *)title;
+
+@end
+
+@interface NSWindow (Private)
 
 // Private NSWindow method, needed to avoid ghosting when using transparency.
 - (BOOL)_setContentHasShadow:(BOOL)contentHasShadow;
 
+@end
+
+@interface NSWindow(iTerm)
+- (BOOL)isTerminalWindow;
 @end
 

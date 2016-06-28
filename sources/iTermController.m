@@ -1109,7 +1109,7 @@ static iTermController *gSharedInstance;
         // When this function is activated from the dock icon's context menu make sure
         // that the new window is on top of all other apps' windows. For some reason,
         // makeKeyAndOrderFront does nothing.
-        if (canActivate) {
+        if (canActivate && !isHotkey) {
             [NSApp activateIgnoringOtherApps:YES];
         }
         [[term window] makeKeyAndOrderFront:nil];

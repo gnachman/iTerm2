@@ -411,7 +411,7 @@
 
 - (void)bringHotkeyWindowToFore:(NSWindow *)window {
     DLog(@"Bring hotkey window %@ to front", window);
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+//    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [window makeKeyAndOrderFront:nil];
 }
 

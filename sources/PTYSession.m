@@ -6329,7 +6329,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[terminal window] makeKeyAndOrderFront:self];
         [_delegate sessionSelectContainingTab];
     }
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+//    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
 
     [_delegate setActiveSession:self];
 }
