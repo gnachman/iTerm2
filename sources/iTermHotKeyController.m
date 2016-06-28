@@ -384,7 +384,6 @@
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-#warning Test this
     for (iTermProfileHotKey *profileHotKey in self.profileHotKeys) {
         PseudoTerminal *term = profileHotKey.windowController;
         NSWindow *window = [term window];
