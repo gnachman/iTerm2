@@ -1228,6 +1228,11 @@ static BOOL hasBecomeActive = NO;
                     // Restore a widow.
                     term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
                                                           sessions:restorableSession.sessions];
+                    if (term.isHotKeyWindow) {
+#warning uncomment the code below to fix reviving closed hotkey windows, which is totally broken.
+                        // If there's a conflict (another hotkey window was created or the profile no longer has a hotkey) then order it in and set its alpha to 1.
+                        // [[iTermHotKeyController sharedInstance] addRevivedHotkeyWindowController:term];
+                    }
                     [[iTermController sharedInstance] addTerminalWindow:term];
                     term.terminalGuid = restorableSession.terminalGuid;
                     break;
