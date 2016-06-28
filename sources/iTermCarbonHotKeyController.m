@@ -168,10 +168,13 @@
 
 - (void)unregisterHotKey:(iTermHotKey *)hotKey {
     DLog(@"Unregister %@", hotKey);
+    // Get the count before removing hotKey because that could free it.
+    NSUInteger count = [[self hotKeysWithID:hotKey.hotKeyID] count];
+    EventHotKeyRef eventHotKey = hotKey.eventHotKey;
     [_hotKeys removeObject:hotKey];
     DLog(@"Hotkeys are now:\n%@", _hotKeys);
-    if ([[self hotKeysWithID:hotKey.hotKeyID] count] == 0) {
-        UnregisterEventHotKey(hotKey.eventHotKey);
+    if (count == 1) {
+        UnregisterEventHotKey(eventHotKey);
     }
 }
 
