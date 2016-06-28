@@ -67,30 +67,43 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     return [[ProfileModel sharedInstance] bookmarkWithGuid:_profileGuid];
 }
 
+- (void)reviveWindowController:(PseudoTerminal *)windowController {
+    if (self.windowController.weaklyReferencedObject) {
+        return;
+    }
+    [self setWindowController:windowController.weakSelf];
+}
+
 - (void)createWindow {
     if (self.windowController.weaklyReferencedObject) {
         return;
     }
 
     DLog(@"Create new window controller for profile hotkey");
-    self.windowController = [[self windowControllerFromRestorableState] weakSelf];
-    if (!self.windowController.weaklyReferencedObject) {
-        self.windowController = [[self windowControllerFromProfile:[self profile]] weakSelf];
+    PseudoTerminal *windowController = [self windowControllerFromRestorableState];
+    if (!windowController) {
+        windowController = [self windowControllerFromProfile:[self profile]];
     }
-    if (!self.windowController.weaklyReferencedObject) {
+    self.windowController = [windowController weakSelf];
+}
+
+- (void)setWindowController:(PseudoTerminal<iTermWeakReference> *)windowController {
+    [_windowController release];
+    _windowController = [windowController.weakSelf retain];
+    if (!_windowController.weaklyReferencedObject) {
         return;
     }
 
     if ([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
-        self.windowController.window.level = NSFloatingWindowLevel;
+        _windowController.window.level = NSFloatingWindowLevel;
     } else {
-        self.windowController.window.level = NSNormalWindowLevel;
+        _windowController.window.level = NSNormalWindowLevel;
     }
-    self.windowController.isHotKeyWindow = YES;
+    _windowController.isHotKeyWindow = YES;
 
-    [self.windowController.window setAlphaValue:0];
-    if (self.windowController.windowType != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-        [self.windowController.window setCollectionBehavior:self.windowController.window.collectionBehavior & ~NSWindowCollectionBehaviorFullScreenPrimary];
+    [_windowController.window setAlphaValue:0];
+    if (_windowController.windowType != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+        [_windowController.window setCollectionBehavior:self.windowController.window.collectionBehavior & ~NSWindowCollectionBehaviorFullScreenPrimary];
     }
 }
 
@@ -344,7 +357,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         return nil;
     }
 
-    PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:arrangement];
+    PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:arrangement
+                                          forceOpeningHotKeyWindow:NO];
     if (term) {
         [[iTermController sharedInstance] addTerminalWindow:term];
     }

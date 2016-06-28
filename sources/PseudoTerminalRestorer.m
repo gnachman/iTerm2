@@ -126,7 +126,8 @@ static BOOL gWaitingForFullScreen;
         VoidBlock theBlock = ^{
             DLog(@"PseudoTerminalRestorer block running for id %@", identifier);
             DLog(@"Creating term");
-            PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
+            PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
+                                                      forceOpeningHotKeyWindow:NO];
             DLog(@"Create a new terminal %@", term);
             if (!term) {
                 DLog(@"Failed to create term");

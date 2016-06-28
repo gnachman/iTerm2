@@ -334,6 +334,19 @@
     return handled;
 }
 
+- (BOOL)addRevivedHotkeyWindowController:(PseudoTerminal *)windowController
+                      forProfileWithGUID:(NSString *)guid {
+    NSArray<iTermProfileHotKey *> *profileHotKeys = [_hotKeys objectsOfClasses:@[ [iTermProfileHotKey class] ]];
+    iTermProfileHotKey *profileHotKey = [profileHotKeys objectPassingTest:^BOOL(iTermProfileHotKey *element, NSUInteger index, BOOL *stop) {
+        return [element.profile[KEY_GUID] isEqualToString:guid];
+    }];
+    if (!profileHotKey || profileHotKey.windowController.weaklyReferencedObject) {
+        return NO;
+    }
+    [profileHotKey reviveWindowController:windowController];
+    return YES;
+}
+
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {

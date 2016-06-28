@@ -1765,34 +1765,43 @@ ITERM_WEAKLY_REFERENCEABLE
     return [PseudoTerminal _windowTypeForArrangement:arrangement] == WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
-+ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary *)arrangement {
++ (BOOL)shouldRestoreHotKeyWindowWithGUID:(NSString *)guid {
+    if (!guid) {
+        // Something went wrong and we don't know the GUID. Or you just upgraded and a GUID wasn't
+        // saved because it's new.
+        if ([[iTermHotKeyMigrationHelper sharedInstance] didMigration] && [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 1) {
+            iTermProfileHotKey *profileHotKey = [[[iTermHotKeyController sharedInstance] profileHotKeys] firstObject];
+            guid = profileHotKey.profile[KEY_GUID];
+            DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. Guessing that it's the profile named %@ because there is only one hotkey profile", profileHotKey.profile[KEY_NAME]);
+        } else {
+            DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. There is more than one hotkey profile so I give up.");
+            return NO;
+        }
+    }
+    BOOL foundHotKey = NO;
+    for (iTermProfileHotKey *hotKey in [[iTermHotKeyController sharedInstance] profileHotKeys]) {
+        if ([[iTermProfilePreferences stringForKey:KEY_GUID inProfile:hotKey.profile] isEqualToString:guid]) {
+            foundHotKey = YES;
+            if (hotKey.windowController) {
+                // Already have a window for this profile hotkey
+                return NO;
+            }
+        }
+    }
+    if (!foundHotKey) {
+        // Do not have a hotkey defined for this profile
+        return NO;
+    }
+    
+    return YES;
+}
+
++ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary *)arrangement
+                      forceOpeningHotKeyWindow:(BOOL)force {
     BOOL isHotkeyWindow = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
     NSString *guid = arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID];
-    if (isHotkeyWindow) {
-        if (!guid) {
-            // Something went wrong and we don't know the GUID. Or you just upgraded and a GUID wasn't
-            // saved because it's new.
-            if ([[iTermHotKeyMigrationHelper sharedInstance] didMigration] && [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 1) {
-                iTermProfileHotKey *profileHotKey = [[[iTermHotKeyController sharedInstance] profileHotKeys] firstObject];
-                guid = profileHotKey.profile[KEY_GUID];
-                DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. Guessing that it's the profile named %@ because there is only one hotkey profile", profileHotKey.profile[KEY_NAME]);
-            } else {
-                DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. There is more than one hotkey profile so I give up.");
-                return nil;
-            }
-        }
-        BOOL foundHotKey = NO;
-        for (iTermProfileHotKey *hotKey in [[iTermHotKeyController sharedInstance] profileHotKeys]) {
-            if ([[iTermProfilePreferences stringForKey:KEY_GUID inProfile:hotKey.profile] isEqualToString:guid]) {
-                foundHotKey = YES;
-                if (hotKey.windowController) {
-                    // Already have a window for this profile hotkey
-                    return nil;
-                }
-            }
-        }
-        if (!foundHotKey) {
-            // Do not have a hotkey defined for this profile
+    if (isHotkeyWindow && !force) {
+        if (![self shouldRestoreHotKeyWindowWithGUID:guid]) {
             return nil;
         }
     }
@@ -1869,16 +1878,25 @@ ITERM_WEAKLY_REFERENCEABLE
         [term hideAfterOpening];
     }
     term.isHotKeyWindow = isHotkeyWindow;
-    if ([term isHotKeyWindow]) {
-        term.window.alphaValue = 0;
-        [[term window] orderOut:nil];
+    if (isHotkeyWindow) {
+        BOOL ok = YES;
+        if (force) {
+            ok = [[iTermHotKeyController sharedInstance] addRevivedHotkeyWindowController:term
+                                                                       forProfileWithGUID:guid];
+        }
+        if (ok) {
+            term.window.alphaValue = 0;
+            [[term window] orderOut:nil];
+        }
     }
     return term;
 }
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
-                               sessions:(NSArray *)sessions {
-    PseudoTerminal* term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
+                               sessions:(NSArray *)sessions
+               forceOpeningHotKeyWindow:(BOOL)force {
+    PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
+                                              forceOpeningHotKeyWindow:force];
     for (PTYSession *session in sessions) {
         assert([session revive]);  // TODO(georgen): This isn't guaranteed
     }
@@ -1889,8 +1907,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement {
-    return [self terminalWithArrangement:arrangement sessions:nil];
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary *)arrangement
+                  forceOpeningHotKeyWindow:(BOOL)force {
+    return [self terminalWithArrangement:arrangement sessions:nil forceOpeningHotKeyWindow:force];
 }
 
 - (IBAction)findUrls:(id)sender {

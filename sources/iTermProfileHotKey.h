@@ -52,6 +52,9 @@
 // want to restore a defunct session.
 - (void)windowWillClose;
 
+// Set the window controller. Used when reviving a previously closed window.
+- (void)reviveWindowController:(PseudoTerminal *)windowController;
+
 @end
 
 @interface iTermProfileHotKey(Internal)

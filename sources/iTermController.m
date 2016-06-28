@@ -407,7 +407,8 @@ static iTermController *gSharedInstance;
         [self performSelector:_cmd withObject:terminalArrangement afterDelay:0.25];
     } else {
         DLog(@"Opening it.");
-        PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
+        PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:terminalArrangement
+                                              forceOpeningHotKeyWindow:NO];
         if (term) {
           [self addTerminalWindow:term];
         }

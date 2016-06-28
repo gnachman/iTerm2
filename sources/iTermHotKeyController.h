@@ -65,4 +65,10 @@
 // Returns YES if an action as taken.
 - (BOOL)dockIconClicked;
 
+// Use when undoing the close of a window to indicate that it is a hotkey window. Returns NO if
+// there is already a hotkey window for this role, in which case it should be made visible and resume
+// life as a regular window.
+- (BOOL)addRevivedHotkeyWindowController:(PseudoTerminal *)windowController
+                      forProfileWithGUID:(NSString *)guid;
+
 @end

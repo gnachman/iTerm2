@@ -74,14 +74,21 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // Returns a new terminal window restored from an arrangement, but with no
 // tabs/sessions. May return nil.
-+ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement;
+// forceOpeningHotKeyWindow means open the window even if there is already a hotkey window with the
+// specified profile, or the arrangement is defective in specifying details of the hotkey window.
++ (PseudoTerminal *)bareTerminalWithArrangement:(NSDictionary *)arrangement
+                       forceOpeningHotKeyWindow:(BOOL)force;
 
 // Returns a new terminal window restored from an arrangement, with
 // tabs/sessions also restored. May return nil.
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
+// forceOpeningHotKeyWindow means open the window even if there is already a hotkey window with the
+// specified profile, or the arrangement is defective in specifying details of the hotkey window.
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
+                  forceOpeningHotKeyWindow:(BOOL)force;
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
-                               sessions:(NSArray *)sessions;
+                               sessions:(NSArray *)sessions
+               forceOpeningHotKeyWindow:(BOOL)force;
 
 // Register all sessions in the window's arrangement so their contents can be
 // rescued later if the window is created from a saved arrangement. Called
