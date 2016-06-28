@@ -154,8 +154,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                                                             object:nil];
     };
 
-    [self updateUIElementEnabled];
-
     [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen
                    type:kPreferenceInfoTypeCheckbox];
@@ -249,22 +247,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     _flashTabBarInFullscreenWhenSwitchingTabs.enabled =
         (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ||
          [iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
-}
-
-- (void)updateUIElementEnabled {
-    _uiElement.enabled = [[[iTermHotKeyController sharedInstance] hotKeyWindowProfiles] count] > 0;
-}
-
-- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
-#warning Migrate this LSUI safety valve to thew new infra (should check if there's a hotkey window)
-    NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
-    NSArray *interestingKeys = @[ kPreferenceKeyHotkeyEnabled ];
-    if ([interestingKeys containsObject:key]) {
-        [self updateUIElementEnabled];
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
-                                                            object:nil];
-    }
-    [super preferenceDidChangeFromOtherPanel:notification];
 }
 
 @end
