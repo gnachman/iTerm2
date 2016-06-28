@@ -2132,6 +2132,8 @@
 		A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */; };
 		A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF23D1D21949D00806EEF /* iTermShortcut.h */; };
 		A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF23E1D21949D00806EEF /* iTermShortcut.m */; };
+		A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */; };
+		A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
@@ -3452,6 +3454,8 @@
 		A6EFF2361D20F64800806EEF /* EraseDarkBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "EraseDarkBackground@2x.png"; path = "images/EraseDarkBackground@2x.png"; sourceTree = "<group>"; };
 		A6EFF23D1D21949D00806EEF /* iTermShortcut.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShortcut.h; sourceTree = "<group>"; };
 		A6EFF23E1D21949D00806EEF /* iTermShortcut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcut.m; sourceTree = "<group>"; };
+		A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSessionHotkeyController.h; sourceTree = "<group>"; };
+		A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSessionHotkeyController.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
@@ -5288,6 +5292,8 @@
 				A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */,
 				A6EFF23D1D21949D00806EEF /* iTermShortcut.h */,
 				A6EFF23E1D21949D00806EEF /* iTermShortcut.m */,
+				A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */,
+				A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */,
 			);
 			name = Hotkey;
 			sourceTree = "<group>";
@@ -6135,6 +6141,7 @@
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
 				A6FEA2881CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h in Headers */,
+				A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */,
 				A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */,
 				1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */,
 				A62C3B2F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
@@ -7688,6 +7695,7 @@
 				A6C7634F1B45C52B00E3C992 /* SessionTitleView.m in Sources */,
 				A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */,
 				A6C763A01B45C52B00E3C992 /* TmuxWindowsTable.m in Sources */,
+				A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */,
 				A6C762B41B45C52B00E3C992 /* NSDictionary+Profile.m in Sources */,
 				A6C763E51B45C70100E3C992 /* SCEvent.m in Sources */,
 				A6C762D41B45C52B00E3C992 /* LineBuffer.m in Sources */,
