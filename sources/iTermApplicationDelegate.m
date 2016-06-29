@@ -986,8 +986,8 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (IBAction)newWindow:(id)sender
-{
+- (IBAction)newWindow:(id)sender {
+    DLog(@"newWindow: invoked");
     [[iTermController sharedInstance] newWindow:sender possiblyTmux:[self possiblyTmuxValueForWindow:YES]];
 }
 

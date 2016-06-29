@@ -222,9 +222,11 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
+    DLog(@"newWindow:%@ posiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
+        DLog(@"Creating a new tmux window");
         [_frontTerminalWindowController newTmuxWindow:sender];
     } else {
         [self launchBookmark:nil inTerminal:nil];
@@ -1022,6 +1024,14 @@ static iTermController *gSharedInstance;
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
                          block:(PTYSession *(^)(PseudoTerminal *))block {
+    DLog(@"launchBookmark:inTerminal:withUrl:isHotkey:makeKey:canActivate:command:block:");
+    DLog(@"Profile:\n%@", bookmarkData);
+    DLog(@"URL: %@", url);
+    DLog(@"isHotkey: %@", @(isHotkey));
+    DLog(@"makeKey: %@", @(makeKey));
+    DLog(@"canActivate: %@", @(canActivate));
+    DLog(@"command: %@", command);
+    
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
@@ -1032,8 +1042,12 @@ static iTermController *gSharedInstance;
     }
 
     if (url) {
+        DLog(@"Add URL to profile");
         // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
         aDict = [self profile:aDict modifiedToOpenURL:url forObjectType:objectType];
+    }
+    if (!bookmarkData) {
+        DLog(@"Using profile:\n%@", aDict);
     }
     if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
         theTerm = nil;
@@ -1048,6 +1062,7 @@ static iTermController *gSharedInstance;
             windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         }
         if (theTerm) {
+            DLog(@"Finish initialization of an existing window controller");
             term = theTerm;
             [term finishInitializationWithSmartLayout:YES
                                            windowType:windowType
@@ -1055,6 +1070,7 @@ static iTermController *gSharedInstance;
                                                screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                              isHotkey:isHotkey];
         } else {
+            DLog(@"Create a new window controller");
             term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                      windowType:windowType
                                                 savedWindowType:WINDOW_TYPE_NORMAL
@@ -1072,14 +1088,17 @@ static iTermController *gSharedInstance;
             toggle = ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
         }
     } else {
+        DLog(@"Use an existing window");
         term = theTerm;
     }
 
     PTYSession* session = nil;
 
     if (block) {
+        DLog(@"Create a session via callback");
         session = block(term);
     } else if (url) {
+        DLog(@"Creating a new session");
         session = [term createSessionWithProfile:aDict
                                          withURL:url
                                    forObjectType:objectType
