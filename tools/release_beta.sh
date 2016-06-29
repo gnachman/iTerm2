@@ -97,7 +97,7 @@ echo Update the linky in the version3 release notes page
 sleep 2
 vi ~/iterm2-website/source/version3.md
 
-echo Fix version.txt. Should look like: +3.0.%(extra)s
+echo Fix version.txt. Should look like: '+3.0.%(extra)s'
 sleep 2
 vi version.txt
 #set -x
