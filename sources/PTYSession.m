@@ -6321,15 +6321,19 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)reveal {
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
+    BOOL okToActivateApp = YES;
     if ([terminal isHotKeyWindow]) {
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)terminal];
         [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
+        okToActivateApp = !hotKey.isFloatingPanel;
     } else {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         [[terminal window] makeKeyAndOrderFront:self];
         [_delegate sessionSelectContainingTab];
     }
-//    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    if (okToActivateApp) {
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    }
 
     [_delegate setActiveSession:self];
 }

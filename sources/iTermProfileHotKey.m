@@ -181,6 +181,10 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
+- (BOOL)isFloatingPanel {
+    return [self.windowController.window isKindOfClass:[iTermPanel class]];
+}
+
 - (void)rollIn {
     DLog(@"Roll in [show] hotkey window");
     if (_rollingIn) {
@@ -188,7 +192,9 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         return;
     }
     _rollingIn = YES;
-//    [NSApp activateIgnoringOtherApps:YES];
+    if (![self isFloatingPanel]) {
+        [NSApp activateIgnoringOtherApps:YES];
+    }
     [self.windowController.window makeKeyAndOrderFront:nil];
     
     if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
@@ -446,7 +452,9 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     const BOOL hotkeyWindowOnOtherSpace = ![self.windowController.window isOnActiveSpace];
     if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
         DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
-//        [NSApp activateIgnoringOtherApps:YES];
+        if (![self isFloatingPanel]) {
+            [NSApp activateIgnoringOtherApps:YES];
+        }
         [self.windowController.window makeKeyAndOrderFront:nil];
         return YES;
     } else {

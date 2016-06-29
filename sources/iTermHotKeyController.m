@@ -406,7 +406,14 @@
             window.isOnActiveSpace &&
             ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
             !profileHotKey.autoHides) {
-          DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
+            DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                DLog(@"Bring hotkey window %@ to front", window);
+                // This shouldn't prevent hotkey windows from overlapping a Lion fullscreen window
+                // because we're switching spaces anyway.
+                [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                [window makeKeyAndOrderFront:nil];
+            });
             [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
         }
         if ([window isVisible] && window.isOnActiveSpace && [term fullScreen]) {
@@ -421,12 +428,6 @@
 }
 
 #pragma mark - Private
-
-- (void)bringHotkeyWindowToFore:(NSWindow *)window {
-    DLog(@"Bring hotkey window %@ to front", window);
-//    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    [window makeKeyAndOrderFront:nil];
-}
 
 - (BOOL)shouldAutoHide {
     if (_disableAutoHide) {

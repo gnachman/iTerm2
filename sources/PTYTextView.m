@@ -4650,6 +4650,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([types containsObject:NSFilenamesPboardType] && filenames.count && dropScpPath) {
         // This is all so the mouse cursor will change to a plain arrow instead of the
         // drop target cursor.
+#warning TODO Does this do something silly with floating panels?
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         [[self window] makeKeyAndOrderFront:nil];
         [self performSelector:@selector(maybeUpload:)

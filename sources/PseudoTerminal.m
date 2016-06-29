@@ -528,7 +528,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else {
         styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
     }
-    if (isHotkey) {
+#warning Make this a method argument
+    BOOL iFloatingPanel = isHotkey;
+    if (iFloatingPanel) {
         styleMask |= NSNonactivatingPanelMask;
     }
     savedWindowType_ = savedWindowType;
@@ -536,8 +538,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     iTermTerminalWindow *myWindow;
 #warning Only floating hotkeys should be panels.
-    // Class windowClass = isHotkey ? [iTermPanel class] : [iTermWindow class];
-    Class windowClass = [iTermWindow class];
+    Class windowClass = iFloatingPanel ? [iTermPanel class] : [iTermWindow class];
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
                                               styleMask:styleMask
                                                 backing:NSBackingStoreBuffered
