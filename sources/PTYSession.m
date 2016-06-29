@@ -2262,6 +2262,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
     if (keyBindingAction == KEY_ACTION_SELECT_MENU_ITEM) {
+        DLog(@"Invoking keybinding action to select menu item %@", keyBindingText);
         [PTYSession selectMenuItem:keyBindingText];
         return YES;
     } else {

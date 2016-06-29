@@ -26,6 +26,7 @@
  */
 
 #import "iTermApplication.h"
+#import "DebugLogging.h"
 #import "HotkeyWindowController.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
@@ -78,6 +79,8 @@
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent*)event {
     if ([event type] == NSKeyDown) {
+        DLog(@"Received NSKeyDown event: %@", event);
+        
         iTermController* cont = [iTermController sharedInstance];
 #ifdef FAKE_EVENT_TAP
         event = [cont runEventTapHandler:event];
@@ -91,11 +94,13 @@
             // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
             // the event tap performs the remapping.
             event = [iTermKeyBindingMgr remapModifiers:event];
+            DLog(@"Remapped modifiers to %@", event);
         }
         if (IsSecureEventInputEnabled() &&
             [[HotkeyWindowController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
+            DLog(@"Directing to hotkey handler");
             OnHotKeyEvent();
             return;
         }
@@ -114,6 +119,7 @@
             }
             if (digit >= 1 && digit <= 9) {
                 PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
+                DLog(@"Switching windows");
                 if (termWithNumber) {
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
                         [[HotkeyWindowController sharedInstance] showHotKeyWindow];
@@ -126,6 +132,7 @@
         }
         iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
         if (shortcutView) {
+            DLog(@"Sending to shortcut input view");
             [shortcutView handleShortcutEvent:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
@@ -136,6 +143,7 @@
             if (inTextView && [(PTYTextView *)responder hasMarkedText]) {
                 // Let the IM process it (I used to call interpretKeyEvents:
                 // here but it caused bug 2882).
+                DLog(@"Sending to input method handler");
                 [super sendEvent:event];
                 return;
             }
@@ -150,11 +158,13 @@
                 int numSessions = [orderedSessions count];
                 if (digit == 9 && numSessions > 0) {
                     // Modifier+9: Switch to last split pane if there are fewer than 9.
+                    DLog(@"Switching to last split pane");
                     [currentTerminal.currentTab setActiveSession:[orderedSessions lastObject]];
                     return;
                 }
                 if (digit >= 1 && digit <= numSessions) {
                     // Modifier+number: Switch to split pane by number.
+                    DLog(@"Switching to split pane");
                     [currentTerminal.currentTab setActiveSession:orderedSessions[digit - 1]];
                     return;
                 }
@@ -166,11 +176,13 @@
                 }
                 if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
                     // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
+                    DLog(@"Switching to last tab");
                     [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
                     return;
                 }
                 if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
                     // Command (or selected modifier)+number: Switch to tab by number.
+                    DLog(@"Switching tabs");
                     [tabView selectTabViewItemAtIndex:digit-1];
                     return;
                 }
@@ -189,15 +201,18 @@
 
             if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
                 // Remap key.
+                DLog(@"Remapping to actionable event");
                 [currentSession keyDown:event];
                 return;
             }
         } else {
             // Focus not in terminal window.
             if ([PTYSession handleShortcutWithoutTerminal:event]) {
+                DLog(@"handled by session");
                 return;
             }
         }
+        DLog(@"NSKeyDown event taking the regular path");
     }
 
     [super sendEvent:event];
