@@ -103,6 +103,7 @@
               KEY_HOTKEY_AUTOHIDE: @(self.autoHide),
               KEY_HOTKEY_REOPEN_ON_ACTIVATION: @(self.showAutoHiddenWindowOnAppActivation),
               KEY_HOTKEY_ANIMATE: @(self.animate),
+              KEY_HOTKEY_FLOAT: @(self.floats),
               KEY_HOTKEY_DOCK_CLICK_ACTION: @(self.dockPreference),
               KEY_HOTKEY_ALTERNATE_SHORTCUTS: [self alternateShortcutDictionaries] ?: @[] };
 }
@@ -148,6 +149,7 @@
     IBOutlet NSButton *_autoHide;
     IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
     IBOutlet NSButton *_animate;
+    IBOutlet NSButton *_floats;
     
     // Radio buttons
     IBOutlet NSButton *_doNotShowOnDockClick;
@@ -200,7 +202,7 @@
 
 - (void)updateViewsEnabled {
     NSArray<NSView *> *buttons =
-        @[ _autoHide, _showAutoHiddenWindowOnAppActivation, _animate, _doNotShowOnDockClick,
+        @[ _autoHide, _showAutoHiddenWindowOnAppActivation, _animate, _floats, _doNotShowOnDockClick,
            _alwaysShowOnDockClick, _showIfNoWindowsOpenOnDockClick ];
     for (NSButton *button in buttons) {
         button.enabled = self.model.hotKeyAssigned;
@@ -229,6 +231,7 @@
     _showAutoHiddenWindowOnAppActivation.enabled = _model.autoHide;
     _showAutoHiddenWindowOnAppActivation.state = _model.showAutoHiddenWindowOnAppActivation ? NSOnState : NSOffState;
     _animate.state = _model.animate ? NSOnState : NSOffState;
+    _floats.state = _model.floats ? NSOnState : NSOffState;
 
     switch (_model.dockPreference) {
         case iTermHotKeyDockPreferenceDoNotShow:
@@ -259,7 +262,8 @@
     _model.autoHide = _autoHide.state == NSOnState;
     _model.showAutoHiddenWindowOnAppActivation = _showAutoHiddenWindowOnAppActivation.state == NSOnState;
     _model.animate = _animate.state == NSOnState;
-   
+    _model.floats = _floats.state == NSOnState;
+
     if (_showIfNoWindowsOpenOnDockClick.state == NSOnState) {
         _model.dockPreference = iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen;
     } else if (_alwaysShowOnDockClick.state == NSOnState) {

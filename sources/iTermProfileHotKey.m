@@ -94,7 +94,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         return;
     }
 
-    if ([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
+    if ([self isFloatingPanel]) {
         _windowController.window.level = NSFloatingWindowLevel;
     } else {
         _windowController.window.level = NSNormalWindowLevel;
@@ -182,7 +182,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (BOOL)isFloatingPanel {
-    return [self.windowController.window isKindOfClass:[iTermPanel class]];
+    return [iTermProfilePreferences boolForKey:KEY_HOTKEY_FLOAT inProfile:self.profile];
 }
 
 - (void)rollIn {
@@ -372,6 +372,14 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     return term;
 }
 
+- (iTermHotkeyWindowType)hotkeyWindowType {
+    if (self.isFloatingPanel) {
+        return iTermHotkeyWindowTypeFloating;
+    } else {
+        return iTermHotkeyWindowTypeRegular;
+    }
+}
+
 - (PseudoTerminal *)windowControllerFromProfile:(Profile *)hotkeyProfile {
     if (!hotkeyProfile) {
         return nil;
@@ -388,7 +396,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     PTYSession *session = [[iTermController sharedInstance] launchBookmark:hotkeyProfile
                                                                 inTerminal:nil
                                                                    withURL:nil
-                                                                  isHotkey:YES
+                                                          hotkeyWindowType:[self hotkeyWindowType]
                                                                    makeKey:YES
                                                                canActivate:YES
                                                                    command:nil

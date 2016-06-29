@@ -936,7 +936,7 @@ static iTermController *gSharedInstance;
                                           windowType:windowType
                                      savedWindowType:WINDOW_TYPE_NORMAL
                                               screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
-                                            isHotkey:NO] autorelease];
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone] autorelease];
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
@@ -962,7 +962,7 @@ static iTermController *gSharedInstance;
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
-                       isHotkey:NO
+                       hotkeyWindowType:iTermHotkeyWindowTypeNone
                         makeKey:YES
                     canActivate:YES
                         command:nil
@@ -1028,7 +1028,7 @@ static iTermController *gSharedInstance;
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
                     inTerminal:(PseudoTerminal *)theTerm
                        withURL:(NSString *)url
-                      isHotkey:(BOOL)isHotkey
+              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
@@ -1036,7 +1036,8 @@ static iTermController *gSharedInstance;
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
-
+    const BOOL isHotkey = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
+    
     aDict = bookmarkData;
     if (aDict == nil) {
         aDict = [self defaultBookmark];
@@ -1064,13 +1065,13 @@ static iTermController *gSharedInstance;
                                            windowType:windowType
                                       savedWindowType:WINDOW_TYPE_NORMAL
                                                screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                             isHotkey:isHotkey];
+                                     hotkeyWindowType:hotkeyWindowType];
         } else {
             term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                      windowType:windowType
                                                 savedWindowType:WINDOW_TYPE_NORMAL
                                                          screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                                       isHotkey:isHotkey] autorelease];
+                                               hotkeyWindowType:hotkeyWindowType] autorelease];
         }
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
             [term hideAfterOpening];

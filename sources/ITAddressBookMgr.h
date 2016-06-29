@@ -200,6 +200,7 @@
 #define KEY_HOTKEY_AUTOHIDE                   @"HotKey Window AutoHides"
 #define KEY_HOTKEY_REOPEN_ON_ACTIVATION       @"HotKey Window Reopens On Activation"
 #define KEY_HOTKEY_ANIMATE                    @"HotKey Window Animates"
+#define KEY_HOTKEY_FLOAT                      @"HotKey Window Floats"
 #define KEY_HOTKEY_DOCK_CLICK_ACTION          @"HotKey Window Dock Click Action"
 #define KEY_HOTKEY_ACTIVATE_WITH_MODIFIER     @"HotKey Activated By Modifier"
 #define KEY_HOTKEY_MODIFIER_ACTIVATION        @"HotKey Modifier Activation"

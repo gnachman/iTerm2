@@ -15,6 +15,7 @@
 @property(nonatomic, assign) BOOL autoHide;
 @property(nonatomic, assign) BOOL showAutoHiddenWindowOnAppActivation;
 @property(nonatomic, assign) BOOL animate;
+@property(nonatomic, assign) BOOL floats;
 @property(nonatomic, retain) NSArray<iTermShortcut *> *alternateShortcuts;
 @property(nonatomic, retain) NSArray<NSDictionary *> *alternateShortcutDictionaries;
 

@@ -123,7 +123,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenNumber
-                           isHotkey:(BOOL)isHotkey;
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType;
 
 // If a PseudoTerminal is created with -init (such as happens with AppleScript)
 // this must be called before it is used.
@@ -131,7 +131,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                                   isHotkey:(BOOL)isHotkey;
+                                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType;
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId;
 

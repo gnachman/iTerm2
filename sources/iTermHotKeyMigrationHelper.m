@@ -271,6 +271,7 @@
                                    KEY_HOTKEY_AUTOHIDE: @(autohides),
                                    KEY_HOTKEY_REOPEN_ON_ACTIVATION: @NO,
                                    KEY_HOTKEY_ANIMATE: @(animate),
+                                   KEY_HOTKEY_FLOAT: @NO,
                                    KEY_HOTKEY_DOCK_CLICK_ACTION: @(dockAction) };
     return newSettings;
 }

@@ -25,6 +25,9 @@
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;
 
+// Returns the profile hotkey, if any, associated with a profile GUID.
+- (iTermProfileHotKey *)profileHotKeyForGUID:(NSString *)guid;
+
 // Reveal the hotkey window, creating it if needed.
 - (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey;
 

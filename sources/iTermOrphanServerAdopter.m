@@ -99,7 +99,7 @@
         [[iTermController sharedInstance] launchBookmark:nil
                                               inTerminal:desiredWindow
                                                  withURL:nil
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:NO
                                              canActivate:NO
                                                  command:nil

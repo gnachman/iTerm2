@@ -252,6 +252,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_AUTOHIDE: @YES,
                   KEY_HOTKEY_REOPEN_ON_ACTIVATION: @NO,
                   KEY_HOTKEY_ANIMATE: @YES,
+                  KEY_HOTKEY_FLOAT: @YES,
                   KEY_HOTKEY_DOCK_CLICK_ACTION: @(iTermHotKeyDockPreferenceDoNotShow),
                   KEY_HOTKEY_MODIFIER_ACTIVATION: @0,
                   KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,

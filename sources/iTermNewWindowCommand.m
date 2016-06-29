@@ -38,7 +38,7 @@
             [[iTermController sharedInstance] launchBookmark:profile
                                                   inTerminal:nil
                                                      withURL:nil
-                                                    isHotkey:NO
+                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                      makeKey:YES
                                                  canActivate:YES
                                                      command:command

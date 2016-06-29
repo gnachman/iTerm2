@@ -364,14 +364,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                           windowType:windowType
                      savedWindowType:savedWindowType
                               screen:screenNumber
-                            isHotkey:NO];
+                    hotkeyWindowType:iTermHotkeyWindowTypeNone];
 }
 
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenNumber
-                           isHotkey:(BOOL)isHotkey {
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {
@@ -379,7 +379,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                        windowType:windowType
                                   savedWindowType:savedWindowType
                                            screen:screenNumber
-                                         isHotkey:isHotkey];
+                                 hotkeyWindowType:hotkeyWindowType];
     }
     return self;
 }
@@ -388,13 +388,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                                   isHotkey:(BOOL)isHotkey {
-    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
+                           hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
          windowType,
          screenNumber,
-         isHotkey ? @"YES" : @"NO");
+         @(hotkeyWindowType));
 
     // Force the nib to load
     [self window];
@@ -529,20 +529,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
     }
 #warning Make this a method argument
-    BOOL iFloatingPanel = isHotkey;
-    if (iFloatingPanel) {
+    if (hotkeyWindowType == iTermHotkeyWindowTypeFloating) {
         styleMask |= NSNonactivatingPanelMask;
     }
     savedWindowType_ = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     iTermTerminalWindow *myWindow;
-#warning Only floating hotkeys should be panels.
-    Class windowClass = iFloatingPanel ? [iTermPanel class] : [iTermWindow class];
+    Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloating) ? [iTermPanel class] : [iTermWindow class];
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
                                               styleMask:styleMask
                                                 backing:NSBackingStoreBuffered
-                                                  defer:isHotkey];
+                                                  defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -574,7 +572,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
-    if (!isHotkey) {
+    if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
     } else {
         self.window.alphaValue = 0;
@@ -642,7 +640,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self hideMenuBar];
     }
 
-    [self setIsHotKeyWindow:isHotkey];
+    [self setIsHotKeyWindow:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
 
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
@@ -1317,9 +1315,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (IBAction)closeCurrentSession:(id)sender
-{
-    iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
+- (IBAction)closeCurrentSession:(id)sender {
+    iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
     if ([[self window] isKeyWindow]) {
         PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
@@ -1819,13 +1816,23 @@ ITERM_WEAKLY_REFERENCEABLE
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
     const BOOL isHotkey = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
+#warning TODO test this
+    iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID]];
+    iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
+    if (isHotkey) {
+        if (profileHotKey.isFloatingPanel) {
+            hotkeyWindowType = iTermHotkeyWindowTypeFloating;
+        } else {
+            hotkeyWindowType = iTermHotkeyWindowTypeRegular;
+        }
+    }
 #warning TODO: Restoring a fullscreen hotkey window hides the dock.
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                                   isHotkey:isHotkey] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
@@ -1842,7 +1849,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                                   isHotkey:isHotkey] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType] autorelease];
         [term delayedEnterFullscreen];
     } else {
         // Support legacy edge-spanning flag by adjusting the
@@ -1871,7 +1878,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  windowType:windowType
                                             savedWindowType:WINDOW_TYPE_NORMAL
                                                      screen:-1
-                                                   isHotkey:isHotkey] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -2202,7 +2209,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
 {
     // This counts as an interaction beacuse it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
-    iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
 
     BOOL needPrompt = NO;
@@ -2386,7 +2393,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateMaximizePaneMenuItem];
     [itad updateUseTransparencyMenuItem];
     [itad updateBroadcastMenuState];
@@ -3003,7 +3010,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
 }
 - (void)updateUseTransparency {
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self allSessions]) {
         [[aSession view] setNeedsDisplay:YES];
@@ -3788,7 +3795,7 @@ ITERM_WEAKLY_REFERENCEABLE
       [aSession setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
     [self refreshTools];
     [self updateTabColors];
@@ -3834,7 +3841,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
 {
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
         [itad updateBroadcastMenuState];
 }
 
@@ -3843,7 +3850,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
         [itad updateBroadcastMenuState];
 }
 
@@ -3859,7 +3866,7 @@ ITERM_WEAKLY_REFERENCEABLE
       [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -4303,7 +4310,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView {
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     // Note: this assume that self is the front window (it should be!). It is smart enough to create
     // a tmux tab if the user wants one (or ask if needed).
     [itad newSession:nil];
@@ -5590,7 +5597,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     broadcastMode_ = mode;
         [self setDimmingForSessions];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -5651,7 +5658,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // Update dimming of panes.
     [self refreshTerminal:nil];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -6730,7 +6737,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
                                               inTerminal:nil
                                                  withURL:nil
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:YES
                                                  command:nil

@@ -40,7 +40,7 @@
         [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:_delegate
                                                  withURL:nil
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:NO
                                                  command:command
@@ -63,7 +63,7 @@
         [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:_delegate
                                                  withURL:nil
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:NO
                                                  command:command

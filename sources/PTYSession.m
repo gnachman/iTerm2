@@ -1372,7 +1372,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermController sharedInstance] launchBookmark:profile
                                           inTerminal:term
                                              withURL:url
-                                            isHotkey:NO
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
                                              makeKey:NO
                                          canActivate:NO
                                              command:nil

@@ -30,6 +30,14 @@
 #import "iTermRestorableSession.h"
 #import "PTYWindow.h"
 
+typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
+    iTermHotkeyWindowTypeNone,
+    iTermHotkeyWindowTypeRegular,
+    // Floating panel
+#warning TODO: What if it doesn't join all spaces? Do I need a "defective floating" type?
+    iTermHotkeyWindowTypeFloating
+};
+
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
 @protocol iTermWindowController;
@@ -107,7 +115,7 @@
 - (PTYSession *)launchBookmark:(Profile *)bookmarkData
                     inTerminal:(PseudoTerminal *)theTerm
                        withURL:(NSString *)url
-                      isHotkey:(BOOL)isHotkey
+              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command

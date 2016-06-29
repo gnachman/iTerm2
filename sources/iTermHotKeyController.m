@@ -343,10 +343,7 @@
 
 - (BOOL)addRevivedHotkeyWindowController:(PseudoTerminal *)windowController
                       forProfileWithGUID:(NSString *)guid {
-    NSArray<iTermProfileHotKey *> *profileHotKeys = [_hotKeys objectsOfClasses:@[ [iTermProfileHotKey class] ]];
-    iTermProfileHotKey *profileHotKey = [profileHotKeys objectPassingTest:^BOOL(iTermProfileHotKey *element, NSUInteger index, BOOL *stop) {
-        return [element.profile[KEY_GUID] isEqualToString:guid];
-    }];
+    iTermProfileHotKey *profileHotKey = [self profileHotKeyForGUID:guid];
     if (!profileHotKey || profileHotKey.windowController.weaklyReferencedObject) {
         return NO;
     }
@@ -394,6 +391,16 @@
     }];
 }
 
+- (iTermProfileHotKey *)profileHotKeyForGUID:(NSString *)guid {
+    NSArray<iTermProfileHotKey *> *profileHotKeys = [_hotKeys objectsOfClasses:@[ [iTermProfileHotKey class] ]];
+    iTermProfileHotKey *profileHotKey = [profileHotKeys objectPassingTest:^BOOL(iTermProfileHotKey *element,
+                                                                                NSUInteger index,
+                                                                                BOOL *stop) {
+        return [element.profile[KEY_GUID] isEqualToString:guid];
+    }];
+    return profileHotKey;
+}
+
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
@@ -414,7 +421,6 @@
                 [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
                 [window makeKeyAndOrderFront:nil];
             });
-            [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
         }
         if ([window isVisible] && window.isOnActiveSpace && [term fullScreen]) {
             // Issue 4136: If you press the hotkey while in a fullscreen app, the

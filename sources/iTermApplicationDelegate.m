@@ -897,7 +897,7 @@ static BOOL hasBecomeActive = NO;
         [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:term
                                                  withURL:urlStr
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:NO
                                              canActivate:NO
                                                  command:nil

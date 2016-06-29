@@ -109,6 +109,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
     model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
     model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];
+    model.floats = [self boolForKey:KEY_HOTKEY_FLOAT];
     model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
     [model setAlternateShortcutDictionaries:(id)[self objectForKey:KEY_HOTKEY_ALTERNATE_SHORTCUTS]];
     
