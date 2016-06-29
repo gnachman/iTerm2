@@ -21,7 +21,7 @@
         return [[[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
                                                             containerSpecifier:containerRef
                                                                            key:@"orderedTerminalWindows"
-                                                                      uniqueID:self.windowIdentifier] autorelease];
+                                                                      uniqueID:@([self windowNumber])] autorelease];
     } else {
         return nil;
     }
