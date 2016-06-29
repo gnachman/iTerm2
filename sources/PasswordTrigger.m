@@ -89,7 +89,7 @@
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
-    iTermApplicationDelegate *delegate = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
     [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:capturedStrings
                                                                                          count:captureCount]
                                      inSession:aSession];

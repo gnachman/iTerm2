@@ -119,7 +119,7 @@ static iTermController *gSharedInstance;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
-        _fullScreenWindowManager = [[iTermFullScreenWindowManager alloc] initWithClass:[PTYWindow class]
+        _fullScreenWindowManager = [[iTermFullScreenWindowManager alloc] initWithClass:[iTermWindow class]
                                                                enterFullScreenSelector:@selector(toggleFullScreen:)];
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
@@ -147,7 +147,7 @@ static iTermController *gSharedInstance;
     const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
                                       [iTermAdvancedSettingsModel restoreWindowContents] &&
                                       self.willRestoreWindowsAtNextLaunch);
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     return (sessionsWillRestore &&
             (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
 }
@@ -255,7 +255,7 @@ static iTermController *gSharedInstance;
     if (!windowIsObscured) {
         // Try to refine the guess by seeing if another terminal is covering this one.
         static const double kOcclusionThreshold = 0.4;
-        if ([(PTYWindow *)terminal.window approximateFractionOccluded] > kOcclusionThreshold) {
+        if ([(iTermTerminalWindow *)terminal.window approximateFractionOccluded] > kOcclusionThreshold) {
             windowIsObscured = YES;
         }
     }
@@ -954,7 +954,8 @@ static iTermController *gSharedInstance;
 }
 
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {
-    [_fullScreenWindowManager makeWindowEnterFullScreen:term.ptyWindow];
+    assert([term.window isKindOfClass:[iTermWindow class]]);
+    [_fullScreenWindowManager makeWindowEnterFullScreen:(iTermWindow *)term.window];
 }
 
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
@@ -1357,10 +1358,11 @@ static iTermController *gSharedInstance;
 }
 
 // Returns all terminal windows that are key.
-- (NSArray<PTYWindow *> *)keyTerminalWindows {
-    NSMutableArray<PTYWindow *> *temp = [NSMutableArray array];
+- (NSArray<iTermTerminalWindow *> *)keyTerminalWindows {
+    NSMutableArray<iTermTerminalWindow *> *temp = [NSMutableArray array];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        PTYWindow *window = [term ptyWindow];
+        iTermTerminalWindow *window = [term ptyWindow];
+#warning TODO Test this and how the results of this method are used.
         if ([window isKeyWindow]) {
             [temp addObject:window];
         }

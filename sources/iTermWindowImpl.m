@@ -1,9 +1,10 @@
 #ifndef THE_CLASS
 #define THE_CLASS ThisIsJustHereToMakeXCodeHappy
-
 @interface THE_CLASS : NSWindow
 @end
 #endif
+
+NS_ASSUME_NONNULL_BEGIN
 
 @implementation THE_CLASS
 {
@@ -18,7 +19,10 @@
     NSInteger _uniqueNumber;
 }
 
-- (instancetype)initWithContentRect:(NSRect)contentRect styleMask:(NSUInteger)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag {
+- (instancetype)initWithContentRect:(NSRect)contentRect
+                          styleMask:(NSUInteger)aStyle
+                            backing:(NSBackingStoreType)bufferingType
+                              defer:(BOOL)flag {
     self = [super initWithContentRect:contentRect styleMask:aStyle backing:bufferingType defer:flag];
     if (self) {
         [self registerForNotifications];
@@ -69,7 +73,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)performMiniaturize:(id)sender {
+- (void)performMiniaturize:(nullable id)sender {
     if ([_delegate anyFullScreen]) {
         [super performMiniaturize:sender];
     } else {
@@ -144,11 +148,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (id<PTYWindowDelegateProtocol>)ptyDelegate {
+- (nullable id<PTYWindowDelegateProtocol>)ptyDelegate {
     return (id<PTYWindowDelegateProtocol>)[self delegate];
 }
 
-- (void)toggleFullScreen:(id)sender {
+- (void)toggleFullScreen:(nullable id)sender {
     if (![[self ptyDelegate] lionFullScreen]  &&
         ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
@@ -167,6 +171,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[[[self screen] deviceDescription] objectForKey:@"NSScreenNumber"] intValue];
 }
 
+#warning This should not know about PseudoTerminal
 - (void)smartLayout {
     PtyLog(@"enter smartLayout");
     NSEnumerator* iterator;
@@ -180,7 +185,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PseudoTerminal* term;
     PtyLog(@"Begin iterating over terminals");
     while ((term = [iterator nextObject])) {
-        PTYWindow* otherWindow = (PTYWindow*)[term window];
+        iTermTerminalWindow* otherWindow = (iTermTerminalWindow *)[term window];
         PtyLog(@"See window %@ at %@", otherWindow, [NSValue valueWithRect:[otherWindow frame]]);
         if (otherWindow == self) {
             PtyLog(@" skip - is self");
@@ -240,7 +245,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 PtyLog(@"compute badness of test rect %d %@", i, [NSValue valueWithRect:testRects[i]]);
 
                 iterator = [windows objectEnumerator];
-                PTYWindow* other;
+                iTermTerminalWindow *other;
                 float badness = 0.0f;
                 while ((other = [iterator nextObject])) {
                     NSRect otherFrame = [other frame];
@@ -280,8 +285,8 @@ end:
     layoutDone = YES;
 }
 
-- (void)makeKeyAndOrderFront:(id)sender {
-    PtyLog(@"PTYWindow makeKeyAndOrderFront: layoutDone=%d %@", (int)layoutDone, [NSThread callStackSymbols]);
+- (void)makeKeyAndOrderFront:(nullable id)sender {
+    PtyLog(@"%@ makeKeyAndOrderFront: layoutDone=%d %@", NSStringFromClass([self class]), (int)layoutDone, [NSThread callStackSymbols]);
     if (!layoutDone) {
         PtyLog(@"try to call windowWillShowInitial");
         [self setLayoutDone];
@@ -291,7 +296,7 @@ end:
             PtyLog(@"delegate %@ does not respond", [self delegate]);
         }
     }
-    PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
+    PtyLog(@"%@ - calling makeKeyAndOrderFont, which triggers a window resize", NSStringFromClass([self class]));
     PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
     [super makeKeyAndOrderFront:sender];
 }
@@ -389,5 +394,6 @@ end:
         self.title = title;
     }
 }
+NS_ASSUME_NONNULL_END
 
 @end

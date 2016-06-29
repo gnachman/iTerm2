@@ -18,6 +18,7 @@
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
+#import "PTYWindow.h"
 #import "SBSystemPreferences.h"
 #import <Carbon/Carbon.h>
 #import <ScriptingBridge/ScriptingBridge.h>
@@ -381,6 +382,18 @@
     _disableAutoHide = NO;
 }
 
+- (NSArray<iTermPanel *> *)visibleFloatingHotkeyWindows {
+    // Note iTermPanel class is implied by appearing on all spaces and floating.
+    return [[self profileHotKeys] mapWithBlock:^id(iTermProfileHotKey *anObject) {
+        NSWindow *window = anObject.windowController.window;
+        if (window.alphaValue == 1 && [window isKindOfClass:[iTermPanel class]]) {
+            return window;
+        } else {
+            return nil;
+        }
+    }];
+}
+
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
@@ -471,7 +484,7 @@
         }
     }
     
-    NSArray<PTYWindow *> *keyTerminalWindows = [[iTermController sharedInstance] keyTerminalWindows];
+    NSArray<iTermTerminalWindow *> *keyTerminalWindows = [[iTermController sharedInstance] keyTerminalWindows];
     NSArray<PseudoTerminal *> *hotKeyWindowControllers = self.hotKeyWindowControllers;
     BOOL nonHotkeyTerminalIsKey = [keyTerminalWindows containsObjectBesidesObjectsInArray:hotKeyWindowControllers];
     BOOL haveMain = [[iTermController sharedInstance] anyWindowIsMain];

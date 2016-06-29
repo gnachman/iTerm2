@@ -139,7 +139,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (void)setFrameValue:(NSValue *)value;
 
 // The PTYWindow for this controller.
-- (PTYWindow*)ptyWindow;
+- (__kindof iTermTerminalWindow *)ptyWindow;
 
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;

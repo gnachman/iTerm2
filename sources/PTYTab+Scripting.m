@@ -9,10 +9,12 @@
 #import "PTYTab+Scripting.h"
 #import "PseudoTerminal.h"
 #import "PTYWindow.h"
+
 @implementation PTYTab (Scripting)
 
 - (NSScriptObjectSpecifier *)objectSpecifier {
-  id classDescription = [NSClassDescription classDescriptionForClass:[PTYWindow class]];
+#warning Audit
+  id classDescription = [NSClassDescription classDescriptionForClass:[self.realParentWindow.window class]];
   NSInteger index = [[self realParentWindow] indexOfTab:self];
   return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription
                                                    containerSpecifier:[self.realParentWindow.window objectSpecifier]

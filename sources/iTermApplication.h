@@ -29,6 +29,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "PTYWindow.h"
 
 @class iTermApplicationDelegate;
 
@@ -40,6 +41,8 @@
 
 + (iTermApplication *)sharedApplication;
 
+- (NSArray<NSWindow *> *)orderedWindowsPlusHotkeyPanels;
+
 // Sets the return value for -currentEvent. Only for testing.
 @property(atomic, retain) NSEvent *fakeCurrentEvent;
 @property(nonatomic, readonly) NSStatusItem *statusBarItem;
@@ -47,8 +50,8 @@
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
 
-// Like orderedWindows, but only PTYWindow objects are returned.
-- (NSArray *)orderedTerminalWindows;
+// Like orderedWindows, but only iTermWindow/iTermPanel objects are returned.
+- (NSArray<iTermWindow *> *)orderedTerminalWindows;
 
 // Changes the process type.
 - (void)setIsUIElementApplication:(BOOL)uiElement;

@@ -534,11 +534,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     savedWindowType_ = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
-    PTYWindow *myWindow;
-    myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
-                                            styleMask:styleMask
-                                              backing:NSBackingStoreBuffered
-                                                defer:isHotkey];
+    iTermTerminalWindow *myWindow;
+#warning Only floating hotkeys should be panels.
+    // Class windowClass = isHotkey ? [iTermPanel class] : [iTermWindow class];
+    Class windowClass = [iTermWindow class];
+    myWindow = [[windowClass alloc] initWithContentRect:initialFrame
+                                              styleMask:styleMask
+                                                backing:NSBackingStoreBuffered
+                                                  defer:isHotkey];
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -930,9 +933,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self window] setFrame:[value rectValue] display:YES];
 }
 
-- (PTYWindow*)ptyWindow
-{
-    return (PTYWindow*) [self window];
+- (__kindof iTermTerminalWindow *)ptyWindow {
+    return (iTermTerminalWindow *)[self window];
 }
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId {
@@ -3552,10 +3554,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return proposedFrame;
 }
 
-- (void)windowWillShowInitial
-{
+- (void)windowWillShowInitial {
     PtyLog(@"windowWillShowInitial");
-    PTYWindow* window = (PTYWindow*)[self window];
+    iTermTerminalWindow* window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
     if (haveScreenPreference_) {
         PtyLog(@"have screen preference is set");

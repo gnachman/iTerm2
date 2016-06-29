@@ -2978,6 +2978,7 @@
 		A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusItemAlt.png; path = images/StatusItemAlt.png; sourceTree = "<group>"; };
 		A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusItemAlt@2x.png"; path = "images/StatusItemAlt@2x.png"; sourceTree = "<group>"; };
 		A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowImpl.m; sourceTree = "<group>"; };
+		A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowScriptingImpl.m; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -4702,6 +4703,7 @@
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */,
+				A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";

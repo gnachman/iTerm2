@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 
+@class iTermPanel;
 @class Profile;
 @class PseudoTerminal;
 
@@ -80,5 +81,8 @@
 
 // Hide all hotkey windows without animation. Used by Exposé All Tabs.
 - (void)fastHideAllHotKeyWindows;
+
+// Alpha=1, level=floating, on all spaces hotkey windows.
+- (NSArray<iTermPanel *> *)visibleFloatingHotkeyWindows;
 
 @end

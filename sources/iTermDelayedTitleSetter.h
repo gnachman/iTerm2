@@ -21,9 +21,10 @@ extern NSString *const kDelayedTitleSetterTitleKey;
 // seems to be relatively slow, so we don't want to spend too much time doing that if the
 // terminal goes nuts and sends lots of title-change sequences.
 
-// This object exists to avoid keeping a PTYWindow or PseudoTerminal from getting dealloc'ed
+// This object exists to avoid keeping an iTermTerminalWindow or PseudoTerminal from getting dealloc'ed
 // while a delayed title-set is happening. The window property is a weak reference and this object
 // can exist for about a tenth of a second after a window is dealloc'ed.
+#warning Replace this with a weak reference.
 @interface iTermDelayedTitleSetter : NSObject
 
 @property(nonatomic, assign) NSWindow *window;

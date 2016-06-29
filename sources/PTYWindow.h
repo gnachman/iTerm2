@@ -42,8 +42,7 @@
 - (PTYTab *)tabForSession:(PTYSession *)session;
 @end
 
-@interface PTYWindow : NSWindow<iTermWeaklyReferenceable>
-
+@protocol PTYWindow<NSObject>
 @property(nonatomic, readonly) int screenNumber;
 @property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
 // A unique identifier that does not get recycled during the program's lifetime.
@@ -62,30 +61,14 @@
 
 // See comments in iTermDelayedTitleSetter for why this is so.
 - (void)delayedSetTitle:(NSString *)title;
-
 @end
 
-@interface iTermPanel : NSPanel<iTermWeaklyReferenceable>
+typedef NSWindow<PTYWindow> iTermTerminalWindow;
 
-@property(nonatomic, readonly) int screenNumber;
-@property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
-// A unique identifier that does not get recycled during the program's lifetime.
-@property(nonatomic, readonly) NSString *windowIdentifier;
+@interface iTermWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
+@end
 
-- (void)smartLayout;
-- (void)setLayoutDone;
-
-- (void)enableBlur:(double)radius;
-- (void)disableBlur;
-
-- (void)setRestoreState:(NSObject *)restoreState;
-
-// Returns the approximate fraction of this window that is occluded by other windows in this app.
-- (double)approximateFractionOccluded;
-
-// See comments in iTermDelayedTitleSetter for why this is so.
-- (void)delayedSetTitle:(NSString *)title;
-
+@interface iTermPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>
 @end
 
 @interface NSWindow (Private)
@@ -98,4 +81,6 @@
 @interface NSWindow(iTerm)
 - (BOOL)isTerminalWindow;
 @end
+
+#define PTYWindow iTermWindow
 

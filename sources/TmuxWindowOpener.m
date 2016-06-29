@@ -383,7 +383,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                               withObject:[NSNumber numberWithInt:windowIndex_]];
         }
         if (isNewWindow) {
-            [[iTermController sharedInstance] didFinishCreatingTmuxWindow:term];
+#warning TODO Make iTermController not know about PseudoTerminal so I don't have to do this cast.
+            [[iTermController sharedInstance] didFinishCreatingTmuxWindow:(PseudoTerminal *)term];
         }
     }
 }

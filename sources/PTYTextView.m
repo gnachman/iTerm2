@@ -778,7 +778,7 @@ static const int kDragThreshold = 3;
 }
 
 // This exists to work around an apparent OS bug described in issue 2690. Under some circumstances
-// (which I cannot reproduce) the key window will be an NSToolbarFullScreenWindow and the PTYWindow
+// (which I cannot reproduce) the key window will be an NSToolbarFullScreenWindow and the iTermTerminalWindow
 // will be one of the main windows. NSToolbarFullScreenWindow doesn't appear to handle keystrokes,
 // so they fall through to the main window. We'd like the cursor to blink and have other key-
 // window behaviors in this case.
@@ -1337,7 +1337,7 @@ static const int kDragThreshold = 3;
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
+        iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
         [appDelegate userDidInteractWithASession];
     });
 
@@ -5595,7 +5595,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
-    _showStripesWhenBroadcastingInput = iTermApplication.sharedApplication.delegate.useBackgroundPatternIndicator;
+    _showStripesWhenBroadcastingInput = [iTermApplication.sharedApplication delegate].useBackgroundPatternIndicator;
     [self setNeedsDisplay:YES];
 }
 

@@ -75,7 +75,7 @@
 
 - (void)twiddleKeyWindow
 {
-    iTermApplicationDelegate *theDelegate = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *theDelegate = [iTermApplication.sharedApplication delegate];
     [theDelegate makeHotKeyWindowKeyIfOpen];
     [super close];
     [parentWindow_ makeKeyAndOrderFront:self];

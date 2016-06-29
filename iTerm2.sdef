@@ -93,7 +93,7 @@
       </element> 
     </class> 
     <class name="window" code="cwin" description="A window."> 
-      <cocoa class="PTYWindow"/> 
+      <cocoa class="iTermWindow"/> 
       <property name="id" code="ID  " description="The unique identifier of the session." type="text" access="r">
         <cocoa key="windowIdentifier"/>
       </property>

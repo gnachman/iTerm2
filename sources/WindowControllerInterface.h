@@ -106,7 +106,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // Underlying window
 - (NSWindow *)window;
-- (PTYWindow *)ptyWindow;
+- (iTermTerminalWindow *)ptyWindow;
 
 // Unique identifier
 - (NSString *)terminalGuid;

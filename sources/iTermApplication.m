@@ -155,7 +155,7 @@
             }
         }
 
-        if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+        if ([[self keyWindow] isTerminalWindow]) {
             // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];
@@ -242,9 +242,10 @@
     }
 }
 
-- (NSArray *)orderedTerminalWindows {
+#warning TODO Audit uses of this method, consider replacing wtih orderedWindowsPlusHotkeyPanels.
+- (NSArray<iTermWindow *> *)orderedTerminalWindows {
     return [[self orderedWindows] filteredArrayUsingBlock:^BOOL(id anObject) {
-        return [anObject isKindOfClass:[PTYWindow class]];
+        return [anObject isKindOfClass:[iTermWindow class]];
     }];
 }
 
@@ -278,6 +279,13 @@
         [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
         self.statusBarItem = nil;
     }
+}
+
+#warning TODO audit what's done with windows gotten from orderedWindows, orderedTerminalWindows, and this method for compatibilityw ith panels.
+- (NSArray<NSWindow *> *)orderedWindowsPlusHotkeyPanels {
+    NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] visibleFloatingHotkeyWindows] ?: @[];
+#warning TODO: Audit all uses of orderedWindows
+    return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
 }
 
 @end

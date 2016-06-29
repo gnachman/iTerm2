@@ -1335,7 +1335,7 @@ static BOOL hasBecomeActive = NO;
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        for (NSWindow *window in [NSApp orderedWindows]) {
+        for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusHotkeyPanels]) {
             if (!window.isOnActiveSpace) {
                 continue;
             }
@@ -1343,7 +1343,7 @@ static BOOL hasBecomeActive = NO;
                 continue;
             }
             NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
-            if ([window isKindOfClass:[PTYWindow class]]) {
+            if ([window isTerminalWindow]) {
                 NSView *view = [window.contentView hitTest:pointInWindow];
                 if ([view isKindOfClass:[PTYTextView class]]) {
                     [window makeKeyAndOrderFront:nil];

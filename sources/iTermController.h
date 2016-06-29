@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
 #import "iTermRestorableSession.h"
+#import "PTYWindow.h"
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
@@ -38,7 +39,6 @@
 @class PTYSession;
 @class PTYTab;
 @class PTYTextView;
-@class PTYWindow;
 
 @interface iTermController : NSObject
 
@@ -56,7 +56,7 @@
 @property(nonatomic, readonly) BOOL keystrokesBeingStolen;
 @property(nonatomic, readonly) BOOL anyWindowIsMain;
 @property(nonatomic, readonly) PseudoTerminal *hotkeyWindow;
-@property(nonatomic, readonly) NSArray<PTYWindow *> *keyTerminalWindows;
+@property(nonatomic, readonly) NSArray<iTermTerminalWindow *> *keyTerminalWindows;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;
