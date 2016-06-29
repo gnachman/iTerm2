@@ -94,6 +94,9 @@ BUILDTYPE=Deployment
 Build $BUILDTYPE "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 #set -x
+echo Fix version.txt. Should look like: +3.0.%(extra)s
+sleep 2
+vi version.txt
 
 git tag v${VERSION}
 git commit -am ${VERSION}
