@@ -1415,6 +1415,7 @@ static BOOL hasBecomeActive = NO;
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
     NSDictionary *hotkeyWindowState = [[HotkeyWindowController sharedInstance] restorableState];
     if (hotkeyWindowState) {
+        DLog(@"Saving hotkey window state:\n%@", hotkeyWindowState);
         [coder encodeObject:hotkeyWindowState
                      forKey:kHotkeyWindowRestorableState];
     }
@@ -1423,7 +1424,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    DLog(@"application:didDecodeRestorableState:");
     if (self.isApplescriptTestApp) {
+        DLog(@"Is applescript test app");
         return;
     }
     NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
@@ -1432,12 +1435,15 @@ static BOOL hasBecomeActive = NO;
     }
 
     NSDictionary *hotkeyWindowState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
+    DLog(@"Hotkey window state:\n%@", hotkeyWindowState);
     if (hotkeyWindowState &&
         [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
+        DLog(@"Set restorable state");
         [[HotkeyWindowController sharedInstance] setRestorableState:hotkeyWindowState];
 
         // We have to create the hotkey window now because we need to attach to servers before
         // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+        DLog(@"Create hidden hotkey window");
         [[HotkeyWindowController sharedInstance] createHiddenHotkeyWindow];
     }
 }

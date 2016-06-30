@@ -154,6 +154,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     HKWLog(@"Open hotkey window");
     NSDictionary *arrangement = [[self.restorableState copy] autorelease];
     if (!arrangement) {
+        DLog(@"Did not have restorable state");
         // If the user had an arrangement saved in user defaults, restore it and delete it. This is
         // how hotkey window state was preserved prior to 12/9/14 when it was moved into application-
         // level restorable state. Eventually this migration code can be deleted.
@@ -167,6 +168,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     self.restorableState = nil;
     PseudoTerminal *term = nil;
     if (arrangement) {
+        DLog(@"Opening terminal with existing arrangement");
         term = [PseudoTerminal terminalWithArrangement:arrangement];
         if (term) {
             [[iTermController sharedInstance] addTerminalWindow:term];
@@ -176,6 +178,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     iTermController* cont = [iTermController sharedInstance];
     Profile* bookmark = [self profile];
     if (!term && bookmark) {
+        DLog(@"Creating new hotkey window");
         if ([[bookmark objectForKey:KEY_WINDOW_TYPE] intValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
             // Lion fullscreen doesn't make sense with hotkey windows. Change
             // window type to traditional fullscreen.
@@ -349,7 +352,9 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 }
 
 - (void)createHiddenHotkeyWindow {
+    DLog(@"Creating hidden hotkey window");
     if (GetHotkeyWindow()) {
+        DLog(@"Already had hotkey window");
         return;
     }
     [self openHotkeyWindowAndRollIn:NO];
@@ -810,7 +815,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
         self.restorableState = [term arrangementExcludingTmuxTabs:YES
                                                 includingContents:includeContents];
-    } else {
+    } else if ([iTermController sharedInstance]) {  // No controller implies we're shutting down. Preserve existing restorable state.
         self.restorableState = nil;
     }
     [NSApp invalidateRestorableState];
