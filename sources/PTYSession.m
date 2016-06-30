@@ -7476,4 +7476,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)sessionViewDoubleClickOnTitleBar {
     [self.delegate sessionDoubleClickOnTitleBar];
 }
+
+- (void)sessionViewBecomeFirstResponder {
+    [self.textview.window makeFirstResponder:self.textview];
+}
+
 @end

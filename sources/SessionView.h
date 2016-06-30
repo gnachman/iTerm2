@@ -110,6 +110,9 @@
 // User double clicked on title view.
 - (void)sessionViewDoubleClickOnTitleBar;
 
+// Make the textview the first responder
+- (void)sessionViewBecomeFirstResponder;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
