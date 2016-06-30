@@ -4,6 +4,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCarbonHotKeyController.h"
+#import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRollAnimationWindow.h"
@@ -283,7 +284,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         } else {
             self.restorableState = nil;
         }
-    } else {
+    } else if ([iTermController sharedInstance]) {
         DLog(@"Not saving hotkey window state for %@", self);
         self.restorableState = nil;
     }
