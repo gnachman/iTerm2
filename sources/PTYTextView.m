@@ -45,6 +45,7 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PasteboardHistory.h"
 #import "PointerController.h"
@@ -1729,7 +1730,7 @@ static const int kDragThreshold = 3;
                 _drawingHelper.underlineRange = action.range;
 
                 if (action.actionType == kURLActionOpenURL) {
-                    NSURL *url = [NSURL URLWithString:action.string];
+                    NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
                     if (![url.host isEqualToString:self.currentUnderlineHostname]) {
                         if (self.currentUnderlineHostname) {
                             [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
@@ -2779,7 +2780,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             break;
 
         case kURLActionOpenURL: {
-            url = [NSURL URLWithString:urlAction.string];
+            url = [NSURL URLWithUserSuppliedString:urlAction.string];
             if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
                 return;
             }
@@ -3712,7 +3713,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)contextMenuActionOpenURL:(id)sender
 {
-    NSURL *url = [NSURL URLWithString:[sender representedObject]];
+    NSURL *url = [NSURL URLWithUserSuppliedString:[sender representedObject]];
     if (url) {
         NSLog(@"Open URL: %@", [sender representedObject]);
         [[NSWorkspace sharedWorkspace] openURL:url];
@@ -6060,7 +6061,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"URL in string is %@", subUrl);
 
     // If subUrl contains a :, make sure something can handle that scheme.
-    NSURL *url = [NSURL URLWithString:subUrl];
+    NSURL *url = [NSURL URLWithUserSuppliedString:subUrl];
     BOOL openable = (url && [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil);
     DLog(@"There seems to be a scheme. ruledOut=%d", (int)openable);
 

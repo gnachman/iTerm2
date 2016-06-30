@@ -7,6 +7,7 @@
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
 
 @interface iTermRemotePreferences ()
 @property(nonatomic, copy) NSDictionary *savedRemotePrefs;
@@ -92,7 +93,7 @@
     NSDictionary *remotePrefs;
     if ([filename stringIsUrlLike]) {
         // Download the URL's contents.
-        NSURL *url = [NSURL URLWithString:filename];
+        NSURL *url = [NSURL URLWithUserSuppliedString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
         NSURLRequest *req = [NSURLRequest requestWithURL:url
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
@@ -159,7 +160,7 @@
     if ([remoteLocation stringIsUrlLike]) {
         // URLs are too expensive to check, so just make sure it's reasonably
         // well formed.
-        return [NSURL URLWithString:remoteLocation] != nil;
+        return [NSURL URLWithUserSuppliedString:remoteLocation] != nil;
     }
     return [self folderIsWritable:remoteLocation];
 }

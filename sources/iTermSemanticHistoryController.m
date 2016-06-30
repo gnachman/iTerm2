@@ -328,7 +328,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         }
         url = [url stringByReplacingVariableReferencesWithVariables:augmentedSubs];
         DLog(@"Open url %@", url);
-        [self openURL:[NSURL URLWithString:url]];
+        [self openURL:[NSURL URLWithUserSuppliedString:url]];
         return YES;
     }
 

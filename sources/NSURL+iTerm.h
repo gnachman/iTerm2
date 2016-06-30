@@ -18,6 +18,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Adds a query parameter to a URL which may or may not have other query parameters or a fragment.
 - (NSURL *)URLByAppendingQueryParameter:(NSString *)queryParameter;
 
+// If non-ascii characters are present then the string is first percent-escaped. NSURL will fail
+// if any non-ascii characters exist, so it's worth a shot.
++ (NSURL *)URLWithUserSuppliedString:(NSString *)string;
+
 @end
 
 NS_ASSUME_NONNULL_END

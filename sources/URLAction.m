@@ -44,7 +44,7 @@
     URLAction *action = [self urlAction];
     action.string = content;
     action.rule = rule;
-    action.actionType = kURLActionSmartSelectionAction;;
+    action.actionType = kURLActionSmartSelectionAction;
     return action;
 }
 
