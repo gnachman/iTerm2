@@ -20,7 +20,7 @@ iTermAnimationDirection iTermAnimationDirectionOpposite(iTermAnimationDirection 
 // Takes a snapshot of a window. Typically the window would be on an edge of
 // the display. Uses core animation to animate the snapshot sliding in. Gets a
 // much better frame rate than using NSWindow animations.
-@interface iTermRollAnimationWindow : NSWindow
+@interface iTermRollAnimationWindow : NSPanel
 
 + (instancetype)rollAnimationWindowForWindow:(NSWindow *)window;
 

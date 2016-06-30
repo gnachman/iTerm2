@@ -39,16 +39,19 @@ iTermAnimationDirection iTermAnimationDirectionOpposite(iTermAnimationDirection 
 
     // Create a new window to contain the animation over where the window to animate is.
     iTermRollAnimationWindow *animationWindow = [[[self alloc] initWithContentRect:window.frame
-                                                                         styleMask:NSBorderlessWindowMask
+                                                                         styleMask:(NSBorderlessWindowMask | NSNonactivatingPanelMask)
                                                                            backing:NSBackingStoreBuffered
                                                                              defer:NO] autorelease];
-
+    animationWindow.collectionBehavior = (NSWindowCollectionBehaviorCanJoinAllSpaces |
+                                          NSWindowCollectionBehaviorFullScreenAuxiliary);
+    animationWindow.level = window.level;
     // The view hierarchy of the animation window is:
     // window
     //   contentView: SolidColorView with clearColor background color. This can't have a layer and be transparent because macOS is 💩.
     //     layerBackedView: A view with a layer.
     //       layer: This is actually a sublayer of layerBackedView's layer. This layer animates.
     animationWindow.opaque = NO;
+    animationWindow.hasShadow = NO;
     
     // Create clearView (the animationWindow's contentView).
     NSView *clearView = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0,
