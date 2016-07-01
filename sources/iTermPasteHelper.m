@@ -160,7 +160,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         NSString *replacement = nil;
         @try {
             replacement = [theString stringByReplacingOccurrencesOfRegex:pasteEvent.regex ?: @""
-                                                              withString:pasteEvent.substitution ?: @""] ?: @"";
+                                                              withString:[pasteEvent.substitution stringByExpandingVimSpecialCharacters] ?: @""] ?: @"";
             if (replacement) {
                 theString = replacement;
             }
