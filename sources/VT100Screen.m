@@ -860,9 +860,39 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)clearBuffer {
+    // Cancel out the current command if shell integration is in use and we are
+    // at the shell prompt.
+
+    // NOTE: This is in screen coords (y=0 is the top)
+    VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
+    if (commandStartX_ >= 0) {
+        // Save the start location of the command. If it's a multi-line command
+        // it'll get truncated and the display is hopelessly messed up, so
+        // while this is not the true start of the command it's better than not
+        // recording a start, which would break alt-click to move the cursor.
+        // The user will probably cancel the command or press ^L to redrasw.
+        newCommandStart = VT100GridCoordMake(commandStartX_, 0);
+
+        // Abort the current command.
+        [self commandWasAborted];
+    }
+    // There is no last command after clearing the screen, so reset it.
+    _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+
+    // Clear the grid by scrolling it up into history.
     [self clearAndResetScreenPreservingCursorLine];
+
+    // Erase history.
     [self clearScrollbackBuffer];
+
+    // Redraw soon.
     [delegate_ screenUpdateDisplay:NO];
+
+    if (newCommandStart.x >= 0) {
+        // Create a new mark and inform the delegate that there's new command start coord.
+        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+        [self commandDidStartAtCoord:newCommandStart];
+    }
 }
 
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
@@ -3613,8 +3643,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalCommandDidStart {
     DLog(@"FinalTerm: terminalCommandDidStart");
-    commandStartX_ = currentGrid_.cursorX;
-    commandStartY_ = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+    [self commandDidStartAtCoord:currentGrid_.cursor];
+}
+
+- (void)commandDidStartAtCoord:(VT100GridCoord)coord {
+    commandStartX_ = coord.x;
+    commandStartY_ = coord.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
     [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
 }
 
@@ -3632,6 +3666,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalAbortCommand {
     DLog(@"FinalTerm: terminalAbortCommand");
+    [self commandWasAborted];
+}
+
+- (void)commandWasAborted {
     VT100ScreenMark *screenMark = [self lastCommandMark];
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
