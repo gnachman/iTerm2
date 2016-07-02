@@ -38,7 +38,9 @@ id gAltOpenAllRepresentedObject;
 // standard.
 int gMigrated;
 
-@implementation ProfileModel
+@implementation ProfileModel {
+    NSString *_modelName;
+}
 
 + (void)initialize
 {
@@ -50,10 +52,10 @@ int gMigrated;
     return gMigrated;
 }
 
-- (ProfileModel*)init
-{
+- (ProfileModel*)initWithName:(NSString *)modelName {
     self = [super init];
     if (self) {
+        _modelName = [modelName copy];
         bookmarks_ = [[NSMutableArray alloc] init];
         defaultBookmarkGuid_ = @"";
         journal_ = [[NSMutableArray alloc] init];
@@ -66,7 +68,7 @@ int gMigrated;
     static ProfileModel* shared = nil;
 
     if (!shared) {
-        shared = [[ProfileModel alloc] init];
+        shared = [[ProfileModel alloc] initWithName:@"Shared"];
         shared->prefs_ = [NSUserDefaults standardUserDefaults];
         shared->postChanges_ = YES;
     }
@@ -79,7 +81,7 @@ int gMigrated;
     static ProfileModel* shared = nil;
 
     if (!shared) {
-        shared = [[ProfileModel alloc] init];
+        shared = [[ProfileModel alloc] initWithName:@"Sessions"];
         shared->prefs_ = nil;
         shared->postChanges_ = NO;
     }
@@ -89,9 +91,10 @@ int gMigrated;
 
 - (void)dealloc
 {
-    [super dealloc];
     [journal_ release];
+    [_modelName release];
     NSLog(@"Deallocating bookmark model!");
+    [super dealloc];
 }
 
 - (int)numberOfBookmarks

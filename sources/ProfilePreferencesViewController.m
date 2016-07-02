@@ -125,6 +125,15 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     [super dealloc];
 }
 
+#pragma mark - iTermPreferencesBaseViewController
+
+- (void)setPreferencePanel:(NSWindowController *)preferencePanel {
+    for (iTermPreferencesBaseViewController *viewController in [self tabViewControllers]) {
+        viewController.preferencePanel = preferencePanel;
+    }
+    [super setPreferencePanel:preferencePanel];
+}
+
 #pragma mark - NSViewController
 
 - (void)awakeFromNib {

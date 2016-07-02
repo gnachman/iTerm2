@@ -2376,7 +2376,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                withObject:nil
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
     [self notifyTmuxOfTabChange];
@@ -3850,7 +3850,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [self notifyTmuxOfTabChange];
-    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
 }
@@ -5238,7 +5238,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     [[_contentView.toolbelt commandHistoryView] updateCommands];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
 }
@@ -6925,7 +6925,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             }
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
-                [[[PreferencePanel sessionsInstance] window] isVisible]) {
+                [[PreferencePanel sessionsInstance] isWindowLoaded]) {
                 [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
@@ -7314,7 +7314,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         _directoriesPopupWindowController.delegate = nil;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         if (self.currentSession) {
             [self editSession:self.currentSession makeKey:NO];
         } else {

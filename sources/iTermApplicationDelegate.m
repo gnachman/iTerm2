@@ -39,19 +39,18 @@
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
-#import "iTermPreferences.h"
-#import "iTermRemotePreferences.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
-#import "iTermProfilesWindowController.h"
 #import "iTermPasswordManagerWindowController.h"
-#import "iTermRestorableSession.h"
+#import "iTermPreferences.h"
+#import "iTermProfilesWindowController.h"
 #import "iTermQuickLookController.h"
+#import "iTermRemotePreferences.h"
+#import "iTermRestorableSession.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
-#import "iTermWarning.h"
 #import "iTermTipWindowController.h"
+#import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -63,6 +62,7 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "QLPreviewPanel+iTerm.h"
 #import "Sparkle/SUStandardVersionComparator.h"
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
@@ -1866,10 +1866,13 @@ static BOOL hasBecomeActive = NO;
 
 - (void)currentSessionDidChange {
     [_passwordManagerWindowController update];
-    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
     PseudoTerminal *currentWindow = [[iTermController sharedInstance] currentTerminal];
-    if (panel.currentController == currentWindow) {
-        [currentWindow.currentSession.quickLookController takeControl];
+    iTermQuickLookController *quickLookController = currentWindow.currentSession.quickLookController;
+    if (quickLookController) {
+        QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanelIfExists];
+        if (panel.currentController == currentWindow) {
+            [quickLookController takeControl];
+        }
     }
 }
 

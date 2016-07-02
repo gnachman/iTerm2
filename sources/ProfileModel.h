@@ -53,6 +53,10 @@ typedef struct {
     BOOL postChanges_;              // should change notifications be posted?
 }
 
+@property(nonatomic, readonly) NSString *modelName;
+
+- (instancetype)init NS_UNAVAILABLE;
+
 + (ProfileModel*)sharedInstance;
 + (ProfileModel*)sessionsInstance;
 + (NSString*)freshGuid;

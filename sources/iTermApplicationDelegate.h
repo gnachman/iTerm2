@@ -30,8 +30,8 @@
 #import "DebugLogging.h"
 #import "iTermApplication.h"
 
-@class PTYSession;
 @class PseudoTerminal;
+@class PTYSession;
 
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kSavedArrangementDidChangeNotification;
