@@ -119,7 +119,8 @@ const int kMaxResultContextWords = 4;
             break;
         }
 
-        VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)];
+        VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)
+                                                       maximumLength:kReasonableMaximumWordLength];
         NSString *s = [textExtractor contentInRange:range
                                   attributeProvider:nil
                                          nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -158,7 +159,8 @@ const int kMaxResultContextWords = 4;
         [prefix_ setString:@""];
     } else {
         iTermTextExtractor *extractor = [self textExtractor];
-        range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)];
+        range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)
+                            maximumLength:kReasonableMaximumWordLength];
         NSString *s = [extractor contentInRange:range
                               attributeProvider:nil
                                      nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -502,7 +504,8 @@ const int kMaxResultContextWords = 4;
             AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
             VT100GridWindowedRange range;
             // Get the word that includes the match.
-            range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)];
+            range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)
+                                maximumLength:kReasonableMaximumWordLength];
             NSString *immutableWord = [extractor contentInRange:range
                                               attributeProvider:nil
                                                      nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -514,7 +517,8 @@ const int kMaxResultContextWords = 4;
                                                          coords:nil];
             NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
             while ([firstWord length] < [prefix_ length]) {
-                range = [extractor rangeForWordAt:range.coordRange.end];
+                range = [extractor rangeForWordAt:range.coordRange.end
+                                    maximumLength:kReasonableMaximumWordLength];
                 NSString* part = [extractor contentInRange:range
                                          attributeProvider:nil
                                                 nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -550,7 +554,8 @@ const int kMaxResultContextWords = 4;
                         ++endY;
                     }
 
-                    range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)];
+                    range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)
+                                        maximumLength:kReasonableMaximumWordLength];
                     word = [extractor contentInRange:range
                                    attributeProvider:nil
                                           nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -568,7 +573,8 @@ const int kMaxResultContextWords = 4;
                             ++range.coordRange.end.y;
                         }
                         if (range.coordRange.end.y < [screen numberOfLines]) {
-                            range = [extractor rangeForWordAt:range.coordRange.end];
+                            range = [extractor rangeForWordAt:range.coordRange.end
+                                                maximumLength:kReasonableMaximumWordLength];
                             word = [extractor contentInRange:range
                                            attributeProvider:nil
                                                   nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst

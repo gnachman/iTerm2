@@ -124,7 +124,8 @@
                                   forBlock:^{
                                       VT100GridWindowedRange range;
                                       for (int i = 0; i < line.length; i++) {
-                                          range = [extractor rangeForWordAt:VT100GridCoordMake(i, 0)];
+                                          range = [extractor rangeForWordAt:VT100GridCoordMake(i, 0)
+                                                              maximumLength:kReasonableMaximumWordLength];
                                           NSString *actual = [self stringForRange:range];
                                           XCTAssertEqualObjects(actual, expected[i],
                                                                 @"For click at %@ got a range of %@ giving “%@”, while I expected “%@”",

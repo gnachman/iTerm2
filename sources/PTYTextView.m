@@ -2691,7 +2691,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)showDefinitionForWordAt:(NSPoint)clickPoint {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridWindowedRange range =
-        [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
+        [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
+                    maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
                                        attributeProvider:^NSDictionary *(screen_char_t theChar) {
                                            return [self charAttributes:theChar];
@@ -3791,7 +3792,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         case kPTYTextViewSelectionExtensionUnitWord: {
             VT100GridWindowedRange rangeWithWordBeforeStart =
-                [extractor rangeForWordAt:coordBeforeStart];
+                [extractor rangeForWordAt:coordBeforeStart maximumLength:kUnlimitedMaximumWordLength];
             rangeWithWordBeforeStart.coordRange.end = existingRange.coordRange.end;
             rangeWithWordBeforeStart.columnWindow = existingRange.columnWindow;
             return rangeWithWordBeforeStart;
@@ -3844,7 +3845,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             BOOL startWasOnNull = [extractor characterAt:startCoord].code == 0;
             VT100GridWindowedRange rangeExcludingWordAtStart = existingRange;
             rangeExcludingWordAtStart.coordRange.start =
-            [extractor rangeForWordAt:startCoord].coordRange.end;
+            [extractor rangeForWordAt:startCoord  maximumLength:kUnlimitedMaximumWordLength].coordRange.end;
             // If the start of range moved from a null to a null, skip to the end of the line or past all the nulls.
             if (startWasOnNull &&
                 [extractor characterAt:rangeExcludingWordAtStart.coordRange.start].code == 0) {
@@ -3889,7 +3890,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case kPTYTextViewSelectionExtensionUnitWord: {
             VT100GridWindowedRange rangeExcludingWordAtEnd = existingRange;
             rangeExcludingWordAtEnd.coordRange.end =
-            [extractor rangeForWordAt:coordBeforeEnd].coordRange.start;
+            [extractor rangeForWordAt:coordBeforeEnd maximumLength:kUnlimitedMaximumWordLength].coordRange.start;
             rangeExcludingWordAtEnd.columnWindow = existingRange.columnWindow;
             return rangeExcludingWordAtEnd;
         }
@@ -3937,9 +3938,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case kPTYTextViewSelectionExtensionUnitWord: {
             VT100GridWindowedRange rangeWithWordAfterEnd;
             if (endCoord.x > VT100GridRangeMax(existingRange.columnWindow)) {
-                rangeWithWordAfterEnd = [extractor rangeForWordAt:coordAfterEnd];
+                rangeWithWordAfterEnd = [extractor rangeForWordAt:coordAfterEnd maximumLength:kUnlimitedMaximumWordLength];
             } else {
-                rangeWithWordAfterEnd = [extractor rangeForWordAt:endCoord];
+                rangeWithWordAfterEnd = [extractor rangeForWordAt:endCoord maximumLength:kUnlimitedMaximumWordLength];
             }
             rangeWithWordAfterEnd.coordRange.start = existingRange.coordRange.start;
             rangeWithWordAfterEnd.columnWindow = existingRange.columnWindow;
@@ -5505,7 +5506,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
-    VT100GridWindowedRange range = [extractor rangeForWordAt:coord];
+    VT100GridWindowedRange range = [extractor rangeForWordAt:coord  maximumLength:kUnlimitedMaximumWordLength];
     if (rangePtr) {
         *rangePtr = range;
     }

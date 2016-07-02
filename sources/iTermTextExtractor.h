@@ -36,6 +36,10 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
 };
 
+// Suggested word lengths for rangeForWordAt:maximumLength:
+extern const NSInteger kReasonableMaximumWordLength;
+extern const NSInteger kUnlimitedMaximumWordLength;
+
 @interface iTermTextExtractor : NSObject
 
 @property(nonatomic, assign) VT100GridRange logicalWindow;
@@ -51,8 +55,9 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 // Returns the range of a word (string of characters belonging to the same class) at a location. If
 // there is a paren or paren-like character at location, it tries to return the range of the
 // parenthetical, even if there are mixed classes. Returns (-1, -1, -1, -1) if location is out of
-// bounds.
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location;
+// bounds. The maximum length is only approximate. See the suggested constants above.
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
+                           maximumLength:(NSInteger)maximumLength;
 
 // Returns the string for the character at a screen location.
 - (NSString *)stringForCharacterAt:(VT100GridCoord)location;

@@ -19,6 +19,9 @@
 // Must find at least this many divider chars in a row for it to count as a divider.
 static const int kNumCharsToSearchForDivider = 8;
 
+const NSInteger kReasonableMaximumWordLength = 1000;
+const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
+
 @implementation iTermTextExtractor {
     id<iTermTextDataSource> _dataSource;
     VT100GridRange _logicalWindow;
@@ -77,14 +80,15 @@ static const int kNumCharsToSearchForDivider = 8;
     _logicalWindow.length = dividerAfter - dividerBefore;
 }
 
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location {
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
+                           maximumLength:(NSInteger)maximumLength {
     location = [self coordLockedToWindow:location];
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
     if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
         VT100GridCoord predecessor = [self predecessorOfCoord:location];
         if (predecessor.x != location.x || predecessor.y != location.y) {
-            return [self rangeForWordAt:predecessor];
+            return [self rangeForWordAt:predecessor maximumLength:maximumLength];
         }
     }
     if (theClass == kTextExtractorClassOther) {
@@ -120,11 +124,16 @@ static const int kNumCharsToSearchForDivider = 8;
                                                            location.y,
                                                            width,
                                                            [_dataSource numberOfLines] - 1);
+    __block NSInteger iterations = 0;
     // Search forward for the end of the word.
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                            _logicalWindow.location,
                                                            _logicalWindow.length)
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                          ++iterations;
+                          if (iterations > maximumLength) {
+                              return YES;
+                          }
                           iTermTextExtractorClass newClass = [self classForCharacter:theChar];
                           BOOL isInWord = (newClass == kTextExtractorClassDoubleWidthPlaceholder ||
                                            newClass == theClass);
@@ -146,14 +155,28 @@ static const int kNumCharsToSearchForDivider = 8;
                                              windowTouchesRightMargin:windowTouchesRightMargin
                                                      ignoringNewlines:NO];
                        }];
-
+    if (iterations > maximumLength) {
+        DLog(@"Word too long when searching forward");
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                          _logicalWindow.location, _logicalWindow.length);
+    }
+    
     // Search backward for the start of the word.
     theRange = VT100GridCoordRangeMake(0, 0, location.x, location.y);
-    NSMutableString *stringBeforeLocation = [NSMutableString string];
+
+    // We want to iterate backward over the string and concatenate characters in reverse order.
+    // Appending to the start of a NSMutableString is very slow, but appending to the start of
+    // a NSMutableArray is fast. So we build an array of tiny strings in the reverse order of how
+    // they appear and then concatenate them after the enumeration.
+    NSMutableArray *substrings = [NSMutableArray array];
     [self enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                     _logicalWindow.location,
                                                                     _logicalWindow.length)
                                charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                                   ++iterations;
+                                   if (iterations > maximumLength) {
+                                       return YES;
+                                   }
                                    iTermTextExtractorClass newClass = [self classForCharacter:theChar];
                                    BOOL isInWord = (newClass == kTextExtractorClassDoubleWidthPlaceholder ||
                                                     newClass == theClass);
@@ -161,7 +184,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                        if (theChar.complexChar ||
                                            theChar.code < ITERM2_PRIVATE_BEGIN || theChar.code > ITERM2_PRIVATE_END) {
                                            NSString *theString = ScreenCharToStr(&theChar);
-                                           [stringBeforeLocation insertString:theString atIndex:0];
+                                           [substrings insertObject:theString atIndex:0];
                                            [coords insertObject:[NSValue valueWithGridCoord:coord] atIndex:0];
                                            [stringLengthsInPrefix insertObject:@(theString.length) atIndex:0];
                                        }
@@ -176,6 +199,13 @@ static const int kNumCharsToSearchForDivider = 8;
                                                               ignoringNewlines:NO];
 
                                 }];
+    NSString *stringBeforeLocation = [substrings componentsJoinedByString:@""];
+
+    if (iterations > maximumLength) {
+        DLog(@"Word too long when searching backward");
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                          _logicalWindow.location, _logicalWindow.length);
+    }
 
     if (!coords.count) {
         return [self windowedRangeWithRange:VT100GridCoordRangeMake(location.x,
@@ -462,7 +492,12 @@ static const int kNumCharsToSearchForDivider = 8;
             NSLog(@"No matches. Fall back on word selection.");
         }
         // Fall back on word selection
-        *range = [self rangeForWordAt:location];
+        if (actionRequired) {
+            // There is no match when using word selection and rangeForWordAt:maximumLength: can be slow.
+            *range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1);
+        } else {
+            *range = [self rangeForWordAt:location maximumLength:kReasonableMaximumWordLength];
+        }
         return nil;
     }
 }
