@@ -1361,8 +1361,8 @@ static BOOL hasBecomeActive = NO;
         [self setSecureInput:YES];
     }
 
-    // If focus follows mouse is on, find the textview under the cursor and make it first responder.
-    // Make its window key.
+    // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
+    // is under the cursor make it first responder.
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         NSRect mouseRect = {
             .origin = [NSEvent mouseLocation],
@@ -1378,11 +1378,11 @@ static BOOL hasBecomeActive = NO;
             NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
             if ([window isKindOfClass:[PTYWindow class]]) {
                 NSView *view = [window.contentView hitTest:pointInWindow];
+                [window makeKeyAndOrderFront:nil];
                 if ([view isKindOfClass:[PTYTextView class]]) {
-                    [window makeKeyAndOrderFront:nil];
                     [window makeFirstResponder:view];
-                    break;
                 }
+                break;
             }
         }
     }
