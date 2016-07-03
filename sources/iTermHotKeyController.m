@@ -360,7 +360,14 @@
                                                     }];
     if (!profileHotKey.windowController.weaklyReferencedObject) {
         profileHotKey.windowController = windowController.weakSelf;
-        windowController.isHotKeyWindow = YES;
+        iTermHotkeyWindowType hotkeyWindowType;
+        if ([windowController.window isKindOfClass:[iTermPanel class]]) {
+            hotkeyWindowType = iTermHotkeyWindowTypeFloating;
+        } else {
+            hotkeyWindowType = iTermHotkeyWindowTypeRegular;
+        }
+#warning test this
+        windowController.hotkeyWindowType = hotkeyWindowType;
         if (show) {
             [profileHotKey showHotKeyWindow];
         }
@@ -404,6 +411,7 @@
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
+    NSLog(@"Active space did change");
     for (iTermProfileHotKey *profileHotKey in self.profileHotKeys) {
         PseudoTerminal *term = profileHotKey.windowController;
         NSWindow *window = [term window];

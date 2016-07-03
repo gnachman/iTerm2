@@ -109,6 +109,7 @@ static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
+#warning deprecate this and add hotkey window type
 static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
 static NSString* TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
@@ -323,7 +324,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-+ (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType {
++ (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    NSInteger mask = 0;
+    if (hotkeyWindowType == iTermHotkeyWindowTypeFloating) {
+        mask = NSNonactivatingPanelMask;
+    }
     switch (windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
@@ -334,13 +340,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            return NSBorderlessWindowMask | NSResizableWindowMask;
+            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return NSBorderlessWindowMask;
+            return mask | NSBorderlessWindowMask;
 
         default:
-            return (NSTitledWindowMask |
+            return (mask |
+                    NSTitledWindowMask |
                     NSClosableWindowMask |
                     NSMiniaturizableWindowMask |
                     NSResizableWindowMask |
@@ -524,13 +531,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         // We want to set the style mask to the window's non-fullscreen appearance so we're prepared
         // to exit fullscreen with the right style.
-        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType];
+        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType hotkeyWindowType:hotkeyWindowType];
     } else {
-        styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
-    }
-#warning Make this a method argument
-    if (hotkeyWindowType == iTermHotkeyWindowTypeFloating) {
-        styleMask |= NSNonactivatingPanelMask;
+        styleMask = [PseudoTerminal styleMaskForWindowType:windowType hotkeyWindowType:hotkeyWindowType];
     }
     savedWindowType_ = savedWindowType;
 
@@ -640,7 +643,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self hideMenuBar];
     }
 
-    [self setIsHotKeyWindow:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
+    // Update the collection behavior.
+    self.hotkeyWindowType = hotkeyWindowType;
 
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
@@ -662,16 +666,24 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
 }
 
-- (void)setIsHotKeyWindow:(BOOL)isHotKeyWindow {
-    _isHotKeyWindow = isHotKeyWindow;
-    if (_isHotKeyWindow) {
-        // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
-    } else {
-        // This allows the window to enter Lion fullscreen.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+- (BOOL)isHotKeyWindow {
+    return self.hotkeyWindowType != iTermHotkeyWindowTypeNone;
+}
+
+- (void)setHotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    _hotkeyWindowType = hotkeyWindowType;
+    switch (hotkeyWindowType) {
+        case iTermHotkeyWindowTypeNone:
+            // This allows the window to enter Lion fullscreen.
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+            break;
+            
+        case iTermHotkeyWindowTypeRegular:
+        case iTermHotkeyWindowTypeFloating:
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
+            break;
     }
 }
 
@@ -2146,7 +2158,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Save index of selected tab.
     result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]);
     result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @(hideAfterOpening_);
-    result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(_isHotKeyWindow);
+    result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(self.isHotKeyWindow);
     NSString *profileGuid = [[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID];
     if (profileGuid) {
         result[TERMINAL_ARRANGEMENT_PROFILE_GUID] = profileGuid;
@@ -2286,7 +2298,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
-    if (_isHotKeyWindow && [[self allSessions] count] == 0) {
+    if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
         iTermProfileHotKey *hotKey =
             [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
@@ -2455,9 +2467,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Forbid FFM from changing key window if is hotkey window.
-- (BOOL)disableFocusFollowsMouse
-{
-    return _isHotKeyWindow;
+- (BOOL)disableFocusFollowsMouse {
+    return self.isHotKeyWindow;
 }
 
 - (CGFloat)growToolbeltBy:(CGFloat)diff {
@@ -3089,7 +3100,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-         !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
+         !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
         // Native fullscreen path
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
@@ -3145,7 +3156,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSUInteger)styleMask {
-    return [PseudoTerminal styleMaskForWindowType:windowType_];
+    return [PseudoTerminal styleMaskForWindowType:windowType_ hotkeyWindowType:_hotkeyWindowType];
 }
 
 // This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.

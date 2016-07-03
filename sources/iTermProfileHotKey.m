@@ -100,7 +100,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     } else {
         _windowController.window.level = NSNormalWindowLevel;
     }
-    _windowController.isHotKeyWindow = YES;
+    _windowController.hotkeyWindowType = [self hotkeyWindowType];
 
     [_windowController.window setAlphaValue:0];
     if (_windowController.windowType != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {

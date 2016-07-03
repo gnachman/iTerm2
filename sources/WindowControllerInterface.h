@@ -356,7 +356,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Indicates if the current session can be split.
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark;
 
-// Indicates if this the hotkey window.
+// Indicates if this a hotkey window.
 - (BOOL)isHotKeyWindow;
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;

@@ -1605,6 +1605,7 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+#warning This doesn't make sense any more
 - (void)makeHotKeyWindowKeyIfOpen
 {
     for (PseudoTerminal* term in [self terminals]) {
