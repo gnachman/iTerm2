@@ -60,6 +60,12 @@
     return NO;
 }
 
++ (NSString *)stringWithLongCharacter:(UTF32Char)longCharacter {
+    UniChar c[2];
+    CFStringGetSurrogatePairForLongCharacter(longCharacter, c);
+    return [[[NSString alloc] initWithCharacters:c length:2] autorelease];
+}
+
 + (NSString *)stringFromPasteboard {
     NSPasteboard *board;
 

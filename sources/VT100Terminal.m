@@ -1364,7 +1364,7 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetScrollRegionTop:top
                                            bottom:bottom];
             // http://www.vt100.net/docs/vt510-rm/DECSTBM.html says:
-            // “DECSTBM moves the cursor to column 1, line 1 of the page.”
+            // ‚ÄúDECSTBM moves the cursor to column 1, line 1 of the page.‚Äù
             break;
         }
         case VT100CSI_DSR:
@@ -2104,6 +2104,7 @@ static const int kMaxScreenRows = 4096;
         } else {
             // Enter multitoken mode to avoid showing the base64 gubbins of the image.
             receivingFile_ = YES;
+            [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
     } else if ([key isEqualToString:@"BeginFile"]) {
         ELog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
