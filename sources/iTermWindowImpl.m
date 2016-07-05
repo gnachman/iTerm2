@@ -394,6 +394,15 @@ end:
         self.title = title;
     }
 }
+
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(nullable NSScreen *)screen {
+    if ([self isKindOfClass:[NSPanel class]]) {
+        return frameRect;
+    } else {
+        return [super constrainFrameRect:frameRect toScreen:screen];
+    }
+}
+
 NS_ASSUME_NONNULL_END
 
 @end

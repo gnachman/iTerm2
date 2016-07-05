@@ -108,28 +108,108 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
+- (NSPoint)destinationPointForInitialPoint:(NSPoint)point
+              forAnimationInDirection:(iTermAnimationDirection)direction
+                                 size:(NSSize)size {
+    switch (direction) {
+        case kAnimationDirectionUp:
+            return NSMakePoint(point.x, point.y + size.height);
+        case kAnimationDirectionDown:
+            return NSMakePoint(point.x, point.y - size.height);
+        case kAnimationDirectionLeft:
+            return NSMakePoint(point.x - size.width, point.y);
+        case kAnimationDirectionRight:
+            return NSMakePoint(point.x + size.width, point.y);
+    }
+    assert(false);
+}
+
+- (NSPoint)visibleOrigin {
+    NSRect rect = self.windowController.window.frame;
+    switch (self.windowController.windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PARTIAL:
+            return NSMakePoint(rect.origin.x, NSMaxY(self.windowController.window.screen.visibleFrame) - NSHeight(rect));
+            
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            return NSMakePoint(NSMinX(self.windowController.window.screen.visibleFrame) + NSWidth(rect), rect.origin.y);
+            
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            return NSMakePoint(NSMaxX(self.windowController.window.screen.visibleFrame) - NSWidth(rect), rect.origin.y);
+            
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame) + NSHeight(rect));
+            
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return rect.origin;
+    }
+    return rect.origin;
+}
+
+- (NSPoint)hiddenOrigin {
+    NSRect rect = self.windowController.window.frame;
+    switch (self.windowController.windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PARTIAL:
+            return NSMakePoint(rect.origin.x, NSMaxY(self.windowController.window.screen.visibleFrame));
+            
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            return NSMakePoint(NSMinX(self.windowController.window.screen.visibleFrame), rect.origin.y);
+            
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            return NSMakePoint(NSMaxX(self.windowController.window.screen.visibleFrame), rect.origin.y);
+            
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame));
+            
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return rect.origin;
+    }
+    return rect.origin;
+}
+
 - (void)rollInAnimatingInDirection:(iTermAnimationDirection)direction {
-    iTermRollAnimationWindow *animationWindow = [[iTermRollAnimationWindow rollAnimationWindowForWindow:self.windowController.window] retain];
-    self.windowController.window.alphaValue = 0.01;
-    
-    const NSTimeInterval duration = kAnimationDuration;
-    [animationWindow animateInWithDirection:direction duration:duration completion:^() {
-        self.windowController.window.alphaValue = 1;
-        [self rollInFinished];
-        [animationWindow release];
-    }];
+    NSRect destination = self.windowController.window.frame;
+    destination.origin = [self visibleOrigin];
+    self.windowController.window.alphaValue = 0;
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+        [context setDuration:kAnimationDuration];
+        [context setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]];
+        [self.windowController.window.animator setFrame:destination display:NO];
+        [self.windowController.window.animator setAlphaValue:1];
+    }
+                        completionHandler:^{
+                            [self rollInFinished];
+                        }];
 }
 
 - (void)rollOutAnimatingInDirection:(iTermAnimationDirection)direction {
-    iTermRollAnimationWindow *animationWindow = [[iTermRollAnimationWindow rollAnimationWindowForWindow:self.windowController.window] retain];
-    self.windowController.window.alphaValue = 0.01;
-    
-    const NSTimeInterval duration = kAnimationDuration;
-    [animationWindow animateOutWithDirection:direction duration:duration completion:^() {
-        self.windowController.window.alphaValue = 0;
-        [self didFinishRollingOut];
-        [animationWindow release];
-    }];
+    NSRect source = self.windowController.window.frame;
+    NSRect destination = source;
+    destination.origin = [self hiddenOrigin];
+
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+        [context setDuration:kAnimationDuration];
+        [context setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]];
+        [self.windowController.window.animator setFrame:destination display:NO];
+        [self.windowController.window.animator setAlphaValue:0];
+    }
+                        completionHandler:^{
+                            [self didFinishRollingOut];
+                        }];
+
 }
 
 - (void)fadeIn {
@@ -186,7 +266,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     return [iTermProfilePreferences boolForKey:KEY_HOTKEY_FLOAT inProfile:self.profile];
 }
 
-- (void)rollIn {
+- (void)rollInAnimated:(BOOL)animated {
     DLog(@"Roll in [show] hotkey window");
     if (_rollingIn) {
         DLog(@"Already rolling in");
@@ -197,6 +277,11 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         [NSApp activateIgnoringOtherApps:YES];
     }
     [self.windowController.window makeKeyAndOrderFront:nil];
+    if (!animated) {
+        self.windowController.window.alphaValue = 1;
+        [self rollInFinished];
+        return;
+    }
     
     if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
         switch (self.windowController.windowType) {
@@ -325,6 +410,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
             return NO;
         }
     }];
+
     if (self.windowController.weaklyReferencedObject) {
         DLog(@"already have a hotkey window created");
         if (self.windowController.window.alphaValue == 1) {
@@ -343,6 +429,15 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         DLog(@"no hotkey window created yet");
         [self showHotKeyWindow];
     }
+//    if (self.windowController.weaklyReferencedObject) {
+//        if (!self.windowController.window.isVisible) {
+//            [self showHotKeyWindow];
+//        } else {
+//            [self hideHotKeyWindowAnimated:YES suppressHideApp:NO];
+//        }
+//    } else {
+//        [self showHotKeyWindow];
+//    }
 }
 
 #pragma mark - Private
@@ -501,7 +596,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         DLog(@"Create new hotkey window");
         [self createWindow];
     }
-    [self rollIn];
+    [self rollInAnimated:YES];
 }
 
 - (void)hideHotKeyWindowAnimated:(BOOL)animated
