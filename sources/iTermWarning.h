@@ -19,6 +19,36 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
     kItermWarningSelectionError,  // Something went wrong.
 };
 
+typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
+
+// Encpasulates a label and an optional block that's called when the action is
+// selected.
+@interface iTermWarningAction : NSObject
+
++ (instancetype)warningActionWithLabel:(NSString *)label
+                                 block:(iTermWarningActionBlock)block;
+
+@property(nonatomic, copy) NSString *label;
+@property(nonatomic, copy) iTermWarningActionBlock block;
+
+@end
+
+// Recommended usage:
+/*
+    iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:@"Cancel" block:nil];
+    iTermWarningAction *doStuff =
+        [iTermWarningAction warningActionWithLabel:@"Do Stuff"
+                                             block:^(iTermWarningSelection selection) {
+            DoStuff();
+        }];
+    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    warning.title = @"This is the main text for the warning.";      // TODO: CUSTOMIZE THIS
+    warning.warningActions = @[ doStuff, cancel ];                  // TODO: CUSTOMIZE THIS
+    warning.identifier = @"NoSyncSuppressDoStuffWarning";           // TODO: CUSTOMIZE THIS
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;  // TODO: CUSTOMIZE THIS
+    [warning runModal];
+*/
+
 @interface iTermWarning : NSObject
 
 // Tests can use this to prevent warning popups.
@@ -77,16 +107,38 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
 
 // If you prefer you can set the properties you care about and then invoke runModal.
 
+// Main text to display.
 @property(nonatomic, copy) NSString *title;
-@property(nonatomic, retain) NSArray<NSString *> *actions;
+
+// Strings to display in buttons. This is computed from warningActions.
+@property(nonatomic, retain) NSArray<NSString *> *actionLabels;
+
+// 1:1 with buttons to show. First button is default.
+@property(nonatomic, retain) NSArray<iTermWarningAction *> *warningActions;
+
+// Optional. Should be 1:1 with actions. Provides a mapping from the index of the button actually
+// pressed to the index runModal reports.
 @property(nonatomic, retain) NSArray<NSNumber *> *actionToSelectionMap;
+
+// Optional view to show below main text.
 @property(nonatomic, retain) NSView *accessory;
+
+// String used as a user defaults key to remember the user's preference.
 @property(nonatomic, copy) NSString *identifier;
+
+// What kind of suppression options are availble.
 @property(nonatomic, assign) iTermWarningType warningType;
+
+// Optional. Changes the bold heading on the warning.
 @property(nonatomic, copy) NSString *heading;
+
+// Optional. An action whose string is equal to `cancelLabel`
 @property(nonatomic, copy) NSString *cancelLabel;
+
+// If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
 @property(nonatomic, copy) void (^showHelpBlock)();
 
+// Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;
 
 @end

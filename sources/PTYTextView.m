@@ -3021,7 +3021,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (IBAction)installShellIntegration:(id)sender {
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = @"Shell Integration comes with an optional Utilities Package, which lets you view images and download files. What would you prefer?";
-    warning.actions = @[ @"Install Shell Integration & Utilities", @"Cancel", @"Shell Integration Only" ];
+    warning.actionLabels = @[ @"Install Shell Integration & Utilities", @"Cancel", @"Shell Integration Only" ];
     warning.identifier = @"NoSyncInstallUtilitiesPackage";
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
     warning.showHelpBlock = ^() {
