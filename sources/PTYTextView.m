@@ -3659,25 +3659,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow line:(int)line
-{
+- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow line:(int)line {
     BOOL didAdd = NO;
-    NSArray* rulesArray = _smartSelectionRules ? _smartSelectionRules : [SmartSelectionController defaultRules];
+    NSArray *rulesArray = _smartSelectionRules ? _smartSelectionRules : [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
 
+    DLog(@"Looking for custom actions. Evaluating smart selection rules…");
+    DLog(@"text window is: %@", textWindow);
     for (int j = 0; j < numRules; j++) {
         NSDictionary *rule = [rulesArray objectAtIndex:j];
+        NSArray *actions = [SmartSelectionController actionsInRule:rule];
+        if (!actions.count) {
+            DLog(@"Skipping rule with no actions:\n%@", rule);
+            continue;
+        }
+        
+        DLog(@"Evaluating rule:\n%@", rule);
         NSString *regex = [SmartSelectionController regexInRule:rule];
         for (int i = 0; i <= textWindow.length; i++) {
-            NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
-            NSError* regexError = nil;
+            NSString *substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
+            NSError *regexError = nil;
             NSArray *components = [substring captureComponentsMatchedByRegex:regex
                                                                      options:0
                                                                        range:NSMakeRange(0, [substring length])
                                                                        error:&regexError];
             if (components.count) {
-                NSLog(@"Components for %@ are %@", regex, components);
-                NSArray *actions = [SmartSelectionController actionsInRule:rule];
+                DLog(@"Components for %@ are %@", regex, components);
                 for (NSDictionary *action in actions) {
                     SEL mySelector = [self selectorForSmartSelectionAction:action];
                     NSString *theTitle =
