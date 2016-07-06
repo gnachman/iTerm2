@@ -92,7 +92,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [NSApp removeObserver:self forKeyPath:@"orderedWindows"];
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [restoreState_ release];
