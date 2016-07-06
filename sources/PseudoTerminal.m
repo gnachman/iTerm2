@@ -327,7 +327,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     NSInteger mask = 0;
-    if (hotkeyWindowType == iTermHotkeyWindowTypeFloating) {
+    if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
         mask = NSNonactivatingPanelMask;
     }
     switch (windowType) {
@@ -539,7 +539,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     iTermTerminalWindow *myWindow;
-    Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloating) ? [iTermPanel class] : [iTermWindow class];
+    Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) ? [iTermPanel class] : [iTermWindow class];
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
                                               styleMask:styleMask
                                                 backing:NSBackingStoreBuffered
@@ -679,7 +679,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             break;
             
         case iTermHotkeyWindowTypeRegular:
-        case iTermHotkeyWindowTypeFloating:
+        case iTermHotkeyWindowTypeFloatingPanel:
+        case iTermHotkeyWindowTypeFloatingWindow:
             [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
             [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
             [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
@@ -1832,11 +1833,9 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID]];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
     if (isHotkey) {
-        if (profileHotKey.isFloatingPanel) {
-            hotkeyWindowType = iTermHotkeyWindowTypeFloating;
-        } else {
-            hotkeyWindowType = iTermHotkeyWindowTypeRegular;
-        }
+#warning TODO test this - it should not assert when upgrading
+        assert(profileHotKey);
+        hotkeyWindowType = profileHotKey.hotkeyWindowType;
     }
 #warning TODO: Restoring a fullscreen hotkey window hides the dock.
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
@@ -2090,7 +2089,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
     if ([addressbookEntry objectForKey:KEY_SPACE] &&
-        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
+        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
@@ -7113,7 +7112,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1 &&
         profile[KEY_SPACE] &&
-        [profile[KEY_SPACE] intValue] == -1) {
+        [profile[KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 

@@ -33,9 +33,8 @@
 typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
     iTermHotkeyWindowTypeNone,
     iTermHotkeyWindowTypeRegular,
-    // Floating panel
-#warning TODO: What if it doesn't join all spaces? Do I need a "defective floating" type?
-    iTermHotkeyWindowTypeFloating
+    iTermHotkeyWindowTypeFloatingPanel,  // joins all spaces and has a higher level than a regular window. Is an NSPanel.
+    iTermHotkeyWindowTypeFloatingWindow  // has a higher level than a regular window.
 };
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"

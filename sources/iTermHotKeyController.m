@@ -362,7 +362,9 @@
         profileHotKey.windowController = windowController.weakSelf;
         iTermHotkeyWindowType hotkeyWindowType;
         if ([windowController.window isKindOfClass:[iTermPanel class]]) {
-            hotkeyWindowType = iTermHotkeyWindowTypeFloating;
+            hotkeyWindowType = iTermHotkeyWindowTypeFloatingPanel;
+        } else if (windowController.window.level == NSNormalWindowLevel){
+            hotkeyWindowType = iTermHotkeyWindowTypeFloatingWindow;
         } else {
             hotkeyWindowType = iTermHotkeyWindowTypeRegular;
         }

@@ -222,6 +222,9 @@
 // Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 extern const NSTimeInterval kMinimumAntiIdlePeriod;
 
+// Special value for KEY_SPACE.
+extern NSInteger iTermProfileJoinsAllSpaces;
+
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.

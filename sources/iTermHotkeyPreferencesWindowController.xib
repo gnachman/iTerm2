@@ -249,7 +249,7 @@ Gw
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="HTr-Xd-Qib">
                         <rect key="frame" x="163" y="139" width="397" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" title="Floating windows appear on top of all other windows. They may share a Space with other app’s Full Screen windows." id="NTW-IM-ZXD">
+                        <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" title="Floating windows appear on top of all other windows. They may overlap Full Screen windows if their Space is set to All Spaces." id="NTW-IM-ZXD">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>

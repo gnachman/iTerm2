@@ -43,6 +43,7 @@
 #include <arpa/inet.h>
 
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
+NSInteger iTermProfileJoinsAllSpaces = -1;
 
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;

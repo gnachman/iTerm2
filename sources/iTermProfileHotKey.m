@@ -95,7 +95,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         return;
     }
 
-    if ([self isFloatingPanel]) {
+    if (self.floats) {
         _windowController.window.level = NSFloatingWindowLevel;
     } else {
         _windowController.window.level = NSNormalWindowLevel;
@@ -262,7 +262,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
-- (BOOL)isFloatingPanel {
+- (BOOL)floats {
     return [iTermProfilePreferences boolForKey:KEY_HOTKEY_FLOAT inProfile:self.profile];
 }
 
@@ -273,7 +273,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         return;
     }
     _rollingIn = YES;
-    if (![self isFloatingPanel]) {
+    if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
         [NSApp activateIgnoringOtherApps:YES];
     }
     [self.windowController.window makeKeyAndOrderFront:nil];
@@ -469,8 +469,13 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (iTermHotkeyWindowType)hotkeyWindowType {
-    if (self.isFloatingPanel) {
-        return iTermHotkeyWindowTypeFloating;
+    if (self.floats) {
+        if ([iTermProfilePreferences unsignedIntegerForKey:KEY_SPACE inProfile:self.profile] == iTermProfileJoinsAllSpaces) {
+            // This makes it possible to overlap Lion fullscreen windows.
+            return iTermHotkeyWindowTypeFloatingPanel;
+        } else {
+            return iTermHotkeyWindowTypeFloatingWindow;
+        }
     } else {
         return iTermHotkeyWindowTypeRegular;
     }
@@ -556,7 +561,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     const BOOL hotkeyWindowOnOtherSpace = ![self.windowController.window isOnActiveSpace];
     if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
         DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
-        if (![self isFloatingPanel]) {
+        if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
             [NSApp activateIgnoringOtherApps:YES];
         }
         [self.windowController.window makeKeyAndOrderFront:nil];

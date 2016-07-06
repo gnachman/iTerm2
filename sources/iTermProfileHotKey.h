@@ -37,9 +37,8 @@
 @property(nonatomic, retain) PseudoTerminal<iTermWeakReference> *windowController;
 @property(nonatomic) BOOL wasAutoHidden;
 
-// Is the window a floating iTermPanel? If so, you should avoid invoking activateIgnoringOtherApps:YES
-// because it'll change spaces when on a Lion fullscreen window that isn't iTerm2.
-@property(nonatomic, readonly) BOOL isFloatingPanel;
+// This is computed based on the current settings of the profile we were created with.
+@property(nonatomic, readonly) iTermHotkeyWindowType hotkeyWindowType;
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
             hasModifierActivation:(BOOL)hasModifierActivation

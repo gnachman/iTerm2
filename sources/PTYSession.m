@@ -6325,7 +6325,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([terminal isHotKeyWindow]) {
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)terminal];
         [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
-        okToActivateApp = !hotKey.isFloatingPanel;
+        okToActivateApp = (hotKey.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel);
     } else {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         [[terminal window] makeKeyAndOrderFront:self];
