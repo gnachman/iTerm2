@@ -145,4 +145,10 @@ static NSString *const kGridSizeHeight = @"Height";
     return temp;
 }
 
+- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key {
+    NSMutableDictionary *mutableSelf = [[self mutableCopy] autorelease];
+    mutableSelf[key] = object;
+    return mutableSelf;
+}
+
 @end

@@ -17,10 +17,12 @@
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRecentDirectoryMO+Additions.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "iTermCommandHistoryEntryMO.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
+#include <sys/stat.h>
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
 NSString *const kDirectoriesDidChangeNotificationName = @"kDirectoriesDidChangeNotificationName";
@@ -128,7 +130,11 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
                               withIntermediateDirectories:YES
                                                attributes:nil
                                                     error:NULL];
-    return [path stringByAppendingPathComponent:name];
+    if (name) {
+        return [path stringByAppendingPathComponent:name];
+    } else {
+        return path;
+    }
 }
 
 - (NSString *)pathToDeprecatedCommandHistoryPlist {
@@ -228,7 +234,45 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         return [self initializeCoreDataWithRetry:NO vacuum:vacuum];
     }
     
+    if (self.shouldSaveToDisk) {
+        [self makeDatabaseReadableOnlyByUser];
+    }
     return YES;
+}
+
+- (void)makeDatabaseReadableOnlyByUser {
+    NSString *basePath = [self pathForFileNamed:nil];
+    for (NSString *filename in [[NSFileManager defaultManager] enumeratorAtPath:basePath]) {
+        if (![filename hasPrefix:self.databaseFilenamePrefix]) {
+            DLog(@"Skip setting permissions on file %@ that isn't part of the shell history db", filename);
+            continue;
+        }
+        NSString *fullPath = [basePath stringByAppendingPathComponent:filename];
+        NSError *error = nil;
+        NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:&error];
+        if (error) {
+            ELog(@"Failed to get attributes of %@: %@", fullPath, error);
+            continue;
+        }
+        
+        NSNumber *permissionsNumber = attributes[NSFilePosixPermissions];
+        if (!permissionsNumber) {
+            ELog(@"Couldn't get permissions of file %@. Attributes are: %@", fullPath, attributes);
+            continue;
+        }
+        
+        short posixPermissions = [permissionsNumber shortValue];
+        short fixedPosixPermissions = (posixPermissions & 0700);  // Remove other and group permissions.
+        if (fixedPosixPermissions != posixPermissions) {
+            NSDictionary *updatedAttributes = [attributes dictionaryBySettingObject:@(fixedPosixPermissions)
+                                                                             forKey:NSFilePosixPermissions];
+            error = nil;
+            [[NSFileManager defaultManager] setAttributes:updatedAttributes ofItemAtPath:fullPath error:&error];
+            if (error) {
+                ELog(@"Failed to set attributes of %@ to %@: %@", fullPath, updatedAttributes, error);
+            }
+        }
+    }
 }
 
 - (BOOL)deleteDatabase {
@@ -450,8 +494,11 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         [self initializeCoreDataWithRetry:YES vacuum:NO];
     }
 
-    // Erase files containing user data.
-    if (!self.shouldSaveToDisk) {
+    if (self.shouldSaveToDisk) {
+        // Fix file permissions.
+        [self makeDatabaseReadableOnlyByUser];
+    } else {
+        // Erase files containing user data.
         [self deleteDatabase];
     }
 }

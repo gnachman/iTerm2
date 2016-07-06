@@ -40,4 +40,6 @@
 
 - (NSDictionary *)dictionaryByRemovingNullValues;
 
+- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key;
+
 @end
