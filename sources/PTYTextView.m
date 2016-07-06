@@ -3042,10 +3042,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             assert(false);
     }
     if (theCommand) {
-        [_delegate writeTask:theCommand];
+        [self installShellIntegrationWithCommand:theCommand];
     } else {
         assert(false);
     }
+}
+
+- (void)installShellIntegrationWithCommand:(NSString *)theCommand {
+    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    warning.title = [NSString stringWithFormat:@"Ok to run this command in the current shell?\n\n%@", theCommand];
+    warning.warningActions =
+    @[
+          [iTermWarningAction warningActionWithLabel:@"OK" block:^(iTermWarningSelection selection) {
+              [_delegate writeTask:theCommand];
+          }],
+          [iTermWarningAction warningActionWithLabel:@"Cancel" block:nil]
+      ];
+    warning.identifier = @"NoSyncConfirmShellIntegrationCommand";
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    [warning runModal];
 }
 
 - (IBAction)selectAll:(id)sender
