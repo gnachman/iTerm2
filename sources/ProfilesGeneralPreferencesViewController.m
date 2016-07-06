@@ -188,6 +188,21 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 #pragma mark - URL Schemes
 
+- (BOOL)profileHandlesScheme:(NSString *)scheme {
+    Profile *handler = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
+    NSString *guid = [self stringForKey:KEY_GUID];
+    return (handler &&
+            [[handler objectForKey:KEY_GUID] isEqualToString:guid] &&
+            [[iTermLaunchServices sharedInstance] iTermIsDefaultForScheme:scheme]);
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.menu == _urlSchemes.menu) {
+        menuItem.state = [self profileHandlesScheme:menuItem.title] ? NSOnState : NSOffState;
+    }
+    return YES;
+}
+
 - (IBAction)urlSchemeHandlerDidChange:(id)sender {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     NSString *guid = profile[KEY_GUID];
@@ -212,17 +227,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
         [_urlSchemes setTitle:@"Select URL Schemes…"];
     }
     
-    NSString* guid = [profile objectForKey:KEY_GUID];
     [[_urlSchemes menu] setAutoenablesItems:YES];
     [[_urlSchemes menu] setDelegate:self];
-    for (NSMenuItem* item in [[_urlSchemes menu] itemArray]) {
-        Profile* handler = [[iTermLaunchServices sharedInstance] profileForScheme:[item title]];
-        if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
-            [item setState:NSOnState];
-        } else {
-            [item setState:NSOffState];
-        }
-    }
 }
 
 #pragma mark - Advanced initial directory settings
