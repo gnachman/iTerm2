@@ -27,6 +27,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermDelayedTitleSetter.h"
+#import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermPreferences.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -53,6 +54,12 @@
     NSObject *restoreState_;
     iTermDelayedTitleSetter *_titleSetter;
     NSInteger _uniqueNumber;
+
+    // Time the occlusion cache was last updated
+    NSTimeInterval _totalOcclusionCacheTime;
+
+    // Cached value of the percentage of this window that is occluded by other nonpanel windows in this app.
+    double _cachedTotalOcclusion;
 }
 
 - (instancetype)initWithContentRect:(NSRect)contentRect styleMask:(NSUInteger)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag {
@@ -75,6 +82,8 @@
                                screen:screen];
     if (self) {
         [self registerForNotifications];
+        DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+        [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     }
     return self;
 }
@@ -83,6 +92,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [NSApp removeObserver:self forKeyPath:@"orderedWindows"];
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [restoreState_ release];
     _titleSetter.window = nil;
     [_titleSetter release];
@@ -330,6 +342,8 @@ end:
     }
     PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
     PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super makeKeyAndOrderFront:sender];
 }
 
@@ -337,7 +351,54 @@ end:
     return YES;
 }
 
+- (void)orderWindow:(NSWindowOrderingMode)place relativeTo:(NSInteger)otherWin {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super orderWindow:place relativeTo:otherWin];
+}
+
+- (void)orderFrontRegardless {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super orderFrontRegardless];
+}
+
+- (void)orderFront:(id)sender {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super orderFront:sender];
+}
+
+- (void)orderBack:(id)sender {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super orderBack:sender];
+}
+
+- (void)orderOut:(id)sender {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super orderOut:sender];
+}
+
+- (void)setOrderedIndex:(NSInteger)orderedIndex {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super setOrderedIndex:orderedIndex];
+}
+
+- (void)setAlphaValue:(CGFloat)alphaValue {
+    DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    [super setAlphaValue:alphaValue];
+}
+
 - (double)approximateFractionOccluded {
+    if (_totalOcclusionCacheTime > [[iTermWindowOcclusionChangeMonitor sharedInstance] timeOfLastOcclusionChange]) {
+        // -orderedWindows is expensive, so avoid doing anything here if nothing has changed.
+        return _cachedTotalOcclusion;
+    }
+
     NSArray *orderedWindows = [[NSApplication sharedApplication] orderedWindows];
     NSUInteger myIndex = [orderedWindows indexOfObject:self];
     if (myIndex == 0) {
@@ -402,6 +463,8 @@ end:
         }
     }
 
+    _totalOcclusionCacheTime = [NSDate timeIntervalSinceReferenceDate];
+    _cachedTotalOcclusion = totalOcclusion;
     return totalOcclusion;
 }
 
