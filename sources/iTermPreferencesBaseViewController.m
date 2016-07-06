@@ -523,6 +523,10 @@ static NSString *const kKey = @"key";
     if (_preferencePanel == notification.object) {
         _preferencePanel = nil;
         // Breaks reference cycles in settingChanged and update blocks.
+        for (NSControl *key in _keyMap) {
+            PreferenceInfo *info = [_keyMap objectForKey:key];
+            [info clearBlocks];
+        }
         [_keyMap removeAllObjects];
     }
 }

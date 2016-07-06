@@ -76,4 +76,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;
 
+// Set all blocks to nil to clean up cyclic references.
+- (void)clearBlocks;
+
 @end

@@ -42,6 +42,8 @@
     [_shouldBeEnabled release];
     [_onChange release];
     [_customSettingChangedHandler release];
+    [_willChange release];
+    [_controlTextDidEndEditing release];
     [_onUpdate release];
     [_observer release];
     [super dealloc];
@@ -50,6 +52,16 @@
 - (void)setObserver:(void (^)())observer {
     [_observer autorelease];
     _observer = [observer copy];
+}
+
+- (void)clearBlocks {
+    self.shouldBeEnabled = nil;
+    self.observer = nil;
+    self.onChange = nil;
+    self.willChange = nil;
+    self.onUpdate = nil;
+    self.customSettingChangedHandler = nil;
+    self.controlTextDidEndEditing = nil;    
 }
 
 #pragma mark - Notifications

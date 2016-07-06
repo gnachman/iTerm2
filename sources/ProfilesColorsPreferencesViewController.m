@@ -89,6 +89,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
+        NSValue *weakWindowPointer = [NSValue valueWithPointer:self.view.window];
         colorWell.willClosePopover = ^() {
             // NSSearchField remembers who was first responder before it gained
             // first responder status. That is the popover at this time. When
@@ -97,7 +98,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             // smart and doesn't realize the popover has been deallocated. So
             // this changes its conception of who was the previous first
             // responder and prevents the crash.
-            [self.view.window makeFirstResponder:nil];
+            NSWindow *unsafeWindow = [weakWindowPointer pointerValue];
+            [unsafeWindow makeFirstResponder:nil];
         };
     }
 
