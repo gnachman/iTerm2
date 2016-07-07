@@ -35,6 +35,7 @@
 // The key used for a window's arrangement in encoding restorable state.
 extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 
+// Extra methods for delegates of terminal windows to implement.
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
 - (BOOL)lionFullScreen;
 - (BOOL)anyFullScreen;
@@ -45,6 +46,7 @@ extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 - (PTYTab *)tabForSession:(PTYSession *)session;
 @end
 
+// Common methods implemented by terminal windows of both kinds.
 @protocol PTYWindow<NSObject>
 @property(nonatomic, readonly) int screenNumber;
 @property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
@@ -66,9 +68,11 @@ extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 
 typedef NSWindow<PTYWindow> iTermTerminalWindow;
 
+// A normal terminal window.
 @interface iTermWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
 @end
 
+// A floating hotkey window. This can overlap a lion fullscreen window.
 @interface iTermPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>
 @end
 
