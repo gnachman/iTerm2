@@ -80,5 +80,3 @@ typedef NSWindow<PTYWindow> iTermTerminalWindow;
 - (BOOL)isTerminalWindow;
 @end
 
-#define PTYWindow iTermWindow
-

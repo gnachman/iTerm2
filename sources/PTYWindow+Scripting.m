@@ -7,7 +7,7 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 
-#define THE_CLASS PTYWindow
+#define THE_CLASS iTermWindow
 #include "iTermWindowScriptingImpl.m"
 #undef THE_CLASS
 

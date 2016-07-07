@@ -27,6 +27,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "NSArray+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYWindow.h"
@@ -40,7 +41,7 @@
 
 @implementation NSWindow(iTerm)
 - (BOOL)isTerminalWindow {
-    return [[self class] isKindOfClass:[PTYWindow class]] || [[self class] isKindOfClass:[iTermPanel class]];
+    return [[self class] isKindOfClass:[iTermWindow class]] || [[self class] isKindOfClass:[iTermPanel class]];
 }
 @end
 
@@ -48,7 +49,7 @@
 - (NSView *)titlebarContainerView;
 @end
 
-#define THE_CLASS PTYWindow
+#define THE_CLASS iTermWindow
 #include "iTermWindowImpl.m"
 #undef THE_CLASS
 
