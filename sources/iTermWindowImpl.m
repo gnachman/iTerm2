@@ -133,112 +133,56 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[[[self screen] deviceDescription] objectForKey:@"NSScreenNumber"] intValue];
 }
 
-#warning This should not know about PseudoTerminal
+- (CGFloat)sumOfIntersectingAreaOfRect:(NSRect)rect withRects:(NSArray<NSValue *> *)rects {
+    CGFloat totalArea = 0;
+    for (NSValue *value in rects) {
+        NSRect aRect = [value rectValue];
+        NSRect intersection = NSIntersectionRect(aRect, rect);
+        totalArea += (intersection.size.width * intersection.size.height);
+    }
+    return totalArea;
+}
+
 - (void)smartLayout {
-    PtyLog(@"enter smartLayout");
-    NSEnumerator* iterator;
+    PtyLog(@"Begin smartLayout");
 
     int currentScreen = [self screenNumber];
     NSRect screenRect = [[self screen] visibleFrame];
 
     // Get a list of relevant windows, same screen & workspace
-    NSMutableArray* windows = [[NSMutableArray alloc] init];
-    iterator = [[[iTermController sharedInstance] terminals] objectEnumerator];
-    PseudoTerminal* term;
-    PtyLog(@"Begin iterating over terminals");
-    while ((term = [iterator nextObject])) {
-        iTermTerminalWindow* otherWindow = (iTermTerminalWindow *)[term window];
-        PtyLog(@"See window %@ at %@", otherWindow, [NSValue valueWithRect:[otherWindow frame]]);
-        if (otherWindow == self) {
-            PtyLog(@" skip - is self");
-            continue;
-        }
-        int otherScreen = [otherWindow screenNumber];
-        if (otherScreen != currentScreen) {
-            PtyLog(@" skip - screen %d vs my %d", otherScreen, currentScreen);
-            continue;
-        }
+    NSArray<NSWindow *> *windows = [[NSApp orderedWindows] filteredArrayUsingBlock:^BOOL(id window) {
+        return (window != self &&
+                [window conformsToProtocol:@protocol(PTYWindow)] &&
+                [window screenNumber] == currentScreen &&
+                [window isOnActiveSpace]);
+    }];
 
-        if (![otherWindow isOnActiveSpace]) {
-            PtyLog(@"  skip - not in active space");
-            continue;
-        }
-
-        PtyLog(@" add window to array of windows");
-        [windows addObject:otherWindow];
-    }
-
-
-    // Find the spot on screen with the lowest window intersection
-    float bestIntersect = INFINITY;
-    NSRect bestFrame = [self frame];
-
-    NSRect placementRect = NSMakeRect(
-        screenRect.origin.x,
-        screenRect.origin.y,
-        MAX(1, screenRect.size.width-[self frame].size.width),
-        MAX(1, screenRect.size.height-[self frame].size.height)
-    );
-    PtyLog(@"PlacementRect is %@", [NSValue valueWithRect:placementRect]);
-
-    for(int x = 0; x < placementRect.size.width/2; x += 50) {
-        for(int y = 0; y < placementRect.size.height/2; y += 50) {
-            PtyLog(@"Try coord %d,%d", x, y);
-
-            NSRect testRects[4] = {[self frame]};
-
-            // Top Left
-            testRects[0].origin.x = placementRect.origin.x + x;
-            testRects[0].origin.y = placementRect.origin.y + placementRect.size.height - y;
-
-            // Top Right
-            testRects[1] = testRects[0];
-            testRects[1].origin.x = placementRect.origin.x + placementRect.size.width - x;
-
-            // Bottom Left
-            testRects[2] = testRects[0];
-            testRects[2].origin.y = placementRect.origin.y + y;
-
-            // Bottom Right
-            testRects[3] = testRects[1];
-            testRects[3].origin.y = placementRect.origin.y + y;
-
-            for (int i = 0; i < sizeof(testRects)/sizeof(NSRect); i++) {
-                PtyLog(@"compute badness of test rect %d %@", i, [NSValue valueWithRect:testRects[i]]);
-
-                iterator = [windows objectEnumerator];
-                iTermTerminalWindow *other;
-                float badness = 0.0f;
-                while ((other = [iterator nextObject])) {
-                    NSRect otherFrame = [other frame];
-                    NSRect intersection = NSIntersectionRect(testRects[i], otherFrame);
-                    badness += intersection.size.width * intersection.size.height;
-                    PtyLog(@"badness of %@ is %.2f", other, intersection.size.width * intersection.size.height);
-                }
-
-
-                char const * names[] = {"TL", "TR", "BL", "BR"};
-                PtyLog(@"%s: testRect:%@, bad:%.2f",
-                        names[i], NSStringFromRect(testRects[i]), badness);
-
-                if (badness < bestIntersect) {
-                    PtyLog(@"This is the best coordinate found so far");
-                    bestIntersect = badness;
-                    bestFrame = testRects[i];
-                }
-
-                // Shortcut if we've found an empty spot
-                if (bestIntersect == 0) {
-                    PtyLog(@"zero badness. Done.");
-                    goto end;
-                }
+    NSArray<NSValue *> *frames = [windows mapWithBlock:^id(NSWindow *window) {
+        return [NSValue valueWithRect:window.frame];
+    }];
+    
+    double lowestCost = INFINITY;
+    NSRect bestFrame = self.frame;
+    const CGFloat widthToScan = screenRect.size.width - self.frame.size.width;
+    const CGFloat heightToScan = screenRect.size.height - self.frame.size.height;
+    const CGFloat stride = 50;
+    
+    for (CGFloat xOffset = 0; lowestCost > 0 && xOffset < widthToScan; xOffset += stride) {
+        for (CGFloat yOffset = 0; lowestCost > 0 && yOffset < heightToScan; yOffset += stride) {
+            NSRect proposedRect = NSMakeRect(screenRect.origin.x + xOffset,
+                                             screenRect.origin.y + yOffset,
+                                             self.frame.size.width,
+                                             self.frame.size.height);
+            const CGFloat cost = [self sumOfIntersectingAreaOfRect:proposedRect withRects:frames];
+            NSLog(@"Cost of %@ is %@", NSStringFromRect(proposedRect), @(cost));
+            if (cost < lowestCost) {
+                lowestCost = cost;
+                bestFrame = proposedRect;
             }
         }
     }
 
-end:
-    [windows release];
-    PtyLog(@"set frame origin to %@", [NSValue valueWithPoint:bestFrame.origin]);
+    PtyLog(@"Using smart layout place window at %@ given frames %@", NSStringFromRect(bestFrame), frames);
     [self setFrameOrigin:bestFrame.origin];
 }
 
