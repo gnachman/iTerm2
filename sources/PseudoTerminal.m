@@ -6338,6 +6338,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [aSession setPreferencesFromAddressBookEntry:tempPrefs];
         [aSession loadInitialColorTable];
         [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
+        [aSession.screen resetTimestamps];
 
         if (title) {
             [aSession setName:title];

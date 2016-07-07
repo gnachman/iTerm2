@@ -1614,6 +1614,11 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (void)resetTimestamps {
+    for (VT100LineInfo *info in lineInfos_) {
+        info.timestamp = 0;
+    }
+}
 
 #pragma mark - Private
 
