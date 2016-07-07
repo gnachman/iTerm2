@@ -32,6 +32,9 @@
 @class PTYTab;
 @class PTYSession;
 
+// The key used for a window's arrangement in encoding restorable state.
+extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
+
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
 - (BOOL)lionFullScreen;
 - (BOOL)anyFullScreen;

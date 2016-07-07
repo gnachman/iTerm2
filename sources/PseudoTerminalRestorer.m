@@ -100,7 +100,7 @@ static BOOL gWaitingForFullScreen;
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
         DLog(@"Abort because opening arrangement at startup");
         NSDictionary *arrangement =
-            [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
+            [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
         if (arrangement) {
             [PseudoTerminal registerSessionsInArrangement:arrangement];
         }
@@ -120,7 +120,7 @@ static BOOL gWaitingForFullScreen;
                                                      name:kApplicationDidFinishLaunchingNotification
                                                    object:nil];
     }
-    NSDictionary *arrangement = [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
+    NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
     if (arrangement) {
         DLog(@"Have an arrangement");
         VoidBlock theBlock = ^{

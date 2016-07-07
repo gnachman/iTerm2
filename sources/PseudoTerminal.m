@@ -82,7 +82,6 @@
 @class QLPreviewPanel;
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
-NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
@@ -7145,7 +7144,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
 {
-    [self loadArrangement:[state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey]
+    [self loadArrangement:[state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]
                  sessions:nil];
 }
 

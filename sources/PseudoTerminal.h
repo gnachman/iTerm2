@@ -25,8 +25,6 @@
 extern NSString *const kTerminalWindowControllerWasCreatedNotification;
 
 extern NSString *const kCurrentSessionDidChange;
-// The key used for a window's arrangement in encoding restorable state.
-extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
 // status, and coordinates resizing of sessions (either session-initiated

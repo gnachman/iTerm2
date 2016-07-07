@@ -29,15 +29,12 @@
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "PreferencePanel.h"
-#import "PseudoTerminal.h"
 #import "PTYWindow.h"
 #import "objc/runtime.h"
 
-#ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
-#define PtyLog NSLog
-#else
 #define PtyLog DLog
-#endif
+
+NSString *const kTerminalWindowStateRestorationWindowArrangementKey = @"ptyarrangement";
 
 @implementation NSWindow(iTerm)
 - (BOOL)isTerminalWindow {
