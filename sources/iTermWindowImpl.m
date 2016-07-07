@@ -10,7 +10,9 @@ NS_ASSUME_NONNULL_BEGIN
 {
     int blurFilter;
     double blurRadius_;
-    BOOL layoutDone;
+    
+    // If set, then windowWillShowInitial is not invoked.
+    BOOL _layoutDone;
 
     // True while in -[NSWindow toggleFullScreen:].
     BOOL isTogglingLionFullScreen_;
@@ -188,12 +190,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setLayoutDone {
     DLog(@"setLayoutDone %@", [NSThread callStackSymbols]);
-    layoutDone = YES;
+    _layoutDone = YES;
 }
 
 - (void)makeKeyAndOrderFront:(nullable id)sender {
-    DLog(@"%@ makeKeyAndOrderFront: layoutDone=%d %@", NSStringFromClass([self class]), (int)layoutDone, [NSThread callStackSymbols]);
-    if (!layoutDone) {
+    DLog(@"%@ makeKeyAndOrderFront: layoutDone=%@ %@", NSStringFromClass([self class]), @(_layoutDone), [NSThread callStackSymbols]);
+    if (!_layoutDone) {
         DLog(@"try to call windowWillShowInitial");
         [self setLayoutDone];
         if ([[self delegate] respondsToSelector:@selector(windowWillShowInitial)]) {
