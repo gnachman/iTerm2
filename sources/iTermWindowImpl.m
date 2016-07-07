@@ -144,7 +144,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)smartLayout {
-    PtyLog(@"Begin smartLayout");
+    DLog(@"Begin smartLayout");
 
     int currentScreen = [self screenNumber];
     NSRect screenRect = [[self screen] visibleFrame];
@@ -182,28 +182,28 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    PtyLog(@"Using smart layout place window at %@ given frames %@", NSStringFromRect(bestFrame), frames);
+    DLog(@"Using smart layout place window at %@ given frames %@", NSStringFromRect(bestFrame), frames);
     [self setFrameOrigin:bestFrame.origin];
 }
 
 - (void)setLayoutDone {
-    PtyLog(@"setLayoutDone %@", [NSThread callStackSymbols]);
+    DLog(@"setLayoutDone %@", [NSThread callStackSymbols]);
     layoutDone = YES;
 }
 
 - (void)makeKeyAndOrderFront:(nullable id)sender {
-    PtyLog(@"%@ makeKeyAndOrderFront: layoutDone=%d %@", NSStringFromClass([self class]), (int)layoutDone, [NSThread callStackSymbols]);
+    DLog(@"%@ makeKeyAndOrderFront: layoutDone=%d %@", NSStringFromClass([self class]), (int)layoutDone, [NSThread callStackSymbols]);
     if (!layoutDone) {
-        PtyLog(@"try to call windowWillShowInitial");
+        DLog(@"try to call windowWillShowInitial");
         [self setLayoutDone];
         if ([[self delegate] respondsToSelector:@selector(windowWillShowInitial)]) {
             [[self delegate] performSelector:@selector(windowWillShowInitial)];
         } else {
-            PtyLog(@"delegate %@ does not respond", [self delegate]);
+            DLog(@"delegate %@ does not respond", [self delegate]);
         }
     }
-    PtyLog(@"%@ - calling makeKeyAndOrderFont, which triggers a window resize", NSStringFromClass([self class]));
-    PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
+    DLog(@"%@ - calling makeKeyAndOrderFont, which triggers a window resize", NSStringFromClass([self class]));
+    DLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
     [super makeKeyAndOrderFront:sender];
 }
 

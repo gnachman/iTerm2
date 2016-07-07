@@ -21,18 +21,12 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "iTerm.h"
+#import "DebugLogging.h"
 #import "FutureMethods.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermController.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
-#import "PreferencePanel.h"
 #import "PTYWindow.h"
 #import "objc/runtime.h"
-
-#define PtyLog DLog
 
 NSString *const kTerminalWindowStateRestorationWindowArrangementKey = @"ptyarrangement";
 
