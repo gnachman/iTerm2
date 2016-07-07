@@ -15,53 +15,15 @@ NS_ASSUME_NONNULL_BEGIN
     // True while in -[NSWindow toggleFullScreen:].
     BOOL isTogglingLionFullScreen_;
     NSObject *restoreState_;
-    iTermDelayedTitleSetter *_titleSetter;
     NSInteger _uniqueNumber;
-}
-
-- (instancetype)initWithContentRect:(NSRect)contentRect
-                          styleMask:(NSUInteger)aStyle
-                            backing:(NSBackingStoreType)bufferingType
-                              defer:(BOOL)flag {
-    self = [super initWithContentRect:contentRect styleMask:aStyle backing:bufferingType defer:flag];
-    if (self) {
-        [self registerForNotifications];
-    }
-    return self;
-}
-
-- (instancetype)initWithContentRect:(NSRect)contentRect
-                          styleMask:(NSUInteger)aStyle
-                            backing:(NSBackingStoreType)bufferingType
-                              defer:(BOOL)flag
-                             screen:(nullable NSScreen *)screen {
-    self = [super initWithContentRect:contentRect
-                            styleMask:aStyle
-                              backing:bufferingType
-                                defer:flag
-                               screen:screen];
-    if (self) {
-        [self registerForNotifications];
-    }
-    return self;
 }
 
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [restoreState_ release];
-    _titleSetter.window = nil;
-    [_titleSetter release];
     [super dealloc];
 
-}
-
-- (void)registerForNotifications {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(delayedSetTitleNotification:)
-                                                 name:kDelayedTitleSetterSetTitle
-                                               object:self];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
@@ -377,23 +339,7 @@ end:
     return totalOcclusion;
 }
 
-- (void)delayedSetTitle:(NSString *)title {
-    if (!_titleSetter) {
-        _titleSetter = [[iTermDelayedTitleSetter alloc] init];
-        _titleSetter.window = self;
-    }
-    [_titleSetter setTitle:title];
-}
-
 #pragma mark - Notifications
-
-- (void)delayedSetTitleNotification:(NSNotification *)notification {
-    NSDictionary *userInfo = [notification userInfo];
-    NSString *title = userInfo[kDelayedTitleSetterTitleKey];
-    if (title) {
-        self.title = title;
-    }
-}
 
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(nullable NSScreen *)screen {
     if ([self isKindOfClass:[NSPanel class]]) {

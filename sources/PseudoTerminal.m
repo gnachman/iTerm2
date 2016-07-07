@@ -131,6 +131,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
 @property(nonatomic, assign) NSTimeInterval timeOfLastResize;
+
+// Used for delaying and coalescing title changes. After a title change request
+// is received the new title is stored here and a .1 second delay begins. If a
+// new request is made before the timer is up this property gets changed. It is
+// reset to nil after the change is made in the window.
+@property(nonatomic, copy) NSString *desiredTitle;
 @end
 
 @implementation PseudoTerminal {
@@ -748,6 +754,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shortcutAccessoryViewController release];
 #endif
     [_didEnterLionFullscreen release];
+    [_desiredTitle release];
     [super dealloc];
 }
 
@@ -1470,8 +1477,25 @@ ITERM_WEAKLY_REFERENCEABLE
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
     } else {
-        // See comments in iTermDelaydTitleSetter for why this is so.
-        [self.ptyWindow delayedSetTitle:title];
+        // In bug 2593, we see a crazy thing where setting the window title right
+        // after a window is created causes it to have the wrong background color.
+        // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
+        // do until a better explanation comes along.
+
+        // In bug 3957, we see that GNU screen is buggy and sends a crazy number of title changes.
+        // We want to coalesce them to avoid the title flickering like mad. Also, setting the title
+        // seems to be relatively slow, so we don't want to spend too much time doing that if the
+        // terminal goes nuts and sends lots of title-change sequences.
+        BOOL hadTimer = (self.desiredTitle != nil);
+        self.desiredTitle = title;
+        if (!hadTimer) {
+            PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+            static const NSTimeInterval kSetTitleDelay = 0.1;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSetTitleDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                weakSelf.window.title = weakSelf.desiredTitle;
+                weakSelf.desiredTitle = nil;
+            });
+        }
     }
 }
 

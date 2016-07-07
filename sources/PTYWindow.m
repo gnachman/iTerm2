@@ -26,7 +26,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
-#import "iTermDelayedTitleSetter.h"
 #import "iTermPreferences.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
