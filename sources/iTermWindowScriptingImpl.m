@@ -6,8 +6,10 @@
 
     NSScriptObjectSpecifier *containerRef;
 
-    NSArray *windows = [iTermApplication.sharedApplication orderedTerminalWindows];
-    anIndex = [windows indexOfObjectIdenticalTo:self];
+    NSArray<iTermScriptingWindow *> *windows = [[iTermApplication sharedApplication] orderedScriptingWindows];
+    anIndex = [windows indexOfObjectPassingTest:^BOOL(iTermScriptingWindow * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.underlyingWindow == self;
+    }];
     if (anIndex != NSNotFound) {
         containerRef = [NSApp objectSpecifier];
         classDescription = [NSClassDescription classDescriptionForClass:[NSApp class]];

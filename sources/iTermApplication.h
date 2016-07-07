@@ -32,6 +32,7 @@
 #import "PTYWindow.h"
 
 @class iTermApplicationDelegate;
+@class iTermScriptingWindow;
 
 @protocol iTermApplicationDelegate<NSApplicationDelegate>
 - (NSMenu *)statusBarMenu;
@@ -50,8 +51,8 @@
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
 
-// Like orderedWindows, but only iTermWindow/iTermPanel objects are returned.
-- (NSArray<iTermWindow *> *)orderedTerminalWindows;
+// Like orderedWindows, but only iTermWindow/iTermPanel objects wrapped in iTermScriptingWindow*s are returned.
+- (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows;
 
 // Changes the process type.
 - (void)setIsUIElementApplication:(BOOL)uiElement;

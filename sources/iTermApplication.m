@@ -31,6 +31,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
+#import "iTermScriptingWindow.h"
 #import "iTermShortcutInputView.h"
 #import "NSArray+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -243,9 +244,13 @@
 }
 
 #warning TODO Audit uses of this method, consider replacing wtih orderedWindowsPlusHotkeyPanels.
-- (NSArray<iTermWindow *> *)orderedTerminalWindows {
-    return [[self orderedWindows] filteredArrayUsingBlock:^BOOL(id anObject) {
-        return [anObject isKindOfClass:[iTermWindow class]];
+- (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows {
+    return [self.orderedWindows mapWithBlock:^id(NSWindow *window) {
+        if ([window isKindOfClass:[iTermWindow class]]) {
+            return [iTermScriptingWindow scriptingWindowWithWindow:window];
+        } else {
+            return nil;
+        }
     }];
 }
 
@@ -281,7 +286,7 @@
     }
 }
 
-#warning TODO audit what's done with windows gotten from orderedWindows, orderedTerminalWindows, and this method for compatibilityw ith panels.
+#warning TODO audit what's done with windows gotten from orderedWindows, orderedScriptingWindows, and this method for compatibilityw ith panels.
 - (NSArray<NSWindow *> *)orderedWindowsPlusHotkeyPanels {
     NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] visibleFloatingHotkeyWindows] ?: @[];
 #warning TODO: Audit all uses of orderedWindows

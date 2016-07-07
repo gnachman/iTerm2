@@ -113,7 +113,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     iTerm2Application *iterm = [SBApplication applicationWithBundleIdentifier:kTestBundleId];
     [iterm activate];
     [iterm createWindowWithDefaultProfileCommand:nil];
-    iTerm2Window *terminal = [iterm currentWindow];
+    iTerm2Window *terminal = [iterm currentScriptingWindow];
     [terminal.currentSession writeContentsOfFile:nil text:@"echo Testing123"];
     for (int i = 0; i < 10; i++) {
         NSString *contents = [terminal.currentSession contents];
