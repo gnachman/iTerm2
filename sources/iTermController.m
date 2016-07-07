@@ -940,10 +940,11 @@ static iTermController *gSharedInstance;
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
-    [[iTermHotKeyController sharedInstance] didCreateWindowController:term
-                                                          withProfile:profile
-                                                                 show:NO];
-    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term] setAllowsStateRestoration:NO];
+    iTermProfileHotKey *profileHotKey =
+        [[iTermHotKeyController sharedInstance] didCreateWindowController:term
+                                                              withProfile:profile
+                                                                     show:NO];
+    [profileHotKey setAllowsStateRestoration:NO];
     
     [self addTerminalWindow:term];
     return term;

@@ -76,11 +76,11 @@
                       forProfileWithGUID:(NSString *)guid;
 
 // Use this when creating a window that might be a hotkey window. Generally iTermProfileHotkey creates
-// its own windows, but that's not the case for e.g. tmux windows. Returns YES if it was accepted
-// as a hotkey window.
-- (BOOL)didCreateWindowController:(PseudoTerminal *)windowController
-                      withProfile:(Profile *)profile
-                             show:(BOOL)show;
+// its own windows, but that's not the case for e.g. tmux windows. Returns the iTermProfileHotKey if
+// the window controller was assigned a shotkey or nil if not.
+- (iTermProfileHotKey *)didCreateWindowController:(PseudoTerminal *)windowController
+                                      withProfile:(Profile *)profile
+                                             show:(BOOL)show;
 
 // Hide all hotkey windows without animation. Used by Exposé All Tabs.
 - (void)fastHideAllHotKeyWindows;

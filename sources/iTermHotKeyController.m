@@ -351,13 +351,16 @@
     return YES;
 }
 
-- (BOOL)didCreateWindowController:(PseudoTerminal *)windowController
-                      withProfile:(Profile *)profile
-                             show:(BOOL)show {
+- (iTermProfileHotKey *)didCreateWindowController:(PseudoTerminal *)windowController
+                                      withProfile:(Profile *)profile
+                                             show:(BOOL)show {
     iTermProfileHotKey *profileHotKey = [_hotKeys objectOfClass:[iTermProfileHotKey class]
                                                     passingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
                                                         return [[element profile][KEY_GUID] isEqualToString:profile[KEY_GUID]];
                                                     }];
+    if (!profileHotKey) {
+        return nil;
+    }
     if (!profileHotKey.windowController.weaklyReferencedObject) {
         profileHotKey.windowController = windowController.weakSelf;
         iTermHotkeyWindowType hotkeyWindowType;
@@ -368,14 +371,13 @@
         } else {
             hotkeyWindowType = iTermHotkeyWindowTypeRegular;
         }
-#warning test this
         windowController.hotkeyWindowType = hotkeyWindowType;
         if (show) {
             [profileHotKey showHotKeyWindow];
         }
-        return YES;
+        return profileHotKey;
     } else {
-        return NO;
+        return nil;
     }
 }
 
