@@ -243,10 +243,9 @@
     }
 }
 
-#warning TODO Audit uses of this method, consider replacing wtih orderedWindowsPlusHotkeyPanels.
 - (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows {
-    return [self.orderedWindows mapWithBlock:^id(NSWindow *window) {
-        if ([window isKindOfClass:[iTermWindow class]]) {
+    return [self.windows mapWithBlock:^id(NSWindow *window) {
+        if ([window conformsToProtocol:@protocol(PTYWindow)]) {
             return [iTermScriptingWindow scriptingWindowWithWindow:window];
         } else {
             return nil;
