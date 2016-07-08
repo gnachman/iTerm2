@@ -1548,6 +1548,12 @@
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A6936B4D1D2E0ABF00521B04 /* iTermScriptingWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B4B1D2E0ABF00521B04 /* iTermScriptingWindow.h */; };
 		A6936B4E1D2E0ABF00521B04 /* iTermScriptingWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B4C1D2E0ABF00521B04 /* iTermScriptingWindow.m */; };
+		A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B4F1D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h */; };
+		A6936B521D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B501D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.m */; };
+		A6936B551D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B531D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h */; };
+		A6936B561D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */; };
+		A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */; };
+		A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
 		A697100B18D94CDA007E901D /* iTermAdvancedSettingsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */; };
 		A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
@@ -3260,6 +3266,12 @@
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6936B4B1D2E0ABF00521B04 /* iTermScriptingWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermScriptingWindow.h; sourceTree = "<group>"; };
 		A6936B4C1D2E0ABF00521B04 /* iTermScriptingWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermScriptingWindow.m; sourceTree = "<group>"; };
+		A6936B4F1D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdditionalHotKeyObjectValue.h; sourceTree = "<group>"; };
+		A6936B501D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdditionalHotKeyObjectValue.m; sourceTree = "<group>"; };
+		A6936B531D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdditionalHotKeyTableCellView.h; sourceTree = "<group>"; };
+		A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdditionalHotKeyTableCellView.m; sourceTree = "<group>"; };
+		A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesModel.h; sourceTree = "<group>"; };
+		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
 		A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A697100518D82E79007E901D /* iTermAdvancedSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsModel.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5310,6 +5322,12 @@
 				A6EFF23E1D21949D00806EEF /* iTermShortcut.m */,
 				A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */,
 				A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */,
+				A6936B4F1D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h */,
+				A6936B501D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.m */,
+				A6936B531D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h */,
+				A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */,
+				A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */,
+				A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */,
 			);
 			name = Hotkey;
 			sourceTree = "<group>";
@@ -6139,6 +6157,7 @@
 				1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */,
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
+				A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
 				A62C3B291BCC24AB00B5629D /* iTermHostRecordMO.h in Headers */,
@@ -6147,6 +6166,7 @@
 				1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */,
 				A6FEA2701CF2C8EE00376F28 /* iTermProfileHotKey.h in Headers */,
 				A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */,
+				A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A6EFF21C1D1CA9F800806EEF /* NSLocale+iTerm.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
 				A66DB8361C8E4CBB00233E88 /* iTermOpenQuicklyCommands.h in Headers */,
@@ -6156,6 +6176,7 @@
 				A67778B41CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h in Headers */,
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
+				A6936B551D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A6FEA2881CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h in Headers */,
 				A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */,
 				A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */,
@@ -7533,6 +7554,7 @@
 				A6C763271B45C52B00E3C992 /* PointerController.m in Sources */,
 				A6C7637C1B45C52B00E3C992 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A6C763E21B45C6DD00E3C992 /* PSMTabDragWindow.m in Sources */,
+				A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */,
 				A6C763051B45C52B00E3C992 /* AsyncHostLookupController.m in Sources */,
 				A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */,
 				A6C763121B45C52B00E3C992 /* iTermImageInfo.m in Sources */,
@@ -7657,6 +7679,7 @@
 				A62C3B431BD40E7C00B5629D /* iTermImageMark.m in Sources */,
 				A6C763261B45C52B00E3C992 /* PasteEvent.m in Sources */,
 				A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */,
+				A6936B561D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m in Sources */,
 				A66DB8371C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m in Sources */,
 				A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */,
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
@@ -7726,6 +7749,7 @@
 				A6C7633A1B45C52B00E3C992 /* SplitPanel.m in Sources */,
 				A6C763921B45C52B00E3C992 /* iTermFileDescriptorClient.c in Sources */,
 				A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */,
+				A6936B521D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.m in Sources */,
 				A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */,
 				A6C762B81B45C52B00E3C992 /* NSImage+iTerm.m in Sources */,
 				1D300BAB1BD9A8BB002043F7 /* NSDate+iTerm.m in Sources */,
