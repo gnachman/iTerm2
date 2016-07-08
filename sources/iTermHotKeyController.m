@@ -501,14 +501,6 @@
         return NO;
     }
     
-    if ([iTermAdvancedSettingsModel hotkeyWindowIgnoresSpotlight]) {
-        // This tries to detect if the Spotlight window is open.
-        if ([[iTermController sharedInstance] keystrokesBeingStolen]) {
-            DLog(@"Keystrokes being stolen (spotlight open?)");
-            return NO;
-        }
-    }
-    
     NSArray<iTermTerminalWindow *> *keyTerminalWindows = [[iTermController sharedInstance] keyTerminalWindows];
     NSArray<PseudoTerminal *> *hotKeyWindowControllers = self.hotKeyWindowControllers;
     BOOL nonHotkeyTerminalIsKey = [keyTerminalWindows containsObjectBesidesObjectsInArray:hotKeyWindowControllers];

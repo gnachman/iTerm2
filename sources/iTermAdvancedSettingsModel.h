@@ -124,7 +124,6 @@
 + (BOOL)typingClearsSelection;
 + (BOOL)focusReportingEnabled;
 
-+ (BOOL)hotkeyWindowIgnoresSpotlight;
 + (BOOL)tabTitlesUseSmartTruncation;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;

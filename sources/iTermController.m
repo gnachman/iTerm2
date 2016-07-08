@@ -1324,9 +1324,9 @@ static iTermController *gSharedInstance;
 }
 
 // This exists because I don't trust -[NSApp keyWindow]. I've seen all kinds of weird behavior from it.
-- (BOOL)anyOrderedWindowIsKey {
+- (BOOL)anyVisibleWindowIsKey {
     DLog(@"Searching for key window...");
-    for (NSWindow *window in [NSApp orderedWindows]) {
+    for (NSWindow *window in [(iTermApplication *)NSApp orderedWindowsPlusVisibleHotkeyPanels]) {
         if (window.isKeyWindow) {
             DLog(@"Key ordered window is %@", window);
             return YES;
@@ -1340,7 +1340,7 @@ static iTermController *gSharedInstance;
     // If we're active and have ordered windows but none of them are key then our keystrokes are
     // being stolen by something else. This is meant to detect when Spotlight is open. It might
     // also catch other things that act similarly.
-    return [NSApp isActive] && [[NSApp orderedWindows] count] > 0 && ![self anyOrderedWindowIsKey];
+    return [NSApp isActive] && [[NSApp orderedWindows] count] > 0 && ![self anyVisibleWindowIsKey];
 }
 
 // I don't trust -[NSApp mainWindow].
