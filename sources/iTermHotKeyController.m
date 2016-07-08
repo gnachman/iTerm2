@@ -84,7 +84,6 @@
 #pragma mark - APIs
 
 - (PseudoTerminal *)topMostVisibleHotKeyWindow {
-    // TODO: Verify the order of windows is really front-to-back
     for (NSWindow *window in [NSApp orderedWindows]) {
         PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
         if (term.isHotKeyWindow && [[term window] alphaValue] > 0) {

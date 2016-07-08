@@ -176,7 +176,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                              self.frame.size.width,
                                              self.frame.size.height);
             const CGFloat cost = [self sumOfIntersectingAreaOfRect:proposedRect withRects:frames];
-            NSLog(@"Cost of %@ is %@", NSStringFromRect(proposedRect), @(cost));
             if (cost < lowestCost) {
                 lowestCost = cost;
                 bestFrame = proposedRect;
