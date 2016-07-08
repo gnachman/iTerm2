@@ -225,7 +225,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (double)approximateFractionOccluded {
-    NSArray *orderedWindows = [[NSApplication sharedApplication] orderedWindows];
+    NSArray *orderedWindows = [(iTermApplication *)NSApp orderedWindowsPlusVisibleHotkeyPanels];
     NSUInteger myIndex = [orderedWindows indexOfObject:self];
     if (myIndex == 0 || myIndex == NSNotFound) {
         return 0;
@@ -260,7 +260,7 @@ ITERM_WEAKLY_REFERENCEABLE
     CGFloat totalOcclusion = 0;
     for (NSUInteger i = 0; i < myIndex; i++) {
         NSWindow *other = orderedWindows[i];
-        if ([other isMiniaturized] || other.alphaValue < 0.1) {
+        if ([other isMiniaturized] || other.alphaValue < 0.1 || !other.isVisible) {
             // The other window is almost transparent or miniaturized, so short circuit.
             continue;
         }
