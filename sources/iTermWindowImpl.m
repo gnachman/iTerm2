@@ -292,8 +292,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return totalOcclusion;
 }
 
-#pragma mark - Notifications
-
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(nullable NSScreen *)screen {
     if ([_delegate terminalWindowShouldConstrainFrameToScreen]) {
         return [super constrainFrameRect:frameRect toScreen:screen];

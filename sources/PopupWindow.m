@@ -35,8 +35,11 @@
     [super dealloc];
 }
 
-- (BOOL)canBecomeKeyWindow
-{
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
+- (BOOL)canBecomeMainWindow {
     return YES;
 }
 

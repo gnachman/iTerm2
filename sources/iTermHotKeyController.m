@@ -423,9 +423,10 @@
             DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 DLog(@"Bring hotkey window %@ to front", window);
-                // This shouldn't prevent hotkey windows from overlapping a Lion fullscreen window
-                // because we're switching spaces anyway.
-                [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                if (![window isKindOfClass:[iTermPanel class]]) {
+                    // Activating the app switches away from a lion fullscreen window
+                    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                }
                 [window makeKeyAndOrderFront:nil];
             });
         }

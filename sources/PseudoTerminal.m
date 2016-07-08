@@ -675,6 +675,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return self.hotkeyWindowType != iTermHotkeyWindowTypeNone;
 }
 
+- (BOOL)isFloatingHotKeyWindow {
+    return self.isHotKeyWindow && [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats];
+}
+
 - (void)setHotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     _hotkeyWindowType = hotkeyWindowType;
     switch (hotkeyWindowType) {

@@ -359,6 +359,9 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Indicates if this a hotkey window.
 - (BOOL)isHotKeyWindow;
 
+// Is this a "floating" hotkey window? These sit in nonactivating panels with a high window level.
+- (BOOL)isFloatingHotKeyWindow;
+
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
 
 #pragma mark - Command history

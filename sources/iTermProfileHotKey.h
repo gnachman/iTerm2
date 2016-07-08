@@ -19,6 +19,10 @@
 
 @property(nonatomic, readonly) Profile *profile;
 
+// Is the window level floating? May not be a floating panel if it doesn't meet all the critieria
+// to be a panel (must join all spaces).
+@property(nonatomic, readonly) BOOL floats;
+
 // Is the hotkey window in the process of opening right now?
 @property(nonatomic, readonly) BOOL rollingIn;
 @property(nonatomic, readonly) BOOL rollingOut;

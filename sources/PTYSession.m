@@ -7202,8 +7202,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_delegate realParentWindow];
 }
 
-- (BOOL)popupWindowIsInHotkeyWindow {
-    return _delegate.realParentWindow.isHotKeyWindow;
+- (BOOL)popupWindowIsInFloatingHotkeyWindow {
+    return _delegate.realParentWindow.isFloatingHotKeyWindow;
 }
 
 - (VT100Screen *)popupVT100Screen {

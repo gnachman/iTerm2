@@ -1346,16 +1346,6 @@ static iTermController *gSharedInstance;
     return NO;
 }
 
-#warning This doesn't make sense
-- (PseudoTerminal *)hotkeyWindow {
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if (term.isHotKeyWindow) {
-            return term;
-        }
-    }
-    return nil;
-}
-
 // Returns all terminal windows that are key.
 - (NSArray<iTermTerminalWindow *> *)keyTerminalWindows {
     NSMutableArray<iTermTerminalWindow *> *temp = [NSMutableArray array];
