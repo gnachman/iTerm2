@@ -31,7 +31,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 @implementation NSColor (iTerm)
 
 + (NSColor *)colorWithString:(NSString *)s {
-    NSData *data = [[[NSData alloc] initWithBase64Encoding:s] autorelease];
+    NSData *data = [[[NSData alloc] initWithBase64EncodedString:s options:0] autorelease];
     if (!data.length) {
         return nil;
     }
@@ -53,7 +53,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
     [self encodeWithCoder:coder];
     [coder finishEncoding];
-    return [data base64Encoding];
+    return [data base64EncodedStringWithOptions:0];
 }
 
 + (NSColor *)colorWith8BitRed:(int)red
