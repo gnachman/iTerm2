@@ -259,8 +259,13 @@
     NSString *characters = character ? [NSString stringWithFormat:@"%C", character] : @"";
     NSEventModifierFlags modifiers = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyHotkeyModifiers];
     BOOL autohides = [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides_Deprecated];
+    
+    // We use deprecated methods to do the migration.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     BOOL animate = [iTermAdvancedSettingsModel hotkeyTermAnimationDuration] > 0;
     BOOL dockIconTogglesWindow = [iTermAdvancedSettingsModel dockIconTogglesWindow];
+#pragma clang diagnostic pop
     iTermHotKeyDockPreference dockAction = dockIconTogglesWindow ? iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen : iTermHotKeyDockPreferenceDoNotShow;
     
     NSDictionary *newSettings = @{ KEY_HAS_HOTKEY: @YES,
