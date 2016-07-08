@@ -23,6 +23,7 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTermApplication.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "PTYWindow.h"

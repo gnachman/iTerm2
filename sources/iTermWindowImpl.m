@@ -152,8 +152,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSRect screenRect = [[self screen] visibleFrame];
 
     // Get a list of relevant windows, same screen & workspace
-    NSArray<NSWindow *> *windows = [[NSApp orderedWindows] filteredArrayUsingBlock:^BOOL(id window) {
+    NSArray<NSWindow *> *windows = [[(iTermApplication *)NSApp orderedWindowsPlusVisibleHotkeyPanels] filteredArrayUsingBlock:^BOOL(id window) {
         return (window != self &&
+                [window isVisible] &&
                 [window conformsToProtocol:@protocol(PTYWindow)] &&
                 [window screenNumber] == currentScreen &&
                 [window isOnActiveSpace]);
