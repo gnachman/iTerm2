@@ -305,7 +305,7 @@
             }
         }];
     } else {
-        NSUInteger numberOfTerminalWindowsOpen = [[[NSApp orderedWindows] filteredArrayUsingBlock:^BOOL(NSWindow *window) {
+        NSUInteger numberOfTerminalWindowsOpen = [[[(iTermApplication *)NSApp orderedWindowsPlusVisibleHotkeyPanels] filteredArrayUsingBlock:^BOOL(NSWindow *window) {
             return [window.windowController isKindOfClass:[PseudoTerminal class]] && [window isVisible];
         }] count];
         [self.profileHotKeys enumerateObjectsUsingBlock:^(iTermProfileHotKey  *_Nonnull profileHotKey,
