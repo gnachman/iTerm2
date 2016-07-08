@@ -162,7 +162,6 @@
 
 // Bound to the close button.
 - (IBAction)close:(id)sender {
-    [[[[iTermHotKeyController sharedInstance] topMostVisibleHotKeyWindowController] window] makeKeyWindow];
     [self.window close];
 }
 

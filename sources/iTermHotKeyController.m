@@ -83,16 +83,6 @@
 
 #pragma mark - APIs
 
-- (PseudoTerminal *)topMostVisibleHotKeyWindow {
-    for (NSWindow *window in [NSApp orderedWindows]) {
-        PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
-        if (term.isHotKeyWindow && [[term window] alphaValue] > 0) {
-            return term;
-        }
-    }
-    return nil;
-}
-
 - (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey {
     DLog(@"Show window for profile hotkey %@", profileHotKey);
     [profileHotKey showHotKeyWindow];

@@ -19,7 +19,6 @@
 @property(nonatomic, readonly) NSArray<Profile *> *hotKeyWindowProfiles;
 @property(nonatomic, readonly) NSArray<PseudoTerminal *> *visibleWindowControllers;
 @property(nonatomic, readonly) NSArray<iTermProfileHotKey *> *profileHotKeys;
-@property(nonatomic, readonly) PseudoTerminal *topMostVisibleHotKeyWindowController;
 @property(nonatomic, readonly) NSArray *restorableStates;
 
 + (instancetype)sharedInstance;
