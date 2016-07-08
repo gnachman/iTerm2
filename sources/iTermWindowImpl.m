@@ -169,14 +169,21 @@ ITERM_WEAKLY_REFERENCEABLE
     const CGFloat widthToScan = screenRect.size.width - self.frame.size.width;
     const CGFloat heightToScan = screenRect.size.height - self.frame.size.height;
     const CGFloat stride = 50;
-    
-    for (CGFloat xOffset = 0; lowestCost > 0 && xOffset < widthToScan; xOffset += stride) {
-        for (CGFloat yOffset = 0; lowestCost > 0 && yOffset < heightToScan; yOffset += stride) {
+    const NSPoint screenCenter = NSMakePoint(NSMidX(screenRect), NSMidY(screenRect));
+    const CGFloat maxDistance = sqrt(pow(screenRect.size.width, 2) + pow(screenRect.size.height, 2));
+    for (CGFloat xOffset = 0; xOffset < widthToScan; xOffset += stride) {
+        for (CGFloat yOffset = 0; yOffset < heightToScan; yOffset += stride) {
             NSRect proposedRect = NSMakeRect(screenRect.origin.x + xOffset,
                                              screenRect.origin.y + yOffset,
                                              self.frame.size.width,
                                              self.frame.size.height);
-            const CGFloat cost = [self sumOfIntersectingAreaOfRect:proposedRect withRects:frames];
+            // Ensure distance from screen center is less than 1 so any amount of overlap dominates even the
+            // greatest cost from additional distance
+            const NSPoint proposedCenter = NSMakePoint(NSMidX(proposedRect), NSMidY(proposedRect));
+            CGFloat distanceFromScreenCenter = sqrt(pow(proposedCenter.x - screenCenter.x, 2) +
+                                                    pow(proposedCenter.y - screenCenter.y, 2)) / maxDistance;
+            const CGFloat cost = [self sumOfIntersectingAreaOfRect:proposedRect withRects:frames] + distanceFromScreenCenter;
+            
             if (cost < lowestCost) {
                 lowestCost = cost;
                 bestFrame = proposedRect;
