@@ -44,7 +44,7 @@ static BOOL gWaitingForFullScreen;
 + (void)runQueuedBlocks_10_10_andEarlier {
     DLog(@"runQueuedBlocks (<=10.10) starting");
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0),
-                   dispatch_get_current_queue(),
+                   dispatch_get_main_queue(),
                    ^{
                        for (VoidBlock block in queuedBlocks) {
                            block();
