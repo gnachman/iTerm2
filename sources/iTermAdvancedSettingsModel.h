@@ -19,7 +19,7 @@
 + (NSString *)alternateMouseScrollStringForDown;
 + (BOOL)traditionalVisualBell;
 + (double)hotkeyTermAnimationDuration DEPRECATED_ATTRIBUTE;
-+ (BOOL)hotkeyWindowFloatsAboveOtherWindows;
++ (BOOL)hotkeyWindowFloatsAboveOtherWindows DEPRECATED_ATTRIBUTE;
 + (NSString *)searchCommand;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (double)timeBetweenBlinks;
