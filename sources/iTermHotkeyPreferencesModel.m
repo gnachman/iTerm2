@@ -7,6 +7,7 @@
 //
 
 #import "iTermHotkeyPreferencesModel.h"
+#import "NSArray+iTerm.h"
 
 @implementation iTermHotkeyPreferencesModel
 
