@@ -288,10 +288,10 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - Notifications
 
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(nullable NSScreen *)screen {
-    if ([self isKindOfClass:[NSPanel class]]) {
-        return frameRect;
-    } else {
+    if ([_delegate terminalWindowShouldConstrainFrameToScreen]) {
         return [super constrainFrameRect:frameRect toScreen:screen];
+    } else {
+        return frameRect;
     }
 }
 

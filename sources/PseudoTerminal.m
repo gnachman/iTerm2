@@ -1057,6 +1057,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return (PTYTab *)session.delegate;
 }
 
+// Allow frame to go off-screen while hotkey window is sliding in or out.
+- (BOOL)terminalWindowShouldConstrainFrameToScreen {
+    iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+    return !([profileHotKey rollingIn] || [profileHotKey rollingOut]);
+}
+
 - (void)closeSession:(PTYSession *)aSession {
     [self closeSession:aSession soft:NO];
 }

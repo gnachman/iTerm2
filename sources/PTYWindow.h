@@ -44,6 +44,10 @@ extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 
 // Returns the tab a session belongs to.
 - (PTYTab *)tabForSession:(PTYSession *)session;
+
+// Should the window's frame be constrainted to its present screen?
+- (BOOL)terminalWindowShouldConstrainFrameToScreen;
+
 @end
 
 // Common methods implemented by terminal windows of both kinds.

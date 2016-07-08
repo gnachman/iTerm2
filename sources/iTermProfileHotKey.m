@@ -181,6 +181,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)rollInAnimatingInDirection:(iTermAnimationDirection)direction {
+    [self.windowController.window setFrameOrigin:[self hiddenOrigin]];
+
     NSRect destination = self.windowController.window.frame;
     destination.origin = [self visibleOrigin];
     self.windowController.window.alphaValue = 0;
