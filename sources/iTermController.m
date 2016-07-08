@@ -1336,13 +1336,6 @@ static iTermController *gSharedInstance;
     return NO;
 }
 
-- (BOOL)keystrokesBeingStolen {
-    // If we're active and have ordered windows but none of them are key then our keystrokes are
-    // being stolen by something else. This is meant to detect when Spotlight is open. It might
-    // also catch other things that act similarly.
-    return [NSApp isActive] && [[NSApp orderedWindows] count] > 0 && ![self anyVisibleWindowIsKey];
-}
-
 // I don't trust -[NSApp mainWindow].
 - (BOOL)anyWindowIsMain {
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
