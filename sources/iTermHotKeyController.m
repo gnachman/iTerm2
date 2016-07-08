@@ -391,10 +391,16 @@
 }
 
 - (NSArray<iTermPanel *> *)visibleFloatingHotkeyWindows {
+    return [[self allFloatingHotkeyWindows] filteredArrayUsingBlock:^BOOL(iTermPanel *anObject) {
+        return anObject.alphaValue == 1;
+    }];
+}
+
+- (NSArray<iTermPanel *> *)allFloatingHotkeyWindows {
     // Note iTermPanel class is implied by appearing on all spaces and floating.
     return [[self profileHotKeys] mapWithBlock:^id(iTermProfileHotKey *anObject) {
         NSWindow *window = anObject.windowController.window;
-        if (window.alphaValue == 1 && [window isKindOfClass:[iTermPanel class]]) {
+        if ([window isKindOfClass:[iTermPanel class]]) {
             return window;
         } else {
             return nil;

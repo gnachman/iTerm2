@@ -42,7 +42,7 @@ static void WriteDebugLogHeader() {
                         (long long)[[NSDate date] timeIntervalSince1970],
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
-                        [(iTermApplication *)NSApp orderedWindowsPlusHotkeyPanels]];
+                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
     [gDebugLogHeader release];
     gDebugLogHeader = [header copy];
 }
@@ -57,7 +57,7 @@ static void WriteDebugLogFooter() {
                       @"Windows: %@\n"
                       @"Ordered windows: %@\n",
                       windows,
-                      [(iTermApplication *)NSApp orderedWindowsPlusHotkeyPanels]];
+                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
   [gDebugLogStr appendString:footer];
 }
 

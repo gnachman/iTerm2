@@ -42,7 +42,8 @@
 
 + (iTermApplication *)sharedApplication;
 
-- (NSArray<NSWindow *> *)orderedWindowsPlusHotkeyPanels;
+- (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels;
+- (NSArray<NSWindow *> *)orderedWindowsPlusAllHotkeyPanels;
 
 // Sets the return value for -currentEvent. Only for testing.
 @property(atomic, retain) NSEvent *fakeCurrentEvent;

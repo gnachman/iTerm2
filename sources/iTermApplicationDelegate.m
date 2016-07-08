@@ -1335,7 +1335,7 @@ static BOOL hasBecomeActive = NO;
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusHotkeyPanels]) {
+        for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels]) {
             if (!window.isOnActiveSpace) {
                 continue;
             }

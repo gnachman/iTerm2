@@ -286,9 +286,14 @@
 }
 
 #warning TODO audit what's done with windows gotten from orderedWindows, orderedScriptingWindows, and this method for compatibilityw ith panels.
-- (NSArray<NSWindow *> *)orderedWindowsPlusHotkeyPanels {
+- (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {
     NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] visibleFloatingHotkeyWindows] ?: @[];
 #warning TODO: Audit all uses of orderedWindows
+    return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
+}
+
+- (NSArray<NSWindow *> *)orderedWindowsPlusAllHotkeyPanels {
+    NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] allFloatingHotkeyWindows] ?: @[];
     return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
 }
 

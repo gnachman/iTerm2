@@ -87,5 +87,6 @@
 
 // Alpha=1, level=floating, on all spaces hotkey windows.
 - (NSArray<iTermPanel *> *)visibleFloatingHotkeyWindows;
+- (NSArray<iTermPanel *> *)allFloatingHotkeyWindows;
 
 @end
