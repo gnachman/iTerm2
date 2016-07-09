@@ -39,7 +39,7 @@
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
                                               title:@"Credits\n\n"];
 
-        NSDictionary *linkTextViewAttributes = @{ NSUnderlineStyleAttributeName: @(NSSingleUnderlineStyle),
+        NSDictionary *linkTextViewAttributes = @{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
                                                   NSForegroundColorAttributeName: [NSColor blueColor],
                                                   NSCursorAttributeName: [NSCursor pointingHandCursor] };
 

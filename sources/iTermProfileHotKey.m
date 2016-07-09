@@ -141,7 +141,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
             
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame) + NSHeight(rect));
+            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame));
             
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -169,7 +169,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
             
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame));
+            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame) - NSHeight(rect));
             
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:

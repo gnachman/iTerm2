@@ -108,8 +108,8 @@ static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
-#warning deprecate this and add hotkey window type
 static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
+
 static NSString* TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
@@ -1834,7 +1834,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (iTermProfileHotKey *hotKey in [[iTermHotKeyController sharedInstance] profileHotKeys]) {
         if ([[iTermProfilePreferences stringForKey:KEY_GUID inProfile:hotKey.profile] isEqualToString:guid]) {
             foundHotKey = YES;
-            if (hotKey.windowController) {
+            if (hotKey.windowController.weaklyReferencedObject) {
                 // Already have a window for this profile hotkey
                 return NO;
             }
@@ -1861,11 +1861,10 @@ ITERM_WEAKLY_REFERENCEABLE
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
-    const BOOL isHotkey = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
 #warning TODO test this
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID]];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
-    if (isHotkey) {
+    if (isHotkeyWindow) {
 #warning TODO test this - it should not assert when upgrading
         assert(profileHotKey);
         hotkeyWindowType = profileHotKey.hotkeyWindowType;

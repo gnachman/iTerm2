@@ -1351,7 +1351,6 @@ static iTermController *gSharedInstance;
     NSMutableArray<iTermTerminalWindow *> *temp = [NSMutableArray array];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         iTermTerminalWindow *window = [term ptyWindow];
-#warning TODO Test this and how the results of this method are used.
         if ([window isKeyWindow]) {
             [temp addObject:window];
         }
