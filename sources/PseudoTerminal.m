@@ -1861,15 +1861,12 @@ ITERM_WEAKLY_REFERENCEABLE
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
-#warning TODO test this
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID]];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
     if (isHotkeyWindow) {
-#warning TODO test this - it should not assert when upgrading
         assert(profileHotKey);
         hotkeyWindowType = profileHotKey.hotkeyWindowType;
     }
-#warning TODO: Restoring a fullscreen hotkey window hides the dock.
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
