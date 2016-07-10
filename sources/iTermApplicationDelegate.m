@@ -37,6 +37,7 @@
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
+#import "iTermFullScreenWindowManager.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
 #import "iTermOpenQuicklyWindowController.h"
@@ -172,6 +173,9 @@ static BOOL hasBecomeActive = NO;
     [ITAddressBookMgr sharedInstance];
 
     [iTermToolbeltView populateMenu:toolbeltMenu];
+
+    // Start tracking windows entering/exiting full screen.
+    [iTermFullScreenWindowManager sharedInstance];
 
     // Users used to be opted into the beta by default. Make sure the user is cool with that.
     [self promptAboutRemainingInBetaIfNeeded];

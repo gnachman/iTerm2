@@ -1530,6 +1530,8 @@
 		A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
+		A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */; };
+		A686F3631D32CD8100F08ED7 /* NSWindow+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
 		A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30C4186D0F36007F550F /* SmartMatch.h */; };
 		A68A30F4186D150A007F550F /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EA186D150A007F550F /* FileTransferManager.h */; };
@@ -3191,6 +3193,8 @@
 		A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testWindowedCharacterSelection.png"; path = "tests/Goldens/PTYTextViewTest-golden-testWindowedCharacterSelection.png"; sourceTree = "<group>"; };
 		A686C1931ADF62F200906FAE /* Zoomed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Zoomed.png; path = images/Zoomed.png; sourceTree = "<group>"; };
 		A686C1941ADF62F200906FAE /* Zoomed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Zoomed@2x.png"; path = "images/Zoomed@2x.png"; sourceTree = "<group>"; };
+		A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+iTerm.h"; sourceTree = "<group>"; };
+		A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+iTerm.m"; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindCursorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4478,6 +4482,8 @@
 				A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */,
 				5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */,
 				5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */,
+				A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */,
+				A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -6060,6 +6066,7 @@
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
+				A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */,
 				1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */,
 				A62C3B2F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
 				1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */,
@@ -7554,6 +7561,7 @@
 				A6C762DF1B45C52B00E3C992 /* PTYTask.m in Sources */,
 				A6C7637D1B45C52B00E3C992 /* ProfilesGeneralPreferencesViewController.m in Sources */,
 				A6C763801B45C52B00E3C992 /* ProfilesTerminalPreferencesViewController.m in Sources */,
+				A686F3631D32CD8100F08ED7 /* NSWindow+iTerm.m in Sources */,
 				A6C763671B45C52B00E3C992 /* ContextMenuActionPrefsController.m in Sources */,
 				A62C3B301BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.m in Sources */,
 				A6C763681B45C52B00E3C992 /* EventMonitorView.m in Sources */,

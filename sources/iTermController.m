@@ -36,6 +36,7 @@
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "NSWindow+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PasteboardHistory.h"
@@ -75,6 +76,7 @@ static iTermController *gSharedInstance;
     PseudoTerminal *_frontTerminalWindowController;
     iTermFullScreenWindowManager *_fullScreenWindowManager;
     BOOL _willPowerOff;
+    BOOL _arrangeHorizontallyPendingFullScreenTransitions;
 }
 
 + (iTermController *)sharedInstance {
@@ -119,8 +121,6 @@ static iTermController *gSharedInstance;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
-        _fullScreenWindowManager = [[iTermFullScreenWindowManager alloc] initWithClass:[PTYWindow class]
-                                                               enterFullScreenSelector:@selector(toggleFullScreen:)];
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
         
@@ -128,6 +128,10 @@ static iTermController *gSharedInstance;
                                                                selector:@selector(workspaceWillPowerOff:)
                                                                    name:NSWorkspaceWillPowerOffNotification
                                                                  object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidExitFullScreen:)
+                                                     name:NSWindowDidExitFullScreenNotification
+                                                   object:nil];
     }
 
     return (self);
@@ -153,6 +157,8 @@ static iTermController *gSharedInstance;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
     // Save hotkey window arrangement to user defaults before closing it.
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
@@ -550,25 +556,40 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
+    DLog(@"Controller: window exited fullscreen");
+    if (_arrangeHorizontallyPendingFullScreenTransitions &&
+        [[iTermFullScreenWindowManager sharedInstance] numberOfQueuedTransitions] == 0) {
+        _arrangeHorizontallyPendingFullScreenTransitions = NO;
+        [self arrangeHorizontally];
+    }
+}
+
 - (void)arrangeHorizontally {
+    DLog(@"Arrange horizontally…");
     [iTermExpose exitIfActive];
 
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreenMode deallocs self.
-    PseudoTerminal *waitFor = nil;
-    for (PseudoTerminal *t in _terminalWindows) {
-        if ([t anyFullScreen]) {
-            if ([t lionFullScreen]) {
-                waitFor = t;
+    for (PseudoTerminal *windowController in _terminalWindows) {
+        if ([windowController anyFullScreen]) {
+            if (windowController.window.isFullScreen) {
+                // Lion fullscreen
+                DLog(@"Enqueue window %@", windowController.window);
+                _arrangeHorizontallyPendingFullScreenTransitions = YES;
+                [[iTermFullScreenWindowManager sharedInstance] makeWindowExitFullScreen:windowController.ptyWindow];
+            } else if (windowController.fullScreen) {
+                // Traditional fullscreen
+                DLog(@"Exit traditional fullscreen");
+                [windowController toggleFullScreenMode:self];
             }
-            [t toggleFullScreenMode:self];
         }
     }
-
-    if (waitFor) {
-        [self performSelector:@selector(arrangeHorizontally) withObject:nil afterDelay:0.5];
+    if (_arrangeHorizontallyPendingFullScreenTransitions) {
         return;
     }
+    
+    DLog(@"Actually arranging");
 
     // For each screen, find the terminals in it and arrange them. This way
     // terminals don't move from screen to screen in this operation.
@@ -946,7 +967,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {
-    [_fullScreenWindowManager makeWindowEnterFullScreen:term.ptyWindow];
+    [[iTermFullScreenWindowManager sharedInstance] makeWindowEnterFullScreen:term.ptyWindow];
 }
 
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
