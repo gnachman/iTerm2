@@ -150,5 +150,6 @@
 + (double)tabFlashAnimationDuration;
 + (NSString *)downloadsDirectory;
 + (double)pointSizeOfTimeStamp;
++ (BOOL)showYellowMarkForJobStoppedBySignal;
 
 @end

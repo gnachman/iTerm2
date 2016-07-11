@@ -484,11 +484,18 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         [path setLineWidth:1.0];
         [path stroke];
 
-        if (mark.code) {
-            [[NSColor colorWithCalibratedRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
-        } else {
+        if (mark.code == 0) {
+            // Success
             [[NSColor colorWithCalibratedRed:120.0 / 255.0 green:178.0 / 255.0 blue:255.0 / 255.0 alpha:1] set];
+        } else if ([iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal] &&
+                   mark.code >= 128 && mark.code <= 128 + 32) {
+            // Stopped by a signal (or an error, but we can't tell which)
+            [[NSColor colorWithCalibratedRed:210.0 / 255.0 green:210.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
+        } else {
+            // Failure
+            [[NSColor colorWithCalibratedRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
         }
+
         [path moveToPoint:top];
         [path lineToPoint:right];
         [path lineToPoint:bottom];
