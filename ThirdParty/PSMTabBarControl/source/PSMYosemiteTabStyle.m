@@ -15,6 +15,36 @@
 #define kPSMMetalCounterMinWidth 20
 static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 
+@interface NSAttributedString(PSM)
+- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
+@end
+
+@implementation NSAttributedString(PSM)
+
+- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment {
+    // First try to do it the easy way.
+    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
+    NSMutableParagraphStyle *paragraphStyle = immutableAttributes[NSParagraphStyleAttributeName];
+    if ([paragraphStyle isKindOfClass:[NSMutableParagraphStyle class]]) {
+        paragraphStyle.alignment = textAlignment;
+        return self;
+    }
+    
+    // If that fails do it the right way.
+    NSMutableDictionary *attributes = [[immutableAttributes mutableCopy] autorelease];
+    paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
+    if (!paragraphStyle) {
+        paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+    }
+    paragraphStyle.alignment = textAlignment;
+    NSMutableAttributedString *temp = [[self mutableCopy] autorelease];
+    attributes[NSParagraphStyleAttributeName] = paragraphStyle;
+    [temp setAttributes:attributes range:NSMakeRange(0, temp.length)];
+    return temp;
+}
+
+@end
+
 @interface PSMTabBarCell(PSMYosemiteTabStyle)
 
 @property(nonatomic) NSAttributedString *previousAttributedString;
@@ -537,10 +567,21 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         closeButton = _closeButtonDown;
     }
 
+    CGFloat reservedSpace = 0;
     closeButtonSize = [closeButton size];
     if ([cell hasCloseButton]) {
-        // scoot label over
-        labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
+        if (cell.isCloseButtonSuppressed && _orientation == PSMTabBarHorizontalOrientation) {
+            // Do not use this much space on the left for the label, but the label is centered as
+            // though it is not reserved if it's not too long.
+            //
+            //                Center
+            //                   V
+            // [(reserved)  short-label            ]
+            // [(reserved)long-------------label   ]
+            reservedSpace = closeButtonSize.width + kPSMTabBarCellPadding;
+        } else {
+            labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
+        }
     }
 
     // Draw close button
@@ -611,6 +652,17 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 
         if ([cell count] > 0) {
             labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
+        }
+
+        if (_orientation == PSMTabBarHorizontalOrientation) {
+            NSSize size = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+            CGFloat effectiveLeftMargin = (labelRect.size.width - size.width) / 2;
+            if (effectiveLeftMargin < reservedSpace) {
+                attributedString = [attributedString attributedStringWithTextAlignment:NSLeftTextAlignment];
+
+                labelRect.origin.x += reservedSpace;
+                labelRect.size.width -= reservedSpace;
+            }
         }
 
         [attributedString drawInRect:labelRect];
