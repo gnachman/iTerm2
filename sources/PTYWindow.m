@@ -398,7 +398,6 @@ end:
         return _cachedTotalOcclusion;
     }
 
-    NSLog(@"Do the needful for window %p", self);
     NSArray *orderedWindows = [[NSApplication sharedApplication] orderedWindows];
     NSUInteger myIndex = [orderedWindows indexOfObject:self];
     CGFloat totalOcclusion = 0;
