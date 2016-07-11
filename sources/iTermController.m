@@ -566,7 +566,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)arrangeHorizontally {
-    DLog(@"Arrange horizontally…");
+    DLog(@"Arrange horizontally");
     [iTermExpose exitIfActive];
 
     // Un-full-screen each window. This is done in two steps because
