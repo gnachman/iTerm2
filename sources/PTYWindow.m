@@ -398,70 +398,70 @@ end:
         return _cachedTotalOcclusion;
     }
 
+    NSLog(@"Do the needful for window %p", self);
     NSArray *orderedWindows = [[NSApplication sharedApplication] orderedWindows];
     NSUInteger myIndex = [orderedWindows indexOfObject:self];
-    if (myIndex == 0) {
-        return 0;
-    }
-    const int kRows = 3;
-    const int kCols = 3;
-    typedef struct {
-        NSRect rect;
-        double occlusion;
-    } OcclusionPart;
-    OcclusionPart parts[kRows][kCols];
-    NSRect myFrame = [self frame];
-    NSSize partSize = NSMakeSize(myFrame.size.width / kCols, myFrame.size.height / kRows);
-    for (int y = 0; y < kRows; y++) {
-        for (int x = 0; x < kCols; x++) {
-            parts[y][x].rect = NSMakeRect(myFrame.origin.x + x * partSize.width,
-                                          myFrame.origin.y + y * partSize.height,
-                                          partSize.width,
-                                          partSize.height);
-            parts[y][x].occlusion = 0;
-        }
-    }
-    CGFloat pixelsInPart = partSize.width * partSize.height;
-
-    // This loop iterates over each window in front of this one and measures
-    // how much of it intersects each part of this one (a part is one 9th of
-    // the window, as divded into a 3x3 grid). For each part, an occlusion
-    // fraction is tracked, which is the fraction of that part which is covered
-    // by another window. It's approximate because it's the maximum occlusion
-    // for that part by all other windows, so it could be too low (if two
-    // windows each cover different halves of a part, for example).
     CGFloat totalOcclusion = 0;
-    for (NSUInteger i = 0; i < myIndex; i++) {
-        NSWindow *other = orderedWindows[i];
-        if ([other isMiniaturized] || other.alphaValue < 0.1) {
-            // The other window is almost transparent or miniaturized, so short circuit.
-            continue;
-        }
-        NSRect otherFrame = [other frame];
-        NSRect overallIntersection = NSIntersectionRect(otherFrame, myFrame);
-        if (overallIntersection.size.width < 1 &&
-            overallIntersection.size.height < 1) {
-            // Short circuit--there is no overlap at all.
-            continue;
-        }
-        totalOcclusion = 0;
+    if (myIndex != 0 && myIndex != NSNotFound) {
+        const int kRows = 3;
+        const int kCols = 3;
+        typedef struct {
+            NSRect rect;
+            double occlusion;
+        } OcclusionPart;
+        OcclusionPart parts[kRows][kCols];
+        NSRect myFrame = [self frame];
+        NSSize partSize = NSMakeSize(myFrame.size.width / kCols, myFrame.size.height / kRows);
         for (int y = 0; y < kRows; y++) {
             for (int x = 0; x < kCols; x++) {
-                if (parts[y][x].occlusion != 1) {
-                    NSRect intersection = NSIntersectionRect(parts[y][x].rect, otherFrame);
-                    CGFloat pixelsOfOcclusion = intersection.size.width * intersection.size.height;
-                    parts[y][x].occlusion = MAX(parts[y][x].occlusion,
-                                                pixelsOfOcclusion / pixelsInPart);
-                }
-                totalOcclusion += parts[y][x].occlusion / (kRows * kCols);
+                parts[y][x].rect = NSMakeRect(myFrame.origin.x + x * partSize.width,
+                                              myFrame.origin.y + y * partSize.height,
+                                              partSize.width,
+                                              partSize.height);
+                parts[y][x].occlusion = 0;
             }
         }
-        if (totalOcclusion > 0.99) {
-            totalOcclusion = 1;
-            break;
+        CGFloat pixelsInPart = partSize.width * partSize.height;
+
+        // This loop iterates over each window in front of this one and measures
+        // how much of it intersects each part of this one (a part is one 9th of
+        // the window, as divded into a 3x3 grid). For each part, an occlusion
+        // fraction is tracked, which is the fraction of that part which is covered
+        // by another window. It's approximate because it's the maximum occlusion
+        // for that part by all other windows, so it could be too low (if two
+        // windows each cover different halves of a part, for example).
+        for (NSUInteger i = 0; i < myIndex; i++) {
+            NSWindow *other = orderedWindows[i];
+            if ([other isMiniaturized] || other.alphaValue < 0.1) {
+                // The other window is almost transparent or miniaturized, so short circuit.
+                continue;
+            }
+            NSRect otherFrame = [other frame];
+            NSRect overallIntersection = NSIntersectionRect(otherFrame, myFrame);
+            if (overallIntersection.size.width < 1 &&
+                overallIntersection.size.height < 1) {
+                // Short circuit--there is no overlap at all.
+                continue;
+            }
+            totalOcclusion = 0;
+            for (int y = 0; y < kRows; y++) {
+                for (int x = 0; x < kCols; x++) {
+                    if (parts[y][x].occlusion != 1) {
+                        NSRect intersection = NSIntersectionRect(parts[y][x].rect, otherFrame);
+                        CGFloat pixelsOfOcclusion = intersection.size.width * intersection.size.height;
+                        parts[y][x].occlusion = MAX(parts[y][x].occlusion,
+                                                    pixelsOfOcclusion / pixelsInPart);
+                    }
+                    totalOcclusion += parts[y][x].occlusion / (kRows * kCols);
+                }
+            }
+            if (totalOcclusion > 0.99) {
+                totalOcclusion = 1;
+                break;
+            }
         }
     }
-
+    
     _totalOcclusionCacheTime = [NSDate timeIntervalSinceReferenceDate];
     _cachedTotalOcclusion = totalOcclusion;
     return totalOcclusion;

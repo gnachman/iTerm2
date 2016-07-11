@@ -10,9 +10,7 @@
 
 #import "DebugLogging.h"
 
-@implementation iTermWindowOcclusionChangeMonitor {
-    NSTimeInterval _occlusionInvalidationTime;
-}
+@implementation iTermWindowOcclusionChangeMonitor
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -73,7 +71,7 @@
 }
 
 - (void)invalidateCachedOcclusion {
-    _occlusionInvalidationTime = [NSDate timeIntervalSinceReferenceDate];
+    _timeOfLastOcclusionChange = [NSDate timeIntervalSinceReferenceDate];
 }
 
 
