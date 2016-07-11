@@ -114,7 +114,7 @@
     NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
     temp[NSStrokeColorAttributeName] = [_backgroundColor colorWithAlphaComponent:1];
     NSSize sizeWithFont = [self sizeWithAttributes:temp];
-    if (sizeWithFont.width <= 0 && sizeWithFont.height <= 0) {
+    if (sizeWithFont.width <= 0 || sizeWithFont.height <= 0) {
         return nil;
     }
 
