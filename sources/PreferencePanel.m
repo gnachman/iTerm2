@@ -268,6 +268,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 #pragma mark - NSWindowController
 
 - (void)windowWillLoad {
+    DLog(@"Will load prefs panel from %@", [NSThread callStackSymbols]);
     // We finally set our autosave window frame name and restore the one from the user's defaults.
     [self setShouldCascadeWindows:NO];
 }
