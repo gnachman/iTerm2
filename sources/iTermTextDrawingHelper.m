@@ -299,6 +299,9 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     CGFloat alpha = _transparencyAlpha;
     if (run->selected) {
         color = [self selectionColorForCurrentFocus];
+        if (_transparencyAffectsOnlyDefaultBackgroundColor) {
+            alpha = 1;
+        }
     } else if (run->isMatch) {
         color = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
     } else {
