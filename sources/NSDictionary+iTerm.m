@@ -145,6 +145,45 @@ static NSString *const kGridSizeHeight = @"Height";
     return temp;
 }
 
+- (BOOL)isEqualToDictionary:(NSDictionary *)other ignoringKeys:(NSSet *)keysToIgnore {
+    NSMutableSet *allKeys = [NSMutableSet set];
+    [allKeys addObjectsFromArray:self.allKeys];
+    [allKeys addObjectsFromArray:other.allKeys];
+
+    for (id key in allKeys) {
+        if ([keysToIgnore containsObject:key]) {
+            continue;
+        }
+        id myValue = self[key];
+        if (![myValue isEqual:other[key]]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (NSDictionary *)dictionaryByMergingDictionary:(NSDictionary *)other {
+    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
+    [other enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        temp[key] = obj;
+    }];
+    return temp;
+}
+
+- (BOOL)isExactlyEqualToDictionary:(NSDictionary *)other {
+    if (self.count != other.count) {
+        return NO;
+    }
+    __block BOOL result = YES;
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        if (other[key] != obj) {
+            *stop = YES;
+            result = NO;
+        }
+    }];
+    return result;
+}
+
 - (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key {
     NSMutableDictionary *mutableSelf = [[self mutableCopy] autorelease];
     mutableSelf[key] = object;

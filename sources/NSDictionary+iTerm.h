@@ -40,6 +40,12 @@
 
 - (NSDictionary *)dictionaryByRemovingNullValues;
 
+- (BOOL)isEqualToDictionary:(NSDictionary *)other ignoringKeys:(NSSet *)keysToIgnore;
+- (NSDictionary *)dictionaryByMergingDictionary:(NSDictionary *)other;
+
+// Compares pointers only
+- (BOOL)isExactlyEqualToDictionary:(NSDictionary *)other;
+
 - (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key;
 
 @end

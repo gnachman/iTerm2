@@ -1,5 +1,4 @@
 #import <Cocoa/Cocoa.h>
-#import "CharacterRun.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermColorMap.h"

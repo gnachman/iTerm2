@@ -1,8 +1,6 @@
 #import "PTYTextView.h"
 
 #import "AsyncHostLookupController.h"
-#import "CharacterRun.h"
-#import "CharacterRunInline.h"
 #import "charmaps.h"
 #import "FileTransferManager.h"
 #import "FontSizeEstimator.h"
@@ -5270,7 +5268,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setTransparency:(double)fVal {
     _transparency = fVal;
-    _drawingHelper.transparency = fVal;
     [self setNeedsDisplay:YES];
 }
 

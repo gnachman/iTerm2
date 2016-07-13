@@ -119,9 +119,6 @@
 // Height of the "excess" region between the last line and the bottom of the view.
 @property(nonatomic, assign) double excess;
 
-// How transparent is the view?
-@property(nonatomic, assign) CGFloat transparency;
-
 // Total number of lines ever scrolled out of history.
 @property(nonatomic, assign) long long totalScrollbackOverflow;
 
@@ -164,7 +161,7 @@
 // Is there an underlined hostname?
 @property(nonatomic, assign) BOOL haveUnderlinedHostname;
 
-// Alpha value to use for cursor.
+// Background transparency level. Should be 1 if transparency is off for this view.
 @property(nonatomic, assign) double transparencyAlpha;
 
 // Is the cursor visible?
