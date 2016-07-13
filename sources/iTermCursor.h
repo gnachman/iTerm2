@@ -18,13 +18,10 @@ typedef struct {
 
 - (iTermCursorNeighbors)cursorNeighbors;
 
-- (void)cursorDrawCharacter:(screen_char_t)screenChar
-                        row:(int)row
-                      point:(NSPoint)point
-                doubleWidth:(BOOL)doubleWidth
-              overrideColor:(NSColor*)overrideColor
-                    context:(CGContextRef)ctx
-            backgroundColor:(NSColor *)backgroundColor;
+- (void)cursorDrawCharacterAt:(VT100GridCoord)coord
+                overrideColor:(NSColor*)overrideColor
+                      context:(CGContextRef)ctx
+              backgroundColor:(NSColor *)backgroundColor;
 
 - (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
                       wantBackground:(BOOL)wantBackgroundColor
@@ -46,6 +43,7 @@ typedef struct {
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
      backgroundColor:(NSColor *)backgroundColor
+     foregroundColor:(NSColor *)foregroundColor
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord

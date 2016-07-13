@@ -11,6 +11,33 @@
 
 @implementation NSImage (iTerm)
 
++ (instancetype)imageWithRawData:(NSData *)data
+                            size:(NSSize)size
+                   bitsPerSample:(NSInteger)bitsPerSample
+                 samplesPerPixel:(NSInteger)samplesPerPixel
+                        hasAlpha:(BOOL)hasAlpha
+                  colorSpaceName:(NSString *)colorSpaceName {
+    assert(data.length == size.width * size.height * bitsPerSample * samplesPerPixel / 8);
+    NSBitmapImageRep *bitmapImageRep =
+        [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil  // allocate the pixel buffer for us
+                                                 pixelsWide:size.width
+                                                 pixelsHigh:size.height
+                                              bitsPerSample:bitsPerSample
+                                            samplesPerPixel:samplesPerPixel
+                                                   hasAlpha:hasAlpha
+                                                   isPlanar:NO
+                                             colorSpaceName:colorSpaceName
+                                                bytesPerRow:bitsPerSample * samplesPerPixel * size.width / 8
+                                               bitsPerPixel:bitsPerSample * samplesPerPixel] autorelease];  // 0 means OS infers it
+
+    memmove([bitmapImageRep bitmapData], data.bytes, data.length);
+
+    NSImage *theImage = [[[NSImage alloc] initWithSize:size] autorelease];
+    [theImage addRepresentation:bitmapImageRep];
+
+    return theImage;
+}
+
 + (NSString *)extensionForUniformType:(NSString *)type {
     NSDictionary *map = @{ (NSString *)kUTTypeBMP: @"bmp",
                            (NSString *)kUTTypeGIF: @"gif",

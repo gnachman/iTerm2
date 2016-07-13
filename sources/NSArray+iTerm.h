@@ -58,6 +58,8 @@
 // For N=0 elements:   @""
 - (NSString *)componentsJoinedWithOxfordComma;
 
+- (NSArray *)intersectArray:(NSArray *)other;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)

@@ -249,6 +249,9 @@
 // Line number that is being hovered over for drop
 @property(nonatomic, assign) int dropLine;
 
+// Smallest of the baseline offset for the available fonts. Is a negative number.
+@property(nonatomic, assign) CGFloat baselineOffset;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

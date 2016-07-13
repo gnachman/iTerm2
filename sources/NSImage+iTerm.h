@@ -10,6 +10,13 @@
 
 @interface NSImage (iTerm)
 
++ (instancetype)imageWithRawData:(NSData *)data
+                            size:(NSSize)size
+                   bitsPerSample:(NSInteger)bitsPerSample  // e.g. 8 or 1
+                 samplesPerPixel:(NSInteger)samplesPerPixel  // e.g. 4 (RGBA) or 1
+                        hasAlpha:(BOOL)hasAlpha
+                  colorSpaceName:(NSString *)colorSpaceName;  // e.g., NSCalibratedRGBColorSpace
+
 // Returns "gif", "png", etc., or nil.
 + (NSString *)extensionForUniformType:(NSString *)type;
 

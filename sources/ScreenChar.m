@@ -130,14 +130,6 @@ static BOOL hasWrapped = NO;
 static void CreateComplexCharMapIfNeeded() {
     if (!complexCharMap) {
         complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
-        // Add box-drawing chars, which are reserved. They are drawn using
-        // bezier paths but it's important that the keys refer to an existing
-        // string for general correctness.
-        for (int i = 0; i < 256; i++) {
-            if (lineDrawingCharFlags[i]) {
-                complexCharMap[@(charmap[i])] = [NSString stringWithFormat:@"%C", charmap[i]];
-            }
-        }
         inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
     }
 }
@@ -201,23 +193,7 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex)
 }
 
 static BOOL ComplexCharKeyIsReserved(int k) {
-    switch (k) {
-        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT:
-        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT:
-        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT:
-        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT:
-        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL:
-            return YES;
-
-        default:
-            return NO;
-    }
+    return k >= iTermBoxDrawingCodeMin && k <= iTermBoxDrawingCodeMax;
 }
 
 static void AllocateImageMapsIfNeeded(void) {
@@ -623,7 +599,7 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
 
     for (i = 0; i < len; i++) {
         assert(!s[i].complexChar);
-        s[i].complexChar = lineDrawingCharFlags[(int)(s[i].code)];
+        s[i].complexChar = NO;
         s[i].code = charmap[(int)(s[i].code)];
     }
 }
