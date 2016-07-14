@@ -217,7 +217,7 @@ typedef struct iTermTextColorContext {
     NSRectClip(innerRect);
 
     // Draw an extra ring of characters outside it.
-    NSRect outerRect = [self rectByGrowingRectByOneCell:innerRect];
+    NSRect outerRect = [self rectByGrowingRect:innerRect];
     [self drawOneRect:outerRect];
 
     [context restoreGraphicsState];
@@ -1854,12 +1854,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                       (coordRange.end.y - coordRange.start.y) * _cellSize.height);
 }
 
-- (NSRect)rectByGrowingRectByOneCell:(NSRect)innerRect {
+- (NSRect)rectByGrowingRect:(NSRect)innerRect {
     NSSize frameSize = _frame.size;
-    NSPoint minPoint = NSMakePoint(MAX(0, innerRect.origin.x - _cellSize.width),
-                                   MAX(0, innerRect.origin.y - _cellSize.height));
-    NSPoint maxPoint = NSMakePoint(MIN(frameSize.width, NSMaxX(innerRect) + _cellSize.width),
-                                   MIN(frameSize.height, NSMaxY(innerRect) + _cellSize.height));
+    const NSInteger extraWidth = 3;
+    const NSInteger extraHeight = 1;
+    NSPoint minPoint = NSMakePoint(MAX(0, innerRect.origin.x - extraWidth * _cellSize.width),
+                                   MAX(0, innerRect.origin.y - extraHeight * _cellSize.height));
+    NSPoint maxPoint = NSMakePoint(MIN(frameSize.width, NSMaxX(innerRect) + extraWidth * _cellSize.width),
+                                   MIN(frameSize.height, NSMaxY(innerRect) + extraHeight * _cellSize.height));
     NSRect outerRect = NSMakeRect(minPoint.x,
                                   minPoint.y,
                                   maxPoint.x - minPoint.x,
