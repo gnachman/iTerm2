@@ -1027,9 +1027,10 @@ typedef struct iTermTextColorContext {
         CGFloat xPositionForFirstGlyphInCharacter = positions[0].x;
         for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
             CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            if (characterIndex != previousCharacterIndex) {
+            while (characterIndex != previousCharacterIndex) {
                 characterX += [advances[characterIndex] doubleValue];
                 xPositionForFirstGlyphInCharacter = positions[glyphIndex].x;
+                ++previousCharacterIndex;
             }
 
             positions[glyphIndex].x += characterX - xPositionForFirstGlyphInCharacter;
