@@ -43,6 +43,7 @@
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
      backgroundColor:(NSColor *)backgroundColor
+     foregroundColor:(NSColor *)foregroundColor
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
@@ -57,6 +58,7 @@
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
      backgroundColor:(NSColor *)backgroundColor
+     foregroundColor:(NSColor *)foregroundColor
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
@@ -76,6 +78,7 @@
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
      backgroundColor:(NSColor *)backgroundColor
+     foregroundColor:(NSColor *)foregroundColor
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
@@ -92,6 +95,7 @@
          doubleWidth:(BOOL)doubleWidth
           screenChar:(screen_char_t)screenChar
      backgroundColor:(NSColor *)backgroundColor
+     foregroundColor:(NSColor *)foregroundColor
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
@@ -118,24 +122,13 @@
             [self drawSmartCursorCharacter:screenChar
                            backgroundColor:backgroundColor
                                        ctx:ctx
-                               doubleWidth:doubleWidth
-                                      rect:rect
                                      coord:coord];
         } else {
             // Non-smart
-            screen_char_t modifiedScreenChar = screenChar;
-            modifiedScreenChar.foregroundColor = ALTSEM_CURSOR;
-            modifiedScreenChar.fgGreen = 0;
-            modifiedScreenChar.fgBlue = 0;
-            modifiedScreenChar.foregroundColorMode = ColorModeAlternate;
-
-            [self.delegate cursorDrawCharacter:modifiedScreenChar
-                                           row:coord.y
-                                         point:rect.origin
-                                   doubleWidth:doubleWidth
-                                 overrideColor:nil
-                                       context:ctx
-                               backgroundColor:backgroundColor];
+            [self.delegate cursorDrawCharacterAt:coord
+                                   overrideColor:foregroundColor
+                                         context:ctx
+                                 backgroundColor:backgroundColor];
         }
     }
 }
@@ -143,8 +136,6 @@
 - (void)drawSmartCursorCharacter:(screen_char_t)screenChar
                  backgroundColor:(NSColor *)backgroundColor
                              ctx:(CGContextRef)ctx
-                     doubleWidth:(BOOL)doubleWidth
-                            rect:(NSRect)rect
                            coord:(VT100GridCoord)coord {
     NSColor *proposedForeground = [self.delegate cursorColorForCharacter:screenChar
                                                           wantBackground:YES
@@ -153,13 +144,10 @@
     NSColor *overrideColor = [self overrideColorForSmartCursorWithForegroundColor:proposedForeground
                                                                   backgroundColor:backgroundColor];
 
-    [self.delegate cursorDrawCharacter:screenChar
-                                   row:coord.y
-                                 point:rect.origin
-                           doubleWidth:doubleWidth
-                         overrideColor:overrideColor
-                               context:ctx
-                       backgroundColor:nil];
+    [self.delegate cursorDrawCharacterAt:coord
+                           overrideColor:overrideColor
+                                 context:ctx
+                         backgroundColor:nil];
 
 }
 

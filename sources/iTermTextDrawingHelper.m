@@ -1676,10 +1676,20 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         }
         iTermCursor *cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
+        
+        NSColor *cursorTextColor = [_delegate drawingHelperColorForCode:ALTSEM_CURSOR
+                                                                  green:0
+                                                                   blue:0
+                                                              colorMode:ColorModeAlternate
+                                                                   bold:NO
+                                                                  faint:NO
+                                                           isBackground:NO];
+
         [cursor drawWithRect:rect
                  doubleWidth:isDoubleWidth
                   screenChar:screenChar
              backgroundColor:cursorColor
+             foregroundColor:cursorTextColor
                        smart:_useSmartCursorColor
                      focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
                        coord:_cursorCoord
@@ -2818,35 +2828,30 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return neighbors;
 }
 
-- (void)cursorDrawCharacter:(screen_char_t)screenChar
-                        row:(int)row
-                      point:(NSPoint)point
-                doubleWidth:(BOOL)doubleWidth
-              overrideColor:(NSColor *)overrideColor
-                    context:(CGContextRef)ctx
-            backgroundColor:(NSColor *)backgroundColor {
-    // Offset the point by the vertical spacing. The point is derived from the box cursor's frame,
-    // which is different than the top of the row (the cursor doesn't get taller as vertical spacing
-    // is added, or shorter as it is removed). Text still wants to be rendered relative to the top
-    // of the row including spacing, though.
-    point.y -= (_cellSize.height - _cellSizeWithoutSpacing.height);
+- (void)cursorDrawCharacterAt:(VT100GridCoord)coord
+                overrideColor:(NSColor *)overrideColor
+                      context:(CGContextRef)ctx
+              backgroundColor:(NSColor *)backgroundColor {
+    NSGraphicsContext *context = [NSGraphicsContext currentContext];
+    [context saveGraphicsState];
 
-    // Draw the characters.
-    screen_char_t temp[2];
-    temp[0] = screenChar;
-    memset(temp + 1, 0, sizeof(temp[1]));
-    if (doubleWidth) {
-        temp[1].code = DWC_RIGHT;
-    }
-    [self constructAndDrawRunsForLine:temp
+    int row = coord.y + _numberOfScrollbackLines;
+    VT100GridCoordRange coordRange = VT100GridCoordRangeMake(coord.x, row, coord.x + 1, row + 1);
+    NSRect innerRect = [self rectForCoordRange:coordRange];
+    NSRectClip(innerRect);
+
+    screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
+    [self constructAndDrawRunsForLine:line
                                   row:row
-                              inRange:NSMakeRange(0, 1)
-                      startingAtPoint:point
+                              inRange:NSMakeRange(0, _gridSize.width)
+                      startingAtPoint:NSMakePoint(MARGIN, row * _cellSize.height)
                            bgselected:NO
                               bgColor:backgroundColor
                               matches:nil
                        forceTextColor:overrideColor
                               context:ctx];
+    
+    [context restoreGraphicsState];
 }
 
 - (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
