@@ -189,18 +189,6 @@ NS_ENUM(unichar, iTermBoxDrawingCode) {
     iTermBoxDrawingCodeHeavyUpAndLightDown = 0x257F,  // ╿
 };
 
-//#define ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT             0x2518  // 106: ┘
-//#define ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT           0x2510  // 107: ┐
-//#define ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT          0x250C  // 108: ┌
-//#define ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT            0x2514  // 109: └
-//#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL 0x253c  // 110: ┼
-//#define ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL              0x2500  // 113: ─
-//#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT      0x251c  // 116: ├
-//#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT       0x2524  // 117: ┤
-//#define ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL       0x2534  // 118: ┴
-//#define ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL     0x252C  // 119: ┬
-//#define ITERM_BOX_DRAWINGS_LIGHT_VERTICAL                0x2502  // 120: │
-
 // Defines a mapping from ascii characters to their Unicode graphical equivalent. Used in line-
 // drawing mode.
 static const unichar charmap[256]={
@@ -224,7 +212,7 @@ static const unichar charmap[256]={
     iTermBoxDrawingCodeLightUpAndRight,
     iTermBoxDrawingCodeLightVerticalAndHorizontal,
     0x23ba, 0x23bb,
-    iTermBoxDrawingCodeLightVertical,
+    iTermBoxDrawingCodeLightHorizontal,
     0x23bc, 0x23bd,
     iTermBoxDrawingCodeLightVerticalAndRight,
     iTermBoxDrawingCodeLightVerticalAndLeft,
@@ -250,39 +238,3 @@ static const unichar charmap[256]={
     0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff
 };
 
-// Which chars should get special line-drawing treatment. Corresponds to the ITERM_BOX_DRAWINGS...
-// defines above.
-static const BOOL lineDrawingCharFlags[256]={
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 1, 1, 1, 1, 1, 0,
-    0, 1, 0, 0, 1, 1, 1, 1,
-    1, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
-};

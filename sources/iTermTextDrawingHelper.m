@@ -79,18 +79,17 @@ static NSString *const iTermIsBoxDrawingAttribute = @"iTermIsBoxDrawingAttribute
 
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
-    NSColor *lastProcessedColor;
     CGFloat dimmingAmount;
     CGFloat mutingAmount;
     BOOL hasSelectedText;
     iTermColorMap *colorMap;
     NSView<iTermTextDrawingHelperDelegate> *delegate;
     NSData *findMatches;
-    const char *matchBytes;
     BOOL reverseVideo;
     screen_char_t previousCharacterAttributes;
     BOOL havePreviousCharacterAttributes;
     NSColor *backgroundColor;
+    NSColor *previousBackgroundColor;
     CGFloat minimumContrast;
     BOOL haveUnderlinedHostname;
     NSColor *previousForegroundColor;
@@ -125,6 +124,7 @@ typedef struct iTermTextColorContext {
     NSImage *_backgroundStripesImage;
     
     iTermPreciseTimerStats _stats[TIMER_STAT_MAX];
+    CGFloat _baselineOffset;
 }
 
 - (instancetype)init {
@@ -851,7 +851,7 @@ typedef struct iTermTextColorContext {
                             matches:(NSData *)matches
                      forceTextColor:(NSColor *)forceTextColor  // optional
                             context:(CGContextRef)ctx {
-    NSMutableArray<NSNumber *> *advances = [NSMutableArray array];
+    NSMutableArray<NSNumber *> *positions = [NSMutableArray array];
     
     if (indexRange.location > 0) {
         screen_char_t firstCharacter = theLine[indexRange.location];
@@ -871,14 +871,14 @@ typedef struct iTermTextColorContext {
                                                                        forceTextColor:forceTextColor
                                                                           findMatches:matches
                                                                       underlinedRange:[self underlinedRangeOnLine:row]
-                                                                             advances:advances];
+                                                                            positions:positions];
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
     [self drawMultipartAttributedString:attributedStrings
                                 atPoint:initialPoint
                                  origin:VT100GridCoordMake(indexRange.location, row)
-                               advances:advances
+                              positions:positions
                               inContext:ctx];
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_DRAW]);
 }
@@ -886,22 +886,21 @@ typedef struct iTermTextColorContext {
 - (void)drawMultipartAttributedString:(NSArray<NSAttributedString *> *)attributedStrings
                               atPoint:(NSPoint)initialPoint
                                origin:(VT100GridCoord)initialOrigin
-                             advances:(NSArray<NSNumber *> *)advances
+                            positions:(NSArray<NSNumber *> *)positions
                             inContext:(CGContextRef)ctx {
     NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
     for (NSAttributedString *singlePartAttributedString in attributedStrings) {
-        NSArray *subadvances = [advances subarrayWithRange:NSMakeRange(start, singlePartAttributedString.length)];
+        NSArray *subpositions = [positions subarrayWithRange:NSMakeRange(start, singlePartAttributedString.length)];
         start += singlePartAttributedString.length;
         CGFloat width =
             [self drawSinglePartAttributedString:singlePartAttributedString
                                          atPoint:point
                                           origin:origin
-                                        advances:subadvances
+                                       positions:subpositions
                                        inContext:ctx];
         origin.x += round(width / _cellSize.width);
-        point.x += width;
     }
 }
 
@@ -925,7 +924,7 @@ typedef struct iTermTextColorContext {
 - (CGFloat)drawSinglePartAttributedString:(NSAttributedString *)attributedString
                                   atPoint:(NSPoint)point
                                    origin:(VT100GridCoord)origin
-                                 advances:(NSArray<NSNumber *> *)advances
+                                positions:(NSArray<NSNumber *> *)positions
                                 inContext:(CGContextRef)ctx {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     if (attributes[iTermImageCodeAttribute]) {
@@ -941,17 +940,18 @@ typedef struct iTermTextColorContext {
     } else if ([attributes[iTermIsBoxDrawingAttribute] boolValue]) {
         // Special box-drawing cells don't use the font so they look prettier.
         [attributedString.string enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
-            [self drawBoxDrawingCharacter:simple withAttributes:[attributedString attributesAtIndex:range.location effectiveRange:nil] at:point];
+            NSPoint p = NSMakePoint(point.x + [positions[range.location] doubleValue], point.y);
+            [self drawBoxDrawingCharacter:simple
+                           withAttributes:[attributedString attributesAtIndex:range.location
+                                                               effectiveRange:nil]
+                                       at:p];
         }];
         return _cellSize.width * attributedString.length;
     } else {
         // Faster (not fast, but faster) than drawStringWithCombiningMarksInRun. This is used for
         // surrogate pairs and when drawing a simple run fails because a glyph couldn't be found.
-        CGFloat width = 0;
-        for (NSNumber *number in advances) {
-            width += number.doubleValue;
-        }
-        [self drawTextOnlyAttributedString:attributedString atPoint:point advances:advances width:width];
+        CGFloat width = [[positions lastObject] doubleValue] + _cellSize.width;
+        [self drawTextOnlyAttributedString:attributedString atPoint:point positions:positions width:width];
         DLog(@"Return width of %d", (int)round(width));
         return width;
     }
@@ -959,18 +959,15 @@ typedef struct iTermTextColorContext {
 
 - (void)drawTextOnlyAttributedString:(NSAttributedString *)attributedString
                                 atPoint:(NSPoint)origin
-                               advances:(NSArray<NSNumber *> *)advances
+                           positions:(NSArray<NSNumber *> *)stringPositions
                                width:(CGFloat)width {
     DLog(@"Draw attributed string beginning at %d", (int)round(origin.x));
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
-    NSFont *font = attributes[NSFontAttributeName];
-    CGFloat baselineOffset = -(floorf(font.leading) - floorf(font.descender));
     NSColor *color = attributes[NSForegroundColorAttributeName];
 
     BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
     BOOL fakeItalic = [attributes[iTermFakeItalicAttribute] boolValue];
     BOOL antiAlias = [attributes[iTermAntiAliasAttribute] boolValue];
-    // TODO: Anti aliasing
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
 
     [ctx saveGraphicsState];
@@ -984,6 +981,7 @@ typedef struct iTermTextColorContext {
     CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
     CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
     CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+    CGContextSetShouldAntialias(cgContext, antiAlias);
     CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
     CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
 
@@ -992,14 +990,14 @@ typedef struct iTermTextColorContext {
         c = 0.2;
     }
 
-    const CGFloat ty = origin.y + baselineOffset + _cellSize.height;
+    const CGFloat ty = origin.y + _baselineOffset + _cellSize.height;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
                                                          origin.x, ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
 
-    CGFloat characterX = 0;
-    CFIndex previousCharacterIndex = 0;
+    CGFloat cellOrigin = -1;
+    CFIndex previousCharacterIndex = -1;
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
         size_t length = CTRunGetGlyphCount(run);
@@ -1024,16 +1022,14 @@ typedef struct iTermTextColorContext {
             glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
         }
         
-        CGFloat xPositionForFirstGlyphInCharacter = positions[0].x;
+        CGFloat positionOfFirstGlyphInCluster = positions[0].x;
         for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
             CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            while (characterIndex != previousCharacterIndex) {
-                characterX += [advances[characterIndex] doubleValue];
-                xPositionForFirstGlyphInCharacter = positions[glyphIndex].x;
-                ++previousCharacterIndex;
+            if (characterIndex != previousCharacterIndex && [stringPositions[characterIndex] doubleValue] != cellOrigin) {
+                positionOfFirstGlyphInCluster = positions[glyphIndex].x;
+                cellOrigin = [stringPositions[characterIndex] doubleValue];
             }
-
-            positions[glyphIndex].x += characterX - xPositionForFirstGlyphInCharacter;
+            positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
         }
 
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
@@ -1048,32 +1044,17 @@ typedef struct iTermTextColorContext {
     CFRelease(lineRef);
     [ctx restoreGraphicsState];
     
-    __block CGFloat x = origin.x;
-    __block NSInteger location = 0;
     [attributedString enumerateAttribute:NSUnderlineStyleAttributeName
                                  inRange:NSMakeRange(0, attributedString.length)
                                  options:0
                               usingBlock:^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
                                   if (value.integerValue) {
                                       NSDictionary *attributes = [attributedString attributesAtIndex:range.location effectiveRange:nil];
-                                      NSPoint cellOrigin = origin;
-                                      while (range.location > location) {
-                                          x += [advances[location] doubleValue];
-                                          ++location;
-                                      }
-                                      cellOrigin.x = x;
-                                      CGFloat width = 0;
-                                      NSInteger limit = NSMaxRange(range);
-                                      while (limit  > location) {
-                                          x += [advances[location] doubleValue];
-                                          width += [advances[location] doubleValue];
-                                          ++location;
-                                      }
 #warning TODO: Support custom underline color when merging in 3.1 branch
                                       [self drawUnderlineOfColor:attributes[NSForegroundColorAttributeName]
-                                                    atCellOrigin:cellOrigin
-                                                            font:attributes[NSFontNameAttribute]
-                                                           width:width];
+                                                    atCellOrigin:NSMakePoint(origin.x + [stringPositions[range.location] doubleValue], origin.y)
+                                                            font:attributes[NSFontAttributeName]
+                                                           width:[stringPositions[NSMaxRange(range) - 1] doubleValue] + self.cellSize.width - [stringPositions[range.location] doubleValue]];
                                   }
                               }];
 }
@@ -1084,39 +1065,49 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
                                                    iTermTextColorContext *context) {
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
+    const BOOL needsProcessing = context->backgroundColor && (context->minimumContrast > 0.001 ||
+                                                              context->dimmingAmount > 0.001 ||
+                                                              context->mutingAmount > 0.001 ||
+                                                              c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
 
     if (context->findMatches && !context->hasSelectedText) {
         // Test if this is a highlighted match from a find.
         int theIndex = index / 8;
         int mask = 1 << (index & 7);
-        if (theIndex < [context->findMatches length] && (context->matchBytes[theIndex] & mask)) {
+        const char *matchBytes = context->findMatches.bytes;
+        if (theIndex < [context->findMatches length] && (matchBytes[theIndex] & mask)) {
             isMatch = YES;
         }
     }
 
     if (isMatch) {
+        // Black-on-yellow search result.
         rawColor = [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
+        context->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange && !context->haveUnderlinedHostname) {
+        // Blue link text.
         rawColor = [context->colorMap colorForKey:kColorMapLink];
+        context->havePreviousCharacterAttributes = NO;
     } else if (context->hasSelectedText) {
+        // Selected text.
         rawColor = [context->colorMap colorForKey:kColorMapSelectedText];
+        context->havePreviousCharacterAttributes = NO;
     } else if (context->reverseVideo &&
-               ((c->foregroundColor == ALTSEM_DEFAULT &&
-                 c->foregroundColorMode == ColorModeAlternate) ||
-                (c->foregroundColor == ALTSEM_CURSOR &&
-                 c->foregroundColorMode == ColorModeAlternate))) {
+               ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
+                (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
         // Reverse video is on. Either is cursor or has default foreground color. Use
         // background color.
         rawColor = [context->colorMap colorForKey:kColorMapBackground];
+        context->havePreviousCharacterAttributes = NO;
     } else if (!context->havePreviousCharacterAttributes ||
                c->foregroundColor != context->previousCharacterAttributes.foregroundColor ||
                c->fgGreen != context->previousCharacterAttributes.fgGreen ||
                c->fgBlue != context->previousCharacterAttributes.fgBlue ||
                c->foregroundColorMode != context->previousCharacterAttributes.foregroundColorMode ||
                c->bold != context->previousCharacterAttributes.bold ||
-               c->faint != context->previousCharacterAttributes.faint) {
-        // Not reversed or not subject to reversing (only default
-        // foreground color is drawn in reverse video).
+               c->faint != context->previousCharacterAttributes.faint ||
+               !context->previousForegroundColor) {
+        // "Normal" case for uncached text color. Recompute the unprocessed color from the character.
         context->previousCharacterAttributes = *c;
         context->havePreviousCharacterAttributes = YES;
         rawColor = [context->delegate drawingHelperColorForCode:c->foregroundColor
@@ -1127,27 +1118,29 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
                                                           faint:c->faint
                                                    isBackground:NO];
     } else {
-        rawColor = context->previousForegroundColor;
+        // Foreground attributes are just like the last character. There is a cached foreground color.
+        if (needsProcessing && context->backgroundColor != context->previousBackgroundColor) {
+            // Process the text color for the current background color, which has changed since
+            // the last cell.
+            rawColor = context->lastUnprocessedColor;
+        } else {
+            // Text color is unchanged. Either it's independent of the background color or the
+            // background color has not changed.
+            return context->previousForegroundColor;
+        }
     }
 
-    if (context->backgroundColor && (context->minimumContrast > 0.001 ||
-                                     context->dimmingAmount > 0.001 ||
-                                     context->mutingAmount > 0.001 ||
-                                     c->faint)) {  // faint implies alpha<1 and is faster than getting the alpha component
-        NSColor *processedColor;
-        if (rawColor == context->lastUnprocessedColor) {
-            processedColor = context->lastProcessedColor;
-        } else {
-            processedColor = [context->colorMap processedTextColorForTextColor:rawColor
-                                                           overBackgroundColor:context->backgroundColor];
-            context->lastUnprocessedColor = rawColor;
-            context->lastProcessedColor = processedColor;
-        }
-        context->previousForegroundColor = processedColor;
+    context->lastUnprocessedColor = rawColor;
+
+    NSColor *result = nil;
+    if (needsProcessing) {
+        result = [context->colorMap processedTextColorForTextColor:rawColor
+                                               overBackgroundColor:context->backgroundColor];
     } else {
-        context->previousForegroundColor = rawColor;
+        result = rawColor;
     }
-    return context->previousForegroundColor;
+    context->previousForegroundColor = result;
+    return result;
 }
 
 static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
@@ -1314,19 +1307,17 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                              forceTextColor:(NSColor *)forceTextColor
                                                 findMatches:(NSData *)findMatches
                                             underlinedRange:(NSRange)underlinedRange
-                                                   advances:(NSMutableArray<NSNumber *> *)advances {
+                                                  positions:(NSMutableArray<NSNumber *> *)positions {
     NSMutableArray<NSAttributedString *> *attributedStrings = [NSMutableArray array];
-    CGFloat previousOffset = 0;
     iTermColorMap *colorMap = self.colorMap;
     iTermTextColorContext textColorContext = {
         .lastUnprocessedColor = nil,
-        .lastProcessedColor = nil,
         .dimmingAmount = colorMap.dimmingAmount,
         .mutingAmount = colorMap.mutingAmount,
         .hasSelectedText = hasSelectedText,
         .colorMap = self.colorMap,
         .delegate = _delegate,
-        .matchBytes = findMatches.bytes,
+        .findMatches = findMatches,
         .reverseVideo = _reverseVideo,
         .havePreviousCharacterAttributes = NO,
         .backgroundColor = backgroundColor,
@@ -1418,13 +1409,11 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
         
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
-        // Append to advances.
-        CGFloat offset = (1 + i - indexRange.location) * _cellSize.width;
-        [advances addObject:@(offset - previousOffset)];
-        for (NSUInteger j = 1; j < length; j++) {
-            [advances addObject:@0];
+        // Append to positions.
+        CGFloat offset = (i - indexRange.location) * _cellSize.width;
+        for (NSUInteger j = 0; j < length; j++) {
+            [positions addObject:@(offset)];
         }
-        previousOffset = offset;
         iTermPreciseTimerStatsAccumulate(&_stats[TIMER_ADVANCES]);
     }
     if (builder.length) {

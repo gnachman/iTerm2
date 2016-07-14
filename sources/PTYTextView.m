@@ -1063,6 +1063,12 @@ static const int kDragThreshold = 3;
     return _drawingHelper.cursorVisible;
 }
 
+- (CGFloat)minimumBaselineOffset {
+    CGFloat asciiOffset = -(floorf(self.font.leading) - floorf(self.font.descender));
+    CGFloat nonasciiOffset = self.useNonAsciiFont ? -(floorf(self.nonAsciiFont.leading) - floorf(self.nonAsciiFont.descender)) : 0;
+    return MIN(asciiOffset, nonasciiOffset);
+}
+
 - (void)drawRect:(NSRect)rect {
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
@@ -1101,7 +1107,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
     _drawingHelper.thinStrokes = _thinStrokes;
     _drawingHelper.showSearchingCursor = _showSearchingCursor;
-
+    _drawingHelper.baselineOffset = [self minimumBaselineOffset];
+    
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
