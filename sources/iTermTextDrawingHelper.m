@@ -1856,7 +1856,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 - (NSRect)rectByGrowingRect:(NSRect)innerRect {
     NSSize frameSize = _frame.size;
-    const NSInteger extraWidth = 3;
+    const NSInteger extraWidth = 1;
     const NSInteger extraHeight = 1;
     NSPoint minPoint = NSMakePoint(MAX(0, innerRect.origin.x - extraWidth * _cellSize.width),
                                    MAX(0, innerRect.origin.y - extraHeight * _cellSize.height));

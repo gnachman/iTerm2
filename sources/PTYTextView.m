@@ -6561,9 +6561,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSRect)rectWithHalo:(NSRect)rect {
-    rect.origin.x -= _charWidth;
+    rect.origin.x = 0;
     rect.origin.y -= _lineHeight;
-    rect.size.width += _charWidth * 2;
+    rect.size.width = self.frame.size.width;
     rect.size.height += _lineHeight * 2;
 
     return rect;
