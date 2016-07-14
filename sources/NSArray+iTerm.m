@@ -89,6 +89,17 @@
     }
 }
 
+- (NSArray *)intersectArray:(NSArray *)other {
+    NSMutableArray *intersection = [NSMutableArray array];
+    for (id obj in self) {
+        if ([other containsObject:obj]) {
+            [intersection addObject:obj];
+        }
+    }
+    return intersection;
+}
+
+
 @end
 
 @implementation NSMutableArray (iTerm)

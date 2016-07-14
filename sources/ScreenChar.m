@@ -201,23 +201,7 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex)
 }
 
 static BOOL ComplexCharKeyIsReserved(int k) {
-    switch (k) {
-        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_LEFT:
-        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT:
-        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT:
-        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_RIGHT:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL_AND_LEFT:
-        case ITERM_BOX_DRAWINGS_LIGHT_UP_AND_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_DOWN_AND_HORIZONTAL:
-        case ITERM_BOX_DRAWINGS_LIGHT_VERTICAL:
-            return YES;
-
-        default:
-            return NO;
-    }
+    return k >= iTermBoxDrawingCodeMin && k <= iTermBoxDrawingCodeMax;
 }
 
 static void AllocateImageMapsIfNeeded(void) {
