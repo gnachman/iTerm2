@@ -158,13 +158,8 @@ static BOOL hasBecomeActive = NO;
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 }
 
-- (BOOL)shouldBeUIElementApplication {
-    return ([iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
-            [[[iTermHotKeyController sharedInstance] profileHotKeys] count] > 0);
-}
-
 - (void)updateProcessType {
-    [[iTermApplication sharedApplication] setIsUIElementApplication:[self shouldBeUIElementApplication]];
+    [[iTermApplication sharedApplication] setIsUIElementApplication:[iTermPreferences boolForKey:kPreferenceKeyUIElement]];
 }
 
 // NSApplication delegate methods
