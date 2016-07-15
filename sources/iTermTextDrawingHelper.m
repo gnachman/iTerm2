@@ -331,7 +331,7 @@ typedef struct iTermTextColorContext {
                                     y:_cursorCoord.y
                                 width:_gridSize.width
                                height:_gridSize.height
-                         cursorHeight:_cellSize.height
+                         cursorHeight:_cellSizeWithoutSpacing.height
                                   ctx:ctx];
     _blinkingFound |= self.cursorBlinking;
     
@@ -829,8 +829,9 @@ typedef struct iTermTextColorContext {
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
-        NSPoint textOrigin = NSMakePoint(MARGIN + run->range.location * _cellSize.width, y);
-
+        NSPoint textOrigin = NSMakePoint(MARGIN + run->range.location * _cellSize.width,
+                                         y);
+        NSLog(@"text origin for row %d is %f. Cursor rect is %@", line, textOrigin.y, NSStringFromRect(self.cursorFrame));
         [self constructAndDrawRunsForLine:theLine
                                       row:line
                                   inRange:run->range
@@ -953,7 +954,9 @@ typedef struct iTermTextColorContext {
         // Faster (not fast, but faster) than drawStringWithCombiningMarksInRun. This is used for
         // surrogate pairs and when drawing a simple run fails because a glyph couldn't be found.
         CGFloat width = [[positions lastObject] doubleValue] + _cellSize.width;
-        [self drawTextOnlyAttributedString:attributedString atPoint:point positions:positions width:width];
+        NSPoint offsetPoint = point;
+        offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
+        [self drawTextOnlyAttributedString:attributedString atPoint:offsetPoint positions:positions width:width];
         DLog(@"Return width of %d", (int)round(width));
         return width;
     }
@@ -1569,7 +1572,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                              renderBold:&ignore
                                                            renderItalic:&ignore];
             [self drawUnderlineOfColor:[self defaultTextColor]
-                          atCellOrigin:NSMakePoint(x, y)
+                          atCellOrigin:NSMakePoint(x, y - round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0))
                                   font:fontInfo.font
                                  width:charsInLine * _cellSize.width];
 
@@ -1614,7 +1617,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             cursorX = rightMargin - kCursorWidth;
         }
         NSRect cursorFrame = NSMakeRect(cursorX,
-                                        cursorY,
+                                        cursorY + round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0),
                                         2.0,
                                         cursorHeight);
         _imeCursorLastPos = cursorFrame.origin;
@@ -1635,7 +1638,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 - (NSRect)cursorFrame {
     const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
     return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
-                      rowNumber * _cellSize.height + (_cellSize.height - _cellSizeWithoutSpacing.height),
+                      rowNumber * _cellSize.height + round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0),
                       MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                       _cellSizeWithoutSpacing.height);
 }
