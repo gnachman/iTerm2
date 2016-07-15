@@ -1530,6 +1530,8 @@
 		A686F3861D36A18900F08ED7 /* iTermMutableAttributedStringBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3841D36A18900F08ED7 /* iTermMutableAttributedStringBuilder.m */; };
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
 		A686F38A1D36A49100F08ED7 /* iTermPreciseTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3881D36A49100F08ED7 /* iTermPreciseTimer.m */; };
+		A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */; };
+		A686F38E1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
 		A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30C4186D0F36007F550F /* SmartMatch.h */; };
 		A68A30F4186D150A007F550F /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EA186D150A007F550F /* FileTransferManager.h */; };
@@ -3191,6 +3193,8 @@
 		A686F3841D36A18900F08ED7 /* iTermMutableAttributedStringBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMutableAttributedStringBuilder.m; sourceTree = "<group>"; };
 		A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreciseTimer.h; sourceTree = "<group>"; };
 		A686F3881D36A49100F08ED7 /* iTermPreciseTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreciseTimer.m; sourceTree = "<group>"; };
+		A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBoxDrawingBezierCurveFactory.h; sourceTree = "<group>"; };
+		A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBoxDrawingBezierCurveFactory.m; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindCursorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5057,6 +5061,8 @@
 				A686F3881D36A49100F08ED7 /* iTermPreciseTimer.m */,
 				A6936B471D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h */,
 				A6936B481D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m */,
+				A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */,
+				A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6034,6 +6040,7 @@
 				A6936B491D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
 				5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
+				A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */,
 				A686F3851D36A18900F08ED7 /* iTermMutableAttributedStringBuilder.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
 				1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */,
@@ -7438,6 +7445,7 @@
 				A6C762ED1B45C52B00E3C992 /* IntervalMap.m in Sources */,
 				A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */,
 				A6C763321B45C52B00E3C992 /* iTermInstantReplayWindowController.m in Sources */,
+				A686F38E1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m in Sources */,
 				A6C762AC1B45C52B00E3C992 /* NSArray+iTerm.m in Sources */,
 				1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */,
 				A6C762AE1B45C52B00E3C992 /* NSCharacterSet+iTerm.m in Sources */,
