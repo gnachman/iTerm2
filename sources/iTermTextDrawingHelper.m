@@ -76,6 +76,7 @@ static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
 static NSString *const iTermImageColumnAttribute = @"iTermImageColumnAttribute";
 static NSString *const iTermImageLineAttribute = @"iTermImageLineAttribute";
 static NSString *const iTermIsBoxDrawingAttribute = @"iTermIsBoxDrawingAttribute";
+static NSCharacterSet *sBoxDrawingCharactersWithBezierPaths;
 
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
@@ -130,6 +131,12 @@ typedef struct iTermTextColorContext {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            sBoxDrawingCharactersWithBezierPaths =
+                [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
+                  @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"] retain];
+        });
         if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
             _drawRectDuration = [[MovingAverage alloc] init];
@@ -1258,15 +1265,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                                          textColorContext);
     }
 
-    attributes->boxDrawing = NO;
-    
     const BOOL complex = c->complexChar;
     const unichar code = c->code;
 
-    if (!complex) {
-        attributes->boxDrawing = (code >= iTermBoxDrawingCodeMin && code <= iTermBoxDrawingCodeMax);
-    }
-
+    attributes->boxDrawing = !complex && [sBoxDrawingCharactersWithBezierPaths characterIsMember:code];
     attributes->fakeBold = c->bold;
     attributes->fakeItalic = c->italic;
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
@@ -2062,7 +2064,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         case iTermBoxDrawingCodeHeavyQuadrupleDashHorizontal:  // ┉
         case iTermBoxDrawingCodeLightQuadrupleDashVertical:  // ┊
         case iTermBoxDrawingCodeHeavyQuadrupleDashVertical:  // ┋
-            break;
+            return nil;
             
         case iTermBoxDrawingCodeLightDownAndRight:  // ┌
             components = @[ iTermBoxDrawingComponentLightDown,
@@ -2356,11 +2358,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             components = @[ iTermBoxDrawingComponentHeavyHorizontal,
                             iTermBoxDrawingComponentHeavyVertical ];
             break;
+
         case iTermBoxDrawingCodeLightDoubleDashHorizontal:  // ╌
         case iTermBoxDrawingCodeHeavyDoubleDashHorizontal:  // ╍
         case iTermBoxDrawingCodeLightDoubleDashVertical:  // ╎
         case iTermBoxDrawingCodeHeavyDoubleDashVertical:  // ╏
-            break;
+            return nil;
             
         case iTermBoxDrawingCodeDoubleHorizontal:  // ═
             components = @[ iTermBoxDrawingComponentHorizontalShiftedDown, iTermBoxDrawingComponentHorizontalShiftedUp ];
@@ -2489,7 +2492,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         case iTermBoxDrawingCodeLightDiagonalUpperRightToLowerLeft:  // ╱
         case iTermBoxDrawingCodeLightDiagonalUpperLeftToLowerRight:  // ╲
         case iTermBoxDrawingCodeLightDiagonalCross:  // ╳
-            break;
+            return nil;
             
         case iTermBoxDrawingCodeLightLeft:  // ╴
             components = @[ iTermBoxDrawingComponentLightLeft ];
@@ -2599,17 +2602,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSBezierPath *light = [NSBezierPath bezierPath];
     [light setLineWidth:1];
 
-    /*
-     Nothing specials:
-     ╞ ╡ ╥ ╨ ╪ ╫
-     
-     Lengthen single by 1:
-     ╒ ╓ ╕ ╘ ╙ ╖ ╛ ╜
-     
-     Shorten single:
-     ╟ ╢ ╤ ╧
-     
-     */
     NSPoint extensionForSingle = NSMakePoint(0, 0);
     if (doubleIntersectsPerpindicular) {
         NSString *doubleComponent = [[components intersectArray:doubles] firstObject];
@@ -2673,22 +2665,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                     [heavy appendBezierPath:subpath];
                 } else {
                     [light appendBezierPath:subpath];
-//                } else {
-//                    NSBezierPath *first = subpath;
-//                    NSBezierPath *second = [[subpath copy] autorelease];
-//                    
-//                    NSAffineTransform *transform = [NSAffineTransform transform];
-//                    if ([horizontals containsObject:component]) {
-//                        [transform translateXBy:0 yBy:-1];
-//                    } else {
-//                        [transform translateXBy:-1 yBy:0];
-//                    }
-//                    [first transformUsingAffineTransform:transform];
-//                    
-//                    [transform invert];
-//                    [second transformUsingAffineTransform:transform];
-//                    [light appendBezierPath:first];
-//                    [light appendBezierPath:second];
                 }
             }
         }
