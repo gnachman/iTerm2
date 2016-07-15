@@ -458,7 +458,7 @@
 
 
 - (IBAction)ok:(id)sender {
-    if (_shortcutField.stringValue.length == 0) {
+    if (!self.currentKeyCombination) {
         NSBeep();
         return;
     }
