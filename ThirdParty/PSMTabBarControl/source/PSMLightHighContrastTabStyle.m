@@ -33,7 +33,7 @@
     }
   } else {
     if ([self isYosemiteOrLater]) {
-      CGFloat value = 200 / 255.0 - highlightAmount * 0.1;
+      CGFloat value = 180 / 255.0 - highlightAmount * 0.1;
       return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     } else {
       // 10.9 and earlier needs a darker color to look good
@@ -41,6 +41,26 @@
       return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }
   }
+}
+
+- (NSColor *)verticalLineColor {
+    return [NSColor colorWithWhite:140.0 / 255.0 alpha:1];
+}
+
+- (NSColor *)topLineColorSelected:(BOOL)selected {
+    if (selected) {
+        return [super topLineColorSelected:selected];
+    } else {
+        return [self verticalLineColor];
+    }
+}
+
+- (NSColor *)bottomLineColorSelected:(BOOL)selected {
+    return [self verticalLineColor];
+}
+
+- (NSColor *)tabBarColor {
+    return [NSColor colorWithCalibratedWhite:0 alpha:0.3];
 }
 
 - (CGFloat)fontSize {

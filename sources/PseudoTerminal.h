@@ -5,12 +5,14 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPopupWindowController.h"
 #import "iTermToolbeltView.h"
+#import "iTermWeakReference.h"
 #import "PasteboardHistory.h"
 #import "ProfileListView.h"
 #import "PSMTabBarControl.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
 #import "WindowControllerInterface.h"
+
 #include "iTermFileDescriptorClient.h"
 
 @class PTYSession;
@@ -19,15 +21,17 @@
 @class iTermController;
 @class TmuxController;
 
+// Posted when a new window controller is created. It's not ready to use at this point, though.
+extern NSString *const kTerminalWindowControllerWasCreatedNotification;
+
 extern NSString *const kCurrentSessionDidChange;
-// The key used for a window's arrangement in encoding restorable state.
-extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
 // status, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
 @interface PseudoTerminal : NSWindowController <
   iTermInstantReplayDelegate,
+  iTermWeaklyReferenceable,
   iTermWindowController,
   NSWindowDelegate,
   PSMTabBarControlDelegate,
@@ -43,9 +47,8 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // Used to make restoring fullscreen windows work on 10.11.
 @property(nonatomic, readonly) BOOL togglingLionFullScreen;
 
-// Up to one window may be the hotkey window, which is toggled with the system-wide
-// hotkey.
-@property(nonatomic, assign) BOOL isHotKeyWindow;
+// What kind of hotkey window this is, if any.
+@property(nonatomic, assign) iTermHotkeyWindowType hotkeyWindowType;
 
 // A unique string for this window. Used for tmux to remember which window
 // a tmux window should be opened in as a tab. A window restored from a
@@ -69,14 +72,21 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // Returns a new terminal window restored from an arrangement, but with no
 // tabs/sessions. May return nil.
-+ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement;
+// forceOpeningHotKeyWindow means open the window even if there is already a hotkey window with the
+// specified profile, or the arrangement is defective in specifying details of the hotkey window.
++ (PseudoTerminal *)bareTerminalWithArrangement:(NSDictionary *)arrangement
+                       forceOpeningHotKeyWindow:(BOOL)force;
 
 // Returns a new terminal window restored from an arrangement, with
 // tabs/sessions also restored. May return nil.
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
+// forceOpeningHotKeyWindow means open the window even if there is already a hotkey window with the
+// specified profile, or the arrangement is defective in specifying details of the hotkey window.
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
+                  forceOpeningHotKeyWindow:(BOOL)force;
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
-                               sessions:(NSArray *)sessions;
+                               sessions:(NSArray *)sessions
+               forceOpeningHotKeyWindow:(BOOL)force;
 
 // Register all sessions in the window's arrangement so their contents can be
 // rescued later if the window is created from a saved arrangement. Called
@@ -111,7 +121,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenNumber
-                           isHotkey:(BOOL)isHotkey;
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType;
 
 // If a PseudoTerminal is created with -init (such as happens with AppleScript)
 // this must be called before it is used.
@@ -119,7 +129,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                                   isHotkey:(BOOL)isHotkey;
+                                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType;
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId;
 
@@ -127,7 +137,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (void)setFrameValue:(NSValue *)value;
 
 // The PTYWindow for this controller.
-- (PTYWindow*)ptyWindow;
+- (__kindof iTermTerminalWindow *)ptyWindow;
 
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;

@@ -148,36 +148,36 @@ const CGFloat kEdgeWidth = 3;
         [self drawInteriorWithFrame:originalFrame inView:controlView];
         return;
     }
-        NSColor *insetTopColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
-        NSColor *insetBottomColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.35];
-        NSColor *strokeTopColor = [NSColor colorWithCalibratedWhite:0.240 alpha:1.0];
-        NSColor *strokeBottomColor = [NSColor colorWithCalibratedWhite:0.380 alpha:1.0];
+    NSColor *insetTopColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
+    NSColor *insetBottomColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.35];
+    NSColor *strokeTopColor = [NSColor colorWithCalibratedWhite:0.240 alpha:1.0];
+    NSColor *strokeBottomColor = [NSColor colorWithCalibratedWhite:0.380 alpha:1.0];
 
-        if (![[controlView window] isKeyWindow]) {
-                strokeTopColor = [NSColor colorWithCalibratedWhite:0.550 alpha:1.0];
-                strokeBottomColor = [NSColor colorWithCalibratedWhite:0.557 alpha:1.0];
-        }
+    if (![[controlView window] isKeyWindow]) {
+            strokeTopColor = [NSColor colorWithCalibratedWhite:0.550 alpha:1.0];
+            strokeBottomColor = [NSColor colorWithCalibratedWhite:0.557 alpha:1.0];
+    }
 
-        NSRect strokeRect = cellFrame;
-        strokeRect.size.height -= 1.0;
-        NSBezierPath *strokePath = [NSBezierPath bezierPathWithRoundedRect:strokeRect xRadius:strokeRect.size.height/2.0 yRadius:strokeRect.size.height/2.0];
+    NSRect strokeRect = cellFrame;
+    strokeRect.size.height -= 1.0;
+    NSBezierPath *strokePath = [NSBezierPath bezierPathWithRoundedRect:strokeRect xRadius:strokeRect.size.height/2.0 yRadius:strokeRect.size.height/2.0];
 
-        NSBezierPath *insetPath = [NSBezierPath bezierPath];
-        [insetPath appendBezierPath:strokePath];
-        NSAffineTransform *transform = [NSAffineTransform transform];
-        [transform translateXBy:0 yBy:1.0];
-        [insetPath transformUsingAffineTransform:transform];
-        NSGradient *insetGradient = [[NSGradient alloc] initWithStartingColor:insetTopColor endingColor:insetBottomColor];
-        [insetGradient drawInBezierPath:insetPath angle:90.0];
-        [insetGradient release];
+    NSBezierPath *insetPath = [NSBezierPath bezierPath];
+    [insetPath appendBezierPath:strokePath];
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:0 yBy:1.0];
+    [insetPath transformUsingAffineTransform:transform];
+    NSGradient *insetGradient = [[NSGradient alloc] initWithStartingColor:insetTopColor endingColor:insetBottomColor];
+    [insetGradient drawInBezierPath:insetPath angle:90.0];
+    [insetGradient release];
 
-        NSGradient *strokeGradient = [[NSGradient alloc] initWithStartingColor:strokeTopColor endingColor:strokeBottomColor];
-        [strokeGradient drawInBezierPath:strokePath angle:90.0];
-        [strokeGradient release];
+    NSGradient *strokeGradient = [[NSGradient alloc] initWithStartingColor:strokeTopColor endingColor:strokeBottomColor];
+    [strokeGradient drawInBezierPath:strokePath angle:90.0];
+    [strokeGradient release];
 
-        NSRect fieldRect = NSInsetRect(cellFrame, 1.0, 1.0);
-        fieldRect.size.height -= 1.0;
-        NSBezierPath *fieldPath = [NSBezierPath bezierPathWithRoundedRect:fieldRect xRadius:fieldRect.size.height/2.0 yRadius:fieldRect.size.height/2.0];
+    NSRect fieldRect = NSInsetRect(cellFrame, 1.0, 1.0);
+    fieldRect.size.height -= 1.0;
+    NSBezierPath *fieldPath = [NSBezierPath bezierPathWithRoundedRect:fieldRect xRadius:fieldRect.size.height/2.0 yRadius:fieldRect.size.height/2.0];
 
     [[NSColor whiteColor] set];
     [fieldPath fill];

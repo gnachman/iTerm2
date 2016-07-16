@@ -10,7 +10,6 @@
 #import "FindViewController.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAboutWindow.h"
@@ -22,6 +21,8 @@
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermHotKeyController.h"
+#import "iTermHotKeyMigrationHelper.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPasswordManagerWindowController.h"
@@ -63,6 +64,7 @@
 #import "PTYTabView.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
+#import "PTYWindow.h"
 #import "SessionView.h"
 #import "SplitPanel.h"
 #import "TemporaryNumberAllocator.h"
@@ -82,7 +84,7 @@
 @class QLPreviewPanel;
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
-NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
+NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -109,6 +111,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening"
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
 static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
+
+static NSString* TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
@@ -128,14 +132,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
 @property(nonatomic, assign) NSTimeInterval timeOfLastResize;
+
+// Used for delaying and coalescing title changes. After a title change request
+// is received the new title is stored here and a .1 second delay begins. If a
+// new request is made before the timer is up this property gets changed. It is
+// reset to nil after the change is made in the window.
+@property(nonatomic, copy) NSString *desiredTitle;
 @end
 
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
 
-    // This is a weak reference to the window's content view, here for convenience because it has
+    // This is a reference to the window's content view, here for convenience because it has
     // the right type.
-    iTermRootTerminalView *_contentView;
+    __unsafe_unretained iTermRootTerminalView *_contentView;
 
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel
@@ -209,9 +219,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     int nextSessionRows_;
     int nextSessionColumns_;
 
-    int windowType_;
+    iTermWindowType windowType_;
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
-    int savedWindowType_;
+    iTermWindowType savedWindowType_;
     BOOL haveScreenPreference_;
     int screenNumber_;
 
@@ -321,7 +331,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-+ (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType {
++ (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    NSInteger mask = 0;
+    if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
+        mask = NSNonactivatingPanelMask;
+    }
     switch (windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
@@ -332,13 +347,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            return NSBorderlessWindowMask | NSResizableWindowMask;
+            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return NSBorderlessWindowMask;
+            return mask | NSBorderlessWindowMask;
 
         default:
-            return (NSTitledWindowMask |
+            return (mask |
+                    NSTitledWindowMask |
                     NSClosableWindowMask |
                     NSMiniaturizableWindowMask |
                     NSResizableWindowMask |
@@ -362,14 +378,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                           windowType:windowType
                      savedWindowType:savedWindowType
                               screen:screenNumber
-                            isHotkey:NO];
+                    hotkeyWindowType:iTermHotkeyWindowTypeNone];
 }
 
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenNumber
-                           isHotkey:(BOOL)isHotkey {
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {
@@ -377,7 +393,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                        windowType:windowType
                                   savedWindowType:savedWindowType
                                            screen:screenNumber
-                                         isHotkey:isHotkey];
+                                 hotkeyWindowType:hotkeyWindowType];
     }
     return self;
 }
@@ -386,13 +402,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                                   isHotkey:(BOOL)isHotkey {
-    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
+                           hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
          windowType,
          screenNumber,
-         isHotkey ? @"YES" : @"NO");
+         @(hotkeyWindowType));
 
     // Force the nib to load
     [self window];
@@ -522,18 +538,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         // We want to set the style mask to the window's non-fullscreen appearance so we're prepared
         // to exit fullscreen with the right style.
-        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType];
+        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType hotkeyWindowType:hotkeyWindowType];
     } else {
-        styleMask = [PseudoTerminal styleMaskForWindowType:windowType];
+        styleMask = [PseudoTerminal styleMaskForWindowType:windowType hotkeyWindowType:hotkeyWindowType];
     }
     savedWindowType_ = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
-    PTYWindow *myWindow;
-    myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
-                                            styleMask:styleMask
-                                              backing:NSBackingStoreBuffered
-                                                defer:isHotkey];
+    iTermTerminalWindow *myWindow;
+    Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) ? [iTermPanel class] : [iTermWindow class];
+    myWindow = [[windowClass alloc] initWithContentRect:initialFrame
+                                              styleMask:styleMask
+                                                backing:NSBackingStoreBuffered
+                                                  defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -565,7 +582,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
-    if (!isHotkey) {
+    if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
     } else {
         self.window.alphaValue = 0;
@@ -633,17 +650,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self hideMenuBar];
     }
 
-    if (isHotkey) {
-        // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
-    } else {
-        // This allows the window to enter Lion fullscreen.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
-    }
-    if (isHotkey) {
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
-    }
+    // Update the collection behavior.
+    self.hotkeyWindowType = hotkeyWindowType;
 
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
@@ -662,8 +670,34 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 #endif
-    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
     DLog(@"Done initializing PseudoTerminal %@", self);
+}
+
+- (BOOL)isHotKeyWindow {
+    return self.hotkeyWindowType != iTermHotkeyWindowTypeNone;
+}
+
+- (BOOL)isFloatingHotKeyWindow {
+    return self.isHotKeyWindow && [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats];
+}
+
+- (void)setHotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    _hotkeyWindowType = hotkeyWindowType;
+    switch (hotkeyWindowType) {
+        case iTermHotkeyWindowTypeNone:
+            // This allows the window to enter Lion fullscreen.
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+            break;
+            
+        case iTermHotkeyWindowTypeRegular:
+        case iTermHotkeyWindowTypeFloatingPanel:
+        case iTermHotkeyWindowTypeFloatingWindow:
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
+            break;
+    }
 }
 
 - (void)finishToolbeltInitialization {
@@ -683,7 +717,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)dealloc {
+ITERM_WEAKLY_REFERENCEABLE
+
+- (void)iterm_dealloc {
     [_contentView shutdown];
 
     [self closeInstantReplayWindow];
@@ -724,6 +760,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_shortcutAccessoryViewController release];
 #endif
     [_didEnterLionFullscreen release];
+    [_desiredTitle release];
     [super dealloc];
 }
 
@@ -921,9 +958,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[self window] setFrame:[value rectValue] display:YES];
 }
 
-- (PTYWindow*)ptyWindow
-{
-    return (PTYWindow*) [self window];
+- (__kindof iTermTerminalWindow *)ptyWindow {
+    return (iTermTerminalWindow *)[self window];
 }
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId {
@@ -1028,6 +1064,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return (PTYTab *)session.delegate;
 }
 
+// Allow frame to go off-screen while hotkey window is sliding in or out.
+- (BOOL)terminalWindowShouldConstrainFrameToScreen {
+    iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+    return !([profileHotKey rollingIn] || [profileHotKey rollingOut]);
+}
+
 - (void)closeSession:(PTYSession *)aSession {
     [self closeSession:aSession soft:NO];
 }
@@ -1037,8 +1079,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self closeSession:aSession soft:YES];
 }
 
-- (int)windowType
-{
+- (iTermWindowType)windowType {
     return windowType_;
 }
 
@@ -1306,9 +1347,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (IBAction)closeCurrentSession:(id)sender
-{
-    iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
+- (IBAction)closeCurrentSession:(id)sender {
+    iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
     if ([[self window] isKeyWindow]) {
         PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
@@ -1389,7 +1429,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         return;
     }
     if ([self isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+        iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
     } else {
         [self.window makeKeyAndOrderFront:nil];
     }
@@ -1448,8 +1489,25 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
     } else {
-        // See comments in iTermDelaydTitleSetter for why this is so.
-        [self.ptyWindow delayedSetTitle:title];
+        // In bug 2593, we see a crazy thing where setting the window title right
+        // after a window is created causes it to have the wrong background color.
+        // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
+        // do until a better explanation comes along.
+
+        // In bug 3957, we see that GNU screen is buggy and sends a crazy number of title changes.
+        // We want to coalesce them to avoid the title flickering like mad. Also, setting the title
+        // seems to be relatively slow, so we don't want to spend too much time doing that if the
+        // terminal goes nuts and sends lots of title-change sequences.
+        BOOL hadTimer = (self.desiredTitle != nil);
+        self.desiredTitle = title;
+        if (!hadTimer) {
+            PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+            static const NSTimeInterval kSetTitleDelay = 0.1;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSetTitleDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                weakSelf.window.title = weakSelf.desiredTitle;
+                weakSelf.desiredTitle = nil;
+            });
+        }
     }
 }
 
@@ -1761,17 +1819,43 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [PseudoTerminal _windowTypeForArrangement:arrangement] == WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
-+ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
-{
-    BOOL isHotkeyWindow = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
-    if (isHotkeyWindow) {
-        if ([[HotkeyWindowController sharedInstance] hotKeyWindow]) {
-            // Already have a hotkey window.
-            return nil;
++ (BOOL)shouldRestoreHotKeyWindowWithGUID:(NSString *)guid {
+    if (!guid) {
+        // Something went wrong and we don't know the GUID. Or you just upgraded and a GUID wasn't
+        // saved because it's new.
+        if ([[iTermHotKeyMigrationHelper sharedInstance] didMigration] && [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 1) {
+            iTermProfileHotKey *profileHotKey = [[[iTermHotKeyController sharedInstance] profileHotKeys] firstObject];
+            guid = profileHotKey.profile[KEY_GUID];
+            DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. Guessing that it's the profile named %@ because there is only one hotkey profile", profileHotKey.profile[KEY_NAME]);
+        } else {
+            DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. There is more than one hotkey profile so I give up.");
+            return NO;
         }
+    }
+    BOOL foundHotKey = NO;
+    for (iTermProfileHotKey *hotKey in [[iTermHotKeyController sharedInstance] profileHotKeys]) {
+        if ([[iTermProfilePreferences stringForKey:KEY_GUID inProfile:hotKey.profile] isEqualToString:guid]) {
+            foundHotKey = YES;
+            if (hotKey.windowController.weaklyReferencedObject) {
+                // Already have a window for this profile hotkey
+                return NO;
+            }
+        }
+    }
+    if (!foundHotKey) {
+        // Do not have a hotkey defined for this profile
+        return NO;
+    }
+    
+    return YES;
+}
 
-        if (![iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled]) {
-            // Hotkey window disabled
++ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary *)arrangement
+                      forceOpeningHotKeyWindow:(BOOL)force {
+    BOOL isHotkeyWindow = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
+    NSString *guid = arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID];
+    if (isHotkeyWindow && !force) {
+        if (![self shouldRestoreHotKeyWindowWithGUID:guid]) {
             return nil;
         }
     }
@@ -1779,12 +1863,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
+    iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID]];
+    iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
+    if (isHotkeyWindow) {
+        assert(profileHotKey);
+        hotkeyWindowType = profileHotKey.hotkeyWindowType;
+    }
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                                   isHotkey:NO] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
@@ -1801,7 +1891,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                                   isHotkey:NO] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType] autorelease];
         [term delayedEnterFullscreen];
     } else {
         // Support legacy edge-spanning flag by adjusting the
@@ -1829,7 +1919,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:windowType
                                             savedWindowType:WINDOW_TYPE_NORMAL
-                                                     screen:-1] autorelease];
+                                                     screen:-1
+                                           hotkeyWindowType:hotkeyWindowType] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -1843,19 +1934,27 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
         [term hideAfterOpening];
     }
-    term.isHotKeyWindow = isHotkeyWindow;
-    if ([term isHotKeyWindow]) {
-        term.window.alphaValue = 0;
-        [[term window] orderOut:nil];
+    if (isHotkeyWindow) {
+        BOOL ok = YES;
+        if (force) {
+            ok = [[iTermHotKeyController sharedInstance] addRevivedHotkeyWindowController:term
+                                                                       forProfileWithGUID:guid];
+        }
+        if (ok) {
+            term.window.alphaValue = 0;
+            [[term window] orderOut:nil];
+        }
     }
     return term;
 }
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
-                               sessions:(NSArray *)sessions {
-    PseudoTerminal* term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
+                               sessions:(NSArray *)sessions
+               forceOpeningHotKeyWindow:(BOOL)force {
+    PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
+                                              forceOpeningHotKeyWindow:force];
     for (PTYSession *session in sessions) {
-        assert([session revive]);  // TODO(georgen): This isn't guarantted
+        assert([session revive]);  // TODO(georgen): This isn't guaranteed
     }
     if ([term loadArrangement:arrangement sessions:sessions]) {
         return term;
@@ -1864,8 +1963,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement {
-    return [self terminalWithArrangement:arrangement sessions:nil];
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary *)arrangement
+                  forceOpeningHotKeyWindow:(BOOL)force {
+    return [self terminalWithArrangement:arrangement sessions:nil forceOpeningHotKeyWindow:force];
 }
 
 - (IBAction)findUrls:(id)sender {
@@ -2026,7 +2126,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
     if ([addressbookEntry objectForKey:KEY_SPACE] &&
-        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
+        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
@@ -2094,7 +2194,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // Save index of selected tab.
     result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]);
     result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @(hideAfterOpening_);
-    result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(_isHotKeyWindow);
+    result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(self.isHotKeyWindow);
+    NSString *profileGuid = [[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID];
+    if (profileGuid) {
+        result[TERMINAL_ARRANGEMENT_PROFILE_GUID] = profileGuid;
+    }
 
     return result;
 }
@@ -2153,7 +2257,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
 {
     // This counts as an interaction beacuse it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
-    iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
 
     BOOL needPrompt = NO;
@@ -2229,11 +2333,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     _instantReplayWindowController = nil;
 }
 
-- (void)windowWillClose:(NSNotification *)aNotification
-{
-    if (_isHotKeyWindow && [[self allSessions] count] == 0) {
+- (void)windowWillClose:(NSNotification *)aNotification {
+    if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
-        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+        iTermProfileHotKey *hotKey =
+            [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+        [hotKey windowWillClose];
+        [[self window] invalidateRestorableState];
     }
     // Close popups.
     [pbHistoryView close];
@@ -2302,10 +2408,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [[self retain] autorelease];
     
-    if ([self isHotKeyWindow]) {
-        [[HotkeyWindowController sharedInstance] restorePreviouslyActiveApp];
-    }
-
     // This releases the last reference to self except for autorelease pools.
     [[iTermController sharedInstance] terminalWillClose:self];
 
@@ -2330,20 +2432,22 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
 #endif
-    if (!_isHotKeyWindow) {
-        [self maybeHideHotkeyWindow];
+    if (!self.isHotKeyWindow) {
+        [[iTermHotKeyController sharedInstance] nonHotKeyWindowDidBecomeKey];
     }
+    [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:[[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self]];
+
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateMaximizePaneMenuItem];
     [itad updateUseTransparencyMenuItem];
     [itad updateBroadcastMenuState];
     if (_fullScreen) {
         if (![self isHotKeyWindow] ||
-            [[HotkeyWindowController sharedInstance] rollingInHotkeyTerm] ||
+            [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] rollingIn] ||
             [[self window] alphaValue] > 0) {
             // One of the following is true:
             // - This is a regular (non-hotkey) fullscreen window
@@ -2399,9 +2503,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 // Forbid FFM from changing key window if is hotkey window.
-- (BOOL)disableFocusFollowsMouse
-{
-    return _isHotKeyWindow;
+- (BOOL)disableFocusFollowsMouse {
+    return self.isHotKeyWindow;
 }
 
 - (CGFloat)growToolbeltBy:(CGFloat)diff {
@@ -2627,7 +2730,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         return;
     }
 
-    [self maybeHideHotkeyWindow];
+    NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
+    NSWindowController *newKeyWindowController = [[NSApp keyWindow] windowController];
+    if (![siblings containsObject:newKeyWindowController]) {
+        [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+    }
 
     [_contentView.tabBarControl setFlashing:NO];
     _contentView.tabBarControl.cmdPressed = NO;
@@ -2663,117 +2770,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView updateDivisionView];
 }
 
-// Returns the hotkey window that should be hidden or nil if the hotkey window
-// shouldn't be hidden right now.
-- (PseudoTerminal *)hotkeyWindowToHide {
-    DLog(@"Checking if hotkey window should be hidden.");
-
-    if (togglingFullScreen_) {
-        // I can't get this code path to execute. Candidate for removal.
-        DLog(@"Currently toggling fullscreen");
-        return nil;
-    }
-
-    // Check if a terminal that isn't the hotkey window is the key window.
-    PseudoTerminal *hotkeyTerminal = [[iTermController sharedInstance] hotkeyWindow];
-
-    if (!hotkeyTerminal) {
-        DLog(@"Failed to find a hotkey window");
-        return nil;
-    }
-    
-    NSArray<PTYWindow *> *keyTerminalWindows = [[iTermController sharedInstance] keyTerminalWindows];
-
-    BOOL nonHotkeyTerminalIsKey = [keyTerminalWindows containsObjectBesides:[hotkeyTerminal ptyWindow]];
-    BOOL haveMain = [[iTermController sharedInstance] anyWindowIsMain];
-    
-    if (haveMain && !nonHotkeyTerminalIsKey) {
-        // Issue 1251: we can take this path when a "clipboard manager" window is open.
-        DLog(@"Some non-terminal window is now main. Key terminal windows are %@",
-             [[iTermController sharedInstance] keyTerminalWindows]);
-        return nil;
-    }
-    if ([[hotkeyTerminal window] alphaValue] == 0) {
-        // Hotkey window not visible. This path is taken when there is a hidden hotkey window.
-        DLog(@"Hotkey window's alpha value is 0.");
-        return nil;
-    }
-    if (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
-        DLog(@"Autohide is disabled");
-        return nil;
-    }
-    if ([[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
-        DLog(@"Currently rolling in hotkey window");
-        return nil;
-    }
-    DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
-
-    // We want to dismiss the hotkey window when some other window
-    // becomes key. Note that if a popup closes this function shouldn't
-    // be called at all because it makes us key before closing itself.
-    // If a popup is opening, though, we shouldn't close ourselves.
-    if ([[NSApp keyWindow] isKindOfClass:[PopupWindow class]]) {
-        DLog(@"Key window is a popup");
-        return nil;
-    }
-    if ([[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]]) {
-        DLog(@"Key window is Open Quickly");
-        return nil;
-    }
-    if ([[NSApp keyWindow] isKindOfClass:[iTermAboutWindow class]]) {
-        DLog(@"Key window is About");
-        return nil;
-    }
-    if ([[[NSApp keyWindow] windowController] isKindOfClass:[iTermProfilesWindowController class]]) {
-        DLog(@"Key window is Profiles");
-        return nil;
-    }
-    if ([iTermWarning showingWarning]) {
-        DLog(@"A warning is showing");
-        return nil;
-    }
-    if ([[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
-        DLog(@"Key window is prefs");
-        return nil;
-    }
-    if ([self.window.sheets containsObject:[NSApp keyWindow]]) {
-        DLog(@"A sheet is being shown");
-        return nil;
-    }
-
-    // The hotkey window can co-exist with these apps.
-    static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";  // This doesn't seem to work on OS 10.11 but the spotlight experimental feature does.
-    static NSString *kApptivateBundleId = @"se.cocoabeans.apptivate";
-    NSArray *bundleIdsToNotDismissFor = @[ kAlfredBundleId, kApptivateBundleId ];
-    NSString *frontmostAppBundleId = [[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier];
-    if ([bundleIdsToNotDismissFor containsObject:frontmostAppBundleId]) {
-        DLog(@"The frontmost application is whitelisted");
-        return nil;
-    }
-
-    if ([iTermAdvancedSettingsModel hotkeyWindowIgnoresSpotlight]) {
-        // This tries to detect if the Spotlight window is open.
-        if ([[iTermController sharedInstance] keystrokesBeingStolen]) {
-            DLog(@"Keystrokes being stolen (spotlight or alfred open?)");
-            return nil;
-        }
-    }
-
-    DLog(@"Should hide hotkey terminal %@", hotkeyTerminal);
-    return hotkeyTerminal;
-}
-
-- (void)maybeHideHotkeyWindow {
-    PseudoTerminal *hotkeyTerminal = [self hotkeyWindowToHide];
-    if (hotkeyTerminal) {
-        PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
-        if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
-            [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
-        }
-        [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerminal];
-    }
-}
-
 - (void)windowDidBecomeMain:(NSNotification *)notification {
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
@@ -2786,8 +2782,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #endif
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    [self maybeHideHotkeyWindow];
-
+    NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
+    NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
+    if (![siblings containsObject:newMainWindowController]) {
+        [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+    }
+    
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
@@ -3058,7 +3058,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
 }
 - (void)updateUseTransparency {
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self allSessions]) {
         [[aSession view] setNeedsDisplay:YES];
@@ -3137,7 +3137,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-         !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
+         !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
         // Native fullscreen path
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
@@ -3193,7 +3193,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (NSUInteger)styleMask {
-    return [PseudoTerminal styleMaskForWindowType:windowType_];
+    return [PseudoTerminal styleMaskForWindowType:windowType_ hotkeyWindowType:_hotkeyWindowType];
 }
 
 // This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
@@ -3610,10 +3610,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return proposedFrame;
 }
 
-- (void)windowWillShowInitial
-{
+- (void)windowWillShowInitial {
     PtyLog(@"windowWillShowInitial");
-    PTYWindow* window = (PTYWindow*)[self window];
+    iTermTerminalWindow* window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
     if (haveScreenPreference_) {
         PtyLog(@"have screen preference is set");
@@ -3844,7 +3843,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
       [aSession setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
     [self refreshTools];
     [self updateTabColors];
@@ -3890,7 +3889,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
 {
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
         [itad updateBroadcastMenuState];
 }
 
@@ -3899,7 +3898,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
         [itad updateBroadcastMenuState];
 }
 
@@ -3917,7 +3916,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -4360,7 +4359,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView {
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     // Note: this assume that self is the front window (it should be!). It is smart enough to create
     // a tmux tab if the user wants one (or ask if needed).
     [itad newSession:nil];
@@ -5418,6 +5417,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         case WINDOW_TYPE_RIGHT_PARTIAL:
             frame.origin.x = self.screen.visibleFrameIgnoringHiddenDock.origin.x + self.screen.visibleFrameIgnoringHiddenDock.size.width - frame.size.width;
             break;
+            
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            break;
     }
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
@@ -5646,7 +5651,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     broadcastMode_ = mode;
         [self setDimmingForSessions];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -5707,7 +5712,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     // Update dimming of panes.
     [self refreshTerminal:nil];
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
 
@@ -6338,6 +6343,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [aSession setPreferencesFromAddressBookEntry:tempPrefs];
         [aSession loadInitialColorTable];
         [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
+        [aSession.screen resetTimestamps];
 
         if (title) {
             [aSession setName:title];
@@ -6787,7 +6793,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
                                               inTerminal:nil
                                                  withURL:nil
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:YES
                                                  command:nil
@@ -7155,7 +7161,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1 &&
         profile[KEY_SPACE] &&
-        [profile[KEY_SPACE] intValue] == -1) {
+        [profile[KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 
@@ -7164,7 +7170,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
 {
-    [self loadArrangement:[state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey]
+    [self loadArrangement:[state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]
                  sessions:nil];
 }
 
@@ -7189,7 +7195,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // they get a special path for restoration where the arrangement is saved in user defaults.
     if ([self isHotKeyWindow]) {
         [[self ptyWindow] setRestoreState:nil];
-        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+        [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] saveHotKeyWindowState];
         return;
     }
 

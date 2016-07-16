@@ -7,8 +7,12 @@
 //
 
 #import "AppearancePreferencesViewController.h"
+#import "iTermHotKeyController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermWarning.h"
 #import "PreferencePanel.h"
+
+NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidChangeNotification";
 
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
@@ -37,6 +41,9 @@
 
     // Hide menu bar in non-lion fullscreen.
     IBOutlet NSButton *_hideMenuBarInFullscreen;
+
+    // Exclude from dock and cmd-tab (LSUIElement)
+    IBOutlet NSButton *_uiElement;
 
     IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
     IBOutlet NSButton *_showTabBarInFullscreen;
@@ -123,6 +130,30 @@
                            key:kPreferenceKeyHideMenuBarInFullscreen
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_uiElement
+                           key:kPreferenceKeyUIElement
+                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        BOOL isOn = [sender state] == NSOnState;
+        if (isOn) {
+            iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:@"When iTerm2 is excluded from the dock, you can "
+                                                   @"always get back to Preferences using the status "
+                                                   @"bar item. Look for an iTerm2 icon on the right "
+                                                   @"side of your menu bar."
+                                           actions:@[ @"Exclude From Dock and App Switcher", @"Cancel" ]
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent];
+            if (selection == kiTermWarningSelection0) {
+                [self setBool:YES forKey:kPreferenceKeyUIElement];
+            }
+        } else {
+            [self setBool:NO forKey:kPreferenceKeyUIElement];
+        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
+                                                            object:nil];
+    };
 
     [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen

@@ -40,6 +40,7 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 - (void)selectGeneralTab;
 
 - (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab;
+- (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid;
 
 // Update views for changed backing state.
 - (void)refresh;

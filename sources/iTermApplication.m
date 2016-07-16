@@ -27,13 +27,16 @@
 
 #import "iTermApplication.h"
 #import "DebugLogging.h"
-#import "HotkeyWindowController.h"
 #import "iTermController.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
+#import "iTermScriptingWindow.h"
 #import "iTermShortcutInputView.h"
 #import "NSArray+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWindow+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -41,7 +44,13 @@
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 
-@implementation iTermApplication
+@interface iTermApplication()
+@property(nonatomic, retain) NSStatusItem *statusBarItem;
+@end
+
+@implementation iTermApplication {
+    BOOL _isUIElement;
+}
 
 - (void)dealloc {
     [_fakeCurrentEvent release];
@@ -76,38 +85,57 @@
     }
 }
 
+- (NSEvent *)eventByRemappingForSecureInput:(NSEvent *)event {
+    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped] &&
+        (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers])) {
+        // The event tap is not working, but we can still remap modifiers for non-system
+        // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
+        // the event tap performs the remapping.
+        event = [iTermKeyBindingMgr remapModifiers:event];
+        DLog(@"Remapped modifiers to %@", event);
+    }
+    return event;
+}
+
+- (BOOL)routeEventToShortcutInputView:(NSEvent *)event {
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
+        iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)firstResponder;
+        if (shortcutView) {
+            [shortcutView handleShortcutEvent:event];
+            return YES;
+        }
+    }
+    return NO;
+}
+
 // override to catch key press events very early on
-- (void)sendEvent:(NSEvent*)event {
-    if ([event type] == NSKeyDown) {
-        DLog(@"Received NSKeyDown event: %@", event);
-        
-        iTermController* cont = [iTermController sharedInstance];
-#ifdef FAKE_EVENT_TAP
-        event = [cont runEventTapHandler:event];
-        if (!event) {
+- (void)sendEvent:(NSEvent *)event {
+    if ([event type] == NSFlagsChanged) {
+        event = [self eventByRemappingForSecureInput:event];
+        if ([self routeEventToShortcutInputView:event]) {
             return;
         }
-#endif
-        if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped] &&
-            (IsSecureEventInputEnabled() || ![[HotkeyWindowController sharedInstance] haveEventTap])) {
-            // The event tap is not working, but we can still remap modifiers for non-system
-            // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
-            // the event tap performs the remapping.
-            event = [iTermKeyBindingMgr remapModifiers:event];
-            DLog(@"Remapped modifiers to %@", event);
-        }
+    } else if ([event type] == NSKeyDown) {
+        iTermController* cont = [iTermController sharedInstance];
+
+        event = [self eventByRemappingForSecureInput:event];
         if (IsSecureEventInputEnabled() &&
-            [[HotkeyWindowController sharedInstance] eventIsHotkey:event]) {
+            [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
             // tap won't get it. Do what the event tap would do in this case.
             DLog(@"Directing to hotkey handler");
-            OnHotKeyEvent();
+            [[iTermHotKeyController sharedInstance] hotkeyPressed:event];
             return;
         }
         PseudoTerminal* currentTerminal = [cont currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
+
+        if ([self routeEventToShortcutInputView:event]) {
+            return;
+        }
 
         const NSUInteger allModifiers =
             (NSShiftKeyMask | NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask);
@@ -122,7 +150,9 @@
                 DLog(@"Switching windows");
                 if (termWithNumber) {
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+                        iTermProfileHotKey *hotKey =
+                            [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:termWithNumber];
+                        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
                     } else {
                         [[termWithNumber window] makeKeyAndOrderFront:self];
                     }
@@ -130,12 +160,8 @@
                 return;
             }
         }
-        iTermShortcutInputView *shortcutView = [iTermShortcutInputView firstResponder];
-        if (shortcutView) {
-            DLog(@"Sending to shortcut input view");
-            [shortcutView handleShortcutEvent:event];
-            return;
-        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+
+        if ([[self keyWindow] isTerminalWindow]) {
             // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];
@@ -230,10 +256,56 @@
     }
 }
 
-- (NSArray *)orderedTerminalWindows {
-    return [[self orderedWindows] filteredArrayUsingBlock:^BOOL(id anObject) {
-        return [anObject isKindOfClass:[PTYWindow class]];
+- (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows {
+    return [self.windows mapWithBlock:^id(NSWindow *window) {
+        if ([window conformsToProtocol:@protocol(PTYWindow)]) {
+            return [iTermScriptingWindow scriptingWindowWithWindow:window];
+        } else {
+            return nil;
+        }
     }];
+}
+
+- (void)setIsUIElementApplication:(BOOL)uiElement {
+    if (uiElement == _isUIElement) {
+        return;
+    }
+    _isUIElement = uiElement;
+
+    ProcessSerialNumber psn = { 0, kCurrentProcess };
+    TransformProcessType(&psn,
+                         uiElement ? kProcessTransformToUIElementApplication :
+                                     kProcessTransformToForegroundApplication);
+    if (uiElement) {
+        // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
+        // when toggling the preference because all the windows disappear.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        });
+        
+        NSImage *image = [NSImage imageNamed:@"StatusItem"];
+        self.statusBarItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width] retain];
+        _statusBarItem.title = @"";
+        _statusBarItem.image = image;
+        _statusBarItem.alternateImage = [NSImage imageNamed:@"StatusItemAlt"];
+        _statusBarItem.highlightMode = YES;
+        
+        _statusBarItem.menu = [[self delegate] statusBarMenu];
+        
+    } else {
+        [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
+        self.statusBarItem = nil;
+    }
+}
+
+- (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {
+    NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] visibleFloatingHotkeyWindows] ?: @[];
+    return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
+}
+
+- (NSArray<NSWindow *> *)orderedWindowsPlusAllHotkeyPanels {
+    NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] allFloatingHotkeyWindows] ?: @[];
+    return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
 }
 
 @end

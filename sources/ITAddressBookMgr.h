@@ -192,6 +192,19 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
+#define KEY_HAS_HOTKEY                        @"Has Hotkey"  // This determines whether the "has a hotkey" box is checked. See also KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS.
+#define KEY_HOTKEY_KEY_CODE                   @"HotKey Key Code"
+#define KEY_HOTKEY_CHARACTERS                 @"HotKey Characters"
+#define KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS @"HotKey Characters Ignoring Modifiers"  // If this is non-empty then a hotkey is assigned, but see also KEY_HAS_HOTKEY.
+#define KEY_HOTKEY_MODIFIER_FLAGS             @"HotKey Modifier Flags"
+#define KEY_HOTKEY_AUTOHIDE                   @"HotKey Window AutoHides"
+#define KEY_HOTKEY_REOPEN_ON_ACTIVATION       @"HotKey Window Reopens On Activation"
+#define KEY_HOTKEY_ANIMATE                    @"HotKey Window Animates"
+#define KEY_HOTKEY_FLOAT                      @"HotKey Window Floats"
+#define KEY_HOTKEY_DOCK_CLICK_ACTION          @"HotKey Window Dock Click Action"
+#define KEY_HOTKEY_ACTIVATE_WITH_MODIFIER     @"HotKey Activated By Modifier"
+#define KEY_HOTKEY_MODIFIER_ACTIVATION        @"HotKey Modifier Activation"
+#define KEY_HOTKEY_ALTERNATE_SHORTCUTS        @"HotKey Alternate Shortcuts"
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
@@ -201,9 +214,16 @@
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
+#define KEY_DYNAMIC_PROFILE_FILENAME         @"Dynamic Profile Filename"
+
+// Session-only key
+#define KEY_SESSION_HOTKEY                   @"Session Hotkey"
 
 // Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 extern const NSTimeInterval kMinimumAntiIdlePeriod;
+
+// Special value for KEY_SPACE.
+extern NSInteger iTermProfileJoinsAllSpaces;
 
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
@@ -246,6 +266,20 @@ typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
     iTermThinStrokesSettingAlways,
 };
 
+typedef NS_ENUM(NSUInteger, iTermHotKeyDockPreference) {
+    iTermHotKeyDockPreferenceDoNotShow,
+    iTermHotKeyDockPreferenceAlwaysShow,
+    iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen,
+};
+
+// Do not renumber. These are tag numbers and also saved in prefs.
+typedef NS_ENUM(NSUInteger, iTermHotKeyModifierActivation) {
+    iTermHotKeyModifierActivationControl = 0,
+    iTermHotKeyModifierActivationShift = 1,
+    iTermHotKeyModifierActivationOption = 2,
+    iTermHotKeyModifierActivationCommand = 3,
+};
+
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 
 + (id)sharedInstance;
@@ -269,6 +303,6 @@ typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
 
 // Removes the profile from the model, removes key mappings that reference this profile, and posts a
 // kProfileWasDeletedNotification notification, then flushes the model to backing store.
-+ (void)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
++ (BOOL)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
 
 @end

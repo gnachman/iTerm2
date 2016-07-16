@@ -4431,6 +4431,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [self activeSession] == session;
 }
 
+- (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session {
+    if ([[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem]) {
+        return NO;
+    }
+    return [self activeSession] == session;
+}
+
 #pragma mark - Private
 
 - (void)setLabelAttributesForDeadSession {

@@ -1,7 +1,8 @@
 #import "iTermOpenQuicklyWindowController.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermHotKeyController.h"
+#import "iTermProfileHotKey.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermOpenQuicklyModel.h"
 #import "iTermOpenQuicklyTableCellView.h"
@@ -162,7 +163,7 @@
 
 // Bound to the close button.
 - (IBAction)close:(id)sender {
-    [HotkeyWindowController closeWindowReturningToHotkeyWindowIfPossible:self.window];
+    [self.window close];
 }
 
 // Switch to the session associated with the currently selected row, closing
@@ -182,15 +183,21 @@
         } else if ([object isKindOfClass:[Profile class]]) {
             // Create a new tab/window
             Profile *profile = object;
-            iTermController *controller = [iTermController sharedInstance];
-            [controller launchBookmark:profile
-                            inTerminal:[controller currentTerminal]
-                               withURL:nil
-                              isHotkey:NO
-                               makeKey:YES
-                           canActivate:YES
-                               command:nil
-                                 block:nil];
+            iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:profile[KEY_GUID]];
+            if (profileHotkey.windowController.weaklyReferencedObject) {
+                // Create a new non-hotkey window
+                [[iTermController sharedInstance] launchBookmark:profile
+                                                      inTerminal:[[iTermController sharedInstance] currentTerminal]
+                                                         withURL:nil
+                                                hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                         makeKey:YES
+                                                     canActivate:YES
+                                                         command:nil
+                                                           block:nil];
+            } else {
+                // Create the hotkey window for this profile
+                [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey];
+            }
         } else if ([object isKindOfClass:[NSString class]]) {
             // Load window arrangement
             [[iTermController sharedInstance] loadWindowArrangementWithName:object];

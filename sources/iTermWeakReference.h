@@ -74,7 +74,7 @@ extern NSString *const iTermWeaklyReferenceableObjectWillDealloc;
 
 // Use this macro inside a weakly referencable object's @implementation.
 #define ITERM_WEAKLY_REFERENCEABLE \
-- (id)weakSelf { \
+- (_Nullable id)weakSelf { \
     return [[[iTermWeakReference alloc] initWithObject:self] autorelease]; \
 } \
 - (void)dealloc { \

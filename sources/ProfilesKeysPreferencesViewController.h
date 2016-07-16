@@ -10,4 +10,7 @@
 
 @interface ProfilesKeysPreferencesViewController : iTermProfilePreferencesBaseViewController
 
+- (void)layoutSubviewsForEditCurrentSessionMode;
+- (IBAction)openHotKeyPanel:(id)sender;
+
 @end

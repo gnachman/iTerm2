@@ -82,6 +82,7 @@ extern NSString *const kPreferenceKeyHideTabActivityIndicator;
 extern NSString *const kPreferenceKeyShowNewOutputIndicator;
 extern NSString *const kPreferenceKeyShowPaneTitles;
 extern NSString *const kPreferenceKeyHideMenuBarInFullscreen;
+extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyShowWindowNumber;
 extern NSString *const kPreferenceKeyShowJobName;
@@ -103,13 +104,16 @@ extern NSString *const kPreferenceKeyRightCommandRemapping;
 extern NSString *const kPreferenceKeySwitchPaneModifier;
 extern NSString *const kPreferenceKeySwitchTabModifier;
 extern NSString *const kPreferenceKeySwitchWindowModifier;
+
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyHotKeyCode;
 extern NSString *const kPreferenceKeyHotkeyCharacter;
 extern NSString *const kPreferenceKeyHotkeyModifiers;
-extern NSString *const kPreferenceKeyHotKeyTogglesWindow;
-extern NSString *const kPreferenceKeyHotkeyProfileGuid;
-extern NSString *const kPreferenceKeyHotkeyAutoHides;
+
+// Migration to multi-hotkey window will move these settings into a profile.
+extern NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated;  // Deprecated
+extern NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated;  // Deprecated
+extern NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated;  // Deprecated
 
 // Pointer
 extern NSString *const kPreferenceKeyCmdClickOpensURLs;
@@ -144,6 +148,9 @@ extern NSString *const kPreferenceKeyLeftTabBarWidth;
 extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 
 extern NSString *const kPreferenceKeyShowFullscreenTabBar;
+
+// Set to YES on the first launch of a version that supports multiple hotkey windows.
+extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 
 @interface iTermPreferences : NSObject
 

@@ -373,6 +373,9 @@ typedef struct iTermTextColorContext {
     CGFloat alpha = _transparencyAlpha;
     if (run->selected) {
         color = [self selectionColorForCurrentFocus];
+        if (_transparencyAffectsOnlyDefaultBackgroundColor) {
+            alpha = 1;
+        }
     } else if (run->isMatch) {
         color = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
     } else {
@@ -558,11 +561,18 @@ typedef struct iTermTextColorContext {
         [path setLineWidth:1.0];
         [path stroke];
 
-        if (mark.code) {
-            [[NSColor colorWithCalibratedRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
-        } else {
+        if (mark.code == 0) {
+            // Success
             [[NSColor colorWithCalibratedRed:120.0 / 255.0 green:178.0 / 255.0 blue:255.0 / 255.0 alpha:1] set];
+        } else if ([iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal] &&
+                   mark.code >= 128 && mark.code <= 128 + 32) {
+            // Stopped by a signal (or an error, but we can't tell which)
+            [[NSColor colorWithCalibratedRed:210.0 / 255.0 green:210.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
+        } else {
+            // Failure
+            [[NSColor colorWithCalibratedRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1] set];
         }
+
         [path moveToPoint:top];
         [path lineToPoint:right];
         [path lineToPoint:bottom];
@@ -1306,7 +1316,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
               NSFontAttributeName: attributes->font,
               iTermFakeBoldAttribute: @(attributes->fakeBold),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
-              NSUnderlineStyleAttributeName: attributes->underline ? @(NSSingleUnderlineStyle) : @(NSNoUnderlineStyle) };
+              NSUnderlineStyleAttributeName: attributes->underline ? @(NSUnderlineStyleSingle) : @(NSUnderlineStyleNone) };
 }
 
 - (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c {
@@ -2031,18 +2041,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         return [_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]];
     } else {
         return _unfocusedSelectionColor;
-    }
-}
-
-- (void)selectFont:(NSFont *)font inContext:(CGContextRef)ctx {
-    if (font != _selectedFont) {
-        // This method is really slow so avoid doing it when it's not necessary
-        CGContextSelectFont(ctx,
-                            [[font fontName] UTF8String],
-                            [font pointSize],
-                            kCGEncodingMacRoman);
-        [_selectedFont release];
-        _selectedFont = [font retain];
     }
 }
 

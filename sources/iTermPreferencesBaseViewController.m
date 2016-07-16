@@ -20,7 +20,7 @@ static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChan
 
 // key for userInfo dictionary of kPreferenceDidChangeFromOtherPanel notification having
 // key of changed preference.
-static NSString *const kKey = @"key";
+NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 @interface iTermPreferencesBaseViewController()
 // If set to YES, then controls won't be updated with values from backing store when it changes.
@@ -72,6 +72,12 @@ static NSString *const kKey = @"key";
 }
 
 #pragma mark - Methods to override
+
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [self setObject:obj forKey:key];
+    }];
+}
 
 - (BOOL)boolForKey:(NSString *)key {
     return [iTermPreferences boolForKey:key];
@@ -231,7 +237,7 @@ static NSString *const kKey = @"key";
     if ([self shouldUpdateOtherPanels]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kPreferenceDidChangeFromOtherPanel
                                                             object:self
-                                                          userInfo:@{ kKey: info.key }];
+                                                          userInfo:@{ kPreferenceDidChangeFromOtherPanelKeyUserInfoKey: info.key }];
     }
 
 }
@@ -510,7 +516,7 @@ static NSString *const kKey = @"key";
 #pragma mark - Notifications
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
-    NSString *key = notification.userInfo[kKey];
+    NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
     if (![_keys containsObject:key]) {
         return;
     }
@@ -523,6 +529,10 @@ static NSString *const kKey = @"key";
     if (_preferencePanel == notification.object) {
         _preferencePanel = nil;
         // Breaks reference cycles in settingChanged and update blocks.
+        for (NSControl *key in _keyMap) {
+            PreferenceInfo *info = [_keyMap objectForKey:key];
+            [info clearBlocks];
+        }
         [_keyMap removeAllObjects];
     }
 }

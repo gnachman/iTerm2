@@ -74,10 +74,12 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermModifierRemapper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
-#import "HotkeyWindowController.h"
+#import "NSStringITerm.h"
 #import "PTYTextView.h"   // For selection movement units
 #import <Carbon/Carbon.h>
 
@@ -260,24 +262,12 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             break;
     }
 
-    theKeyString = [[NSMutableString alloc] initWithString: @""];
-    if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
-    }
-    if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"⌥"];
-    }
-    if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"⇧"];
-    }
-    if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
-    }
+    theKeyString = [[[NSString stringForModifiersWithMask:keyMods] mutableCopy] autorelease];
     if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
         [theKeyString appendString: @"num-"];
     }
-    [theKeyString appendString: aString];
-    return [theKeyString autorelease];
+    [theKeyString appendString:aString];
+    return theKeyString;
 }
 
 + (NSString*)_bookmarkNameForGuid:(NSString*)guid
@@ -512,25 +502,33 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     return [dict objectForKey:keyString] != nil;
 }
 
-+ (int)localActionForKeyCode:(unichar)keyCode
-                   modifiers:(unsigned int) keyMods
-                        text:(NSString **) text
-                 keyMappings:(NSDictionary *)keyMappings
-{
-    NSString *keyString;
-    NSDictionary *theKeyMapping;
-    int retCode = -1;
-    unsigned int theModifiers;
-
-    // turn off all the other modifier bits we don't care about
-    theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
-
++ (NSEventModifierFlags)modifiersForKeyCode:(int)keyCode modifiers:(NSEventModifierFlags)keyMods {
+    NSEventModifierFlags theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
+    
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
     }
+    return theModifiers;
+}
 
-    keyString = [NSString stringWithFormat: @"0x%x-0x%x", keyCode, theModifiers];
++ (NSString *)identifierForCharacterIgnoringModifiers:(unichar)characterIgnoringModifiers
+                                            modifiers:(NSEventModifierFlags)keyMods {
+    // turn off all the other modifier bits we don't care about
+    unsigned int theModifiers = [self modifiersForKeyCode:characterIgnoringModifiers modifiers:keyMods];
+    return [NSString stringWithFormat: @"0x%x-0x%x", characterIgnoringModifiers, theModifiers];
+}
+
++ (int)localActionForKeyCode:(unichar)keyCode
+                   modifiers:(unsigned int)keyMods
+                        text:(NSString **)text
+                 keyMappings:(NSDictionary *)keyMappings
+{
+    NSString *keyString = [self identifierForCharacterIgnoringModifiers:keyCode modifiers:keyMods];
+    
+    NSDictionary *theKeyMapping;
+    int retCode = -1;
+
     theKeyMapping = [keyMappings objectForKey: keyString];
     if (theKeyMapping == nil) {
         if (text) {
@@ -860,62 +858,62 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 + (NSInteger)_cgMaskForLeftCommandKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightCommandKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftCommandKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightCommandKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftAlternateKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightAlternateKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftAlternateKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightAlternateKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftControlKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightControlKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftControlKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightControlKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent

@@ -1443,6 +1443,11 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     currentGrid_.cursor = coord;
 }
 
+- (void)resetTimestamps {
+    [primaryGrid_ resetTimestamps];
+    [altGrid_ resetTimestamps];
+}
+
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.

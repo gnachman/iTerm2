@@ -77,7 +77,7 @@
       <cocoa class="iTermApplication"/>
       <property name="current window" code="Crwn" type="window"
         description="The frontmost window">
-        <cocoa key="currentWindow" />
+        <cocoa key="currentScriptingWindow" />
       </property>
 
       <property name="name" code="pnam" type="text" access="r" 
@@ -89,10 +89,11 @@
       <property name="version" code="vers" type="text" access="r" 
         description="The version of the application."/> 
       <element type="window" access="r"> 
-        <cocoa key="orderedTerminalWindows"/> 
+        <cocoa key="orderedScriptingWindows"/> 
       </element> 
     </class> 
     <class name="window" code="cwin" description="A window."> 
+      <cocoa class="iTermScriptingWindow"/>
       <cocoa class="PTYWindow"/>
       <!-- Prior to 3.0.4, id was a string with code "ID  " that had a value like "window-1" which
        coincides with the unique identifier used in a window's object specifier. Issue 4825 points 

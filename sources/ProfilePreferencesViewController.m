@@ -226,6 +226,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
+    [_keysViewController layoutSubviewsForEditCurrentSessionMode];
     NSRect newFrame = _tabView.superview.bounds;
     newFrame.size.width -= 13;
 
@@ -261,6 +262,19 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
 
 - (void)reloadProfileInProfileViewControllers {
     [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
+}
+
+- (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid {
+    [_profilesListView reloadData];
+    if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
+        [self reloadProfileInProfileViewControllers];
+    } else {
+        [self selectGuid:guid];
+    }
+    if (!self.view.window.attachedSheet) {
+        [_tabView selectTabViewItem:_keysTab];
+        [_keysViewController openHotKeyPanel:nil];
+    }
 }
 
 - (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab {

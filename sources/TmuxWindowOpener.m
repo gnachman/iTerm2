@@ -301,6 +301,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     DLog(@"requestDidComplete. Pending requests is now %d", pendingRequests_);
     if (pendingRequests_ == 0) {
         NSWindowController<iTermWindowController> *term = nil;
+        BOOL isNewWindow = NO;
         if (!tabToUpdate_) {
             DLog(@"Have no tab to update.");
             if (![[[PTYTab tmuxBookmark] objectForKey:KEY_PREVENT_TAB] boolValue]) {
@@ -320,6 +321,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
             }
             if (!term) {
                 term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:[PTYTab tmuxBookmark]];
+                isNewWindow = YES;
                 DLog(@"Opened a new window %@", term);
             }
         }
@@ -382,6 +384,10 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         if (self.target) {
             [self.target performSelector:self.selector
                               withObject:[NSNumber numberWithInt:windowIndex_]];
+        }
+        if (isNewWindow) {
+#warning TODO Make iTermController not know about PseudoTerminal so I don't have to do this cast.
+            [[iTermController sharedInstance] didFinishCreatingTmuxWindow:(PseudoTerminal *)term];
         }
     }
 }

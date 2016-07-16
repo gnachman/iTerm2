@@ -174,6 +174,10 @@ static PreferencePanel *gSessionsPreferencePanel;
     return self;
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 #pragma mark - View layout
 
 - (void)awakeFromNib {
@@ -211,6 +215,13 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 #pragma mark - API
+
+- (void)configureHotkeyForProfile:(Profile *)profile {
+    [self window];
+    [self selectProfilesTab];
+    [self run];
+    [_profilesViewController openToProfileWithGuidAndEditHotKey:profile[KEY_GUID]];
+}
 
 - (void)selectProfilesTab {
     [_tabView selectTabViewItem:_bookmarksTabViewItem];
@@ -268,6 +279,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 #pragma mark - NSWindowController
 
 - (void)windowWillLoad {
+    DLog(@"Will load prefs panel from %@", [NSThread callStackSymbols]);
     // We finally set our autosave window frame name and restore the one from the user's defaults.
     [self setShouldCascadeWindows:NO];
 }
@@ -414,7 +426,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 #pragma mark - Hotkey Window
 
-// This is used by HotkeyWindowController to not activate the hotkey while the field for typing
+// This is used by iTermHotKeyController to not activate the hotkey while the field for typing
 // the hotkey into is the first responder.
 - (NSTextField*)hotkeyField {
     return _keysViewController.hotkeyField;

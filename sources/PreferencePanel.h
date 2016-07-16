@@ -100,4 +100,7 @@ void LoadPrefsFromCustomFolder(void);
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
 
+// Go to the profiles tab, go to its Keys sub-tab, and open the Hotkey window panel.
+- (void)configureHotkeyForProfile:(Profile *)profile;
+
 @end

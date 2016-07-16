@@ -1,5 +1,6 @@
 #import "CPKEyedropperWindow.h"
 #import "CPKEyedropperView.h"
+#import "NSColor+CPK.h"
 
 // Size in points of one edge of the window. It is square.
 const CGFloat kSize = 200;
@@ -161,7 +162,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSMutableArray *outerArray = [NSMutableArray array];
     const NSInteger radius = 9;
     NSBitmapImageRep *screenshot = [self currentScreenScreenshot];
-    NSColor *blackColor = [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
+    NSColor *blackColor = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:1];
     for (NSInteger x = point.x - radius; x <= point.x + radius; x++) {
         NSMutableArray *innerArray = [NSMutableArray array];
         for (NSInteger y = point.y - radius; y <= point.y + radius; y++) {

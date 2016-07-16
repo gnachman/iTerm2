@@ -1,6 +1,7 @@
 // Defines a protocol shared by PseudoTerminal and FakeWindow.
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 #import "ProfileModel.h"
 #import "PTYTabDelegate.h"
 #import "PTYWindow.h"
@@ -105,7 +106,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // Underlying window
 - (NSWindow *)window;
-- (PTYWindow *)ptyWindow;
+- (iTermTerminalWindow *)ptyWindow;
 
 // Unique identifier
 - (NSString *)terminalGuid;
@@ -145,7 +146,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (BOOL)lionFullScreen;
 
 // Get the window type
-- (int)windowType;
+- (iTermWindowType)windowType;
 
 // Returns a new terminal at the given screen coordinate. The
 // "wasDraggedFromAnotherWindow_" flag is set on the returned window.
@@ -357,8 +358,11 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Indicates if the current session can be split.
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark;
 
-// Indicates if this the hotkey window.
+// Indicates if this a hotkey window.
 - (BOOL)isHotKeyWindow;
+
+// Is this a "floating" hotkey window? These sit in nonactivating panels with a high window level.
+- (BOOL)isFloatingHotKeyWindow;
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
 

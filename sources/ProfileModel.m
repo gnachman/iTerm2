@@ -599,8 +599,18 @@ int gMigrated;
     return [tags allObjects];
 }
 
-- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark
-{
+- (Profile *)setObjectsFromDictionary:(NSDictionary *)dictionary inProfile:(Profile *)profile {
+    NSMutableDictionary *newDict = [[profile mutableCopy] autorelease];
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [newDict setObject:obj forKey:key];
+    }];
+    NSString *guid = [profile objectForKey:KEY_GUID];
+    Profile *newProfile = [NSDictionary dictionaryWithDictionary:newDict];
+    [self setBookmark:newProfile withGuid:guid];
+    return newProfile;
+}
+
+- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark {
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     if (object == nil) {
         [newDict removeObjectForKey:key];

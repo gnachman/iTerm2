@@ -247,6 +247,9 @@
 // Restore saved state excluding screen contents.
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
+// Reset timestamps to the uninitialized state.
+- (void)resetTimestamps;
+
 #pragma mark - Testing use only
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;

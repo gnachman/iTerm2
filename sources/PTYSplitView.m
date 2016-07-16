@@ -44,6 +44,9 @@
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
+    if (self.subviews.count == 0) {
+        return;
+    }
     // First, find the splitter that was clicked on. It will be the one closest
     // to the mouse. The OS seems to give a bit of wiggle room so it's not
     // necessary exactly under the mouse.

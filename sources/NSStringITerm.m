@@ -27,6 +27,7 @@
 
 #import "DebugLogging.h"
 #import "NSData+iTerm.h"
+#import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
@@ -1378,16 +1379,16 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 + (NSString *)stringForModifiersWithMask:(NSUInteger)keyMods {
     NSMutableString *theKeyString = [NSMutableString string];
     if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
+        [theKeyString appendString:@"^"];
     }
     if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"⌥"];
+        [theKeyString appendString:@"⌥"];
     }
     if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"⇧"];
+        [theKeyString appendString:@"⇧"];
     }
     if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
+        [theKeyString appendString:@"⌘"];
     }
     return theKeyString;
 }
@@ -1528,6 +1529,61 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 
     return hash;
+}
+
+- (NSUInteger)firstCharacter {
+    if (self.length == 0) {
+        return 0;
+    } else {
+        unichar firstUTF16 = [self characterAtIndex:0];
+        if (self.length == 1 || !IsHighSurrogate(firstUTF16)) {
+            return firstUTF16;
+        }
+        unichar secondUTF16 = [self characterAtIndex:1];
+        if (!IsLowSurrogate(secondUTF16)) {
+            return 0;
+        }
+        return DecodeSurrogatePair(firstUTF16, secondUTF16);
+    }
+}
+
+- (BOOL)startsWithQuotationMark {
+    return [self hasPrefix:[[NSLocale currentLocale] objectForKey:NSLocaleQuotationBeginDelimiterKey]];
+}
+
+- (BOOL)endsWithQuotationMark {
+    return [self hasSuffix:[[NSLocale currentLocale] objectForKey:NSLocaleQuotationEndDelimiterKey]];
+}
+
+- (BOOL)isInQuotationMarks {
+    return [self startsWithQuotationMark] && [self endsWithQuotationMark];
+}
+
+- (NSString *)stringByInsertingTerminalPunctuation:(NSString *)punctuation {
+    if ([[NSLocale currentLocale] commasAndPeriodsGoInsideQuotationMarks] && [self endsWithQuotationMark]) {
+        NSString *endQuote = [[NSLocale currentLocale] objectForKey:NSLocaleQuotationEndDelimiterKey];
+        NSInteger quotationLength = [endQuote length];
+        NSString *stringWithoutEndQuote = [self substringToIndex:self.length - quotationLength];
+        return [[stringWithoutEndQuote stringByAppendingString:punctuation] stringByAppendingString:endQuote];
+    } else {
+        return [self stringByAppendingString:punctuation];
+    }
+}
+
+- (NSString *)stringByEscapingForJSON {
+    // Escape backslash and " with unicode literals.
+    NSString *escaped =
+	[[self stringByReplacingOccurrencesOfString:@"\\" withString:@"\\u005c"]
+               stringByReplacingOccurrencesOfString:@"\"" withString:@"\\u0022"];
+    return [NSString stringWithFormat:@"\"%@\"", escaped];
+}
+
+- (NSString *)stringByEscapingForXML {
+    return [[[[[self stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"]
+                     stringByReplacingOccurrencesOfString:@"\"" withString:@"&quot;"]
+                     stringByReplacingOccurrencesOfString:@"'" withString:@"&#39;"]
+                     stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"]
+                     stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
 }
 
 - (NSArray<NSNumber *> *)codePoints {

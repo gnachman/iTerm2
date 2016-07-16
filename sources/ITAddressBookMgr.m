@@ -29,7 +29,10 @@
 
 #import "DebugLogging.h"
 #import "iTermDynamicProfileManager.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermHotKeyMigrationHelper.h"
+#import "iTermHotKeyProfileBindingController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "PreferencePanel.h"
@@ -40,6 +43,7 @@
 #include <arpa/inet.h>
 
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
+NSInteger iTermProfileJoinsAllSpaces = -1;
 
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;
@@ -133,6 +137,9 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
             // One of the dynamic profiles has the default guid.
             [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
         }
+        
+        [[iTermHotKeyMigrationHelper sharedInstance] migrateSingleHotkeyToMulti];
+        [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 
     return self;
@@ -676,12 +683,12 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     return YES;
 }
 
-+ (void)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
++ (BOOL)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
     NSString *guid = profile[KEY_GUID];
     DLog(@"Remove profile with guid %@...", guid);
     if ([model numberOfBookmarks] == 1) {
         DLog(@"Refusing to remove only profile");
-        return;
+        return NO;
     }
 
     DLog(@"Removing key bindings that reference the guid being removed");
@@ -694,6 +701,7 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     [[NSNotificationCenter defaultCenter] postNotificationName:kProfileWasDeletedNotification
                                                         object:nil];
     [model flush];
+    return YES;
 }
 
 + (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {

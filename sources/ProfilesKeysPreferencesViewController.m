@@ -8,8 +8,11 @@
 
 #import "ProfilesKeysPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermHotKeyController.h"
+#import "iTermHotkeyPreferencesWindowController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermShortcutInputView.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
@@ -24,6 +27,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSMatrix *_rightOptionKeySends;
     IBOutlet NSButton *_deleteSendsCtrlHButton;
     IBOutlet NSButton *_applicationKeypadAllowed;
+    IBOutlet NSButton *_hasHotkey;
+    IBOutlet NSButton *_configureHotKey;
+    IBOutlet NSView *_hotKeyContainerView;
 }
 
 - (void)dealloc {
@@ -52,7 +58,31 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
                    type:kPreferenceInfoTypeCheckbox];
 
+    PreferenceInfo *info = [self defineControl:_hasHotkey
+                                           key:KEY_HAS_HOTKEY
+                                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        if ([[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS] length]) {
+            [self setBool:([sender state] == NSOnState) forKey:KEY_HAS_HOTKEY];
+        } else {
+            [self openHotKeyPanel:nil];
+        }
+    };
+    info.observer = ^() {
+        _configureHotKey.enabled = _hasHotkey.state == NSOnState;
+    };
+    
     [self updateDeleteSendsCtrlH];
+}
+
+- (void)layoutSubviewsForEditCurrentSessionMode {
+    _hotKeyContainerView.hidden = YES;
+
+    // Update the "original" size of the view.
+    iTermSizeRememberingView *sizeRememberingView = (iTermSizeRememberingView *)self.view;
+    CGSize size = sizeRememberingView.originalSize;
+    size.height -= _hotKeyContainerView.frame.size.height;
+    sizeRememberingView.originalSize = size;
 }
 
 - (NSArray *)keysForBulkCopy {
@@ -64,6 +94,37 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [super reloadProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil];
+}
+
+#pragma mark - Actions
+
+- (IBAction)openHotKeyPanel:(id)sender {
+    iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
+    model.hasModifierActivation = [self boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER];
+    model.modifierActivation = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION];
+    model.primaryShortcut = [[[iTermShortcut alloc] initWithKeyCode:[self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE]
+                                                          modifiers:[self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS]
+                                                         characters:[self stringForKey:KEY_HOTKEY_CHARACTERS]
+                                        charactersIgnoringModifiers:[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS]] autorelease];
+    model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
+    model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
+    model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];
+    model.floats = [self boolForKey:KEY_HOTKEY_FLOAT];
+    model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
+    [model setAlternateShortcutDictionaries:(id)[self objectForKey:KEY_HOTKEY_ALTERNATE_SHORTCUTS]];
+    
+    iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
+    panel.descriptorsInUseByOtherProfiles =
+        [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:self.delegate.profilePreferencesCurrentProfile];
+    panel.model = model;
+    
+    [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSModalResponseOK) {
+            [self setObjectsFromDictionary:model.dictionaryValue];
+            _hasHotkey.state = [self boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
+        }
+        _configureHotKey.enabled = [self boolForKey:KEY_HAS_HOTKEY];
+    }];
 }
 
 #pragma mark - Notifications

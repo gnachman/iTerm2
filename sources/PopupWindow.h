@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface PopupWindow : NSWindow
+@interface PopupWindow : NSPanel
 
 - (void)shutdown;
 

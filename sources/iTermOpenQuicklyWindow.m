@@ -18,4 +18,8 @@
     return 0.15;
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 @end

@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
@@ -26,7 +27,7 @@ static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
-@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate, ProfileListViewDelegate>
+@interface ProfilesGeneralPreferencesViewController () <iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -58,6 +59,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
+    IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
 
     IBOutlet NSView *_editCurrentSessionView;
     IBOutlet NSButton *_copySettingsToProfile;
@@ -163,6 +165,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+    _sessionHotkeyInputView.shortcut = [iTermShortcut shortcutWithDictionary:(NSDictionary *)[self objectForKey:KEY_SESSION_HOTKEY]];
 }
 
 - (NSString *)selectedGuid {
@@ -188,6 +191,21 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 #pragma mark - URL Schemes
 
+- (BOOL)profileHandlesScheme:(NSString *)scheme {
+    Profile *handler = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
+    NSString *guid = [self stringForKey:KEY_GUID];
+    return (handler &&
+            [[handler objectForKey:KEY_GUID] isEqualToString:guid] &&
+            [[iTermLaunchServices sharedInstance] iTermIsDefaultForScheme:scheme]);
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.menu == _urlSchemes.menu) {
+        menuItem.state = [self profileHandlesScheme:menuItem.title] ? NSOnState : NSOffState;
+    }
+    return YES;
+}
+
 - (IBAction)urlSchemeHandlerDidChange:(id)sender {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     NSString *guid = profile[KEY_GUID];
@@ -212,17 +230,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
         [_urlSchemes setTitle:@"Select URL Schemes…"];
     }
     
-    NSString* guid = [profile objectForKey:KEY_GUID];
     [[_urlSchemes menu] setAutoenablesItems:YES];
     [[_urlSchemes menu] setDelegate:self];
-    for (NSMenuItem* item in [[_urlSchemes menu] itemArray]) {
-        Profile* handler = [[iTermLaunchServices sharedInstance] profileForScheme:[item title]];
-        if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
-            [item setState:NSOnState];
-        } else {
-            [item setState:NSOffState];
-        }
-    }
 }
 
 #pragma mark - Advanced initial directory settings
@@ -461,6 +470,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 - (void)profileTableRowSelected:(id)profileTable {
     [self changeProfile:self];
+}
+
+#pragma mark - iTermShortcutInputViewDelegate
+
+- (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
+    [self setObject:view.shortcut.dictionaryValue forKey:KEY_SESSION_HOTKEY];
 }
 
 @end

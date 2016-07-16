@@ -27,18 +27,26 @@
 
 #import "iTermApplicationDelegate.h"
 
+#import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
+#import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
+#import "iTermFullScreenWindowManager.h"
+#import "iTermHotKeyController.h"
+#import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
+#import "iTermModifierRemapper.h"
+#import "iTermPreferences.h"
+#import "iTermRemotePreferences.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
@@ -54,6 +62,7 @@
 #import "NSApplication+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWindow+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -85,7 +94,8 @@ NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
-static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";
+static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
+static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
 
 static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
@@ -150,17 +160,15 @@ static BOOL hasBecomeActive = NO;
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 }
 
+- (void)updateProcessType {
+    [[iTermApplication sharedApplication] setIsUIElementApplication:[iTermPreferences boolForKey:kPreferenceKeyUIElement]];
+}
+
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
-    }
-
-    if ([iTermAdvancedSettingsModel hideFromDockAndAppSwitcher]) {
-        ProcessSerialNumber psn = { 0, kCurrentProcess };
-        TransformProcessType(&psn, kProcessTransformToUIElementApplication);
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
     [self buildScriptMenu:nil];
@@ -171,7 +179,14 @@ static BOOL hasBecomeActive = NO;
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 
+    // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
+    // exists.
+    [self updateProcessType];
+
     [iTermToolbeltView populateMenu:toolbeltMenu];
+
+    // Start tracking windows entering/exiting full screen.
+    [iTermFullScreenWindowManager sharedInstance];
 
     // Users used to be opted into the beta by default. Make sure the user is cool with that.
     [self promptAboutRemainingInBetaIfNeeded];
@@ -461,18 +476,18 @@ static BOOL hasBecomeActive = NO;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
-    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
-        ([iTermPreferences intForKey:kPreferenceKeyHotKeyCode] ||
-         [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter])) {
-        [[HotkeyWindowController sharedInstance] registerHotkey:[iTermPreferences intForKey:kPreferenceKeyHotKeyCode]
-                                                      modifiers:[iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers]];
-    }
-    if ([[HotkeyWindowController sharedInstance] isAnyModifierRemapped]) {
+    // Ensure hotkeys are registered.
+    [iTermAppHotKeyProvider sharedInstance];
+    [iTermHotKeyProfileBindingController sharedInstance];
+
+    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
         // Use a brief delay so windows have a chance to open before the dialog is shown.
-        [[HotkeyWindowController sharedInstance] performSelector:@selector(beginRemappingModifiers)
-                                                      withObject:nil
-                                                      afterDelay:0.5];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+              [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
+            }
+        });
     }
     [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 
@@ -502,6 +517,11 @@ static BOOL hasBecomeActive = NO;
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(processTypeDidChange:)
+                                                 name:iTermProcessTypeDidChangeNotification
+                                               object:nil];
+
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
@@ -522,6 +542,10 @@ static BOOL hasBecomeActive = NO;
     [NSApp invalidateRestorableState];
     [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
+}
+
+- (void)processTypeDidChange:(NSNotification *)notification {
+    [self updateProcessType];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
@@ -578,7 +602,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // Ensure [iTermController dealloc] is called before prefs are saved
-    [[HotkeyWindowController sharedInstance] stopEventTap];
+    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
 
     // Prevent sessions from making their termination undoable since we're quitting.
     [[iTermController sharedInstance] setApplicationIsQuitting:YES];
@@ -604,8 +628,8 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
-    [[HotkeyWindowController sharedInstance] stopEventTap];
-         DLog(@"applicationWillTerminate returning");
+    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
+    DLog(@"applicationWillTerminate returning");
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn
@@ -726,29 +750,10 @@ static BOOL hasBecomeActive = NO;
     return quittingBecauseLastWindowClosed_;
 }
 
-- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
-{
-    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
-        [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
-        // The hotkey window is configured.
-        PseudoTerminal* hotkeyTerm = [[HotkeyWindowController sharedInstance] hotKeyWindow];
-        if (hotkeyTerm) {
-            // Hide the existing window or open it if enabled by preference.
-            if ([[hotkeyTerm window] alphaValue] == 1) {
-                [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
-                return NO;
-            } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
-                [[HotkeyWindowController sharedInstance] showHotKeyWindow];
-                return NO;
-            }
-        } else if ([iTermAdvancedSettingsModel dockIconTogglesWindow]) {
-            // No existing hotkey window but preference is to toggle it by dock icon so open a new
-            // one.
-            [[HotkeyWindowController sharedInstance] showHotKeyWindow];
-            return NO;
-        }
-    }
-    return YES;
+// User clicked on the dock icon.
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication
+                    hasVisibleWindows:(BOOL)flag {
+    return ![[iTermHotKeyController sharedInstance] dockIconClicked];
 }
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
@@ -835,23 +840,32 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
 }
 
+- (NSMenu *)topLevelViewNamed:(NSString *)menuName {
+    NSMenu *appMenu = [NSApp mainMenu];
+    NSMenuItem *topLevelMenuItem = [appMenu itemWithTitle:menuName];
+    NSMenu *menu = [topLevelMenuItem submenu];
+    return menu;
+}
+
+- (void)addMenuItemView:(NSView *)view toMenu:(NSMenu *)menu title:(NSString *)title {
+    NSMenuItem *newItem;
+    newItem = [[[NSMenuItem alloc] initWithTitle:title
+                                       action:@selector(changeTabColorToMenuAction:)
+                                keyEquivalent:@""] autorelease];
+    [newItem setView:view];
+    [menu addItem:newItem];
+}
+
 - (void)awakeFromNib {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
 
-    NSMenu *appMenu = [NSApp mainMenu];
-    NSMenuItem *viewMenuItem = [appMenu itemWithTitle:@"View"];
-    NSMenu *viewMenu = [viewMenuItem submenu];
+    NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
+    [viewMenu addItem:[NSMenuItem separatorItem]];
 
-    [viewMenu addItem: [NSMenuItem separatorItem]];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                            initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
-    NSMenuItem *item;
-    item = [[[NSMenuItem alloc] initWithTitle:@"Current Tab Color"
-                                       action:@selector(changeTabColorToMenuAction:)
-                                keyEquivalent:@""] autorelease];
-    [item setView:labelTrackView];
-    [viewMenu addItem:item];
-
+    [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
+    
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
     }
@@ -939,7 +953,7 @@ static BOOL hasBecomeActive = NO;
         [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:term
                                                  withURL:urlStr
-                                                isHotkey:NO
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:NO
                                              canActivate:NO
                                                  command:nil
@@ -1011,6 +1025,11 @@ static BOOL hasBecomeActive = NO;
 {
     [[PreferencePanel sharedInstance] run];
     [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:self];
+}
+
+- (IBAction)showAndOrderFrontRegardlessPrefWindow:(id)sender {
+    [self showPrefWindow:sender];
+    [[[PreferencePanel sharedInstance] window] orderFrontRegardless];
 }
 
 - (IBAction)showBookmarkWindow:(id)sender
@@ -1269,7 +1288,8 @@ static BOOL hasBecomeActive = NO;
                 case kiTermRestorableSessionGroupWindow:
                     // Restore a widow.
                     term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
-                                                          sessions:restorableSession.sessions];
+                                                          sessions:restorableSession.sessions
+                                          forceOpeningHotKeyWindow:YES];
                     [[iTermController sharedInstance] addTerminalWindow:term];
                     term.terminalGuid = restorableSession.terminalGuid;
                     break;
@@ -1368,7 +1388,7 @@ static BOOL hasBecomeActive = NO;
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        for (NSWindow *window in [NSApp orderedWindows]) {
+        for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels]) {
             if (!window.isOnActiveSpace) {
                 continue;
             }
@@ -1376,7 +1396,7 @@ static BOOL hasBecomeActive = NO;
                 continue;
             }
             NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
-            if ([window isKindOfClass:[PTYWindow class]]) {
+            if ([window isTerminalWindow]) {
                 NSView *view = [window.contentView hitTest:pointInWindow];
                 [window makeKeyAndOrderFront:nil];
                 if ([view isKindOfClass:[PTYTextView class]]) {
@@ -1412,12 +1432,12 @@ static BOOL hasBecomeActive = NO;
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
 
-    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
-    NSDictionary *hotkeyWindowState = [[HotkeyWindowController sharedInstance] restorableState];
-    if (hotkeyWindowState) {
-        DLog(@"Saving hotkey window state:\n%@", hotkeyWindowState);
-        [coder encodeObject:hotkeyWindowState
-                     forKey:kHotkeyWindowRestorableState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
+
+    NSArray *hotkeyWindowsStates = [[iTermHotKeyController sharedInstance] restorableStates];
+    if (hotkeyWindowsStates) {
+        [coder encodeObject:hotkeyWindowsStates
+                     forKey:kHotkeyWindowsRestorableStates];
     }
     NSLog(@"Time to save app restorable state: %@",
           @([NSDate timeIntervalSinceReferenceDate] - start));
@@ -1434,17 +1454,19 @@ static BOOL hasBecomeActive = NO;
         ScreenCharDecodeRestorableState(screenCharState);
     }
 
-    NSDictionary *hotkeyWindowState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
-    DLog(@"Hotkey window state:\n%@", hotkeyWindowState);
-    if (hotkeyWindowState &&
-        [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        DLog(@"Set restorable state");
-        [[HotkeyWindowController sharedInstance] setRestorableState:hotkeyWindowState];
-
-        // We have to create the hotkey window now because we need to attach to servers before
-        // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-        DLog(@"Create hidden hotkey window");
-        [[HotkeyWindowController sharedInstance] createHiddenHotkeyWindow];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
+        NSArray *hotkeyWindowsStates = [coder decodeObjectForKey:kHotkeyWindowsRestorableStates];
+        if (hotkeyWindowsStates) {
+            // We have to create the hotkey window now because we need to attach to servers before
+            // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+            [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
+        } else {
+            // Restore hotkey window from pre-3.1 version.
+            NSDictionary *legacyState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
+            if (legacyState) {
+                [[iTermHotKeyController sharedInstance] createHiddenWindowFromLegacyRestorableState:legacyState];
+            }
+        }
     }
 }
 
@@ -1650,6 +1672,7 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+#warning This doesn't make sense any more
 - (void)makeHotKeyWindowKeyIfOpen
 {
     for (PseudoTerminal* term in [self terminals]) {
@@ -1882,6 +1905,28 @@ static BOOL hasBecomeActive = NO;
 
 - (NSArray*)terminals {
     return [[iTermController sharedInstance] terminals];
+}
+
+#pragma mark - iTermApplicationDelegate
+
+- (NSMenu *)statusBarMenu {
+    NSMenu *menu = [[NSMenu alloc] init];
+    NSMenuItem *item;
+    item = [[[NSMenuItem alloc] initWithTitle:@"Preferences"
+                                       action:@selector(showAndOrderFrontRegardlessPrefWindow:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+    
+    item = [[[NSMenuItem alloc] initWithTitle:@"Bring All Windows to Front"
+                                       action:@selector(arrangeInFront:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+
+    item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
+                                       action:@selector(terminate:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+return menu;
 }
 
 @end
