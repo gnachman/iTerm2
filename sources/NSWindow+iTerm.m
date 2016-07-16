@@ -16,7 +16,7 @@
 }
 
 - (BOOL)isTerminalWindow {
-    return [[self class] isKindOfClass:[iTermWindow class]] || [[self class] isKindOfClass:[iTermPanel class]];
+    return [self conformsToProtocol:@protocol(PTYWindow)];
 }
 
 @end
