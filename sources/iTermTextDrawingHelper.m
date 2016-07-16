@@ -900,6 +900,15 @@ typedef struct iTermTextColorContext {
                                origin:(VT100GridCoord)initialOrigin
                             positions:(NSArray<NSNumber *> *)positions
                             inContext:(CGContextRef)ctx {
+    int savedFontSmoothingStyle = 0;
+    BOOL useThinStrokes = [self useThinStrokes];
+    if (useThinStrokes) {
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
+        CGContextSetFontSmoothingStyle(ctx, 16);
+    }
+    
     NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
@@ -913,6 +922,10 @@ typedef struct iTermTextColorContext {
                                        positions:subpositions
                                        inContext:ctx];
         origin.x += round(width / _cellSize.width);
+    }
+
+    if (useThinStrokes) {
+        CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
 }
 
