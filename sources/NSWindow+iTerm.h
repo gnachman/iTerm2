@@ -9,8 +9,9 @@
 #import <Cocoa/Cocoa.h>
 
 @interface NSWindow(iTerm)
+
 // Is window Lion fullscreen?
 @property(nonatomic, readonly) BOOL isFullScreen;
 - (BOOL)isTerminalWindow;
-@end
 
+@end
