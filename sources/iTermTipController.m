@@ -119,7 +119,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (void)askForPermission {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"See Tips of the Day?";
-    alert.informativeText = @"iTerm2 can show you a Tip of the Day message help you learn about its many features. Are you interested?";
+    alert.informativeText = @"iTerm2 can show you a Tip of the Day message to help you learn about its many features. Are you interested?";
     [alert addButtonWithTitle:@"Yes"];
     [alert addButtonWithTitle:@"No"];
     BOOL havePermission = ([alert runModal] == NSAlertFirstButtonReturn);
