@@ -841,7 +841,6 @@ typedef struct iTermTextColorContext {
         iTermBackgroundColorRun *run = box.valuePointer;
         NSPoint textOrigin = NSMakePoint(MARGIN + run->range.location * _cellSize.width,
                                          y);
-        NSLog(@"text origin for row %d is %f. Cursor rect is %@", line, textOrigin.y, NSStringFromRect(self.cursorFrame));
         [self constructAndDrawRunsForLine:theLine
                                       row:line
                                   inRange:run->range
