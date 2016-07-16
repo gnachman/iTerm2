@@ -1654,20 +1654,6 @@ DQ
                         <outlet property="nextKeyView" destination="5410" id="5738"/>
                     </connections>
                 </textField>
-                <textField verticalHuggingPriority="750" id="5410" userLabel="Send text at start text field">
-                    <rect key="frame" x="146" y="203" width="393" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5411">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="erY-Gq-EOG"/>
-                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="4bw-lH-KA5"/>
-                        <outlet property="nextKeyView" destination="2190" id="5413"/>
-                    </connections>
-                </textField>
                 <textField verticalHuggingPriority="750" id="2132" userLabel="Command label">
                     <rect key="frame" x="14" y="277" width="82" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1709,7 +1695,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="3243" userLabel="Tags label">
-                    <rect key="frame" x="47" y="344" width="90" height="17"/>
+                    <rect key="frame" x="47" y="341" width="90" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Tags:" id="3244">
                         <font key="font" metaFont="system"/>
@@ -1907,13 +1893,27 @@ DQ
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" id="nUa-Y1-jO4" userLabel="Name label">
-                    <rect key="frame" x="89" y="312" width="48" height="17"/>
+                    <rect key="frame" x="89" y="311" width="48" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Badge:" id="7Oa-B2-O5u">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="5410" userLabel="Send text at start text field">
+                    <rect key="frame" x="146" y="202" width="393" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5411">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="erY-Gq-EOG"/>
+                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="4bw-lH-KA5"/>
+                        <outlet property="nextKeyView" destination="2190" id="5413"/>
+                    </connections>
                 </textField>
             </subviews>
             <point key="canvasLocation" x="986.5" y="-712"/>
@@ -2023,7 +2023,6 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
                     </connections>
                 </button>
-
                 <customView id="rSL-fL-hpc" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="149" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2040,7 +2039,6 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="acz-bU-TQP"/>
                     </connections>
                 </button>
-
                 <slider verticalHuggingPriority="750" id="4896">
                     <rect key="frame" x="141" y="125" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
