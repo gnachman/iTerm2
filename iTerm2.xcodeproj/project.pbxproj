@@ -2133,8 +2133,6 @@
 		A6EFF21D1D1CA9F800806EEF /* NSLocale+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */; };
 		A6EFF2201D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF21E1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h */; };
 		A6EFF2211D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */; };
-		A6EFF22D1D1F39B600806EEF /* iTermRollAnimationWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */; };
-		A6EFF22E1D1F39B600806EEF /* iTermRollAnimationWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */; };
 		A6EFF2311D2049A300806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
 		A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF2301D20499700806EEF /* Erase@2x.png */; };
 		A6EFF2331D2049A400806EEF /* Erase.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EFF22F1D20499700806EEF /* Erase.png */; };
@@ -3482,8 +3480,6 @@
 		A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSLocale+iTerm.m"; sourceTree = "<group>"; };
 		A6EFF21E1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotKeyMigrationHelper.h; sourceTree = "<group>"; };
 		A6EFF21F1D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotKeyMigrationHelper.m; sourceTree = "<group>"; };
-		A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRollAnimationWindow.h; sourceTree = "<group>"; };
-		A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRollAnimationWindow.m; sourceTree = "<group>"; };
 		A6EFF22F1D20499700806EEF /* Erase.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Erase.png; path = images/Erase.png; sourceTree = "<group>"; };
 		A6EFF2301D20499700806EEF /* Erase@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Erase@2x.png"; path = "images/Erase@2x.png"; sourceTree = "<group>"; };
 		A6EFF2351D20F64800806EEF /* EraseDarkBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = EraseDarkBackground.png; path = images/EraseDarkBackground.png; sourceTree = "<group>"; };
@@ -5339,8 +5335,6 @@
 				A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */,
 				A67778B21CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h */,
 				A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */,
-				A6EFF22B1D1F39B600806EEF /* iTermRollAnimationWindow.h */,
-				A6EFF22C1D1F39B600806EEF /* iTermRollAnimationWindow.m */,
 				A6EFF23D1D21949D00806EEF /* iTermShortcut.h */,
 				A6EFF23E1D21949D00806EEF /* iTermShortcut.m */,
 				A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */,
@@ -6154,7 +6148,6 @@
 				A66DB83A1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h in Headers */,
 				A6FEA2681CF2C83700376F28 /* iTermPreviousState.h in Headers */,
 				A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */,
-				A6EFF22D1D1F39B600806EEF /* iTermRollAnimationWindow.h in Headers */,
 				A6FEA2781CF2CBCC00376F28 /* iTermAppHotKeyProvider.h in Headers */,
 				A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
@@ -6170,7 +6163,6 @@
 				5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */,
-				A686F3851D36A18900F08ED7 /* iTermMutableAttributedStringBuilder.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
 				1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */,
 				A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */,
@@ -7833,7 +7825,6 @@
 				A6BDB0BC1B470CBE00F511E6 /* iTermRootTerminalView.m in Sources */,
 				A6C762B71B45C52B00E3C992 /* NSFont+iTerm.m in Sources */,
 				A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */,
-				A6EFF22E1D1F39B600806EEF /* iTermRollAnimationWindow.m in Sources */,
 				A6C7632D1B45C52B00E3C992 /* ThreeFingerTapGestureRecognizer.m in Sources */,
 				A6C762BC1B45C52B00E3C992 /* NSObject+iTerm.m in Sources */,
 				A6C762CE1B45C52B00E3C992 /* iTermKeyBindingMgr.m in Sources */,

@@ -12,6 +12,26 @@
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
+typedef NS_ENUM(NSUInteger, iTermAnimationDirection) {
+    kAnimationDirectionDown,
+    kAnimationDirectionRight,
+    kAnimationDirectionLeft,
+    kAnimationDirectionUp
+};
+
+static iTermAnimationDirection iTermAnimationDirectionOpposite(iTermAnimationDirection direction) {
+    switch (direction) {
+        case kAnimationDirectionRight:
+            return kAnimationDirectionLeft;
+        case kAnimationDirectionLeft:
+            return kAnimationDirectionRight;
+        case kAnimationDirectionDown:
+            return kAnimationDirectionUp;
+        case kAnimationDirectionUp:
+            return kAnimationDirectionDown;
+    }
+    assert(false);
+}
 static NSString *const kGUID = @"GUID";
 static NSString *const kArrangement = @"Arrangement";
 static const NSTimeInterval kAnimationDuration = 0.25;
