@@ -7,7 +7,6 @@
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
-#import "iTermRollAnimationWindow.h"
 #import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
 #import "SolidColorView.h"
