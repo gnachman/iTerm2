@@ -2424,12 +2424,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    int charsTakenFromPrefix;
     NSString *filename =
         [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
                                                               suffix:@""
                                                     workingDirectory:workingDirectory
-                                                charsTakenFromPrefix:&charsTakenFromPrefix
+                                                charsTakenFromPrefix:nil
+                                                charsTakenFromSuffix:nil
                                                       trimWhitespace:YES];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {

@@ -49,10 +49,6 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber;
 
-// Given a relative |path| (which may include a :line number) and a |workingDirectory|, returns
-// whether it is openable. See notes on getFullPath:workingDirectory:lineNumber:.
-- (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
-
 // Opens the file at the relative |path| (which may include :lineNumber) in |workingDirectory|.
 // The |substitutions| dictionary is used to expand \references in the command to run (gotten from
 // self.prefs[kSemanticHistoryTextKey]) as follows:
@@ -102,6 +98,7 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
+                           charsTakenFromSuffix:(int *)suffixChars
                                  trimWhitespace:(BOOL)trimWhitespace;
 
 #pragma mark - Testing
