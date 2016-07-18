@@ -94,7 +94,6 @@
     </class> 
     <class name="window" code="cwin" description="A window."> 
       <cocoa class="iTermScriptingWindow"/>
-      <cocoa class="PTYWindow"/>
       <!-- Prior to 3.0.4, id was a string with code "ID  " that had a value like "window-1" which
        coincides with the unique identifier used in a window's object specifier. Issue 4825 points 
        out this is problematic because integral window IDs are useful as arguments to 
@@ -560,6 +559,7 @@
 
       <property name="underline color" code="Co23" type="RGB color">
         <cocoa key="underlineColor" />
+      </property>
       <property name="use underline color" code="Undl" type="boolean"
         description="Whether the use a dedicated color for underlining.">
         <cocoa key="useUnderlineColor"/>
