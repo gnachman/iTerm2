@@ -12,8 +12,6 @@
 #import "PSMProgressIndicator.h"
 #import "PSMTabDragAssistant.h"
 
-static NSTimeInterval kHighlightAnimationDuration = 0.5;
-
 // A timer that does not keep a strong reference to its target. The target
 // should invoke -invalidate from its -dealloc method and release the timer to
 // avoid getting called posthumously.
@@ -75,6 +73,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     NSTimeInterval _highlightChangeTime;
     PSMWeakTimer *_delayedStringValueTimer;  // For bug 3957
     BOOL _hasIcon;
+    BOOL _highlighted;
 }
 
 #pragma mark - Creation/Destruction
@@ -267,8 +266,8 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
 - (CGFloat)highlightAmount {
     NSTimeInterval timeSinceChange = [NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime;
     CGFloat amount = self.highlighted ? 1 : 0;
-    if (timeSinceChange < kHighlightAnimationDuration) {
-        CGFloat alpha = timeSinceChange / kHighlightAnimationDuration;
+    if (timeSinceChange < [self highlightAnimationDuration]) {
+        CGFloat alpha = timeSinceChange / [self highlightAnimationDuration];
         return amount * alpha + (1 - amount) * (1 - alpha);
     } else {
         return amount;
@@ -487,22 +486,39 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     }
 }
 
+- (BOOL)isHighlighted {
+    return _highlighted;
+}
+
 - (void)setHighlighted:(BOOL)highlighted {
+    // Don't call -[super setHighlighted:] because it redraws the whole control.
     BOOL wasHighlighted = self.isHighlighted;
-    [super setHighlighted:highlighted];
+    _highlighted = highlighted;
     if (highlighted != wasHighlighted) {
-        _highlightChangeTime = [NSDate timeIntervalSinceReferenceDate];
-        [NSTimer scheduledTimerWithTimeInterval:1 / 60.0
-                                         target:self
-                                       selector:@selector(redrawHighlight:)
-                                       userInfo:self.controlView
-                                        repeats:YES];
+        if ([self highlightAnimationDuration] > 0) {
+            _highlightChangeTime = [NSDate timeIntervalSinceReferenceDate];
+            [NSTimer scheduledTimerWithTimeInterval:1 / 60.0
+                                             target:self
+                                           selector:@selector(redrawHighlight:)
+                                           userInfo:self.controlView
+                                            repeats:YES];
+        } else {
+            [self.controlView setNeedsDisplayInRect:self.frame];
+        }
+    }
+}
+
+- (CGFloat)highlightAnimationDuration {
+    if ([(PSMTabBarControl *)_controlView orientation] == PSMTabBarHorizontalOrientation) {
+        return 0.2;
+    } else {
+        return 0;
     }
 }
 
 - (void)redrawHighlight:(NSTimer *)timer {
     [self.controlView setNeedsDisplayInRect:self.frame];
-    if ([NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime > kHighlightAnimationDuration) {
+    if ([NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime > [self highlightAnimationDuration]) {
         [timer invalidate];
     }
 }
