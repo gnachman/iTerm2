@@ -1313,7 +1313,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
-    return @{ (NSString *)kCTLigatureAttributeName: @1,
+    return @{ (NSString *)kCTLigatureAttributeName: @0,
               iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
               NSForegroundColorAttributeName: attributes->foregroundColor,
               iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
