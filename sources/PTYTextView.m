@@ -1108,7 +1108,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.thinStrokes = _thinStrokes;
     _drawingHelper.showSearchingCursor = _showSearchingCursor;
     _drawingHelper.baselineOffset = [self minimumBaselineOffset];
-    
+    _drawingHelper.boldAllowed = _useBoldFont;
+
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];

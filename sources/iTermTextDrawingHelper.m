@@ -52,6 +52,7 @@ typedef struct {
     NSColor *foregroundColor;
     BOOL boxDrawing;
     NSFont *font;
+    BOOL bold;
     BOOL fakeBold;
     BOOL fakeItalic;
     BOOL underline;
@@ -71,6 +72,7 @@ enum {
 };
 
 static NSString *const iTermAntiAliasAttribute = @"iTermAntiAliasAttribute";
+static NSString *const iTermBoldAttribute = @"iTermBoldAttribute";
 static NSString *const iTermFakeBoldAttribute = @"iTermFakeBoldAttribute";
 static NSString *const iTermFakeItalicAttribute = @"iTermFakeItalicAttribute";
 static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
@@ -990,6 +992,7 @@ typedef struct iTermTextColorContext {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     NSColor *color = attributes[NSForegroundColorAttributeName];
 
+    BOOL bold = [attributes[iTermBoldAttribute] boolValue];
     BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
     BOOL fakeItalic = [attributes[iTermFakeItalicAttribute] boolValue];
     BOOL antiAlias = [attributes[iTermAntiAliasAttribute] boolValue];
@@ -1060,7 +1063,13 @@ typedef struct iTermTextColorContext {
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
         CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
 
-        if (fakeBold) {
+        if (bold && !fakeBold) {
+            // If this text is supposed to be bold, but the font is not, use double-struck text. Issue 4956.
+            CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
+            fakeBold = !(traits & kCTFontTraitBold);
+        }
+        
+        if (fakeBold && _boldAllowed) {
             CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
             CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
@@ -1233,7 +1242,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                           ![newAttributes->foregroundColor isEqual:previousAttributes->foregroundColor] ||
                                           newAttributes->boxDrawing != previousAttributes->boxDrawing ||
                                           ![newAttributes->font isEqual:previousAttributes->font] ||
-                                          newAttributes->fakeBold != previousAttributes->fakeBold ||
+                                          newAttributes->bold != previousAttributes->bold ||
                                           newAttributes->fakeItalic != previousAttributes->fakeItalic ||
                                           newAttributes->underline != previousAttributes->underline);
         }
@@ -1289,8 +1298,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     const unichar code = c->code;
 
     attributes->boxDrawing = !complex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] characterIsMember:code];
-    attributes->fakeBold = c->bold;
-    attributes->fakeItalic = c->italic;
+    attributes->bold = c->bold;
+
+    attributes->fakeBold = c->bold;  // default value
+    attributes->fakeItalic = c->italic;  // default value
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
                                                       isComplex:complex
                                                      renderBold:&attributes->fakeBold
@@ -1308,6 +1319,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
               iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
               NSFontAttributeName: attributes->font,
               iTermFakeBoldAttribute: @(attributes->fakeBold),
+              iTermBoldAttribute: @(attributes->bold),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
               NSUnderlineStyleAttributeName: attributes->underline ? @(NSUnderlineStyleSingle) : @(NSUnderlineStyleNone) };
 }
