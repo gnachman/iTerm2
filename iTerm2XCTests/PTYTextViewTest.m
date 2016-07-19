@@ -1780,7 +1780,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
                               textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
-                                  helper.underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(2, 0, 2, 1), 0, 5);
+                                  helper.underlinedRange = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(2, 0, 2, 1), 0, 5);
                               };
                           }
               profileOverrides:nil

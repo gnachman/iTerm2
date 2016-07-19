@@ -189,7 +189,7 @@
 @property(nonatomic, assign) BOOL blinkAllowed;
 
 // Underlined selection range (inclusive of all values), indicating clickable url.
-@property(nonatomic, assign) VT100GridWindowedRange underlineRange;
+@property(nonatomic, assign) VT100GridAbsWindowedRange underlinedRange;
 
 // If set, the last-modified time of each line on the screen is shown on the right side of the display.
 @property(nonatomic, assign) BOOL showTimestamps;

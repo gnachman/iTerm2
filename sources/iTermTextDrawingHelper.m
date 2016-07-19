@@ -883,7 +883,7 @@ typedef struct iTermTextColorContext {
                                                                       backgroundColor:bgColor
                                                                        forceTextColor:forceTextColor
                                                                           findMatches:matches
-                                                                      underlinedRange:[self underlinedRangeOnLine:row]
+                                                                      underlinedRange:[self underlinedRangeOnLine:row + _totalScrollbackOverflow]
                                                                             positions:positions];
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     
@@ -1758,37 +1758,37 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 #pragma mark - Text Run Construction
 
-- (NSRange)underlinedRangeOnLine:(int)row {
-    if (_underlineRange.coordRange.start.x < 0) {
+- (NSRange)underlinedRangeOnLine:(long long)row {
+    if (_underlinedRange.coordRange.start.x < 0) {
         return NSMakeRange(0, 0);
     }
 
-    if (row == _underlineRange.coordRange.start.y && row == _underlineRange.coordRange.end.y) {
+    if (row == _underlinedRange.coordRange.start.y && row == _underlinedRange.coordRange.end.y) {
         // Whole underline is on one line.
-        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
-        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
+        const int start = VT100GridAbsWindowedRangeStart(_underlinedRange).x;
+        const int end = VT100GridAbsWindowedRangeEnd(_underlinedRange).x;
         return NSMakeRange(start, end - start);
-    } else if (row == _underlineRange.coordRange.start.y) {
+    } else if (row == _underlinedRange.coordRange.start.y) {
         // Underline spans multiple lines, starting at this one.
-        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
+        const int start = VT100GridAbsWindowedRangeStart(_underlinedRange).x;
         const int end =
-        _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
-        : _gridSize.width;
+            _underlinedRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlinedRange.columnWindow) + 1
+            : _gridSize.width;
         return NSMakeRange(start, end - start);
-    } else if (row == _underlineRange.coordRange.end.y) {
+    } else if (row == _underlinedRange.coordRange.end.y) {
         // Underline spans multiple lines, ending at this one.
         const int start =
-        _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
-        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
+            _underlinedRange.columnWindow.length > 0 ? _underlinedRange.columnWindow.location : 0;
+        const int end = VT100GridAbsWindowedRangeEnd(_underlinedRange).x;
         return NSMakeRange(start, end - start);
-    } else if (row > _underlineRange.coordRange.start.y && row < _underlineRange.coordRange.end.y) {
+    } else if (row > _underlinedRange.coordRange.start.y && row < _underlinedRange.coordRange.end.y) {
         // Underline spans multiple lines. This is not the first or last line, so all chars
         // in it are underlined.
         const int start =
-        _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
+            _underlinedRange.columnWindow.length > 0 ? _underlinedRange.columnWindow.location : 0;
         const int end =
-        _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
-        : _gridSize.width;
+            _underlinedRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlinedRange.columnWindow) + 1
+            : _gridSize.width;
         return NSMakeRange(start, end - start);
     } else {
         // No underline on this line.
