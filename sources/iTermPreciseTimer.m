@@ -107,10 +107,11 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
     
     if (iTermPreciseTimerMeasure(&gLastLog) >= interval) {
         for (size_t i = 0; i < count; i++) {
-            NSLog(@"%20s: %0.3fms ±%.03fms (2σ) n=%@",
+            NSLog(@"%20s: %0.3fms ±%.03fms (2σ) total=%.2fms n=%@",
                   stats[i].name,
                   iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0,
                   iTermPreciseTimerStatsGetStddev(&stats[i]) * 1000.0 * 2,
+                  stats[i].n * iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0,
                   @(stats[i].n));
             iTermPreciseTimerStatsInit(&stats[i], NULL);
         }

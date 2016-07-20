@@ -3451,7 +3451,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateDisplay {
-    DLog(@"updateDisplay session=%@", self);
     _timerRunning = YES;
     
     // Set attributes of tab to indicate idle, processing, etc.
