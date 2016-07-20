@@ -1085,6 +1085,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Swap views between newSession and oldSession.
     SessionView* newView = [newSession view];
     SessionView* oldView = [oldSession view];
+    newView.frame = oldView.frame;
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
     [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
