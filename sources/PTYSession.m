@@ -591,7 +591,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     assert(_dvr);
     if (![_dvrDecoder seek:timestamp]) {
-        [_dvrDecoder seek:[_dvr firstTimeStamp]];
+        return [_dvrDecoder timestamp];
     }
     [self setDvrFrame];
     return [_dvrDecoder timestamp];
