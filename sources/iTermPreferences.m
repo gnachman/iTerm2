@@ -255,7 +255,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
-                  kPreferenceKeyTripleClickSelectsFullWrappedLines: @NO,
+                  kPreferenceKeyTripleClickSelectsFullWrappedLines: @YES,
                   kPreferenceKeyDoubleClickPerformsSmartSelection: @NO,
 
                   kPreferenceAutoCommandHistory: @NO,
