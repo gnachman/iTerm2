@@ -12,6 +12,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermKeyBindingMgr.h"
 #import "NSPopUpButton+iTerm.h"
+#import "RegexKitLite.h"
 
 @interface iTermEditKeyActionWindowController () <iTermShortcutInputViewDelegate>
 
@@ -416,6 +417,14 @@
     }
 }
 
++ (BOOL)item:(NSMenuItem *)item isWindowInWindowsMenu:(NSMenu *)menu {
+    if (![[menu title] isEqualToString:@"Window"]) {
+        return NO;
+    }
+    
+    return ([item.title isMatchedByRegex:@"^\\d+\\. " ]);
+}
+
 + (void)recursiveAddMenu:(NSMenu *)menu
             toButtonMenu:(NSMenu *)buttonMenu
                    depth:(int)depth{
@@ -424,7 +433,7 @@
             continue;
         }
         if ([[item title] isEqualToString:@"Services"] ||  // exclude services menu
-            isnumber([[item title] characterAtIndex:0])) {  // exclude windows in window menu
+            [self item:item isWindowInWindowsMenu:menu]) {  // exclude windows in window menu
             continue;
         }
         NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
