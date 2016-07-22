@@ -780,6 +780,9 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
     if (commandSelector == @selector(cancelOperation:)) {
+        if (searchField_.stringValue.length == 0) {
+            return NO;
+        }
         searchField_.stringValue = @"";
         dataSource_.lockedGuid = nil;
         [self updateResultsForSearch];
