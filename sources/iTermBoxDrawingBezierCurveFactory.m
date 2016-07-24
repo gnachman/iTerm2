@@ -23,130 +23,35 @@
     return sBoxDrawingCharactersWithBezierPaths;
 }
 
+
+
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
                                                  cellSize:(NSSize)cellSize {
-    NSString *const iTermBoxDrawingComponentLightUp = @"iTermBoxDrawingComponentLightUp";
-    NSString *const iTermBoxDrawingComponentLightRight = @"iTermBoxDrawingComponentLightRight";
-    NSString *const iTermBoxDrawingComponentLightDown = @"iTermBoxDrawingComponentLightDown";
-    NSString *const iTermBoxDrawingComponentLightLeft = @"iTermBoxDrawingComponentLightLeft";
-    NSString *const iTermBoxDrawingComponentLightHorizontal = @"iTermBoxDrawingComponentLightHorizontal";
-    NSString *const iTermBoxDrawingComponentLightVertical = @"iTermBoxDrawingComponentLightVertical";
-    
-    NSString *const iTermBoxDrawingComponentHeavyUp = @"iTermBoxDrawingComponentHeavyUp";
-    NSString *const iTermBoxDrawingComponentHeavyRight = @"iTermBoxDrawingComponentHeavyRight";
-    NSString *const iTermBoxDrawingComponentHeavyDown = @"iTermBoxDrawingComponentHeavyDown";
-    NSString *const iTermBoxDrawingComponentHeavyLeft = @"iTermBoxDrawingComponentHeavyLeft";
-    NSString *const iTermBoxDrawingComponentHeavyHorizontal = @"iTermBoxDrawingComponentHeavyHorizontal";
-    NSString *const iTermBoxDrawingComponentHeavyVertical = @"iTermBoxDrawingComponentHeavyVertical";
-    
-    NSString *const iTermBoxDrawingComponentDoubleUp = @"iTermBoxDrawingComponentDoubleUp";
-    NSString *const iTermBoxDrawingComponentDoubleRight = @"iTermBoxDrawingComponentDoubleRight";
-    NSString *const iTermBoxDrawingComponentDoubleDown = @"iTermBoxDrawingComponentDoubleDown";
-    NSString *const iTermBoxDrawingComponentDoubleLeft = @"iTermBoxDrawingComponentDoubleLeft";
-    NSString *const iTermBoxDrawingComponentDoubleHorizontal = @"iTermBoxDrawingComponentDoubleHorizontal";
-    NSString *const iTermBoxDrawingComponentDoubleVertical = @"iTermBoxDrawingComponentDoubleVertical";
-
-    static NSString *const iTermBoxDrawingComponentInnerDownRight = @"iTermBoxDrawingComponentInnerDownRight";
-    static NSString *const iTermBoxDrawingComponentOuterDownRight = @"iTermBoxDrawingComponentOuterDownRight";
-    static NSString *const iTermBoxDrawingComponentInnerDownLeft = @"iTermBoxDrawingComponentInnerDownLeft";
-    static NSString *const iTermBoxDrawingComponentOuterDownLeft = @"iTermBoxDrawingComponentOuterDownLeft";
-    static NSString *const iTermBoxDrawingComponentInnerTopRight = @"iTermBoxDrawingComponentInnerTopRight";
-    static NSString *const iTermBoxDrawingComponentOuterTopRight = @"iTermBoxDrawingComponentOuterTopRight";
-    static NSString *const iTermBoxDrawingComponentInnerTopLeft = @"iTermBoxDrawingComponentInnerTopLeft";
-    static NSString *const iTermBoxDrawingComponentOuterTopLeft = @"iTermBoxDrawingComponentOuterTopLeft";
-    static NSString *const iTermBoxDrawingComponentVerticalShiftedLeft = @"iTermBoxDrawingComponentVerticalShiftedLeft";
-    static NSString *const iTermBoxDrawingComponentVerticalShiftedRight = @"iTermBoxDrawingComponentVerticalShiftedRight";
-    static NSString *const iTermBoxDrawingComponentHorizontalShiftedUp = @"iTermBoxDrawingComponentHorizontalShiftedUp";
-    static NSString *const iTermBoxDrawingComponentHorizontalShiftedDown = @"iTermBoxDrawingComponentHorizontalShiftedDown";
-
-    NSArray<NSString *> *all = @[ iTermBoxDrawingComponentLightUp,
-                                  iTermBoxDrawingComponentLightRight,
-                                  iTermBoxDrawingComponentLightDown,
-                                  iTermBoxDrawingComponentLightLeft,
-                                  iTermBoxDrawingComponentLightHorizontal,
-                                  iTermBoxDrawingComponentLightVertical,
-                                  iTermBoxDrawingComponentHeavyUp,
-                                  iTermBoxDrawingComponentHeavyRight,
-                                  iTermBoxDrawingComponentHeavyDown,
-                                  iTermBoxDrawingComponentHeavyLeft,
-                                  iTermBoxDrawingComponentHeavyHorizontal,
-                                  iTermBoxDrawingComponentHeavyVertical,
-                                  iTermBoxDrawingComponentDoubleUp,
-                                  iTermBoxDrawingComponentDoubleRight,
-                                  iTermBoxDrawingComponentDoubleDown,
-                                  iTermBoxDrawingComponentDoubleLeft,
-                                  iTermBoxDrawingComponentDoubleHorizontal,
-                                  iTermBoxDrawingComponentDoubleVertical,
-                                  iTermBoxDrawingComponentInnerDownRight,
-                                  iTermBoxDrawingComponentOuterDownRight,
-                                  iTermBoxDrawingComponentInnerDownLeft,
-                                  iTermBoxDrawingComponentOuterDownLeft,
-                                  iTermBoxDrawingComponentInnerTopRight,
-                                  iTermBoxDrawingComponentOuterTopRight,
-                                  iTermBoxDrawingComponentInnerTopLeft,
-                                  iTermBoxDrawingComponentOuterTopLeft,
-                                  iTermBoxDrawingComponentVerticalShiftedLeft,
-                                  iTermBoxDrawingComponentVerticalShiftedRight,
-                                  iTermBoxDrawingComponentHorizontalShiftedUp,
-                                  iTermBoxDrawingComponentHorizontalShiftedDown, ];
-
-    //  0    1  2  3    4
+    //          l         hc-1    hc-1/2    hc    hc+1/2      hc+1             r
+    //          a         b       c         d     e           f                g
+    // t        1
     //
-    //  5    6  7  8    9
-    // 10   11 12 13   14
-    // 15   16 17 18   19
+    // vc-1     2
+    // vc-1/2   3
+    // vc       4
+    // vc+1/2   5
+    // vc+1     6
     //
-    // 20   21 22 23   24
+    // b        7
 
-    NSDictionary *componentPoints =
-        @{ iTermBoxDrawingComponentLightUp:          @[ @[ @12, @2  ] ],
-           iTermBoxDrawingComponentLightRight:       @[ @[ @12, @14 ] ],
-           iTermBoxDrawingComponentLightDown:        @[ @[ @12, @22 ] ],
-           iTermBoxDrawingComponentLightLeft:        @[ @[ @12, @10 ] ],
-           iTermBoxDrawingComponentLightHorizontal:  @[ @[ @10, @14 ] ],
-           iTermBoxDrawingComponentLightVertical:    @[ @[ @2,  @22 ] ],
-
-           iTermBoxDrawingComponentHeavyUp:          @[ @[ @12, @2  ] ],
-           iTermBoxDrawingComponentHeavyRight:       @[ @[ @12, @14 ] ],
-           iTermBoxDrawingComponentHeavyDown:        @[ @[ @12, @22 ] ],
-           iTermBoxDrawingComponentHeavyLeft:        @[ @[ @12, @10 ] ],
-           iTermBoxDrawingComponentHeavyHorizontal:  @[ @[ @10, @14 ] ],
-           iTermBoxDrawingComponentHeavyVertical:    @[ @[ @2,  @22 ] ],
-
-           iTermBoxDrawingComponentDoubleUp:         @[ @[ @11, @1 ], @[ @13, @3 ] ],
-           iTermBoxDrawingComponentDoubleRight:      @[ @[ @7,  @9 ], @[ @17, @19 ] ],
-           iTermBoxDrawingComponentDoubleDown:       @[ @[ @11, @21], @[ @13, @23 ] ],
-           iTermBoxDrawingComponentDoubleLeft:       @[ @[ @7,  @5 ], @[ @17, @15 ] ],
-           iTermBoxDrawingComponentDoubleHorizontal: @[ @[ @5,  @9 ], @[ @15, @19 ] ],
-           iTermBoxDrawingComponentDoubleVertical:   @[ @[ @1,  @21], @[ @3,  @23 ] ],
-           
-           iTermBoxDrawingComponentInnerDownRight:        @[ @[ @23, @18, @19 ] ],
-           iTermBoxDrawingComponentOuterDownRight:        @[ @[ @21, @6, @9 ] ],
-           iTermBoxDrawingComponentInnerDownLeft:         @[ @[ @21, @16, @15 ] ],
-           iTermBoxDrawingComponentOuterDownLeft:         @[ @[ @23, @8, @5 ] ],
-           iTermBoxDrawingComponentInnerTopRight:         @[ @[ @3, @8, @9 ] ],
-           iTermBoxDrawingComponentOuterTopRight:         @[ @[ @1, @16, @19 ] ],
-           iTermBoxDrawingComponentInnerTopLeft:          @[ @[ @1, @6, @5 ] ],
-           iTermBoxDrawingComponentOuterTopLeft:          @[ @[ @3, @18, @15 ] ],
-           iTermBoxDrawingComponentVerticalShiftedLeft:   @[ @[ @1, @21 ] ],
-           iTermBoxDrawingComponentVerticalShiftedRight:  @[ @[ @3, @23 ] ],
-           iTermBoxDrawingComponentHorizontalShiftedUp:   @[ @[ @5, @9 ] ],
-           iTermBoxDrawingComponentHorizontalShiftedDown: @[ @[ @15, @19 ] ]
-        };
-    NSArray *components = nil;
-    
+    NSString *components = nil;
     switch (code) {
         case iTermBoxDrawingCodeLightHorizontal:  // ─
-            components = @[ iTermBoxDrawingComponentLightHorizontal ];
+            components = @"a4g4";
             break;
         case iTermBoxDrawingCodeHeavyHorizontal:  // ━
-            components = @[ iTermBoxDrawingComponentHeavyHorizontal ];
+            components = @"a3g3 a5g5";
             break;
         case iTermBoxDrawingCodeLightVertical:  // │
-            components = @[ iTermBoxDrawingComponentLightVertical];
+            components = @"d1d7";
             break;
         case iTermBoxDrawingCodeHeavyVertical:  // ┃
-            components = @[ iTermBoxDrawingComponentHeavyVertical];
+            components = @"c1c7 e1e7";
             break;
             
         case iTermBoxDrawingCodeLightTripleDashHorizontal:  // ┄
@@ -160,296 +65,196 @@
             return nil;
             
         case iTermBoxDrawingCodeLightDownAndRight:  // ┌
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"g4d4 d4d7";
             break;
         case iTermBoxDrawingCodeDownLightAndRightHeavy:  // ┍
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"g3d3 d3d7 g5d5";
             break;
         case iTermBoxDrawingCodeDownHeavyAndRightLight:  // ┎
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"g4c4 c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeHeavyDownAndRight:  // ┏
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"g3c3 c3c7 g5e5 e5e7";
             break;
         case iTermBoxDrawingCodeLightDownAndLeft:  // ┐
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4d4 d4d7";
             break;
         case iTermBoxDrawingCodeDownLightAndLeftHeavy:  // ┑
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyLeft ];
+            components = @"a3d3 d3d7 a5d5";
             break;
         case iTermBoxDrawingCodeDownHeavyAndLeftLight:  // ┒
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4e4 e4e7 c4c7";
             break;
         case iTermBoxDrawingCodeHeavyDownAndLeft:  // ┓
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyLeft ];
+            components = @"a3e3 e3e7 a5c5 c5c7";
             break;
         case iTermBoxDrawingCodeLightUpAndRight:  // └
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"d1d4 d4g4";
             break;
         case iTermBoxDrawingCodeUpLightAndRightHeavy:  // ┕
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"d1d5 d5g5 d3g3";
             break;
         case iTermBoxDrawingCodeUpHeavyAndRightLight:  // ┖
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"c1c4 c4g4 e1e4";
             break;
         case iTermBoxDrawingCodeHeavyUpAndRight:  // ┗
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"c1c5 c5g5 e1e3 e3g3";
             break;
         case iTermBoxDrawingCodeLightUpAndLeft:  // ┘
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4d4 d4d1";
             break;
         case iTermBoxDrawingCodeUpLightAndLeftHeavy:  // ┙
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentHeavyLeft ];
+            components = @"a5d5 d5d1 a3d3";
             break;
         case iTermBoxDrawingCodeUpHeavyAndLeftLight:  // ┚
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4e4 e4e1 c4c1";
             break;
         case iTermBoxDrawingCodeHeavyUpAndLeft:  // ┛
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentHeavyLeft ];
+            components = @"a5e5 e5e1 a3c3 c3c1";
             break;
         case iTermBoxDrawingCodeLightVerticalAndRight:  // ├
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"d1d7 d4g4";
             break;
         case iTermBoxDrawingCodeVerticalLightAndRightHeavy:  // ┝
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"d1d7 d3g3 d5g5";
             break;
         case iTermBoxDrawingCodeUpHeavyAndRightDownLight:  // ┞
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c4 e1e4 e4g4 d4d7";
             break;
         case iTermBoxDrawingCodeDownHeavyAndRightUpLight:  // ┟
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"d1d4 d4g4 c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeVerticalHeavyAndRightLight:  // ┠
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c7 e1e7 e4g4";
             break;
         case iTermBoxDrawingCodeDownLightAndRightUpHeavy:  // ┡
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c4 c4g4 e1e3 e3g3 d4d7";
             break;
         case iTermBoxDrawingCodeUpLightAndRightDownHeavy:  // ┢
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"d1d4 c7c3 c3g3 e7e5 e5g5";
             break;
         case iTermBoxDrawingCodeHeavyVerticalAndRight:  // ┣
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c7 e1e3 e3g3 g5e5 e5e7";
             break;
         case iTermBoxDrawingCodeLightVerticalAndLeft:  // ┤
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"d1d7 a4d4";
             break;
         case iTermBoxDrawingCodeVerticalLightAndLeftHeavy:  // ┥
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentHeavyLeft ];
+            components = @"d1d7 a3d3 a5d5";
             break;
         case iTermBoxDrawingCodeUpHeavyAndLeftDownLight:  // ┦
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c4 e1e4 a4d4 d4d7";
             break;
         case iTermBoxDrawingCodeDownHeavyAndLeftUpLight:  // ┧
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"d1d4 d4a4 c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeVerticalHeavyAndLeftLight:  // ┨
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"a4c4 c1c7 e1e7";
             break;
         case iTermBoxDrawingCodeDownLightAndLeftUpHeavy:  // ┩
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c3 c3a3 e1e5 e5a5 d4d7";
             break;
         case iTermBoxDrawingCodeUpLightAndLeftDownHeavy:  // ┪
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a3d3 d3d7 a5c5 c5c7 d1d4";
             break;
         case iTermBoxDrawingCodeHeavyVerticalAndLeft:  // ┫
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"a3c3 c3c1 a5c5 c5c7 e1e7";
             break;
         case iTermBoxDrawingCodeLightDownAndHorizontal:  // ┬
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"a4g4 d4d7";
             break;
         case iTermBoxDrawingCodeLeftHeavyAndRightDownLight:  // ┭
-            components = @[ iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"a3d3 a5d5 d7d4 d4g4";
             break;
         case iTermBoxDrawingCodeRightHeavyAndLeftDownLight:  // ┮
-            components = @[ iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"a4d4 d4d7 d3g3 d5g5";
             break;
         case iTermBoxDrawingCodeDownLightAndHorizontalHeavy:  // ┯
-            components = @[ iTermBoxDrawingComponentHeavyHorizontal,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"a3g3 a5g5 d5d7";
             break;
         case iTermBoxDrawingCodeDownHeavyAndHorizontalLight:  // ┰
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentHeavyDown ];
+            components = @"a4g4 c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeRightLightAndLeftDownHeavy:  // ┱
-            components = @[ iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentHeavyDown ];
+            components = @"a3e3 e3e7 a5c5 c5c7 d4g4";
             break;
         case iTermBoxDrawingCodeLeftLightAndRightDownHeavy:  // ┲
-            components = @[ iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentHeavyDown ];
+            components = @"a4d4 c7c3 c3g3 e7e5 e5g5";
             break;
         case iTermBoxDrawingCodeHeavyDownAndHorizontal:  // ┳
-            components = @[ iTermBoxDrawingComponentHeavyHorizontal,
-                            iTermBoxDrawingComponentHeavyDown ];
+            components = @"a3g3 a5c5 c5c7 e7e5 e5g5";
             break;
         case iTermBoxDrawingCodeLightUpAndHorizontal:  // ┴
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a4g4 d1d4";
             break;
         case iTermBoxDrawingCodeLeftHeavyAndRightUpLight:  // ┵
-            components = @[ iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"d1d4 d4g4 a3d3 a5d5";
             break;
         case iTermBoxDrawingCodeRightHeavyAndLeftUpLight:  // ┶
-            components = @[ iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a4d4 d4d1 d3g3 d5g5";
             break;
         case iTermBoxDrawingCodeUpLightAndHorizontalHeavy:  // ┷
-            components = @[ iTermBoxDrawingComponentHeavyHorizontal,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a3g3 a5g5 d1d4";
             break;
         case iTermBoxDrawingCodeUpHeavyAndHorizontalLight:  // ┸
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"a4g4 c1c4 e1e4";
             break;
         case iTermBoxDrawingCodeRightLightAndLeftUpHeavy:  // ┹
-            components = @[ iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"a3c3 c3c1 a5e5 e5e1 d4g4";
             break;
         case iTermBoxDrawingCodeLeftLightAndRightUpHeavy:  // ┺
-            components = @[ iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentHeavyUp ];
+            components = @"a4d4 c1c5 c5g5 d1d3 d3g3";
             break;
         case iTermBoxDrawingCodeHeavyUpAndHorizontal:  // ┻
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a5g5 a3c3 c3c1 e1e3 e3g3";
             break;
         case iTermBoxDrawingCodeLightVerticalAndHorizontal:  // ┼
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentLightVertical ];
+            components = @"a4g4 d1d7";
             break;
         case iTermBoxDrawingCodeLeftHeavyAndRightVerticalLight:  // ┽
-            components = @[ iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightVertical ];
+            components = @"d1d7 d4g4 a3d3 a5d5";
             break;
         case iTermBoxDrawingCodeRightHeavyAndLeftVerticalLight:  // ┾
-            components = @[ iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentLightVertical ];
+            components = @"d1d7 a4d4 d3g3 d5g5";
             break;
         case iTermBoxDrawingCodeVerticalLightAndHorizontalHeavy:  // ┿
-            components = @[ iTermBoxDrawingComponentHeavyHorizontal,
-                            iTermBoxDrawingComponentLightVertical ];
+            components = @"d1d7 a3g3 a5g5";
             break;
         case iTermBoxDrawingCodeUpHeavyAndDownHorizontalLight:  // ╀
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentLightVertical ];
+            components = @"a4g4 d4d7 c1c4 e1e4";
             break;
         case iTermBoxDrawingCodeDownHeavyAndUpHorizontalLight:  // ╁
-            components = @[ iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a4g4 d1d4 c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeVerticalHeavyAndHorizontalLight:  // ╂
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentHeavyVertical ];
+            components = @"a4g4 c1c7 e1e7";
             break;
         case iTermBoxDrawingCodeLeftUpHeavyAndRightDownLight:  // ╃
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"a3c3 c3c1 a5e5 e5e1 d7d4 d4g4";
             break;
         case iTermBoxDrawingCodeRightUpHeavyAndLeftDownLight:  // ╄
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"a4d4 d4d7 c1c5 c5g5 e1e3 e3g3";
             break;
         case iTermBoxDrawingCodeLeftDownHeavyAndRightUpLight:  // ╅
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"d1d4 d4g4 a3e3 e3e7 a5c5 c5c7";
             break;
         case iTermBoxDrawingCodeRightDownHeavyAndLeftUpLight:  // ╆
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight ];
+            components = @"a4d4 d4d1 c7c3 c3g3 e7e5 e5g5";
             break;
         case iTermBoxDrawingCodeDownLightAndUpHorizontalHeavy:  // ╇
-            components = @[ iTermBoxDrawingComponentHeavyUp,
-                            iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyHorizontal ];
+            components = @"a5g5 a3c3 c3c1 e1e3 e3g3 d4d7";
             break;
         case iTermBoxDrawingCodeUpLightAndDownHorizontalHeavy:  // ╈
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentHeavyDown,
-                            iTermBoxDrawingComponentHeavyHorizontal ];
+            components = @"d1d4 a3g3 a5c5 c5c7 e7e5 e5g5";
             break;
         case iTermBoxDrawingCodeRightLightAndLeftVerticalHeavy:  // ╉
-            components = @[ iTermBoxDrawingComponentLightRight,
-                            iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentHeavyVertical ];
+            components = @"a3c3 c3c1 a5c5 c5c7 e1e7 d4g4";
             break;
         case iTermBoxDrawingCodeLeftLightAndRightVerticalHeavy:  // ╊
-            components = @[ iTermBoxDrawingComponentHeavyRight,
-                            iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyVertical ];
+            components = @"a4c4 c1c7 e1e3 e3g3 e7e5 e5g5";
             break;
         case iTermBoxDrawingCodeHeavyVerticalAndHorizontal:  // ╋
-            components = @[ iTermBoxDrawingComponentHeavyHorizontal,
-                            iTermBoxDrawingComponentHeavyVertical ];
+            components = @"a3g3 a5g5 c1c7 e1e7";
             break;
 
         case iTermBoxDrawingCodeLightDoubleDashHorizontal:  // ╌
@@ -459,124 +264,91 @@
             return nil;
             
         case iTermBoxDrawingCodeDoubleHorizontal:  // ═
-            components = @[ iTermBoxDrawingComponentHorizontalShiftedDown, iTermBoxDrawingComponentHorizontalShiftedUp ];
+            components = @"a2g2 a6g6";
             break;
         case iTermBoxDrawingCodeDoubleVertical:  // ║
-            components = @[ iTermBoxDrawingComponentVerticalShiftedLeft, iTermBoxDrawingComponentVerticalShiftedRight ];
+            components = @"b1b7 f1f7";
             break;
         case iTermBoxDrawingCodeDownSingleAndRightDouble:  // ╒
-            components = @[ iTermBoxDrawingComponentDoubleRight,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"g2d2 d2d7 g6d6";
             break;
         case iTermBoxDrawingCodeDownDoubleAndRightSingle:  // ╓
-            components = @[ iTermBoxDrawingComponentDoubleUp,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"g4b4 b4b7 f4f7";
             break;
         case iTermBoxDrawingCodeDoubleDownAndRight:  // ╔
-            components = @[ iTermBoxDrawingComponentInnerDownRight,
-                            iTermBoxDrawingComponentOuterDownRight ];
+            components = @"g2b2 b2b7 g6f6 f6f7";
             break;
         case iTermBoxDrawingCodeDownSingleAndLeftDouble:  // ╕
-            components = @[ iTermBoxDrawingComponentDoubleLeft,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a2d2 d2d7 a6d6";
             break;
         case iTermBoxDrawingCodeDownDoubleAndLeftSingle:  // ╖
-            components = @[ iTermBoxDrawingComponentDoubleUp,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4f4 f4f7 b4b7";
             break;
         case iTermBoxDrawingCodeDoubleDownAndLeft:  // ╗
-            components = @[ iTermBoxDrawingComponentInnerDownLeft,
-                            iTermBoxDrawingComponentOuterDownLeft ];
+            components = @"a2f2 f2f7 a6b6 b6b7";
             break;
         case iTermBoxDrawingCodeUpSingleAndRightDouble:  // ╘
-            components = @[ iTermBoxDrawingComponentDoubleRight,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"d1d6 d6g6 d2g2";
             break;
         case iTermBoxDrawingCodeUpDoubleAndRightSingle:  // ╙
-            components = @[ iTermBoxDrawingComponentDoubleDown,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"b1b4 b4g4 f1f4";
             break;
         case iTermBoxDrawingCodeDoubleUpAndRight:  // ╚
-            components = @[ iTermBoxDrawingComponentInnerTopRight,
-                            iTermBoxDrawingComponentOuterTopRight ];
+            components = @"b1b6 b6g6 f1f2 f2g2";
             break;
         case iTermBoxDrawingCodeUpSingleAndLeftDouble:  // ╛
-            components = @[ iTermBoxDrawingComponentDoubleLeft,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"a2d2 a6d6 d6d1";
             break;
         case iTermBoxDrawingCodeUpDoubleAndLeftSingle:  // ╜
-            components = @[ iTermBoxDrawingComponentDoubleDown,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4f4 f4f1 b4b1";
             break;
         case iTermBoxDrawingCodeDoubleUpAndLeft:  // ╝
-            components = @[ iTermBoxDrawingComponentInnerTopLeft,
-                            iTermBoxDrawingComponentOuterTopLeft ];
+            components = @"a2b2 b2b1 a6f6 f6f1";
             break;
         case iTermBoxDrawingCodeVerticalSingleAndRightDouble:  // ╞
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentDoubleRight ];
+            components = @"d1d7 d2g2 d6g6";
             break;
         case iTermBoxDrawingCodeVerticalDoubleAndRightSingle:  // ╟
-            components = @[ iTermBoxDrawingComponentDoubleVertical,
-                            iTermBoxDrawingComponentLightRight ];
+            components = @"b1b7 f1f7 f4g4";
             break;
         case iTermBoxDrawingCodeDoubleVerticalAndRight:  // ╠
-            components = @[ iTermBoxDrawingComponentVerticalShiftedLeft,
-                            iTermBoxDrawingComponentInnerTopRight,
-                            iTermBoxDrawingComponentInnerDownRight ];
+            components = @"b1b7 f1f2 f2g2 f7f6 f6g6";
             break;
         case iTermBoxDrawingCodeVerticalSingleAndLeftDouble:  // ╡
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentDoubleLeft ];
+            components = @"d1d7 a2d2 a6d6";
             break;
         case iTermBoxDrawingCodeVerticalDoubleAndLeftSingle:  // ╢
-            components = @[ iTermBoxDrawingComponentDoubleVertical,
-                            iTermBoxDrawingComponentLightLeft ];
+            components = @"a4b4 b1b7 f1f7";
             break;
         case iTermBoxDrawingCodeDoubleVerticalAndLeft:  // ╣
-            components = @[ iTermBoxDrawingComponentVerticalShiftedRight,
-                            iTermBoxDrawingComponentInnerTopLeft,
-                            iTermBoxDrawingComponentInnerDownLeft ];
+            components = @"a2b2 b2b1 a6b6 b6b7 f1f7";
             break;
         case iTermBoxDrawingCodeDownSingleAndHorizontalDouble:  // ╤
-            components = @[ iTermBoxDrawingComponentDoubleHorizontal,
-                            iTermBoxDrawingComponentLightDown ];
+            components = @"a2g2 a6g6 d6d7";
             break;
         case iTermBoxDrawingCodeDownDoubleAndHorizontalSingle:  // ╥
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentDoubleDown ];
+            components = @"a4g4 b4b7 f4f7";
             break;
         case iTermBoxDrawingCodeDoubleDownAndHorizontal:  // ╦
-            components = @[ iTermBoxDrawingComponentHorizontalShiftedUp,
-                            iTermBoxDrawingComponentInnerDownRight,
-                            iTermBoxDrawingComponentInnerDownLeft ];
+            components = @"a2g2 a6b6 b6b7 f7f6 f6g6";
             break;
         case iTermBoxDrawingCodeUpSingleAndHorizontalDouble:  // ╧
-            components = @[ iTermBoxDrawingComponentDoubleHorizontal,
-                            iTermBoxDrawingComponentLightUp ];
+            components = @"a6g6 a2g2 d1d2";
             break;
         case iTermBoxDrawingCodeUpDoubleAndHorizontalSingle:  // ╨
-            components = @[ iTermBoxDrawingComponentLightHorizontal,
-                            iTermBoxDrawingComponentDoubleUp ];
+            components = @"a4g4 b1b4 f1f4";
             break;
         case iTermBoxDrawingCodeDoubleUpAndHorizontal:  // ╩
-            components = @[ iTermBoxDrawingComponentHorizontalShiftedDown,
-                            iTermBoxDrawingComponentInnerTopRight,
-                            iTermBoxDrawingComponentInnerTopLeft ];
+            components = @"a2b2 b2b1 f1f2 f2g2 a6g6";
             break;
         case iTermBoxDrawingCodeVerticalSingleAndHorizontalDouble:  // ╪
-            components = @[ iTermBoxDrawingComponentLightVertical,
-                            iTermBoxDrawingComponentDoubleHorizontal ];
+            components = @"a2g2 a6g6 d1d7";
             break;
         case iTermBoxDrawingCodeVerticalDoubleAndHorizontalSingle:  // ╫
-            components = @[ iTermBoxDrawingComponentDoubleVertical,
-                            iTermBoxDrawingComponentLightHorizontal ];
+            components = @"b1b7 f1f7 a4g4";
             break;
         case iTermBoxDrawingCodeDoubleVerticalAndHorizontal:  // ╬
-            components = @[ iTermBoxDrawingComponentInnerDownRight,
-                            iTermBoxDrawingComponentInnerDownLeft,
-                            iTermBoxDrawingComponentInnerTopRight,
-                            iTermBoxDrawingComponentInnerTopLeft ];
+            components = @"a2b2 b2b1 f1f2 f2g2 g6f6 f6f7 b7b6 b6a6";
             break;
         case iTermBoxDrawingCodeLightArcDownAndRight:  // ╭
         case iTermBoxDrawingCodeLightArcDownAndLeft:  // ╮
@@ -588,183 +360,77 @@
             return nil;
             
         case iTermBoxDrawingCodeLightLeft:  // ╴
-            components = @[ iTermBoxDrawingComponentLightLeft ];
+            components = @"a4d4";
             break;
         case iTermBoxDrawingCodeLightUp:  // ╵
-            components = @[ iTermBoxDrawingComponentLightUp ];
+            components = @"d1d4";
             break;
         case iTermBoxDrawingCodeLightRight:  // ╶
-            components = @[ iTermBoxDrawingComponentLightRight ];
+            components = @"d4g4";
             break;
         case iTermBoxDrawingCodeLightDown:  // ╷
-            components = @[ iTermBoxDrawingComponentLightDown ];
+            components = @"d4d7";
             break;
         case iTermBoxDrawingCodeHeavyLeft:  // ╸
-            components = @[ iTermBoxDrawingComponentHeavyLeft ];
+            components = @"a3d3 a5d5";
             break;
         case iTermBoxDrawingCodeHeavyUp:  // ╹
-            components = @[ iTermBoxDrawingComponentHeavyUp ];
+            components = @"c1c4 e1e4";
             break;
         case iTermBoxDrawingCodeHeavyRight:  // ╺
-            components = @[ iTermBoxDrawingComponentHeavyRight ];
+            components = @"d3g3 d5g5";
             break;
         case iTermBoxDrawingCodeHeavyDown:  // ╻
-            components = @[ iTermBoxDrawingComponentHeavyDown ];
+            components = @"c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeLightLeftAndHeavyRight:  // ╼
-            components = @[ iTermBoxDrawingComponentLightLeft,
-                            iTermBoxDrawingComponentHeavyRight];
+            components = @"a4d4 d3g3 d5g5";
             break;
         case iTermBoxDrawingCodeLightUpAndHeavyDown:  // ╽
-            components = @[ iTermBoxDrawingComponentLightUp,
-                            iTermBoxDrawingComponentHeavyDown];
+            components = @"d1d4 c4c7 e4e7";
             break;
         case iTermBoxDrawingCodeHeavyLeftAndLightRight:  // ╾
-            components = @[ iTermBoxDrawingComponentHeavyLeft,
-                            iTermBoxDrawingComponentLightRight];
+            components = @"a3d3 a5d5 d4g4";
             break;
         case iTermBoxDrawingCodeHeavyUpAndLightDown:  // ╿
-            components = @[ iTermBoxDrawingComponentLightDown,
-                            iTermBoxDrawingComponentHeavyUp];
+            components = @"c1c4 e1e4 d4d7";
             break;
     }
-
-    NSArray *singles = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return ![string containsString:@"Double"];
-    }];
-    NSArray *doubles = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return [string containsString:@"Double"];
-    }];
-    NSArray *fulls = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return [string containsString:@"Vertical"] || [string containsString:@"Horizontal"];
-    }];
-    NSArray *halfs = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return !([string containsString:@"Vertical"] || [string containsString:@"Horizontal"]);
-    }];
-    NSArray *lights = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return [string containsString:@"Light"];
-    }];
-    NSArray *doubleInternals = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return ([string containsString:@"Shifted"] ||
-                [string containsString:@"Inner"] ||
-                [string containsString:@"Outer"]);
-    }];
-    NSArray *heavys = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return [string containsString:@"Heavy"];
-    }];
-    NSArray *rights = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return [string containsString:@"Right"];
-    }];
-    NSArray *horizontals = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return ([string containsString:@"Left"] ||
-                [string containsString:@"Right"] ||
-                [string containsString:@"Horizontal"]);
-    }];
-    NSArray *verticals = [all filteredArrayUsingBlock:^BOOL(NSString *string) {
-        return ([string containsString:@"Up"] ||
-                [string containsString:@"Down"] ||
-                [string containsString:@"Vertical"]);
-    }];
-
-    // Need to handle intersection specially if double meets a perpindicualr.
-    NSArray *doubleComponents = [components intersectArray:doubles];
-    BOOL doubleIntersectsPerpindicular = NO;
-    if (doubleComponents.count) {
-        NSString *aDouble = doubleComponents.firstObject;
-        BOOL doubleIsHorizontal = [horizontals containsObject:aDouble];
-        BOOL hasPerp;
-        if (doubleIsHorizontal) {
-            hasPerp = [[components intersectArray:verticals] count] > 0;
-        } else {
-            hasPerp = [[components intersectArray:horizontals] count] > 0;
-        }
-        if (hasPerp) {
-            doubleIntersectsPerpindicular = YES;
-        }
+    
+    if (!components) {
+        return nil;
     }
     
-    BOOL twoHalves = (components.count == 2 && [[halfs intersectArray:components] count] == 2);
-    BOOL twoPerpindicular = (components.count == 2 &&
-                             [[horizontals intersectArray:components] count] == 1 &&
-                             [[verticals intersectArray:components] count] == 1);
-    BOOL twoPerpindicularHalves = (twoHalves && twoPerpindicular);
-    BOOL anyDouble = doubleComponents.count > 0;
+    CGFloat horizontalCenter = cellSize.width / 2.0;
+    CGFloat verticalCenter = cellSize.height / 2.0;
     
-    NSBezierPath *heavy = [NSBezierPath bezierPath];
-    [heavy setLineWidth:2];
-    NSBezierPath *light = [NSBezierPath bezierPath];
-    [light setLineWidth:1];
-
-    NSPoint extensionForSingle = NSMakePoint(0, 0);
-    if (doubleIntersectsPerpindicular) {
-        NSString *doubleComponent = [[components intersectArray:doubles] firstObject];
-        NSString *singleComponent = [[components intersectArray:singles] firstObject];
-        if ([[components intersectArray:singles] count] == 1) {
-            // Mix of single and double.
-            if ([[components intersectArray:halfs] count] == 2) {
-                // Both halfs. Make single longer.
-                // ╒ ╓ ╕ ╘ ╙ ╖ ╛ ╜
-                if (singleComponent == iTermBoxDrawingComponentLightDown) {
-                    extensionForSingle.y = -1.5;
-                } else if (singleComponent == iTermBoxDrawingComponentLightLeft) {
-                    extensionForSingle.x = 1.5;
-                } else if (singleComponent == iTermBoxDrawingComponentLightUp) {
-                    extensionForSingle.y = 1.5;
-                } else if (singleComponent == iTermBoxDrawingComponentLightRight) {
-                    extensionForSingle.x = -1.5;
-                }
-            } else if ([fulls containsObject:doubleComponent] &&
-                       [halfs containsObject:singleComponent]) {
-                // One is full length. No fancy corner needed. Make single shorter.
-                // ╟ ╢ ╤ ╧
-                if (singleComponent == iTermBoxDrawingComponentLightDown) {
-                    extensionForSingle.y = 1.5;
-                } else if (singleComponent == iTermBoxDrawingComponentLightLeft) {
-                    extensionForSingle.x = -1.5;
-                } else if (singleComponent == iTermBoxDrawingComponentLightUp) {
-                    extensionForSingle.y = -1.5;
-                } else if (singleComponent == iTermBoxDrawingComponentLightRight) {
-                    extensionForSingle.x = 1.5;
-                }
-            }
+    const char *bytes = [components UTF8String];
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    int lastX = -1;
+    int lastY = -1;
+    int i = 0;
+    int length = components.length;
+    CGFloat xs[] = { 0, horizontalCenter - 1, horizontalCenter - 0.5, horizontalCenter, horizontalCenter + 0.5, horizontalCenter + 1, cellSize.width };
+    CGFloat ys[] = { 0, verticalCenter - 1, verticalCenter - 0.5, verticalCenter, verticalCenter + 0.5, verticalCenter + 1, cellSize.height };
+    while (i + 4 <= length) {
+        int x1 = bytes[i++] - 'a';
+        int y1 = bytes[i++] - '1';
+        int x2 = bytes[i++] - 'a';
+        int y2 = bytes[i++] - '1';
+        
+        assert(x1 == x2 || y1 == y2);
+        if (x1 != lastX || y1 != lastY) {
+            [path moveToPoint:NSMakePoint(xs[x1], ys[y1])];
         }
+        [path lineToPoint:NSMakePoint(xs[x2], ys[y2])];
+        
+        i++;
+        
+        lastX = x2;
+        lastY = y2;
     }
-    if (components) {
-        for (NSInteger i = 0; i < components.count; i++) {
-            NSString *component = components[i];
-
-            NSPoint extension = NSMakePoint(0, 0);
-            if (twoPerpindicularHalves && !anyDouble && [horizontals containsObject:component]) {
-                // Extend horizontal line where single half-lines meet.
-                BOOL verticalIsHeavy = [heavys containsObject:components[1 - i]];
-                if (verticalIsHeavy) {
-                    extension.x = 1;
-                } else {
-                    extension.x = 0.5;
-                }
-                if ([rights containsObject:component]) {
-                    extension.x *= -1;
-                }
-            } else if ([singles containsObject:component]) {
-                // Tweak single line when single meets double.
-                extension = extensionForSingle;
-            }
-            
-            for (NSArray *points in componentPoints[component]) {
-                NSBezierPath *subpath = [self bezierPathForPoints:points
-                                               extendPastCenterBy:extension
-                                                         cellSize:cellSize];
-                
-                if ([heavys containsObject:component]) {
-                    [heavy appendBezierPath:subpath];
-                } else {
-                    [light appendBezierPath:subpath];
-                }
-            }
-        }
-    }
-
-    return @[ heavy, light ];
+    
+    return @[ path ];
 }
 
 + (NSBezierPath *)bezierPathForPoints:(NSArray *)points
