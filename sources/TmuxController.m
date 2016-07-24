@@ -489,7 +489,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSSize minSize = NSMakeSize(INFINITY, INFINITY);
     for (id windowKey in windows_) {
         PTYTab *tab = [[windows_ objectForKey:windowKey] objectAtIndex:0];
-        NSSize size = [tab maxTmuxSize];
+        NSSize size = [tab tmuxSize];
         minSize.width = MIN(minSize.width, size.width);
         minSize.height = MIN(minSize.height, size.height);
     }

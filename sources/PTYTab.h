@@ -50,7 +50,6 @@
 
 // Size we should report to fit the current layout
 @property(nonatomic, readonly) NSSize tmuxSize;
-@property(nonatomic, readonly) NSSize maxTmuxSize;
 @property(nonatomic, copy) NSString *tmuxWindowName;
 @property (readonly, getter=isTmuxTab) BOOL tmuxTab;
 

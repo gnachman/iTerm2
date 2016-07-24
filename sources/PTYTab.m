@@ -437,7 +437,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)numberOfSessionsDidChange {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
-        DLog(@"PTTab numberOfSessionsDidChange triggering windowDidResize");
+        DLog(@"PTYTab numberOfSessionsDidChange triggering windowDidResize");
         [tmuxController_ windowDidResize:realParentWindow_];
     }
     int i = 1;
@@ -2624,7 +2624,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL isVertical = NO;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
         case kLeafLayoutNode:
-            DLog(@"Leafe node. Compute size of session");
+            DLog(@"Leaf node. Compute size of session");
             size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:bookmark]
                                          dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
                                                                [[parseTree objectForKey:kLayoutDictHeightKey] intValue])
@@ -2874,6 +2874,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                               hasFlexibleView:YES
                                       viewMap:nil
                                    sessionMap:nil];
+
+    NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
+    BOOL haveMultipleSessions = ([theChildren count] > 1);
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && haveMultipleSessions) {
+        // Set the showTitle flag so recompact does not make the views too small.
+        for (PTYSession *aSession in [theTab sessions]) {
+            [aSession.view setShowTitle:YES adjustScrollView:NO];
+        }
+    }
+
+    
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
@@ -2923,8 +2934,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)addSplitter:(NSSplitView *)splitter
         toIntervalMap:(IntervalMap *)intervalMap
           forHeight:(BOOL)forHeight
-             origin:(NSPoint)origin
-{
+             origin:(NSPoint)origin {
     BOOL first = YES;
     int minPos, size;
     NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
@@ -2962,7 +2972,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             // Look at the amount of space this SessionView could possibly
             // contain. The PTYScrollView might be smaller than it so it's not
             // relevant.
-            NSRect sessionViewFrame = [session.view frame];
+            NSRect sessionViewFrame = [session.view.scrollview frame];
             NSSize contentSize = [NSScrollView contentSizeForFrameSize:sessionViewFrame.size
                                                horizontalScrollerClass:nil
                                                  verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[session.view.scrollview verticalScroller] class] : nil
@@ -3001,8 +3011,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // So:
     // When forHeight is true, we want the tallest column.
-    // intervalMap maps (min x pixel, max x pixel) -> number of rows (plus 1 for each splitter)
-    // Then the largest value is the tallest column.
+    // intervalMap maps (min x pixel, max x pixel) -> number of cells (plus 1 for each splitter)
+    // Then the largest value is the last row/column.
     IntervalMap *intervalMap = [[[IntervalMap alloc] init] autorelease];
     [self addSplitter:root_
           toIntervalMap:intervalMap
@@ -3011,31 +3021,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSArray *values = [intervalMap allValues];
     NSArray *sortedValues = [values sortedArrayUsingSelector:@selector(compare:)];
     return [[sortedValues lastObject] intValue];
-}
-
-// Returns the size (in characters) of the largest layout that can fit in this tab.
-- (NSSize)maxTmuxSize {
-    DLog(@"Computing the size fo the largest layout that can fit in this tab");
-    
-    NSSize rootSize = root_.frame.size;
-    NSSize containerSize = flexibleView_.frame.size;
-    NSSize overage = NSMakeSize(MAX(0, rootSize.width - containerSize.width),
-                                MAX(0, rootSize.height - containerSize.height));
-    NSSize charSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
-    overage.width = ceil(overage.width / charSize.width);
-    overage.height = ceil(overage.height / charSize.height);
-    NSSize tmuxSize = [self tmuxSize];
-    
-    NSSize result = NSMakeSize(tmuxSize.width - overage.width,
-                               tmuxSize.height - overage.height);
-    DLog(@"rootSize=%@ containerSize=%@ overage=%@ charSize=%@ tmuxSize=%@ result=%@",
-         NSStringFromSize(rootSize),
-         NSStringFromSize(containerSize),
-         NSStringFromSize(overage),
-         NSStringFromSize(charSize),
-         NSStringFromSize(tmuxSize),
-         NSStringFromSize(result));
-    return result;
 }
 
 // Returns the size (in characters) of the window size that fits this tab's
@@ -3077,12 +3062,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSSize charSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
 
     // The characters growth (+ growth, - shrinkage) needed to attain the target
-    NSSize charsDiff = NSMakeSize(sizeDiff.width / charSize.width,
-                                  sizeDiff.height / charSize.height);
+    NSSize charsDiff = NSMakeSize(floor(sizeDiff.width / charSize.width),
+                                  floor(sizeDiff.height / charSize.height));
 
     // The character size closest to the target.
-    NSSize tmuxSize = NSMakeSize((int) (rootSizeChars.width + charsDiff.width),
-                                 (int) (rootSizeChars.height + charsDiff.height));
+    NSSize tmuxSize = NSMakeSize(rootSizeChars.width + charsDiff.width,
+                                 rootSizeChars.height + charsDiff.height);
 
     DLog(@"tmuxSize: rootSizeChars=%@, targetSizePixels=%@, rootSizePixels=%@, sizeDiff=%@, charSize=%@, charsDiff=%@, tmuxSize=%@",
          NSStringFromSize(rootSizeChars),
@@ -3265,6 +3250,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
 
+    const BOOL showTitles = ([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] &&
+                             self.sessions.count > 1);
+
     for (PTYSession *aSession in [self sessions]) {
         NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
         if (![preexistingPanes containsObject:n]) {
@@ -3274,6 +3262,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                     inWindow:tmuxWindow_];
             [aSession setTmuxController:tmuxController_];
         }
+        [aSession.view setShowTitle:showTitles adjustScrollView:NO];
     }
     [self fitSubviewsToRoot];
     [self numberOfSessionsDidChange];
