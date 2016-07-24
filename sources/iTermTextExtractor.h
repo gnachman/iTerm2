@@ -153,6 +153,20 @@ extern const NSInteger kUnlimitedMaximumWordLength;
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
 
+typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
+    // Do not trim any trailing whitespace.
+    iTermTextExtractorTrimTrailingWhitespaceNone,
+
+    // Trim all trailing whitespace.
+    iTermTextExtractorTrimTrailingWhitespaceAll,
+
+    // Trim only the trailing newline and whitespace just before it on the last line.
+    iTermTextExtractorTrimTrailingWhitespaceOneLine
+};
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range
+                                                     leading:(BOOL)leading
+                                                    trailing:(iTermTextExtractorTrimTrailingWhitespace)trailing;
+
 // Checks if two coordinates are equal. Either they are the same coordinate or they are adjacent
 // on the same DWC.
 - (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2;

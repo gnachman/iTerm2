@@ -5643,7 +5643,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         DLog(@"Returning cached range.");
-        return _screen.lastCommandOutputRange;
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
+        return [extractor rangeByTrimmingWhitespaceFromRange:_screen.lastCommandOutputRange
+                                                     leading:NO
+                                                    trailing:iTermTextExtractorTrimTrailingWhitespaceOneLine];
     }
 }
 
