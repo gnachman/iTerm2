@@ -40,12 +40,26 @@
 
 - (NSInteger)ligatureLevel {
     if (!_ligatureLevel) {
-        // PragmataPro has great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
+        // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
         // you ligatures whether you like it or not.
         static NSDictionary *fontNameToLigatureLevel;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            fontNameToLigatureLevel = @{ @"PragmataPro": @1 };
+            fontNameToLigatureLevel = @{ @"PragmataPro": @1,
+                                         @"Hasklig-Black": @1,
+                                         @"Hasklig-BlackIt": @1,
+                                         @"Hasklig-Bold": @1,
+                                         @"Hasklig-BoldIt": @1,
+                                         @"Hasklig-ExtraLight": @1,
+                                         @"Hasklig-ExtraLightIt": @1,
+                                         @"Hasklig-It": @1,
+                                         @"Hasklig-Light": @1,
+                                         @"Hasklig-LightIt": @1,
+                                         @"Hasklig-Medium": @1,
+                                         @"Hasklig-MediumIt": @1,
+                                         @"Hasklig-Regular": @1,
+                                         @"Hasklig-Semibold": @1,
+                                         @"Hasklig-SemiboldIt": @1 };
             [fontNameToLigatureLevel retain];
         });
         _ligatureLevel = [@([fontNameToLigatureLevel[font_.fontName] integerValue]) retain];
