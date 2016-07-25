@@ -15,7 +15,7 @@
         classDescription = [NSClassDescription classDescriptionForClass:[NSApp class]];
         return [[[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
                                                             containerSpecifier:containerRef
-                                                                           key:@"orderedTerminalWindows"
+                                                                           key:@"orderedScriptingWindows"
                                                                       uniqueID:@([self windowNumber])] autorelease];
     } else {
         return nil;
