@@ -171,7 +171,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Timer period between updates when active (not idle, tab is visible or title bar is changing,
 // etc.)
-static const NSTimeInterval kActiveUpdateCadence = 1.0 / 30.0;
+static const NSTimeInterval kActiveUpdateCadence = 1 / 20.0;
 
 // Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
 static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
