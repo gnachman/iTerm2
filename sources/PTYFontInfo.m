@@ -10,7 +10,13 @@
 
 #import "DebugLogging.h"
 
-@implementation PTYFontInfo
+@implementation PTYFontInfo {
+    NSFont *font_;
+    double baselineOffset_;
+    PTYFontInfo *boldVersion_;
+    PTYFontInfo *italicVersion_;
+    NSNumber *_ligatureLevel;
+}
 
 @synthesize font = font_;
 @synthesize baselineOffset = baselineOffset_;
@@ -28,7 +34,31 @@
     [font_ release];
     [boldVersion_ release];
     [italicVersion_ release];
+    [_ligatureLevel release];
     [super dealloc];
+}
+
+- (NSInteger)ligatureLevel {
+    if (!_ligatureLevel) {
+        // PragmataPro has great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
+        // you ligatures whether you like it or not.
+        static NSDictionary *fontNameToLigatureLevel;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            fontNameToLigatureLevel = @{ @"PragmataPro": @1 };
+            [fontNameToLigatureLevel retain];
+        });
+        _ligatureLevel = [@([fontNameToLigatureLevel[font_.fontName] integerValue]) retain];
+    }
+    return [_ligatureLevel doubleValue];
+}
+
+- (void)setFont:(NSFont *)font {
+    [font_ autorelease];
+    font_ = [font retain];
+    
+    [_ligatureLevel release];
+    _ligatureLevel = nil;
 }
 
 // Issue 4294 reveals that merely upconverting the weight of a font once is not sufficient because

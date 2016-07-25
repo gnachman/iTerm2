@@ -56,6 +56,7 @@ typedef struct {
     BOOL fakeBold;
     BOOL fakeItalic;
     BOOL underline;
+    NSInteger ligatureLevel;
 } iTermCharacterAttributes;
 
 enum {
@@ -1264,6 +1265,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                           ![newAttributes->foregroundColor isEqual:previousAttributes->foregroundColor] ||
                                           newAttributes->boxDrawing != previousAttributes->boxDrawing ||
                                           ![newAttributes->font isEqual:previousAttributes->font] ||
+                                          newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
                                           newAttributes->fakeItalic != previousAttributes->fakeItalic ||
                                           newAttributes->underline != previousAttributes->underline);
@@ -1330,12 +1332,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                    renderItalic:&attributes->fakeItalic];
 
     attributes->font = fontInfo.font;
-    
+    attributes->ligatureLevel = fontInfo.ligatureLevel;
     attributes->underline = (c->underline || inUnderlinedRange);
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
-    return @{ (NSString *)kCTLigatureAttributeName: @0,
+    return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
               NSForegroundColorAttributeName: attributes->foregroundColor,
               NSFontAttributeName: attributes->font,
               iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
