@@ -493,8 +493,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         minSize.width = MIN(minSize.width, size.width);
         minSize.height = MIN(minSize.height, size.height);
     }
-    if (minSize.width == 0 || minSize.height == 0) {
-        // After the last session closes a size of 0 is reported.
+    if (minSize.width <= 0 || minSize.height <= 0) {
+        // After the last session closes a size of 0 is reported. Apparently unplugging a monitor
+        // leads to a negative value here. That's inferred from crash report 1468853197.309853926.txt
+        // (at the time of that crash, this tested only for zero values so it passed through and
+        // asserted anyway).
         return;
     }
     if (NSEqualSizes(minSize, lastSize_)) {
