@@ -4514,7 +4514,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue ?: @{},
-           kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
+           kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
            };
     return [dict dictionaryByRemovingNullValues];
