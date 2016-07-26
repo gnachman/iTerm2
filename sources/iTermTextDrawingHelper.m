@@ -862,6 +862,7 @@ typedef struct iTermTextColorContext {
                           startingAtPoint:textOrigin
                                bgselected:run->selected
                                   bgColor:box.unprocessedBackgroundColor
+                 processedBackgroundColor:box.backgroundColor
                                   matches:matches
                            forceTextColor:nil
                                   context:ctx];
@@ -874,6 +875,7 @@ typedef struct iTermTextColorContext {
                     startingAtPoint:(NSPoint)initialPoint
                          bgselected:(BOOL)bgselected
                             bgColor:(NSColor *)bgColor
+           processedBackgroundColor:(NSColor *)processedBackgroundColor
                             matches:(NSData *)matches
                      forceTextColor:(NSColor *)forceTextColor  // optional
                             context:(CGContextRef)ctx {
@@ -907,7 +909,8 @@ typedef struct iTermTextColorContext {
                                 atPoint:initialPoint
                                  origin:VT100GridCoordMake(indexRange.location, row)
                               positions:positions
-                              inContext:ctx];
+                              inContext:ctx
+                        backgroundColor:processedBackgroundColor];
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_DRAW]);
 }
 
@@ -915,16 +918,8 @@ typedef struct iTermTextColorContext {
                               atPoint:(NSPoint)initialPoint
                                origin:(VT100GridCoord)initialOrigin
                             positions:(NSArray<NSNumber *> *)positions
-                            inContext:(CGContextRef)ctx {
-    int savedFontSmoothingStyle = 0;
-    BOOL useThinStrokes = [self useThinStrokes];
-    if (useThinStrokes) {
-        // This seems to be available at least on 10.8 and later. The only reference to it is in
-        // WebKit. This causes text to render just a little lighter, which looks nicer.
-        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
-        CGContextSetFontSmoothingStyle(ctx, 16);
-    }
-    
+                            inContext:(CGContextRef)ctx
+                      backgroundColor:(NSColor *)backgroundColor {
     NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
@@ -936,7 +931,8 @@ typedef struct iTermTextColorContext {
                                          atPoint:point
                                           origin:origin
                                        positions:subpositions
-                                       inContext:ctx];
+                                       inContext:ctx
+                                 backgroundColor:backgroundColor];
 //        [[NSColor colorWithRed:arc4random_uniform(255) / 255.0
 //                         green:arc4random_uniform(255) / 255.0
 //                          blue:arc4random_uniform(255) / 255.0
@@ -945,10 +941,6 @@ typedef struct iTermTextColorContext {
 
         origin.x += round(width / _cellSize.width);
 
-    }
-
-    if (useThinStrokes) {
-        CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
 }
 
@@ -974,7 +966,8 @@ typedef struct iTermTextColorContext {
                                   atPoint:(NSPoint)point
                                    origin:(VT100GridCoord)origin
                                 positions:(NSArray<NSNumber *> *)positions
-                                inContext:(CGContextRef)ctx {
+                                inContext:(CGContextRef)ctx
+                          backgroundColor:(NSColor *)backgroundColor {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     if (attributes[iTermImageCodeAttribute]) {
         // Handle cells that are part of an image.
@@ -1000,7 +993,7 @@ typedef struct iTermTextColorContext {
         CGFloat width = [[positions lastObject] doubleValue] + _cellSize.width;
         NSPoint offsetPoint = point;
         offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
-        [self drawTextOnlyAttributedString:attributedString atPoint:offsetPoint positions:positions width:width];
+        [self drawTextOnlyAttributedString:attributedString atPoint:offsetPoint positions:positions width:width backgroundColor:backgroundColor];
         DLog(@"Return width of %d", (int)round(width));
         return width;
     }
@@ -1009,7 +1002,8 @@ typedef struct iTermTextColorContext {
 - (void)drawTextOnlyAttributedString:(NSAttributedString *)attributedString
                                 atPoint:(NSPoint)origin
                            positions:(NSArray<NSNumber *> *)stringPositions
-                               width:(CGFloat)width {
+                               width:(CGFloat)width
+                     backgroundColor:(NSColor *)backgroundColor {
     DLog(@"Draw attributed string beginning at %d", (int)round(origin.x));
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     NSColor *color = attributes[NSForegroundColorAttributeName];
@@ -1040,6 +1034,16 @@ typedef struct iTermTextColorContext {
         c = 0.2;
     }
 
+    int savedFontSmoothingStyle = 0;
+    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
+    if (useThinStrokes) {
+        CGContextSetShouldSmoothFonts(cgContext, YES);
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(cgContext);
+        CGContextSetFontSmoothingStyle(cgContext, 16);
+    }
+    
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
@@ -1098,6 +1102,11 @@ typedef struct iTermTextColorContext {
         }
     }
     CFRelease(lineRef);
+    
+    if (useThinStrokes) {
+        CGContextSetFontSmoothingStyle(cgContext, savedFontSmoothingStyle);
+    }
+
     [ctx restoreGraphicsState];
     
 
@@ -1618,6 +1627,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                               startingAtPoint:NSMakePoint(x, y)
                                    bgselected:NO
                                       bgColor:nil
+                     processedBackgroundColor:[self defaultBackgroundColor]
                                       matches:nil
                                forceTextColor:[self defaultTextColor]
                                       context:ctx];
@@ -2099,6 +2109,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                       startingAtPoint:NSMakePoint(MARGIN, row * _cellSize.height)
                            bgselected:NO
                               bgColor:backgroundColor
+             processedBackgroundColor:backgroundColor
                               matches:nil
                        forceTextColor:overrideColor
                               context:ctx];
