@@ -12,13 +12,13 @@
 @interface PTYFontInfo : NSObject
 
 @property(nonatomic, retain) NSFont *font;
-@property(nonatomic, assign) double baselineOffset;
+@property(nonatomic, readonly) CGFloat baselineOffset;
 @property(nonatomic, retain) PTYFontInfo *boldVersion;
 @property(nonatomic, retain) PTYFontInfo *italicVersion;
 @property(nonatomic, retain) PTYFontInfo *boldItalicVersion;
 @property(nonatomic, readonly) NSInteger ligatureLevel;
 
-+ (PTYFontInfo *)fontInfoWithFont:(NSFont *)font baseline:(double)baseline;
++ (PTYFontInfo *)fontInfoWithFont:(NSFont *)font;
 
 // Returns a new autorelased PTYFontInfo with a bold version of this font (or
 // nil if none is available).

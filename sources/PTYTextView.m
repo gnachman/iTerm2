@@ -685,33 +685,14 @@ static const int kDragThreshold = 3;
     self.lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
 
     _primaryFont.font = aFont;
-    _primaryFont.baselineOffset = baseline;
     _primaryFont.boldVersion = [_primaryFont computedBoldVersion];
     _primaryFont.italicVersion = [_primaryFont computedItalicVersion];
     _primaryFont.boldItalicVersion = [_primaryFont computedBoldItalicVersion];
 
     _secondaryFont.font = nonAsciiFont;
-    _secondaryFont.baselineOffset = baseline;
     _secondaryFont.boldVersion = [_secondaryFont computedBoldVersion];
     _secondaryFont.italicVersion = [_secondaryFont computedItalicVersion];
     _secondaryFont.boldItalicVersion = [_secondaryFont computedBoldItalicVersion];
-
-    // Force the secondary font to use the same baseline as the primary font.
-    _secondaryFont.baselineOffset = _primaryFont.baselineOffset;
-    if (_secondaryFont.boldVersion) {
-        if (_primaryFont.boldVersion) {
-            _secondaryFont.boldVersion.baselineOffset = _primaryFont.boldVersion.baselineOffset;
-        } else {
-            _secondaryFont.boldVersion.baselineOffset = _secondaryFont.baselineOffset;
-        }
-    }
-    if (_secondaryFont.italicVersion) {
-        if (_primaryFont.italicVersion) {
-            _secondaryFont.italicVersion.baselineOffset = _primaryFont.italicVersion.baselineOffset;
-        } else {
-            _secondaryFont.italicVersion.baselineOffset = _secondaryFont.baselineOffset;
-        }
-    }
 
     [self updateMarkedTextAttributes];
     [self setNeedsDisplay:YES];
@@ -1064,9 +1045,11 @@ static const int kDragThreshold = 3;
 }
 
 - (CGFloat)minimumBaselineOffset {
-    CGFloat asciiOffset = -(floorf(self.font.leading) - floorf(self.font.descender));
-    CGFloat nonasciiOffset = self.useNonAsciiFont ? -(floorf(self.nonAsciiFont.leading) - floorf(self.nonAsciiFont.descender)) : 0;
-    return MIN(asciiOffset, nonasciiOffset);
+    if (self.useNonAsciiFont) {
+        return MIN(_primaryFont.baselineOffset, _secondaryFont.baselineOffset);
+    } else {
+        return _primaryFont.baselineOffset;
+    }
 }
 
 - (void)drawRect:(NSRect)rect {

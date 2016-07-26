@@ -12,21 +12,18 @@
 
 @implementation PTYFontInfo {
     NSFont *font_;
-    double baselineOffset_;
     PTYFontInfo *boldVersion_;
     PTYFontInfo *italicVersion_;
     NSNumber *_ligatureLevel;
 }
 
 @synthesize font = font_;
-@synthesize baselineOffset = baselineOffset_;
 @synthesize boldVersion = boldVersion_;
 @synthesize italicVersion = italicVersion_;
 
-+ (PTYFontInfo *)fontInfoWithFont:(NSFont *)font baseline:(double)baseline {
++ (PTYFontInfo *)fontInfoWithFont:(NSFont *)font {
     PTYFontInfo *fontInfo = [[[PTYFontInfo alloc] init] autorelease];
     fontInfo.font = font;
-    fontInfo.baselineOffset = baseline;
     return fontInfo;
 }
 
@@ -73,6 +70,19 @@
     
     [_ligatureLevel release];
     _ligatureLevel = nil;
+    
+    _baselineOffset = [self computedBaselineOffset];
+}
+
+- (CGFloat)computedBaselineOffset {
+    // See issue 4957 for the Monaco hack.
+    CGFloat extraDescender = 0;
+    if ([font_.fontName isEqualToString:@"Monaco"]) {
+        extraDescender = 0.5;
+    }
+    CGFloat descender = self.font.descender + extraDescender;
+    CGFloat baselineOffset = -(floorf(font_.leading) - floorf(descender));
+    return baselineOffset;
 }
 
 // Issue 4294 reveals that merely upconverting the weight of a font once is not sufficient because
@@ -124,7 +134,7 @@
     NSFont *boldFont = [self boldVersionOfFont:font_];
     DLog(@"Bold version of %@ is %@", font_, boldFont);
     if (boldFont && boldFont != font_) {
-        return [PTYFontInfo fontInfoWithFont:boldFont baseline:baselineOffset_];
+        return [PTYFontInfo fontInfoWithFont:boldFont];
     } else {
         DLog(@"Failed to find a bold version of %@", font_);
         return nil;
@@ -136,7 +146,7 @@
     NSFont* italicFont = [fontManager convertFont:font_ toHaveTrait:NSItalicFontMask];
     DLog(@"Italic version of %@ is %@", font_, italicFont);
     if (italicFont && italicFont != font_) {
-        return [PTYFontInfo fontInfoWithFont:italicFont baseline:baselineOffset_];
+        return [PTYFontInfo fontInfoWithFont:italicFont];
     } else {
         DLog(@"Failed to find an italic version of %@", font_);
         return nil;
