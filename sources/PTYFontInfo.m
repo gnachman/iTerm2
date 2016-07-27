@@ -77,7 +77,7 @@
 - (CGFloat)computedBaselineOffset {
     // See issue 4957 for the Monaco hack.
     CGFloat extraDescender = 0;
-    if ([font_.fontName isEqualToString:@"Monaco"]) {
+    if (![font_.fontName isEqualToString:@"Monaco"]) {
         extraDescender = 0.5;
     }
     CGFloat descender = self.font.descender + extraDescender;
