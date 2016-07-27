@@ -708,7 +708,6 @@
 		1D6ED89A19AEA20D005A7799 /* CGSNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6C0E748404000EC682 /* CGSNotifications.h */; };
 		1D6ED89B19AEA20D005A7799 /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		1D6ED89C19AEA20D005A7799 /* CGSRegion.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6D0E748404000EC682 /* CGSRegion.h */; };
-		1D6ED89D19AEA20D005A7799 /* iTermPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */; };
 		1D6ED89E19AEA20D005A7799 /* CGSSession.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6E0E748404000EC682 /* CGSSession.h */; };
 		1D6ED89F19AEA20D005A7799 /* CGSTransitions.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6F0E748404000EC682 /* CGSTransitions.h */; };
 		1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F700E748404000EC682 /* CGSWindow.h */; };
@@ -1593,6 +1592,7 @@
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
 		A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6AC81931D4923DC006F2ADC /* iTermPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */; };
 		A6ACD1F81B62F2210095CB57 /* iTermRuleTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */; };
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
@@ -2084,7 +2084,6 @@
 		A6E525E11A9C5730007B898E /* VT100State.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DC1A9C5730007B898E /* VT100State.h */; };
 		A6E525E21A9C5730007B898E /* VT100State.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DC1A9C5730007B898E /* VT100State.h */; };
 		A6E7137A18F1D70E008D94DD /* GeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */; };
-		A6E7137F18F1DB1E008D94DD /* iTermPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */; };
 		A6E7138418F263BC008D94DD /* PreferenceInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138218F263BC008D94DD /* PreferenceInfo.h */; };
 		A6E7138918F26445008D94DD /* iTermPreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */; };
 		A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */; };
@@ -5407,7 +5406,6 @@
 				1D6ED89A19AEA20D005A7799 /* CGSNotifications.h in Headers */,
 				1D6ED89B19AEA20D005A7799 /* iTermColorMap.h in Headers */,
 				1D6ED89C19AEA20D005A7799 /* CGSRegion.h in Headers */,
-				1D6ED89D19AEA20D005A7799 /* iTermPreferences.h in Headers */,
 				1D6ED89E19AEA20D005A7799 /* CGSSession.h in Headers */,
 				1D6ED89F19AEA20D005A7799 /* CGSTransitions.h in Headers */,
 				1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */,
@@ -5757,7 +5755,6 @@
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
-				A6E7137F18F1DB1E008D94DD /* iTermPreferences.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
@@ -6068,6 +6065,7 @@
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
 				A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */,
 				1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */,
+				A6AC81931D4923DC006F2ADC /* iTermPreferences.h in Headers */,
 				A62C3B2F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
 				1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */,
 				A6EEA6681C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h in Headers */,
