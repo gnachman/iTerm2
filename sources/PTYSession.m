@@ -6799,6 +6799,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
                                      cappedAtSize:-1
+                                     truncateTail:YES
                                 continuationChars:nil
                                            coords:nil];
     NSRange newline = [command rangeOfString:@"\n"];

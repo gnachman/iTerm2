@@ -2702,6 +2702,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                       includeLastNewline:NO
                                   trimTrailingWhitespace:YES
                                             cappedAtSize:_dataSource.width
+                                            truncateTail:YES
                                        continuationChars:nil
                                                   coords:nil];
     if (word.length) {
@@ -3185,6 +3186,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 includeLastNewline:copyLastNewline
                             trimTrailingWhitespace:trimWhitespace
                                       cappedAtSize:cap
+                                      truncateTail:YES
                                  continuationChars:nil
                                             coords:nil];
             if (attributed) {
@@ -3242,6 +3244,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:YES
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
+                        truncateTail:YES
                    continuationChars:nil
                               coords:nil];
 }
@@ -4843,6 +4846,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                       includeLastNewline:YES
                                   trimTrailingWhitespace:NO
                                             cappedAtSize:-1
+                                            truncateTail:YES
                                        continuationChars:nil
                                                   coords:nil]];
             break;
@@ -5540,6 +5544,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
+                        truncateTail:YES
                    continuationChars:nil
                               coords:nil];
 }

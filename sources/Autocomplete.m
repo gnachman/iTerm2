@@ -128,6 +128,7 @@ const int kMaxResultContextWords = 4;
                                  includeLastNewline:NO
                              trimTrailingWhitespace:NO
                                        cappedAtSize:-1
+                                       truncateTail:YES
                                   continuationChars:nil
                                              coords:nil];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
@@ -168,6 +169,7 @@ const int kMaxResultContextWords = 4;
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
                                    cappedAtSize:-1
+                                   truncateTail:YES
                               continuationChars:nil
                                          coords:nil];
         int maxWords = kMaxQueryContextWords;
@@ -513,6 +515,7 @@ const int kMaxResultContextWords = 4;
                                              includeLastNewline:NO
                                          trimTrailingWhitespace:NO
                                                    cappedAtSize:-1
+                                                   truncateTail:YES
                                               continuationChars:nil
                                                          coords:nil];
             NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
@@ -526,6 +529,7 @@ const int kMaxResultContextWords = 4;
                                         includeLastNewline:NO
                                     trimTrailingWhitespace:NO
                                               cappedAtSize:-1
+                                              truncateTail:YES
                                          continuationChars:nil
                                                     coords:nil];
                 if ([part length] == 0) {
@@ -563,6 +567,7 @@ const int kMaxResultContextWords = 4;
                                   includeLastNewline:NO
                               trimTrailingWhitespace:NO
                                         cappedAtSize:-1
+                                        truncateTail:YES
                                    continuationChars:nil
                                               coords:nil];
                     AcLog(@"First candidate is at %@", VT100GridWindowedRangeDescription(range));
@@ -582,6 +587,7 @@ const int kMaxResultContextWords = 4;
                                           includeLastNewline:NO
                                       trimTrailingWhitespace:NO
                                                 cappedAtSize:-1
+                                                truncateTail:YES
                                            continuationChars:nil
                                                       coords:nil];
                             if (!whitespaceBeforeCursor_) {

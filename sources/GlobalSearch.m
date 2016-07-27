@@ -259,6 +259,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                   includeLastNewline:NO
                               trimTrailingWhitespace:YES
                                         cappedAtSize:-1
+                                        truncateTail:YES
                                    continuationChars:nil
                                               coords:nil];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"

@@ -117,6 +117,9 @@ extern const NSInteger kUnlimitedMaximumWordLength;
 //
 // If |coords| is non-nil it will be filled with NSValue*s in 1:1 correspondence with characters in
 // the return value, giving VT100GridCoord's with their provenance.
+//
+// if |maxBytes| is positive then the result will not exceed that size. |truncateTail| determines
+// whether the tail or head of the string is shortened to fit.
 - (id)contentInRange:(VT100GridWindowedRange)range
    attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
@@ -124,6 +127,7 @@ extern const NSInteger kUnlimitedMaximumWordLength;
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
+        truncateTail:(BOOL)truncateTail
          continuationChars:(NSMutableIndexSet *)continuationChars
               coords:(NSMutableArray *)coords;
 
