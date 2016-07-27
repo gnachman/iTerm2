@@ -71,6 +71,10 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         int x = j;
         if (theLine[j].code == DWC_RIGHT) {
             x = j - 1;
+            if (x < 0) {
+                // AFAIK this only happens in tests, but it's a nice safety in case things go sideways.
+                continue;
+            }
         }
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
