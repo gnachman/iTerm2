@@ -54,7 +54,7 @@ typedef struct {
     iTermColorMap *_colorMap;
     NSString *_pasteboardString;
     NSMutableDictionary *_methodsCalled;
-    screen_char_t _buffer[4];
+    screen_char_t _buffer[5];
 }
 
 - (void)setUp {
@@ -2354,10 +2354,12 @@ typedef struct {
 }
 
 - (screen_char_t *)getLineAtIndex:(int)theIndex {
-    for (int i = 0; i < [self width]; i++) {
+    int width = self.width;
+    for (int i = 0; i < width + 1; i++) {
         memset(&_buffer[i], 0, sizeof(screen_char_t));
         _buffer[i].code = theIndex + '0';
     }
+    _buffer[width].code = EOL_SOFT;
     return _buffer;
 }
 
