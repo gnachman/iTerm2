@@ -1642,11 +1642,13 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 #pragma mark - Cursor Utilities
 
 - (NSColor *)backgroundColorForCursor {
+    NSColor *color;
     if (_reverseVideo) {
-        return [[_colorMap colorForKey:kColorMapCursorText] colorWithAlphaComponent:1.0];
+        color = [[_colorMap colorForKey:kColorMapCursorText] colorWithAlphaComponent:1.0];
     } else {
-        return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
+        color = [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
     }
+    return [_colorMap colorByDimmingTextColor:color];
 }
 
 - (BOOL)cursorInVisibleRow {
@@ -2096,6 +2098,10 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                                                      blue:0
                                                     alpha:1];
     return [_colorMap colorByDimmingTextColor:blackColor];
+}
+
+- (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color {
+    return [_colorMap colorByDimmingTextColor:color];
 }
 
 @end
