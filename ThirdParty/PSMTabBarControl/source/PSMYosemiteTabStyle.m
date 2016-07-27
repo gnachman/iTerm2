@@ -371,21 +371,6 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 }
 
 - (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell {
-    NSMutableAttributedString *attrStr;
-    NSString *contents = [cell stringValue];
-    attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
-    NSRange range = NSMakeRange(0, [contents length]);
-
-    NSColor *textColor = [self textColorForCell:cell];
-
-    // Add font attribute
-    [attrStr addAttribute:NSFontAttributeName
-                    value:[NSFont systemFontOfSize:self.fontSize]
-                    range:range];
-    [attrStr addAttribute:NSForegroundColorAttributeName
-                    value:textColor
-                    range:range];
-
     // Paragraph Style for Truncating Long Text
     NSMutableParagraphStyle *truncatingTailParagraphStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
@@ -396,11 +381,11 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         [truncatingTailParagraphStyle setAlignment:NSLeftTextAlignment];
     }
 
-    [attrStr addAttribute:NSParagraphStyleAttributeName
-                    value:truncatingTailParagraphStyle
-                    range:range];
-
-    return attrStr;
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
+                                  NSForegroundColorAttributeName: [self textColorForCell:cell],
+                                  NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
+    return [[[NSAttributedString alloc] initWithString:[cell stringValue]
+                                            attributes:attributes] autorelease];
 }
 
 - (CGFloat)fontSize {
