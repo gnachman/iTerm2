@@ -25,6 +25,12 @@ function print_st() {
 #   inline: 0 or 1
 #   base64contents: Base64-encoded contents
 function print_image() {
+    if [[ -z "$1" ]]; then
+      exit 0
+    fi
+    if [[ -n "$4" ]]; then
+      echo $1
+    fi
     print_osc
     printf '1337;File='
     if [[ -n "$1" ]]; then
@@ -74,6 +80,9 @@ while [ $# -gt 0 ]; do
         show_help
         exit
         ;;
+    -p|--p|--print)
+        print_filename=1
+        ;;
     -*)
         error "Unknown option flag: $1"
         show_help
@@ -81,7 +90,7 @@ while [ $# -gt 0 ]; do
       ;;
     *)
         if [ -r "$1" ] ; then
-            print_image "$1" 1 "$(base64 < "$1")"
+            print_image "$1" 1 "$(base64 < "$1")" "$print_filename"
         else
             error "imgcat: $1: No such file or directory"
             exit 2
