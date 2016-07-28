@@ -190,8 +190,7 @@ typedef struct iTermTextColorContext {
     }
 
     const int haloWidth = 4;
-    NSInteger lastVisibleRow = NSMaxRange([self rangeOfVisibleRows]);
-    NSInteger yLimit = MIN(_numberOfLines, lastVisibleRow);
+    NSInteger yLimit = _numberOfLines;
 
     VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
     boundingCoordRange.start.x = MAX(0, boundingCoordRange.start.x - haloWidth);
@@ -199,7 +198,10 @@ typedef struct iTermTextColorContext {
     boundingCoordRange.end.x = MIN(_gridSize.width, boundingCoordRange.end.x + haloWidth);
     boundingCoordRange.end.y = MIN(yLimit, boundingCoordRange.end.y + 1);
     
-    int numRowsInRect = boundingCoordRange.end.y - boundingCoordRange.start.y;
+    int numRowsInRect = MAX(0, boundingCoordRange.end.y - boundingCoordRange.start.y);
+    if (numRowsInRect == 0) {
+        return;
+    }
     NSMutableData *store = [NSMutableData dataWithLength:numRowsInRect * sizeof(NSRange)];
     NSRange *ranges = (NSRange *)store.mutableBytes;
     for (int i = 0; i < rectCount; i++) {
@@ -1713,10 +1715,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 - (void)drawCursor {
     DLog(@"drawCursor");
 
-    if (![self cursorInVisibleRow]) {
-        return;
-    }
-
     // Update the last time the cursor moved.
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (!VT100GridCoordEquals(_cursorCoord, _oldCursorPosition)) {
@@ -1839,12 +1837,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 }
 
-- (BOOL)cursorInVisibleRow {
-    NSRange range = [self rangeOfVisibleRows];
-    int cursorLine = _numberOfLines - _gridSize.height + _cursorCoord.y;
-    return NSLocationInRange(cursorLine, range);
-}
-
 - (BOOL)shouldShowCursor {
     if (_cursorBlinking &&
         self.isInKeyWindow &&
@@ -1945,24 +1937,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return charRange;
 }
 
-- (NSRange)rangeOfVisibleRows {
-    int visibleRows = floor((_scrollViewContentSize.height - VMARGIN * 2) / _cellSize.height);
-    CGFloat top = _scrollViewDocumentVisibleRect.origin.y;
-    int firstVisibleRow = floor(top / _cellSize.height);
-    if (firstVisibleRow < 0) {
-        // I'm pretty sure this will never happen, but safety first when
-        // dealing with unsigned integers.
-        visibleRows += firstVisibleRow;
-        firstVisibleRow = 0;
-    }
-    if (visibleRows >= 0) {
-        return NSMakeRange(firstVisibleRow, visibleRows);
-    } else {
-        return NSMakeRange(0, 0);
-    }
-}
-
-// Not inclusive of end.x or end.y. Range of coords clipped to visible area and addressable lines.
+// Not inclusive of end.x or end.y. Range of coords clipped to addressable lines.
 - (VT100GridCoordRange)drawableCoordRangeForRect:(NSRect)rect {
     VT100GridCoordRange range;
     NSRange charRange = [self rangeOfColumnsFrom:rect.origin.x ofWidth:rect.size.width];
@@ -1974,12 +1949,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     int lineEnd = ceil((rect.origin.y + rect.size.height) / _cellSize.height);
 
     // Ensure valid line ranges
-    lineStart = MAX(0, lineStart);
-    lineEnd = MIN(lineEnd, _numberOfLines);
-
-    // Ensure lineEnd isn't beyond the bottom of the visible area.
-    range.start.y = lineStart;
-    range.end.y = MIN(lineEnd, NSMaxRange([self rangeOfVisibleRows]));
+    range.start.y = MAX(0, lineStart);
+    range.end.y = MIN(lineEnd, _numberOfLines);
 
     return range;
 }
