@@ -4552,7 +4552,7 @@ static void SwapInt(int *a, int *b) {
     }
 
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
-    if (includeRestorationBanner) {
+    if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         [lineBuffer appendMessage:@"Session Restored"];
     }
     [lineBuffer setMaxLines:maxScrollbackLines_];
