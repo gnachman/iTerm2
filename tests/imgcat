@@ -28,9 +28,6 @@ function print_image() {
     if [[ -z "$1" ]]; then
       exit 0
     fi
-    if [[ -n "$4" ]]; then
-      echo $1
-    fi
     print_osc
     printf '1337;File='
     if [[ -n "$1" ]]; then
@@ -48,6 +45,9 @@ function print_image() {
     echo -n "$3"
     print_st
     printf '\n'
+    if [[ -n "$4" ]]; then
+      echo $1
+    fi
 }
 
 function error() {
@@ -55,7 +55,7 @@ function error() {
 }
 
 function show_help() {
-    echo "Usage: imgcat filename ..." 1>& 2
+    echo "Usage: imgcat [-p] filename ..." 1>& 2
     echo "   or: cat filename | imgcat" 1>& 2
 }
 
