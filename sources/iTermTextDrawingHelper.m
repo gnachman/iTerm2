@@ -257,6 +257,19 @@ typedef struct iTermTextColorContext {
     }
 }
 
+- (NSInteger)numberOfEquivalentBackgroundColorLinesInRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                                                     fromIndex:(NSInteger)startIndex {
+    NSInteger count = 1;
+    iTermBackgroundColorRunsInLine *reference = backgroundRunArrays[startIndex];
+    for (NSInteger i = startIndex + 1; i < backgroundRunArrays.count; i++) {
+        if (![backgroundRunArrays[i].array isEqualToArray:reference.array]) {
+            break;
+        }
+        ++count;
+    }
+    return count;
+}
+
 - (void)drawRanges:(NSRange *)ranges count:(NSInteger)numRanges origin:(VT100GridCoord)origin boundingRect:(NSRect)boundingRect {
     // Configure graphics
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
@@ -264,7 +277,7 @@ typedef struct iTermTextColorContext {
     iTermTextExtractor *extractor = [self.delegate drawingHelperTextExtractor];
     _blinkingFound = NO;
 
-    NSMutableArray *backgroundRunArrays = [NSMutableArray array];
+    NSMutableArray<iTermBackgroundColorRunsInLine *> *backgroundRunArrays = [NSMutableArray array];
 
     for (NSInteger i = 0; i < numRanges; i++) {
         const int line = origin.y + i;
@@ -311,11 +324,17 @@ typedef struct iTermTextColorContext {
     }
 
     // Now iterate over the lines and paint the backgrounds.
-    for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
+    for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
+        NSInteger rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
+        iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
         [self drawBackgroundForLine:runArray.line
                                 atY:runArray.y
-                               runs:runArray.array];
-        [self drawMarginsAndMarkForLine:runArray.line y:runArray.y];
+                               runs:runArray.array
+                     equivalentRows:rows];
+        for (NSInteger j = i; j < i + rows; j++) {
+            [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line y:backgroundRunArrays[j].y];
+        }
+        i += rows;
     }
 
     // Draw other background-like stuff that goes behind text.
@@ -359,7 +378,8 @@ typedef struct iTermTextColorContext {
 
 - (void)drawBackgroundForLine:(int)line
                           atY:(CGFloat)yOrigin
-                         runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs {
+                         runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs
+               equivalentRows:(NSInteger)rows {
     for (iTermBoxedBackgroundColorRun *box in runs) {
         iTermBackgroundColorRun *run = box.valuePointer;
 
@@ -368,7 +388,7 @@ typedef struct iTermTextColorContext {
         NSRect rect = NSMakeRect(floor(MARGIN + run->range.location * _cellSize.width),
                                  yOrigin,
                                  ceil(run->range.length * _cellSize.width),
-                                 _cellSize.height);
+                                 _cellSize.height * rows);
         NSColor *color = [self unprocessedColorForBackgroundRun:run];
         // The unprocessed color is needed for minimum contrast computation for text color.
         box.unprocessedBackgroundColor = color;

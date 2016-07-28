@@ -126,5 +126,20 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     return &_value;
 }
 
+- (BOOL)isEqual:(id)other {
+    if (other == self) {
+        return YES;
+    }
+    if (!other || ![other isKindOfClass:[self class]]) {
+        return NO;
+    }
+    return [self isEqualToBoxedBackgroundColorRun:other];
+}
+
+- (BOOL)isEqualToBoxedBackgroundColorRun:(iTermBoxedBackgroundColorRun *)other {
+    return (iTermBackgroundColorRunsEqual(&other->_value, &_value) &&
+            NSEqualRanges(other->_value.range, _value.range));
+}
+
 @end
 
