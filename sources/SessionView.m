@@ -138,6 +138,23 @@ static NSDate* lastResizeDate_;
             [self updateScrollViewFrame];
             [self updateFindViewFrame];
         }
+    } else {
+        // Don't resize anything but do keep it all top-aligned.
+        if (self.showTitle) {
+            NSRect aRect = [self frame];
+            CGFloat maxY = aRect.size.height;
+            if (_showTitle) {
+                maxY -= _title.frame.size.height;
+                [_title setFrame:NSMakeRect(0,
+                                            maxY,
+                                            _title.frame.size.width,
+                                            _title.frame.size.height)];
+            }
+            NSRect frame = _scrollview.frame;
+            maxY -= frame.size.height;
+            frame.origin.y = maxY;
+            _scrollview.frame = frame;
+        }
     }
 }
 
