@@ -14,7 +14,6 @@
     NSFont *font_;
     PTYFontInfo *boldVersion_;
     PTYFontInfo *italicVersion_;
-    NSNumber *_ligatureLevel;
 }
 
 @synthesize font = font_;
@@ -31,46 +30,37 @@
     [font_ release];
     [boldVersion_ release];
     [italicVersion_ release];
-    [_ligatureLevel release];
     [super dealloc];
-}
-
-- (NSInteger)ligatureLevel {
-    if (!_ligatureLevel) {
-        // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
-        // you ligatures whether you like it or not.
-        static NSDictionary *fontNameToLigatureLevel;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            fontNameToLigatureLevel = @{ @"PragmataPro": @1,
-                                         @"Hasklig-Black": @1,
-                                         @"Hasklig-BlackIt": @1,
-                                         @"Hasklig-Bold": @1,
-                                         @"Hasklig-BoldIt": @1,
-                                         @"Hasklig-ExtraLight": @1,
-                                         @"Hasklig-ExtraLightIt": @1,
-                                         @"Hasklig-It": @1,
-                                         @"Hasklig-Light": @1,
-                                         @"Hasklig-LightIt": @1,
-                                         @"Hasklig-Medium": @1,
-                                         @"Hasklig-MediumIt": @1,
-                                         @"Hasklig-Regular": @1,
-                                         @"Hasklig-Semibold": @1,
-                                         @"Hasklig-SemiboldIt": @1 };
-            [fontNameToLigatureLevel retain];
-        });
-        _ligatureLevel = [@([fontNameToLigatureLevel[font_.fontName] integerValue]) retain];
-    }
-    return [_ligatureLevel doubleValue];
 }
 
 - (void)setFont:(NSFont *)font {
     [font_ autorelease];
     font_ = [font retain];
     
-    [_ligatureLevel release];
-    _ligatureLevel = nil;
-    
+    // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
+    // you ligatures whether you like it or not.
+    static NSDictionary *fontNameToLigatureLevel;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        fontNameToLigatureLevel = @{ @"PragmataPro": @1,
+                                     @"Hasklig-Black": @1,
+                                     @"Hasklig-BlackIt": @1,
+                                     @"Hasklig-Bold": @1,
+                                     @"Hasklig-BoldIt": @1,
+                                     @"Hasklig-ExtraLight": @1,
+                                     @"Hasklig-ExtraLightIt": @1,
+                                     @"Hasklig-It": @1,
+                                     @"Hasklig-Light": @1,
+                                     @"Hasklig-LightIt": @1,
+                                     @"Hasklig-Medium": @1,
+                                     @"Hasklig-MediumIt": @1,
+                                     @"Hasklig-Regular": @1,
+                                     @"Hasklig-Semibold": @1,
+                                     @"Hasklig-SemiboldIt": @1 };
+        [fontNameToLigatureLevel retain];
+    });
+    _ligatureLevel = [fontNameToLigatureLevel[font.fontName] integerValue];
+
     _baselineOffset = [self computedBaselineOffset];
 }
 
