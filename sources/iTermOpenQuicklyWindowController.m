@@ -184,7 +184,7 @@
             // Create a new tab/window
             Profile *profile = object;
             iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:profile[KEY_GUID]];
-            if (profileHotkey.windowController.weaklyReferencedObject) {
+            if (!profileHotkey || profileHotkey.windowController.weaklyReferencedObject) {
                 // Create a new non-hotkey window
                 [[iTermController sharedInstance] launchBookmark:profile
                                                       inTerminal:[[iTermController sharedInstance] currentTerminal]
