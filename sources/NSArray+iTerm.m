@@ -235,6 +235,12 @@
     return intersection;
 }
 
+- (NSArray *)arrayByShufflingArray {
+    NSMutableArray *result = [[self mutableCopy] autorelease];
+    [result shuffle];
+    return result;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)
@@ -260,6 +266,18 @@
         }
     }];
     [self removeObjectsAtIndexes:indexes];
+}
+
+- (void)shuffle {
+    NSUInteger count = self.count;
+    if (!count) {
+        return;
+    }
+    for (NSUInteger i = 0; i + 1 < count; i++) {
+        NSInteger numberLeft = count - i;
+        NSInteger j = i + arc4random_uniform((u_int32_t )numberLeft);
+        [self exchangeObjectAtIndex:i withObjectAtIndex:j];
+    }
 }
 
 @end

@@ -41,7 +41,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 
 // Line number to draw at (row - scrollbackOverflow)
 @property(nonatomic, assign) int line;
-
+@property(nonatomic, assign) int equivalentRows;
 @property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun *> *array;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.

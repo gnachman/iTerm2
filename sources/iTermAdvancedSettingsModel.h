@@ -150,5 +150,7 @@
 + (NSString *)downloadsDirectory;
 + (double)pointSizeOfTimeStamp;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
++ (BOOL)parallelizeTextDrawing;
++ (int)numberOfDrawingShards;
 
 @end

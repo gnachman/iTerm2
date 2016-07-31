@@ -210,4 +210,7 @@ DEFINE_BOOL(experimentalKeyHandling, NO, @"Experimental Features: Improved suppo
 DEFINE_BOOL(hideStuckTooltips, NO, @"Experimental Features: Hide stuck tooltips.\nWhen you hide iTerm2 using a hotkey while a tooltip is fading out it gets stuck because of an OS bug. Work around it with a nasty hack by enabling this feature.")
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, NO, @"Experimental Features: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
 
+DEFINE_BOOL(parallelizeTextDrawing, YES, @"Experimental Features: Parallelize drawing");
+DEFINE_INT(numberOfDrawingShards, 4, @"Experimental Features: Number of drawing shards when parallelizing drawing");
+
 @end

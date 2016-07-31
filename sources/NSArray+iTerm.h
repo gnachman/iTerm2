@@ -59,10 +59,12 @@
 - (NSString *)componentsJoinedWithOxfordComma;
 
 - (NSArray *)intersectArray:(NSArray *)other;
+- (NSArray *)arrayByShufflingArray;
 
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)
 - (void)reverse;
 - (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
+- (void)shuffle;
 @end

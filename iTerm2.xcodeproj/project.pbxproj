@@ -1595,6 +1595,8 @@
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
 		A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6AC81961D4B1F56006F2ADC /* iTermDrawingShard.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AC81941D4B1F56006F2ADC /* iTermDrawingShard.h */; };
+		A6AC81971D4B1F56006F2ADC /* iTermDrawingShard.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AC81951D4B1F56006F2ADC /* iTermDrawingShard.m */; };
 		A6ACD1F81B62F2210095CB57 /* iTermRuleTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */; };
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
@@ -3343,6 +3345,8 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6AC81941D4B1F56006F2ADC /* iTermDrawingShard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDrawingShard.h; sourceTree = "<group>"; };
+		A6AC81951D4B1F56006F2ADC /* iTermDrawingShard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDrawingShard.m; sourceTree = "<group>"; };
 		A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRuleTest.m; sourceTree = "<group>"; };
 		A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMouseCursor.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermMouseCursor.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5154,6 +5158,8 @@
 				A6936B481D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m */,
 				A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */,
 				A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */,
+				A6AC81941D4B1F56006F2ADC /* iTermDrawingShard.h */,
+				A6AC81951D4B1F56006F2ADC /* iTermDrawingShard.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6150,6 +6156,7 @@
 				A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */,
 				A6FEA2781CF2CBCC00376F28 /* iTermAppHotKeyProvider.h in Headers */,
 				A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */,
+				A6AC81961D4B1F56006F2ADC /* iTermDrawingShard.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				A6FEA26C1CF2C86800376F28 /* iTermBaseHotKey.h in Headers */,
 				A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */,
@@ -7757,6 +7764,7 @@
 				A6C7634F1B45C52B00E3C992 /* SessionTitleView.m in Sources */,
 				A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */,
 				A6C763A01B45C52B00E3C992 /* TmuxWindowsTable.m in Sources */,
+				A6AC81971D4B1F56006F2ADC /* iTermDrawingShard.m in Sources */,
 				A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */,
 				A6C762B41B45C52B00E3C992 /* NSDictionary+Profile.m in Sources */,
 				A6C763E51B45C70100E3C992 /* SCEvent.m in Sources */,

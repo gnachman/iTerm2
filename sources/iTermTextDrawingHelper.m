@@ -16,6 +16,7 @@
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermDrawingShard.h"
 #import "iTermFindCursorView.h"
 #import "iTermImageInfo.h"
 #import "iTermIndicatorsHelper.h"
@@ -130,11 +131,68 @@ typedef struct iTermTextColorContext {
     
     iTermPreciseTimerStats _stats[TIMER_STAT_MAX];
     CGFloat _baselineOffset;
+    
+    iTermSynchronousDrawingShard *_synchronousShard;
+    
+    NSSize _shardedSize;
+    NSMutableArray<iTermDrawingShard *> *_shards;
+    CGContextRef _currentContext;
+    dispatch_group_t _group;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _shards = [[NSMutableArray alloc] init];
+        _group = dispatch_group_create();
+        _synchronousShard = [[iTermSynchronousDrawingShard alloc] initWithRect:NSZeroRect
+                                                                         scale:0.0
+                                                                         range:NSMakeRange(0, 0)
+                                                                 bitmapContext:nil
+                                                                         queue:nil];
+
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            gCompositingQueue = dispatch_queue_create("com.googlecode.iterm2.CompositingQueue", DISPATCH_QUEUE_SERIAL);
+#if 0
+            dispatch_queue_t samplingQueue = dispatch_queue_create("com.googlecode.iterm2.Sampling", DISPATCH_QUEUE_SERIAL);
+            dispatch_async(samplingQueue, ^{
+                int maxDrawing = 0;
+                int maxCompositing = 0;
+                NSCountedSet *drawingSet = [[NSCountedSet alloc] init];
+                NSCountedSet *compositingSet = [[NSCountedSet alloc] init];
+                int iterations = 0;
+                while (1) {
+                    @autoreleasepool {
+                        int drawing = numDrawing;
+                        int compositing = queuedComposites;
+                        
+                        maxDrawing = MAX(maxDrawing, drawing);
+                        maxCompositing = MAX(maxCompositing, compositing);
+                        
+                        [drawingSet addObject:@(drawing)];
+                        [compositingSet addObject:@(compositing)];
+                        
+                        if (iterations % 100 == 99) {
+                            NSLog(@"Drawing");
+                            for (int i = 0; i < maxDrawing; i++) {
+                                NSString *s = [@"*" stringRepeatedTimes:[drawingSet countForObject:@(i)]];
+                                NSLog(@"%4d: %@", i, s);
+                            }
+                            NSLog(@"Compositing");
+                            for (int i = 0; i < maxCompositing; i++) {
+                                NSString *s = [@"*" stringRepeatedTimes:[compositingSet countForObject:@(i)]];
+                                NSLog(@"%4d: %@", i, s);
+                            }
+                        }
+                        ++iterations;
+                    }
+                    [NSThread sleepForTimeInterval:0.01];
+                }
+            });
+#endif
+        });
+
         if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
             _drawRectDuration = [[MovingAverage alloc] init];
@@ -156,6 +214,7 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)dealloc {
+    [_shards release];
     [_selection release];
     [_cursorGuideColor release];
     [_badgeImage release];
@@ -168,7 +227,8 @@ typedef struct iTermTextColorContext {
     [_drawRectInterval release];
 
     [_backgroundStripesImage release];
-
+    dispatch_release(_group);
+    [_synchronousShard release];
     [super dealloc];
 }
 
@@ -257,6 +317,49 @@ typedef struct iTermTextColorContext {
     }
 }
 
+- (void)setNumberOfShards:(int)numberOfShards numberOfRows:(int)numberOfRows {
+    [_shards removeAllObjects];
+
+    int heightToBeSharded = numberOfRows;
+    int row = 0;
+    const CGFloat scale = self.isRetina ? 2.0 : 1.0;
+    for (int i = 0; i < numberOfShards; i++) {
+        NSLog(@"%0.6fms: Consider shard %d", MillisSinceDrawingEpoch(), i);
+        int height = heightToBeSharded / (numberOfShards - i);
+        NSRect destination = NSMakeRect(MARGIN,
+                                        VMARGIN + _cellSize.height * row,
+                                        _cellSize.width * _gridSize.width,
+                                        _cellSize.height * height);
+        iTermDrawingShard *shard;
+        if (i == 0) {
+            // This shard renders on the compositing queue since it goes first.
+            NSLog(@"%0.6fms: Allocate shard %d", MillisSinceDrawingEpoch(), i);
+            shard = [[[iTermDrawingShard alloc] initWithRect:NSMakeRect(0, 0, destination.size.width, destination.size.height)
+                                                       scale:scale
+                                                       range:NSMakeRange(row, height)
+                                               bitmapContext:nil
+                                                       queue:gCompositingQueue] autorelease];
+            NSLog(@"%0.6fms: Done allocating shard %d", MillisSinceDrawingEpoch(), i);
+        } else {
+            NSLog(@"%0.6fms: Allocate shard %d", MillisSinceDrawingEpoch(), i);
+            shard = [[[iTermDrawingShard alloc] initWithRect:destination
+                                                       scale:scale
+                                                       range:NSMakeRange(row, height)
+                                                 shardNumber:i] autorelease];
+            NSLog(@"%0.6fms: Done allocating shard %d", MillisSinceDrawingEpoch(), i);
+        }
+        if (shard) {
+            row += height;
+            NSLog(@"%0.6fms: Adding shard to array %d", MillisSinceDrawingEpoch(), i);
+            [_shards addObject:shard];
+            NSLog(@"%0.6fms: Done a dding shard to array %d", MillisSinceDrawingEpoch(), i);
+        }
+        heightToBeSharded -= height;
+    }
+    
+    _shardedSize = NSMakeSize(_cellSize.width * _gridSize.width, _cellSize.height * numberOfRows);
+}
+
 - (NSInteger)numberOfEquivalentBackgroundColorLinesInRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                                                      fromIndex:(NSInteger)startIndex {
     NSInteger count = 1;
@@ -270,15 +373,44 @@ typedef struct iTermTextColorContext {
     return count;
 }
 
+- (void)setRangeOfRows:(NSRange)rangeOfRows {
+    int heightToBeSharded = rangeOfRows.length;
+    int row = rangeOfRows.location;
+    for (int i = 0; i < _shards.count; i++) {
+        iTermDrawingShard *shard = _shards[i];
+        
+        int height = heightToBeSharded / (_shards.count - i);
+        shard.range = NSMakeRange(row, height);
+        if (i > 0) {
+            NSRect rect = shard.rect;
+            rect.origin.y = shard.range.location * _cellSize.height + VMARGIN;
+            rect.origin.x = MARGIN;
+            rect.size.width = _cellSize.width * _gridSize.width;
+            rect.size.height = shard.range.length * _cellSize.height;
+            shard.rect = rect;
+        }
+        
+        row += height;
+        heightToBeSharded -= height;
+    }
+}
+
 - (void)drawRanges:(NSRange *)ranges count:(NSInteger)numRanges origin:(VT100GridCoord)origin boundingRect:(NSRect)boundingRect {
+    if (numRanges == 0) {
+        return;
+    }
     // Configure graphics
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
 
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    _currentContext = ctx;
+    _synchronousShard.bitmapContext = ctx;
+    
     iTermTextExtractor *extractor = [self.delegate drawingHelperTextExtractor];
     _blinkingFound = NO;
 
     NSMutableArray<iTermBackgroundColorRunsInLine *> *backgroundRunArrays = [NSMutableArray array];
-
+    
     for (NSInteger i = 0; i < numRanges; i++) {
         const int line = origin.y + i;
         NSRange charRange = ranges[i];
@@ -314,6 +446,13 @@ typedef struct iTermTextColorContext {
                                                    textExtractor:extractor
                                                                y:y
                                                             line:line];
+        for (iTermBoxedBackgroundColorRun *box in runsInLine.array) {
+            iTermBackgroundColorRun *run = box.valuePointer;
+            NSColor *color = [self unprocessedColorForBackgroundRun:run];
+            // The unprocessed color is needed for minimum contrast computation for text color.
+            box.unprocessedBackgroundColor = color;
+            box.backgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
+        }
         [backgroundRunArrays addObject:runsInLine];
     }
 
@@ -327,10 +466,7 @@ typedef struct iTermTextColorContext {
     for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
         NSInteger rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
         iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
-        [self drawBackgroundForLine:runArray.line
-                                atY:runArray.y
-                               runs:runArray.array
-                     equivalentRows:rows];
+        runArray.equivalentRows = rows;
         for (NSInteger j = i; j < i + rows; j++) {
             [self drawMarginsAndMarkForLine:backgroundRunArrays[j].line y:backgroundRunArrays[j].y];
         }
@@ -338,15 +474,118 @@ typedef struct iTermTextColorContext {
     }
 
     // Draw other background-like stuff that goes behind text.
+#warning TODO this has to be chopped up and moved around
     [self drawAccessoriesInRect:boundingRect];
 
+#if VERBOSE_TIMING
+    NSLog(@"Begin");
+#endif
+    for (iTermDrawingShard *shard in _shards) {
+        [shard removeAllEvents];
+    }
+    ResetDrawingEpoch();
+    [_shards.firstObject addEvent:@"Beginning"];
+    if ([iTermAdvancedSettingsModel parallelizeTextDrawing]) {
+        const int kNumShards = [iTermAdvancedSettingsModel parallelizeTextDrawing] ?  [iTermAdvancedSettingsModel numberOfDrawingShards] : 1;
+        if (_shards.count != kNumShards ||
+            _shardedSize.width < boundingRect.size.width ||
+            _shardedSize.height < boundingRect.size.height ||
+            NSMaxRange([_shards.lastObject range]) < numRanges) {
+            NSLog(@"%0.6fms: Allocating shards…", MillisSinceDrawingEpoch());
+            [self setNumberOfShards:kNumShards numberOfRows:numRanges];
+            NSLog(@"%0.6fms: Done allocating shards", MillisSinceDrawingEpoch());
+            [_shards[0] addEvent:@"Reallocated shards"];
+        }
+
+        _shards[0].bitmapContext = ctx;
+        // Enter once per shard that will run its compositing group (all but first).
+        [_shards.firstObject addEvent:@"Calling setRangeOfRows"];
+        [self setRangeOfRows:NSMakeRange(origin.y, numRanges)];
+        [_shards.firstObject addEvent:@"Returned from setRangeOfRows"];
+
+        for (NSUInteger i = 1; i < _shards.count; i++) {
+            dispatch_group_enter(_group);
+            iTermDrawingShard *shard = _shards[i];
+            [_shards.firstObject addEvent:@"Calling setLayerContextFromContext"];
+            [shard setLayerContextFromContext:ctx];
+            [_shards.firstObject addEvent:@"Returned from setLayerContextFromContext"];
+            shard.compositingBlock = ^() {
+                [self stampLayer:shard.layer
+                         atPoint:CGPointMake(shard.rect.origin.x, shard.rect.origin.y)
+                         context:ctx];
+//                [self compositeFromContext:shard.bitmapContext
+//                               intoContext:_currentContext
+//                               destination:shard.rect
+//                                sourceSize:shard.capacity];
+                dispatch_group_leave(_group);
+            };
+        }
+    } else {
+        [_shards removeAllObjects];
+        [_shards addObject:_synchronousShard];
+    }
+    
     // Now iterate over the lines and paint the characters.
-    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
+#if VERBOSE_TIMING
+    NSLog(@"%0.6fms: %@", MillisSinceDrawingEpoch(), @"Start iterating over background runs");
+#endif
+    iTermDrawingShard *previousShard = nil;
+    for (iTermBackgroundColorRunsInLine *runArray in [backgroundRunArrays arrayByShufflingArray]) {
+        iTermDrawingShard *shard = nil;
+#if VERBOSE_TIMING
+        NSLog(@"%0.6fms: %@", MillisSinceDrawingEpoch(), @"Search for shard…");
+#endif
+        [_shards[0] addDebugEvent:@"Searching for shard"];
+        if ([iTermAdvancedSettingsModel parallelizeTextDrawing]) {
+            if (previousShard && NSLocationInRange(runArray.line, previousShard.range)) {
+                shard = previousShard;
+            } else {
+                for (iTermDrawingShard *candidate in _shards) {
+                    if (NSLocationInRange(runArray.line, candidate.range)) {
+                        shard = candidate;
+                        break;
+                    }
+                }
+                assert(shard);
+            }
+        } else {
+            shard = _synchronousShard;
+        }
+        [shard addDebugEvent:@"call darwBackgroundForLine"];
+#warning TODO: Use runArray.equivalentRows as long as it doesn't span a shard boundary
+        [self drawBackgroundForLine:runArray.line
+                                atY:runArray.y
+                               runs:runArray.array
+                     equivalentRows:1
+                              shard:shard];
+        [shard addDebugEvent:@"call drawCharactersForLine"];
         [self drawCharactersForLine:runArray.line
                                 atY:runArray.y
                      backgroundRuns:runArray.array
-                            context:ctx];
+                            context:ctx
+                              shard:shard];
+    }
+//    NSLog(@"Call composite when ready");
+    [_shards makeObjectsPerformSelector:@selector(compositeWhenReady)];
+    
+    // Make the group block until the compositing queue is empty
+    dispatch_group_enter(_group);
+    dispatch_async(gCompositingQueue, ^{
+        dispatch_group_leave(_group);
+    });
+    
+//    NSLog(@"Wait for drawers");
+    [_shards.firstObject addEvent:@"Wait for all drawers to finish"];
+    dispatch_group_wait(_group, DISPATCH_TIME_FOREVER);
+
+//#if VERBOSE_TIMING
+    for (iTermDrawingShard *shard in _shards) {
+        NSLog(@"Log for %@:\n%@", shard, shard.events);
+    }
+//#endif
+//    NSLog(@"Done");
+    
+    for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
         [self drawNoteRangesOnLine:runArray.line];
 
         if (_debug) {
@@ -372,6 +611,12 @@ typedef struct iTermTextColorContext {
     
     [_selectedFont release];
     _selectedFont = nil;
+    
+    _synchronousShard.bitmapContext = nil;
+    _currentContext = nil;
+    for (NSUInteger i = 1; i < _shards.count; i++) {
+        [_shards[i] setLayerContextFromContext:nil];
+    }
 }
 
 #pragma mark - Drawing: Background
@@ -379,33 +624,43 @@ typedef struct iTermTextColorContext {
 - (void)drawBackgroundForLine:(int)line
                           atY:(CGFloat)yOrigin
                          runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs
-               equivalentRows:(NSInteger)rows {
-    for (iTermBoxedBackgroundColorRun *box in runs) {
-        iTermBackgroundColorRun *run = box.valuePointer;
+               equivalentRows:(NSInteger)rows
+                        shard:(iTermDrawingShard *)shard {
+    void (^drawBlock)() = ^void() {
+        for (iTermBoxedBackgroundColorRun *box in runs) {
+            iTermBackgroundColorRun *run = box.valuePointer;
 
-//        NSLog(@"Paint background row %d range %@", line, NSStringFromRange(run->range));
-        
-        NSRect rect = NSMakeRect(floor(MARGIN + run->range.location * _cellSize.width),
-                                 yOrigin,
-                                 ceil(run->range.length * _cellSize.width),
-                                 _cellSize.height * rows);
-        NSColor *color = [self unprocessedColorForBackgroundRun:run];
-        // The unprocessed color is needed for minimum contrast computation for text color.
-        box.unprocessedBackgroundColor = color;
-        color = [_colorMap processedBackgroundColorForBackgroundColor:color];
-        box.backgroundColor = color;
+            [shard addDebugEvent:[NSString stringWithFormat:@"Paint background row %d range %@", line, NSStringFromRange(run->range)]];
+           
+            CGFloat components[4];
+            [box.backgroundColor getComponents:components];
+            CGContextSetFillColorSpace(shard.bitmapContext, box.backgroundColor.colorSpace.CGColorSpace);
+            CGContextSetFillColor(shard.bitmapContext, components);
+            CGRect rect = CGRectMake(floor(MARGIN + run->range.location * _cellSize.width) - shard.rect.origin.x,
+                                     yOrigin - shard.rect.origin.y,
+                                     ceil(run->range.length * _cellSize.width),
+                                     _cellSize.height * rows);
+            CGContextSetBlendMode(shard.bitmapContext, _hasBackgroundImage ? kCGBlendModeNormal : kCGBlendModeCopy);
+            CGContextFillRect(shard.bitmapContext, rect);
 
-        [box.backgroundColor set];
-        NSRectFillUsingOperation(rect,
-                                 _hasBackgroundImage ? NSCompositeSourceOver : NSCompositeCopy);
-
-        if (_debug) {
-            [[NSColor yellowColor] set];
-            NSBezierPath *path = [NSBezierPath bezierPath];
-            [path moveToPoint:rect.origin];
-            [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
-            [path stroke];
+            if (_debug) {
+                components[0] = 1;
+                components[1] = 1;
+                components[2] = 0;
+                components[3] = 1;
+                CGContextSetStrokeColor(shard.bitmapContext, components);
+                CGContextBeginPath(shard.bitmapContext);
+                CGContextMoveToPoint(shard.bitmapContext, rect.origin.x, rect.origin.y);
+                CGContextAddLineToPoint(shard.bitmapContext, CGRectGetMaxX(rect), CGRectGetMaxY(rect));
+                CGContextStrokePath(shard.bitmapContext);
+            }
         }
+    };
+
+    if (shard) {
+        [shard drawWithBlock:drawBlock];
+    } else {
+        drawBlock();
     }
 }
 
@@ -874,7 +1129,8 @@ typedef struct iTermTextColorContext {
 - (void)drawCharactersForLine:(int)line
                           atY:(CGFloat)y
                backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
-                      context:(CGContextRef)ctx {
+                      context:(CGContextRef)ctx
+                        shard:(iTermDrawingShard *)shard {
     screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
@@ -890,7 +1146,8 @@ typedef struct iTermTextColorContext {
                  processedBackgroundColor:box.backgroundColor
                                   matches:matches
                            forceTextColor:nil
-                                  context:ctx];
+                                  context:ctx
+                                    shard:shard];
     }
 }
 
@@ -903,10 +1160,10 @@ typedef struct iTermTextColorContext {
            processedBackgroundColor:(NSColor *)processedBackgroundColor
                             matches:(NSData *)matches
                      forceTextColor:(NSColor *)forceTextColor  // optional
-                            context:(CGContextRef)ctx {
+                            context:(CGContextRef)ctx
+                              shard:(iTermDrawingShard *)shard {
     CTVector(CGFloat) positions;
     CTVectorCreate(&positions, _gridSize.width);
-
 
     if (indexRange.location > 0) {
         screen_char_t firstCharacter = theLine[indexRange.location];
@@ -937,9 +1194,15 @@ typedef struct iTermTextColorContext {
                                  origin:VT100GridCoordMake(indexRange.location, row)
                               positions:&positions
                               inContext:ctx
-                        backgroundColor:processedBackgroundColor];
-    
-    CTVectorDestroy(&positions);
+                        backgroundColor:processedBackgroundColor
+                                  shard:shard];
+    if (shard) {
+        dispatch_group_notify(shard.group, dispatch_get_main_queue(), ^{
+            CTVectorDestroy(&positions);
+        });
+    } else {
+        CTVectorDestroy(&positions);
+    }
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_DRAW]);
 }
 
@@ -948,7 +1211,8 @@ typedef struct iTermTextColorContext {
                                origin:(VT100GridCoord)initialOrigin
                             positions:(CTVector(CGFloat) *)positions
                             inContext:(CGContextRef)ctx
-                      backgroundColor:(NSColor *)backgroundColor {
+                      backgroundColor:(NSColor *)backgroundColor
+                                shard:(iTermDrawingShard *)shard {
     NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
@@ -961,15 +1225,14 @@ typedef struct iTermTextColorContext {
                                           origin:origin
                                        positions:subpositions
                                        inContext:ctx
-                                 backgroundColor:backgroundColor];
+                                 backgroundColor:backgroundColor
+                                           shard:shard];
 //        [[NSColor colorWithRed:arc4random_uniform(255) / 255.0
 //                         green:arc4random_uniform(255) / 255.0
 //                          blue:arc4random_uniform(255) / 255.0
 //                         alpha:1] set];
 //        NSFrameRect(NSMakeRect(point.x + [subpositions.firstObject doubleValue], point.y, width, _cellSize.height));
-
         origin.x += round(width / _cellSize.width);
-
     }
 }
 
@@ -995,34 +1258,63 @@ typedef struct iTermTextColorContext {
                                   atPoint:(NSPoint)point
                                    origin:(VT100GridCoord)origin
                                 positions:(CGFloat *)positions
-                                inContext:(CGContextRef)ctx
-                          backgroundColor:(NSColor *)backgroundColor {
+                                inContext:(CGContextRef)cgContext
+                          backgroundColor:(NSColor *)backgroundColor
+                                    shard:(iTermDrawingShard *)shard {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     if (attributes[iTermImageCodeAttribute]) {
         // Handle cells that are part of an image.
         VT100GridCoord originInImage = VT100GridCoordMake([attributes[iTermImageColumnAttribute] intValue],
                                                           [attributes[iTermImageLineAttribute] intValue]);
-        [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
-                         origin:origin
-                         length:attributedString.length
-                        atPoint:point
-                  originInImage:originInImage];
+        void (^drawImage)() = ^void() {
+            [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
+                             origin:origin
+                             length:attributedString.length
+                            atPoint:point
+                      originInImage:originInImage];
+        };
+        [shard drawWithBlock:drawImage];
         return _cellSize.width * attributedString.length;
     } else if ([attributes[iTermIsBoxDrawingAttribute] boolValue]) {
         // Special box-drawing cells don't use the font so they look prettier.
         [attributedString.string enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
             NSPoint p = NSMakePoint(point.x + positions[range.location], point.y);
-            [self drawBoxDrawingCharacter:simple
-                           withAttributes:[attributedString attributesAtIndex:range.location
-                                                               effectiveRange:nil]
-                                       at:p];
+            NSDictionary *attributes = [[attributedString attributesAtIndex:range.location
+                                                             effectiveRange:nil] copy];
+            
+            void (^drawBoxDrawingCharacter)() = ^void() {
+                [self drawBoxDrawingCharacter:simple
+                               withAttributes:attributes
+                                           at:p];
+                [attributes release];
+            };
+            [shard drawWithBlock:drawBoxDrawingCharacter];
         }];
         return _cellSize.width * attributedString.length;
     } else if (attributedString.length > 0) {
+        // Plain old text.
         CGFloat width = positions[attributedString.length - 1] + _cellSize.width;
         NSPoint offsetPoint = point;
         offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
-        [self drawTextOnlyAttributedString:attributedString atPoint:offsetPoint positions:positions width:width backgroundColor:backgroundColor];
+
+        [shard drawWithBlock:^{
+//            NSLog(@"Draw shard %@", shard);
+            NSPoint shardRelativePoint = NSMakePoint(point.x - shard.rect.origin.x,
+                                                     point.y - shard.rect.origin.y);
+//            NSLog(@"Draw text that should go at %@ at %@ for shard %@", NSStringFromPoint(point), NSStringFromPoint(shardRelativePoint), shard);
+            [self.class drawTextOnlyAttributedString:attributedString
+                                             atPoint:shardRelativePoint
+                                           positions:positions
+                                               width:width
+                                     backgroundColor:backgroundColor
+                                         thinStrokes:[self thinStrokes]
+                                      baselineOffset:_baselineOffset
+                                            cellSize:_cellSize
+                                         boldAllowed:_boldAllowed
+                                    antiAliasedShift:_antiAliasedShift
+                                      underlineColor:[self.colorMap colorForKey:kColorMapUnderline]
+                                           cgContext:shard.bitmapContext];
+        }];
         DLog(@"Return width of %d", (int)round(width));
         return width;
     } else {
@@ -1031,11 +1323,35 @@ typedef struct iTermTextColorContext {
     }
 }
 
-- (void)drawTextOnlyAttributedString:(NSAttributedString *)attributedString
-                                atPoint:(NSPoint)origin
+- (void)compositeFromContext:(CGContextRef)sourceContext
+                 intoContext:(CGContextRef)destinationContext
+                 destination:(NSRect)destination
+                  sourceSize:(NSSize)sourceSize {
+    CGImageRef cgImage = CGBitmapContextCreateImage(sourceContext);
+
+    CGContextClipToRect(destinationContext, destination);
+    CGContextSetBlendMode(destinationContext, kCGBlendModeNormal);
+    CGContextDrawImage(destinationContext, NSMakeRect(destination.origin.x, destination.origin.y, sourceSize.width, sourceSize.height), cgImage);
+    
+    CGImageRelease(cgImage);
+}
+
+- (void)stampLayer:(CGLayerRef)layer atPoint:(CGPoint)destination context:(CGContextRef)context {
+    CGContextDrawLayerAtPoint(context, destination, layer);
+}
+
++ (void)drawTextOnlyAttributedString:(NSAttributedString *)attributedString
+                             atPoint:(NSPoint)origin
                            positions:(CGFloat *)stringPositions
                                width:(CGFloat)width
-                     backgroundColor:(NSColor *)backgroundColor {
+                     backgroundColor:(NSColor *)backgroundColor
+                         thinStrokes:(BOOL)thinStrokes
+                      baselineOffset:(CGFloat)baselineOffset
+                            cellSize:(NSSize)cellSize
+                         boldAllowed:(BOOL)boldAllowed
+                    antiAliasedShift:(CGFloat)antiAliasedShift
+                      underlineColor:(NSColor *)underlineColor
+                           cgContext:(CGContextRef)cgContext {
     DLog(@"Draw attributed string beginning at %d", (int)round(origin.x));
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     NSColor *color = attributes[NSForegroundColorAttributeName];
@@ -1044,10 +1360,9 @@ typedef struct iTermTextColorContext {
     BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
     BOOL fakeItalic = [attributes[iTermFakeItalicAttribute] boolValue];
     BOOL antiAlias = [attributes[iTermAntiAliasAttribute] boolValue];
-    NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
-
-    [ctx saveGraphicsState];
-    [ctx setCompositingOperation:NSCompositeSourceOver];
+    
+    // Prevent emoji from poking a hole through the window.
+    CGContextSetBlendMode(cgContext, kCGBlendModeNormal);
 
     // We used to use -[NSAttributedString drawWithRect:options] but
     // it does a lousy job rendering multiple combining marks. This is close
@@ -1056,7 +1371,6 @@ typedef struct iTermTextColorContext {
 
     CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
     CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
-    CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
     CGContextSetShouldAntialias(cgContext, antiAlias);
     CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
     CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
@@ -1067,7 +1381,7 @@ typedef struct iTermTextColorContext {
     }
 
     int savedFontSmoothingStyle = 0;
-    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
+    BOOL useThinStrokes = thinStrokes && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(cgContext, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
@@ -1076,7 +1390,7 @@ typedef struct iTermTextColorContext {
         CGContextSetFontSmoothingStyle(cgContext, 16);
     }
     
-    const CGFloat ty = origin.y + _baselineOffset + _cellSize.height;
+    const CGFloat ty = origin.y + baselineOffset + cellSize.height;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
                                                          origin.x, ty);
@@ -1127,10 +1441,10 @@ typedef struct iTermTextColorContext {
             fakeBold = !(traits & kCTFontTraitBold);
         }
         
-        if (fakeBold && _boldAllowed) {
-            CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+        if (fakeBold && boldAllowed) {
+            CGContextTranslateCTM(cgContext, antiAlias ? antiAliasedShift : 1, 0);
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-            CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+            CGContextTranslateCTM(cgContext, antiAlias ? -antiAliasedShift : -1, 0);
         }
     }
     CFRelease(lineRef);
@@ -1139,21 +1453,18 @@ typedef struct iTermTextColorContext {
         CGContextSetFontSmoothingStyle(cgContext, savedFontSmoothingStyle);
     }
 
-    [ctx restoreGraphicsState];
-    
-
     [attributedString enumerateAttribute:NSUnderlineStyleAttributeName
                                  inRange:NSMakeRange(0, attributedString.length)
                                  options:0
                               usingBlock:^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
                                   if (value.integerValue) {
                                       NSDictionary *attributes = [attributedString attributesAtIndex:range.location effectiveRange:nil];
-                                      NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
-                                      NSColor *color = (underline ? underline : attributes[NSForegroundColorAttributeName]);
+                                      NSColor *color = (underlineColor ? underlineColor : attributes[NSForegroundColorAttributeName]);
                                       [self drawUnderlineOfColor:color
                                                     atCellOrigin:NSMakePoint(origin.x + stringPositions[range.location], origin.y)
                                                             font:attributes[NSFontAttributeName]
-                                                           width:stringPositions[NSMaxRange(range) - 1] + self.cellSize.width - stringPositions[range.location]];
+                                                           width:stringPositions[NSMaxRange(range) - 1] + cellSize.width - stringPositions[range.location]
+                                                        cellSize:cellSize];
                                   }
                               }];
 }
@@ -1543,16 +1854,17 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 }
 
-- (void)drawUnderlineOfColor:(NSColor *)color
++ (void)drawUnderlineOfColor:(NSColor *)color
                 atCellOrigin:(NSPoint)startPoint
                         font:(NSFont *)font
-                       width:(CGFloat)runWidth {
+                       width:(CGFloat)runWidth
+                    cellSize:(NSSize)cellSize {
     [color set];
     NSBezierPath *path = [NSBezierPath bezierPath];
 
     NSPoint origin = NSMakePoint(startPoint.x,
                                  startPoint.y +
-                                     _cellSize.height +
+                                     cellSize.height +
                                      font.descender -
                                      font.underlinePosition);
     [path moveToPoint:origin];
@@ -1662,18 +1974,20 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                      processedBackgroundColor:[self defaultBackgroundColor]
                                       matches:nil
                                forceTextColor:[self defaultTextColor]
-                                      context:ctx];
+                                      context:ctx
+                                        shard:_synchronousShard];
             // Draw an underline.
             BOOL ignore;
             PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:128
                                                               isComplex:NO
                                                              renderBold:&ignore
                                                            renderItalic:&ignore];
-            [self drawUnderlineOfColor:[self defaultTextColor]
-                          atCellOrigin:NSMakePoint(x, y - round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0))
-                                  font:fontInfo.font
-                                 width:charsInLine * _cellSize.width];
-
+            [self.class drawUnderlineOfColor:[self defaultTextColor]
+                                atCellOrigin:NSMakePoint(x, y - round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0))
+                                        font:fontInfo.font
+                                       width:charsInLine * _cellSize.width
+                                    cellSize:_cellSize];
+            
             // Save the cursor's cell coords
             if (i <= cursorIndex && i + charsInLine > cursorIndex) {
                 // The char the cursor is at was drawn in this line.
@@ -1987,7 +2301,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 #pragma mark - Text Utilities
 
-- (CGColorRef)cgColorForColor:(NSColor *)color {
++ (CGColorRef)cgColorForColor:(NSColor *)color {
     const NSInteger numberOfComponents = [color numberOfComponents];
     CGFloat components[numberOfComponents];
     CGColorSpaceRef colorSpace = [[color colorSpace] CGColorSpace];
@@ -2049,8 +2363,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 - (void)stopTiming {
     [_drawRectDuration addValue:[_drawRectDuration timeSinceTimerStarted]];
-    NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
-          self, _drawRectDuration.value, _drawRectInterval.value);
+    NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f. fps=%0.1f",
+          self, _drawRectDuration.value, _drawRectInterval.value, 1.0 / _drawRectInterval.value);
 }
 
 #pragma mark - iTermCursorDelegate
@@ -2113,7 +2427,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
              processedBackgroundColor:backgroundColor
                               matches:nil
                        forceTextColor:overrideColor
-                              context:ctx];
+                              context:ctx
+                                shard:_synchronousShard];
     
     [context restoreGraphicsState];
 }
