@@ -122,4 +122,3 @@ CTVectorDefine(char);
 CTVectorDefine(NSInteger);
 CTVectorDefine(NSUInteger);
 
-
