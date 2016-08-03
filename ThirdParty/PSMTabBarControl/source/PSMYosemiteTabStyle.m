@@ -22,17 +22,16 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 @implementation NSAttributedString(PSM)
 
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment {
-    // First try to do it the easy way.
-    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
-    NSMutableParagraphStyle *paragraphStyle = immutableAttributes[NSParagraphStyleAttributeName];
-    if ([paragraphStyle isKindOfClass:[NSMutableParagraphStyle class]]) {
-        paragraphStyle.alignment = textAlignment;
+    if (self.length == 0) {
         return self;
     }
-    
-    // If that fails do it the right way.
+    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
+    if (!immutableAttributes) {
+        return self;
+    }
+
     NSMutableDictionary *attributes = [[immutableAttributes mutableCopy] autorelease];
-    paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
+    NSMutableParagraphStyle *paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
     if (!paragraphStyle) {
         paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
     }
