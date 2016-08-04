@@ -201,14 +201,21 @@ static NSString *const kGridSizeKey = @"Size";
     self.cursorY = MIN(size_.height - 1, MAX(0, coord.y));
 }
 
-- (int)numberOfNonEmptyLines {
+- (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)includeWhitespace {
     int numberOfLinesUsed = size_.height;
-
+    NSMutableCharacterSet *allowedCharacters = [[[NSMutableCharacterSet alloc] init] autorelease];
+    [allowedCharacters addCharactersInRange:NSMakeRange(0, 1)];
+    if (includeWhitespace) {
+        [allowedCharacters addCharactersInString:@" \t"];
+        [allowedCharacters addCharactersInRange:NSMakeRange(TAB_FILLER, 1)];
+        [allowedCharacters addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
+        [allowedCharacters addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
+    }
     for(; numberOfLinesUsed > 0; numberOfLinesUsed--) {
         screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
         int i;
         for (i = 0; i < size_.width; i++) {
-            if (line[i].code) {
+            if (line[i].complexChar || ![allowedCharacters characterIsMember:line[i].code]) {
                 break;
             }
         }
@@ -221,7 +228,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (int)numberOfLinesUsed {
-    return MAX(MIN(size_.height, cursor_.y + 1), self.numberOfNonEmptyLines);
+    return MAX(MIN(size_.height, cursor_.y + 1), [self numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:NO]);
 }
 
 - (int)appendLines:(int)numLines

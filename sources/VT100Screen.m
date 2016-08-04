@@ -2543,7 +2543,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     } else {
         lineBuffer = linebuffer_;
     }
-    const int n = [currentGrid_ numberOfNonEmptyLines];
+    const int n = [currentGrid_ numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
             [currentGrid_ scrollWholeScreenUpIntoLineBuffer:lineBuffer

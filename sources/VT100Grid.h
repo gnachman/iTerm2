@@ -69,8 +69,9 @@
 // line the cursor is on.
 - (int)numberOfLinesUsed;
 
-// Like numberOfLinesUsed, but it doesn't care about where the cursor is.
-- (int)numberOfNonEmptyLines;
+// Like numberOfLinesUsed, but it doesn't care about where the cursor is. Also, if
+// `includeWhitespace` is YES then spaces and tabs are considered empty.
+- (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)whitespaceIsEmpty;
 
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
 - (int)appendLines:(int)numLines
