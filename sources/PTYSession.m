@@ -2832,9 +2832,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)badgeLabel {
+    DLog(@"Raw badge format is %@", _badgeFormat);
+    DLog(@"Variables are:\n%@", _variables);
     NSString *p = [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
     p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
+    DLog(@"Expanded badge label is: %@", p);
     return p;
 }
 

@@ -93,7 +93,7 @@
 // Compute the best point size and return a new image of the badge. Returns nil if the badge
 // is empty or zero pixels.r
 - (NSImage *)freshlyComputedImage {
-    DLog(@"Recompute badge self=%p, label=%@, color=%@, view size=%@. Called from:\n%@",
+    DLog(@"Recompute badge self=%p, label=“%@”, color=%@, view size=%@. Called from:\n%@",
          self,
          _stringValue,
          _fillColor,
@@ -179,6 +179,7 @@
 }
 
 - (CGFloat)idealPointSize {
+    DLog(@"Computing ideal point size for badge");
     NSSize maxSize = self.maxSize;
 
     // Perform a binary search for the point size that best fits |maxSize|.
@@ -189,6 +190,7 @@
     NSSize sizeWithFont = NSZeroSize;
     while (points != prevPoints) {
         sizeWithFont = [self sizeWithAttributes:[self attributesWithPointSize:points]];
+        DLog(@"Point size of %@ gives label size of %@", @(points), NSStringFromSize(sizeWithFont));
         if (sizeWithFont.width > maxSize.width ||
             sizeWithFont.height > maxSize.height) {
             max = points;
@@ -199,6 +201,7 @@
         prevPoints = points;
         points = (min + max) / 2;
     }
+    DLog(@"Using point size %@", @(points));
     return points;
 }
 
