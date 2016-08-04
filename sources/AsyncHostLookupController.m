@@ -70,14 +70,13 @@
                 return;
             }
         }
-        
-        struct hostent *hbuf;
-        // On Mac OS this is thread-safe (it uses TLS for the hostent), and gethostbyname_r is not
-        // defined.
-        hbuf = gethostbyname([hostname UTF8String]);
-        BOOL ok = (hbuf != NULL);
-        @synchronized(self) {
-            _cache[hostname] = @(ok);
+
+        BOOL shouldCache;
+        BOOL ok = [self hostnameHasAddress:[hostname UTF8String] shouldCache:&shouldCache];
+        if (shouldCache) {
+            @synchronized(self) {
+                _cache[hostname] = @(ok);
+            }
         }
         dispatch_async(dispatch_get_main_queue(), ^() {
             @synchronized(self) {
@@ -98,6 +97,17 @@
     @synchronized(self) {
         [_pending removeObject:hostname];
     }
+}
+
+- (BOOL)hostnameHasAddress:(const char *)hostname shouldCache:(BOOL *)shouldCache {
+    struct addrinfo *servinfo;
+    int status = getaddrinfo(hostname, NULL, NULL, &servinfo);
+    if (status == 0) {
+        freeaddrinfo(servinfo);
+    }
+    // Don't cache temporary failures
+    *shouldCache = (status != EAI_AGAIN);
+    return status == 0;
 }
 
 @end
