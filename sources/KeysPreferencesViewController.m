@@ -18,7 +18,8 @@
 #import "PreferencePanel.h"
 #import "PSMTabBarControl.h"
 
-static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+static NSString *const kHotkeyAutoHidesPreferenceDidChange = @"kHotkeyAutoHidesPreferenceDidChange";
 
 @interface KeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
 @end
@@ -45,10 +46,19 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSPopUpButton *_hotkeyBookmark;
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+
 - (void)awakeFromNib {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadAddressBookNotification:)
                                                  name:kReloadAddressBookNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(hotkeyAutoHidesPreferenceDidChange:)
+                                                 name:kHotkeyAutoHidesPreferenceDidChange
                                                object:nil];
     
     PreferenceInfo *info;
@@ -122,17 +132,19 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                            key:kPreferenceKeyHotKeyTogglesWindow
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self hotkeyTogglesWindowDidChange]; };
-
     info = [self defineControl:_hotkeyAutoHides
                            key:kPreferenceKeyHotkeyAutoHides
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
-    // You can change this setting with a key binding action, so we observer it to update the
+    // You can change this setting with a key binding action, so we observe it to update the
     // control when the user default changes.
-    [iTermPreferences addObserverForKey:kPreferenceKeyHotkeyAutoHides
-                                  block:^(id before, id after) {
-                                      [self updateValueForInfo:info];
-                                  }];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [iTermPreferences addObserverForKey:kPreferenceKeyHotkeyAutoHides block:^(id before, id after) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kHotkeyAutoHidesPreferenceDidChange
+                                                                object:nil];
+        }];
+    });
 
     [self defineControl:_hotkeyBookmark
                     key:kPreferenceKeyHotkeyProfileGuid
@@ -382,6 +394,10 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 #pragma mark - Notification handlers
+
+- (void)hotkeyAutoHidesPreferenceDidChange:(NSNotification *)notification {
+    [self updateValueForInfo:[self infoForControl:_hotkeyAutoHides]];
+}
 
 - (void)reloadAddressBookNotification:(NSNotification *)aNotification {
     [self populateHotKeyProfilesMenu];
