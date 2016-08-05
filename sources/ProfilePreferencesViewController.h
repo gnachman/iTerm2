@@ -45,6 +45,5 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 - (void)refresh;
 
 - (void)resizeWindowForCurrentTab;
-- (void)windowWillClose:(NSNotification *)notification;
 
 @end

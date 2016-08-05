@@ -64,17 +64,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSButton *_copyProfleToSession;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
-}
-
 - (void)awakeFromNib {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowWillClose:)
-                                                 name:NSWindowWillCloseNotification
-                                               object:self.view.window];
-
     PreferenceInfo *info;
     
     info = [self defineControl:_profileNameField
@@ -146,7 +136,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 }
 
 - (void)windowWillClose {
-    if ([_profileNameFieldForEditCurrentSession textFieldIsFirstResponder]) {
+    if ([_tagsTokenField textFieldIsFirstResponder]) {
+        // The token field's editor is the first responder. Force the token field to end editing
+        // so the last token entered will be tokenized and prefs saved with it.
+        [self.view.window makeFirstResponder:self.view];
+    } else if ([_profileNameFieldForEditCurrentSession textFieldIsFirstResponder]) {
         [_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
     }
 }
@@ -413,20 +407,6 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     NSString *theString = [self stringForKey:KEY_SHORTCUT];
     [_profileShortcut selectItemWithTag:[self shortcutTagForKey:theString]];
     [_profileShortcut sizeToFit];
-}
-
-#pragma mark - Notifications
-
-- (void)windowWillClose:(NSNotification *)notification {
-    NSResponder *firstResponder = [[[self view] window] firstResponder];
-    if (firstResponder && [firstResponder respondsToSelector:@selector(delegate)]) {
-        id delegate = [firstResponder performSelector:@selector(delegate)];
-        if (delegate == _tagsTokenField) {
-            // The token field's editor is the first responder. Force the token field to end editing
-            // so the last token entered will be tokenized.
-            [self.view.window makeFirstResponder:self.view];
-        }
-    }
 }
 
 #pragma mark - NSTokenField delegate

@@ -92,4 +92,7 @@
 // update their values for the affected preference.
 - (BOOL)shouldUpdateOtherPanels;
 
+// The prefs panel this view controller belongs to will close. This implementation does nothing.
+- (void)windowWillClose;
+
 @end

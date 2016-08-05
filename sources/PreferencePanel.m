@@ -287,8 +287,6 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (void)windowWillClose:(NSNotification *)aNotification {
     [self.window saveFrameUsingName:self.nameForFrame];
-    [_profilesViewController windowWillClose:aNotification];
-    [[NSUserDefaults standardUserDefaults] synchronize];
 
     [[self retain] autorelease];
 
@@ -301,6 +299,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     }
 
     [self postWillCloseNotification];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
