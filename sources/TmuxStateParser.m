@@ -23,19 +23,6 @@ NSString *kStateDictScrollRegionLower = @"scroll_region_lower";
 NSString *kStateDictPaneId = @"pane_id";
 NSString *kStateDictTabstops = @"pane_tabs";
 
-// In tmux, the following codes save to these values:
-// ESC 7
-// CSI s
-// The following codes restore from them:
-// ESC 8
-// CSI r
-// Notably, CSI ? 1049 h and CSI ? 1048 h do not save from it and CSI ? 1049 l and CSI ? 1048 l
-// do not restore from it. Those go into alternated_saved_[xy] instead.
-// It doesn't seem to be reset when switching between primary and alt screen in tmux, so it applies
-// equally to both.
-NSString *kStateDictSavedCX = @"saved_cursor_x";
-NSString *kStateDictSavedCY = @"saved_cursor_y";
-
 // Cursor visible? (DECTCEM)
 NSString *kStateDictCursorMode = @"cursor_flag";
 
@@ -94,7 +81,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
     NSMutableString *format = [NSMutableString string];
     NSArray *theModes = [NSArray arrayWithObjects:
                          kStateDictPaneId, kStateDictSavedGrid, kStateDictAltSavedCX,
-                         kStateDictAltSavedCY, kStateDictSavedCX, kStateDictSavedCY,
+                         kStateDictAltSavedCY,
                          kStateDictCursorX, kStateDictCursorY, kStateDictScrollRegionUpper,
                          kStateDictScrollRegionLower, kStateDictTabstops, kStateDictCursorMode,
                          kStateDictInsertMode,
@@ -137,8 +124,6 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
                                 intType, kStateDictCursorY,
                                 intType, kStateDictAltSavedCX,
                                 intType, kStateDictAltSavedCY,
-                                intType, kStateDictSavedCX,
-                                intType, kStateDictSavedCY,
                                 uintType, kStateDictCursorMode,
                                 uintType, kStateDictInsertMode,
                                 uintType, kStateDictKCursorMode,

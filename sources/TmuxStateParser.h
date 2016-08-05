@@ -11,8 +11,6 @@
 extern NSString *kStateDictSavedGrid;
 extern NSString *kStateDictAltSavedCX;
 extern NSString *kStateDictAltSavedCY;
-extern NSString *kStateDictSavedCX;
-extern NSString *kStateDictSavedCY;
 extern NSString *kStateDictCursorX;
 extern NSString *kStateDictCursorY;
 extern NSString *kStateDictScrollRegionUpper;

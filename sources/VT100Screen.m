@@ -1299,12 +1299,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     NSNumber *altSavedY = [state objectForKey:kStateDictAltSavedCY];
     if (altSavedX && altSavedY && inAltScreen) {
         primaryGrid_.cursor = VT100GridCoordMake([altSavedX intValue], [altSavedY intValue]);
-    }
-
-    NSNumber *savedX = [state objectForKey:kStateDictSavedCX];
-    NSNumber *savedY = [state objectForKey:kStateDictSavedCY];
-    if (savedX && savedY) {
-        [terminal_ setSavedCursorPosition:VT100GridCoordMake([savedX intValue], [savedY intValue])];
+        [terminal_ setSavedCursorPosition:primaryGrid_.cursor];
     }
 
     currentGrid_.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
