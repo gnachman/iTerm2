@@ -26,6 +26,11 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     [defaultButton_ setEnabled:([WindowArrangements count] > 0) && ([tableView_ selectedRow] >= 0)];
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+
 - (void)awakeFromNib
 {
     [self updateActionsEnabled];
