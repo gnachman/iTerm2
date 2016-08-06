@@ -450,15 +450,6 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         DLog(@"no hotkey window created yet");
         [self showHotKeyWindow];
     }
-//    if (self.windowController.weaklyReferencedObject) {
-//        if (!self.windowController.window.isVisible) {
-//            [self showHotKeyWindow];
-//        } else {
-//            [self hideHotKeyWindowAnimated:YES suppressHideApp:NO];
-//        }
-//    } else {
-//        [self showHotKeyWindow];
-//    }
 }
 
 #pragma mark - Private
