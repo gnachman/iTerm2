@@ -465,17 +465,6 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (PseudoTerminal *)windowControllerFromRestorableState {
     NSDictionary *arrangement = [[self.restorableState[kArrangement] copy] autorelease];
-    if (!arrangement) {
-        // If the user had an arrangement saved in user defaults, restore it and delete it. This is
-        // how hotkey window state was preserved prior to 12/9/14 when it was moved into application-
-        // level restorable state. Eventually this migration code can be deleted.
-        NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";  // DEPRECATED
-        arrangement =
-            [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
-        if (arrangement) {
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
-        }
-    }
     self.restorableState = nil;
     if (!arrangement) {
         return nil;
