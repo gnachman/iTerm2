@@ -420,7 +420,12 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     }
     NSColor *color = [NSColor colorWithPatternImage:_backgroundStripesImage];
     [color set];
+
+
+    [NSGraphicsContext saveGraphicsState];
+    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0, 0)];
     NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    [NSGraphicsContext restoreGraphicsState];
 }
 
 #pragma mark - Drawing: Accessories
