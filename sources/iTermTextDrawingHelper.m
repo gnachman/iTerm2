@@ -194,7 +194,10 @@ typedef struct iTermTextColorContext {
     NSInteger yLimit = _numberOfLines;
 
     VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
-    boundingCoordRange.start.x = MAX(0, boundingCoordRange.start.x - haloWidth);
+    // Start at 0 because ligatures can draw incorrectly otherwise. When a font has a ligature for
+    // -> and >-, then a line like ->->-> needs to start at the beginning since drawing only a
+    // suffix of it could draw a >- ligature at the start of the range being drawn. Issue 5030.
+    boundingCoordRange.start.x = 0;
     boundingCoordRange.start.y = MAX(0, boundingCoordRange.start.y - 1);
     boundingCoordRange.end.x = MIN(_gridSize.width, boundingCoordRange.end.x + haloWidth);
     boundingCoordRange.end.y = MIN(yLimit, boundingCoordRange.end.y + 1);
@@ -208,7 +211,7 @@ typedef struct iTermTextColorContext {
     for (int i = 0; i < rectCount; i++) {
         VT100GridCoordRange coordRange = [self coordRangeForRect:rectArray[i]];
 //        NSLog(@"Have to draw rect %@ (%@)", NSStringFromRect(rectArray[i]), VT100GridCoordRangeDescription(coordRange));
-        int coordRangeMinX = MAX(0, coordRange.start.x - haloWidth);
+        int coordRangeMinX = 0;
         int coordRangeMaxX = MIN(_gridSize.width, coordRange.end.x + haloWidth);
 
         for (int j = 0; j < numRowsInRect; j++) {
@@ -966,7 +969,7 @@ typedef struct iTermTextColorContext {
 //                         green:arc4random_uniform(255) / 255.0
 //                          blue:arc4random_uniform(255) / 255.0
 //                         alpha:1] set];
-//        NSFrameRect(NSMakeRect(point.x + [subpositions.firstObject doubleValue], point.y, width, _cellSize.height));
+//        NSFrameRect(NSMakeRect(point.x + positions->elements[0], point.y, width, _cellSize.height));
 
         origin.x += round(width / _cellSize.width);
 
