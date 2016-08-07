@@ -256,6 +256,9 @@
 // is not available.
 @property(nonatomic, assign) BOOL boldAllowed;
 
+// Version of unicode. Determines character widths.
+@property(nonatomic, assign) NSInteger unicodeVersion;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

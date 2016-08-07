@@ -38,6 +38,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, copy) NSString *sessionName;
 @property(nonatomic, retain) NSArray *sessions;
 @property(nonatomic, assign) BOOL ambiguousIsDoubleWidth;
+@property(nonatomic, assign) NSInteger unicodeVersion;
 @property(nonatomic, readonly) NSString *clientName;
 @property(nonatomic, readonly) int sessionId;
 @property(nonatomic, readonly) BOOL hasOutstandingWindowResize;

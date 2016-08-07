@@ -13,12 +13,12 @@
 // See EastAsianWidth.txt in Unicode 6.0.
 
 // Full-width characters.
-+ (instancetype)fullWidthCharacterSet;
++ (instancetype)fullWidthCharacterSetForUnicodeVersion:(NSInteger)version;
 
 // Ambiguous-width characters.
-+ (instancetype)ambiguousWidthCharacterSet;
++ (instancetype)ambiguousWidthCharacterSetForUnicodeVersion:(NSInteger)version;
 
 // Zero-width spaces.
-+ (instancetype)zeroWidthSpaceCharacterSet;
++ (instancetype)zeroWidthSpaceCharacterSetForUnicodeVersion:(NSInteger)version;
 
 @end

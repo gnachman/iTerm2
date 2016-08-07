@@ -48,6 +48,17 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     [self setObject:@(value) forKey:key inProfile:profile model:model];
 }
 
++ (NSInteger)integerForKey:(NSString *)key inProfile:(Profile *)profile {
+    return [[self objectForKey:key inProfile:profile] integerValue];
+}
+
++ (void)setInteger:(NSInteger)value
+            forKey:(NSString *)key
+         inProfile:(Profile *)profile
+             model:(ProfileModel *)model {
+    [self setObject:@(value) forKey:key inProfile:profile model:model];
+}
+
 + (NSUInteger)unsignedIntegerForKey:(NSString *)key inProfile:(Profile *)profile {
     return [[self objectForKey:key inProfile:profile] unsignedIntegerValue];
 }
@@ -217,6 +228,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TERMINAL_TYPE: @"xterm",
                   KEY_ANSWERBACK_STRING: @"",
                   KEY_XTERM_MOUSE_REPORTING: @NO,
+                  KEY_UNICODE_VERSION: @8,
                   KEY_ALLOW_TITLE_REPORTING: @NO,
                   KEY_ALLOW_TITLE_SETTING: @YES,
                   KEY_DISABLE_PRINTING: @NO,

@@ -42,6 +42,8 @@
 #import "NSFont+iTerm.h"
 #include <arpa/inet.h>
 
+NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
+
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 NSInteger iTermProfileJoinsAllSpaces = -1;
 

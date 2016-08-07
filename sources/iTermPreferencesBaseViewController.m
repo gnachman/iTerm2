@@ -95,6 +95,14 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     [iTermPreferences setInt:value forKey:key];
 }
 
+- (NSInteger)integerForKey:(NSString *)key {
+    return [iTermPreferences integerForKey:key];
+}
+
+- (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    [iTermPreferences setInteger:value forKey:key];
+}
+
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key {
     return [iTermPreferences unsignedIntegerForKey:key];
 }

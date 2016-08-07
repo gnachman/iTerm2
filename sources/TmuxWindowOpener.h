@@ -34,6 +34,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 // Nil means make no change, otherwise is a bool.
 @property (nonatomic, retain) NSNumber *zoomed;
+@property (nonatomic, assign) NSInteger unicodeVersion;
 
 // Maps a window ID as a string to a dictionary of window flags (see WindowFlag constants above).
 @property (nonatomic, retain) NSDictionary *windowOptions;

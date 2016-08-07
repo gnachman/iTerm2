@@ -1092,7 +1092,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.showSearchingCursor = _showSearchingCursor;
     _drawingHelper.baselineOffset = [self minimumBaselineOffset];
     _drawingHelper.boldAllowed = _useBoldFont;
-
+    _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
+    
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
@@ -5608,7 +5609,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL,
                         NULL,
-                        [_delegate textViewUseHFSPlusMapping]);
+                        [_delegate textViewUseHFSPlusMapping],
+                        [_delegate textViewUnicodeVersion]);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.

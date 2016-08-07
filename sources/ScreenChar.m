@@ -499,10 +499,11 @@ void StringToScreenChars(NSString *s,
                          BOOL ambiguousIsDoubleWidth,
                          int* cursorIndex,
                          BOOL *foundDwc,
-                         BOOL useHFSPlusMapping) {
+                         BOOL useHFSPlusMapping,
+                         NSInteger unicodeVersion) {
     __block NSInteger j = 0;
     __block BOOL foundCursor = NO;
-    NSCharacterSet *zeroWidthSpaces = [NSCharacterSet zeroWidthSpaceCharacterSet];
+    NSCharacterSet *zeroWidthSpaces = [NSCharacterSet zeroWidthSpaceCharacterSetForUnicodeVersion:unicodeVersion];
     [s enumerateComposedCharacters:^(NSRange range,
                                      unichar baseBmpChar,
                                      NSString *composedOrNonBmpChar,
@@ -536,7 +537,8 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             isDoubleWidth = [NSString isDoubleWidthCharacter:baseBmpChar
-                                      ambiguousIsDoubleWidth:ambiguousIsDoubleWidth];
+                                      ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
+                                              unicodeVersion:unicodeVersion];
         } else {
             SetComplexCharInScreenChar(buf + j, composedOrNonBmpChar, useHFSPlusMapping);
             UTF32Char baseChar = [composedOrNonBmpChar characterAtIndex:0];
@@ -544,7 +546,8 @@ void StringToScreenChars(NSString *s,
                 baseChar = DecodeSurrogatePair(baseChar, [composedOrNonBmpChar characterAtIndex:1]);
             }
             isDoubleWidth = [NSString isDoubleWidthCharacter:baseChar
-                                      ambiguousIsDoubleWidth:ambiguousIsDoubleWidth];
+                                      ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
+                                              unicodeVersion:unicodeVersion];
         }
 
         // Append a DWC_RIGHT if the base character is double-width.

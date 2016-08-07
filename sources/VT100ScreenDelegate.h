@@ -236,5 +236,7 @@
 - (void)screenSetUserVar:(NSString *)kvp;
 
 - (BOOL)screenShouldReduceFlicker;
+- (NSInteger)screenUnicodeVersion;
+- (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion;
 
 @end
