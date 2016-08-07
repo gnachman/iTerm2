@@ -20,10 +20,12 @@ function print_st() {
     fi
 }
 
-# print_image filename inline base64contents
+# print_image filename inline base64contents print_filename
 #   filename: Filename to convey to client
 #   inline: 0 or 1
 #   base64contents: Base64-encoded contents
+#   print_filename: If non-empty, print the filename 
+#                   before outputting the image
 function print_image() {
     print_osc
     printf '1337;File='
@@ -100,7 +102,7 @@ done
 
 # Read and print stdin
 if [ $has_stdin = t ]; then
-    print_image "" 1 "$(cat | base64)"
+    print_image "" 1 "$(cat | base64)" ""
 fi
 
 exit 0
