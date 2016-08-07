@@ -58,26 +58,20 @@
 - (NSEvent *)eventByChangingYenToBackslash {
     // NSEvent: type=KeyDown loc=(0,477) time=103943.2 flags=0x80120 win=0x7fd5786432b0 winNum=3667 ctxt=0x0 chars="\" unmodchars="¥" repeat=0 keyCode=93
     
-    if (self.keyCode == kVK_JIS_Yen) {
-        NSString *characters = @"\\";
-        if (self.modifierFlags & NSShiftKeyMask) {
-            characters = @"|";
-        } else {
-            characters = @"\\";
-        }
+    if ([self.charactersIgnoringModifiers isEqualToString:@"¥"]) {
         return [NSEvent keyEventWithType:self.type
                                 location:self.locationInWindow
                            modifierFlags:self.modifierFlags
                                timestamp:self.timestamp
                             windowNumber:self.windowNumber
                                  context:self.context
-                              characters:characters
+                              characters:@"\\"
              charactersIgnoringModifiers:@"\\"
                                isARepeat:self.isARepeat
                                  keyCode:self.keyCode];
     } else {
         return self;
     }
-
+    
 }
 @end
