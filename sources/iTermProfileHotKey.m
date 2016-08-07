@@ -450,32 +450,12 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         DLog(@"no hotkey window created yet");
         [self showHotKeyWindow];
     }
-//    if (self.windowController.weaklyReferencedObject) {
-//        if (!self.windowController.window.isVisible) {
-//            [self showHotKeyWindow];
-//        } else {
-//            [self hideHotKeyWindowAnimated:YES suppressHideApp:NO];
-//        }
-//    } else {
-//        [self showHotKeyWindow];
-//    }
 }
 
 #pragma mark - Private
 
 - (PseudoTerminal *)windowControllerFromRestorableState {
     NSDictionary *arrangement = [[self.restorableState[kArrangement] copy] autorelease];
-    if (!arrangement) {
-        // If the user had an arrangement saved in user defaults, restore it and delete it. This is
-        // how hotkey window state was preserved prior to 12/9/14 when it was moved into application-
-        // level restorable state. Eventually this migration code can be deleted.
-        NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";  // DEPRECATED
-        arrangement =
-            [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
-        if (arrangement) {
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
-        }
-    }
     self.restorableState = nil;
     if (!arrangement) {
         return nil;
