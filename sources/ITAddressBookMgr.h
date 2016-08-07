@@ -151,6 +151,7 @@
 #define KEY_VISUAL_BELL                       @"Visual Bell"
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
+#define KEY_UNICODE_VERSION                   @"Unicode Version"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
 #define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
@@ -201,6 +202,9 @@
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
+
+// Posted when a session's unicode version changes.
+extern NSString *const iTermUnicodeVersionDidChangeNotification;
 
 // Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 extern const NSTimeInterval kMinimumAntiIdlePeriod;

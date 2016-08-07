@@ -2133,6 +2133,8 @@ static const int kMaxScreenRows = 4096;
                            height, width];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
+    } else if ([key isEqualToString:@"UnicodeVersion"]) {
+        [delegate_ setUnicodeVersion:[value integerValue]];
     }
 }
 

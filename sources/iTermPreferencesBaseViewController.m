@@ -89,6 +89,14 @@ static NSString *const kKey = @"key";
     [iTermPreferences setInt:value forKey:key];
 }
 
+- (NSUInteger)integerForKey:(NSString *)key {
+    return [iTermPreferences integerForKey:key];
+}
+
+- (void)setInteger:(NSUInteger)value forKey:(NSString *)key {
+    [iTermPreferences setInteger:value forKey:key];
+}
+
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key {
     return [iTermPreferences unsignedIntegerForKey:key];
 }

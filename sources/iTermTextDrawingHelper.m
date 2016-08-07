@@ -1191,7 +1191,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                             _ambiguousIsDoubleWidth,
                             &cursorIndex,
                             NULL,
-                            _useHFSPlusMapping);
+                            _useHFSPlusMapping,
+                            self.unicodeVersion);
         int cursorX = 0;
         int baseX = floor(xStart * _cellSize.width + MARGIN);
         int i;

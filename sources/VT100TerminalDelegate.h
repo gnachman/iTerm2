@@ -368,4 +368,6 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 
 - (BOOL)terminalIsTrusted;
 
+- (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion;
+
 @end

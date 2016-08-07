@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  ScreenChar.h
  **
@@ -381,7 +380,8 @@ void StringToScreenChars(NSString *s,
                          BOOL ambiguousIsDoubleWidth,
                          int *cursorIndex,
                          BOOL *foundDwc,
-                         BOOL useHFSPlusMapping);
+                         BOOL useHFSPlusMapping,
+                         NSInteger unicodeVersion);
 
 // Copy attributes from fg and bg, and zero out other fields. Text attributes like bold, italic, etc.
 // come from fg.

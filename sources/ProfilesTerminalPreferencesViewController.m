@@ -34,6 +34,7 @@
     IBOutlet NSButton *_setLocaleVars;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
+    IBOutlet NSButton *_unicodeVersion9;
 
     IBOutlet NSPanel *_filterAlertsPanel;
     IBOutlet NSButton *_bellAlert;
@@ -41,6 +42,11 @@
     IBOutlet NSButton *_newOutputAlert;
     IBOutlet NSButton *_sessionEndedAlert;
     IBOutlet NSButton *_terminalGeneratedAlerts;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -90,6 +96,19 @@
                     key:KEY_ANSWERBACK_STRING
                    type:kPreferenceInfoTypeStringTextField];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(unicodeVersionDidChange) name:iTermUnicodeVersionDidChangeNotification object:nil];
+    info = [self defineControl:_unicodeVersion9
+                           key:KEY_UNICODE_VERSION
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onUpdate = ^BOOL() {
+        _unicodeVersion9.state = [self integerForKey:KEY_UNICODE_VERSION] == 9 ? NSOnState : NSOffState;
+        return YES;
+    };
+    info.customSettingChangedHandler = ^(id sender) {
+        const NSInteger version = (_unicodeVersion9.state == NSOnState) ? 9 : 8;
+        [self setInteger:version forKey:KEY_UNICODE_VERSION];
+    };
+
     [self defineControl:_xtermMouseReporting
                     key:KEY_XTERM_MOUSE_REPORTING
                    type:kPreferenceInfoTypeCheckbox];

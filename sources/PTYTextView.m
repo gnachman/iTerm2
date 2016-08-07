@@ -5622,7 +5622,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL,
                         NULL,
-                        [_delegate textViewUseHFSPlusMapping]);
+                        [_delegate textViewUseHFSPlusMapping],
+                        [_delegate textViewUnicodeVersion]);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.

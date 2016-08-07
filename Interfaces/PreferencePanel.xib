@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="15G31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10117"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -2983,11 +2983,11 @@ DQ
             <point key="canvasLocation" x="1031.5" y="300"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="578" height="533"/>
+            <rect key="frame" x="0.0" y="0.0" width="578" height="544"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <popUpButton verticalHuggingPriority="750" id="2390">
-                    <rect key="frame" x="166" y="374" width="331" height="26"/>
+                    <rect key="frame" x="166" y="385" width="331" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -3000,7 +3000,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" id="2391">
-                    <rect key="frame" x="27" y="378" width="136" height="19"/>
+                    <rect key="frame" x="27" y="389" width="136" height="19"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Character Encoding:" id="2426">
                         <font key="font" metaFont="system"/>
@@ -3009,7 +3009,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="2393">
-                    <rect key="frame" x="23" y="352" width="142" height="17"/>
+                    <rect key="frame" x="23" y="363" width="142" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Report Terminal Type:" id="2424">
                         <font key="font" metaFont="system"/>
@@ -3018,7 +3018,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="2400">
-                    <rect key="frame" x="21" y="483" width="144" height="19"/>
+                    <rect key="frame" x="21" y="494" width="144" height="19"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrollback Lines:" id="2417">
                         <font key="font" metaFont="system"/>
@@ -3027,7 +3027,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="2401">
-                    <rect key="frame" x="168" y="483" width="171" height="22"/>
+                    <rect key="frame" x="168" y="494" width="171" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2416">
                         <font key="font" metaFont="system"/>
@@ -3040,7 +3040,7 @@ DQ
                     </connections>
                 </textField>
                 <comboBox verticalHuggingPriority="750" id="2405">
-                    <rect key="frame" x="168" y="346" width="329" height="26"/>
+                    <rect key="frame" x="168" y="357" width="329" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="vt100" drawsBackground="YES" completes="NO" numberOfVisibleItems="7" id="2412">
                         <font key="font" metaFont="system"/>
@@ -3063,7 +3063,7 @@ DQ
                     </connections>
                 </comboBox>
                 <textField verticalHuggingPriority="750" id="2434">
-                    <rect key="frame" x="19" y="513" width="125" height="17"/>
+                    <rect key="frame" x="19" y="524" width="125" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Scrollback Buffer" id="2435">
                         <font key="font" metaFont="systemBold"/>
@@ -3072,7 +3072,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="2436">
-                    <rect key="frame" x="19" y="406" width="136" height="17"/>
+                    <rect key="frame" x="19" y="417" width="136" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Terminal Emulation" id="2437">
                         <font key="font" metaFont="systemBold"/>
@@ -3081,7 +3081,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="5154">
-                    <rect key="frame" x="21" y="459" width="391" height="18"/>
+                    <rect key="frame" x="21" y="470" width="391" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">When using a program like tmux, which shows a status bar at the bottom of the screen, history is not normally saved. This allows such history to be saved but with a performance penalty.</string>
                     <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
@@ -3094,7 +3094,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5758">
-                    <rect key="frame" x="21" y="439" width="391" height="18"/>
+                    <rect key="frame" x="21" y="450" width="391" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Save lines to scrollback in alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5759">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3106,7 +3106,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="Fzk-rB-88j">
-                    <rect key="frame" x="45" y="324" width="120" height="17"/>
+                    <rect key="frame" x="45" y="335" width="120" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="ENQ Answer Back:" id="Lrt-Oz-1A8">
                         <font key="font" metaFont="system"/>
@@ -3115,7 +3115,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="tcJ-V2-9Fd" userLabel="ENQ Answer Back text field">
-                    <rect key="frame" x="168" y="321" width="326" height="22"/>
+                    <rect key="frame" x="168" y="332" width="326" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="UkZ-8d-b91">
                         <font key="font" metaFont="system"/>
@@ -3149,6 +3149,19 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="gMD-DK-gev" id="KKF-gH-Gft"/>
                         <outlet property="nextKeyView" destination="5081" id="5277"/>
+                    </connections>
+                </button>
+                <button id="ajt-kG-p4I">
+                    <rect key="frame" x="21" y="311" width="457" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Apps (such as your shell or your editor) expect each character to have a particular “width,” between 0 and 2 cells. If the app and the terminal emulator have different width tables, rendering problems ensue. Notably, Unicode 8 defines most Emoji to be 1 cell wide. Most fonts render them as two cells wide. Unicode 9 fixes this. If your apps have been updated for Unicode 9, you should enable this.</string>
+                    <buttonCell key="cell" type="check" title="Use Unicode version 9 character widths (requires updated applications)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5IL-Lg-bXE">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="Tc3-SE-3jl"/>
+                        <outlet property="nextKeyView" destination="5081" id="hVw-Zk-eFF"/>
                     </connections>
                 </button>
                 <button id="2403">
@@ -3329,7 +3342,7 @@ DQ
                     </connections>
                 </button>
                 <button id="3647">
-                    <rect key="frame" x="345" y="485" width="151" height="18"/>
+                    <rect key="frame" x="345" y="496" width="151" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Unlimited scrollback" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3648">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3341,7 +3354,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="521" y="-164.5"/>
+            <point key="canvasLocation" x="530" y="-271"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="420"/>

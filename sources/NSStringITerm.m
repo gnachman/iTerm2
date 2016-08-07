@@ -43,18 +43,19 @@
 }
 
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth {
+        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                unicodeVersion:(NSInteger)version {
     if (unicode <= 0xa0 ||
         (unicode > 0x452 && unicode < 0x1100)) {
         // Quickly cover the common cases.
         return NO;
     }
 
-    if ([[NSCharacterSet fullWidthCharacterSet] longCharacterIsMember:unicode]) {
+    if ([[NSCharacterSet fullWidthCharacterSetForUnicodeVersion:version] longCharacterIsMember:unicode]) {
         return YES;
     }
     if (ambiguousIsDoubleWidth &&
-        [[NSCharacterSet ambiguousWidthCharacterSet] longCharacterIsMember:unicode]) {
+        [[NSCharacterSet ambiguousWidthCharacterSetForUnicodeVersion:version] longCharacterIsMember:unicode]) {
         return YES;
     }
     return NO;

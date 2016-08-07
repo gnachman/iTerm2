@@ -16,6 +16,8 @@
 #import <OCHamcrest/OCHamcrest.h>
 #import <OCMockito/OCMockito.h>
 
+static const NSInteger kUnicodeVersion = 9;
+
 @interface iTermTextExtractorTest : XCTestCase<iTermTextDataSource>
 
 @end
@@ -295,7 +297,8 @@
                         NO,
                         NULL,
                         NULL,
-                        NO);
+                        NO,
+                        kUnicodeVersion);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[2].code = 0xf001;
@@ -335,7 +338,8 @@
                         NO,
                         NULL,
                         NULL,
-                        NO);
+                        NO,
+                        kUnicodeVersion);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[2].code = 0xf001;
@@ -379,7 +383,8 @@
                             NO,
                             NULL,
                             NULL,
-                            NO);
+                            NO,
+                            kUnicodeVersion);
         return len;
     }
 }
@@ -418,7 +423,8 @@
                             NO,
                             NULL,
                             NULL,
-                            NO);
+                            NO,
+                            kUnicodeVersion);
         _buffer[len].code = EOL_SOFT;
     }
     

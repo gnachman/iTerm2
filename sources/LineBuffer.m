@@ -45,6 +45,7 @@ static NSString *const kLineBufferTruncatedKey = @"Truncated";
 static NSString *const kLineBufferMayHaveDWCKey = @"May Have Double Width Character";
 
 static const int kLineBufferVersion = 1;
+static const NSInteger kUnicodeVersion = 9;
 
 @implementation LineBuffer {
     // An array of LineBlock*s.
@@ -1144,7 +1145,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     fg.backgroundColorMode = ColorModeAlternate;
     bg.backgroundColor = ALTSEM_REVERSED_DEFAULT;
     bg.backgroundColorMode = ColorModeAlternate;
-    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO);
+    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO, kUnicodeVersion);
     [self appendLine:buffer
               length:0
              partial:NO

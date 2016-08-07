@@ -11,6 +11,7 @@
 
 + (instancetype)sharedInstance;
 - (NSArray<NSData *> *)parseDumpHistoryResponse:(NSString *)response
-                         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
+                         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                                 unicodeVersion:(NSInteger)unicodeVersion;
 
 @end
