@@ -6397,11 +6397,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setNeedsDisplayOnLine:(int)y inRange:(VT100GridRange)range {
     NSRect dirtyRect;
     const int x = range.location;
-    const int maxX = range.location + range.length - 1;
+    const int maxX = range.location + range.length;
 
     dirtyRect.origin.x = MARGIN + x * _charWidth;
     dirtyRect.origin.y = y * _lineHeight;
-    dirtyRect.size.width = (maxX - x + 1) * _charWidth;
+    dirtyRect.size.width = (maxX - x) * _charWidth;
     dirtyRect.size.height = _lineHeight;
 
     if (_drawingHelper.showTimestamps) {
@@ -6411,7 +6411,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Expand the rect in case we're drawing a changed cell with an oversize glyph.
     dirtyRect = [self rectWithHalo:dirtyRect];
 
-    DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
+    DLog(@"Line %d is dirty in range [%d, %d), set rect %@ dirty",
          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
     [self setNeedsDisplayInRect:dirtyRect];
 }
@@ -6555,10 +6555,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSRect)rectWithHalo:(NSRect)rect {
-    return rect;
-    rect.origin.x = rect.origin.x - _charWidth * 1;
+    const int kHaloWidth = 4;
+    rect.origin.x = rect.origin.x - _charWidth * kHaloWidth;
     rect.origin.y -= _lineHeight;
-    rect.size.width = self.frame.size.width + _charWidth * 2;
+    rect.size.width = self.frame.size.width + _charWidth * 2 * kHaloWidth;
     rect.size.height += _lineHeight * 2;
 
     return rect;

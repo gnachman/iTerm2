@@ -26,6 +26,8 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
 
+NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
+
 #define HKWLog DLog
 
 @interface iTermHotKeyController()<iTermHotKeyDelegate>
@@ -157,6 +159,8 @@
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
             iTermProfileHotKey *profileHotKey = hotkey;
+            legacyState = [legacyState dictionaryBySettingObject:profileHotKey.profile[KEY_GUID]
+                                                          forKey:TERMINAL_ARRANGEMENT_PROFILE_GUID];
             [profileHotKey setLegacyState:legacyState];
             [profileHotKey createWindow];
             [profileHotKey.windowController.window orderOut:nil];  // Issue 4065

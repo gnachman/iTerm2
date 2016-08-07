@@ -112,7 +112,6 @@ static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
 static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
 
-static NSString* TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
@@ -1868,7 +1867,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
-    iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID]];
+    iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:guid];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
     if (isHotkeyWindow) {
         assert(profileHotKey);

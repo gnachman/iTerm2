@@ -12,6 +12,10 @@
 @class Profile;
 @class PseudoTerminal;
 
+// Key in window arrangement that gives the GUID for the profile that created the window. Used for
+// restoring legacy hotkey window state.
+extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
+
 @interface iTermHotKeyController : NSObject
 
 // Returns the designated hotkey window or nil if there is none.
