@@ -239,7 +239,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
     NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
-                                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_];
+                                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_
+                                                                     unicodeVersion:self.unicodeVersion];
     if (history) {
         if ([alt boolValue]) {
             [altHistories_ setObject:history forKey:wp];

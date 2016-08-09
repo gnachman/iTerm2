@@ -538,7 +538,11 @@ typedef struct iTermTextColorContext {
     }
     NSColor *color = [NSColor colorWithPatternImage:_backgroundStripesImage];
     [color set];
+
+    [NSGraphicsContext saveGraphicsState];
+    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0, 0)];
     NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    [NSGraphicsContext restoreGraphicsState];
 }
 
 #pragma mark - Drawing: Accessories
@@ -1622,7 +1626,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                             _ambiguousIsDoubleWidth,
                             &cursorIndex,
                             NULL,
-                            _useHFSPlusMapping);
+                            _useHFSPlusMapping,
+                            self.unicodeVersion);
         int cursorX = 0;
         int baseX = floor(xStart * _cellSize.width + MARGIN);
         int i;

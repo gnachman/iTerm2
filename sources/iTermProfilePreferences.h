@@ -22,6 +22,8 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
 @interface iTermProfilePreferences : NSObject
 
++ (id)defaultObjectForKey:(NSString *)key;
+
 // Sets a bunch of values at once (just one notification posted).
 + (void)setObjectsFromDictionary:(NSDictionary *)dictionary
                        inProfile:(Profile *)profile
@@ -38,6 +40,12 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
         forKey:(NSString *)key
      inProfile:(Profile *)profile
          model:(ProfileModel *)model;
+
++ (NSInteger)integerForKey:(NSString *)key inProfile:(Profile *)profile;
++ (void)setInteger:(NSInteger)value
+            forKey:(NSString *)key
+         inProfile:(Profile *)profile
+             model:(ProfileModel *)model;
 
 + (NSUInteger)unsignedIntegerForKey:(NSString *)key inProfile:(Profile *)profile;
 + (void)setUnsignedInteger:(NSUInteger)value

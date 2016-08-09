@@ -55,7 +55,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
+        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                unicodeVersion:(NSInteger)version;
 + (NSString *)stringWithLongCharacter:(UTF32Char)longCharacter;
 
 // Returns the current string on the pasteboard (if any).
@@ -243,6 +244,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Returns a person's surname.
 - (NSString *)surname;
+
+// Contains only digits?
+- (BOOL)isNumeric;
 
 @end
 

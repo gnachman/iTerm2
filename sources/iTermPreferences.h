@@ -168,6 +168,9 @@ extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 + (int)intForKey:(NSString *)key;
 + (void)setInt:(int)value forKey:(NSString *)key;
 
++ (NSInteger)integerForKey:(NSString *)key;
++ (void)setInteger:(NSInteger)value forKey:(NSString *)key;
+
 + (NSUInteger)unsignedIntegerForKey:(NSString *)key;
 + (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key;
 

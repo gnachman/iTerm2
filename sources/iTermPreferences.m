@@ -413,6 +413,14 @@ static NSMutableDictionary *gObservers;
     [self setObject:@(value) forKey:key];
 }
 
++ (NSInteger)integerForKey:(NSString *)key {
+    return [(NSNumber *)[self objectForKey:key] integerValue];
+}
+
++ (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    [self setObject:@(value) forKey:key];
+}
+
 + (NSUInteger)unsignedIntegerForKey:(NSString *)key {
     return [(NSNumber *)[self objectForKey:key] unsignedIntegerValue];
 }

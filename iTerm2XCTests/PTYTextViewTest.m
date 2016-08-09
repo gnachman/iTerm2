@@ -68,6 +68,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     _script = [NSMutableString string];
     _colorMap = [[iTermColorMap alloc] init];
     _textView = [[PTYTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) colorMap:_colorMap];
+    [_textView.colorMap setColor:[NSColor redColor] forKey:kColorMapBackground];
+    [_textView.colorMap setColor:[NSColor redColor] forKey:kColorMapForeground];
     _textView.delegate = self;
     _textView.dataSource = self;
     _methodsCalled = [[NSMutableDictionary alloc] init];

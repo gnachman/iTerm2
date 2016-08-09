@@ -139,6 +139,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [pendingWindowOpens_ addObject:n];
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
+    windowOpener.unicodeVersion = self.unicodeVersion;
     windowOpener.windowIndex = windowIndex;
     windowOpener.name = name;
     windowOpener.size = size;
@@ -161,6 +162,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     DLog(@"setLayoutInTab:%@ toLayout:%@ zoomed:%@", tab, layout, zoomed);
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
+    windowOpener.unicodeVersion = self.unicodeVersion;
     windowOpener.layout = layout;
     windowOpener.maxHistory =
         MAX([[gateway_ delegate] tmuxBookmarkSize].height,

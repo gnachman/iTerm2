@@ -82,6 +82,9 @@
 #include <unistd.h>
 #import <CoreFoundation/CoreFoundation.h>
 
+static const NSInteger kMinimumUnicodeVersion = 8;
+static const NSInteger kMaximumUnicodeVersion = 9;
+
 // The format for a user defaults key that recalls if the user has already been pestered about
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
 static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
@@ -378,6 +381,9 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     
     // Estimates throughput for adaptive framerate.
     iTermThroughputEstimator *_throughputEstimator;
+    
+    // Current unicode version.
+    NSInteger _unicodeVersion;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -2802,6 +2808,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                         inProfile:aDict]];
     [self setXtermMouseReporting:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
                                                            inProfile:aDict]];
+    [self setUnicodeVersion:[iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION
+                                                         inProfile:aDict]];
     [_terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
                                                               inProfile:aDict]];
     [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
@@ -3211,10 +3219,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setUseItalicFont:italicFlag];
 }
 
-- (void)setTreatAmbiguousWidthAsDoubleWidth:(BOOL)set
-{
+- (void)setTreatAmbiguousWidthAsDoubleWidth:(BOOL)set {
     _treatAmbiguousWidthAsDoubleWidth = set;
     _tmuxController.ambiguousIsDoubleWidth = set;
+}
+
+- (void)setUnicodeVersion:(NSInteger)version {
+    _unicodeVersion = version;
+    _tmuxController.unicodeVersion = version;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermUnicodeVersionDidChangeNotification
+                                                        object:nil];
 }
 
 - (void)setXtermMouseReporting:(BOOL)set
@@ -4112,6 +4126,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
                                                    clientName:[self preferredTmuxClientName]];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
+    _tmuxController.unicodeVersion = _unicodeVersion;
     NSSize theSize;
     Profile *tmuxBookmark = [_delegate tmuxBookmark];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
@@ -5803,6 +5818,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSInteger)textViewUnicodeVersion {
+    return _unicodeVersion;
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {
@@ -7222,6 +7241,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)screenShouldReduceFlicker {
     return [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
+}
+
+- (NSInteger)screenUnicodeVersion {
+    return _unicodeVersion;
+}
+
+- (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion {
+    if (unicodeVersion == 0) {
+        // Set to default value
+        unicodeVersion = [[iTermProfilePreferences defaultObjectForKey:KEY_UNICODE_VERSION] integerValue];
+    }
+    if (unicodeVersion >= kMinimumUnicodeVersion && unicodeVersion <= kMaximumUnicodeVersion) {
+        [self setSessionSpecificProfileValues:@{ KEY_UNICODE_VERSION: @(unicodeVersion) }];
+    }
 }
 
 #pragma mark - Announcements

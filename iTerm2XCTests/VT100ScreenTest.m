@@ -16,6 +16,8 @@
 #import "VT100Screen.h"
 #import "iTermSelection.h"
 
+static const NSInteger kUnicodeVersion = 9;
+
 // This macro can be used in tests to document a known bug. The first expression would evaluate to
 // true if the bug were fixed. Until then, the second expression unfortunately does evaluate to true.
 #define ITERM_TEST_KNOWN_BUG(expressionThatShouldBeTrue, expressionThatIsTrue) \
@@ -434,7 +436,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         NO,
                         NULL,
                         NULL,
-                        NO);
+                        NO,
+                        kUnicodeVersion);
     return data;
 }
 
@@ -852,6 +855,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (BOOL)screenShouldReduceFlicker {
     return NO;
+}
+
+- (NSInteger)screenUnicodeVersion {
+    return 8;
+}
+
+- (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion {
 }
 
 #pragma mark - iTermSelectionDelegate
