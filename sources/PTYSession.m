@@ -1994,6 +1994,12 @@ ITERM_WEAKLY_REFERENCEABLE
     });
 }
 
+- (void)taskDiedImmediately {
+    // Let initial creation finish, then report the broken pipe. This happens if the file descriptor
+    // server dies immediately.
+    [self performSelector:@selector(brokenPipe) withObject:nil afterDelay:0];
+}
+
 - (void)brokenPipe {
     if (_exited) {
         return;

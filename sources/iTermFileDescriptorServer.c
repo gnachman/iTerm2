@@ -75,7 +75,7 @@ static void SigUsr1Handler(int arg) {
 }
 
 
-static int Select(int *fds, int count, int *results) {
+int iTermSelect(int *fds, int count, int *results) {
     int result;
     int theError;
     fd_set readset;
@@ -130,7 +130,7 @@ static int SendFileDescriptorAndWait(int connectionFd) {
     syslog(LOG_NOTICE, "All done. Waiting for client to disconnect or child to die.");
     int fds[2] = { gPipe[0], connectionFd };
     int results[2];
-    Select(fds, sizeof(fds) / sizeof(*fds), results);
+    iTermSelect(fds, sizeof(fds) / sizeof(*fds), results);
     syslog(LOG_NOTICE, "select returned. child dead=%d, connection closed=%d", results[0], results[1]);
     close(connectionFd);
 
