@@ -525,6 +525,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     warning.warningActions = actions;
     warning.identifier = identifier;
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    warning.cancelLabel = @"Cancel";
     [warning runModal];
     return result;
 }
