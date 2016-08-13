@@ -58,7 +58,7 @@
 - (NSEvent *)eventByChangingYenToBackslash {
     // NSEvent: type=KeyDown loc=(0,477) time=103943.2 flags=0x80120 win=0x7fd5786432b0 winNum=3667 ctxt=0x0 chars="\" unmodchars="¥" repeat=0 keyCode=93
     
-    if ([self.charactersIgnoringModifiers isEqualToString:@"¥"]) {
+    if ([self.charactersIgnoringModifiers isEqualToString:@"¥"] && [self.characters isEqualToString:@"¥"]) {
         return [NSEvent keyEventWithType:self.type
                                 location:self.locationInWindow
                            modifierFlags:self.modifierFlags
