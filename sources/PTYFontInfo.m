@@ -62,17 +62,25 @@
     _ligatureLevel = [fontNameToLigatureLevel[font.fontName] integerValue];
 
     _baselineOffset = [self computedBaselineOffset];
+    _underlineOffset = [self computedUnderlineOffset];
 }
 
-- (CGFloat)computedBaselineOffset {
+- (CGFloat)descender {
     // See issue 4957 for the Monaco hack.
     CGFloat extraDescender = 0;
     if (![font_.fontName isEqualToString:@"Monaco"]) {
         extraDescender = 0.5;
     }
     CGFloat descender = self.font.descender + extraDescender;
-    CGFloat baselineOffset = -(floorf(font_.leading) - floorf(descender));
-    return baselineOffset;
+    return descender;
+}
+
+- (CGFloat)computedBaselineOffset {
+    return -(floorf(font_.leading) - floorf(self.descender));
+}
+
+- (CGFloat)computedUnderlineOffset {
+    return floorf(self.descender) - floor(font_.underlinePosition);
 }
 
 // Issue 4294 reveals that merely upconverting the weight of a font once is not sufficient because

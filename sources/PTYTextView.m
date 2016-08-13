@@ -1052,6 +1052,18 @@ static const int kDragThreshold = 3;
     }
 }
 
+- (CGFloat)minimumUnderlineOffset {
+    if (self.useNonAsciiFont) {
+        if (_primaryFont.baselineOffset < _secondaryFont.baselineOffset) {
+            return _primaryFont.underlineOffset;
+        } else {
+            return _secondaryFont.underlineOffset;
+        }
+    } else {
+        return _primaryFont.underlineOffset;
+    }
+}
+
 - (void)drawRect:(NSRect)rect {
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
@@ -1091,6 +1103,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.thinStrokes = _thinStrokes;
     _drawingHelper.showSearchingCursor = _showSearchingCursor;
     _drawingHelper.baselineOffset = [self minimumBaselineOffset];
+    _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
     _drawingHelper.boldAllowed = _useBoldFont;
     _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
     

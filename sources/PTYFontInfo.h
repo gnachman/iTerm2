@@ -13,6 +13,7 @@
 
 @property(nonatomic, retain) NSFont *font;
 @property(nonatomic, readonly) CGFloat baselineOffset;
+@property(nonatomic, readonly) CGFloat underlineOffset;
 @property(nonatomic, retain) PTYFontInfo *boldVersion;
 @property(nonatomic, retain) PTYFontInfo *italicVersion;
 @property(nonatomic, retain) PTYFontInfo *boldItalicVersion;

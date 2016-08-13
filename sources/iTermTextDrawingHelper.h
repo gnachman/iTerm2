@@ -252,6 +252,9 @@
 // Smallest of the baseline offset for the available fonts. Is a negative number.
 @property(nonatomic, assign) CGFloat baselineOffset;
 
+// Underline offset to use. Negative.
+@property(nonatomic, assign) CGFloat underlineOffset;
+
 // Is bold text allowed? If so, then double struck text may be used when a bold version of the font
 // is not available.
 @property(nonatomic, assign) BOOL boldAllowed;

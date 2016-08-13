@@ -1558,10 +1558,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSBezierPath *path = [NSBezierPath bezierPath];
 
     NSPoint origin = NSMakePoint(startPoint.x,
-                                 startPoint.y +
-                                     _cellSize.height +
-                                     font.descender -
-                                     font.underlinePosition);
+                                 startPoint.y + _cellSize.height + _underlineOffset);
     [path moveToPoint:origin];
     [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
     [path setLineWidth:font.underlineThickness];
