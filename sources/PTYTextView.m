@@ -649,8 +649,10 @@ static const int kDragThreshold = 3;
     return _secondaryFont.font;
 }
 
-+ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
-{
++ (NSSize)charSizeForFont:(NSFont *)aFont
+        horizontalSpacing:(double)hspace
+          verticalSpacing:(double)vspace
+                 baseline:(double *)baseline {
     FontSizeEstimator* fse = [FontSizeEstimator fontSizeEstimatorForFont:aFont];
     NSSize size = [fse size];
     size.width = ceil(size.width * hspace);
@@ -1045,23 +1047,11 @@ static const int kDragThreshold = 3;
 }
 
 - (CGFloat)minimumBaselineOffset {
-    if (self.useNonAsciiFont) {
-        return MIN(_primaryFont.baselineOffset, _secondaryFont.baselineOffset);
-    } else {
-        return _primaryFont.baselineOffset;
-    }
+    return _primaryFont.baselineOffset;
 }
 
 - (CGFloat)minimumUnderlineOffset {
-    if (self.useNonAsciiFont) {
-        if (_primaryFont.baselineOffset < _secondaryFont.baselineOffset) {
-            return _primaryFont.underlineOffset;
-        } else {
-            return _secondaryFont.underlineOffset;
-        }
-    } else {
-        return _primaryFont.underlineOffset;
-    }
+    return _primaryFont.underlineOffset;
 }
 
 - (void)drawRect:(NSRect)rect {
