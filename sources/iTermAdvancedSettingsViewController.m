@@ -228,6 +228,7 @@ static NSDictionary *gIntrospection;
     // To reproduce, select a row in advanced prefs. Switch to the profiles tab. Press esc to close
     // the prefs window. Doesn't reproduce all the time.
     _tableView.delegate = nil;
+    _tableView.dataSource = nil;
     [super dealloc];
 }
 

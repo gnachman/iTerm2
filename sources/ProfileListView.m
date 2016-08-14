@@ -178,11 +178,18 @@ const CGFloat kDefaultTagsWidth = 80;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [dataSource_ release];
     [selectedGuids_ release];
+    // These if statements are pure paranoia because this thing gets used all
+    // over the place and is pretty old.
+    if (tableView_.delegate == self) {
+        tableView_.delegate = nil;
+    }
+    if (tableView_.dataSource == self) {
+        tableView_.dataSource = nil;
+    }
     [super dealloc];
 }
 

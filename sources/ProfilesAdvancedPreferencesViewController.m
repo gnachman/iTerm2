@@ -46,6 +46,12 @@
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }
 
+- (void)dealloc {
+    _boundHostsTableView.delegate = nil;
+    _boundHostsTableView.dataSource = nil;
+    [super dealloc];
+}
+
 - (void)awakeFromNib {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles:)
