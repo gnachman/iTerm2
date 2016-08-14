@@ -3371,7 +3371,9 @@ ITERM_WEAKLY_REFERENCEABLE
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
 
+    NSLog(@"Get working directory...");
     NSString *pwd = [self currentLocalWorkingDirectory];
+    NSLog(@"Done getting working directory");
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     return result;
 }

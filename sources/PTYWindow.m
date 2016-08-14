@@ -40,6 +40,69 @@
 #define PtyLog DLog
 #endif
 
+@interface NSObject(SizeSummary)
+- (NSString *)sizeSummary;
+@end
+
+@implementation NSObject(SizeSummary)
+
+- (NSString *)sizeSummary {
+    NSInteger total = 0;
+    return [self sizeSummaryWithPrefix:@"" total:&total];
+}
+
+- (NSString *)sizeSummaryWithPrefix:(NSString *)prefix total:(NSInteger *)total {
+    NSMutableString *result = prefix ? [NSMutableString string] : nil;
+    *total = 0;
+    if ([self isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dictionary = (NSDictionary *)self;
+        [result appendString:prefix];
+        [result appendString:@"dictionary {\n"];
+        for (id key in dictionary) {
+            id value = [dictionary objectForKey:key];
+            if ([key isKindOfClass:[NSObject class]] && [value isKindOfClass:[NSObject class]]) {
+                NSInteger valueSize = 0;
+                [result appendFormat:@"  %@%@:\n%@", prefix, key, [value sizeSummaryWithPrefix:[prefix stringByAppendingString:@"    "]
+                                                                                           total:&valueSize]];
+                NSInteger keySize = 0;
+                [key sizeSummaryWithPrefix:nil total:&keySize];
+                *total += keySize + valueSize;
+                [result appendFormat:@" [cumulative: %ld bytes]\n", (long)*total];
+            }
+        }
+        [result appendString:prefix];
+        [result appendString:@"}"];
+    } else if ([self isKindOfClass:[NSArray class]]) {
+        NSDictionary *array = (NSDictionary *)self;
+        [result appendString:prefix];
+        [result appendString:@"array {\n"];
+        for (id value in array) {
+            if ([value isKindOfClass:[NSObject class]]) {
+                NSInteger valueSize = 0;
+                [result appendString:[value sizeSummaryWithPrefix:[prefix stringByAppendingString:@"    "]
+                                                            total:&valueSize]];
+                *total += valueSize;
+                [result appendFormat:@" [cumulative: %ld bytes]\n", (long)*total];
+            }
+        }
+        [result appendString:prefix];
+        [result appendString:@"}"];
+    } else if ([self isKindOfClass:[NSString class]]) {
+        [result appendFormat:@"%@string length=%ld", prefix, (long)[(NSString *)self length]];
+        *total += [(NSString *)self length];
+    } else if ([self isKindOfClass:[NSNumber class]]) {
+        [result appendFormat:@"%@number", prefix];
+        *total += 8;
+    } else if ([self isKindOfClass:[NSData class]]) {
+        [result appendFormat:@"%@data length=%ld", prefix, (long)[(NSData *)self length]];
+        *total += [(NSData *)self length];
+    }
+    
+    [result appendFormat:@" (%ld bytes)", (long)*total];
+    return result;
+}
+
+@end
 @interface NSView (PrivateTitleBarMethods)
 - (NSView *)titlebarContainerView;
 @end
@@ -149,7 +212,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
     [super encodeRestorableStateWithCoder:coder];
+    NSLog(@"Window to begin encoding restoreState");
     [coder encodeObject:restoreState_ forKey:kPseudoTerminalStateRestorationWindowArrangementKey];
+    NSLog(@"Window done encoding restoreState");
+    NSLog(@"Size summary:\n%@", [restoreState_ sizeSummary]);
 }
 
 - (void)setRestoreState:(NSObject *)restoreState {
