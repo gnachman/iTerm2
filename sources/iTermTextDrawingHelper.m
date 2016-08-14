@@ -330,6 +330,7 @@ typedef struct iTermTextColorContext {
     for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
         NSInteger rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
         iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
+        runArray.numberOfEquivalentRows = rows;
         [self drawBackgroundForLine:runArray.line
                                 atY:runArray.y
                                runs:runArray.array
@@ -345,10 +346,17 @@ typedef struct iTermTextColorContext {
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    iTermBackgroundColorRunsInLine *representativeRunArray = nil;
+    NSInteger count = 0;
     for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
+        if (count == 0) {
+            representativeRunArray = runArray;
+            count = runArray.numberOfEquivalentRows;
+        }
+        count--;
         [self drawCharactersForLine:runArray.line
                                 atY:runArray.y
-                     backgroundRuns:runArray.array
+                     backgroundRuns:representativeRunArray.array
                             context:ctx];
         [self drawNoteRangesOnLine:runArray.line];
 

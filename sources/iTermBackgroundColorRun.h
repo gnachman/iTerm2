@@ -43,6 +43,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @property(nonatomic, assign) int line;
 
 @property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun *> *array;
+@property(nonatomic, assign) NSInteger numberOfEquivalentRows;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.

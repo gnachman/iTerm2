@@ -295,7 +295,7 @@ const int kColorMapAnsiBrightModifier = 8;
              fabs(backgroundRgb[1] - defaultBackgroundComponents[1]) < 0.01 &&
              fabs(backgroundRgb[2] - defaultBackgroundComponents[2]) < 0.01);
         if (!isDefaultBackgroundColor) {
-            grayRgb[0] = grayRgb[1] = grayRgb[2] = 0;
+            memmove(grayRgb, defaultBackgroundComponents, sizeof(grayRgb));
             shouldDim = YES;
         }
     }
