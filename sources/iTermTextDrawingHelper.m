@@ -1173,7 +1173,7 @@ typedef struct iTermTextColorContext {
                                       [self drawUnderlineOfColor:color
                                                     atCellOrigin:NSMakePoint(origin.x + stringPositions[range.location], origin.y)
                                                             font:attributes[NSFontAttributeName]
-                                                           width:stringPositions[NSMaxRange(range) - 1] + self.cellSize.width - stringPositions[range.location]];
+                                                           width:stringPositions[NSMaxRange(range)] - stringPositions[range.location]];
                                   }
                               }];
 }
@@ -1450,7 +1450,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSTimeInterval totalBuilderTime = 0;
     iTermCharacterAttributes characterAttributes = { 0 };
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
-    
+    NSInteger lastDrawableIndex = -1;
+
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
@@ -1470,9 +1471,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                                         _blinkAllowed);
         
         if (!drawable) {
+            if (c.code == DWC_RIGHT && !c.complexChar) {
+                lastDrawableIndex = i;
+            }
             continue;
         }
-
+        lastDrawableIndex = i;
         [self getAttributesForCharacter:&c
                                 atIndex:i
                          forceTextColor:forceTextColor
@@ -1539,7 +1543,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
         [attributedStrings addObject:mutableAttributedString];
     }
-
+    // Append one last position so we'll know where the last character in the run ends. This is
+    // needed for underlines.
+    CTVectorAppend(positions, (lastDrawableIndex - indexRange.location + 1) * _cellSize.width);
+    
     iTermPreciseTimerStatsRecord(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
                                  totalBuilderTime);
     iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
