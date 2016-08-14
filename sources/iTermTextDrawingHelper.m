@@ -231,10 +231,6 @@ typedef struct iTermTextColorContext {
 
     [self drawRanges:ranges count:numRowsInRect origin:boundingCoordRange.start boundingRect:[self rectForCoordRange:boundingCoordRange]];
     
-    // The OS may ask us to draw an area outside the visible area, but that looks awful so cover it
-    // up by drawing some background over it.
-    [self drawExcessAtLine:[self coordRangeForRect:rect].end.y];
-
     [self drawCursor];
 
     if (_showDropTargets) {
@@ -281,9 +277,13 @@ typedef struct iTermTextColorContext {
     _blinkingFound = NO;
 
     NSMutableArray<iTermBackgroundColorRunsInLine *> *backgroundRunArrays = [NSMutableArray array];
+    NSRange visibleLines = [self rangeOfVisibleRows];
 
     for (NSInteger i = 0; i < numRanges; i++) {
         const int line = origin.y + i;
+        if (line >= NSMaxRange(visibleLines)) {
+            continue;
+        }
         NSRange charRange = ranges[i];
         // We work hard to paint all the backgrounds first and then all the foregrounds. The reason this
         // is necessary is because sometimes a glyph is larger than its cell. Some fonts draw narrow-
@@ -341,6 +341,11 @@ typedef struct iTermTextColorContext {
         i += rows;
     }
 
+    // Draw default background color over the line under the last drawn line so the tops of
+    // characters aren't visible there. If there is an IME, that could be many lines tall.
+    VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRect];
+    [self drawExcessAtLine:drawableCoordRange.end.y];
+    
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect];
 
@@ -1922,6 +1927,13 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     int width = _gridSize.width;
     int height = _gridSize.height;
 
+    int cursorRow = row + _numberOfScrollbackLines;
+    if (!NSLocationInRange(cursorRow, [self rangeOfVisibleRows])) {
+        // Don't draw a cursor that isn't in one of the rows that's being drawn (e.g., if it's on a
+        // row that's just below the last visible row, don't draw it, or else the top of the cursor
+        // will be visible at the bottom of the window).
+        return NO;
+    }
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
     // the screen (which is just a sanity check, really).
@@ -1940,6 +1952,23 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 }
 
 #pragma mark - Coord/Rect Utilities
+
+- (NSRange)rangeOfVisibleRows {
+    int visibleRows = floor((_scrollViewContentSize.height - VMARGIN * 2) / _cellSize.height);
+    CGFloat top = _scrollViewDocumentVisibleRect.origin.y;
+    int firstVisibleRow = floor(top / _cellSize.height);
+    if (firstVisibleRow < 0) {
+        // I'm pretty sure this will never happen, but safety first when
+        // dealing with unsigned integers.
+        visibleRows += firstVisibleRow;
+        firstVisibleRow = 0;
+    }
+    if (visibleRows >= 0) {
+        return NSMakeRange(firstVisibleRow, visibleRows);
+    } else {
+        return NSMakeRange(0, 0);
+    }
+}
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect {
     return VT100GridCoordRangeMake(floor((rect.origin.x - MARGIN) / _cellSize.width),
