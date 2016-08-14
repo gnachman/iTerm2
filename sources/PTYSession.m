@@ -7067,16 +7067,20 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)currentLocalWorkingDirectory {
+    NSLog(@"Begin computing current local working directory");
     // Ask the kernel what the child's process's working directory is.
     NSString *localDirectoryWithResolvedSymlinks = [_shell getWorkingDirectory];
-
+    NSLog(@"PTYTask reports working directory with resolved symlinks of %@", localDirectoryWithResolvedSymlinks);
+    
     if (_lastDirectory) {
         // See if the last directory from shell integration matches what the kernel reports.
         // Normally, _lastDirectory will contain unfollowed symlinks, which we'd prefer to use
         // (since it's what the user sees).  But there's no way to tell if _lastDirectory refers to
         // local path or one on a remote host. If it resolves to the same location as
         // localDirectoryWithResolvedSymlinks then it's very likely ok.
+        NSLog(@"The last directory seen was %@", _lastDirectory);
         NSString *resolvedLastDirectory = [_lastDirectory stringByResolvingSymlinksInPath];
+        NSLog(@"After resolving symlinks, it is %@", resolvedLastDirectory);
         if ([resolvedLastDirectory isEqualToString:localDirectoryWithResolvedSymlinks]) {
             return _lastDirectory;
         }
