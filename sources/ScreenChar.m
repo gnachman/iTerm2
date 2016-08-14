@@ -629,6 +629,9 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
 }
 
 NSDictionary *ScreenCharEncodedRestorableState(void) {
+    NSLog(@"Complex char map: %@", complexCharMap);
+    NSLog(@"Inverse complex char map: %@", inverseComplexCharMap);
+    NSLog(@"Encodable image map: %@", gEncodableImageMap);
     return @{ kScreenCharComplexCharMapKey: complexCharMap ?: @{},
               kScreenCharInverseComplexCharMapKey: inverseComplexCharMap ?: @{},
               kScreenCharImageMapKey: gEncodableImageMap ?: @{},
