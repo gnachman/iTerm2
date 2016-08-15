@@ -7,6 +7,9 @@
 //
 
 #import "TmuxDashboardController.h"
+
+#import "ITAddressBookMgr.h"
+#import "iTermInitialDirectory.h"
 #import "TmuxSessionsTable.h"
 #import "TmuxController.h"
 #import "TSVParser.h"
@@ -197,12 +200,12 @@
     [self reloadWindows];
 }
 
-- (void)addWindow
-{
+- (void)addWindow {
     NSString *lastName = [[windowsTable_ names] lastObject];
     if (lastName) {
         [[self tmuxController] newWindowInSession:[sessionsTable_ selectedSessionName]
-                              afterWindowWithName:lastName];
+                                 initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:[[ProfileModel sharedInstance] tmuxProfile]
+                                                                                          objectType:iTermWindowObject]];
     }
 }
 

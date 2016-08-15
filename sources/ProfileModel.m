@@ -97,6 +97,23 @@ int gMigrated;
     [super dealloc];
 }
 
+- (Profile *)tmuxProfile {
+    Profile *profile = [self bookmarkWithName:@"tmux"];
+    if (!profile) {
+        Profile *defaultBookmark = [self defaultBookmark];
+        NSMutableDictionary *tmuxProfile = [[defaultBookmark mutableCopy] autorelease];
+        [tmuxProfile setObject:@"tmux" forKey:KEY_NAME];
+        [tmuxProfile setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+        [tmuxProfile setObject:[NSNumber numberWithInt:1000]
+                         forKey:KEY_SCROLLBACK_LINES];
+        [self addBookmark:tmuxProfile];
+        [self postChangeNotification];
+        profile = tmuxProfile;
+    }
+    return profile;
+}
+
+
 - (int)numberOfBookmarks
 {
     return [bookmarks_ count];

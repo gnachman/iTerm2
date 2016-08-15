@@ -2763,25 +2763,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self nameOfSession:self.activeSession didChangeTo:self.activeSession.name];
 }
 
-+ (Profile *)tmuxBookmark
-{
-    Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithName:@"tmux"];
-    if (!bookmark) {
-        Profile *defaultBookmark = [[ProfileModel sharedInstance] defaultBookmark];
-        NSMutableDictionary *tmuxBookmark = [[defaultBookmark mutableCopy] autorelease];
-        [tmuxBookmark setObject:@"tmux" forKey:KEY_NAME];
-        [tmuxBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-                [tmuxBookmark setObject:[NSNumber numberWithInt:1000]
-                                                 forKey:KEY_SCROLLBACK_LINES];
-        [[ProfileModel sharedInstance] addBookmark:tmuxBookmark];
-        [[ProfileModel sharedInstance] postChangeNotification];
-        bookmark = tmuxBookmark;
-    }
-    return bookmark;
++ (Profile *)tmuxBookmark {
+    return [[ProfileModel sharedInstance] tmuxProfile];
 }
 
 - (Profile *)tmuxBookmark {
-    return [PTYTab tmuxBookmark];
+    return [[ProfileModel sharedInstance] tmuxProfile];
 }
 
 + (void)setTmuxFont:(NSFont *)font

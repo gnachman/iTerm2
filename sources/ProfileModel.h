@@ -116,6 +116,9 @@ typedef struct {
 // Write to user defaults
 - (void)flush;
 
+// Returns the profile to be used for tmux sessions.
+- (Profile *)tmuxProfile;
+
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;
 

@@ -41,6 +41,59 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_flags}\t"
     "#{?window_active,1,0}\"";
 
+@interface iTermInitialDirectory(Tmux)
+@end
+
+@implementation iTermInitialDirectory(Tmux)
+
+- (NSString *)tmuxNewWindowCommandInSession:(NSString *)session {
+    NSArray *args = @[ @"new-window", @"-PF '#{window_id}'" ];
+    
+    if (session) {
+        NSString *targetSessionArg = [NSString stringWithFormat:@"\"%@:+\"", [session stringByEscapingQuotes]];
+        NSArray *insertionArguments = @[ @"-a",
+                                         @"-t",
+                                         targetSessionArg ];
+        args = [args arrayByAddingObjectsFromArray:insertionArguments];
+    }
+    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args];
+}
+
+- (NSString *)tmuxNewWindowCommand {
+    return [self tmuxNewWindowCommandInSession:nil];
+}
+
+- (NSString *)tmuxSplitWindowCommand:(int)wp vertically:(BOOL)splitVertically {
+    NSArray *args = @[ @"split-window",
+                       splitVertically ? @"-h": @"-v",
+                       @"-t",
+                       [NSString stringWithFormat:@"%%%d", wp] ];
+    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args];
+}
+
+- (NSString *)tmuxCustomDirectoryParameter {
+    switch (self.mode) {
+        case iTermInitialDirectoryModeHome:
+            return nil;
+        case iTermInitialDirectoryModeCustom:
+            return [self.customDirectory stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
+        case iTermInitialDirectoryModeRecycle:
+            return @"#{pane_current_path}";
+    }
+}
+
+- (NSString *)tmuxCommandByAddingCustomDirectoryWithArgs:(NSArray *)args {
+    NSString *customDirectory = [self tmuxCustomDirectoryParameter];
+    if (customDirectory) {
+        NSString *escapedCustomDirectory= [customDirectory stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
+        NSString *customDirectoryArgument = [NSString stringWithFormat:@"-c '%@'", escapedCustomDirectory];
+        args = [args arrayByAddingObject:customDirectoryArgument];
+    }
+    
+    return [args componentsJoinedByString:@" "];
+}
+
+@end
 
 @interface TmuxController ()
 
@@ -650,25 +703,32 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 // The splitVertically parameter uses the iTerm2 conventions.
-- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically {
+- (void)splitWindowPane:(int)wp
+             vertically:(BOOL)splitVertically
+       initialDirectory:(iTermInitialDirectory *)initialDirectory {
     // No need for a callback. We should get a layout-changed message and act on it.
-    [gateway_ sendCommand:[NSString stringWithFormat:@"split-window -%@ -t %%%d", splitVertically ? @"h": @"v", wp]
+    [gateway_ sendCommand:[initialDirectory tmuxSplitWindowCommand:wp vertically:splitVertically]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
+- (void)selectPane:(int)windowPane {
+    NSString *command = [NSString stringWithFormat:@"select-pane -t %%%d", windowPane];
+    [gateway_ sendCommand:command
            responseTarget:nil
          responseSelector:nil];
 }
 
 - (void)newWindowInSession:(NSString *)targetSession
-       afterWindowWithName:(NSString *)predecessorWindow
-{
-    [gateway_ sendCommand:[NSString stringWithFormat:@"new-window -a -t \"%@:+\" -PF '#{window_id}'",
-                           [targetSession stringByEscapingQuotes]]
+          initialDirectory:(iTermInitialDirectory *)initialDirectory {
+    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandInSession:targetSession]
            responseTarget:nil
          responseSelector:nil];
 }
 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
-{
-    [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
+             initialDirectory:(iTermInitialDirectory *)initialDirectory {
+    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommand]
            responseTarget:self
          responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
            responseObject:windowIdString
@@ -1324,8 +1384,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)newWindowWithAffinityCreated:(NSString *)responseStr
-                      affinityWindow:(NSString *)affinityWindow  // Value passed in to -newWindowWithAffinity:, may be nil
-{
+                      affinityWindow:(NSString *)affinityWindow {  // Value passed in to -newWindowWithAffinity:, may be nil
     if ([responseStr hasPrefix:@"@"]) {
         NSString  *windowId = [NSString stringWithInt:[[responseStr substringFromIndex:1] intValue]];
         if (affinityWindow) {

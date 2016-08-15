@@ -1995,18 +1995,20 @@ ITERM_WEAKLY_REFERENCEABLE
     return controller;
 }
 
-- (IBAction)newTmuxWindow:(id)sender
-{
-    [[self currentTmuxController] newWindowWithAffinity:nil];
+- (IBAction)newTmuxWindow:(id)sender {
+    [[self currentTmuxController] newWindowWithAffinity:nil
+                                       initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
+                                                                                                objectType:iTermWindowObject]];
 }
 
-- (IBAction)newTmuxTab:(id)sender
-{
+- (IBAction)newTmuxTab:(id)sender {
     int tmuxWindow = [[self currentTab] tmuxWindow];
     if (tmuxWindow < 0) {
         tmuxWindow = -(number_ + 1);
     }
-    [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]];
+    [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]
+                                       initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
+                                                                                                objectType:iTermTabObject]];
 }
 
 - (NSSize)tmuxCompatibleSize {
@@ -5051,28 +5053,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
-    if ([[self currentTab] isTmuxTab]) {
-        [self willSplitTmuxPane];
-        [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
-                                                            vertically:isVertical];
-        return nil;
-    }
     return [self splitVertically:isVertical
                     withBookmark:profile
                    targetSession:[self currentSession]];
 }
 
 - (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid {
-    if ([[self currentTab] isTmuxTab]) {
-        [self willSplitTmuxPane];
-        [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
-        return nil;
-    }
-    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    if (bookmark) {
-        return [self splitVertically:isVertical
-                        withBookmark:bookmark
-                       targetSession:[self currentSession]];
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (profile) {
+        return [self splitVertically:isVertical withProfile:profile];
     } else {
         return nil;
     }
@@ -5150,7 +5139,10 @@ ITERM_WEAKLY_REFERENCEABLE
                   targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
-        [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
+        [[targetSession tmuxController] selectPane:targetSession.tmuxPane];
+        [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane]
+                                             vertically:isVertical
+                                       initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]];
         return nil;
     }
     PtyLog(@"--------- splitVertically -----------");

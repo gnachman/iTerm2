@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermInitialDirectory.h"
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
 
@@ -84,14 +85,21 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
-- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
-- (void)newWindowInSession:(NSString *)targetSession afterWindowWithName:(NSString *)predecessorWindow;
+- (void)splitWindowPane:(int)wp
+             vertically:(BOOL)splitVertically
+       initialDirectory:(iTermInitialDirectory *)initialDirectory;
+- (void)newWindowInSession:(NSString *)targetSession
+          initialDirectory:(iTermInitialDirectory *)initialDirectory;
+
+- (void)selectPane:(int)windowPane;
 
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
 // nil: Open in a new window
 // A string of a non-negative integer (e.g., @"2") means to open alongside a tmux window with that ID
 // A string of a negative integer (e.g., @"-2") means to open in an iTerm2 window with abs(windowId)==window number.
-- (void)newWindowWithAffinity:(NSString *)windowId;
+- (void)newWindowWithAffinity:(NSString *)windowId
+             initialDirectory:(iTermInitialDirectory *)initialDirectory;
+
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane
       isVertical:(BOOL)splitVertical

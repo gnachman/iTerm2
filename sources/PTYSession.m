@@ -18,6 +18,7 @@
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermHotKeyController.h"
+#import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
@@ -4087,6 +4088,9 @@ ITERM_WEAKLY_REFERENCEABLE
         _focused = focused;
         if ([_terminal reportFocus]) {
             [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
+        }
+        if (focused && [self isTmuxClient]) {
+            [_tmuxController selectPane:_tmuxPane];
         }
     }
 }
