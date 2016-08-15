@@ -290,7 +290,8 @@ static BOOL hasBecomeActive = NO;
         } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
                    ![PseudoTerminalRestorer willOpenWindows] &&
                    [[[iTermController sharedInstance] terminals] count] == 0 &&
-                   ![self isApplescriptTestApp]) {
+                   ![self isApplescriptTestApp] &&
+                   [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0) {
             [self newWindow:nil];
         }
     }
@@ -710,8 +711,7 @@ static BOOL hasBecomeActive = NO;
     return [travis isEqualToString:@"true"];
 }
 
-- (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
-{
+- (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
     if ([self isApplescriptTestApp]) {
         // Don't want to do this for applescript testing so we have a blank slate.
         return NO;
