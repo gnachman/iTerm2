@@ -4561,7 +4561,7 @@ static void SwapInt(int *a, int *b) {
 
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
     if (includeRestorationBanner) {
-        [lineBuffer appendMessage:@"Session Restored"];
+        [lineBuffer appendMessage:@"Session Contents Restored"];
     }
     [lineBuffer setMaxLines:maxScrollbackLines_];
     if (!unlimitedScrollback_) {
