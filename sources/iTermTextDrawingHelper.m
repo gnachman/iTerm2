@@ -58,6 +58,7 @@ typedef struct {
     BOOL fakeItalic;
     BOOL underline;
     NSInteger ligatureLevel;
+    BOOL drawable;
 } iTermCharacterAttributes;
 
 enum {
@@ -81,6 +82,7 @@ static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
 static NSString *const iTermImageColumnAttribute = @"iTermImageColumnAttribute";
 static NSString *const iTermImageLineAttribute = @"iTermImageLineAttribute";
 static NSString *const iTermIsBoxDrawingAttribute = @"iTermIsBoxDrawingAttribute";
+static NSString *const iTermUnderlineLengthAttribute = @"iTermUnderlineLengthAttribute";
 
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
@@ -1170,10 +1172,11 @@ typedef struct iTermTextColorContext {
                                       NSDictionary *attributes = [attributedString attributesAtIndex:range.location effectiveRange:nil];
                                       NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
                                       NSColor *color = (underline ? underline : attributes[NSForegroundColorAttributeName]);
+                                      const CGFloat width = [attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width;
                                       [self drawUnderlineOfColor:color
                                                     atCellOrigin:NSMakePoint(origin.x + stringPositions[range.location], origin.y)
                                                             font:attributes[NSFontAttributeName]
-                                                           width:stringPositions[NSMaxRange(range)] - stringPositions[range.location]];
+                                                           width:width];
                                   }
                               }];
 }
@@ -1329,7 +1332,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                           newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
                                           newAttributes->fakeItalic != previousAttributes->fakeItalic ||
-                                          newAttributes->underline != previousAttributes->underline);
+                                          newAttributes->underline != previousAttributes->underline ||
+                                          newAttributes->drawable != previousAttributes->drawable);
         }
         return *combinedAttributesChanged;
     } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {
@@ -1395,6 +1399,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     attributes->font = fontInfo.font;
     attributes->ligatureLevel = fontInfo.ligatureLevel;
     attributes->underline = (c->underline || inUnderlinedRange);
+    attributes->drawable = YES;
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
@@ -1450,7 +1455,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSTimeInterval totalBuilderTime = 0;
     iTermCharacterAttributes characterAttributes = { 0 };
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
-    NSInteger lastDrawableIndex = -1;
+    int segmentLength = 0;
 
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
@@ -1469,14 +1474,13 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                                         charAsString,
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed);
-        
         if (!drawable) {
-            if (c.code == DWC_RIGHT && !c.complexChar) {
-                lastDrawableIndex = i;
+            if (characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) {
+                ++segmentLength;
             }
+            characterAttributes.drawable = NO;
             continue;
         }
-        lastDrawableIndex = i;
         [self getAttributesForCharacter:&c
                                 atIndex:i
                          forceTextColor:forceTextColor
@@ -1500,10 +1504,17 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             
             iTermPreciseTimerStart(&buildTimer);
             NSMutableAttributedString *mutableAttributedString = builder.attributedString;
+            if (previousCharacterAttributes.underline) {
+                [mutableAttributedString addAttribute:iTermUnderlineLengthAttribute
+                                                value:@(segmentLength)
+                                                range:NSMakeRange(0, mutableAttributedString.length)];
+            }
+            segmentLength = 0;
             totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
             [attributedStrings addObject:mutableAttributedString];
             builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
         }
+        ++segmentLength;
         memcpy(&previousCharacterAttributes, &characterAttributes, sizeof(previousCharacterAttributes));
         previousImageAttributes = [[imageAttributes copy] autorelease];
         iTermPreciseTimerStatsAccumulate(&_stats[TIMER_SHOULD_SEGMENT]);
@@ -1540,13 +1551,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     if (builder.length) {
         iTermPreciseTimerStart(&buildTimer);
         NSMutableAttributedString *mutableAttributedString = builder.attributedString;
+        if (previousCharacterAttributes.underline) {
+            [mutableAttributedString addAttribute:iTermUnderlineLengthAttribute
+                                            value:@(segmentLength)
+                                            range:NSMakeRange(0, mutableAttributedString.length)];
+        }
         totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
         [attributedStrings addObject:mutableAttributedString];
     }
-    // Append one last position so we'll know where the last character in the run ends. This is
-    // needed for underlines.
-    CTVectorAppend(positions, (lastDrawableIndex - indexRange.location + 1) * _cellSize.width);
-    
     iTermPreciseTimerStatsRecord(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
                                  totalBuilderTime);
     iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
