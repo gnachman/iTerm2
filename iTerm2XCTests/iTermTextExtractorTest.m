@@ -281,8 +281,7 @@
 }
 
 - (void)testContentInRange_RemoveTabFillers {
-    // The x's will be converted into tab fillers later
-    NSString *line = @"a\t\uf001\uf001b";
+    NSString *line = @"a\uf001\uf001\tb";
     NSMutableData *data = [NSMutableData dataWithLength:(line.length + 1) * sizeof(screen_char_t)];
     
     screen_char_t color = { 0 };
@@ -298,8 +297,8 @@
                         NO);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
+    buffer[1].code = 0xf001;
     buffer[2].code = 0xf001;
-    buffer[3].code = 0xf001;
     buffer[len].code = EOL_SOFT;
 
     _lines = @[ data ];
@@ -321,7 +320,6 @@
 }
 
 - (void)testContentInRange_ConvertOrphanTabFillersToSpaces {
-    // The x's will be converted into tab fillers later
     NSString *line = @"ab\uf001\uf001c";
     NSMutableData *data = [NSMutableData dataWithLength:(line.length + 1) * sizeof(screen_char_t)];
     
@@ -357,7 +355,6 @@
                                continuationChars:nil
                                           coords:nil];
     XCTAssertEqualObjects(@"ab  c", actual);
-
 }
 
 #pragma mark - iTermTextDataSource

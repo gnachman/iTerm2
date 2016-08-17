@@ -1233,9 +1233,10 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 }
 
 - (BOOL)tabFillerAtIndex:(int)index isOrphanInLine:(screen_char_t *)line {
-    // A tab filler orphan is a tab filler that is preceded by a tab filler orphan or a
+    // A tab filler orphan is a tab filler that is followed by a tab filler orphan or a
     // non-tab character.
-    for (int i = index - 1; i >= 0; i--) {
+    int xLimit = [self xLimit];
+    for (int i = index + 1; i < xLimit; i++) {
         if (line[i].complexChar) {
             return YES;
         }
