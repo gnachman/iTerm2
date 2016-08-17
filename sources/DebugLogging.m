@@ -88,15 +88,11 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         } else {
             lastSlash++;
         }
-        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s): ",
+        NSMutableString *temp = [NSMutableString string];
+        [temp appendFormat:@"%lld.%06lld %s:%d (%s): ",
             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
-        [gDebugLogStr appendString:value];
-        [gDebugLogStr appendString:@"\n"];
-        static const NSInteger kMaxLogSize = 100000000;
-        if ([gDebugLogStr length] > kMaxLogSize) {
-            [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
-                                        withString:@"*GIANT LOG TRUNCATED*\n"];
-        }
+        [temp appendString:value];
+        NSLog(@"%@", temp);
         [gDebugLogLock unlock];
     }
     return 1;

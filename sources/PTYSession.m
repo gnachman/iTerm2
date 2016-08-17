@@ -3935,8 +3935,10 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - Captured Output
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
+    DLog(@"Add captured output %@ to session %@", capturedOutput, self);
     VT100ScreenMark *lastCommandMark = [_screen lastCommandMark];
     if (!lastCommandMark) {
+        DLog(@"Failed to find a mark!");
         // TODO: Show an announcement
         return;
     }

@@ -65,12 +65,15 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
+    DLog(@"Capture trigger fired");
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
+            DLog(@"Showing shell integration required announcement");
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];
         }
     } else if (![self capturedOutputToolVisibleInSession:aSession]) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
+            DLog(@"Showing tool not visible announcement");
             [self showCapturedOutputToolNotVisibleAnnouncementInSession:aSession];
         }
     }
