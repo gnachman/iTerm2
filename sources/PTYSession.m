@@ -456,6 +456,14 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                                                  selector:@selector(profileSessionNameDidEndEditing:)
                                                      name:kProfileSessionNameDidEndEditing
                                                    object:nil];
+        // Detach before windows get closed. That's why we have to use the
+        // iTermApplicationWillTerminate notification instead of
+        // NSApplicationWillTerminate, since this gets run before the windows
+        // are released.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationWillTerminate:)
+                                                     name:iTermApplicationWillTerminate
+                                                   object:nil];
         [self updateVariables];
     }
     return self;
@@ -3641,6 +3649,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self sanityCheck];
 }
 
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    // See comment where we observe this notification for why this is done.
+    [self tmuxDetach];
+}
+
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
 {
     if (!_exited && [self isTmuxClient]) {
@@ -4123,18 +4136,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)isTmuxClient
-{
+- (BOOL)isTmuxClient {
     return self.tmuxMode == TMUX_CLIENT;
 }
 
-- (BOOL)isTmuxGateway
-{
+- (BOOL)isTmuxGateway {
     return self.tmuxMode == TMUX_GATEWAY;
 }
 
-- (void)tmuxDetach
-{
+- (void)tmuxDetach {
     if (self.tmuxMode != TMUX_GATEWAY) {
         return;
     }

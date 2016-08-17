@@ -40,6 +40,7 @@ extern NSString *const kNonTerminalWindowBecameKeyNotification;
 extern NSString *const kMarkAlertActionModalAlert;
 extern NSString *const kMarkAlertActionPostNotification;
 extern NSString *const kShowFullscreenTabsSettingDidChange;
+extern NSString *const iTermApplicationWillTerminate;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
