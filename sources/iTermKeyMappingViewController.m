@@ -35,6 +35,8 @@
 }
 
 - (void)dealloc {
+    _tableView.delegate = nil;
+    _tableView.dataSource = nil;
     [_placeholderView release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
