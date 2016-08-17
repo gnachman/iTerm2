@@ -150,5 +150,6 @@
 + (NSString *)downloadsDirectory;
 + (double)pointSizeOfTimeStamp;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
++ (double)slowFrameRate;
 
 @end

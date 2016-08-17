@@ -3549,7 +3549,7 @@ ITERM_WEAKLY_REFERENCEABLE
             if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
                 [self setUpdateCadence:kFastUpdateCadence];
             } else {
-                [self setUpdateCadence:kActiveUpdateCadence];
+                [self setUpdateCadence:1.0 / [iTermAdvancedSettingsModel slowFrameRate]];
             }
         } else {
             [self setUpdateCadence:kActiveUpdateCadence];
