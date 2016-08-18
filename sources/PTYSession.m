@@ -1604,7 +1604,20 @@ ITERM_WEAKLY_REFERENCEABLE
         NSArray *stack = [NSThread callStackSymbols];
         DLog(@"writeTaskImpl session=%@ encoding=%@ forceEncoding=%@ canBroadcast=%@: called from %@",
              self, @(encoding), @(forceEncoding), @(canBroadcast), stack);
-        DLog(@"writeTaskImpl string=%@", string);
+        DLog(@"About to write the string...");
+        @try {
+            DLog(@"writeTaskImpl string=%@", string);
+            DLog(@"The class being pasted is %@", NSStringFromClass([string class]));
+            DLog(@"Checking if class is legit");
+            if ([string isKindOfClass:[NSString class]]) {
+                DLog(@"Seems to be a string. Converting it.");
+                NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+                DLog(@"As data: %@", data);
+            }
+        } @catch (NSException *exception) {
+            DLog(@"Caught an exception");
+            DLog(@"Exception is: %@", exception);
+        }
     }
 
     // check if we want to send this input to all the sessions

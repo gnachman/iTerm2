@@ -4748,7 +4748,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([types containsObject:NSStringPboardType]) {
         NSString *string = [pasteboard stringForType:NSStringPboardType];
+        DLog(@"Pasting from pasteboard %@", pasteboard);
+        DLog(@"The class being pasted is %@", NSStringFromClass([string class]));
+        DLog(@"Checking if class is legit");
+        if ([string isKindOfClass:[NSString class]]) {
+            DLog(@"Seems to be a string. Converting it.");
+            NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+            DLog(@"As data: %@", data);
+        }
         if (string.length) {
+            DLog(@"Calling delegate");
             [_delegate pasteString:string];
             return YES;
         }
