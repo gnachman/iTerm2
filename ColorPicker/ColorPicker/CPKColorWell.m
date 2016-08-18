@@ -271,7 +271,6 @@
                          [weakSelf.popover close];
                          [self showSystemColorPicker];
                      }];
-    self.popover.contentViewController.view.window.level = NSSubmenuWindowLevel;
     self.open = YES;
     self.popover.willClose = ^() {
         if (weakSelf.willClosePopover) {
