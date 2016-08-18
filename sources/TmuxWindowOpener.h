@@ -40,7 +40,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, retain) NSDictionary *windowOptions;
 
 + (TmuxWindowOpener *)windowOpener;
-- (void)openWindows:(BOOL)initial;
+- (BOOL)openWindows:(BOOL)initial;
 - (void)updateLayoutInTab:(PTYTab *)term;
 
 @end

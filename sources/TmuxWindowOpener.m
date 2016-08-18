@@ -82,16 +82,16 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [super dealloc];
 }
 
-- (void)openWindows:(BOOL)initial {
+- (BOOL)openWindows:(BOOL)initial {
     DLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
-        DLog(@"Bad layout");
-        return;
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Can't open window: missing layout"]];
+        return NO;
     }
     self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
     if (!self.parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
-        return;
+        return NO;
     }
     NSMutableArray *cmdList = [NSMutableArray array];
     DLog(@"Parse this tree: %@", self.parseTree);
@@ -109,6 +109,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     }
     DLog(@"Depth-first search of parse tree gives command list %@", cmdList);
     [gateway_ sendCommandList:cmdList initial:initial];
+    return YES;
 }
 
 - (void)updateLayoutInTab:(PTYTab *)tab {
@@ -257,29 +258,38 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [self requestDidComplete];
 }
 
+static BOOL IsOctalDigit(char c) {
+    return c >= '0' && c <= '7';
+}
+
+static int OctalValue(const char *bytes) {
+    int value = 0;
+    for (int i = 0; i < 3; i++) {
+        if (!IsOctalDigit(bytes[i])) {
+            return -1;
+        }
+        value *= 8;
+        value += bytes[i] - '0';
+    }
+    return value;
+}
+
 - (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp {
     const char *bytes = response.bytes;
     NSMutableData *pending = [NSMutableData data];
     for (int i = 0; i < response.length; i++) {
         char c = bytes[i];
-        if (c == '\\') {
-            if (i + 3 >= response.length) {
-                DLog(@"Bogus pending output (truncated): %@", response);
-                return;
+
+        // TODO: Fix tmux and update this code.
+        if (c == '\\' &&
+            response.length >= i + 4) {
+            // tmux has a bug where control characters get escaped but backslashes do not.
+            // Only accept octal values that are control codes to minimize the chance of problems.
+            int octalValue = OctalValue(bytes + i + 1);
+            if (octalValue >= 0 && octalValue < ' ') {
+                i += 3;
+                c = octalValue;
             }
-            i++;
-            int value = 0;
-            for (int j = 0; j < 3; j++, i++) {
-                c = bytes[i];
-                if (c < '0' || c > '7') {
-                    DLog(@"Bogus pending output (non-octal): %@", response);
-                    return;
-                }
-                value *= 8;
-                value += (c - '0');
-            }
-            i--;
-            c = value;
         }
         [pending appendBytes:&c length:1];
     }

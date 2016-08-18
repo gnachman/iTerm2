@@ -206,7 +206,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.selector = @selector(windowDidOpen:);
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
-    [windowOpener openWindows:YES];
+    if (![windowOpener openWindows:YES]) {
+        [pendingWindowOpens_ removeObject:n];
+    }
 }
 
 - (void)setLayoutInTab:(PTYTab *)tab
