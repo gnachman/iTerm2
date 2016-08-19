@@ -1593,7 +1593,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                  startPoint.y + _cellSize.height + _underlineOffset);
     [path moveToPoint:origin];
     [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
-    [path setLineWidth:font.underlineThickness];
+    [path setLineWidth:MIN(1, round(font.underlineThickness))];
     [path stroke];
 }
 
