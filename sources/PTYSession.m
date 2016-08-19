@@ -1618,6 +1618,28 @@ ITERM_WEAKLY_REFERENCEABLE
         forceEncoding:(BOOL)forceEncoding
          canBroadcast:(BOOL)canBroadcast {
     const NSStringEncoding encoding = forceEncoding ? optionalEncoding : _terminal.encoding;
+
+    NSLog(@"writeTaskImpl called");
+    @try {
+        NSLog(@"Encoding = %@", @(encoding));
+        NSLog(@"For the record, utf8 encoding is %@", @(NSUTF8StringEncoding));
+        NSLog(@"Class of string is %@", NSStringFromClass([string class]));
+        NSLog(@"Length of string is %@", @([string length]));
+        NSLog(@"Iterating over bytes of string");
+    } @catch (NSException *exception) {
+        NSLog(@"Got exception: %@", exception);
+    }
+    for (NSUInteger i = 0; i < [string length]; i++) {
+        @try {
+            unichar c = [string characterAtIndex:i];
+            NSLog(@"Character at index %@ is %@", @(i), @(c));
+        } @catch (NSException *exception) {
+            NSLog(@"Caled to get character with exception %@", exception);
+        }
+    }
+    NSLog(@"Calling dataUsingEncoding:allowLossyConversion:YES");
+    NSLog(@"Result is: %@", [string dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]);
+    
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
         DLog(@"writeTaskImpl session=%@ encoding=%@ forceEncoding=%@ canBroadcast=%@: called from %@",

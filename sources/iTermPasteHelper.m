@@ -380,6 +380,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     BOOL block = NO;
     NSRange range;
     range.location = 0;
+    NSLog(@"Pasting. Bytes per call = %@", @(_pasteContext.bytesPerCall));
     range.length = MIN(_pasteContext.bytesPerCall, [_buffer length]);
     if (range.length > 0) {
         if (_pasteContext.blockAtNewline) {
@@ -394,6 +395,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                 block = YES;
             }
         }
+        NSLog(@"Pasting range %@ of string with length %@", NSStringFromRange(range), @(_buffer.length));
         [_delegate pasteHelperWriteString:[_buffer substringWithRange:range]];
     }
     [_buffer replaceCharactersInRange:range withString:@""];
