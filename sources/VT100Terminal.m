@@ -593,6 +593,7 @@ static const int kMaxScreenRows = 4096;
                         [self saveCursor];
                         [delegate_ terminalShowAltBuffer];
                         [delegate_ terminalClearScreen];
+                        [delegate_ terminalMoveCursorToX:1 y:1];
                     } else {
                         [delegate_ terminalShowPrimaryBuffer];
                         [self restoreCursor];
