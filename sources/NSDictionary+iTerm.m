@@ -131,7 +131,7 @@ static NSString *const kHotKeyModifierActivation = @"modifier activation";
                                             green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
                                              blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
                                             alpha:alpha];
-        return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+        return srgb;
     } else {
         return [NSColor colorWithCalibratedRed:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
                                          green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]

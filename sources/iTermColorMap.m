@@ -104,7 +104,7 @@ const int kColorMapAnsiBrightModifier = 8;
         _backgroundBlue = [theColor blueComponent];
     }
 
-    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    theColor = [theColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
 
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];

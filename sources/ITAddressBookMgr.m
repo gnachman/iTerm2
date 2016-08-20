@@ -213,9 +213,6 @@ NSInteger iTermProfileJoinsAllSpaces = -1;
     return [origColor dictionaryValue];
 }
 
-// This method always returns a color in the calibrated color space. If the
-// color space in the plist is not calibrated, it is converted (which preserves
-// the actual color values).
 + (NSColor *)decodeColor:(NSDictionary*)plist {
     return [plist colorValue];
 }
