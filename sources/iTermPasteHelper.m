@@ -394,6 +394,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                 block = YES;
             }
         }
+        range = [_buffer makeRangeSafe:range];
         [_delegate pasteHelperWriteString:[_buffer substringWithRange:range]];
     }
     [_buffer replaceCharactersInRange:range withString:@""];

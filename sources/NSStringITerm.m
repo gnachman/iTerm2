@@ -1615,6 +1615,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return range.location == NSNotFound;
 }
 
+- (NSRange)makeRangeSafe:(NSRange)range {
+    if (range.location == NSNotFound || range.length == 0) {
+        return range;
+    }
+    unichar lastCharacter = [self characterAtIndex:NSMaxRange(range) - 1];
+    if (CFStringIsSurrogateHighCharacter(lastCharacter)) {
+        if (NSMaxRange(range) == self.length) {
+            range.length -= 1;
+        } else {
+            range.length += 1;
+        }
+    }
+    return range;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

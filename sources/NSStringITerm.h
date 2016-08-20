@@ -248,6 +248,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Contains only digits?
 - (BOOL)isNumeric;
 
+// Modify the range's endpoint to not sever a surrogate pair.
+- (NSRange)makeRangeSafe:(NSRange)range;
+
 @end
 
 @interface NSMutableString (iTerm)
