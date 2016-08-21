@@ -1590,11 +1590,16 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSBezierPath *path = [NSBezierPath bezierPath];
 
     NSPoint origin = NSMakePoint(startPoint.x,
-                                 startPoint.y + _cellSize.height + _underlineOffset);
+                                 startPoint.y + _cellSize.height + _underlineOffset - 0.25);
     [path moveToPoint:origin];
     [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
-    [path setLineWidth:MIN(1, round(font.underlineThickness))];
+    [path setLineWidth:MIN(0.5, [self retinaRound:font.underlineThickness])];
     [path stroke];
+}
+
+- (CGFloat)retinaRound:(CGFloat)value {
+    CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
+    return round(scaleFactor * value) / scaleFactor;
 }
 
 // origin is the first location onscreen

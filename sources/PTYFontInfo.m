@@ -79,8 +79,20 @@
     return -(floorf(font_.leading) - floorf(self.descender));
 }
 
+// From https://github.com/DrawKit/DrawKit/blob/master/framework/Code/NSBezierPath%2BText.m#L648
 - (CGFloat)computedUnderlineOffset {
-    return floorf(self.descender) - floor(font_.underlinePosition);
+    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+    NSTextContainer *textContainer = [[[NSTextContainer alloc] initWithSize:NSMakeSize(1000, 1000)] autorelease];
+    [layoutManager addTextContainer:textContainer];
+    NSDictionary *attributes = @{ NSFontNameAttribute: font_,
+                                  NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
+    NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
+    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
+    [textStorage addLayoutManager:layoutManager];
+    
+    NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];
+    return [[layoutManager typesetter] baselineOffsetInLayoutManager:layoutManager
+                                                          glyphIndex:glyphIndex] / -2.0;
 }
 
 // Issue 4294 reveals that merely upconverting the weight of a font once is not sufficient because
