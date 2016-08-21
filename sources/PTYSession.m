@@ -3269,7 +3269,6 @@ ITERM_WEAKLY_REFERENCEABLE
         VT100GridSize size = _screen.size;
         size.width++;
         _shell.size = size;
-        [NSThread sleepForTimeInterval:0.1];  // This prevents zsh from coalescing the TIOCGWINSZs
         _shell.size = _screen.size;
     }
 }

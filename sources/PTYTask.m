@@ -111,6 +111,10 @@ setup_tty_param(struct termios* term,
     BOOL _paused;
 
     int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
+    
+    VT100GridSize _desiredSize;
+    NSTimeInterval _timeOfLastSizeChange;
+    BOOL _rateLimitedSetSizeToDesiredSizePending;
 }
 
 - (instancetype)init {
@@ -806,15 +810,44 @@ static int MyForkPty(int *amaster,
 
 - (void)setSize:(VT100GridSize)size {
     PtyTaskDebugLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
-    struct winsize winsize;
     if (self.fd == -1) {
         return;
     }
 
+    _desiredSize = size;
+    [self rateLimitedSetSizeToDesiredSize];
+}
+
+- (void)rateLimitedSetSizeToDesiredSize {
+    if (_rateLimitedSetSizeToDesiredSizePending) {
+        return;
+    }
+
+    static const NSTimeInterval kDelayBetweenSizeChanges = 0.2;
+    if ([NSDate timeIntervalSinceReferenceDate] - _timeOfLastSizeChange < kDelayBetweenSizeChanges) {
+        // Avoid problems with signal coalescing of SIGWINCH preventing redraw for the second size
+        // change. For example, issue 5096 and 4494.
+        _rateLimitedSetSizeToDesiredSizePending = YES;
+        DLog(@" ** Rate limiting **");
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kDelayBetweenSizeChanges * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            _rateLimitedSetSizeToDesiredSizePending = NO;
+            [self setTerminalSizeToDesiredSize];
+        });
+    } else {
+        [self setTerminalSizeToDesiredSize];
+    }
+}
+
+- (void)setTerminalSizeToDesiredSize {
+    DLog(@"Set size of %@ to %@", _delegate, VT100GridSizeDescription(_desiredSize));
+    _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
+    
+    struct winsize winsize;
     ioctl(fd, TIOCGWINSZ, &winsize);
-    if (winsize.ws_col != size.width || winsize.ws_row != size.height) {
-        winsize.ws_col = size.width;
-        winsize.ws_row = size.height;
+    if (winsize.ws_col != _desiredSize.width || winsize.ws_row != _desiredSize.height) {
+        DLog(@"Actually setting the size");
+        winsize.ws_col = _desiredSize.width;
+        winsize.ws_row = _desiredSize.height;
         ioctl(fd, TIOCSWINSZ, &winsize);
     }
 }
