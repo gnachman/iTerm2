@@ -2592,14 +2592,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self smartSelectAtX:x y:y ignoringNewlines:NO];
 }
 
-- (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event {
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-
-    [self smartSelectAtX:x y:y ignoringNewlines:YES];
-}
-
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
                         ignoringNewlines:(BOOL)ignoringNewlines {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
