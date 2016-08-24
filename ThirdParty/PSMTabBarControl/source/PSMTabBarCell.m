@@ -328,7 +328,7 @@
         // TODO: This image is missing!
         NSImage *piImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"pi"]];
         [returnImage lockFocus];
-        NSPoint indicatorPoint = NSMakePoint([self frame].size.width - kSPMTabBarCellInternalXMargin - kPSMTabBarIndicatorWidth, kSPMTabBarCellInternalYMargin);
+        NSPoint indicatorPoint = self.indicator.frame.origin;
         [piImage drawAtPoint:indicatorPoint
                     fromRect:NSZeroRect
                    operation:NSCompositeSourceOver

@@ -13,7 +13,6 @@
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
-static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 
 @interface NSAttributedString(PSM)
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
@@ -190,7 +189,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = [_closeButton size];
     result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -214,7 +213,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin - 1.0;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -234,7 +233,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -255,7 +254,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(countWidth, 2 * kPSMMetalObjectCounterRadius); // temp
     result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - result.size.width;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -394,11 +393,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 #pragma mark - Drawing
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    if (selected) {
-        return [_tabBar.window backgroundColor];
-    } else {
-        return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
-    }
+    return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
 }
 
 - (NSColor *)verticalLineColor {
@@ -631,16 +626,17 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
             labelRect.size.width -= cell.indicator.frame.size.width + kPSMTabBarCellIconPadding;
         }
         labelRect.size.height = cellFrame.size.height;
-        NSFont *font = [[attributedString fontAttributesInRange:NSMakeRange(0, 1)] objectForKey:NSFontAttributeName];
-        labelRect.origin.y = cellFrame.origin.y + kPSMTabBarCellBaselineOffset - font.ascender;
 
         if ([cell count] > 0) {
             labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
         }
 
+        NSSize boundingRect = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+        labelRect.origin.y = floor((cellFrame.size.height - boundingRect.height) / 2.0);
+        labelRect.size.height = boundingRect.height;
+
         if (_orientation == PSMTabBarHorizontalOrientation) {
-            NSSize size = [attributedString boundingRectWithSize:labelRect.size options:0].size;
-            CGFloat effectiveLeftMargin = (labelRect.size.width - size.width) / 2;
+            CGFloat effectiveLeftMargin = (labelRect.size.width - boundingRect.width) / 2;
             if (effectiveLeftMargin < reservedSpace) {
                 attributedString = [attributedString attributedStringWithTextAlignment:NSLeftTextAlignment];
 
