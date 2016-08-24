@@ -20,9 +20,8 @@ NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotificat
 NSString *const kPSMTabModifierKey = @"TabModifier";
 NSString *const PSMTabDragDidEndNotification = @"PSMTabDragDidEndNotification";
 NSString *const PSMTabDragDidBeginNotification = @"PSMTabDragDidBeginNotification";
-const CGFloat kPSMTabBarControlHeight = 22;
+const CGFloat kPSMTabBarControlHeight = 24;
 const CGFloat kSPMTabBarCellInternalXMargin = 6;
-const CGFloat kSPMTabBarCellInternalYMargin = 3.5;
 
 const CGFloat kPSMTabBarCellPadding = 4;
 const CGFloat kPSMTabBarCellIconPadding = 0;
@@ -1021,7 +1020,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
         cellRect.size = [_addTabButton frame].size;
 
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
-            cellRect.origin.y = kSPMTabBarCellInternalYMargin;
+            cellRect.origin.y = 0;
             cellRect.origin.x += [[newWidths valueForKeyPath:@"@sum.floatValue"] floatValue] + 2;
         } else {
             cellRect.origin.x = 0;

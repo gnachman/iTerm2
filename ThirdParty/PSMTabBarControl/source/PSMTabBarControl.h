@@ -19,7 +19,6 @@ extern const CGFloat kPSMTabBarControlHeight;
 
 // internal cell border
 extern const CGFloat kSPMTabBarCellInternalXMargin;
-extern const CGFloat kSPMTabBarCellInternalYMargin;
 
 // padding between objects
 extern const CGFloat kPSMTabBarCellPadding;

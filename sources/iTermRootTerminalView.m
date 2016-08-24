@@ -16,7 +16,7 @@
 #import "iTermToolbeltView.h"
 #import "PTYTabView.h"
 
-const CGFloat kHorizontalTabBarHeight = 22;
+const CGFloat kHorizontalTabBarHeight = 24;
 const CGFloat kDivisionViewHeight = 1;
 
 static const CGFloat kMinimumToolbeltSizeInPoints = 100;
