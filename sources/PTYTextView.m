@@ -2685,6 +2685,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
         [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
+        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+            [self copySelectionAccordingToUserPreferences];
+        }
     }
 }
 
