@@ -608,8 +608,8 @@
         NSRect counterStringRect;
         NSAttributedString *counterString = [self attributedObjectCountValueForTabCell:cell];
         counterStringRect.size = [counterString size];
-        counterStringRect.origin.x = myRect.origin.x + ((myRect.size.width - counterStringRect.size.width) / 2.0) + 0.25;
-        counterStringRect.origin.y = myRect.origin.y + ((myRect.size.height - counterStringRect.size.height) / 2.0) + 0.5;
+        counterStringRect.origin.x = myRect.origin.x + floor((myRect.size.width - counterStringRect.size.width) / 2.0);
+        counterStringRect.origin.y = myRect.origin.y + floor((myRect.size.height - counterStringRect.size.height) / 2.0);
         [counterString drawInRect:counterStringRect];
     }
 
