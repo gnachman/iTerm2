@@ -393,19 +393,19 @@
 #pragma mark - Drawing
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+    if (selected) {
+        return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
+    } else {
+        return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+    }
 }
 
 - (NSColor *)verticalLineColor {
-    return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+    return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (selected) {
-        return [NSColor colorWithSRGBRed:182/255.0 green:180/255.0 blue:182/255.0 alpha:1];
-    } else {
-        return [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
-    }
+    return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
@@ -417,12 +417,11 @@
         }
     } else {
         if ([self isYosemiteOrLater]) {
-            CGFloat value = 196/255.0 - highlightAmount * 0.1;
+            CGFloat value = 190/255.0 - highlightAmount * 0.048;
             return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-            return [NSColor redColor];
         } else {
             // 10.9 and earlier needs a darker color to look good
-            CGFloat value = 0.6 - highlightAmount * 0.1;
+            CGFloat value = 0.6 - highlightAmount * 0.048;
             return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
         }
     }
