@@ -647,12 +647,12 @@
             labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
         }
 
-        NSSize boundingRect = [attributedString boundingRectWithSize:labelRect.size options:0].size;
-        labelRect.origin.y = floor((cellFrame.size.height - boundingRect.height) / 2.0);
-        labelRect.size.height = boundingRect.height;
+        NSSize boundingSize = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+        labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0);
+        labelRect.size.height = boundingSize.height;
 
         if (_orientation == PSMTabBarHorizontalOrientation) {
-            CGFloat effectiveLeftMargin = (labelRect.size.width - boundingRect.width) / 2;
+            CGFloat effectiveLeftMargin = (labelRect.size.width - boundingSize.width) / 2;
             if (effectiveLeftMargin < reservedSpace) {
                 attributedString = [attributedString attributedStringWithTextAlignment:NSLeftTextAlignment];
 
