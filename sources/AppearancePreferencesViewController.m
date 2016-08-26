@@ -48,6 +48,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
     IBOutlet NSButton *_showTabBarInFullscreen;
 
+    IBOutlet NSButton *_stretchTabsToFillBar;
+
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
 
@@ -167,11 +169,17 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         [[NSNotificationCenter defaultCenter] postNotificationName:kShowFullscreenTabsSettingDidChange
                                                             object:nil];
     };
+
     // There's a menu item to change this setting. We want the control to reflect it.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(showFullscreenTabsSettingDidChange:)
                                                  name:kShowFullscreenTabsSettingDidChange
                                                object:nil];
+
+    info = [self defineControl:_stretchTabsToFillBar
+                           key:kPreferenceKeyStretchTabsToFillBar
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber

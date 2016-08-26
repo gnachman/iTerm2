@@ -16,7 +16,7 @@
 #import "iTermToolbeltView.h"
 #import "PTYTabView.h"
 
-const CGFloat kHorizontalTabBarHeight = 22;
+const CGFloat kHorizontalTabBarHeight = 24;
 const CGFloat kDivisionViewHeight = 1;
 
 static const CGFloat kMinimumToolbeltSizeInPoints = 100;
@@ -421,6 +421,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
     }
     [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
+    [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
     [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
     self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
     

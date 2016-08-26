@@ -13,7 +13,6 @@
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
-static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 
 @interface NSAttributedString(PSM)
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
@@ -191,7 +190,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = [_closeButton size];
     result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -215,7 +214,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin - 1.0;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -235,7 +234,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -256,7 +255,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(countWidth, 2 * kPSMMetalObjectCounterRadius); // temp
     result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - result.size.width;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -411,22 +410,18 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
     if (selected) {
-        return [_tabBar.window backgroundColor];
+        return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
     } else {
-        return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+        return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
     }
 }
 
 - (NSColor *)verticalLineColor {
-    return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+    return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (selected) {
-        return [NSColor colorWithSRGBRed:182/255.0 green:180/255.0 blue:182/255.0 alpha:1];
-    } else {
-        return [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
-    }
+    return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
@@ -438,12 +433,11 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         }
     } else {
         if ([self isYosemiteOrLater]) {
-            CGFloat value = 196/255.0 - highlightAmount * 0.1;
+            CGFloat value = 190/255.0 - highlightAmount * 0.048;
             return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-            return [NSColor redColor];
         } else {
             // 10.9 and earlier needs a darker color to look good
-            CGFloat value = 0.6 - highlightAmount * 0.1;
+            CGFloat value = 0.6 - highlightAmount * 0.048;
             return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
         }
     }
@@ -629,8 +623,8 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         NSRect counterStringRect;
         NSAttributedString *counterString = [self attributedObjectCountValueForTabCell:cell];
         counterStringRect.size = [counterString size];
-        counterStringRect.origin.x = myRect.origin.x + ((myRect.size.width - counterStringRect.size.width) / 2.0) + 0.25;
-        counterStringRect.origin.y = myRect.origin.y + ((myRect.size.height - counterStringRect.size.height) / 2.0) + 0.5;
+        counterStringRect.origin.x = myRect.origin.x + floor((myRect.size.width - counterStringRect.size.width) / 2.0);
+        counterStringRect.origin.y = myRect.origin.y + floor((myRect.size.height - counterStringRect.size.height) / 2.0);
         [counterString drawInRect:counterStringRect];
     }
 
@@ -647,16 +641,17 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
             labelRect.size.width -= cell.indicator.frame.size.width + kPSMTabBarCellIconPadding;
         }
         labelRect.size.height = cellFrame.size.height;
-        NSFont *font = [[attributedString fontAttributesInRange:NSMakeRange(0, 1)] objectForKey:NSFontAttributeName];
-        labelRect.origin.y = cellFrame.origin.y + kPSMTabBarCellBaselineOffset - font.ascender;
 
         if ([cell count] > 0) {
             labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
         }
 
+        NSSize boundingSize = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+        labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0);
+        labelRect.size.height = boundingSize.height;
+
         if (_orientation == PSMTabBarHorizontalOrientation) {
-            NSSize size = [attributedString boundingRectWithSize:labelRect.size options:0].size;
-            CGFloat effectiveLeftMargin = (labelRect.size.width - size.width) / 2;
+            CGFloat effectiveLeftMargin = (labelRect.size.width - boundingSize.width) / 2;
             if (effectiveLeftMargin < reservedSpace) {
                 attributedString = [attributedString attributedStringWithTextAlignment:NSLeftTextAlignment];
 

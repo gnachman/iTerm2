@@ -64,7 +64,7 @@
 }
 
 - (CGFloat)fontSize {
-  return 12.0;
+    return 12.0;
 }
 
 @end
