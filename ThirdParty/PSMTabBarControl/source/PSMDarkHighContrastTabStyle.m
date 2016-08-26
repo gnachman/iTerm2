@@ -31,4 +31,8 @@
   return [NSColor colorWithCalibratedWhite:value alpha:1.00];
 }
 
+- (CGFloat)fontSize {
+    return 12.0;
+}
+
 @end
