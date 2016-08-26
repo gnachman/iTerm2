@@ -335,6 +335,11 @@ const NSInteger kPSMStartResizeAnimation = 0;
     [self update:_automaticallyAnimates];
 }
 
+- (void)setStretchCellsToFit:(BOOL)value {
+    _stretchCellsToFit = value;
+    [self update:_automaticallyAnimates];
+}
+
 - (void)setUseOverflowMenu:(BOOL)value {
     _useOverflowMenu = value;
     [self update];
@@ -743,167 +748,67 @@ const NSInteger kPSMStartResizeAnimation = 0;
     [self _removeCellTrackingRects];
 
     // calculate number of cells to fit in control and cell widths
-    int i, cellCount = [_cells count];
-    float availableWidth = [self availableCellWidth], currentOrigin = 0;
+    NSInteger cellCount = [_cells count];
+    CGFloat availableWidth = [self availableCellWidth];
     NSMutableArray *newWidths = [NSMutableArray arrayWithCapacity:cellCount];
-    int numberOfVisibleCells = ([self orientation] == PSMTabBarHorizontalOrientation) ? 1 : 0;
-    float totalOccupiedWidth = 0.0;
-    NSRect cellRect = [self genericCellRect];
-
-    if ([self orientation] == PSMTabBarVerticalOrientation) {
-        currentOrigin = [[self style] topMarginForTabBarControl];
-    }
 
     NSLineBreakMode truncationStyle = [self truncationStyle];
-    
-    for (i = 0; i < cellCount; i++) {
+
+    for (int i = 0; i < cellCount; ++i) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
         cell.truncationStyle = truncationStyle;
         cell.hasCloseButton = _hasCloseButton;
         [cell updateForStyle];
-        float width;
 
         // suppress close button?
         cell.isCloseButtonSuppressed = [self disableTabClose];
+    }
 
-        if ([self orientation] == PSMTabBarHorizontalOrientation) {
-            // Determine cell width
-            if (_sizeCellsToFit) {
-                width = MAX(_cellMinWidth, [cell desiredWidthOfCell]);
-                if (width > _cellMaxWidth) {
-                    width = _cellMaxWidth;
-                }
-            } else {
-                width = _cellOptimumWidth;
+    if ([self orientation] == PSMTabBarHorizontalOrientation) {
+        CGFloat totalDesiredWidth = 0.0;
+        CGFloat desiredWidths[cellCount];
+
+        for (int i = 0; i < cellCount; ++i) {
+            PSMTabBarCell *cell = [_cells objectAtIndex:i];
+            CGFloat width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
+            desiredWidths[i] = width;
+            totalDesiredWidth += width;
+        }
+
+        BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount <= availableWidth);
+        BOOL canFitAllCellsOptimally = (self.cellOptimumWidth * cellCount <= availableWidth);
+        BOOL canFitAllCellsDesirably = (totalDesiredWidth <= availableWidth);
+
+        if (self.sizeCellsToFit && canFitAllCellsDesirably) {
+            for (int i = 0; i < cellCount; ++i) {
+                [newWidths addObject:[NSNumber numberWithFloat:desiredWidths[i]]];
             }
-
-            //check to see if there is not enough space to place all tabs as preferred
-            totalOccupiedWidth += width;
-            if (totalOccupiedWidth >= availableWidth) {
-                //if we're not going to use the overflow menu, cram all the tab cells into the bar
-                if (!_useOverflowMenu) {
-                    int j, averageWidth = (availableWidth / cellCount);
-
-                    [newWidths removeAllObjects];
-
-                    for (j = 0; j < cellCount; j++) {
-                        float desiredWidth = [[_cells objectAtIndex:j] desiredWidthOfCell];
-                        [newWidths addObject:[NSNumber numberWithFloat:(desiredWidth < averageWidth && [self sizeCellsToFit]) ? desiredWidth : averageWidth]];
-                    }
-                    break;
-                }
-
-                numberOfVisibleCells = i;
-                if (_sizeCellsToFit) {
-                    int neededWidth = width - (totalOccupiedWidth - availableWidth); //the amount of space needed to fit the next cell in
-                    // can I squeeze it in without violating min cell width?
-                    int widthIfAllMin = (numberOfVisibleCells + 1) * _cellMinWidth;
-
-                    if ((width + widthIfAllMin) <= availableWidth) {
-                        // squeeze - distribute needed sacrifice among all cells
-                        int q;
-                        for (q = (i - 1); q >= 0; q--) {
-                            int desiredReduction = (int)neededWidth / (q + 1);
-                            if (([[newWidths objectAtIndex:q] floatValue] - desiredReduction) < _cellMinWidth) {
-                                int actualReduction = (int)[[newWidths objectAtIndex:q] floatValue] - _cellMinWidth;
-                                [newWidths replaceObjectAtIndex:q withObject:[NSNumber numberWithFloat:_cellMinWidth]];
-                                neededWidth -= actualReduction;
-                            } else {
-                                int newCellWidth = (int)[[newWidths objectAtIndex:q] floatValue] - desiredReduction;
-                                [newWidths replaceObjectAtIndex:q withObject:[NSNumber numberWithFloat:newCellWidth]];
-                                neededWidth -= desiredReduction;
-                            }
-                        }
-
-                        int totalWidth = [[newWidths valueForKeyPath:@"@sum.intValue"] intValue];
-                        int thisWidth = width - neededWidth; //width the last cell would want
-
-                        //append a final cell if there is enough room, otherwise stretch all the cells out to fully fit the bar
-                        if (availableWidth - totalWidth > thisWidth) {
-                            [newWidths addObject:[NSNumber numberWithFloat:thisWidth]];
-                            numberOfVisibleCells++;
-                            totalWidth += thisWidth;
-                        }
-
-                        if (totalWidth < availableWidth) {
-                            int leftoverWidth = availableWidth - totalWidth;
-                            int q2;
-
-                            for (q2 = i - 1; q2 >= 0; q2--) {
-                                int desiredAddition = (int)leftoverWidth / (q2 + 1);
-                                int newCellWidth = (int)[[newWidths objectAtIndex:q2] floatValue] + desiredAddition;
-                                [newWidths replaceObjectAtIndex:q2 withObject:[NSNumber numberWithFloat:newCellWidth]];
-                                leftoverWidth -= desiredAddition;
-                            }
-                        }
-                    } else {
-                        // stretch - distribute leftover room among cells
-                        int leftoverWidth = availableWidth - totalOccupiedWidth + width;
-                        int q;
-
-                        for (q = i - 1; q >= 0; q--) {
-                            int desiredAddition = (int)leftoverWidth / (q + 1);
-                            int newCellWidth = (int)[[newWidths objectAtIndex:q] floatValue] + desiredAddition;
-                            [newWidths replaceObjectAtIndex:q withObject:[NSNumber numberWithFloat:newCellWidth]];
-                            leftoverWidth -= desiredAddition;
-                        }
-                    }
-
-                    //make sure there are at least two items in the tab bar
-                    if (numberOfVisibleCells < 2 && [_cells count] > 1) {
-                        PSMTabBarCell *cell1 = [_cells objectAtIndex:0], *cell2 = [_cells objectAtIndex:1];
-                        NSNumber *cellWidth;
-
-                        [newWidths removeAllObjects];
-                        totalOccupiedWidth = 0;
-
-                        cellWidth = [NSNumber numberWithFloat:[cell1 desiredWidthOfCell] < availableWidth * 0.5f ? [cell1 desiredWidthOfCell] : availableWidth * 0.5f];
-                        [newWidths addObject:cellWidth];
-                        totalOccupiedWidth += [cellWidth floatValue];
-
-                        cellWidth = [NSNumber numberWithFloat:[cell2 desiredWidthOfCell] < (availableWidth - totalOccupiedWidth) ? [cell2 desiredWidthOfCell] : (availableWidth - totalOccupiedWidth)];
-                        [newWidths addObject:cellWidth];
-                        totalOccupiedWidth += [cellWidth floatValue];
-
-                        if (totalOccupiedWidth < availableWidth) {
-                            [newWidths replaceObjectAtIndex:0 withObject:[NSNumber numberWithFloat:availableWidth - [cellWidth floatValue]]];
-                        }
-                    }
-
-                    break; // done assigning widths; remaining cells go in overflow menu
-                } else {
-                    int revisedWidth = availableWidth / (i + 1);
-                    if (revisedWidth >= _cellMinWidth) {
-                        int q;
-                        totalOccupiedWidth = 0;
-                        for (q = 0; q < [newWidths count]; q++) {
-                            [newWidths replaceObjectAtIndex:q withObject:[NSNumber numberWithFloat:revisedWidth]];
-                            totalOccupiedWidth += revisedWidth;
-                        }
-                        // just squeezed this one in...
-                        [newWidths addObject:[NSNumber numberWithFloat:revisedWidth]];
-                        totalOccupiedWidth += revisedWidth;
-                        numberOfVisibleCells++;
-                    } else {
-                        // couldn't fit that last one...
-                        break;
-                    }
-                }
-            } else {
-                numberOfVisibleCells = cellCount;
-                [newWidths addObject:[NSNumber numberWithFloat:width]];
+        } else if (!self.stretchCellsToFit && canFitAllCellsOptimally) {
+            for (int i = 0; i < cellCount; ++i) {
+                [newWidths addObject:[NSNumber numberWithFloat:_cellOptimumWidth]];
             }
         } else {
+            CGFloat widthRemaining = availableWidth;
+            NSInteger count = (canFitAllCellsMinimally) ? cellCount : availableWidth / _cellMinWidth;
+            for (int i = 0; i < count; ++i) {
+                CGFloat width = floor(widthRemaining / (count - i));
+                [newWidths addObject:[NSNumber numberWithFloat:width]];
+                widthRemaining -= width;
+            }
+        }
+    } else {
+        CGFloat currentOrigin = [[self style] topMarginForTabBarControl];
+        NSRect cellRect = [self genericCellRect];
+
+        for (int i = 0; i < cellCount; ++i) {
             //lay out vertical tabs
             if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
                 [newWidths addObject:[NSNumber numberWithFloat:currentOrigin]];
-                numberOfVisibleCells++;
                 currentOrigin += cellRect.size.height;
             } else {
                 //out of room, the remaining tabs go into overflow
                 if ([newWidths count] > 0 && [self frame].size.height - currentOrigin < 17) {
                     [newWidths removeLastObject];
-                    numberOfVisibleCells--;
                 }
                 break;
             }
@@ -1849,6 +1754,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
         [aCoder encodeBool:_selectsTabsOnMouseDown forKey:@"PSMselectsTabsOnMouseDown"];
         [aCoder encodeBool:_showAddTabButton forKey:@"PSMshowAddTabButton"];
         [aCoder encodeBool:_sizeCellsToFit forKey:@"PSMsizeCellsToFit"];
+        [aCoder encodeBool:_stretchCellsToFit forKey:@"PSMstretchCellsToFit"];
         [aCoder encodeInt:_cellMinWidth forKey:@"PSMcellMinWidth"];
         [aCoder encodeInt:_cellMaxWidth forKey:@"PSMcellMaxWidth"];
         [aCoder encodeInt:_cellOptimumWidth forKey:@"PSMcellOptimumWidth"];
@@ -1884,6 +1790,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
             _selectsTabsOnMouseDown = [aDecoder decodeBoolForKey:@"PSMselectsTabsOnMouseDown"];
             _showAddTabButton = [aDecoder decodeBoolForKey:@"PSMshowAddTabButton"];
             _sizeCellsToFit = [aDecoder decodeBoolForKey:@"PSMsizeCellsToFit"];
+            _stretchCellsToFit = [aDecoder decodeBoolForKey:@"PSMstretchCellsToFit"];
             _cellMinWidth = [aDecoder decodeIntForKey:@"PSMcellMinWidth"];
             _cellMaxWidth = [aDecoder decodeIntForKey:@"PSMcellMaxWidth"];
             _cellOptimumWidth = [aDecoder decodeIntForKey:@"PSMcellOptimumWidth"];
