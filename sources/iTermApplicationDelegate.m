@@ -101,6 +101,7 @@ static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorab
 static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
+NSString *const iTermApplicationWillTerminate = @"iTermApplicationWillTerminate";
 
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
@@ -614,6 +615,9 @@ static BOOL hasBecomeActive = NO;
         // If jobs aren't run in servers, they'll just die normally.
         [[iTermController sharedInstance] killRestorableSessions];
     }
+
+    // Last chance before windows get closed.
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillTerminate object:nil];
 
     // This causes all windows to be closed and all sessions to be terminated.
     [iTermController releaseSharedInstance];

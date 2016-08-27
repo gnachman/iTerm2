@@ -117,6 +117,9 @@ extern const NSInteger kUnlimitedMaximumWordLength;
 //
 // If |coords| is non-nil it will be filled with NSValue*s in 1:1 correspondence with characters in
 // the return value, giving VT100GridCoord's with their provenance.
+//
+// if |maxBytes| is positive then the result will not exceed that size. |truncateTail| determines
+// whether the tail or head of the string is shortened to fit.
 - (id)contentInRange:(VT100GridWindowedRange)range
    attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
@@ -124,6 +127,7 @@ extern const NSInteger kUnlimitedMaximumWordLength;
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
+        truncateTail:(BOOL)truncateTail
          continuationChars:(NSMutableIndexSet *)continuationChars
               coords:(NSMutableArray *)coords;
 
@@ -152,6 +156,20 @@ extern const NSInteger kUnlimitedMaximumWordLength;
 
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
+
+typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
+    // Do not trim any trailing whitespace.
+    iTermTextExtractorTrimTrailingWhitespaceNone,
+
+    // Trim all trailing whitespace.
+    iTermTextExtractorTrimTrailingWhitespaceAll,
+
+    // Trim only the trailing newline and whitespace just before it on the last line.
+    iTermTextExtractorTrimTrailingWhitespaceOneLine
+};
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range
+                                                     leading:(BOOL)leading
+                                                    trailing:(iTermTextExtractorTrimTrailingWhitespace)trailing;
 
 // Checks if two coordinates are equal. Either they are the same coordinate or they are adjacent
 // on the same DWC.

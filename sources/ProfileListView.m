@@ -178,11 +178,18 @@ const CGFloat kDefaultTagsWidth = 80;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [dataSource_ release];
     [selectedGuids_ release];
+    // These if statements are pure paranoia because this thing gets used all
+    // over the place and is pretty old.
+    if (tableView_.delegate == self) {
+        tableView_.delegate = nil;
+    }
+    if (tableView_.dataSource == self) {
+        tableView_.dataSource = nil;
+    }
     [super dealloc];
 }
 
@@ -780,6 +787,9 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
     if (commandSelector == @selector(cancelOperation:)) {
+        if (searchField_.stringValue.length == 0) {
+            return NO;
+        }
         searchField_.stringValue = @"";
         dataSource_.lockedGuid = nil;
         [self updateResultsForSearch];

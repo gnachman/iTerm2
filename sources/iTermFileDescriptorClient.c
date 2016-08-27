@@ -18,7 +18,8 @@
 static ssize_t ReceiveMessageAndFileDescriptor(int fd,
                                                void *buffer,
                                                size_t bufferCapacity,
-                                               int *receivedFileDescriptorPtr) {
+                                               int *receivedFileDescriptorPtr,
+                                               int deadMansPipeReadEnd) {
     // Loop because sometimes the dynamic loader spews warnings (for example, when malloc logging
     // is enabled)
     while (1) {
@@ -42,6 +43,17 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
         do {
             // There used to be a race condition where the server would die
             // really early and then we'd get stuck in recvmsg. See issue 4383.
+            if (deadMansPipeReadEnd >= 0) {
+                syslog(LOG_NOTICE, "Calling select...");
+                int fds[2] = { fd, deadMansPipeReadEnd };
+                int readable[2];
+                iTermSelect(fds, 2, readable);
+                if (readable[1]) {
+                    syslog(LOG_NOTICE, "Server was dead before recevmsg. Did the shell terminate immediately?");
+                    return -1;
+                }
+                syslog(LOG_NOTICE, "assuming socket is readable");
+            }
             syslog(LOG_NOTICE, "calling recvmsg...");
             n = recvmsg(fd, &message, 0);
             syslog(LOG_NOTICE, "recvmsg returned %zd, errno=%s\n", n, (n < 0 ? strerror(errno) : "n/a"));
@@ -132,7 +144,7 @@ iTermFileDescriptorServerConnection iTermFileDescriptorClientRun(pid_t pid) {
         return result;
     }
 
-    iTermFileDescriptorServerConnection result = iTermFileDescriptorClientRead(socketFd);
+    iTermFileDescriptorServerConnection result = iTermFileDescriptorClientRead(socketFd, -1);
     result.serverPid = pid;
     syslog(LOG_NOTICE, "Success: process id is %d, pty master fd is %d\n\n",
            (int)pid, result.ptyMasterFd);
@@ -140,12 +152,13 @@ iTermFileDescriptorServerConnection iTermFileDescriptorClientRun(pid_t pid) {
     return result;
 }
 
-iTermFileDescriptorServerConnection iTermFileDescriptorClientRead(int socketFd) {
+iTermFileDescriptorServerConnection iTermFileDescriptorClientRead(int socketFd, int deadMansPipeReadEnd) {
     iTermFileDescriptorServerConnection result = { 0 };
     int rc = ReceiveMessageAndFileDescriptor(socketFd,
                                              &result.childPid,
                                              sizeof(result.childPid),
-                                             &result.ptyMasterFd);
+                                             &result.ptyMasterFd,
+                                             deadMansPipeReadEnd);
     if (rc == -1 || result.ptyMasterFd == -1) {
         result.error = "Failed to read message from server";
         close(socketFd);

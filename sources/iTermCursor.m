@@ -191,7 +191,7 @@
         CGFloat b = [self farthestValueFromAnyValueIn:constraints];
         bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
     }
-    return bgColor;
+    return [self.delegate cursorColorByDimmingSmartColor:bgColor];
 }
 
 // Return the value in 'values' closest to target.

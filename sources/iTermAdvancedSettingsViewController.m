@@ -224,6 +224,11 @@ static NSDictionary *gIntrospection;
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_filteredAdvancedSettings release];
+    // For reasons I don't understand the tableview outlives this view by a small amount.
+    // To reproduce, select a row in advanced prefs. Switch to the profiles tab. Press esc to close
+    // the prefs window. Doesn't reproduce all the time.
+    _tableView.delegate = nil;
+    _tableView.dataSource = nil;
     [super dealloc];
 }
 

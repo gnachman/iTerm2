@@ -10,6 +10,7 @@
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import "iTermTextExtractor.h"
+#import "NSStringITerm.h"
 #import "ScreenChar.h"
 #import "SmartSelectionController.h"
 #import <OCHamcrest/OCHamcrest.h>
@@ -23,7 +24,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 @implementation iTermTextExtractorTest {
     screen_char_t *_buffer;
-    NSArray<NSString *> *_lines;
+    NSArray *_lines;  // Contains either NSString* or NSData*.
 }
 
 - (void)tearDown {
@@ -235,14 +236,60 @@ static const NSInteger kUnicodeVersion = 9;
   XCTAssertEqual(actual.end.y, expected.end.y);
 }
 
+- (void)testContentInRange_TruncateHeadAndTail {
+    // Make a big array like
+    // abc
+    // ***
+    // ... repeats many times ...
+    // ***
+    // xyz
+    NSMutableArray *temp = [NSMutableArray array];
+    NSUInteger length = 0;
+    [temp addObject:@"abc"];
+    while (length < 1024*200) {
+        [temp addObject:@"***"];
+        length += 3;
+    }
+    [temp addObject:@"xyz"];
+    _lines = temp;
 
-#pragma mark - iTermTextDataSource
+    // Extract the whole range but truncate it 3 bytes at the head.
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 3, _lines.count), 0, 0);
+    NSString *actual = [extractor contentInRange:range
+                               attributeProvider:nil
+                                      nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                             pad:NO
+                              includeLastNewline:NO
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:3
+                                    truncateTail:NO
+                               continuationChars:nil
+                                          coords:nil];
+    XCTAssertEqualObjects(@"xyz", actual);
 
-- (int)lengthOfLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
+    // Same thing but truncate to 3 bytes at the tail.
+    actual = [extractor contentInRange:range
+                     attributeProvider:nil
+                            nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                   pad:NO
+                    includeLastNewline:NO
+                trimTrailingWhitespace:NO
+                          cappedAtSize:3
+                          truncateTail:YES
+                     continuationChars:nil
+                                coords:nil];
+    XCTAssertEqualObjects(@"abc", actual);
+}
+
+- (void)testContentInRange_RemoveTabFillers {
+    NSString *line = @"a\uf001\uf001\tb";
+    NSMutableData *data = [NSMutableData dataWithLength:(line.length + 1) * sizeof(screen_char_t)];
+    
     screen_char_t color = { 0 };
     int len = 0;
-    StringToScreenChars(_lines[0],
-                        buffer,
+    StringToScreenChars(line,
+                        data.mutableBytes,
                         color,
                         color,
                         &len,
@@ -251,13 +298,102 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion);
-    return len;
+    screen_char_t *buffer = data.mutableBytes;
+    // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
+    buffer[1].code = 0xf001;
+    buffer[2].code = 0xf001;
+    buffer[len].code = EOL_SOFT;
+
+    _lines = @[ data ];
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 5, 1), 0, 0);
+    NSString *actual = [extractor contentInRange:range
+                               attributeProvider:nil
+                                      nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                             pad:NO
+                              includeLastNewline:NO
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:-1
+                                    truncateTail:NO
+                               continuationChars:nil
+                                          coords:nil];
+    XCTAssertEqualObjects(@"a\tb", actual);
+
+}
+
+- (void)testContentInRange_ConvertOrphanTabFillersToSpaces {
+    NSString *line = @"ab\uf001\uf001c";
+    NSMutableData *data = [NSMutableData dataWithLength:(line.length + 1) * sizeof(screen_char_t)];
+    
+    screen_char_t color = { 0 };
+    int len = 0;
+    StringToScreenChars(line,
+                        data.mutableBytes,
+                        color,
+                        color,
+                        &len,
+                        NO,
+                        NULL,
+                        NULL,
+                        NO);
+    screen_char_t *buffer = data.mutableBytes;
+    // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
+    buffer[2].code = 0xf001;
+    buffer[3].code = 0xf001;
+    buffer[len].code = EOL_SOFT;
+
+    _lines = @[ data ];
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 5, 1), 0, 0);
+    NSString *actual = [extractor contentInRange:range
+                               attributeProvider:nil
+                                      nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                             pad:NO
+                              includeLastNewline:NO
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:-1
+                                    truncateTail:NO
+                               continuationChars:nil
+                                          coords:nil];
+    XCTAssertEqualObjects(@"ab  c", actual);
+}
+
+#pragma mark - iTermTextDataSource
+
+- (int)lengthOfLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
+    if ([_lines[0] isKindOfClass:[NSData class]]) {
+        NSData *data = _lines[0];
+        int length = (data.length / sizeof(screen_char_t)) - 1;
+        memmove(buffer, data.bytes, length * sizeof(screen_char_t));
+        return length;
+    } else {
+        screen_char_t color = { 0 };
+        int len = 0;
+        StringToScreenChars(_lines[0],
+                            buffer,
+                            color,
+                            color,
+                            &len,
+                            NO,
+                            NULL,
+                            NULL,
+                            NO,
+                            kUnicodeVersion);
+        return len;
+    }
 }
 
 - (int)width {
-    assert([_lines[0] length] < 50);
-    screen_char_t temp[100];
-    return [self lengthOfLineAtIndex:0 withBuffer:temp];
+    if ([_lines[0] isKindOfClass:[NSData class]]) {
+        NSData *data = _lines[0];
+        return (data.length / sizeof(screen_char_t)) - 1;
+    } else {
+        assert([_lines[0] length] < 50);
+        screen_char_t temp[100];
+        return [self lengthOfLineAtIndex:0 withBuffer:temp];
+    }
 }
 
 - (int)numberOfLines {
@@ -269,20 +405,24 @@ static const NSInteger kUnicodeVersion = 9;
         free(_buffer);
     }
     _buffer = malloc(sizeof(screen_char_t) * (self.width + 1));
-
-    screen_char_t color = { 0 };
-    int len = 0;
-    StringToScreenChars(_lines[theIndex],
-                        _buffer,
-                        color,
-                        color,
-                        &len,
-                        NO,
-                        NULL,
-                        NULL,
-                        NO,
-                        kUnicodeVersion);
-    _buffer[len].code = EOL_SOFT;
+    if ([_lines[0] isKindOfClass:[NSData class]]) {
+        NSData *data = _lines[theIndex];
+        memmove(_buffer, data.bytes, sizeof(screen_char_t) * (self.width + 1));
+    } else {
+        screen_char_t color = { 0 };
+        int len = 0;
+        StringToScreenChars(_lines[theIndex],
+                            _buffer,
+                            color,
+                            color,
+                            &len,
+                            NO,
+                            NULL,
+                            NULL,
+                            NO,
+                            kUnicodeVersion);
+        _buffer[len].code = EOL_SOFT;
+    }
     
     return _buffer;
 }

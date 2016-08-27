@@ -224,13 +224,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     [self openFile:path inEditorWithBundleId:[self preferredEditorIdentifier] lineNumber:lineNumber];
 }
 
-- (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
-    NSString *fullPath = [self getFullPath:path
-                          workingDirectory:workingDirectory
-                                lineNumber:NULL];
-    return [self.fileManager fileExistsAtPath:fullPath];
-}
-
 - (BOOL)activatesOnAnyString {
     return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
 }
@@ -384,6 +377,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
+                           charsTakenFromSuffix:(int *)suffixChars
                                  trimWhitespace:(BOOL)trimWhitespace {
     BOOL workingDirectoryIsOk = [self fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
@@ -391,71 +385,60 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
              workingDirectory);
     }
 
-    NSMutableString *beforeString = [[beforeStringIn mutableCopy] autorelease];
-    NSMutableString *afterString = [[afterStringIn mutableCopy] autorelease];
-
-    // Remove escaping slashes
-    NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
-
     DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
-         beforeString, afterString, workingDirectory);
+         beforeStringIn, afterStringIn, workingDirectory);
 
-    [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
-    [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
-    beforeString = [[beforeString copy] autorelease];
     // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
     // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autorelease]
     // then the items in the array get over-released.
     NSString *const kSplitRegex = @"([\t ()])";
-    NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:kSplitRegex];
-    NSArray *afterChunks = [afterString componentsSeparatedByRegex:kSplitRegex];
-
-    // If the before/after string didn't produce any chunks, allow the other
-    // half to stand alone.
-    if (!beforeChunks.count) {
-        beforeChunks = @[ @"" ];
-    }
-    if (!afterChunks.count) {
-        afterChunks = @[ @"" ];
-    }
-
-    NSMutableString *left = [NSMutableString string];
-    // Bail after 100 iterations if nothing is still found.
-    int limit = 100;
-
-    NSMutableSet *paths = [NSMutableSet set];
-
+    NSArray *beforeChunks = [beforeStringIn componentsSeparatedByRegex:kSplitRegex];
+    NSArray *afterChunks = [afterStringIn componentsSeparatedByRegex:kSplitRegex];
     DLog(@"before chunks=%@", beforeChunks);
     DLog(@"after chunks=%@", afterChunks);
 
-    // Some programs will thoughtlessly print a filename followed by some silly suffix.
-    // We'll try versions with and without a questionable suffix. The version
-    // with the suffix is always preferred if it exists.
-    NSArray *questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
+    NSMutableString *left = [NSMutableString string];
+    int iterationsBeforeQuitting = 100;  // Bail after 100 iterations if nothing is still found.
+    NSMutableSet *paths = [NSMutableSet set];
     NSCharacterSet *whitespaceCharset = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
         if (i < [beforeChunks count]) {
-            beforeChunk = [beforeChunks objectAtIndex:i];
+            beforeChunk = beforeChunks[i];
         }
 
         [left insertString:beforeChunk atIndex:0];
-        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
-
+        NSMutableString *right = [NSMutableString string];
         // Do not search more than 10 chunks forward to avoid starving leftward search.
-        for (int j = 0; j < [afterChunks count] && j < 10; j++) {
-            [possiblePath appendString:afterChunks[j]];
-            NSString *trimmedPath;
+        for (int j = 0; j < MAX(1, afterChunks.count) && j < 10; j++) {
+            NSString *rightChunk = @"";
+            if (j < afterChunks.count) {
+                rightChunk = afterChunks[j];
+            }
+            [right appendString:rightChunk];
+            
+            NSString *possiblePath = [left stringByAppendingString:right];
+            NSString *trimmedPath = possiblePath;
             if (trimWhitespace) {
-                trimmedPath = [possiblePath stringByTrimmingCharactersInSet:whitespaceCharset];
-            } else {
-                trimmedPath = possiblePath;
+                trimmedPath = [trimmedPath stringByTrimmingCharactersInSet:whitespaceCharset];
             }
             if ([paths containsObject:[NSString stringWithString:trimmedPath]]) {
                 continue;
             }
             [paths addObject:[[trimmedPath copy] autorelease]];
 
+            // Replace \x with x for x in: space, (, [, ], \, ).
+            NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
+            trimmedPath = [trimmedPath stringByReplacingOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
+
+            // Some programs will thoughtlessly print a filename followed by some silly suffix.
+            // We'll try versions with and without a questionable suffix. The version
+            // with the suffix is always preferred if it exists.
+            static NSArray *questionableSuffixes;
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                questionableSuffixes = [@[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ] retain];
+            });
             for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
@@ -463,24 +446,29 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {
-                        if (trimWhitespace) {
-                            if ([afterChunks[j] length] == 0) {
-                                // trimmedPath is trim(left + afterChunks[j]). If afterChunks[j] is empty
-                                // then we don't want to count trailing whitespace from left in the chars
-                                // taken from prefix.
-                                *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
-                            } else {
-                                *charsTakenFromPrefixPtr = left.length;
-                            }
+                        if (trimWhitespace &&
+                            [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] == 0) {
+                            // trimmedPath is trim(left + right). If trim(right) is empty
+                            // then we don't want to count trailing whitespace from left in the chars
+                            // taken from prefix.
+                            *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
                         } else {
                             *charsTakenFromPrefixPtr = left.length;
+                        }
+                    }
+                    if (suffixChars) {
+                        NSInteger lengthOfBadSuffix = trimmedPath.length - modifiedPossiblePath.length;
+                        if (trimWhitespace) {
+                            *suffixChars = [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix;
+                        } else {
+                            *suffixChars = right.length - lengthOfBadSuffix;
                         }
                     }
                     DLog(@"Using path %@", modifiedPossiblePath);
                     return modifiedPossiblePath;
                 }
             }
-            if (--limit == 0) {
+            if (--iterationsBeforeQuitting == 0) {
                 return nil;
             }
         }

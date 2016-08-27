@@ -83,23 +83,25 @@
 }
 
 - (NSAttributedString *)patronsString {
-    NSArray *patronNames = @[
-                             @"Filip",
-                             @"Ozzy Johnson",
-                             @"Aaron Kulbe",
-                             @"Stefan Countryman",
-                             @"Roger Tokarek",
-                             @"Konstantin Gredeskoul",
-                             @"Mark H Berger",
-                             @"Travis",
-                             @"Wayne Robinson",
-                             @"Robert Raftery",
+    NSArray *patronNames = @[@"James Dorn",
+                             @"Colin",
                              @"Alex Howells",
                              @"Stephan Telling",
-                             @"Rob McGuire-Dale",
-                             @"Brod",
+                             @"Matt Svoboda",
+                             @"Brian Gupta",
+                             @"Shunwen Hsiao",
+                             @"Han Zhang",
+                             @"Karl Bunch",
                              @"Daniel Collin",
-                             ];
+                             @"Brod",
+                             @"Rob McGuire-Dale",
+                             @"Wayne Robinson",
+                             @"Travis",
+                             @"Mark H Berger",
+                             @"Roger Tokarek",
+                             @"Aaron Kulbe",
+                             @"Ozzy Johnson",
+                             @"Filip"];
     NSArray *sortedNames = [patronNames sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
         return [[obj1 surname] compare:[obj2 surname]];
     }];

@@ -181,7 +181,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Timer period between updates when active (not idle, tab is visible or title bar is changing,
 // etc.)
-static const NSTimeInterval kActiveUpdateCadence = 1.0 / 30.0;
+static const NSTimeInterval kActiveUpdateCadence = 1 / 20.0;
 
 // Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
 static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
@@ -470,6 +470,14 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                                                  selector:@selector(profileSessionNameDidEndEditing:)
                                                      name:kProfileSessionNameDidEndEditing
                                                    object:nil];
+        // Detach before windows get closed. That's why we have to use the
+        // iTermApplicationWillTerminate notification instead of
+        // NSApplicationWillTerminate, since this gets run before the windows
+        // are released.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationWillTerminate:)
+                                                     name:iTermApplicationWillTerminate
+                                                   object:nil];
         [self updateVariables];
     }
     return self;
@@ -605,7 +613,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     assert(_dvr);
     if (![_dvrDecoder seek:timestamp]) {
-        [_dvrDecoder seek:[_dvr firstTimeStamp]];
+        return [_dvrDecoder timestamp];
     }
     [self setDvrFrame];
     return [_dvrDecoder timestamp];
@@ -2020,6 +2028,12 @@ ITERM_WEAKLY_REFERENCEABLE
     });
 }
 
+- (void)taskDiedImmediately {
+    // Let initial creation finish, then report the broken pipe. This happens if the file descriptor
+    // server dies immediately.
+    [self performSelector:@selector(brokenPipe) withObject:nil afterDelay:0];
+}
+
 - (void)brokenPipe {
     if (_exited) {
         return;
@@ -2450,12 +2464,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    int charsTakenFromPrefix;
     NSString *filename =
         [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
                                                               suffix:@""
                                                     workingDirectory:workingDirectory
-                                                charsTakenFromPrefix:&charsTakenFromPrefix
+                                                charsTakenFromPrefix:nil
+                                                charsTakenFromSuffix:nil
                                                       trimWhitespace:YES];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
@@ -3690,6 +3704,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self sanityCheck];
 }
 
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    // See comment where we observe this notification for why this is done.
+    [self tmuxDetach];
+}
+
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
 {
     if (!_exited && [self isTmuxClient]) {
@@ -4176,18 +4195,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)isTmuxClient
-{
+- (BOOL)isTmuxClient {
     return self.tmuxMode == TMUX_CLIENT;
 }
 
-- (BOOL)isTmuxGateway
-{
+- (BOOL)isTmuxGateway {
     return self.tmuxMode == TMUX_GATEWAY;
 }
 
-- (void)tmuxDetach
-{
+- (void)tmuxDetach {
     if (self.tmuxMode != TMUX_GATEWAY) {
         return;
     }
@@ -5708,7 +5724,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         DLog(@"Returning cached range.");
-        return _screen.lastCommandOutputRange;
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
+        return [extractor rangeByTrimmingWhitespaceFromRange:_screen.lastCommandOutputRange
+                                                     leading:NO
+                                                    trailing:iTermTextExtractorTrimTrailingWhitespaceOneLine];
     }
 }
 
@@ -6874,6 +6893,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
                                      cappedAtSize:-1
+                                     truncateTail:YES
                                 continuationChars:nil
                                            coords:nil];
     NSRange newline = [command rangeOfString:@"\n"];

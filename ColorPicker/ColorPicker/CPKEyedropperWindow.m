@@ -128,14 +128,15 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 }
 
 - (NSInteger)currentScreenIndex {
-    NSInteger i = 0;
     NSPoint location = [NSEvent mouseLocation];
-    for (NSScreen *screen in [NSScreen screens]) {
+    __block NSInteger result = -1;
+    [[NSScreen screens] enumerateObjectsUsingBlock:^(NSScreen * _Nonnull screen, NSUInteger idx, BOOL * _Nonnull stop) {
         if (NSPointInRect(location, screen.frame)) {
-            return i;
+            result = idx;
+            *stop = YES;
         }
-    }
-    return -1;
+    }];
+    return result;
 }
 
 - (NSBitmapImageRep *)currentScreenScreenshot {
@@ -159,6 +160,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     point.y = screen.frame.size.height - point.y;
     point.x *= screen.backingScaleFactor;
     point.y *= screen.backingScaleFactor;
+
     NSMutableArray *outerArray = [NSMutableArray array];
     const NSInteger radius = 9;
     NSBitmapImageRep *screenshot = [self currentScreenScreenshot];

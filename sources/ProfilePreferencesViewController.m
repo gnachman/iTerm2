@@ -35,7 +35,6 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
     NSTabViewDelegate,
-    NSWindowDelegate,
     ProfileListViewDelegate,
     ProfilesGeneralPreferencesViewControllerDelegate>
 @end
@@ -132,6 +131,10 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
         viewController.preferencePanel = preferencePanel;
     }
     [super setPreferencePanel:preferencePanel];
+}
+
+- (void)windowWillClose {
+    [_profilesListView unlockSelection];
 }
 
 #pragma mark - NSViewController
@@ -715,13 +718,6 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
-}
-
-#pragma mark - NSWindowDelegate
-
-- (void)windowWillClose:(NSNotification *)notification {
-    [_generalViewController windowWillClose];
-    [_profilesListView unlockSelection];
 }
 
 @end

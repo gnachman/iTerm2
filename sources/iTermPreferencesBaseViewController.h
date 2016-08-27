@@ -104,4 +104,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // Override this to handle updates of preferences from other panels.
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification NS_REQUIRES_SUPER;
 
+// The prefs panel this view controller belongs to will close. This implementation does nothing.
+- (void)windowWillClose;
+
 @end

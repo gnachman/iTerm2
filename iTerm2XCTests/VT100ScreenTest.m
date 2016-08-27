@@ -2106,8 +2106,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testSetTmuxState {
     NSDictionary *stateDict =
     @{
-      kStateDictSavedCX: @(2),
-      kStateDictSavedCY: @(3),
       kStateDictCursorX: @(4),
       kStateDictCursorY: @(5),
       kStateDictScrollRegionUpper: @(6),

@@ -2585,14 +2585,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self smartSelectAtX:x y:y ignoringNewlines:NO];
 }
 
-- (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event {
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-
-    [self smartSelectAtX:x y:y ignoringNewlines:YES];
-}
-
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
                         ignoringNewlines:(BOOL)ignoringNewlines {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
@@ -2678,6 +2670,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
         [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
+        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+            [self copySelectionAccordingToUserPreferences];
+        }
     }
 }
 
@@ -2695,6 +2690,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                       includeLastNewline:NO
                                   trimTrailingWhitespace:YES
                                             cappedAtSize:_dataSource.width
+                                            truncateTail:YES
                                        continuationChars:nil
                                                   coords:nil];
     if (word.length) {
@@ -3017,6 +3013,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     warning.actionLabels = @[ @"Install Shell Integration & Utilities", @"Cancel", @"Shell Integration Only" ];
     warning.identifier = @"NoSyncInstallUtilitiesPackage";
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    warning.cancelLabel = @"Cancel";
     warning.showHelpBlock = ^() {
         [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/utilities.html"]];
     };
@@ -3053,6 +3050,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
       ];
     warning.identifier = @"NoSyncConfirmShellIntegrationCommand";
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    warning.cancelLabel = @"Cancel";
     [warning runModal];
 }
 
@@ -3178,6 +3176,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 includeLastNewline:copyLastNewline
                             trimTrailingWhitespace:trimWhitespace
                                       cappedAtSize:cap
+                                      truncateTail:YES
                                  continuationChars:nil
                                             coords:nil];
             if (attributed) {
@@ -3235,6 +3234,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:YES
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
+                        truncateTail:YES
                    continuationChars:nil
                               coords:nil];
 }
@@ -4839,6 +4839,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                       includeLastNewline:YES
                                   trimTrailingWhitespace:NO
                                             cappedAtSize:-1
+                                            truncateTail:YES
                                        continuationChars:nil
                                                   coords:nil]];
             break;
@@ -5535,6 +5536,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
+                        truncateTail:YES
                    continuationChars:nil
                               coords:nil];
 }
@@ -5951,7 +5953,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         fromCharacterSet:[PTYTextView filenameCharacterSet]
                     charsTakenFromPrefix:NULL];
 
-    int fileCharsTaken = 0;
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:y];
     DLog(@"According to data source, the working directory on line %d is %@", y, workingDirectory);
@@ -5964,12 +5965,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!workingDirectory) {
         workingDirectory = @"";
     }
+    int prefixChars = 0;
+    int suffixChars = 0;
     // First, try to locate an existing filename at this location.
     NSString *filename =
         [self.semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
                                                                    suffix:possibleFilePart2
                                                          workingDirectory:workingDirectory
-                                                     charsTakenFromPrefix:&fileCharsTaken
+                                                     charsTakenFromPrefix:&prefixChars
+                                                     charsTakenFromSuffix:&suffixChars
                                                            trimWhitespace:NO];
 
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
@@ -5981,17 +5985,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         VT100GridWindowedRange range;
 
-        if (prefixCoords.count > 0 && fileCharsTaken > 0) {
-            NSInteger i = MAX(0, (NSInteger)prefixCoords.count - fileCharsTaken);
+        if (prefixCoords.count > 0 && prefixChars > 0) {
+            NSInteger i = MAX(0, (NSInteger)prefixCoords.count - prefixChars);
             range.coordRange.start = [prefixCoords[i] gridCoordValue];
         } else {
             // Everything is coming from the suffix (e.g., when mouse is on first char of filename)
             range.coordRange.start = [suffixCoords[0] gridCoordValue];
         }
         VT100GridCoord lastCoord;
-        NSInteger i = (NSInteger)filename.length - fileCharsTaken - 1;
         // Ensure we don't run off the end of suffixCoords if something unexpected happens.
-        i = MIN((NSInteger)suffixCoords.count - 1, i);
+        // Subtract 1 because the 0th index into suffixCoords corresponds to 1 suffix char being used, etc.
+        NSInteger i = MIN((NSInteger)suffixCoords.count - 1, suffixChars - 1);
         if (i >= 0) {
             lastCoord = [suffixCoords[i] gridCoordValue];
         } else {
@@ -6057,7 +6061,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // No luck. Look for something vaguely URL-like.
-    int prefixChars;
     NSString *joined = [prefix stringByAppendingString:suffix];
     DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
          joined, (int)[prefix length]);

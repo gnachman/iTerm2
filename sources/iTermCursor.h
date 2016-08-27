@@ -29,6 +29,7 @@ typedef struct {
 
 - (NSColor *)cursorWhiteColor;
 - (NSColor *)cursorBlackColor;
+- (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color;
 
 @end
 

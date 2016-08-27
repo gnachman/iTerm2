@@ -22,17 +22,16 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 @implementation NSAttributedString(PSM)
 
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment {
-    // First try to do it the easy way.
-    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
-    NSMutableParagraphStyle *paragraphStyle = immutableAttributes[NSParagraphStyleAttributeName];
-    if ([paragraphStyle isKindOfClass:[NSMutableParagraphStyle class]]) {
-        paragraphStyle.alignment = textAlignment;
+    if (self.length == 0) {
         return self;
     }
-    
-    // If that fails do it the right way.
+    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
+    if (!immutableAttributes) {
+        return self;
+    }
+
     NSMutableDictionary *attributes = [[immutableAttributes mutableCopy] autorelease];
-    paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
+    NSMutableParagraphStyle *paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
     if (!paragraphStyle) {
         paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
     }
@@ -371,21 +370,6 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 }
 
 - (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell {
-    NSMutableAttributedString *attrStr;
-    NSString *contents = [cell stringValue];
-    attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
-    NSRange range = NSMakeRange(0, [contents length]);
-
-    NSColor *textColor = [self textColorForCell:cell];
-
-    // Add font attribute
-    [attrStr addAttribute:NSFontAttributeName
-                    value:[NSFont systemFontOfSize:self.fontSize]
-                    range:range];
-    [attrStr addAttribute:NSForegroundColorAttributeName
-                    value:textColor
-                    range:range];
-
     // Paragraph Style for Truncating Long Text
     NSMutableParagraphStyle *truncatingTailParagraphStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
@@ -396,11 +380,11 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         [truncatingTailParagraphStyle setAlignment:NSLeftTextAlignment];
     }
 
-    [attrStr addAttribute:NSParagraphStyleAttributeName
-                    value:truncatingTailParagraphStyle
-                    range:range];
-
-    return attrStr;
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
+                                  NSForegroundColorAttributeName: [self textColorForCell:cell],
+                                  NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
+    return [[[NSAttributedString alloc] initWithString:[cell stringValue]
+                                            attributes:attributes] autorelease];
 }
 
 - (CGFloat)fontSize {

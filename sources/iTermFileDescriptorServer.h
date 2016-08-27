@@ -22,4 +22,9 @@ int iTermFileDescriptorServerSocketBindListen(const char *path);
 // suitable to pass to iTermFileDescriptorServerRun() in |connectionFd|.
 int iTermFileDescriptorServerAccept(int socketFd);
 
+// Takes an array of file descriptors and its length as input. `results` should be an array of
+// equal length. On return, the readable FDs will have the corresponding value in `results` set to
+// true. Takes care of EINTR. Return value is number of readable FDs.
+int iTermSelect(int *fds, int count, int *results);
+
 #endif  // __ITERM_FILE_DESCRIPTOR_SERVER_H

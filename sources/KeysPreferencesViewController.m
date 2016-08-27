@@ -22,7 +22,8 @@
 #import "PreferencePanel.h"
 #import "PSMTabBarControl.h"
 
-static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+static NSString *const kHotkeyAutoHidesPreferenceDidChange = @"kHotkeyAutoHidesPreferenceDidChange";
 
 @interface KeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
 @end
@@ -43,6 +44,11 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSTextField *_hotkeyField;
     IBOutlet NSTextField *_hotkeyLabel;
     IBOutlet NSButton *_configureHotKeyWindow;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
 }
 
 - (void)awakeFromNib {

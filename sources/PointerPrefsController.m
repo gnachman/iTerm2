@@ -147,9 +147,10 @@ typedef enum {
     NSString *origKey_;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [origKey_ release];
+    tableView_.delegate = nil;
+    tableView_.dataSource = nil;
     [super dealloc];
 }
 

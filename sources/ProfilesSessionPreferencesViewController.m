@@ -35,6 +35,12 @@
     BOOL _awoken;
 }
 
+- (void)dealloc {
+    _jobsTable.dataSource = nil;
+    _jobsTable.delegate = nil;
+    [super dealloc];
+}
+
 - (void)awakeFromNib {
     if (_awoken) {
         return;

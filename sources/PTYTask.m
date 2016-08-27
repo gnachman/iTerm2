@@ -35,6 +35,7 @@
 #include <util.h>
 
 #define CTRLKEY(c) ((c)-'A'+1)
+const int kNumFileDescriptorsToDup = 4;
 
 NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
@@ -275,42 +276,47 @@ static void HandleSigChld(int n) {
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
-// Like login_tty but makes fd 0 the master, fd 1 the slave, and fd 2 an open unix-domain socket
-// for transferring file descriptors.
-static void MyLoginTTY(int master, int slave, int serverSocketFd) {
+// Like login_tty but makes fd 0 the master, fd 1 the slave, fd 2 an open unix-domain socket
+// for transferring file descriptors, and fd 3 the write end of a pipe that closes when the server
+// dies.
+static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPipeWriteEnd) {
     setsid();
     ioctl(slave, TIOCSCTTY, NULL);
 
     // This array keeps track of which file descriptors are in use and should not be dup2()ed over.
-    // It has |inuseCount| valid elements.
-    int inuse[9] = { 0, 1, 2, master, slave, serverSocketFd, -1, -1, -1 };
-    int inuseCount = 6;
+    // It has |inuseCount| valid elements. inuse must have inuseCount + arraycount(orig) elements.
+    int inuse[3 * kNumFileDescriptorsToDup] = {
+       0, 1, 2, 3,  // FDs get duped to the lowest numbers so reserve them
+       master, slave, serverSocketFd, deadMansPipeWriteEnd,  // FDs to get duped, which mustn't be overwritten
+       -1, -1, -1, -1 };  // Space for temp values to ensure they don't get resused
+    int inuseCount = 2 * kNumFileDescriptorsToDup;
 
     // File descriptors get dup2()ed to temporary numbers first to avoid stepping on each other or
     // on any of the desired final values. Their temporary values go in here. The first is always
     // master, then slave, then server socket.
-    int temp[3];
+    int temp[kNumFileDescriptorsToDup];
 
     // The original file descriptors to renumber.
-    int orig[3] = { master, slave, serverSocketFd };
+    int orig[kNumFileDescriptorsToDup] = { master, slave, serverSocketFd, deadMansPipeWriteEnd };
 
     for (int o = 0; o < sizeof(orig) / sizeof(*orig); o++) {  // iterate over orig
         int original = orig[o];
 
-        // Try to find a temp value that doesn't belong to inuse
-        for (int t = 0; t < sizeof(inuse) / sizeof(*inuse); t++) {
+        // Try to find a candidate file descriptor that is not important to us (i.e., does not belong
+        // to the inuse array).
+        for (int candidate = 0; candidate < sizeof(inuse) / sizeof(*inuse); candidate++) {
             BOOL isInUse = NO;
             for (int i = 0; i < sizeof(inuse) / sizeof(*inuse); i++) {
-                if (inuse[i] == t) {
+                if (inuse[i] == candidate) {
                     isInUse = YES;
                     break;
                 }
             }
             if (!isInUse) {
                 // t is good. dup orig[o] to t and close orig[o]. Save t in temp[o].
-                inuse[inuseCount++] = t;
-                temp[o] = t;
-                dup2(original, t);
+                inuse[inuseCount++] = candidate;
+                temp[o] = candidate;
+                dup2(original, candidate);
                 close(original);
                 break;
             }
@@ -330,7 +336,8 @@ static int MyForkPty(int *amaster,
                      char *name,
                      struct termios *termp,
                      struct winsize *winp,
-                     int serverSocketFd) {
+                     int serverSocketFd,
+                     int deadMansPipeWriteEnd) {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     int master;
     int slave;
@@ -349,13 +356,15 @@ static int MyForkPty(int *amaster,
 
         case 0:
             // child
-            MyLoginTTY(master, slave, serverSocketFd);
+            MyLoginTTY(master, slave, serverSocketFd, deadMansPipeWriteEnd);
             return 0;
 
         default:
             // parent
             *amaster = master;
             close(slave);
+            close(serverSocketFd);
+            close(deadMansPipeWriteEnd);
             return pid;
     }
 }
@@ -475,11 +484,13 @@ static int MyForkPty(int *amaster,
     DLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
     DLog(@"Environment is\n%@", env);
     char **newEnviron = [self environWithOverrides:env];
-
+    int deadMansPipe[2] = { 0, 0 };
+    
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     pid_t pid;
     int connectionFd = -1;
+    int numFileDescriptorsToPreserve;
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
         NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
@@ -506,6 +517,7 @@ static int MyForkPty(int *amaster,
 
         // Connect to the server running in a thread.
         connectionFd = iTermFileDescriptorClientConnect(tempPath.UTF8String);
+        assert(connectionFd != -1);  // If this happens the block dispatched above never returns. Ran out of FDs, presumably.
 
         // Wait for serverConnectionFd to be written to.
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -520,11 +532,17 @@ static int MyForkPty(int *amaster,
 
         // Now fork. This variant of forkpty passes through the master, slave,
         // and serverConnectionFd to the child job.
-        pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win, serverConnectionFd);
+        pipe(deadMansPipe);
+        
+        // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
+        pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win, serverConnectionFd, deadMansPipe[1]);
+        numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
     } else {
         pid = _childPid = forkpty(&fd, theTtyname, &term, &win);
+        numFileDescriptorsToPreserve = 3;
     }
     if (pid == (pid_t)0) {
+        // Child
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
@@ -535,7 +553,7 @@ static int MyForkPty(int *amaster,
 
         // Apple opens files without the close-on-exec flag (e.g., Extras2.rsrc).
         // See issue 2662.
-        for (int j = 3; j < getdtablesize(); j++) {
+        for (int j = numFileDescriptorsToPreserve; j < getdtablesize(); j++) {
             close(j);
         }
 
@@ -554,9 +572,10 @@ static int MyForkPty(int *amaster,
         sleep(1);
         _exit(-1);
     } else if (pid < (pid_t)0) {
+        // Error
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
         NSRunCriticalAlertPanel(@"Unable to Fork!",
-                                @"iTerm cannot launch the program for this session.",
+                                @"iTerm2 cannot launch the program for this session.",
                                 @"OK",
                                 nil,
                                 nil);
@@ -580,7 +599,8 @@ static int MyForkPty(int *amaster,
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
         iTermFileDescriptorServerConnection serverConnection =
-            iTermFileDescriptorClientRead(connectionFd);
+            iTermFileDescriptorClientRead(connectionFd, deadMansPipe[0]);
+        close(deadMansPipe[0]);
         if (serverConnection.ok) {
             // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
             // lets the server know it should call accept(). We now have two copies of the master PTY
@@ -601,7 +621,7 @@ static int MyForkPty(int *amaster,
         } else {
             close(fd);
             NSLog(@"Server died immediately!");
-            [_delegate brokenPipe];
+            [_delegate taskDiedImmediately];
         }
     } else {
         // Jobs are direct children of iTerm2

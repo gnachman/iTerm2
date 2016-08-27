@@ -19,6 +19,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)brokenPipe;  // Called in main thread
 - (void)taskWasDeregistered;
 - (void)writeForCoprocessOnlyTask:(NSData *)data;
+
+// Called on main thread from within launchWithPath:arguments:environment:width:height:isUTF8:.
+- (void)taskDiedImmediately;
 @end
 
 @interface PTYTask : NSObject

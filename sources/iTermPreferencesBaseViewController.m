@@ -420,6 +420,10 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     return [_keys allObjects];
 }
 
+- (void)windowWillClose {
+    // Documented as doing nothing.
+}
+
 #pragma mark - Constraints
 
 // Pick out the digits from s and clamp it to a range.
@@ -535,6 +539,9 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (void)preferencePanelWillClose:(NSNotification *)notification {
     if (_preferencePanel == notification.object) {
+        // Give subclasses a chance to do something first.
+        [self windowWillClose];
+
         _preferencePanel = nil;
         // Breaks reference cycles in settingChanged and update blocks.
         for (NSControl *key in _keyMap) {

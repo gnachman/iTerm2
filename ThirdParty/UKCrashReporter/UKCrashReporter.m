@@ -74,11 +74,20 @@ void    UKCrashReporterCheckForCrash(void)
                 NSString*            numCPUsString = (numCores == 1) ? @"" : [NSString stringWithFormat: @"%dx ",numCores];
                 
                 // Create a string containing Mac and CPU info, crash log and prefs:
+                NSDictionary *prefsDictionary = [[NSUserDefaults standardUserDefaults] persistentDomainForName: [[NSBundle mainBundle] bundleIdentifier]];
+                NSError *error;
+                NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:prefsDictionary
+                                                                             format:NSPropertyListXMLFormat_v1_0
+                                                                            options:0
+                                                                              error:&error];
+                
+                NSString *prefs = [[NSString alloc] initWithData:xmlData encoding:NSUTF8StringEncoding];
+
                 currentReport = [NSString stringWithFormat:
                                     @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n\nPreferences:\n%@",
                                     UKMachineName(), numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
                                     currentReport,
-                                    [[NSUserDefaults standardUserDefaults] persistentDomainForName: [[NSBundle mainBundle] bundleIdentifier]]];
+                                    prefs];
                 
                 // Now show a crash reporter window so the user can edit the info to send:
                 [[UKCrashReporter alloc] initWithLogString: currentReport];
