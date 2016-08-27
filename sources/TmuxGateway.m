@@ -534,9 +534,29 @@ error:
     }
 }
 
+- (NSString *)firstSupplementaryPlaneCharacterInArray:(NSArray<NSNumber *> *)codePoints {
+    NSUInteger index = [codePoints indexOfObjectPassingTest:^BOOL(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.integerValue > 0xffff;
+    }];
+    if (index == NSNotFound) {
+        return nil;
+    } else {
+        UTF32Char c = [codePoints[index] integerValue];
+        return [NSString stringWithLongCharacter:c];
+    }
+}
+
 - (void)sendCodePoints:(NSArray<NSNumber *> *)codePoints toWindowPane:(int)windowPane {
     if (!codePoints.count) {
         return;
+    }
+    
+    if (![self serverAcceptsSurrogatePairs]) {
+        NSString *string = [self firstSupplementaryPlaneCharacterInArray:codePoints];
+        if (string) {
+            [delegate_ tmuxCannotSendCharactersInSupplementaryPlanes:string windowPane:windowPane];
+            return;
+        }
     }
     
     // Send multiple small send-keys commands because commands longer than 1024 bytes crash tmux 1.8.
@@ -557,9 +577,15 @@ error:
 - (BOOL)doubleValue:(double)value1 isGreaterOrEqualTo:(double)value2 epsilon:(double)epsilon {
     return value1 - value2 >= -epsilon;
 }
+
 - (BOOL)serverSupportsUTF8 {
-    return (self.minimumServerVersion &&
-            [self doubleValue:self.minimumServerVersion.doubleValue isGreaterOrEqualTo:2.2 epsilon:kVersionNumberComparisonEpsilon]);
+    return (self.minimumServerVersion != nil &&
+            [self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"2.2"]] != NSOrderedAscending);
+}
+
+- (BOOL)serverAcceptsSurrogatePairs {
+    NSDecimalNumber *version2_2 = [NSDecimalNumber decimalNumberWithString:@"2.2"];
+    return !([self.minimumServerVersion isEqual:version2_2] && [self.maximumServerVersion isEqual:version2_2]);
 }
 
 - (NSDictionary *)dictionaryForSendKeysCommandWithCodePoints:(NSArray<NSNumber *> *)codePoints

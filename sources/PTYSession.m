@@ -4453,6 +4453,24 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
+    PTYSession *session = [_tmuxController sessionForWindowPane:windowPane];
+    
+    NSString *message = [NSString stringWithFormat:@"Because of a bug in tmux 2.2, the character “%@” cannot be sent.", string];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:message
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Why?" ]
+                                                    completion:^(int selection) {
+                                                        if (selection == 0) {
+                                                            NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
+                                                            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                        }
+                                                    }];
+    announcement.dismissOnKeyDown = YES;
+    [session queueAnnouncement:announcement identifier:@"Tmux2.2SupplementaryPlaneAnnouncement"];
+}
+
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging {
     _tmuxSecureLogging = secureLogging;
 }
