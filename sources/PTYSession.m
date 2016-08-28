@@ -7188,6 +7188,18 @@ ITERM_WEAKLY_REFERENCEABLE
     return [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
 }
 
+- (BOOL)screenShouldShowInlineImage {
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:@"The terminal would like to show an inline image. You should only allow it if the image comes from a trusted source."
+                                                                 actions:@[ @"OK", @"Cancel" ]
+                                                           actionMapping:nil
+                                                               accessory:nil
+                                                              identifier:@"NoSyncSuppressWarningAboutInlineImages"
+                                                             silenceable:kiTermWarningTypePermanentlySilenceable
+                                                                 heading:@"OK to show inline image?"
+                                                             cancelLabel:nil];
+    return selection == kiTermWarningSelection0;
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {

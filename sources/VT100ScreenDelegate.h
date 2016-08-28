@@ -237,4 +237,6 @@
 
 - (BOOL)screenShouldReduceFlicker;
 
+- (BOOL)screenShouldShowInlineImage;
+
 @end

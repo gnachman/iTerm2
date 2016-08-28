@@ -3478,18 +3478,20 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
-        // TODO: Handle objects other than images.
-        NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-        NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
-        [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
-                                    width:[inlineFileInfo_[kInlineFileWidth] intValue]
-                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
-                                   height:[inlineFileInfo_[kInlineFileHeight] intValue]
-                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
-                      preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                    inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
-                                    image:image
-                                     data:data];
+        if ([delegate_ screenShouldShowInlineImage]) {
+            // TODO: Handle objects other than images.
+            NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+            NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
+            [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
+                                        width:[inlineFileInfo_[kInlineFileWidth] intValue]
+                                        units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
+                                       height:[inlineFileInfo_[kInlineFileHeight] intValue]
+                                        units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
+                          preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                        inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
+                                        image:image
+                                         data:data];
+        }
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {
