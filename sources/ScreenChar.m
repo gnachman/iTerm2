@@ -258,7 +258,7 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
     charPtr->backgroundColor = y;
 }
 
-void SetDecodedImage(unichar code, NSImage *image, NSData *data) {
+void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
     iTermImageInfo *imageInfo = gImages[@(code)];
     [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];

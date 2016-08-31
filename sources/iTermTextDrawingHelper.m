@@ -63,6 +63,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     // Pattern for background stripes
     NSImage *_backgroundStripesImage;
+    
+    NSMutableSet<NSString *> *_missingImages;
 }
 
 - (instancetype)init {
@@ -75,6 +77,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
             _drawRectDuration.alpha = 0.95;
             _drawRectInterval.alpha = 0.95;
         }
+        _missingImages = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -92,6 +95,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     [_drawRectInterval release];
 
     [_backgroundStripesImage release];
+    [_missingImages release];
 
     [super dealloc];
 }
@@ -963,6 +967,19 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 - (void)drawImageCellInRun:(CRun *)run atPoint:(NSPoint)point {
     iTermImageInfo *imageInfo = GetImageInfo(run->attrs.imageCode);
     NSImage *image = [imageInfo imageWithCellSize:_cellSize];
+    if (!image) {
+        if (!imageInfo) {
+            [[NSColor brownColor] set];
+        } else {
+            [_missingImages addObject:imageInfo.uniqueIdentifier];
+            
+            [[NSColor grayColor] set];
+        }
+        NSRectFill(NSMakeRect(point.x, point.y, _cellSize.width * run->numImageCells, _cellSize.height));
+        return;
+    }
+    [_missingImages removeObject:imageInfo.uniqueIdentifier];
+
     NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
                                   image.size.height / imageInfo.size.height);
 

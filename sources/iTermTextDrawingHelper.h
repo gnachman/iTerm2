@@ -252,6 +252,9 @@
 // Line number that is being hovered over for drop
 @property(nonatomic, assign) int dropLine;
 
+// Lazily loading images that could not be drawn. Contains unique identifiers of iTermImageInfo*s
+@property(nonatomic, readonly) NSSet<NSString *> *missingImages;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

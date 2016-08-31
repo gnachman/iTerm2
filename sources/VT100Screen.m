@@ -10,6 +10,7 @@
 #import "iTermColorMap.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermImage.h"
 #import "iTermImageMark.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
@@ -3361,10 +3362,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
                               inset:(NSEdgeInsets)inset
-                              image:(NSImage *)image
+                              image:(NSImage *)nativeImage
                                data:(NSData *)data {
+    iTermImage *image;
+    if (nativeImage) {
+        image = [iTermImage imageWithNativeImage:nativeImage];
+    } else {
+        image = [iTermImage imageWithCompressedData:data];
+    }
     if (!image) {
-        image = [NSImage imageNamed:@"broken_image"];
+        image = [iTermImage imageWithNativeImage:[NSImage imageNamed:@"broken_image"]];
+        assert(image);
     }
 
     BOOL needsWidth = NO;
@@ -3481,7 +3489,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         if ([delegate_ screenShouldShowInlineImage]) {
             // TODO: Handle objects other than images.
             NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-            NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
             [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
                                         width:[inlineFileInfo_[kInlineFileWidth] intValue]
                                         units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
@@ -3489,7 +3496,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                         units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                           preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
                                         inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
-                                        image:image
+                                        image:nil
                                          data:data];
         }
         [inlineFileInfo_ release];
