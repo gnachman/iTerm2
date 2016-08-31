@@ -3486,19 +3486,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
-        if ([delegate_ screenShouldShowInlineImage]) {
-            // TODO: Handle objects other than images.
-            NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-            [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
-                                        width:[inlineFileInfo_[kInlineFileWidth] intValue]
-                                        units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
-                                       height:[inlineFileInfo_[kInlineFileHeight] intValue]
-                                        units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
-                          preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                        inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
-                                        image:nil
-                                         data:data];
-        }
+        // TODO: Handle objects other than images.
+        NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+        [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
+                                    width:[inlineFileInfo_[kInlineFileWidth] intValue]
+                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
+                                   height:[inlineFileInfo_[kInlineFileHeight] intValue]
+                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
+                      preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                    inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
+                                    image:nil
+                                     data:data];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {

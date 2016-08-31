@@ -175,8 +175,7 @@ DEFINE_BOOL(aboutToPasteTabs, NO, @"Warnings: Suppress warning about pasting tab
 DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforeMultilinePaste, NoSyncDoNotWarnBeforeMultilinePaste, NO, @"Warnings: Suppress warning about multi-line pastes (or a single line ending in a newline).\nThis applies whether you are at the shell prompt or not, provided two or more lines are being pasted.");
 DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt, NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt, NO, @"Warnings: Suppress warning about pasting a single line ending in a newline when at the shell prompt.\nThis requires Shell Integration to be installed.");
 
-DEFINE_BOOL(noSyncReplaceProfileWarning, NO, @"Warnings: Suppress warning about copying a session's settings over a Profile.");
-DEFINE_BOOL(noSyncSuppressWarningAboutInlineImages, NO, @"Warnings: Suppress warning about displaying inline images.");
+DEFINE_BOOL(noSyncReplaceProfileWarning, NO, @"Warnings: Suppress warning about copying a session's settings over a Profile");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard.");
