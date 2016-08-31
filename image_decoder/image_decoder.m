@@ -50,7 +50,7 @@ int main(int argc, const char * argv[]) {
             syslog(LOG_DEBUG, "Reading image on fd 0");
             data = [fileHandle readDataToEndOfFile];
         } @catch (NSException *exception) {
-            syslog(LOG_ERR, [[exception debugDescription] UTF8String]);
+            syslog(LOG_ERR, "Failed to read: %s", [[exception debugDescription] UTF8String]);
             exit(1);
         }
         
