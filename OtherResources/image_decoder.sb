@@ -1,0 +1,10 @@
+(version 1)
+(deny default)
+(allow file-read-data file-read-metadata
+  (regex "^/System/Library/Frameworks")
+  (regex "^/System/Library/PrivateFrameworks")
+  (literal "@PATH_TO_EXECUTABLE@")
+  (regex "^/usr/lib"))
+
+(allow process-exec (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@"))
+(allow mach* sysctl-read)

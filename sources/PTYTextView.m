@@ -317,7 +317,11 @@ static const int kDragThreshold = 3;
                                                  selector:@selector(hostnameLookupSucceeded:)
                                                      name:kHostnameLookupSucceeded
                                                    object:nil];
-
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(imageDidLoad:)
+                                                     name:iTermImageDidLoad
+                                                   object:nil];
+        
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
         _semanticHistoryDragged = NO;
@@ -4225,7 +4229,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
         if (!data) {
-            NSBitmapImageRep *rep = [imageInfo.image bitmapImageRep];
+            NSBitmapImageRep *rep = [imageInfo.image.images.firstObject bitmapImageRep];
             data = [rep representationUsingType:fileType properties:@{}];
         }
         [data writeToFile:filename atomically:NO];
@@ -6149,6 +6153,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         self.currentUnderlineHostname = nil;
         [self setNeedsDisplay:YES];
     }
+}
+
+- (void)imageDidLoad:(NSNotification *)notification {
+    if ([self imageIsVisible:notification.object]) {
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (BOOL)imageIsVisible:(iTermImageInfo *)image {
+    if (![_drawingHelper.missingImages containsObject:image.uniqueIdentifier]) {
+        return NO;
+    }
+    
+    int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / _lineHeight;
+    int width = [_dataSource width];
+    for (int y = 0; y < [_dataSource height]; y++) {
+        screen_char_t *theLine = [_dataSource getLineAtIndex:y + firstVisibleLine];
+        for (int x = 0; x < width; x++) {
+            if (theLine && theLine[x].image && GetImageInfo(theLine[x].code) == image) {
+                return YES;
+            }
+        }
+    }
+    return NO;
 }
 
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y {

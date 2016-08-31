@@ -143,7 +143,7 @@ extern int kVT100ScreenMinRows;
 // (notifications, flashing lights, sounds) per user preference.
 - (void)activateBell;
 
-// Show an inline image.
+// Show an inline image. image and data are mutually exclusive.
 - (void)appendImageAtCursorWithName:(NSString *)name
                               width:(int)width
                               units:(VT100TerminalUnits)widthUnits
@@ -152,7 +152,7 @@ extern int kVT100ScreenMinRows;
                 preserveAspectRatio:(BOOL)preserveAspectRatio
                               inset:(NSEdgeInsets)inset
                               image:(NSImage *)image
-                               data:(NSData *)data;  // data is optional and only used by animated GIFs
+                               data:(NSData *)data;
 
 - (void)resetAnimatedLines;
 
