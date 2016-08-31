@@ -153,6 +153,5 @@
 + (double)pointSizeOfTimeStamp;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (double)slowFrameRate;
-+ (BOOL)noSyncSuppressWarningAboutInlineImages;
 
 @end
