@@ -51,6 +51,9 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 @interface iTermWarning : NSObject
 
+// Used to unsilence a particular selection (e.g., when you have a bug and silence the Cancel selection).
++ (void)unsilenceIdentifier:(NSString *)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection;
+
 // Tests can use this to prevent warning popups.
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
 + (id<iTermWarningHandler>)warningHandler;

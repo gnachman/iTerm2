@@ -521,6 +521,10 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
             theTitle = @"OK to paste one line ending in a newline?";
         }
     }
+    
+    // Issue 5115
+    [iTermWarning unsilenceIdentifier:identifier ifSelectionEquals:[actions indexOfObjectIdenticalTo:cancel]];
+    
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = theTitle;
     warning.warningActions = actions;
