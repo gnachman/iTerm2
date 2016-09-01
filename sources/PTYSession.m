@@ -166,7 +166,7 @@ static NSMutableDictionary *gRegisteredSessionContents;
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Grace period to avoid failing to write anti-idle code when timer runs just before when the code
-// should be sent.
+// shuold be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Timer period between updates when active (not idle, tab is visible or title bar is changing,
@@ -180,6 +180,12 @@ static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
 // so it must run often enough for that to be useful.
 // TODO(georgen): There's room for improvement here.
 static const NSTimeInterval kBackgroundUpdateCadence = 1;
+
+// Limit for number of entries in self.directories, self.commands, self.hosts.
+// Keeps saved state from exploding like in issue 5029.
+static const NSUInteger kMaxDirectories = 100;
+static const NSUInteger kMaxCommands = 100;
+static const NSUInteger kMaxHosts = 100;
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
@@ -914,15 +920,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
         [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
+        [aSession trimCommandsIfNeeded];
     }
     if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
         [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
+        [aSession trimDirectoriesIfNeeded];
     }
     if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
         for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
             VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
             if (remoteHost) {
                 [aSession.hosts addObject:remoteHost];
+                [aSession trimHostsIfNeeded];
             }
         }
     }
@@ -6889,6 +6898,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
                                                withMark:mark];
             [_commands addObject:trimmedCommand];
+            [self trimCommandsIfNeeded];
         }
     }
     self.lastCommand = command;
@@ -7067,10 +7077,29 @@ ITERM_WEAKLY_REFERENCEABLE
     return _profile[KEY_NAME];
 }
 
+- (void)trimHostsIfNeeded {
+    if (_hosts.count > kMaxHosts) {
+        [_hosts removeObjectsInRange:NSMakeRange(0, _hosts.count - kMaxHosts)];
+    }
+}
+
+- (void)trimCommandsIfNeeded {
+    if (_commands.count > kMaxCommands) {
+        [_commands removeObjectsInRange:NSMakeRange(0, _commands.count - kMaxCommands)];
+    }
+}
+
+- (void)trimDirectoriesIfNeeded {
+    if (_directories.count > kMaxDirectories) {
+        [_directories removeObjectsInRange:NSMakeRange(0, _directories.count - kMaxDirectories)];
+    }
+}
+
 - (void)setLastDirectory:(NSString *)lastDirectory {
     DLog(@"Set last directory to %@", lastDirectory);
     if (lastDirectory) {
         [_directories addObject:lastDirectory];
+        [self trimDirectoriesIfNeeded];
     }
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
@@ -7098,6 +7127,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
     if (lastRemoteHost) {
         [_hosts addObject:lastRemoteHost];
+        [self trimHostsIfNeeded];
     }
     [_lastRemoteHost autorelease];
     _lastRemoteHost = [lastRemoteHost retain];

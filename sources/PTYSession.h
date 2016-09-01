@@ -366,9 +366,9 @@ typedef enum {
 
 // Commands issued, directories entered, and hosts connected to during this session.
 // Requires shell integration.
-@property(nonatomic, readonly) NSMutableArray *commands;  // of NSString
-@property(nonatomic, readonly) NSMutableArray *directories;  // of NSString
-@property(nonatomic, readonly) NSMutableArray *hosts;  // of VT100RemoteHost
+@property(nonatomic, readonly) NSMutableArray<NSString *> *commands;  // of NSString
+@property(nonatomic, readonly) NSMutableArray<NSString *> *directories;  // of NSString
+@property(nonatomic, readonly) NSMutableArray<VT100RemoteHost *> *hosts;  // of VT100RemoteHost
 
 // Session-defined and user-defined variables. Session-defined vars start with "session." and
 // user-defined variables start with "user.".
