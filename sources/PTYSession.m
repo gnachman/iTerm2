@@ -879,7 +879,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession setWindowTitle:title];
         }
         if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
-            [aSession.shell startLoggingToFileWithPath:[aSession _autoLogFilenameForTermId:aSession.sessionId]
+            [aSession.shell startLoggingToFileWithPath:[aSession _autoLogFilenameForTermId:[aSession.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]]
                                           shouldAppend:NO];
         }
     }
@@ -1267,8 +1267,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
-- (NSString *)_autoLogFilenameForTermId:(NSString *)termid
-{
+- (NSString *)_autoLogFilenameForTermId:(NSString *)termid {
     // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
     return [NSString stringWithFormat:@"%@/%@.%@.%@.%d.%0x.log",
             [_profile objectForKey:KEY_LOGDIR],
@@ -1357,7 +1356,7 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:itermId]
+        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:[itermId stringByReplacingOccurrencesOfString:@":" withString:@"."]]
                               shouldAppend:NO];
     }
     @synchronized(self) {
