@@ -728,17 +728,17 @@ const NSInteger kPSMStartResizeAnimation = 0;
     [self update:NO];
 }
 
-- (void)update:(BOOL)animate
-{
-    // abandon hope, all ye who enter here :-)
-    // this method handles all of the cell layout, and is called when something changes to require the refresh.  This method is not called during drag and drop; see the PSMTabDragAssistant's calculateDragAnimationForTabBar: method, which does layout in that case.
+- (void)update:(BOOL)animate {
+    // This method handles all of the cell layout, and is called when something changes to require
+    // the refresh.  This method is not called during drag and drop. See the PSMTabDragAssistant's
+    // calculateDragAnimationForTabBar: method, which does layout in that case.
 
-    // make sure all of our tabs are accounted for before updating
+    // Make sure all of our tabs are accounted for before updating.
     if ([_tabView numberOfTabViewItems] != [_cells count]) {
         return;
     }
 
-    // hide/show? (these return if already in desired state)
+    // Hide or show? These do nothing if already in the desired state.
     if ((_hideForSingleTab) && ([_cells count] <= 1)) {
         [self hideTabBar:YES animate:YES];
     } else {
@@ -747,56 +747,62 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
     [self _removeCellTrackingRects];
 
-    // calculate number of cells to fit in control and cell widths
-    NSInteger cellCount = [_cells count];
-    CGFloat availableWidth = [self availableCellWidth];
-    NSMutableArray *newWidths = [NSMutableArray arrayWithCapacity:cellCount];
 
     NSLineBreakMode truncationStyle = [self truncationStyle];
 
-    for (int i = 0; i < cellCount; ++i) {
-        PSMTabBarCell *cell = [_cells objectAtIndex:i];
+    // Update cells' flags in case they changed.
+    for (PSMTabBarCell *cell in _cells) {
         cell.truncationStyle = truncationStyle;
         cell.hasCloseButton = _hasCloseButton;
         [cell updateForStyle];
-
-        // suppress close button?
         cell.isCloseButtonSuppressed = [self disableTabClose];
     }
 
+    // Calculate number of cells to fit in the control and cell widths.
+    const NSInteger cellCount = [_cells count];
+    NSMutableArray *newWidths = [NSMutableArray arrayWithCapacity:cellCount];
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         CGFloat totalDesiredWidth = 0.0;
-        CGFloat desiredWidths[cellCount];
+        NSMutableArray *desiredWidths = [NSMutableArray array];
 
-        for (int i = 0; i < cellCount; ++i) {
-            PSMTabBarCell *cell = [_cells objectAtIndex:i];
-            CGFloat width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
-            desiredWidths[i] = width;
+        // Cache desired widths for each cell because it is expensive to compute.
+        for (PSMTabBarCell *cell in _cells) {
+            const CGFloat width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
+            [desiredWidths addObject:@(width)];
             totalDesiredWidth += width;
         }
 
+        const CGFloat availableWidth = [self availableCellWidth];
+        // If all cells are the smallest allowed size, do they fit?
         BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount <= availableWidth);
+
+        // If all cells are the client-specified optimum size, do they fit?
         BOOL canFitAllCellsOptimally = (self.cellOptimumWidth * cellCount <= availableWidth);
+
+        // If all cells get their "desired" width, do they fit?
         BOOL canFitAllCellsDesirably = (totalDesiredWidth <= availableWidth);
 
         if (self.sizeCellsToFit && canFitAllCellsDesirably) {
-            for (int i = 0; i < cellCount; ++i) {
-                [newWidths addObject:[NSNumber numberWithFloat:desiredWidths[i]]];
-            }
+            // Each cell will be a different size that fits it best.
+            [newWidths addObjectsFromArray:desiredWidths];
         } else if (!self.stretchCellsToFit && canFitAllCellsOptimally) {
-            for (int i = 0; i < cellCount; ++i) {
-                [newWidths addObject:[NSNumber numberWithFloat:_cellOptimumWidth]];
+            // Use the client-specified size, even if that leaves unused space on the right.
+            for (int i = 0; i < cellCount; i++) {
+                [newWidths addObject:@(_cellOptimumWidth)];
             }
         } else {
+            // Divide up the space evenly, but don't allow cells to be smaller than the minimum
+            // width.
             CGFloat widthRemaining = availableWidth;
-            NSInteger count = (canFitAllCellsMinimally) ? cellCount : availableWidth / _cellMinWidth;
-            for (int i = 0; i < count; ++i) {
-                CGFloat width = floor(widthRemaining / (count - i));
-                [newWidths addObject:[NSNumber numberWithFloat:width]];
+            NSInteger numberOfVisibleCells = canFitAllCellsMinimally ? cellCount : (availableWidth / _cellMinWidth);
+            for (int i = 0; i < numberOfVisibleCells; i++) {
+                CGFloat width = floor(widthRemaining / (numberOfVisibleCells - i));
+                [newWidths addObject:@(width)];
                 widthRemaining -= width;
             }
         }
     } else {
+        // Vertical orientation
         CGFloat currentOrigin = [[self style] topMarginForTabBarControl];
         NSRect cellRect = [self genericCellRect];
 
