@@ -64,6 +64,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSButton *_copyProfleToSession;
 }
 
+- (void)dealloc {
+    _profileNameFieldForEditCurrentSession.delegate = nil;
+    [super dealloc];
+}
+
 - (void)awakeFromNib {
     PreferenceInfo *info;
     
