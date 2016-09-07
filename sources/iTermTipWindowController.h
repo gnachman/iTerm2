@@ -34,6 +34,9 @@
 // Indicates that a named tip will show imminently.
 - (void)tipWindowWillShowTipWithIdentifier:(NSString *)identifier;
 
+- (BOOL)tipFrequencyIsHigh;
+- (void)toggleTipFrequency;
+
 @end
 
 // Shows a tip of the day in a card onscreen.

@@ -152,5 +152,7 @@
 + (double)pointSizeOfTimeStamp;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (double)slowFrameRate;
++ (double)timeBetweenTips;
++ (void)setTimeBetweenTips:(double)time;
 
 @end

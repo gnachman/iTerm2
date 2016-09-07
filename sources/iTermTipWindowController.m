@@ -28,6 +28,8 @@ static NSString *const kDisableTipsTitle = @"Disable Tips";
 static NSString *const kEnableTipsTitle = @"Enable Tips";
 static NSString *const kShowNextTipTitle = @"Show Next Tip";
 static NSString *const kShowPreviousTipTitle = @"Show Previous Tip";
+static NSString *const kShowTipsWeeklyTitle = @"Show Tips Weekly";
+static NSString *const kShowTipsDailyTitle = @"Show Tips Daily";
 
 static const CGFloat kWindowWidth = 400;
 
@@ -140,6 +142,29 @@ static const CGFloat kWindowWidth = 400;
         [button setCollapsed:YES];
     }
 
+    NSString *frequencyTitle;
+    if ([_delegate tipFrequencyIsHigh]) {
+        frequencyTitle = kShowTipsWeeklyTitle;
+    } else {
+        frequencyTitle = kShowTipsDailyTitle;
+    }
+    button =
+        [card addActionWithTitle:frequencyTitle
+                            icon:[NSImage imageNamed:@"TipCalendar"]
+                           block:^(id sendingCard) {
+                               [_delegate toggleTipFrequency];
+                               iTermTipCardActionButton *theButton = [card actionWithTitle:kShowTipsWeeklyTitle];
+                               if (theButton) {
+                                   [theButton setTitle:kShowTipsDailyTitle];
+                               } else {
+                                   theButton = [card actionWithTitle:kShowTipsDailyTitle];
+                                   [theButton setTitle:kShowTipsWeeklyTitle];
+                               }
+                           }];
+    if (!expanded) {
+        [button setCollapsed:YES];
+    }
+
     NSString *enableOrDisableTitle;
     if ([_delegate tipWindowTipsAreDisabled]) {
         enableOrDisableTitle = kEnableTipsTitle;
@@ -208,6 +233,8 @@ static const CGFloat kWindowWidth = 400;
     return @[ kShowThisLaterTitle,
               kDisableTipsTitle,
               kEnableTipsTitle,
+              kShowTipsDailyTitle,
+              kShowTipsWeeklyTitle,
               kShowNextTipTitle,
               kShowPreviousTipTitle ];
 }
@@ -342,6 +369,8 @@ static const CGFloat kWindowWidth = 400;
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowTipsDailyTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
@@ -352,6 +381,8 @@ static const CGFloat kWindowWidth = 400;
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowTipsDailyTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
     }

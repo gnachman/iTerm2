@@ -9,6 +9,7 @@
 #import "iTermTipController.h"
 #import <Cocoa/Cocoa.h>
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermTip.h"
 #import "iTermTipData.h"
 #import "iTermTipWindowController.h"
@@ -141,13 +142,13 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
         return;
     }
     if (_showingTip || [self haveShownTipRecently]) {
-        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
+        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:[self timeBetweenTips]];
         return;
     }
     NSString *nextTipKey = [self nextTipKey];
     if (nextTipKey) {
         [self showTipForKey:nextTipKey];
-        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
+        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:[self timeBetweenTips]];
     }
 }
 
@@ -171,7 +172,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (BOOL)haveShownTipRecently {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval previous = [[NSUserDefaults standardUserDefaults] doubleForKey:kLastTipTimeKey];
-    return (now - previous) < kSecondsPerDay;
+    return (now - previous) < [self timeBetweenTips];
 }
 
 - (NSString *)nextTipKey {
@@ -281,6 +282,22 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (void)tipWindowWillShowTipWithIdentifier:(NSString *)identifier {
     [self doNotShowCurrentTipAgain];
     [self willShowTipWithIdentifier:identifier];
+}
+
+- (NSTimeInterval)timeBetweenTips {
+    return [iTermAdvancedSettingsModel timeBetweenTips];
+}
+
+- (BOOL)tipFrequencyIsHigh {
+    return [self timeBetweenTips] <= kSecondsPerDay;
+}
+
+- (void)toggleTipFrequency {
+    if ([self tipFrequencyIsHigh]) {
+        [iTermAdvancedSettingsModel setTimeBetweenTips:kSecondsPerDay * 7];
+    } else {
+        [iTermAdvancedSettingsModel setTimeBetweenTips:kSecondsPerDay];
+    }
 }
 
 @end
