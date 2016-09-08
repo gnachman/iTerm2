@@ -15,7 +15,7 @@
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
 #import "NSWindow+PSM.h"
-
+#include <sys/time.h>
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
 NSString *const PSMTabDragDidEndNotification = @"PSMTabDragDidEndNotification";
@@ -416,10 +416,13 @@ const NSInteger kPSMStartResizeAnimation = 0;
     [self initializeStateForCell:cell];
     [self bindPropertiesForCell:cell andTabViewItem:item];
     [cell release];
+    
+    [self logCells];
 }
 
 - (void)addTabViewItem:(NSTabViewItem *)item {
     [self addTabViewItem:item atIndex:[_cells count]];
+    [self logCells];
 }
 
 - (void)removeTabForCell:(PSMTabBarCell *)cell {
@@ -446,6 +449,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
     // pull from collection
     [_cells removeObject:cell];
+    [self logCells];
 }
 
 #pragma mark -
@@ -721,6 +725,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     }
 
     [self update:YES];
+    [self logCells];
 }
 
 - (void)update
@@ -2117,6 +2122,26 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
 - (void)progressIndicatorNeedsUpdate {
     [self update];
+}
+
+NSMutableArray *sCellLog;
+
+- (void)logCells {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    NSString *logEntry = [NSString stringWithFormat:@"%lld.%06lld control=%@ cells=%@ Stack Trace:\n%@",
+                          (long long)tv.tv_sec, (long long)tv.tv_usec, self, _cells, [NSThread callStackSymbols]];
+    if (!sCellLog) {
+        sCellLog = [[NSMutableArray alloc] init];
+    }
+    [sCellLog addObject:logEntry];
+    if ([sCellLog count] > 10000) {
+        [sCellLog removeObjectAtIndex:0];
+    }
+}
+
++ (NSString *)cellLog {
+    return [sCellLog componentsJoinedByString:@"\n\n"];
 }
 
 @end

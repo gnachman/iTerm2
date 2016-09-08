@@ -217,4 +217,7 @@ enum {
 
 - (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
 
+- (void)logCells;
++ (NSString *)cellLog;
+
 @end

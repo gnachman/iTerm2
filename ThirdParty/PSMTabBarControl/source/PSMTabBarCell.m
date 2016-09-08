@@ -78,6 +78,12 @@
 
 #pragma mark - Creation/Destruction
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ inOverflow=%@ count=%@ isPlaceholder=%@ string=\"%@\">",
+            NSStringFromClass([self class]), self, NSStringFromRect(self.frame), @(self.isInOverflowMenu), @(self.count),
+            @(self.isPlaceholder), self.attributedStringValue.string];
+}
+
 - (id)initWithControlView:(PSMTabBarControl *)controlView {
     if ((self = [super init])) {
         [self setControlView:controlView];

@@ -512,7 +512,8 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
                 }
                 //add the dragged tab to the new window
                 [[control cells] insertObject:[self draggedCell] atIndex:0];
-
+                [control logCells];
+                
                 //remove the tracking rects and bindings registered on the old tab
                 [[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
                 [[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
@@ -790,6 +791,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     pc.truncationStyle = truncationStyle;
     if ([[control cells] count] > (2 * numVisibleTabs)) {
         [[control cells] insertObject:pc atIndex:(2 * numVisibleTabs)];
+        [control logCells];
     } else {
         [[control cells] addObject:pc];
     }

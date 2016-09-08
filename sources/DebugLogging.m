@@ -10,6 +10,7 @@
 #import "iTermApplication.h"
 #import "NSView+RecursiveDescription.h"
 #import <Cocoa/Cocoa.h>
+#import "PSMTabBarControl.h"
 
 #include <sys/time.h>
 
@@ -36,13 +37,15 @@ static void WriteDebugLogHeader() {
                         @"Key window: %@\n"
                         @"Windows: %@\n"
                         @"Ordered windows: %@\n"
+                        @"Cell log:\n%@"
                         @"------ END HEADER ------\n\n",
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
                         [NSDate date],
                         (long long)[[NSDate date] timeIntervalSince1970],
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
-                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
+                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
+                        [PSMTabBarControl cellLog]];
     [gDebugLogHeader release];
     gDebugLogHeader = [header copy];
 }
