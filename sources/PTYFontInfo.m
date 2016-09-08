@@ -56,7 +56,17 @@
                                      @"Hasklig-MediumIt": @1,
                                      @"Hasklig-Regular": @1,
                                      @"Hasklig-Semibold": @1,
-                                     @"Hasklig-SemiboldIt": @1 };
+                                     @"Hasklig-SemiboldIt": @1,
+                                     @"OperatorMono-XLight": @1,
+                                     @"OperatorMono-XLightItalic": @1,
+                                     @"OperatorMono-Light": @1,
+                                     @"OperatorMono-LightItalic": @1,
+                                     @"OperatorMono-Book": @1,
+                                     @"OperatorMono-BookItalic": @1,
+                                     @"OperatorMono-Medium": @1,
+                                     @"OperatorMono-MediumItalic": @1,
+                                     @"OperatorMono-Bold": @1,
+                                     @"OperatorMono-BoldItalic": @1 };
         [fontNameToLigatureLevel retain];
     });
     _ligatureLevel = [fontNameToLigatureLevel[font.fontName] integerValue];
