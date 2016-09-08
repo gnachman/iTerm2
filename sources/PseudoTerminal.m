@@ -7210,7 +7210,7 @@ ITERM_WEAKLY_REFERENCEABLE
         lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES
                                              includingContents:includeContents] retain];
         NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
-        NSLog(@"Time to encode state for window %@: %@", self, @(end - start));
+        DLog(@"Time to encode state for window %@: %@", self, @(end - start));
     }
     // For whatever reason, setting the value in the coder here doesn't work but
     // doing it in PTYWindow immediately after this method's caller returns does

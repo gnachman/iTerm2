@@ -1452,7 +1452,7 @@ static BOOL hasBecomeActive = NO;
         [coder encodeObject:hotkeyWindowsStates
                      forKey:kHotkeyWindowsRestorableStates];
     }
-    NSLog(@"Time to save app restorable state: %@",
+    DLog(@"Time to save app restorable state: %@",
           @([NSDate timeIntervalSinceReferenceDate] - start));
 }
 
