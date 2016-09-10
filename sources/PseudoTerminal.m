@@ -782,7 +782,8 @@ ITERM_WEAKLY_REFERENCEABLE
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
-    return (!togglingFullScreen_ &&
+    return ([iTermPreferences boolForKey:kPreferenceKeyEnableDivisionView] &&
+            !togglingFullScreen_ &&
             (self.window.styleMask & NSTitledWindowMask) &&
             ![self anyFullScreen] &&
             ![self tabBarVisibleOnTop]);

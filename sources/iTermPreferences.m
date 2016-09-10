@@ -74,6 +74,7 @@ NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
 NSString *const kPreferenceKeyShowWindowBorder = @"UseBorder";
 NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
 NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"DisableFullscreenTransparency";
+NSString *const kPreferenceKeyEnableDivisionView = @"EnableDivisionView";
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
 NSString *const kPreferenceKeyControlRemapping = @"Control";
@@ -234,6 +235,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyShowWindowBorder: @NO,
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
+                  kPreferenceKeyEnableDivisionView: @YES,
                   kPreferenceKeyDimBackgroundWindows: @NO,
 
                   kPreferenceKeyControlRemapping: @(kPreferencesModifierTagControl),

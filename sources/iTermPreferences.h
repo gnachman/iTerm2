@@ -94,6 +94,7 @@ extern NSString *const kPreferenceKeyDimInactiveSplitPanes;
 extern NSString *const kPreferenceKeyShowWindowBorder;
 extern NSString *const kPreferenceKeyHideScrollbar;
 extern NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault;
+extern NSString *const kPreferenceKeyEnableDivisionView;
 extern NSString *const kPreferenceKeyDimBackgroundWindows;
 
 // Keys
