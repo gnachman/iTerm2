@@ -56,6 +56,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "PFMoveApplication.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
@@ -154,11 +155,13 @@ static BOOL hasBecomeActive = NO;
 
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+    PFMoveToApplicationsFolderIfNecessary();
+
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
     }
-
+    
     if ([iTermAdvancedSettingsModel hideFromDockAndAppSwitcher]) {
         ProcessSerialNumber psn = { 0, kCurrentProcess };
         TransformProcessType(&psn, kProcessTransformToUIElementApplication);

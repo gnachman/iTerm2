@@ -1325,6 +1325,8 @@
 		A647E3A918C353C500450FA1 /* VT100StringParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A718C353C500450FA1 /* VT100StringParser.h */; };
 		A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3AC18C3588800450FA1 /* VT100ControlParser.h */; };
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
+		A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = A65871681D85E6700061CEEE /* PFMoveApplication.h */; };
+		A658716B1D85E6750061CEEE /* PFMoveApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = A65871671D85E6700061CEEE /* PFMoveApplication.m */; };
 		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
 		A65B72531B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
 		A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
@@ -3007,6 +3009,8 @@
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; tabWidth = 4; };
 		A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "iTerm2ForApplescriptTesting-Info.plist"; sourceTree = "<group>"; };
+		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
+		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
 		A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WarningSign@2x.png"; path = "images/WarningSign@2x.png"; sourceTree = "<group>"; };
 		A65B72581B1A630100F947A7 /* CheckMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CheckMark.png; path = images/CheckMark.png; sourceTree = "<group>"; };
@@ -4093,6 +4097,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A65871661D85E6660061CEEE /* LetsMove */,
 				1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */,
 				F6441F610E748404000EC682 /* CGSInternal */,
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
@@ -4715,6 +4720,15 @@
 				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
 			);
 			name = VT100;
+			sourceTree = "<group>";
+		};
+		A65871661D85E6660061CEEE /* LetsMove */ = {
+			isa = PBXGroup;
+			children = (
+				A65871671D85E6700061CEEE /* PFMoveApplication.m */,
+				A65871681D85E6700061CEEE /* PFMoveApplication.h */,
+			);
+			name = LetsMove;
 			sourceTree = "<group>";
 		};
 		A663012119D08638004AF81C /* SCEvents */ = {
@@ -5856,6 +5870,7 @@
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
 				1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */,
+				A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */,
 				A6E713AD18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h in Headers */,
 				A68A30F4186D150A007F550F /* FileTransferManager.h in Headers */,
 				1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */,
@@ -7700,6 +7715,7 @@
 				A6C763921B45C52B00E3C992 /* iTermFileDescriptorClient.c in Sources */,
 				A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */,
 				A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */,
+				A658716B1D85E6750061CEEE /* PFMoveApplication.m in Sources */,
 				A6C762B81B45C52B00E3C992 /* NSImage+iTerm.m in Sources */,
 				1D300BAB1BD9A8BB002043F7 /* NSDate+iTerm.m in Sources */,
 				A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */,
