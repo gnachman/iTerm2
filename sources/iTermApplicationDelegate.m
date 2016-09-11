@@ -155,8 +155,9 @@ static BOOL hasBecomeActive = NO;
 
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+#if !DEBUG
     PFMoveToApplicationsFolderIfNecessary();
-
+#endif
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
