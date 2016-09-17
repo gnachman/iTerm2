@@ -34,7 +34,7 @@ function print_image() {
     fi
     if $(base64 --version 2>&1 | egrep 'fourmilab|GNU' > /dev/null)
     then
-      BASE64ARG=-d
+      BASE64ARG=-di
     else
       BASE64ARG=-D
     fi
