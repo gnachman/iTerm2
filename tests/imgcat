@@ -32,12 +32,16 @@ function print_image() {
     if [[ -n "$1" ]]; then
       printf 'name='`echo -n "$1" | base64`";"
     fi
-    if $(base64 --version 2>&1 | egrep 'fourmilab|GNU' > /dev/null)
-    then
+
+    VERSION=$(base64 --version 2>&1)
+    if [[ "$VERSION" =~ fourmilab ]]; then
+      BASE64ARG=-d
+    elif [[ "$VERSION" =~ GNU ]]; then
       BASE64ARG=-di
     else
       BASE64ARG=-D
     fi
+
     echo -n "$3" | base64 $BASE64ARG | wc -c | awk '{printf "size=%d",$1}'
     printf ";inline=$2"
     printf ":"
