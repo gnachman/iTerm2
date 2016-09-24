@@ -4391,9 +4391,20 @@ ITERM_WEAKLY_REFERENCEABLE
                 [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
                 [[self window] setBackgroundColor:newTabColor];
+
+                if (IsYosemiteOrLater()) {
+                    if (newTabColor.brightnessComponent < 0.5) {
+                        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+                    } else {
+                        self.window.appearance = nil;
+                    }
+                }
                 [_contentView setColor:newTabColor];
             } else {
                 [[self window] setBackgroundColor:nil];
+                if (IsYosemiteOrLater()) {
+                    self.window.appearance = nil;
+                }
                 [_contentView setColor:normalBackgroundColor];
             }
         }
