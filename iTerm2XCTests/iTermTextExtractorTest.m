@@ -336,7 +336,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NO,
                         NULL,
                         NULL,
-                        NO);
+                        NO,
+                        kUnicodeVersion);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[2].code = 0xf001;
