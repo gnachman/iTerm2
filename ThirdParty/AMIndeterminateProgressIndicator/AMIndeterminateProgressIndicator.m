@@ -118,7 +118,7 @@ static CGFloat DegreesToRadians(double radians) {
     [NSBezierPath setDefaultLineWidth:previousLineWidth];
 }
 
-- (void)drawStep:(int)step {
+- (void)drawStep:(NSInteger)step {
     CGRect frame = self.frame;
     
     // Scale frame by the layer's contentsScale so we fill it properly.

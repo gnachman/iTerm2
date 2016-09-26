@@ -8,6 +8,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "NSArray+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "PseudoTerminal.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
@@ -143,56 +144,72 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     assert(false);
 }
 
-- (NSPoint)visibleOrigin {
-    NSRect rect = self.windowController.window.frame;
-    switch (self.windowController.windowType) {
+- (NSRect)preferredFrameForWindowController:(PseudoTerminal<iTermWeakReference> *)windowController {
+    // This can be the anchored screen (typically the screen the window was created
+    // with, but can be changed by -moveToPreferredScreen). If unanchored, then
+    // it is the current screen.
+    NSScreen *screen = windowController.screen;
+
+    switch (windowController.windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
-            return NSMakePoint(rect.origin.x, NSMaxY(self.windowController.window.screen.visibleFrame) - NSHeight(rect));
-            
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
-            return NSMakePoint(NSMinX(self.windowController.window.screen.visibleFrame) + NSWidth(rect), rect.origin.y);
-            
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-            return NSMakePoint(NSMaxX(self.windowController.window.screen.visibleFrame) - NSWidth(rect), rect.origin.y);
-            
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame));
-            
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            return rect.origin;
+            return [windowController canonicalFrameForScreen:screen];
+
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            return [self frameByMovingFrame:windowController.window.frame
+                                 fromScreen:windowController.window.screen
+                                   toScreen:screen];
     }
-    return rect.origin;
+    assert(false);
 }
 
-- (NSPoint)hiddenOrigin {
+- (NSRect)frameByMovingFrame:(NSRect)sourceFrame fromScreen:(NSScreen *)sourceScreen toScreen:(NSScreen *)destinationScreen {
+    NSSize originOffset = NSMakeSize(sourceFrame.origin.x - sourceScreen.visibleFrame.origin.x,
+                                     sourceFrame.origin.y - sourceScreen.visibleFrame.origin.y);
+
+    NSRect destination = sourceFrame;
+    destination.origin = destinationScreen.visibleFrame.origin;
+    destination.origin.x += originOffset.width;
+    destination.origin.y += originOffset.height;
+    return destination;
+}
+
+- (NSPoint)hiddenOriginForScreen:(NSScreen *)screen {
     NSRect rect = self.windowController.window.frame;
+    DLog(@"Basing hidden origin on screen frame (IHD) %@", NSStringFromRect(screen.visibleFrameIgnoringHiddenDock));
     switch (self.windowController.windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
-            return NSMakePoint(rect.origin.x, NSMaxY(self.windowController.window.screen.visibleFrame));
+            return NSMakePoint(rect.origin.x, NSMaxY(screen.visibleFrame));
             
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
-            return NSMakePoint(NSMinX(self.windowController.window.screen.visibleFrame), rect.origin.y);
+            return NSMakePoint(NSMinX(screen.visibleFrameIgnoringHiddenDock), rect.origin.y);
             
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-            return NSMakePoint(NSMaxX(self.windowController.window.screen.visibleFrame), rect.origin.y);
+            return NSMakePoint(NSMaxX(screen.visibleFrameIgnoringHiddenDock), rect.origin.y);
             
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            return NSMakePoint(rect.origin.x, NSMinY(self.windowController.window.screen.visibleFrame) - NSHeight(rect));
+            return NSMakePoint(rect.origin.x, NSMinY(screen.visibleFrameIgnoringHiddenDock) - NSHeight(rect));
             
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
+            return [self frameByMovingFrame:rect fromScreen:self.windowController.window.screen toScreen:screen].origin;
+
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+            return screen.frame.origin;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return rect.origin;
     }
@@ -200,10 +217,10 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)rollInAnimatingInDirection:(iTermAnimationDirection)direction {
-    [self.windowController.window setFrameOrigin:[self hiddenOrigin]];
+    [self moveToPreferredScreen];
+    [self.windowController.window setFrameOrigin:[self hiddenOriginForScreen:self.windowController.screen]];
 
-    NSRect destination = self.windowController.window.frame;
-    destination.origin = [self visibleOrigin];
+    NSRect destination = [self preferredFrameForWindowController:self.windowController];
     self.windowController.window.alphaValue = 0;
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         [context setDuration:kAnimationDuration];
@@ -219,7 +236,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 - (void)rollOutAnimatingInDirection:(iTermAnimationDirection)direction {
     NSRect source = self.windowController.window.frame;
     NSRect destination = source;
-    destination.origin = [self hiddenOrigin];
+    destination.origin = [self hiddenOriginForScreen:self.windowController.window.screen];
 
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         [context setDuration:kAnimationDuration];
@@ -231,6 +248,17 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                             [self didFinishRollingOut];
                         }];
 
+}
+
+- (void)moveToPreferredScreen {
+    // If the window was created with a profile that moved it to the screen
+    // with the cursor, anchor it to the screen that currently has the cursor.
+    // Doing so changes what -[PseudoTerminal screen] returns. If any other
+    // screen preference was selected this does nothing.
+    [self.windowController moveToPreferredScreen];
+
+    NSRect destination = [self preferredFrameForWindowController:self.windowController];
+    [self.windowController.window setFrame:destination display:NO];
 }
 
 - (void)fadeIn {
@@ -320,6 +348,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+                [self moveToPreferredScreen];
                 [self fadeIn];
                 break;
                 

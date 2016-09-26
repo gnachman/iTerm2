@@ -55,7 +55,7 @@
     // According to Apple these two are needed to make it clickable.
     link.allowsEditingTextAttributes = YES;
     link.selectable = YES;
-    NSDictionary *attributes = @{ NSUnderlineStyleAttributeName: @(NSSingleUnderlineStyle),
+    NSDictionary *attributes = @{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
                                   NSForegroundColorAttributeName: [NSColor colorWithCalibratedRed:0 green:0 blue:0.93 alpha:1],
                                   NSCursorAttributeName: [NSCursor pointingHandCursor],
                                   NSLinkAttributeName: url };
