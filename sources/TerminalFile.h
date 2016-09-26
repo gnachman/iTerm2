@@ -9,7 +9,7 @@
 #import "TransferrableFile.h"
 
 // Posted when the transfer wants to stop.
-NSString *const kTerminalFileShouldStopNotification;
+extern NSString *const kTerminalFileShouldStopNotification;
 
 // A file downloaded from the terminal via an escape code.
 @interface TerminalFile : TransferrableFile

@@ -15,7 +15,7 @@ U+257x	╰	╱	╲	╳	╴	╵	╶	╷	╸	╹	╺	╻	╼	╽	╾	╿
 #define iTermBoxDrawingCodeMin 0x2500
 #define iTermBoxDrawingCodeMax 0x257f
 
-NS_ENUM(unichar, iTermBoxDrawingCode) {
+typedef NS_ENUM(unichar, iTermBoxDrawingCode) {
     iTermBoxDrawingCodeLightHorizontal = 0x2500,  // ─
     iTermBoxDrawingCodeHeavyHorizontal = 0x2501,  // ━
     

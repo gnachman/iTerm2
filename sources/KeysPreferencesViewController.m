@@ -23,7 +23,6 @@
 #import "PSMTabBarControl.h"
 
 static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
-static NSString *const kHotkeyAutoHidesPreferenceDidChange = @"kHotkeyAutoHidesPreferenceDidChange";
 
 @interface KeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
 @end

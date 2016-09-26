@@ -64,6 +64,12 @@ extern NSString *const kCurrentSessionDidChange;
 // This is useful when attaching to an orphaned server.
 @property(nonatomic, assign) BOOL disablePromptForSubstitutions;
 
+// If the window is "anchored" to a screen, this returns that screen. Otherwise, it returns the
+// current screen. If the window doesn't have a current screen, it returns the
+// preferred screen from the profile. If headless, this returns nil. Consider
+// this the preferred screen.
+@property(nonatomic, readonly) NSScreen *screen;
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.
@@ -291,6 +297,14 @@ extern NSString *const kCurrentSessionDidChange;
             withSize:(NSSize *)size;
 
 - (NSColor *)accessoryTextColor;
+
+// Update self.screen to reflect the currently preferred screen. In practice,
+// this changes self.screen to the screen with the cursor if the window is
+// configured to follow it.
+- (void)moveToPreferredScreen;
+
+// Returns the preferred frame for the window if it were on a given screen.
+- (NSRect)canonicalFrameForScreen:(NSScreen *)screen;
 
 @end
 

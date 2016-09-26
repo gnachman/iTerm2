@@ -221,8 +221,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     iTermWindowType windowType_;
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
     iTermWindowType savedWindowType_;
-    BOOL haveScreenPreference_;
-    int screenNumber_;
+
+    // Indicates if _anchoredScreenNumber is to be used.
+    BOOL _isAnchoredToScreen;
+
+    // The initial screen used for the window. Always >= 0.
+    int _anchoredScreenNumber;
+
+    // // The KEY_SCREEN from the profile the window was created with.
+    // -2 = follow cursor, -1 = no preference, >= 0 screen number
+    int _screenNumberFromFirstProfile;
 
     // Window number, used for keyboard shortcut to select a window.
     // This value is 0-based while the UI is 1-based.
@@ -411,6 +419,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     // Force the nib to load
     [self window];
+    _screenNumberFromFirstProfile = screenNumber;
     if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
          windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
         screenNumber == -1) {
@@ -458,13 +467,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         screen = [[self window] screen];
         DLog(@"Screen number %d is out of range [0,%d] so using 0",
              screenNumber, (int)[[NSScreen screens] count]);
-        screenNumber_ = 0;
-        haveScreenPreference_ = NO;
+        _anchoredScreenNumber = 0;
+        _isAnchoredToScreen = NO;
     } else if (screenNumber >= 0) {
         DLog(@"Selecting screen number %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
-        screenNumber_ = screenNumber;
-        haveScreenPreference_ = YES;
+        _anchoredScreenNumber = screenNumber;
+        _isAnchoredToScreen = YES;
     }
 
     desiredRows_ = desiredColumns_ = -1;
@@ -500,7 +509,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
-            if (haveScreenPreference_) {
+            if (_isAnchoredToScreen) {
                 // Move the frame to the desired screen
                 NSScreen* baseScreen = [[self window] screen];
                 NSPoint basePoint = [baseScreen visibleFrame].origin;
@@ -977,18 +986,26 @@ ITERM_WEAKLY_REFERENCEABLE
     return nil;
 }
 
-- (NSScreen*)screen {
-    NSArray* screens = [NSScreen screens];
-    if (!haveScreenPreference_) {
-        DLog(@"No screen preference so using the window's current screen");
+- (NSScreen *)screen {
+    NSArray *screens = [NSScreen screens];
+    if (screens.count == 0) {
+        DLog(@"We are headless");
+        return nil;
+    } else if (_isAnchoredToScreen && _anchoredScreenNumber < screens.count) {
+        DLog(@"Anchor screen preference %d respected", _anchoredScreenNumber);
+        return screens[_anchoredScreenNumber];
+    } else if (self.window.screen) {
+        DLog(@"Not anchored, or anchored screen does not exist. Using current screen.");
         return self.window.screen;
-    }
-    if ([screens count] > screenNumber_) {
-        DLog(@"Screen preference %d respected", screenNumber_);
-        return screens[screenNumber_];
+    } else if (_screenNumberFromFirstProfile >= 0 && _screenNumberFromFirstProfile < screens.count) {
+        DLog(@"Using screen number from first profile %d", _screenNumberFromFirstProfile);
+        return screens[_screenNumberFromFirstProfile];
     } else {
-        DLog(@"Screen preference %d out of range so using main screen.", screenNumber_);
-        return [NSScreen mainScreen];
+        // _screenNumberFromFirstProfile must be no preference (-1), where
+        // cursor was at creation time (-2), or out of range. We'll use the
+        // first screen for lack of any better option.
+        DLog(@"Using first screen because screen number from first profile is %d", _screenNumberFromFirstProfile);
+        return screens.firstObject;
     }
 }
 
@@ -2530,35 +2547,63 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame");
-    PTYSession* session = [self currentSession];
-    NSDictionary* abDict = [session profile];
+    // It's important that this method respect the current screen if possible because
+    // -windowDidChangeScreen calls it.
     NSScreen* screen = [[self window] screen];
     if (!screen) {
-        PtyLog(@"No window screen");
-        // Try to use the screen of the current session. Fall back to the main
-        // screen if that's not an option.
-        NSArray* screens = [NSScreen screens];
-        int screenNumber = [abDict objectForKey:KEY_SCREEN] ? [[abDict objectForKey:KEY_SCREEN] intValue] : 0;
-        if (screenNumber == -1) { // No pref
-            screenNumber = 0;
-        } else if (screenNumber == -2) {  // Where cursor is; respect original preference
-            if ([screens count] > screenNumber_) {
-                screenNumber = screenNumber_;
-            } else {
-                screenNumber = 0;
-            }
-        }
-        if ([screens count] == 0) {
-            PtyLog(@"We are headless");
-            // Nothing we can do if we're headless.
+        screen = self.screen;
+        if (!screen) {
+            // Headless
             return;
         }
-        if ([screens count] <= screenNumber) {
-            PtyLog(@"Using screen 0 because the preferred screen isn't around any more");
-            screenNumber = 0;
-        }
-        screen = screens[screenNumber];
     }
+    switch (windowType_) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            if ([self updateSessionScrollbars]) {
+                PtyLog(@"Fitting tabs to window because scrollbars changed.");
+                [self fitTabsToWindow];
+            }
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL: {
+            NSRect desiredWindowFrame = [self canonicalFrameForScreen:screen];
+            if (desiredWindowFrame.size.width > 0 && desiredWindowFrame.size.height > 0) {
+                [[self window] setFrame:desiredWindowFrame display:YES];
+            }
+            break;
+        }
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN: {
+            if ([screen frame].size.width > 0) {
+                // This is necessary when restoring a traditional fullscreen window while scrollbars are
+                // forced on systemwide.
+                BOOL changedScrollBars = [self updateSessionScrollbars];
+                NSRect originalFrame = self.window.frame;
+                PtyLog(@"set window to screen's frame");
+
+                [[self window] setFrame:[self canonicalFrameForScreen:screen] display:YES];
+
+                if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
+                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
+                    [self fitTabsToWindow];
+                }
+            }
+        }
+    }
+
+    [_contentView updateToolbeltFrame];
+}
+
+- (NSRect)canonicalFrameForScreen:(NSScreen *)screen {
+    PTYSession* session = [self currentSession];
     NSRect frame = [[self window] frame];
     NSRect screenVisibleFrame = [screen visibleFrame];
     NSRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
@@ -2574,6 +2619,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (windowType_) {
         case WINDOW_TYPE_TOP_PARTIAL:
             edgeSpanning = NO;
+            // Fall through
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
@@ -2593,10 +2639,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
             frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
-
-            if (frame.size.width > 0) {
-                [[self window] setFrame:frame display:YES];
-            }
+            return frame;
             break;
 
         case WINDOW_TYPE_BOTTOM_PARTIAL:
@@ -2628,6 +2671,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_LEFT_PARTIAL:
             edgeSpanning = NO;
+            // Fall through
         case WINDOW_TYPE_LEFT:
             PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
@@ -2648,13 +2692,11 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
 
-            if (frame.size.width > 0) {
-                [[self window] setFrame:frame display:YES];
-            }
-            break;
+            return frame;
 
         case WINDOW_TYPE_RIGHT_PARTIAL:
             edgeSpanning = NO;
+            // Fall through
         case WINDOW_TYPE_RIGHT:
             PtyLog(@"Window type = RIGHT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
@@ -2675,46 +2717,24 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
 
-            if (frame.size.width > 0) {
-                [[self window] setFrame:frame display:YES];
-            }
+            return frame;
             break;
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
-            if ([self updateSessionScrollbars]) {
-                PtyLog(@"Fitting tabs to window because scrollbars changed.");
-                [self fitTabsToWindow];
-            }
-            break;
+            return self.window.frame;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
-                // This is necessary when restoring a traditional fullscreen window while scrollbars are
-                // forced on systemwide.
-                BOOL changedScrollBars = [self updateSessionScrollbars];
-                NSRect originalFrame = self.window.frame;
-                PtyLog(@"set window to screen's frame");
-                if (windowType_ == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-                    [[self window] setFrame:[self traditionalFullScreenFrameForScreen:screen] display:YES];
-                } else {
-                    [[self window] setFrame:[screen frame] display:YES];
-                }
-                if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
-                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
-                    [self fitTabsToWindow];
-                }
+                return [self traditionalFullScreenFrameForScreen:screen];
+            } else {
+                return NSZeroRect;
             }
-            break;
-
-        default:
-            break;
     }
-
-    [_contentView updateToolbeltFrame];
+    return NSZeroRect;
 }
 
 - (void)screenParametersDidChange
@@ -3621,7 +3641,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"windowWillShowInitial");
     iTermTerminalWindow* window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
-    if (haveScreenPreference_) {
+    if (_isAnchoredToScreen) {
         PtyLog(@"have screen preference is set");
         NSRect frame = [window frame];
         frame.origin = preferredOrigin_;
@@ -3631,7 +3651,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSUInteger numberOfTerminalWindows = [[[iTermController sharedInstance] terminals] count];
     if (numberOfTerminalWindows == 1 ||
         ![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
-        if (!haveScreenPreference_ &&
+        if (!_isAnchoredToScreen &&
             [iTermAdvancedSettingsModel rememberWindowPositions]) {
             PtyLog(@"No smart layout");
             NSRect frame = [window frame];
@@ -4391,9 +4411,20 @@ ITERM_WEAKLY_REFERENCEABLE
                 [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
                 [[self window] setBackgroundColor:newTabColor];
+
+                if (IsYosemiteOrLater()) {
+                    if (newTabColor.brightnessComponent < 0.5) {
+                        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+                    } else {
+                        self.window.appearance = nil;
+                    }
+                }
                 [_contentView setColor:newTabColor];
             } else {
                 [[self window] setBackgroundColor:nil];
+                if (IsYosemiteOrLater()) {
+                    self.window.appearance = nil;
+                }
                 [_contentView setColor:normalBackgroundColor];
             }
         }
@@ -7331,6 +7362,21 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)openSelection:(id)sender {
     [[self currentSession] openSelection];
+}
+
+- (void)moveToPreferredScreen {
+    if (_screenNumberFromFirstProfile == -2) {
+        // Return screen with cursor
+        NSPoint cursor = [NSEvent mouseLocation];
+        [[NSScreen screens] enumerateObjectsUsingBlock:^(NSScreen * _Nonnull screen, NSUInteger i, BOOL * _Nonnull stop) {            
+            if (NSPointInRect(cursor, screen.frame)) {
+                _isAnchoredToScreen = YES;
+                _anchoredScreenNumber = i;
+                DLog(@"Move window to screen %d %@", (int)i, NSStringFromRect(screen.frame));
+                *stop = YES;
+            }
+        }];
+    }
 }
 
 #pragma mark - Find

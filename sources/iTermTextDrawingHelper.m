@@ -1208,15 +1208,14 @@ typedef struct iTermTextColorContext {
                                   if (value.integerValue) {
                                       if (!maskGraphicsContext) {
                                           // Create a mask image.
-                                          maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(origin.x + width, origin.y + _cellSize.height)];
-                                      
+                                          maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(origin.x + width, _cellSize.height)];
                                           [NSGraphicsContext saveGraphicsState];
                                           [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:maskGraphicsContext
                                                                                                                           flipped:NO]];
-                                          
+
                                           // Draw the background
                                           [[NSColor whiteColor] setFill];
-                                          CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, origin.y, origin.x + width, _cellSize.height));
+                                          CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, origin.x + width, _cellSize.height));
                                           
                                           // Draw text into the mask
                                           NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
@@ -1225,7 +1224,7 @@ typedef struct iTermTextColorContext {
                                           [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
 
                                           [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
-                                                                                     atPoint:origin
+                                                                                     atPoint:NSMakePoint(origin.x, 0)
                                                                                    positions:stringPositions
                                                                                        width:width
                                                                              backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
@@ -1243,9 +1242,9 @@ typedef struct iTermTextColorContext {
                                       CGContextSaveGState(cgContext);
                                       CGContextClipToMask(cgContext,
                                                           NSMakeRect(0,
-                                                                     0,
+                                                                     origin.y,
                                                                      origin.x + width,
-                                                                     origin.y + _cellSize.height),
+                                                                     _cellSize.height),
                                                           alphaMask);
 
                                       NSDictionary *attributes = [attributedString attributesAtIndex:range.location
@@ -1694,11 +1693,20 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     [color set];
     NSBezierPath *path = [NSBezierPath bezierPath];
 
+    // Keep the underline a reasonable distance from the baseline.
+    CGFloat underlineOffset = _underlineOffset;
+    CGFloat distanceFromBaseline = underlineOffset - _baselineOffset;
+    if (distanceFromBaseline < 1.5) {
+        underlineOffset = _baselineOffset + 1.5;
+    } else if (distanceFromBaseline > font.xHeight / 2) {
+        underlineOffset = _baselineOffset + font.xHeight / 2;
+    }
+
     NSPoint origin = NSMakePoint(startPoint.x,
-                                 startPoint.y + _cellSize.height + _underlineOffset - 0.25);
+                                 [self retinaRound:startPoint.y + _cellSize.height + underlineOffset]);
     [path moveToPoint:origin];
     [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
-    [path setLineWidth:MIN(0.5, [self retinaRound:font.underlineThickness])];
+    [path setLineWidth:MAX(1, [self retinaRound:font.underlineThickness])];
     [path stroke];
 }
 

@@ -140,6 +140,7 @@ static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Arr
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
+static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE = @"Last Directory Is Remote";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";  // Dictionary of APS state.
 
@@ -207,6 +208,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 @property(nonatomic) NSTimeInterval lastResize;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
+@property(nonatomic) BOOL lastDirectoryIsRemote;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
@@ -977,6 +979,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
+            aSession->_lastDirectoryIsRemote = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE] boolValue];
         }
     }
 
@@ -3403,6 +3406,7 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
         if (self.lastDirectory) {
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
+            result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE] = @(self.lastDirectoryIsRemote);
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
             [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
@@ -7163,32 +7167,29 @@ ITERM_WEAKLY_REFERENCEABLE
     return _profile[KEY_NAME];
 }
 
-- (void)setLastDirectory:(NSString *)lastDirectory {
+- (void)setLastDirectory:(NSString *)lastDirectory isRemote:(BOOL)isRemote {
     DLog(@"Set last directory to %@", lastDirectory);
     if (lastDirectory) {
         [_directories addObject:lastDirectory];
     }
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
+    _lastDirectoryIsRemote = isRemote;
 }
 
 - (NSString *)currentLocalWorkingDirectory {
-    // Ask the kernel what the child's process's working directory is.
-    NSString *localDirectoryWithResolvedSymlinks = [_shell getWorkingDirectory];
-
-    if (_lastDirectory) {
-        // See if the last directory from shell integration matches what the kernel reports.
-        // Normally, _lastDirectory will contain unfollowed symlinks, which we'd prefer to use
-        // (since it's what the user sees).  But there's no way to tell if _lastDirectory refers to
-        // local path or one on a remote host. If it resolves to the same location as
-        // localDirectoryWithResolvedSymlinks then it's very likely ok.
-        NSString *resolvedLastDirectory = [_lastDirectory stringByResolvingSymlinksInPath];
-        if ([resolvedLastDirectory isEqualToString:localDirectoryWithResolvedSymlinks]) {
-            return _lastDirectory;
-        }
+    if (_lastDirectoryIsRemote) {
+        // Ask the kernel what the child's process's working directory is.
+        return [_shell getWorkingDirectory];
+    } else {
+        // If a shell integration-provided working directory is available, prefer to use it because
+        // it has unresolved symlinks. The path provided by -getWorkingDirectory has expanded symlinks
+        // and isn't what the user expects to see. This was raised in issue 3383. My first fix was
+        // to expand symlinks on _lastDirectory and use it if it matches what the kernel reports.
+        // That was a bad idea because expanding symlinks is slow on network file systems (Issue 4901).
+        // Instead, we'll use _lastDirectory if we believe it's on localhost.
+        return _lastDirectory;
     }
-
-    return localDirectoryWithResolvedSymlinks;
 }
 
 - (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
@@ -7206,7 +7207,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
                                                            onHost:[_screen remoteHostOnLine:line]
                                                          isChange:!isSame];
-    self.lastDirectory = directory;
+    [self setLastDirectory:directory isRemote:!remoteHost.isLocalhost];
     self.lastRemoteHost = remoteHost;
 }
 

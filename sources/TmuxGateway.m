@@ -18,7 +18,6 @@
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 const int kTmuxGatewayCommandShouldTolerateErrors = (1 << 0);
 const int kTmuxGatewayCommandWantsData = (1 << 1);
-static const double kVersionNumberComparisonEpsilon = 0.00001;
 
 #define NEWLINE @"\r"
 
