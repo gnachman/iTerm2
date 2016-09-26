@@ -197,7 +197,7 @@ const int kColorMapAnsiBrightModifier = 8;
     }
     dimmedRgb[3] = 1;
 
-    if (!memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3)) {
+    if (_lastTextColor && !memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3)) {
         return _lastTextColor;
     } else {
         [_lastTextColor autorelease];
