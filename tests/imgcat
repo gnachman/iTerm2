@@ -45,7 +45,7 @@ function print_image() {
     echo -n "$3" | base64 $BASE64ARG | wc -c | awk '{printf "size=%d",$1}'
     printf ";inline=$2"
     printf ":"
-    echo -n "$3"
+    printf "%s" "$3"
     print_st
     printf '\n'
     if [[ -n "$4" ]]; then
