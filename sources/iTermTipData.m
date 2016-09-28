@@ -17,7 +17,7 @@
   return @{
     // Big new features
             @"000": @{ kTipTitleKey: @"Tip of the Day",
-                        kTipBodyKey: @"This window shows the iTerm2 tip of the day. It'll appear every 24 hours to let you know about new features and hidden secrets. Hit “More Options” to view more tips or to stop getting them altogether." },
+                        kTipBodyKey: @"This window shows the iTerm2 tip of the day. It’ll appear every 24 hours to let you know about new features and hidden secrets. Hit “More Options” to view more tips or to stop getting them altogether." },
             @"0000": @{ kTipTitleKey: @"Shell Integration",
                          kTipBodyKey: @"The big new feature of iTerm2 version 3 is Shell Integration. Click “Learn More” for all the details.",
                           kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
@@ -52,25 +52,25 @@
                         kTipUrlKey: @"https://iterm2.com/captured_output.html" },
 
             @"0010": @{ kTipTitleKey: @"Badges",
-                        kTipBodyKey: @"You can display a status message in the top right of your session in the background. It‘s called a “Badge.” If you install Shell Integration you can include info like user name, hostname, current directory, and more.",
+                        kTipBodyKey: @"You can display a status message in the top right of your session in the background. It’s called a “Badge.” If you install Shell Integration you can include info like user name, hostname, current directory, and more.",
                         kTipUrlKey: @"https://iterm2.com/badges.html" },
 
             @"0011" : @{ kTipTitleKey: @"Dynamic Profiles",
-                         kTipBodyKey: @"Dynamic Profiles let you store your profiles as one or more JSON files. It‘s great for batch creating and editing profiles.",
+                         kTipBodyKey: @"Dynamic Profiles let you store your profiles as one or more JSON files. It’s great for batch creating and editing profiles.",
                          kTipUrlKey: @"https://iterm2.com/dynamic-profiles.html" },
 
             @"0012" : @{ kTipTitleKey: @"Advanced Paste",
                          kTipBodyKey: @"“Edit > Paste Special > Advanced Paste” lets you preview and edit text before you paste. You get to tweak options, like how to handle control codes, or even to base-64 encode before pasting." },
 
             @"0013" : @{ kTipTitleKey: @"Zoom",
-                         kTipBodyKey: @"Ever wanted to focus on a block of lines without distraction, or limit Find to a single command‘s output? Select the lines and choose “View > Zoom In on Selection.” The session‘s contents will be temporarily replaced with the selection. Press “esc” to unzoom." },
+                         kTipBodyKey: @"Ever wanted to focus on a block of lines without distraction, or limit Find to a single command’s output? Select the lines and choose “View > Zoom In on Selection.” The session’s contents will be temporarily replaced with the selection. Press “esc” to unzoom." },
 
     // Big but not new features
             @"0014": @{ kTipTitleKey: @"Semantic History",
                          kTipBodyKey: @"The “Semantic History” feature allows you to ⌘-click on a file or URL to open it.", },
 
             @"0015": @{ kTipTitleKey: @"Tmux Integration",
-                        kTipBodyKey: @"If you use tmux, try running “tmux -CC” to get iTerm2‘s tmux integration mode. The tmux windows show up as native iTerm2 windows, and you can use iTerm2‘s keyboard shortcuts. It even works over ssh!",
+                        kTipBodyKey: @"If you use tmux, try running “tmux -CC” to get iTerm2’s tmux integration mode. The tmux windows show up as native iTerm2 windows, and you can use iTerm2’s keyboard shortcuts. It even works over ssh!",
                         kTipUrlKey: @"https://gitlab.com/gnachman/iterm2/wikis/TmuxIntegration" },
 
             @"0016": @{ kTipTitleKey: @"Triggers",
@@ -78,7 +78,7 @@
                         kTipUrlKey: @"https://www.iterm2.com/documentation-triggers.html" },
 
             @"0017": @{ kTipTitleKey: @"Smart Selection",
-                        kTipBodyKey: @"Quadruple click to perform Smart Selection. It figures out if you‘re selecting a URL, filename, email address, etc. based on prioritized regular expressions.",
+                        kTipBodyKey: @"Quadruple click to perform Smart Selection. It figures out if you’re selecting a URL, filename, email address, etc. based on prioritized regular expressions.",
                         kTipUrlKey: @"https://www.iterm2.com/smartselection.html" },
 
             @"0018": @{ kTipTitleKey: @"Instant Replay",
@@ -125,7 +125,7 @@
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0029": @{ kTipTitleKey: @"Find Your Cursor",
-                        kTipBodyKey: @"Press ⌘/ to locate your cursor. It‘s fun!" },
+                        kTipBodyKey: @"Press ⌘/ to locate your cursor. It’s fun!" },
 
             @"0030": @{ kTipTitleKey: @"Customize Smart Selection",
                         kTipBodyKey: @"You can edit Smart Selection regular expressions in “Prefs > Profiles > Advanced > Smart Selection.”",
@@ -145,18 +145,18 @@
                         kTipBodyKey: @"You can assign tags to your profiles, and by clicking “Tags>” anywhere you see a list of profiles you can browse those tags." },
 
             @"0035": @{ kTipTitleKey: @"Tag Hierarchy",
-                        kTipBodyKey: @"If you put a slash in a profile‘s tag, that implicitly defines a hierarchy. You can see it in the Profiles menu as nested submenus." },
+                        kTipBodyKey: @"If you put a slash in a profile’s tag, that implicitly defines a hierarchy. You can see it in the Profiles menu as nested submenus." },
 
             @"0036": @{ kTipTitleKey: @"Downloads",
                         kTipBodyKey: @"iTerm2 can download files by base-64 encoding them. Click “Learn More” to download a shell script that makes it easy.",
                         kTipUrlKey: @"https://iterm2.com/download.sh" },
 
             @"0037": @{ kTipTitleKey: @"Command Completion",
-                        kTipBodyKey: @"If you install Shell Integration, ⇧⌘; helps you complete commands. It remembers the commands you‘ve run on each host that has Shell Integration installed. It knows how often that command was run and how recently to help make the best suggestions.",
+                        kTipBodyKey: @"If you install Shell Integration, ⇧⌘; helps you complete commands. It remembers the commands you’ve run on each host that has Shell Integration installed. It knows how often that command was run and how recently to help make the best suggestions.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0038": @{ kTipTitleKey: @"Recent Directories",
-                        kTipBodyKey: @"iTerm2 remembers which directories you use the most on each host that has Shell Integration installed. There‘s a Toolbelt tool to browse them, and ⌥⌘/ gives you a popup sorted by frequency and recency of use.",
+                        kTipBodyKey: @"iTerm2 remembers which directories you use the most on each host that has Shell Integration installed. There’s a Toolbelt tool to browse them, and ⌥⌘/ gives you a popup sorted by frequency and recency of use.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0039": @{ kTipTitleKey: @"Favorite Directories",
@@ -202,7 +202,7 @@
                         kTipBodyKey: @"Adjust “Minimum Contrast” in “Prefs > Profiles > Colors” to ensure text is always legible regardless of text/background color combination." },
 
             @"0052": @{ kTipTitleKey: @"Tabs",
-                        kTipBodyKey: @"Normally, new tabs appear at the end of the tab bar. There‘s a setting in “Prefs > Advanced” to place them next to your current tab." },
+                        kTipBodyKey: @"Normally, new tabs appear at the end of the tab bar. There’s a setting in “Prefs > Advanced” to place them next to your current tab." },
 
             @"0053": @{ kTipTitleKey: @"Base Conversion",
                         kTipBodyKey: @"Right-click on a number and the context menu shows it converted to hex or decimal as appropriate." },
@@ -222,13 +222,13 @@
                         kTipBodyKey: @"Single click where you want to start a selection and ⇧-click where you want it to end to select text without dragging." },
 
             @"0059" : @{ kTipTitleKey: @"Smooth Window Resizing",
-                         kTipBodyKey: @"Hold ^ while resizing a window and it won‘t snap to the character grid: you can make it any size you want." },
+                         kTipBodyKey: @"Hold ^ while resizing a window and it won’t snap to the character grid: you can make it any size you want." },
 
             @"0060" : @{ kTipTitleKey: @"Pasting Tabs",
-                         kTipBodyKey: @"If you paste text containing tabs, you‘ll be asked if you want to convert them to spaces. It‘s handy at the shell prompt to avoid triggering filename completion." },
+                         kTipBodyKey: @"If you paste text containing tabs, you’ll be asked if you want to convert them to spaces. It’s handy at the shell prompt to avoid triggering filename completion." },
 
             @"0061" : @{ kTipTitleKey: @"Bell Silencing",
-                         kTipBodyKey: @"Did you know? If the bell rings too often, you‘ll be asked if you‘d like to silence it temporarily. iTerm2 cares about your comfort." },
+                         kTipBodyKey: @"Did you know? If the bell rings too often, you’ll be asked if you’d like to silence it temporarily. iTerm2 cares about your comfort." },
 
             @"0062" : @{ kTipTitleKey: @"Profile Search",
                          kTipBodyKey: @"Every list of profiles has a search field (e.g., in ”Prefs > Profiles.”) You can use various operators to restrict your search query. Click “Learn More” for all the details.",
