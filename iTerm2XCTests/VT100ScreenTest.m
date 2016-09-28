@@ -2120,9 +2120,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     XCTAssert(screen.cursorX == 5);
     XCTAssert(screen.cursorY == 6);
-    [terminal_ restoreCursor];
-    XCTAssert(screen.cursorX == 3);
-    XCTAssert(screen.cursorY == 4);
     XCTAssert([[screen currentGrid] topMargin] == 6);
     XCTAssert([[screen currentGrid] bottomMargin] == 7);
     XCTAssert(!cursorVisible_);
