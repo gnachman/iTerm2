@@ -4607,4 +4607,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (NSUInteger)sessionPaneNumber:(PTYSession *)session {
+    NSUInteger index = [self.sessions indexOfObject:session];
+    if (index == NSNotFound) {
+        return self.sessions.count;
+    } else {
+        // It must have just been added.
+        return self.sessions.count - 1;
+    }
+}
 @end

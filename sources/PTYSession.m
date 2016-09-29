@@ -1288,7 +1288,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [NSString stringWithFormat:@"w%dt%dp%lu:%@",
             [[_delegate realParentWindow] number],
             _delegate.tabNumberForItermSessionId,
-            (unsigned long)_delegate.sessions.count,
+            [_delegate sessionPaneNumber:self],
             self.guid];
 }
 
