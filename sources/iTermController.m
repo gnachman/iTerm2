@@ -341,7 +341,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (NSString *)_showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
+- (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
     NSAlert *alert = [NSAlert alertWithMessageText:prompt
                                      defaultButton:@"OK"
                                    alternateButton:@"Cancel"
@@ -356,7 +356,7 @@ static iTermController *gSharedInstance;
     NSInteger button = [alert runModal];
     if (button == NSAlertDefaultReturn) {
         [input validateEditing];
-        return [input stringValue];
+        return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     } else if (button == NSAlertAlternateReturn) {
         return nil;
     } else {
@@ -366,8 +366,8 @@ static iTermController *gSharedInstance;
 }
 
 - (void)saveWindowArrangement:(BOOL)allWindows {
-    NSString *name = [self _showAlertWithText:@"Name for saved window arrangement:"
-                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
+    NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
+                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
     if (!name) {
         return;
     }
