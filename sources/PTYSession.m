@@ -2517,6 +2517,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (bgNum < 0 || fgNum < 0) {
+        if ([iTermAdvancedSettingsModel useColorfgbgFallback]) {
+            if ([fgColor brightnessComponent] > [bgColor brightnessComponent]) {
+                return @"15;0";
+            } else {
+                return @"0;15";
+            }
+        }
         return nil;
     }
 
