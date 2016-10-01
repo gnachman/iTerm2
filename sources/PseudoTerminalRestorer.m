@@ -123,6 +123,7 @@ static BOOL gWaitingForFullScreen;
     NSDictionary *arrangement = [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
     if (arrangement) {
         DLog(@"Have an arrangement");
+        DLog(@"Arrangement:\n%@", arrangement);
         VoidBlock theBlock = ^{
             DLog(@"PseudoTerminalRestorer block running for id %@", identifier);
             DLog(@"Creating term");

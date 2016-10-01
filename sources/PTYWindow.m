@@ -149,6 +149,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
     [super encodeRestorableStateWithCoder:coder];
+    DLog(@"Encode restorable state:\n%@", restoreState_);
     [coder encodeObject:restoreState_ forKey:kPseudoTerminalStateRestorationWindowArrangementKey];
 }
 

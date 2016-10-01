@@ -825,7 +825,7 @@ static int MyForkPty(int *amaster,
 }
 
 - (void)setSize:(VT100GridSize)size {
-    PtyTaskDebugLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
+    NSLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
     struct winsize winsize;
     if (self.fd == -1) {
         return;
