@@ -30,7 +30,7 @@ function print_image() {
     print_osc
     printf '1337;File='
     if [[ -n "$1" ]]; then
-      printf 'name='`echo -n "$1" | base64`";"
+      printf 'name='`printf "%s" "$1" | base64`";"
     fi
 
     VERSION=$(base64 --version 2>&1)
@@ -42,10 +42,10 @@ function print_image() {
       BASE64ARG=-D
     fi
 
-    echo -n "$3" | base64 $BASE64ARG | wc -c | awk '{printf "size=%d",$1}'
+    printf "%s" "$3" | base64 $BASE64ARG | wc -c | awk '{printf "size=%d",$1}'
     printf ";inline=$2"
     printf ":"
-    echo -n "$3"
+    printf "%s" "$3"
     print_st
     printf '\n'
     if [[ -n "$4" ]]; then
