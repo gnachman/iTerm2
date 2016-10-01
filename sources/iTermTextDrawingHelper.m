@@ -1706,7 +1706,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                  [self retinaRound:startPoint.y + _cellSize.height + underlineOffset]);
     [path moveToPoint:origin];
     [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
-    [path setLineWidth:MAX(1, [self retinaRound:font.underlineThickness])];
+    [path setLineWidth:MAX(0.75, [self retinaRound:font.underlineThickness])];
     [path stroke];
 }
 
