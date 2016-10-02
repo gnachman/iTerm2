@@ -776,54 +776,69 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 + (NSInteger)_cgMaskForMod:(int)mod
 {
+    DLog(@"Computing cgmask for %@", @(mod));
     switch (mod) {
         case kPreferencesModifierTagControl:
+            DLog(@"Return %@", @(kCGEventFlagMaskControl));
             return kCGEventFlagMaskControl;
 
         case kPreferencesModifierTagLeftOption:
         case kPreferencesModifierTagRightOption:
         case kPreferencesModifierTagEitherOption:
+            DLog(@"Return %@", @(kCGEventFlagMaskAlternate));
             return kCGEventFlagMaskAlternate;
 
         case kPreferencesModifierTagEitherCommand:
         case kPreferencesModifierTagLeftCommand:
         case kPreferencesModifierTagRightCommand:
+            DLog(@"Return %@", @(kCGEventFlagMaskCommand));
             return kCGEventFlagMaskCommand;
 
         case kPreferencesModifierTagCommandAndOption:
+            DLog(@"Return %@", @(kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate));
             return kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate;
 
         default:
+            DLog(@"Default case - return 0");
             return 0;
     }
 }
 
 + (NSInteger)_nxMaskForLeftMod:(int)mod
 {
+    DLog(@"Computing nxmask for %@", @(mod));
     switch (mod) {
         case kPreferencesModifierTagControl:
+            DLog(@"Return %@", @(NX_DEVICELCTLKEYMASK));
             return NX_DEVICELCTLKEYMASK;
 
         case kPreferencesModifierTagLeftOption:
+            DLog(@"Return %@", @(NX_DEVICELALTKEYMASK));
             return NX_DEVICELALTKEYMASK;
 
         case kPreferencesModifierTagRightOption:
+            DLog(@"Return %@", @(NX_DEVICERALTKEYMASK));
             return NX_DEVICERALTKEYMASK;
 
         case kPreferencesModifierTagEitherOption:
+            DLog(@"Return %@", @(NX_DEVICELALTKEYMASK));
             return NX_DEVICELALTKEYMASK;
 
         case kPreferencesModifierTagRightCommand:
+            DLog(@"Return %@", @(NX_DEVICERCMDKEYMASK));
             return NX_DEVICERCMDKEYMASK;
 
         case kPreferencesModifierTagLeftCommand:
         case kPreferencesModifierTagEitherCommand:
+            DLog(@"Return %@", @(NX_DEVICELCMDKEYMASK));
             return NX_DEVICELCMDKEYMASK;
 
         case kPreferencesModifierTagCommandAndOption:
+            DLog(@"Return %@", @(NX_DEVICELCMDKEYMASK | NX_DEVICELALTKEYMASK));
             return NX_DEVICELCMDKEYMASK | NX_DEVICELALTKEYMASK;
 
         default:
+            DLog(@"Default case - return 0");
             return 0;
     }
 }
@@ -921,50 +936,93 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent
 {
     // This function copied from cmd-key happy. See copyright notice at top.
-    CGEventFlags flags = CGEventGetFlags(cgEvent);
+    const CGEventFlags flags = CGEventGetFlags(cgEvent);
     const CGEventFlags origFlags = flags;
     CGEventFlags andMask = -1;
     CGEventFlags orMask = 0;
+
+    DLog(@"original flags: %@", @(origFlags));
+
+    DLog(@"Command remappings: left cmd=%@   right cmd=%@   left opt=%@   right opt=%@   control=%@",
+         @([[HotkeyWindowController sharedInstance] leftCommandRemapping]),
+         @([[HotkeyWindowController sharedInstance] rightCommandRemapping]),
+         @([[HotkeyWindowController sharedInstance] leftOptionRemapping]),
+         @([[HotkeyWindowController sharedInstance] rightOptionRemapping]),
+         @([[HotkeyWindowController sharedInstance] controlRemapping])
+         );
+
     if (origFlags & kCGEventFlagMaskCommand) {
+        DLog(@"Original flags had CG cmd");
+
         andMask &= ~kCGEventFlagMaskCommand;
         if (flags & NX_DEVICELCMDKEYMASK) {
+            DLog(@"Original flags had NX left cmd");
+
             andMask &= ~NX_DEVICELCMDKEYMASK;
+            DLog(@"andMask now %@", @(andMask));
             orMask |= [self _cgMaskForLeftCommandKey];
+            DLog(@"After adding cg mask, or mask now %@", @(orMask));
             orMask |= [self _nxMaskForLeftCommandKey];
+            DLog(@"After adding nx mask, or mask now %@", @(orMask));
         }
+
         if (flags & NX_DEVICERCMDKEYMASK) {
+            DLog(@"Original flags had NX right cmd");
             andMask &= ~NX_DEVICERCMDKEYMASK;
+            DLog(@"andMask now %@", @(andMask));
             orMask |= [self _cgMaskForRightCommandKey];
+            DLog(@"After adding cg mask, or mask now %@", @(orMask));
             orMask |= [self _nxMaskForRightCommandKey];
-        }
-    }
-    if (origFlags & kCGEventFlagMaskAlternate) {
-        andMask &= ~kCGEventFlagMaskAlternate;
-        if (flags & NX_DEVICELALTKEYMASK) {
-            andMask &= ~NX_DEVICELALTKEYMASK;
-            orMask |= [self _cgMaskForLeftAlternateKey];
-            orMask |= [self _nxMaskForLeftAlternateKey];
-        }
-        if (flags & NX_DEVICERALTKEYMASK) {
-            andMask &= ~NX_DEVICERALTKEYMASK;
-            orMask |= [self _cgMaskForRightAlternateKey];
-            orMask |= [self _nxMaskForRightAlternateKey];
-        }
-    }
-    if (origFlags & kCGEventFlagMaskControl) {
-        andMask &= ~kCGEventFlagMaskControl;
-        if (flags & NX_DEVICELCTLKEYMASK) {
-            andMask &= ~NX_DEVICELCTLKEYMASK;
-            orMask |= [self _cgMaskForLeftControlKey];
-            orMask |= [self _nxMaskForLeftControlKey];
-        }
-        if (flags & NX_DEVICERCTLKEYMASK) {
-            andMask &= ~NX_DEVICERCTLKEYMASK;
-            orMask |= [self _cgMaskForRightControlKey];
-            orMask |= [self _nxMaskForRightControlKey];
+            DLog(@"After adding nx mask, or mask now %@", @(orMask));
         }
     }
 
+    if (origFlags & kCGEventFlagMaskAlternate) {
+        DLog(@"Flags had alternate!");
+        andMask &= ~kCGEventFlagMaskAlternate;
+        if (flags & NX_DEVICELALTKEYMASK) {
+            DLog(@"Left alt");
+            andMask &= ~NX_DEVICELALTKEYMASK;
+            DLog(@"andMask now %@", @(andMask));
+            orMask |= [self _cgMaskForLeftAlternateKey];
+            DLog(@"After adding cg mask, or mask now %@", @(orMask));
+            orMask |= [self _nxMaskForLeftAlternateKey];
+            DLog(@"After adding nx mask, or mask now %@", @(orMask));
+        }
+        if (flags & NX_DEVICERALTKEYMASK) {
+            DLog(@"Right alt");
+            andMask &= ~NX_DEVICERALTKEYMASK;
+            DLog(@"andMask now %@", @(andMask));
+            orMask |= [self _cgMaskForRightAlternateKey];
+            DLog(@"After adding cg mask, or mask now %@", @(orMask));
+            orMask |= [self _nxMaskForRightAlternateKey];
+            DLog(@"After adding nx mask, or mask now %@", @(orMask));
+        }
+    }
+    if (origFlags & kCGEventFlagMaskControl) {
+        DLog(@"Flags had control!");
+        andMask &= ~kCGEventFlagMaskControl;
+        if (flags & NX_DEVICELCTLKEYMASK) {
+            DLog(@"Left ctrl");
+            andMask &= ~NX_DEVICELCTLKEYMASK;
+            DLog(@"andMask now %@", @(andMask));
+            orMask |= [self _cgMaskForLeftControlKey];
+            DLog(@"After adding cg mask, or mask now %@", @(orMask));
+            orMask |= [self _nxMaskForLeftControlKey];
+            DLog(@"After adding nx mask, or mask now %@", @(orMask));
+        }
+        if (flags & NX_DEVICERCTLKEYMASK) {
+            DLog(@"Right ctrl");
+            andMask &= ~NX_DEVICERCTLKEYMASK;
+            DLog(@"andMask now %@", @(andMask));
+            orMask |= [self _cgMaskForRightControlKey];
+            DLog(@"After adding cg mask, or mask now %@", @(orMask));
+            orMask |= [self _nxMaskForRightControlKey];
+            DLog(@"After adding nx mask, or mask now %@", @(orMask));
+        }
+    }
+
+    DLog(@"Set flags to %@", @((flags & andMask) | orMask));
     CGEventSetFlags(cgEvent, (flags & andMask) | orMask);
     return cgEvent;
 }
