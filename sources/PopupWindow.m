@@ -15,7 +15,7 @@
 }
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
-                          styleMask:(NSWindowStyleMask)aStyle
+                          styleMask:(NSUInteger)aStyle
                             backing:(NSBackingStoreType)bufferingType
                               defer:(BOOL)flag {
     self = [super initWithContentRect:contentRect
