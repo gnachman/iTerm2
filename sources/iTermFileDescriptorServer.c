@@ -157,7 +157,6 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
         syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
         return -1;
     }
-
     // Mask off all permissions for group and other. Only user can use this socket.
     mode_t oldMask = umask(S_IRWXG | S_IRWXO);
 

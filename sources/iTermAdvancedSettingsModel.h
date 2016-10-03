@@ -154,5 +154,6 @@
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (double)slowFrameRate;
 + (BOOL)useColorfgbgFallback;
++ (BOOL)promptForPasteWhenNotAtPrompt;
 
 @end

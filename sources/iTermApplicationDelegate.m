@@ -443,7 +443,34 @@ static BOOL hasBecomeActive = NO;
         [alert runModal];
     }
 }
+
+- (void)warnAboutChangeToDefaultPasteBehavior {
+    static NSString *const kHaveWarnedAboutPasteConfirmationChange = @"NoSyncHaveWarnedAboutPasteConfirmationChange";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kHaveWarnedAboutPasteConfirmationChange]) {
+        // Safety check that we definitely don't show this twice.
+        return;
+    }
+    NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
+    if ([iTermWarning identifierIsSilenced:identifier]) {
+        return;
+    }
+
+    NSArray *warningList = @[ @"3.0.0", @"3.0.1", @"3.0.2", @"3.0.3", @"3.0.4", @"3.0.5", @"3.0.6", @"3.0.7", @"3.0.8", @"3.0.9", @"3.0.10" ];
+    if ([warningList containsObject:[iTermPreferences appVersionBeforeThisLaunch]]) {
+        [iTermWarning showWarningWithTitle:@"iTerm2 no longer warns before a multi-line paste, unless you are at the shell prompt."
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Important Change"];
+    }
+
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [self warnAboutChangeToDefaultPasteBehavior];
+
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
