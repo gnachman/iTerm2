@@ -47,11 +47,11 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Growl.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/NMSSH.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/ColorPicker.framework"
-  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
+  codesign -s "H7V7XYVQ7D" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Growl.framework"
+  codesign -s "H7V7XYVQ7D" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/NMSSH.framework"
+  codesign -s "H7V7XYVQ7D" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework"
+  codesign -s "H7V7XYVQ7D" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/ColorPicker.framework"
+  codesign -s "H7V7XYVQ7D" -f "build/$BUILDTYPE/iTerm2.app"
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
  

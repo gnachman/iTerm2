@@ -32,7 +32,7 @@ Dep:
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment
 
 Deployment:
-	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment && \
+	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO && \
 	chmod -R go+rX build/Deployment
 
 Nightly: force
