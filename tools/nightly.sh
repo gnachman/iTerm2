@@ -29,8 +29,8 @@ set -x
 rm -rf build/Nightly/iTerm2.app
 make clean || die "Make clean failed"
 security unlock-keychain -p "$ITERM_KEYCHAIN_PASSWORD" "$ITERM_KEYCHAIN"
-tools/sign.sh
 make Nightly || die "Nightly build failed"
+tools/sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
