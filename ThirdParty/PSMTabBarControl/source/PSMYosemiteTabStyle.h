@@ -15,4 +15,7 @@
 @property(nonatomic, readonly) PSMTabBarControl *tabBar;
 @property(nonatomic, readonly) BOOL isYosemiteOrLater;
 
+// For subclasses.
+- (NSColor *)topLineColorSelected:(BOOL)selected;
+
 @end

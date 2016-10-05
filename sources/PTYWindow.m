@@ -62,7 +62,7 @@
     double _cachedTotalOcclusion;
 }
 
-- (instancetype)initWithContentRect:(NSRect)contentRect styleMask:(NSUInteger)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag {
+- (instancetype)initWithContentRect:(NSRect)contentRect styleMask:(NSWindowStyleMask)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag {
     self = [super initWithContentRect:contentRect styleMask:aStyle backing:bufferingType defer:flag];
     if (self) {
         [self registerForNotifications];
@@ -71,7 +71,7 @@
 }
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
-                          styleMask:(NSUInteger)aStyle
+                          styleMask:(NSWindowStyleMask)aStyle
                             backing:(NSBackingStoreType)bufferingType
                               defer:(BOOL)flag
                              screen:(nullable NSScreen *)screen {
