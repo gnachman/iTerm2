@@ -117,6 +117,7 @@
             return;
         }
     } else if ([event type] == NSKeyDown) {
+        DLog(@"Received KeyDown event: %@", event);
         iTermController* cont = [iTermController sharedInstance];
 
         event = [self eventByRemappingForSecureInput:event];
