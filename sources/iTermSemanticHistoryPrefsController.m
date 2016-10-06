@@ -28,6 +28,7 @@ NSString *kSemanticHistoryEditorAction = @"editor";
 NSString *kSemanticHistoryCommandAction = @"command";
 NSString *kSemanticHistoryRawCommandAction = @"raw command";
 NSString *kSemanticHistoryCoprocessAction = @"coprocess";
+NSString *kSemanticHistoryRawCoprocessAction = @"raw coprocess";
 
 @implementation iTermSemanticHistoryPrefsController {
     NSString *guid_;
@@ -192,7 +193,8 @@ enum {
               @3: kSemanticHistoryEditorAction,
               @4: kSemanticHistoryCommandAction,
               @5: kSemanticHistoryRawCommandAction,
-              @6: kSemanticHistoryCoprocessAction };
+              @7: kSemanticHistoryRawCoprocessAction,
+              @6: kSemanticHistoryCoprocessAction};
 }
 
 - (NSString *)actionIdentifier {
@@ -259,6 +261,12 @@ enum {
         case 6:
             [[text_ cell] setPlaceholderString:@"Enter command"];
             [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+            hideCaveat = NO;
+            hideText = NO;
+            break;
+        case 7:
+            [[text_ cell] setPlaceholderString:@"Enter command"];
+            [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename (even if it's not a avlid filename). Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
             hideCaveat = NO;
             hideText = NO;
             break;

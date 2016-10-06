@@ -389,6 +389,22 @@
     XCTAssert([expectedScript isEqualToString:actualScript]);
 }
 
+- (void) testOpenPathRawCoprocess {
+    NSString *kCommand = @"Command";
+    _semanticHistoryController.prefs =
+    @{ kSemanticHistoryActionKey: kSemanticHistoryRawCoprocessAction,
+       kSemanticHistoryTextKey: kCommand};
+    NSString *kExistingFileAbsolutePath = @"/file/that/exists";
+    // Should run the command even if the file does not exist locally.
+    BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePath
+                                      workingDirectory:@"/"
+                                         substitutions:@{ kSemanticHistoryPrefixSubstitutionKey: @"Prefix",
+                                                          kSemanticHistorySuffixSubstitutionKey: @"Suffix",
+                                                          kSemanticHistoryWorkingDirectorySubstitutionKey: @"/tmp" }];
+    XCTAssert(opened);
+    XCTAssert([kCommand isEqualToString:_coprocessCommand]);
+}
+
 - (void)testOpenPathFailsIfFileDoesNotExist {
     _semanticHistoryController.prefs =
         @{ kSemanticHistoryActionKey: kSemanticHistoryBestEditorAction };

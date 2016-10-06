@@ -225,7 +225,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)activatesOnAnyString {
-    return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
+    return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction] ||
+        [prefs_ [kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCoprocessAction];
 }
 
 - (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments wait:(BOOL)wait {
@@ -264,8 +265,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     BOOL isDirectory;
     NSString *lineNumber = @"";
 
+    BOOL isRawCoProcess = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCoprocessAction];
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
-    if (!isRawAction) {
+
+    if (!(isRawAction || isRawCoProcess)) {
         path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber];
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
@@ -287,9 +290,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return YES;
     }
 
-    if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
-        DLog(@"No file exists at %@, not running semantic history", path);
-        return NO;
+    if (isRawCoProcess) {
+        DLog(@"Launch coproress with script %@", script);
+        assert(delegate_);
+        [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
+        return YES;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
@@ -298,16 +303,21 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return YES;
     }
 
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
-        DLog(@"Launch coproress with script %@", script);
-        assert(delegate_);
-        [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
-        return YES;
+    if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
+        DLog(@"No file exists at %@, not running semantic history", path);
+        return NO;
     }
 
     if (isDirectory) {
         DLog(@"Open directory %@", path);
         [self openFile:path];
+        return YES;
+    }
+
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
+        DLog(@"Launch coproress with script %@", script);
+        assert(delegate_);
+        [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
         return YES;
     }
 
@@ -416,7 +426,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 rightChunk = afterChunks[j];
             }
             [right appendString:rightChunk];
-            
+
             NSString *possiblePath = [left stringByAppendingString:right];
             NSString *trimmedPath = possiblePath;
             if (trimWhitespace) {
