@@ -136,7 +136,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 - (NSString *)stringValue {
-    return self.charactersIgnoringModifiers.length > 0 ? [iTermKeyBindingMgr formatKeyCombination:self.identifier] : @"";
+    return self.charactersIgnoringModifiers.length > 0 ? [iTermKeyBindingMgr formatKeyCombination:self.identifier keyCode:self.keyCode] : @"";
 }
 
 - (BOOL)isAssigned {

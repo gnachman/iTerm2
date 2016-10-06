@@ -88,16 +88,10 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 @implementation iTermKeyBindingMgr
 
-+ (NSString *)formatKeyCombination:(NSString *)theKeyCombination
-{
-    unsigned int keyMods;
-    unsigned int keyCode;
-    NSString *aString;
-    NSMutableString *theKeyString;
-    keyCode = keyMods = 0;
-    sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyMods);
++ (NSString *)stringForCharacter:(unsigned int)character isArrow:(BOOL *)isArrowPtr {
     BOOL isArrow = NO;
-    switch (keyCode) {
+    NSString *aString = nil;
+    switch (character) {
         case NSDownArrowFunctionKey:
             aString = @"↓";
             isArrow = YES;
@@ -152,7 +146,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case NSF18FunctionKey:
         case NSF19FunctionKey:
         case NSF20FunctionKey:
-            aString = [NSString stringWithFormat: @"F%d", (keyCode - NSF1FunctionKey + 1)];
+            aString = [NSString stringWithFormat: @"F%d", (character - NSF1FunctionKey + 1)];
             break;
         case NSHelpFunctionKey:
             aString = NSLocalizedStringFromTableInBundle(@"Help",
@@ -186,7 +180,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case '7':
         case '8':
         case '9':
-            aString = [NSString stringWithFormat: @"%d", (keyCode - '0')];
+            aString = [NSString stringWithFormat: @"%d", (character - '0')];
             break;
         case '=':
             aString = @"=";
@@ -224,50 +218,125 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             break;
 
         default:
-            if (keyCode >= '!' && keyCode <= '~') {
-                aString = [NSString stringWithFormat:@"%c", keyCode];
+            if (character > ' ' && (character < 0xe800 || character > 0xfdff) && character < 0xffff) {
+                aString = [NSString stringWithFormat:@"%C", (unichar)character];
             } else {
-                switch (keyCode) {
+                switch (character) {
                     case ' ':
                         aString = @"Space";
                         break;
 
                     case '\r':
-                        aString = @"↩";
+                        aString = @"Return ↩";
                         break;
 
                     case 27:
-                        aString = @"⎋";
+                        aString = @"Esc ⎋";
                         break;
 
                     case '\t':
-                        aString = @"↦";
+                        aString = @"Tab ↦";
                         break;
 
                     case 0x19:
                         // back-tab
-                        aString = @"↤";
+                        aString = @"Tab ↤";
                         break;
 
                     default:
-                        aString = [NSString stringWithFormat: @"%@ 0x%x",
-                                   NSLocalizedStringFromTableInBundle(@"Hex Code",
-                                                                      @"iTerm",
-                                                                      [NSBundle bundleForClass: [self class]],
-                                                                      @"Key Names"),
-                                   keyCode];
+                        aString = [NSString stringWithFormat: @"Hex Code 0x%x", character];
                         break;
                 }
             }
             break;
     }
-
-    theKeyString = [[[NSString stringForModifiersWithMask:keyMods] mutableCopy] autorelease];
-    if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
-        [theKeyString appendString: @"num-"];
+    if (isArrowPtr) {
+        *isArrowPtr = isArrow;
     }
-    [theKeyString appendString:aString];
-    return theKeyString;
+    return aString;
+}
+
++ (NSString *)stringForKeyCode:(CGKeyCode)virtualKeyCode
+                     character:(unichar)character
+                       isArrow:(BOOL *)isArrow {
+    TISInputSourceRef inputSource = NULL;
+    NSString *result = nil;
+
+    if (virtualKeyCode != 0) {
+        inputSource = TISCopyCurrentKeyboardInputSource();
+        if (inputSource == NULL) {
+            goto exit;
+        }
+
+        CFDataRef keyLayoutData = TISGetInputSourceProperty(inputSource,
+                                                            kTISPropertyUnicodeKeyLayoutData);
+        if (keyLayoutData == NULL) {
+            goto exit;
+        }
+
+        const UCKeyboardLayout *keyLayoutPtr = (const UCKeyboardLayout *)CFDataGetBytePtr(keyLayoutData);
+        if (keyLayoutPtr == NULL) {
+            goto exit;
+        }
+
+        UInt32 deadKeyState = 0;
+        UniChar unicodeString[4];
+        UniCharCount actualStringLength;
+
+        OSStatus status = UCKeyTranslate(keyLayoutPtr,
+                                         virtualKeyCode,
+                                         kUCKeyActionDisplay,
+                                         0,
+                                         LMGetKbdType(),
+                                         kUCKeyTranslateNoDeadKeysBit,
+                                         &deadKeyState,
+                                         sizeof(unicodeString) / sizeof(*unicodeString),
+                                         &actualStringLength,
+                                         unicodeString);
+        if (status != noErr) {
+            goto exit;
+        }
+
+        if (actualStringLength == 0) {
+            goto exit;
+        }
+
+        if (unicodeString[0] <= ' ' || unicodeString[0] == 127) {
+            goto exit;
+        }
+
+        result = [NSString stringWithCharacters:unicodeString length:actualStringLength];
+    }
+
+exit:
+    if (inputSource != NULL) {
+        CFRelease(inputSource);
+    }
+    if (result == nil) {
+        result = [self stringForCharacter:character isArrow:isArrow];
+    }
+    return result;
+}
+
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination {
+    return [self formatKeyCombination:theKeyCombination keyCode:0];
+}
+
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination keyCode:(NSUInteger)virtualKeyCode {
+    unsigned int keyMods = 0;
+    unsigned int keyCode = 0;
+
+    sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyMods);
+
+    BOOL isArrow = NO;
+    NSString *charactersAsString = [self stringForKeyCode:virtualKeyCode character:keyCode isArrow:&isArrow];
+
+    NSMutableString *result = [[[NSString stringForModifiersWithMask:keyMods] mutableCopy] autorelease];
+    if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
+        [result appendString: @"num-"];
+    }
+    [result appendString:charactersAsString];
+    return result;
 }
 
 + (NSString*)_bookmarkNameForGuid:(NSString*)guid
