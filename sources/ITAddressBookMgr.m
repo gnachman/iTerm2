@@ -609,15 +609,16 @@ NSInteger iTermProfileJoinsAllSpaces = -1;
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-               forObjectType:(iTermObjectType)objectType
-{
+               forObjectType:(iTermObjectType)objectType {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
-        return [bookmark objectForKey:KEY_COMMAND_LINE];
-    } else {
-        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
-                                                forObjectType:objectType];
+        NSString *command = [bookmark objectForKey:KEY_COMMAND_LINE];
+        if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
+            return command;
+        }
     }
+    return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
+                                            forObjectType:objectType];
 }
 
 + (NSString *)_advancedWorkingDirWithOption:(NSString *)option
