@@ -419,7 +419,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         PseudoTerminal *term = profileHotKey.windowController;
         NSWindow *window = [term window];
         // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
-        // another app key, leaving the hotkey window open underneath other windows.
+        // another app key, leaving the hotkey window open underneath other windows. Issue 5217
+        // refines this further by pointing out the window should remain visible but cede key
+        // status.
         if ([window isVisible] &&
             window.isOnActiveSpace &&
             ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
@@ -427,11 +429,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
             DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 DLog(@"Bring hotkey window %@ to front", window);
-                if (![window isKindOfClass:[iTermPanel class]]) {
-                    // Activating the app switches away from a lion fullscreen window
-                    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-                }
-                [window makeKeyAndOrderFront:nil];
+                [window orderFrontRegardless];
             });
         }
         if ([window isVisible] && window.isOnActiveSpace && [term fullScreen]) {

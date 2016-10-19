@@ -92,7 +92,7 @@
 // From https://github.com/DrawKit/DrawKit/blob/master/framework/Code/NSBezierPath%2BText.m#L648
 - (CGFloat)computedUnderlineOffset {
     NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
-    NSTextContainer *textContainer = [[[NSTextContainer alloc] initWithSize:NSMakeSize(1000, 1000)] autorelease];
+    NSTextContainer *textContainer = [[[NSTextContainer alloc] init] autorelease];
     [layoutManager addTextContainer:textContainer];
     NSDictionary *attributes = @{ NSFontNameAttribute: font_,
                                   NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
