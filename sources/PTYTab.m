@@ -3311,6 +3311,29 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (shouldZoom) {
         DLog(@"Maximizing");
         [self maximize];
+
+        // TODO: For tmux 1.2, we can use window_visible_layout to fix up the parse tree earlier.
+        // The approach below is to construct a fake parse tree with a single session whose size
+        // equals that of the window. See issue 5233.
+        NSMutableDictionary *child = [[@{
+                                         kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
+                                         kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
+                                         kLayoutDictNodeType: @(kLeafLayoutNode),
+                                         kLayoutDictWindowPaneKey: @(self.activeSession.tmuxPane),
+                                         kLayoutDictXOffsetKey: @0,
+                                         kLayoutDictYOffsetKey: @0,
+                                         } mutableCopy] autorelease];
+        NSMutableDictionary *maximizedParseTree =
+            [[@{ kLayoutDictChildrenKey: @[ child ],
+                 kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
+                 kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
+                 kLayoutDictNodeType: @(kVSplitLayoutNode),
+                 kLayoutDictXOffsetKey: @0,
+                 kLayoutDictYOffsetKey: @0,
+             } mutableCopy] autorelease];
+        [PTYTab setSizesInTmuxParseTree:maximizedParseTree inTerminal:realParentWindow_];
+        [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
+        [self fitSubviewsToRoot];
     }
 }
 
