@@ -1458,8 +1458,8 @@ static BOOL hasBecomeActive = NO;
         [coder encodeObject:hotkeyWindowState
                      forKey:kHotkeyWindowRestorableState];
     }
-    NSLog(@"Time to save app restorable state: %@",
-          @([NSDate timeIntervalSinceReferenceDate] - start));
+    DLog(@"Time to save app restorable state: %@",
+         @([NSDate timeIntervalSinceReferenceDate] - start));
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
