@@ -19,8 +19,9 @@ const int kColorMapCursor = 5;
 const int kColorMapCursorText = 6;
 const int kColorMapInvalid = 7;
 const int kColorMapLink = 8;
+const int kColorMapUnderline = 9;
 // This value plus 0...255 are accepted.
-const int kColorMap8bitBase = 9;
+const int kColorMap8bitBase = 10;
 // This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
 const int kColorMap24bitBase = kColorMap8bitBase + 256;
 
@@ -86,19 +87,31 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (void)setColor:(NSColor *)theColor forKey:(iTermColorMapKey)theKey {
-    if (!theColor || theColor == _map[@(theKey)] || theKey >= kColorMap24bitBase) {
+    if (theKey >= kColorMap24bitBase)
+        return;
+
+    if (!theColor) {
+        [_map removeObjectForKey:@(theKey)];
         return;
     }
+
+    if (theColor == _map[@(theKey)])
+        return;
+
     if (theKey == kColorMapBackground) {
         _backgroundRed = [theColor redComponent];
         _backgroundGreen = [theColor greenComponent];
         _backgroundBlue = [theColor blueComponent];
     }
-    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    _map[@(theKey)] = theColor;
+
+    theColor = [theColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];
     }
+
+    _map[@(theKey)] = theColor;
+
     [_delegate colorMap:self didChangeColorForKey:theKey];
 }
 
@@ -112,11 +125,7 @@ const int kColorMapAnsiBrightModifier = 8;
         int red = (n >> 16) & 0xff;
         return [NSColor colorWith8BitRed:red green:green blue:blue];
     } else {
-        NSColor *result = _map[@(theKey)];
-        if (!result) {
-            result = [NSColor colorWithCalibratedRed:1 green:0 blue:0 alpha:1];
-        }
-        return result;
+        return _map[@(theKey)];
     }
 }
 
@@ -143,6 +152,9 @@ const int kColorMapAnsiBrightModifier = 8;
 // spaces. The effects are generally subtle.
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
                         overBackgroundColor:(NSColor *)backgroundColor {
+    if (!textColor) {
+        return nil;
+    }
     // Fist apply minimum contrast, then muting, then dimming (as needed).
     CGFloat textRgb[4];
     [textColor getComponents:textRgb];
@@ -185,7 +197,7 @@ const int kColorMapAnsiBrightModifier = 8;
     }
     dimmedRgb[3] = 1;
 
-    if (!memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3)) {
+    if (_lastTextColor && !memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3)) {
         return _lastTextColor;
     } else {
         [_lastTextColor autorelease];
@@ -257,6 +269,9 @@ const int kColorMapAnsiBrightModifier = 8;
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle.
 - (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)backgroundColor {
+    if (!backgroundColor) {
+        return nil;
+    }
     // Fist apply muting then dimming (as needed).
     CGFloat backgroundRgb[4];
     [backgroundColor getComponents:backgroundRgb];
@@ -280,7 +295,9 @@ const int kColorMapAnsiBrightModifier = 8;
              fabs(backgroundRgb[1] - defaultBackgroundComponents[1]) < 0.01 &&
              fabs(backgroundRgb[2] - defaultBackgroundComponents[2]) < 0.01);
         if (!isDefaultBackgroundColor) {
-            grayRgb[0] = grayRgb[1] = grayRgb[2] = 0;
+            for (int j = 0; j < 3; j++) {
+                grayRgb[j] = _backgroundBrightness;
+            }
             shouldDim = YES;
         }
     }
@@ -325,6 +342,8 @@ const int kColorMapAnsiBrightModifier = 8;
             return KEY_CURSOR_COLOR;
         case kColorMapCursorText:
             return KEY_CURSOR_TEXT_COLOR;
+        case kColorMapUnderline:
+            return KEY_UNDERLINE_COLOR;
 
         case kColorMapAnsiBlack:
             return KEY_ANSI_0_COLOR;

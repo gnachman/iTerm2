@@ -23,8 +23,7 @@
         width_ = width;
         start_ = -1;
         bound_ = -1;
-        [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:YES];
-        [self updateTimestamp];
+        [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:NO];
     }
     return self;
 }
@@ -71,7 +70,7 @@
 }
 
 - (void)updateTimestamp {
-    timestamp_ = [NSDate timeIntervalSinceReferenceDate];
+    self.timestamp = [NSDate timeIntervalSinceReferenceDate];
 }
 
 - (BOOL)isDirtyAtOffset:(int)x {

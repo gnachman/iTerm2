@@ -26,6 +26,8 @@
 // choose an application. Associate the selected app as a view and reopen, if he picks one.
 - (BOOL)openFile:(NSString *)fullPath;
 
+- (BOOL)iTermIsDefaultForScheme:(NSString *)scheme;
+
 #pragma mark - Default Terminal
 
 - (void)makeITermDefaultTerminal;

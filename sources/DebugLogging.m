@@ -7,6 +7,7 @@
 //
 
 #import "DebugLogging.h"
+#import "iTermApplication.h"
 #import "NSView+RecursiveDescription.h"
 #import <Cocoa/Cocoa.h>
 
@@ -41,7 +42,7 @@ static void WriteDebugLogHeader() {
                         (long long)[[NSDate date] timeIntervalSince1970],
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
-                        [NSApp orderedWindows]];
+                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
     [gDebugLogHeader release];
     gDebugLogHeader = [header copy];
 }
@@ -56,7 +57,7 @@ static void WriteDebugLogFooter() {
                       @"Windows: %@\n"
                       @"Ordered windows: %@\n",
                       windows,
-                      [NSApp orderedWindows]];
+                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
   [gDebugLogStr appendString:footer];
 }
 

@@ -39,9 +39,20 @@
     }
 }
 
+- (void)replaceAttributesInRange:(NSRange)range withAttributes:(NSDictionary *)newAttributes {
+    for (NSString *key in newAttributes) {
+        [self removeAttribute:key range:range];
+        [self addAttribute:key value:newAttributes[key] range:range];
+    }
+}
+
 @end
 
 @implementation NSAttributedString (iTerm)
+
++ (instancetype)attributedStringWithString:(NSString *)string attributes:(NSDictionary *)attributes {
+    return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+}
 
 - (CGFloat)heightForWidth:(CGFloat)maxWidth {
     if (![self length]) {

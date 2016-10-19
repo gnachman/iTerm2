@@ -25,6 +25,8 @@ typedef struct {
     int buckets[NUM_DIFF_BUCKETS];
 } iTermDiffStats;
 
+static NSString *const kDiffScriptPath = @"/tmp/diffs";
+
 @interface PTYTextViewTest : XCTestCase
 @end
 
@@ -54,18 +56,31 @@ typedef struct {
     iTermColorMap *_colorMap;
     NSString *_pasteboardString;
     NSMutableDictionary *_methodsCalled;
-    screen_char_t _buffer[4];
+    screen_char_t _buffer[5];
+    NSMutableString *_script;
 }
 
 - (void)setUp {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [@"" writeToFile:kDiffScriptPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    });
+    _script = [NSMutableString string];
     _colorMap = [[iTermColorMap alloc] init];
     _textView = [[PTYTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) colorMap:_colorMap];
+    [_textView.colorMap setColor:[NSColor redColor] forKey:kColorMapBackground];
+    [_textView.colorMap setColor:[NSColor redColor] forKey:kColorMapForeground];
     _textView.delegate = self;
     _textView.dataSource = self;
     _methodsCalled = [[NSMutableDictionary alloc] init];
 }
 
 - (void)tearDown {
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:kDiffScriptPath];
+    [fileHandle seekToEndOfFile];
+    [fileHandle writeData:[_script dataUsingEncoding:NSUTF8StringEncoding]];
+    [fileHandle closeFile];
+
     [_textView release];
     [_colorMap release];
     [_methodsCalled release];
@@ -407,7 +422,10 @@ typedef struct {
 - (void)selectPaneBelowInCurrentTerminal {
 }
 
-- (void)writeTask:(NSData *)data {
+- (void)writeTask:(NSString *)string {
+}
+
+- (void)writeStringWithLatin1Encoding:(NSString *)string {
 }
 
 - (void)textViewSelectNextWindow {
@@ -623,10 +641,13 @@ typedef struct {
 
 // Minor differences in anti-aliasing on different machines (even running the same version of the
 // OS) cause false failures with golden images, so we'll ignore tiny differences in brightness.
-- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 stats:(iTermDiffStats *)stats {
+- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 size:(NSSize)size stats:(iTermDiffStats *)stats diffPath:(NSString *)diffPath {
     if (image1.length != image2.length) {
         return NO;
     }
+    
+    NSMutableData *diffData = [NSMutableData data];
+    
     unsigned char *bytes1 = (unsigned char *)image1.bytes;
     unsigned char *bytes2 = (unsigned char *)image2.bytes;
     const CGFloat threshold = 0.1;
@@ -640,6 +661,20 @@ typedef struct {
         CGFloat brightness1 = PerceivedBrightness(bytes1[i + 0] / 255.0, bytes1[i + 1] / 255.0, bytes1[i + 2] / 255.0);
         CGFloat brightness2 = PerceivedBrightness(bytes2[i + 0] / 255.0, bytes2[i + 1] / 255.0, bytes2[i + 2] / 255.0);
         CGFloat diff = fabs(brightness1 - brightness2);
+
+        unsigned char diffbytes[3] = { 0, 0, 0 };
+        
+        if (diff > 0) {
+            diffbytes[0] = diff * 255;
+            diffbytes[1] = (1.0 - diff) * 255;
+            diffbytes[2] = 0;
+        } else {
+            diffbytes[0] = (brightness1 + brightness2) * 128;
+            diffbytes[1] = (brightness1 + brightness2) * 128;
+            diffbytes[2] = (brightness1 + brightness2) * 128;
+        }
+        [diffData appendBytes:diffbytes length:sizeof(diffbytes)];
+
         sumOfSquares += diff*diff;
         sum += diff;
         maxDiff = MAX(maxDiff, diff);
@@ -651,6 +686,16 @@ typedef struct {
     CGFloat N = image1.length / 4;
     stats->variance = sumOfSquares/N - (sum/N)*(sum/N);
     stats->maxDiff = maxDiff;
+    
+    NSImage *diffImage = [NSImage imageWithRawData:diffData
+                                              size:size
+                                     bitsPerSample:8
+                                   samplesPerPixel:3
+                                          hasAlpha:NO
+                                    colorSpaceName:NSCalibratedRGBColorSpace];
+    NSData *encodedDiffImage = [diffImage dataForFileOfType:NSPNGFileType];
+    [encodedDiffImage writeToFile:diffPath atomically:NO];
+    
     return maxDiff < threshold;
 }
 
@@ -693,14 +738,22 @@ typedef struct {
         NSData *actualData = [actual rawPixelsInRGBColorSpace];
         XCTAssertEqual(goldenData.length, actualData.length, @"Different number of pixels between %@ and %@", golden, actual);
         iTermDiffStats stats = { 0 };
-        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData stats:&stats];
+        NSString *diffPath = [NSString stringWithFormat:@"/tmp/diff-%@.png", name];
+        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData size:actual.size stats:&stats diffPath:diffPath];
         if (ok) {
             NSLog(@"Tests “%@” ok with variance: %f. Max diff: %f", name, stats.variance, stats.maxDiff);
         } else {
             NSString *failPath = [NSString stringWithFormat:@"/tmp/failed-%@.png", name];
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
-            NSLog(@"Test “%@” about to fail.\nActual output in %@.\nExpected output in %@",
+            NSLog(@"nTest “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
+            [_script appendFormat:@"echo ----- %@ -----\n", name];
+            [_script appendFormat:@"echo Actual:\n"];
+            [_script appendFormat:@"imgcat %@\n", failPath];
+            [_script appendFormat:@"echo Expected:\n"];
+            [_script appendFormat:@"imgcat %@\n", goldenName];
+            [_script appendFormat:@"echo Diffs:\n"];
+            [_script appendFormat:@"imgcat %@\n", diffPath];
         }
         XCTAssert(ok, @"variance=%f maxdiff=%f deciles=%@", stats.variance, stats.maxDiff, [self decilesInStats:stats]);
     }
@@ -802,19 +855,19 @@ typedef struct {
 // unfocused.
 - (void)testSelectedTabOrphan {
     [self doGoldenTestForInput:@"a\t\x08q"
-                              name:NSStringFromSelector(_cmd)
-                              hook:^(PTYTextView *textView) {
-                                  VT100GridWindowedRange range =
-                                      VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 0, 3, 0),
-                                                                 0, 0);
-                                  iTermSubSelection *subSelection =
-                                      [iTermSubSelection subSelectionWithRange:range
-                                                                          mode:kiTermSelectionModeCharacter];
-                                  [textView.selection addSubSelection:subSelection];
-                              }
-                  profileOverrides:nil
-                      createGolden:NO
-                              size:VT100GridSizeMake(9, 2)];
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              VT100GridWindowedRange range =
+                              VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 0, 3, 0),
+                                                         0, 0);
+                              iTermSubSelection *subSelection =
+                              [iTermSubSelection subSelectionWithRange:range
+                                                                  mode:kiTermSelectionModeCharacter];
+                              [textView.selection addSubSelection:subSelection];
+                          }
+              profileOverrides:nil
+                  createGolden:NO
+                          size:VT100GridSizeMake(9, 2)];
 }
 
 // The area between a and b is selected, and so is b. The selection color is grayed because the window is
@@ -1729,7 +1782,7 @@ typedef struct {
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
                               textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
-                                  helper.underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(2, 0, 2, 1), 0, 5);
+                                  helper.underlinedRange = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(2, 0, 2, 1), 0, 5);
                               };
                           }
               profileOverrides:nil
@@ -1854,6 +1907,29 @@ typedef struct {
                   createGolden:NO
                           size:VT100GridSizeMake(2, 2)];
 }
+
+- (void)testCustomUnderline {
+    [self doGoldenTestForInput:@"A\e[4mB\e[36mCC\e[39mDE\e[m"
+                          name:NSStringFromSelector(_cmd)
+                          hook: nil
+              profileOverrides:@{ KEY_USE_UNDERLINE_COLOR: @YES,
+                                  KEY_UNDERLINE_COLOR: [[NSColor colorWithCalibratedRed:1.0
+                                                                                  green:1.0
+                                                                                   blue:.0
+                                                                                  alpha:1] dictionaryValue] }
+                  createGolden:NO
+                          size:VT100GridSizeMake(7, 1)];
+}
+
+- (void)testUnderline {
+    [self doGoldenTestForInput:@"A\e[4mB\e[36mCC\e[39mDE\e[m"
+                          name:NSStringFromSelector(_cmd)
+                          hook: nil
+              profileOverrides:@{ KEY_USE_UNDERLINE_COLOR: @NO }
+                  createGolden:NO
+                          size:VT100GridSizeMake(7, 1)];
+}
+
 
 // Should render a black x on green background.
 - (void)testMinimumContrast {
@@ -2351,10 +2427,12 @@ typedef struct {
 }
 
 - (screen_char_t *)getLineAtIndex:(int)theIndex {
-    for (int i = 0; i < [self width]; i++) {
+    int width = self.width;
+    for (int i = 0; i < width + 1; i++) {
         memset(&_buffer[i], 0, sizeof(screen_char_t));
         _buffer[i].code = theIndex + '0';
     }
+    _buffer[width].code = EOL_SOFT;
     return _buffer;
 }
 

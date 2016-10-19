@@ -32,6 +32,10 @@
 @class PTYTab;
 @class PTYSession;
 
+// The key used for a window's arrangement in encoding restorable state.
+extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
+
+// Extra methods for delegates of terminal windows to implement.
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
 - (BOOL)lionFullScreen;
 - (BOOL)anyFullScreen;
@@ -40,10 +44,14 @@
 
 // Returns the tab a session belongs to.
 - (PTYTab *)tabForSession:(PTYSession *)session;
+
+// Should the window's frame be constrainted to its present screen?
+- (BOOL)terminalWindowShouldConstrainFrameToScreen;
+
 @end
 
-@interface PTYWindow : NSWindow<iTermWeaklyReferenceable>
-
+// Common methods implemented by terminal windows of both kinds.
+@protocol PTYWindow<NSObject>
 @property(nonatomic, readonly) int screenNumber;
 @property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
 // A unique identifier that does not get recycled during the program's lifetime.
@@ -60,12 +68,19 @@
 // Returns the approximate fraction of this window that is occluded by other windows in this app.
 - (double)approximateFractionOccluded;
 
-// See comments in iTermDelayedTitleSetter for why this is so.
-- (void)delayedSetTitle:(NSString *)title;
-
 @end
 
-@interface PTYWindow (Private)
+typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
+
+// A normal terminal window.
+@interface iTermWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
+@end
+
+// A floating hotkey window. This can overlap a lion fullscreen window.
+@interface iTermPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>
+@end
+
+@interface NSWindow (Private)
 
 // Private NSWindow method, needed to avoid ghosting when using transparency.
 - (BOOL)_setContentHasShadow:(BOOL)contentHasShadow;

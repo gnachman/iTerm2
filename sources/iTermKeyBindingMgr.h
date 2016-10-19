@@ -144,6 +144,15 @@
 // readable representation (e.g., ^X)
 + (NSString *)formatKeyCombination:(NSString *)theKeyCombination;
 
+// Formats the key combination using the current keyboard's mapping from
+// keycode to character. keyCode must not be 0, or it will fall back to the
+// character embedded in the key combination.
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination keyCode:(NSUInteger)keyCode;
+
+// Given a keycode and a modifier return 0xKeycode-0xModifiers
++ (NSString *)identifierForCharacterIgnoringModifiers:(unichar)characterIgnoringModifiers
+                                            modifiers:(NSEventModifierFlags)keyMods;
+
 // Given a dictionary with keys Action->int, Text->string, return a human-readable
 // description (e.g., "Send text: foo"). The action comes from the KEY_ACTION_xxx
 // constants.

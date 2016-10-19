@@ -144,6 +144,9 @@
 {
     if ([iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
         [NSKeyedArchiver archiveRootObject:[self _entriesToDict] toFile:path_];
+        [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @0600 }
+                                         ofItemAtPath:path_
+                                                error:nil];
     }
 }
 

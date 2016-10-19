@@ -45,12 +45,14 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_cursorColor;
     IBOutlet CPKColorWell *_cursorTextColor;
     IBOutlet CPKColorWell *_tabColor;
+    IBOutlet CPKColorWell *_underlineColor;
     IBOutlet CPKColorWell *_badgeColor;
 
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
 
     IBOutlet NSButton *_useTabColor;
+    IBOutlet NSButton *_useUnderlineColor;
     IBOutlet NSButton *_useSmartCursorColor;
 
     IBOutlet NSSlider *_minimumContrast;
@@ -89,6 +91,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
+        NSValue *weakViewPointer = [NSValue valueWithPointer:colorWell];
         colorWell.willClosePopover = ^() {
             // NSSearchField remembers who was first responder before it gained
             // first responder status. That is the popover at this time. When
@@ -97,7 +100,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             // smart and doesn't realize the popover has been deallocated. So
             // this changes its conception of who was the previous first
             // responder and prevents the crash.
-            [self.view.window makeFirstResponder:nil];
+            NSView *unsafeView = [weakViewPointer pointerValue];
+            [unsafeView.window makeFirstResponder:nil];
         };
     }
 
@@ -105,6 +109,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [self updateColorControlsEnabled]; };
+
+    info = [self defineControl:_useUnderlineColor
+                           key:KEY_USE_UNDERLINE_COLOR
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [self updateColorControlsEnabled]; };
 
@@ -130,6 +139,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)updateColorControlsEnabled {
     _tabColor.enabled = [self boolForKey:KEY_USE_TAB_COLOR];
+    _underlineColor.enabled = [self boolForKey:KEY_USE_UNDERLINE_COLOR];
     _cursorColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorTextColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
@@ -162,6 +172,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
               KEY_CURSOR_COLOR: _cursorColor,
               KEY_CURSOR_TEXT_COLOR: _cursorTextColor,
               KEY_TAB_COLOR: _tabColor,
+              KEY_UNDERLINE_COLOR: _underlineColor,
               KEY_CURSOR_GUIDE_COLOR: _guideColor,
               KEY_BADGE_COLOR: _badgeColor };
 }

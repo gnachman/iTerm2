@@ -107,6 +107,10 @@ typedef enum {
 // isn't necessarily selected.
 - (BOOL)sessionIsActiveInTab:(PTYSession *)session;
 
+// Is this session active in a currently selected tab? This ignores whether the
+// window is key.
+- (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session;
+
 // Session-initiated name change.
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
 
@@ -168,6 +172,9 @@ typedef enum {
 
 // Indicates if the splits are currently being dragged. Affects how resizing works for tmux tabs.
 - (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged;
+
+// User double clicked on title bar
+- (void)sessionDoubleClickOnTitleBar;
 
 @end
 
@@ -488,9 +495,17 @@ typedef enum {
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
-// Writing output.
-- (void)writeTask:(NSData*)data;
-- (void)writeTaskNoBroadcast:(NSData *)data;
+// Writes output as though a key was pressed. Broadcast allowed. Supports tmux integration properly.
+- (void)writeTask:(NSString *)string;
+
+// Writes output as though a key was pressed. Does not broadcast. Supports tmux integration properly.
+- (void)writeTaskNoBroadcast:(NSString *)string;
+
+// Write with a particular encoding. If the encoding is just session.terminal.encoding then pass
+// NO for `forceEncoding` and the terminal's encoding will be used instead of `optionalEncoding`.
+- (void)writeTaskNoBroadcast:(NSString *)string
+                    encoding:(NSStringEncoding)optionalEncoding
+               forceEncoding:(BOOL)forceEncoding;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;
@@ -542,8 +557,6 @@ typedef enum {
 - (void)clearScrollbackBuffer;
 - (void)logStart;
 - (void)logStop;
-
-- (void)sendCommand:(NSString *)command;
 
 // Display timer stuff
 - (void)updateDisplay;
@@ -618,7 +631,7 @@ typedef enum {
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 
-- (void)tryToRunShellIntegrationInstaller;
+- (void)tryToRunShellIntegrationInstallerWithPromptCheck:(BOOL)promptCheck;
 
 - (NSDictionary *)arrangementWithContents:(BOOL)includeContents;
 

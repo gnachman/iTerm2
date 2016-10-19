@@ -16,6 +16,8 @@
 #import "VT100Screen.h"
 #import "iTermSelection.h"
 
+static const NSInteger kUnicodeVersion = 9;
+
 // This macro can be used in tests to document a known bug. The first expression would evaluate to
 // true if the bug were fixed. Until then, the second expression unfortunately does evaluate to true.
 #define ITERM_TEST_KNOWN_BUG(expressionThatShouldBeTrue, expressionThatIsTrue) \
@@ -122,7 +124,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         XCTAssert([s length] == 0);
     }
 
-    // Append some stuff to it to make sure we can retreive it.
+    // Append some stuff to it to make sure we can retrieve it.
     for (int i = 0; i < [screen height] - 1; i++) {
         [screen terminalAppendString:[NSString stringWithFormat:@"Line %d", i]];
         [screen terminalLineFeed];
@@ -434,7 +436,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         NO,
                         NULL,
                         NULL,
-                        NO);
+                        NO,
+                        kUnicodeVersion);
     return data;
 }
 
@@ -852,6 +855,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (BOOL)screenShouldReduceFlicker {
     return NO;
+}
+
+- (NSInteger)screenUnicodeVersion {
+    return 8;
+}
+
+- (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion {
 }
 
 #pragma mark - iTermSelectionDelegate
@@ -2096,8 +2106,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testSetTmuxState {
     NSDictionary *stateDict =
     @{
-      kStateDictSavedCX: @(2),
-      kStateDictSavedCY: @(3),
       kStateDictCursorX: @(4),
       kStateDictCursorY: @(5),
       kStateDictScrollRegionUpper: @(6),
@@ -2112,9 +2120,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     XCTAssert(screen.cursorX == 5);
     XCTAssert(screen.cursorY == 6);
-    [terminal_ restoreCursor];
-    XCTAssert(screen.cursorX == 3);
-    XCTAssert(screen.cursorY == 4);
     XCTAssert([[screen currentGrid] topMargin] == 6);
     XCTAssert([[screen currentGrid] bottomMargin] == 7);
     XCTAssert(!cursorVisible_);

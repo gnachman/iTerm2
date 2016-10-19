@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermShortcut.h"
 
 @class iTermShortcutInputView;
 
@@ -20,15 +21,20 @@
 // event will be sent to -handleShortcutEvent: while this field's NSTextView is
 // the first responder. Events are immediately passed to the shortcutDelegate.
 // You can assign the shortcutDelegate in IB as it is an IBOutlet.
-@interface iTermShortcutInputView : NSTextField
+@interface iTermShortcutInputView : NSView
 
 @property(nonatomic, assign) IBOutlet id<iTermShortcutInputViewDelegate> shortcutDelegate;
 @property(nonatomic, assign) BOOL disableKeyRemapping;
-
-// If an instance of this class is currently the first responder, return it,
-// else return nil.
-+ (instancetype)firstResponder;
+@property(nonatomic, assign, getter=isEnabled) BOOL enabled;
+@property(nonatomic, copy) NSString *stringValue;
+@property(nonatomic, assign) NSBackgroundStyle backgroundStyle;
+@property(nonatomic, retain) iTermShortcut *shortcut;
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 
+- (void)setShortcut:(iTermShortcut *)shortcut;
+
+- (NSString *)identifierForCode:(NSUInteger)code
+                      modifiers:(NSEventModifierFlags)modifiers
+                      character:(NSUInteger)character;
 @end

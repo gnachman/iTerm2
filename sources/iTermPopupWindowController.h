@@ -23,7 +23,7 @@
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
-- (BOOL)popupWindowIsInHotkeyWindow;
+- (BOOL)popupWindowIsInFloatingHotkeyWindow;
 - (void)popupIsSearching:(BOOL)searching;
 
 @end

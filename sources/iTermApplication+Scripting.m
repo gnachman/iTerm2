@@ -8,6 +8,7 @@
 
 #import "iTermApplication+Scripting.h"
 #import "iTermController.h"
+#import "iTermScriptingWindow.h"
 
 @implementation iTermApplication (Scripting)
 
@@ -15,8 +16,8 @@
     return @[];
 }
 
-- (id)currentWindow {
-    return [(NSWindowController *)[[iTermController sharedInstance] currentTerminal] window];
+- (id)currentScriptingWindow {
+    return [iTermScriptingWindow scriptingWindowWithWindow:[(NSWindowController *)[[iTermController sharedInstance] currentTerminal] window]];
 }
 
 @end

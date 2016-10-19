@@ -24,7 +24,7 @@ typedef struct {
 
 // NOTE: This does not compare the ranges.
 NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
-                                             iTermBackgroundColorRun *b) {
+                                             iTermBackgroundColorRun *b) {    
     return (a->bgColor == b->bgColor &&
             a->bgGreen == b->bgGreen &&
             a->bgBlue == b->bgBlue &&
@@ -43,6 +43,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @property(nonatomic, assign) int line;
 
 @property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun *> *array;
+@property(nonatomic, assign) NSInteger numberOfEquivalentRows;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.

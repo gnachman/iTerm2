@@ -36,6 +36,10 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
 };
 
+// Suggested word lengths for rangeForWordAt:maximumLength:
+extern const NSInteger kReasonableMaximumWordLength;
+extern const NSInteger kUnlimitedMaximumWordLength;
+
 @interface iTermTextExtractor : NSObject
 
 @property(nonatomic, assign) VT100GridRange logicalWindow;
@@ -51,8 +55,9 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 // Returns the range of a word (string of characters belonging to the same class) at a location. If
 // there is a paren or paren-like character at location, it tries to return the range of the
 // parenthetical, even if there are mixed classes. Returns (-1, -1, -1, -1) if location is out of
-// bounds.
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location;
+// bounds. The maximum length is only approximate. See the suggested constants above.
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
+                           maximumLength:(NSInteger)maximumLength;
 
 // Returns the string for the character at a screen location.
 - (NSString *)stringForCharacterAt:(VT100GridCoord)location;
@@ -112,6 +117,9 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 //
 // If |coords| is non-nil it will be filled with NSValue*s in 1:1 correspondence with characters in
 // the return value, giving VT100GridCoord's with their provenance.
+//
+// if |maxBytes| is positive then the result will not exceed that size. |truncateTail| determines
+// whether the tail or head of the string is shortened to fit.
 - (id)contentInRange:(VT100GridWindowedRange)range
    attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
@@ -119,6 +127,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
+        truncateTail:(BOOL)truncateTail
          continuationChars:(NSMutableIndexSet *)continuationChars
               coords:(NSMutableArray *)coords;
 
@@ -147,6 +156,20 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
+
+typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
+    // Do not trim any trailing whitespace.
+    iTermTextExtractorTrimTrailingWhitespaceNone,
+
+    // Trim all trailing whitespace.
+    iTermTextExtractorTrimTrailingWhitespaceAll,
+
+    // Trim only the trailing newline and whitespace just before it on the last line.
+    iTermTextExtractorTrimTrailingWhitespaceOneLine
+};
+- (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range
+                                                     leading:(BOOL)leading
+                                                    trailing:(iTermTextExtractorTrimTrailingWhitespace)trailing;
 
 // Checks if two coordinates are equal. Either they are the same coordinate or they are adjacent
 // on the same DWC.

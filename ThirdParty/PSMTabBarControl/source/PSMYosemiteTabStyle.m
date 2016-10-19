@@ -13,7 +13,35 @@
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
-static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
+
+@interface NSAttributedString(PSM)
+- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
+@end
+
+@implementation NSAttributedString(PSM)
+
+- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment {
+    if (self.length == 0) {
+        return self;
+    }
+    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
+    if (!immutableAttributes) {
+        return self;
+    }
+
+    NSMutableDictionary *attributes = [[immutableAttributes mutableCopy] autorelease];
+    NSMutableParagraphStyle *paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
+    if (!paragraphStyle) {
+        paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+    }
+    paragraphStyle.alignment = textAlignment;
+    NSMutableAttributedString *temp = [[self mutableCopy] autorelease];
+    attributes[NSParagraphStyleAttributeName] = paragraphStyle;
+    [temp setAttributes:attributes range:NSMakeRange(0, temp.length)];
+    return temp;
+}
+
+@end
 
 @interface PSMTabBarCell(PSMYosemiteTabStyle)
 
@@ -161,7 +189,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = [_closeButton size];
     result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -185,7 +213,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin - 1.0;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -205,7 +233,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -226,7 +254,7 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRect result;
     result.size = NSMakeSize(countWidth, 2 * kPSMMetalObjectCounterRadius); // temp
     result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - result.size.width;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
 }
@@ -341,21 +369,6 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 }
 
 - (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell {
-    NSMutableAttributedString *attrStr;
-    NSString *contents = [cell stringValue];
-    attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
-    NSRange range = NSMakeRange(0, [contents length]);
-
-    NSColor *textColor = [self textColorForCell:cell];
-
-    // Add font attribute
-    [attrStr addAttribute:NSFontAttributeName
-                    value:[NSFont systemFontOfSize:self.fontSize]
-                    range:range];
-    [attrStr addAttribute:NSForegroundColorAttributeName
-                    value:textColor
-                    range:range];
-
     // Paragraph Style for Truncating Long Text
     NSMutableParagraphStyle *truncatingTailParagraphStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
@@ -366,11 +379,11 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         [truncatingTailParagraphStyle setAlignment:NSLeftTextAlignment];
     }
 
-    [attrStr addAttribute:NSParagraphStyleAttributeName
-                    value:truncatingTailParagraphStyle
-                    range:range];
-
-    return attrStr;
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
+                                  NSForegroundColorAttributeName: [self textColorForCell:cell],
+                                  NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
+    return [[[NSAttributedString alloc] initWithString:[cell stringValue]
+                                            attributes:attributes] autorelease];
 }
 
 - (CGFloat)fontSize {
@@ -380,22 +393,30 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 #pragma mark - Drawing
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    if (selected) {
-        return [_tabBar.window backgroundColor];
+    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (selected) {
+            return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
+        } else {
+            return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+        }
     } else {
-        return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+        return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
     }
 }
 
 - (NSColor *)verticalLineColor {
-    return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+    } else {
+        return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
+    }
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (selected) {
-        return [NSColor colorWithSRGBRed:182/255.0 green:180/255.0 blue:182/255.0 alpha:1];
+    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
     } else {
-        return [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
+        return [NSColor colorWithSRGBRed:210/255.0 green:210/255.0 blue:210/255.0 alpha:1];
     }
 }
 
@@ -408,12 +429,17 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         }
     } else {
         if ([self isYosemiteOrLater]) {
-            CGFloat value = 196/255.0 - highlightAmount * 0.1;
+            CGFloat value;
+            if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+                value = 190/255.0 - highlightAmount * 0.048;
+            } else {
+                // Make inactive windows' background color lighter
+                value = 236/255.0 - highlightAmount * 0.048;
+            }
             return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-            return [NSColor redColor];
         } else {
             // 10.9 and earlier needs a darker color to look good
-            CGFloat value = 0.6 - highlightAmount * 0.1;
+            CGFloat value = 0.6 - highlightAmount * 0.048;
             return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
         }
     }
@@ -441,32 +467,18 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
     NSRectFill(cellFrame);
 
     if (tabColor) {
+        // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
+        CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.8 : 0.6;
+        
+        // Alpha the inactive tab's colors a bit to make it clear which tab is active.
         if (selected) {
-            [[tabColor colorWithAlphaComponent:0.8] set];
+            [[tabColor colorWithAlphaComponent:alpha] set];
             NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
         } else {
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRect colorRect = cellFrame;
-
-            CGRect unscaledRect = CGRectMake(0, 0, 1, 1);
-            CGRect scaledRect = CGContextConvertRectToDeviceSpace([[NSGraphicsContext currentContext] graphicsPort], unscaledRect);
-            BOOL isRetina = (scaledRect.size.width >= 2);
-
-            if (horizontal) {
-                colorRect.size.height = isRetina ? 3.5 : 3;
-            } else {
-                colorRect.size.width = 6;
-            }
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
-
-            [[self topLineColorSelected:selected] set];
-            CGFloat stroke = 1;
-            if (horizontal) {
-                NSRectFill(NSMakeRect(NSMinX(colorRect), NSMaxY(colorRect), NSWidth(colorRect), stroke));
-            } else {
-                NSRectFill(NSMakeRect(NSMaxX(colorRect), NSMinY(colorRect), stroke, NSHeight(colorRect)));
-            }
+            NSColor *startingColor = [tabColor colorWithAlphaComponent:alpha - 0.2];
+            NSColor *endingColor = [tabColor colorWithAlphaComponent:0];
+            NSGradient *gradient = [[[NSGradient alloc] initWithStartingColor:startingColor endingColor:endingColor] autorelease];
+            [gradient drawInRect:cellFrame angle:-90];
         }
     }
 
@@ -551,10 +563,21 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         closeButton = _closeButtonDown;
     }
 
+    CGFloat reservedSpace = 0;
     closeButtonSize = [closeButton size];
     if ([cell hasCloseButton]) {
-        // scoot label over
-        labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
+        if (cell.isCloseButtonSuppressed && _orientation == PSMTabBarHorizontalOrientation) {
+            // Do not use this much space on the left for the label, but the label is centered as
+            // though it is not reserved if it's not too long.
+            //
+            //                Center
+            //                   V
+            // [(reserved)  short-label            ]
+            // [(reserved)long-------------label   ]
+            reservedSpace = closeButtonSize.width + kPSMTabBarCellPadding;
+        } else {
+            labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
+        }
     }
 
     // Draw close button
@@ -602,8 +625,8 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
         NSRect counterStringRect;
         NSAttributedString *counterString = [self attributedObjectCountValueForTabCell:cell];
         counterStringRect.size = [counterString size];
-        counterStringRect.origin.x = myRect.origin.x + ((myRect.size.width - counterStringRect.size.width) / 2.0) + 0.25;
-        counterStringRect.origin.y = myRect.origin.y + ((myRect.size.height - counterStringRect.size.height) / 2.0) + 0.5;
+        counterStringRect.origin.x = myRect.origin.x + floor((myRect.size.width - counterStringRect.size.width) / 2.0);
+        counterStringRect.origin.y = myRect.origin.y + floor((myRect.size.height - counterStringRect.size.height) / 2.0);
         [counterString drawInRect:counterStringRect];
     }
 
@@ -620,11 +643,23 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
             labelRect.size.width -= cell.indicator.frame.size.width + kPSMTabBarCellIconPadding;
         }
         labelRect.size.height = cellFrame.size.height;
-        NSFont *font = [[attributedString fontAttributesInRange:NSMakeRange(0, 1)] objectForKey:NSFontAttributeName];
-        labelRect.origin.y = cellFrame.origin.y + kPSMTabBarCellBaselineOffset - font.ascender;
 
         if ([cell count] > 0) {
             labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
+        }
+
+        NSSize boundingSize = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+        labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0);
+        labelRect.size.height = boundingSize.height;
+
+        if (_orientation == PSMTabBarHorizontalOrientation) {
+            CGFloat effectiveLeftMargin = (labelRect.size.width - boundingSize.width) / 2;
+            if (effectiveLeftMargin < reservedSpace) {
+                attributedString = [attributedString attributedStringWithTextAlignment:NSLeftTextAlignment];
+
+                labelRect.origin.x += reservedSpace;
+                labelRect.size.width -= reservedSpace;
+            }
         }
 
         [attributedString drawInRect:labelRect];
@@ -632,7 +667,11 @@ static const CGFloat kPSMTabBarCellBaselineOffset = 14.5;
 }
 
 - (NSColor *)tabBarColor {
-    return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
+    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
+    } else {
+        return [NSColor colorWithCalibratedWhite:236 / 255.0 alpha:1];
+    }
 }
 
 - (void)drawBackgroundInRect:(NSRect)rect

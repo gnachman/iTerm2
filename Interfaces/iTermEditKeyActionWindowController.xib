@@ -57,7 +57,7 @@
                             <popUpButton verticalHuggingPriority="750" id="GMz-jA-Nhg">
                                 <rect key="frame" x="146" y="88" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <popUpButtonCell key="cell" type="push" title="Select Action" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" tag="999" inset="2" pullsDown="YES" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="Zt3-jj-Skb" id="NkH-n8-Fjv">
+                                <popUpButtonCell key="cell" type="push" title="Ignore" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" tag="13" inset="2" pullsDown="YES" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="NkH-n8-Fjv">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="menu"/>
                                     <menu key="menu" title="OtherViews" id="BCW-Et-dPr">

@@ -61,7 +61,9 @@ NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
 NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
+NSString *const kPreferenceKeyStretchTabsToFillBar = @"StretchTabsToFillBar";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
+NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
 NSString *const kPreferenceKeyShowJobName = @"JobName";
@@ -72,6 +74,7 @@ NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
 NSString *const kPreferenceKeyShowWindowBorder = @"UseBorder";
 NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
 NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"DisableFullscreenTransparency";
+NSString *const kPreferenceKeyEnableDivisionView = @"EnableDivisionView";
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
 NSString *const kPreferenceKeyControlRemapping = @"Control";
@@ -86,9 +89,10 @@ NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";  // Nonzero if hotkey char is set.
 NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
-NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";
-NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";
-NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";
+
+NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
+NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
+NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated = @"HotkeyAutoHides";  // deprecated
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
@@ -118,6 +122,8 @@ NSString *const kPreferenceKeyLeftTabBarWidth = @"LeftTabBarWidth";
 NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
 
 NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
+NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigratedFromSingleToMulti";
+NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
 
 static NSMutableDictionary *gObservers;
 
@@ -190,7 +196,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
-                  kPreferenceKeyCheckForTestReleases: @YES,
+                  kPreferenceKeyCheckForTestReleases: @NO,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
                   kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection: @NO,
                   kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection: @0,
@@ -214,9 +220,11 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHideTabCloseButton: @NO,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
+                  kPreferenceKeyStretchTabsToFillBar: @NO,
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
+                  kPreferenceKeyUIElement: @NO,
                   kPreferenceKeyFlashTabBarInFullscreen:@YES,
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName: @YES,
@@ -227,6 +235,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyShowWindowBorder: @NO,
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
+                  kPreferenceKeyEnableDivisionView: @YES,
                   kPreferenceKeyDimBackgroundWindows: @NO,
 
                   kPreferenceKeyControlRemapping: @(kPreferencesModifierTagControl),
@@ -241,16 +250,16 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
                   kPreferenceKeyHotkeyModifiers: @0,
-                  kPreferenceKeyHotKeyTogglesWindow: @NO,
-                  kPreferenceKeyHotkeyProfileGuid: [NSNull null],
-                  kPreferenceKeyHotkeyAutoHides: @YES,
+                  kPreferenceKeyHotKeyTogglesWindow_Deprecated: @NO,
+                  kPreferenceKeyHotkeyProfileGuid_Deprecated: [NSNull null],
+                  kPreferenceKeyHotkeyAutoHides_Deprecated: @YES,
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
-                  kPreferenceKeyTripleClickSelectsFullWrappedLines: @NO,
+                  kPreferenceKeyTripleClickSelectsFullWrappedLines: @YES,
                   kPreferenceKeyDoubleClickPerformsSmartSelection: @NO,
 
                   kPreferenceAutoCommandHistory: @NO,
@@ -270,7 +279,9 @@ static NSMutableDictionary *gObservers;
 
                   kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
                   kPreferenceKeyShowFullscreenTabBar: @YES,
+                  kPreferenceKeyHotkeyMigratedFromSingleToMulti: @NO,
                   kPreferenceKeyLeftTabBarWidth: @150,
+                  kPreferenceKeyDefaultToolbeltWidth: @250,
               };
         [dict retain];
     }
@@ -403,6 +414,14 @@ static NSMutableDictionary *gObservers;
 }
 
 + (void)setInt:(int)value forKey:(NSString *)key {
+    [self setObject:@(value) forKey:key];
+}
+
++ (NSInteger)integerForKey:(NSString *)key {
+    return [(NSNumber *)[self objectForKey:key] integerValue];
+}
+
++ (void)setInteger:(NSInteger)value forKey:(NSString *)key {
     [self setObject:@(value) forKey:key];
 }
 

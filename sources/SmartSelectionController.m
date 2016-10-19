@@ -47,6 +47,8 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
 - (void)dealloc {
     [guid_ release];
+    tableView_.delegate = nil;
+    tableView_.dataSource = nil;
     [super dealloc];
 }
 

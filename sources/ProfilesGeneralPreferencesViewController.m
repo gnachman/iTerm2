@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
@@ -26,7 +27,7 @@ static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
-@interface ProfilesGeneralPreferencesViewController () <NSMenuDelegate, ProfileListViewDelegate>
+@interface ProfilesGeneralPreferencesViewController () <iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -58,6 +59,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
+    IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
 
     IBOutlet NSView *_editCurrentSessionView;
     IBOutlet NSButton *_copySettingsToProfile;
@@ -65,16 +67,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 }
 
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    _profileNameFieldForEditCurrentSession.delegate = nil;
     [super dealloc];
 }
 
 - (void)awakeFromNib {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowWillClose:)
-                                                 name:NSWindowWillCloseNotification
-                                               object:self.view.window];
-
     PreferenceInfo *info;
     
     info = [self defineControl:_profileNameField
@@ -146,7 +143,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 }
 
 - (void)windowWillClose {
-    if ([_profileNameFieldForEditCurrentSession textFieldIsFirstResponder]) {
+    if ([_tagsTokenField textFieldIsFirstResponder]) {
+        // The token field's editor is the first responder. Force the token field to end editing
+        // so the last token entered will be tokenized and prefs saved with it.
+        [self.view.window makeFirstResponder:self.view];
+    } else if ([_profileNameFieldForEditCurrentSession textFieldIsFirstResponder]) {
         [_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
     }
 }
@@ -163,6 +164,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+    _sessionHotkeyInputView.shortcut = [iTermShortcut shortcutWithDictionary:(NSDictionary *)[self objectForKey:KEY_SESSION_HOTKEY]];
 }
 
 - (NSString *)selectedGuid {
@@ -188,6 +190,21 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 #pragma mark - URL Schemes
 
+- (BOOL)profileHandlesScheme:(NSString *)scheme {
+    Profile *handler = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
+    NSString *guid = [self stringForKey:KEY_GUID];
+    return (handler &&
+            [[handler objectForKey:KEY_GUID] isEqualToString:guid] &&
+            [[iTermLaunchServices sharedInstance] iTermIsDefaultForScheme:scheme]);
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.menu == _urlSchemes.menu) {
+        menuItem.state = [self profileHandlesScheme:menuItem.title] ? NSOnState : NSOffState;
+    }
+    return YES;
+}
+
 - (IBAction)urlSchemeHandlerDidChange:(id)sender {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     NSString *guid = profile[KEY_GUID];
@@ -212,17 +229,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
         [_urlSchemes setTitle:@"Select URL Schemes…"];
     }
     
-    NSString* guid = [profile objectForKey:KEY_GUID];
     [[_urlSchemes menu] setAutoenablesItems:YES];
     [[_urlSchemes menu] setDelegate:self];
-    for (NSMenuItem* item in [[_urlSchemes menu] itemArray]) {
-        Profile* handler = [[iTermLaunchServices sharedInstance] profileForScheme:[item title]];
-        if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
-            [item setState:NSOnState];
-        } else {
-            [item setState:NSOffState];
-        }
-    }
 }
 
 #pragma mark - Advanced initial directory settings
@@ -409,20 +417,6 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [_profileShortcut sizeToFit];
 }
 
-#pragma mark - Notifications
-
-- (void)windowWillClose:(NSNotification *)notification {
-    NSResponder *firstResponder = [[[self view] window] firstResponder];
-    if (firstResponder && [firstResponder respondsToSelector:@selector(delegate)]) {
-        id delegate = [firstResponder performSelector:@selector(delegate)];
-        if (delegate == _tagsTokenField) {
-            // The token field's editor is the first responder. Force the token field to end editing
-            // so the last token entered will be tokenized.
-            [self.view.window makeFirstResponder:self.view];
-        }
-    }
-}
-
 #pragma mark - NSTokenField delegate
 
 - (NSArray *)tokenField:(NSTokenField *)tokenField
@@ -461,6 +455,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 - (void)profileTableRowSelected:(id)profileTable {
     [self changeProfile:self];
+}
+
+#pragma mark - iTermShortcutInputViewDelegate
+
+- (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
+    [self setObject:view.shortcut.dictionaryValue forKey:KEY_SESSION_HOTKEY];
 }
 
 @end

@@ -93,7 +93,7 @@
 // Compute the best point size and return a new image of the badge. Returns nil if the badge
 // is empty or zero pixels.r
 - (NSImage *)freshlyComputedImage {
-    DLog(@"Recompute badge self=%p, label=%@, color=%@, view size=%@. Called from:\n%@",
+    DLog(@"Recompute badge self=%p, label=“%@”, color=%@, view size=%@. Called from:\n%@",
          self,
          _stringValue,
          _fillColor,
@@ -114,7 +114,7 @@
     NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
     temp[NSStrokeColorAttributeName] = [_backgroundColor colorWithAlphaComponent:1];
     NSSize sizeWithFont = [self sizeWithAttributes:temp];
-    if (sizeWithFont.width <= 0 && sizeWithFont.height <= 0) {
+    if (sizeWithFont.width <= 0 || sizeWithFont.height <= 0) {
         return nil;
     }
 
@@ -139,13 +139,13 @@
 // Attributed string attributes for a given font point size.
 - (NSDictionary *)attributesWithPointSize:(CGFloat)pointSize {
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSArray *fonts = [[NSFontManager sharedFontManager] availableFontFamilies];
     NSString *fontName = [iTermAdvancedSettingsModel badgeFont];
     NSFont *font;
-    if (![fonts containsObject:fontName]) {
-      fontName = @"Helvetica";
-    }
+
     font = [NSFont fontWithName:fontName size:pointSize];
+    if (!font) {
+        font = [NSFont fontWithName:@"Helvetica" size:pointSize];
+    }
     if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
       font = [fontManager convertFont:font
                           toHaveTrait:NSBoldFontMask];
@@ -179,6 +179,7 @@
 }
 
 - (CGFloat)idealPointSize {
+    DLog(@"Computing ideal point size for badge");
     NSSize maxSize = self.maxSize;
 
     // Perform a binary search for the point size that best fits |maxSize|.
@@ -189,6 +190,7 @@
     NSSize sizeWithFont = NSZeroSize;
     while (points != prevPoints) {
         sizeWithFont = [self sizeWithAttributes:[self attributesWithPointSize:points]];
+        DLog(@"Point size of %@ gives label size of %@", @(points), NSStringFromSize(sizeWithFont));
         if (sizeWithFont.width > maxSize.width ||
             sizeWithFont.height > maxSize.height) {
             max = points;
@@ -199,6 +201,7 @@
         prevPoints = points;
         points = (min + max) / 2;
     }
+    DLog(@"Using point size %@", @(points));
     return points;
 }
 

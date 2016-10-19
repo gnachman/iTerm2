@@ -13,6 +13,7 @@
     NSArray *_delays;
     NSTimeInterval _creationTime;
     NSTimeInterval _maxDelay;
+    int _lastFrameNumber;
 }
 
 - (instancetype)initWithData:(NSData *)data {
@@ -66,14 +67,23 @@
     [super dealloc];
 }
 
+- (void)setPaused:(BOOL)paused {
+    _paused = paused;
+}
+
 - (int)currentFrame {
+    if (_paused) {
+        return _lastFrameNumber;
+    }
     NSTimeInterval offset = [NSDate timeIntervalSinceReferenceDate] - _creationTime;
     NSTimeInterval delay = fmod(offset, _maxDelay);
     for (int i = 0; i < _delays.count; i++) {
         if ([_delays[i] doubleValue] >= delay) {
+            _lastFrameNumber = i;
             return i;
         }
     }
+    _lastFrameNumber = 0;
     return 0;
 }
 

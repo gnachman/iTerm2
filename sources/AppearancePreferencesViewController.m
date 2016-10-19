@@ -7,8 +7,12 @@
 //
 
 #import "AppearancePreferencesViewController.h"
+#import "iTermHotKeyController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermWarning.h"
 #import "PreferencePanel.h"
+
+NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidChangeNotification";
 
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
@@ -38,8 +42,13 @@
     // Hide menu bar in non-lion fullscreen.
     IBOutlet NSButton *_hideMenuBarInFullscreen;
 
+    // Exclude from dock and cmd-tab (LSUIElement)
+    IBOutlet NSButton *_uiElement;
+
     IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
     IBOutlet NSButton *_showTabBarInFullscreen;
+
+    IBOutlet NSButton *_stretchTabsToFillBar;
 
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
@@ -70,6 +79,9 @@
 
     // Disable transparency in fullscreen by default.
     IBOutlet NSButton *_disableFullscreenTransparency;
+    
+    // Draw line under title bar when the tab bar is not visible
+    IBOutlet NSButton *_enableDivisionView;
 }
 
 - (void)awakeFromNib {
@@ -124,6 +136,30 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
+    info = [self defineControl:_uiElement
+                           key:kPreferenceKeyUIElement
+                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        BOOL isOn = [sender state] == NSOnState;
+        if (isOn) {
+            iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:@"When iTerm2 is excluded from the dock, you can "
+                                                   @"always get back to Preferences using the status "
+                                                   @"bar item. Look for an iTerm2 icon on the right "
+                                                   @"side of your menu bar."
+                                           actions:@[ @"Exclude From Dock and App Switcher", @"Cancel" ]
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent];
+            if (selection == kiTermWarningSelection0) {
+                [self setBool:YES forKey:kPreferenceKeyUIElement];
+            }
+        } else {
+            [self setBool:NO forKey:kPreferenceKeyUIElement];
+        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
+                                                            object:nil];
+    };
+
     [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen
                    type:kPreferenceInfoTypeCheckbox];
@@ -136,11 +172,17 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:kShowFullscreenTabsSettingDidChange
                                                             object:nil];
     };
+
     // There's a menu item to change this setting. We want the control to reflect it.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(showFullscreenTabsSettingDidChange:)
                                                  name:kShowFullscreenTabsSettingDidChange
                                                object:nil];
+
+    info = [self defineControl:_stretchTabsToFillBar
+                           key:kPreferenceKeyStretchTabsToFillBar
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
@@ -189,6 +231,11 @@
 
     info = [self defineControl:_disableFullscreenTransparency
                            key:kPreferenceKeyDisableFullscreenTransparencyByDefault
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+    
+    info = [self defineControl:_enableDivisionView
+                           key:kPreferenceKeyEnableDivisionView
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 }

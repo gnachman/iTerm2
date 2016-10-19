@@ -9,7 +9,7 @@
 
 #import "iTermTipWindowController.h"
 
-#import "GTMCarbonEvent.h"
+#import "iTermCarbonHotKeyController.h"
 #import "iTermTip.h"
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
@@ -26,9 +26,10 @@ static NSString *const kMoreOptionsTitle = @"More Options";
 static NSString *const kShowThisLaterTitle = @"Show This Later";
 static NSString *const kDisableTipsTitle = @"Disable Tips";
 static NSString *const kEnableTipsTitle = @"Enable Tips";
-static NSString *const kReallyDisableTipsTitle = @"Click Again to Disable Tips";
 static NSString *const kShowNextTipTitle = @"Show Next Tip";
 static NSString *const kShowPreviousTipTitle = @"Show Previous Tip";
+static NSString *const kShowTipsWeeklyTitle = @"Show Tips Weekly";
+static NSString *const kShowTipsDailyTitle = @"Show Tips Daily";
 
 static const CGFloat kWindowWidth = 400;
 
@@ -63,7 +64,7 @@ static const CGFloat kWindowWidth = 400;
     // Cards that are animating out. In practice this can have up to 1 element.
     NSMutableArray *_exitingCardViewControllers;
 
-    GTMCarbonHotKey *_hotkey;
+    iTermHotKey *_hotKey;
 }
 
 - (instancetype)initWithTip:(id)tip {
@@ -141,6 +142,29 @@ static const CGFloat kWindowWidth = 400;
         [button setCollapsed:YES];
     }
 
+    NSString *frequencyTitle;
+    if ([_delegate tipFrequencyIsHigh]) {
+        frequencyTitle = kShowTipsWeeklyTitle;
+    } else {
+        frequencyTitle = kShowTipsDailyTitle;
+    }
+    button =
+        [card addActionWithTitle:frequencyTitle
+                            icon:[NSImage imageNamed:@"TipCalendar"]
+                           block:^(id sendingCard) {
+                               [_delegate toggleTipFrequency];
+                               iTermTipCardActionButton *theButton = [card actionWithTitle:kShowTipsWeeklyTitle];
+                               if (theButton) {
+                                   [theButton setTitle:kShowTipsDailyTitle];
+                               } else {
+                                   theButton = [card actionWithTitle:kShowTipsDailyTitle];
+                                   [theButton setTitle:kShowTipsWeeklyTitle];
+                               }
+                           }];
+    if (!expanded) {
+        [button setCollapsed:YES];
+    }
+
     NSString *enableOrDisableTitle;
     if ([_delegate tipWindowTipsAreDisabled]) {
         enableOrDisableTitle = kEnableTipsTitle;
@@ -152,13 +176,7 @@ static const CGFloat kWindowWidth = 400;
                             icon:[NSImage imageNamed:@"DisableTips"]
                            block:^(id sendingCard) {
                                if (![_delegate tipWindowTipsAreDisabled]) {
-                                   iTermTipCardActionButton *theButton = [card actionWithTitle:kDisableTipsTitle];
-                                   if (theButton) {
-                                       [theButton setImportant:YES];
-                                       [theButton setTitle:kReallyDisableTipsTitle];
-                                   } else {
-                                       [self disableTips];
-                                   }
+                                   [self disableTips];
                                } else {
                                    iTermTipCardActionButton *theButton = [card actionWithTitle:kEnableTipsTitle];
                                    [self enableTips];
@@ -214,8 +232,9 @@ static const CGFloat kWindowWidth = 400;
 - (NSArray *)collapsingTitles {
     return @[ kShowThisLaterTitle,
               kDisableTipsTitle,
-              kReallyDisableTipsTitle,
               kEnableTipsTitle,
+              kShowTipsDailyTitle,
+              kShowTipsWeeklyTitle,
               kShowNextTipTitle,
               kShowPreviousTipTitle ];
 }
@@ -245,14 +264,16 @@ static const CGFloat kWindowWidth = 400;
     // Animate in the window.
     [self present];
 
-    if (!_hotkey) {
-        _hotkey = [[[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler]
-                          registerHotKey:kVK_Escape
-                          modifiers:0
-                          target:self
-                          action:@selector(dismissByKeyboard:)
-                          userInfo:nil
-                          whenPressed:YES] retain];
+    if (!_hotKey) {
+        NSString *characters = [NSString stringWithFormat:@"%c", 27];
+        iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:kVK_Escape
+                                                                modifiers:0
+                                                               characters:characters
+                                              charactersIgnoringModifiers:characters] autorelease];
+        _hotKey = [[[iTermCarbonHotKeyController sharedInstance] registerShortcut:shortcut
+                                                                           target:self
+                                                                         selector:@selector(dismissByKeyboard:)
+                                                                         userData:nil] retain];
     }
 }
 
@@ -270,7 +291,7 @@ static const CGFloat kWindowWidth = 400;
     frame.origin = NSZeroPoint;
 
     static const CGFloat kWindowLeftMargin = 8;
-    static const CGFloat kWindowTopMargin = 24;
+    static const CGFloat kWindowTopMargin = 8;
     NSRect screenFrame = self.window.screen.visibleFrame;
     NSRect windowFrame = NSMakeRect(NSMinX(screenFrame) + kWindowLeftMargin,
                                     NSMaxY(screenFrame) - NSHeight(frame) - kWindowTopMargin,  // In case menu bar is hidden and later becomes visible
@@ -305,10 +326,10 @@ static const CGFloat kWindowWidth = 400;
 #pragma mark - User Actions
 
 - (void)dismiss {
-    if (_hotkey) {
-        [[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler] unregisterHotKey:_hotkey];
-        [_hotkey release];
-        _hotkey = nil;
+    if (_hotKey) {
+        [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:_hotKey];
+        [_hotKey release];
+        _hotKey = nil;
     }
     [self animateOut];
     [_delegate tipWindowDismissed];
@@ -347,8 +368,9 @@ static const CGFloat kWindowWidth = 400;
         [action setTitle:kFewerOptionsTitle];
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowTipsDailyTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
@@ -358,8 +380,9 @@ static const CGFloat kWindowWidth = 400;
         [action setTitle:kMoreOptionsTitle];
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowTipsDailyTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
     }

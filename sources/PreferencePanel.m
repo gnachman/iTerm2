@@ -69,15 +69,16 @@
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAdvancedSettingsViewController.h"
+#import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
+#import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermLaunchServices.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
@@ -101,6 +102,12 @@ NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
+NSString *const kPreferencePanelDidLoadNotification = @"kPreferencePanelDidLoadNotification";
+NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCloseNotification";
+
+// Strong references to the two preference panels.
+static PreferencePanel *gSharedPreferencePanel;
+static PreferencePanel *gSessionsPreferencePanel;
 
 @interface PreferencePanel() <NSTabViewDelegate>
 
@@ -139,23 +146,19 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 }
 
 + (instancetype)sharedInstance {
-    static id instance;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        instance = [[self alloc] initWithProfileModel:[ProfileModel sharedInstance]
-                               editCurrentSessionMode:NO];
-    });
-    return instance;
+    if (!gSharedPreferencePanel) {
+        gSharedPreferencePanel = [[PreferencePanel alloc] initWithProfileModel:[ProfileModel sharedInstance]
+                                                        editCurrentSessionMode:NO];
+    }
+    return gSharedPreferencePanel;
 }
 
 + (instancetype)sessionsInstance {
-    static id instance;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        instance = [[self alloc] initWithProfileModel:[ProfileModel sessionsInstance]
-                               editCurrentSessionMode:YES];
-    });
-    return instance;
+    if (!gSessionsPreferencePanel) {
+        gSessionsPreferencePanel = [[PreferencePanel alloc] initWithProfileModel:[ProfileModel sessionsInstance]
+                                                          editCurrentSessionMode:YES];
+    }
+    return gSessionsPreferencePanel;
 }
 
 - (instancetype)initWithProfileModel:(ProfileModel*)model
@@ -171,10 +174,15 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     return self;
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 #pragma mark - View layout
 
 - (void)awakeFromNib {
-    [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+    NSAssert(self.isWindowLoaded, @"window not loaded in %@", NSStringFromSelector(_cmd));
+    [self.window setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
     _globalTabViewItem.view = _generalPreferencesViewController.view;
@@ -183,6 +191,12 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     _arrangementsTabViewItem.view = arrangements_.view;
     _mouseTabViewItem.view = _pointerViewController.view;
     _advancedTabViewItem.view = _advancedViewController.view;
+
+    _generalPreferencesViewController.preferencePanel = self;
+    _appearancePreferencesViewController.preferencePanel = self;
+    _keysViewController.preferencePanel = self;
+    _profilesViewController.preferencePanel = self;
+    _pointerViewController.preferencePanel = self;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
@@ -202,6 +216,13 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 #pragma mark - API
 
+- (void)configureHotkeyForProfile:(Profile *)profile {
+    [self window];
+    [self selectProfilesTab];
+    [self run];
+    [_profilesViewController openToProfileWithGuidAndEditHotKey:profile[KEY_GUID]];
+}
+
 - (void)selectProfilesTab {
     [_tabView selectTabViewItem:_bookmarksTabViewItem];
     [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];
@@ -215,11 +236,30 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
 }
 
+- (NSWindow *)window {
+    BOOL shouldPostWindowLoadNotification = !self.windowLoaded;
+    NSWindow *window = [super window];
+    if (shouldPostWindowLoadNotification) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidLoadNotification
+                                                            object:self];
+    }
+    return window;
+}
+
+- (NSWindow *)windowIfLoaded {
+    if (self.isWindowLoaded) {
+        return self.window;
+    } else {
+        return nil;
+    }
+}
+
 - (WindowArrangements *)arrangements {
     return arrangements_;
 }
 
 - (void)run {
+    [self window];
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
     if (!self.window.isVisible) {
@@ -232,17 +272,44 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_profilesViewController refresh];
 }
 
+- (NSString *)nameForFrame {
+    return [NSString stringWithFormat:@"%@Preferences", _profileModel.modelName];
+}
+
 #pragma mark - NSWindowController
 
 - (void)windowWillLoad {
+    DLog(@"Will load prefs panel from %@", [NSThread callStackSymbols]);
     // We finally set our autosave window frame name and restore the one from the user's defaults.
-    [self setWindowFrameAutosaveName:@"Preferences"];
+    [self setShouldCascadeWindows:NO];
+}
+
+- (void)windowDidLoad {
+    // We shouldn't use setFrameAutosaveName: because this window controller controls two windows
+    // with different frames (besides, I tried it and it doesn't work here for some reason). 
+    [self.window setFrameUsingName:self.nameForFrame force:NO];
 }
 
 #pragma mark - NSWindowDelegate
 
+- (void)windowDidMove:(NSNotification *)notification {
+    [self.window saveFrameUsingName:self.nameForFrame];
+}
+
 - (void)windowWillClose:(NSNotification *)aNotification {
-    [_profilesViewController windowWillClose:aNotification];
+    [self.window saveFrameUsingName:self.nameForFrame];
+
+    [[self retain] autorelease];
+
+    if (self == gSharedPreferencePanel) {
+        [gSharedPreferencePanel autorelease];
+        gSharedPreferencePanel = nil;
+    } else if (self == gSessionsPreferencePanel) {
+        [gSessionsPreferencePanel autorelease];
+        gSessionsPreferencePanel = nil;
+    }
+
+    [self postWillCloseNotification];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
@@ -252,24 +319,31 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
                                                       userInfo:nil];
 }
 
+- (void)postWillCloseNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelWillCloseNotification
+                                                        object:self];
+}
+
 #pragma mark - Handle calls to current first responder
 
 // Shell>Close
 - (void)closeCurrentSession:(id)sender {
-    if ([[self window] isKeyWindow]) {
-        [self closeWindow:self];
-    }
+    [self close];
 }
 
 // Shell>Close Terminal Window
 - (void)closeWindow:(id)sender {
-    [[self window] close];
+    [self close];
+}
+
+- (void)close {
+    [self postWillCloseNotification];
+    [super close];
 }
 
 - (void)changeFont:(id)fontManager {
     [_profilesViewController changeFont:fontManager];
 }
-
 
 #pragma mark - IBActions
 
@@ -351,7 +425,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 
 #pragma mark - Hotkey Window
 
-// This is used by HotkeyWindowController to not activate the hotkey while the field for typing
+// This is used by iTermHotKeyController to not activate the hotkey while the field for typing
 // the hotkey into is the first responder.
 - (NSTextField*)hotkeyField {
     return _keysViewController.hotkeyField;

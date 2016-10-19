@@ -30,6 +30,7 @@ NSString *const kSavedCursorLineDrawingArrayKey = @"Line Drawing Flags";
 NSString *const kSavedCursorGraphicRenditionKey = @"Graphic Rendition";
 NSString *const kSavedCursorOriginKey = @"Origin";
 NSString *const kSavedCursorWraparoundKey = @"Wraparound";
+NSString *const kSavedCursorUnicodeVersion = @"Unicode Version";
 
 NSString *const kTerminalStateTermTypeKey = @"Term Type";
 NSString *const kTerminalStateAnswerBackStringKey = @"Answerback String";
@@ -60,6 +61,7 @@ NSString *const kTerminalStateAllowColumnModeKey = @"Allow Column Mode";
 NSString *const kTerminalStateColumnModeKey = @"Column Mode";
 NSString *const kTerminalStateDisableSMCUPAndRMCUPKey = @"Disable Alt Screen";
 NSString *const kTerminalStateInCommandKey = @"In Command";
+NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reportFocus;
@@ -108,6 +110,7 @@ typedef struct {
     VT100GraphicRendition graphicRendition;
     BOOL origin;
     BOOL wraparound;
+    NSInteger unicodeVersion;
 } VT100SavedCursor;
 
 @implementation VT100Terminal {
@@ -130,6 +133,7 @@ typedef struct {
 
     // TODO: Actually use this.
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
+    NSMutableArray *_unicodeVersionStack;
 }
 
 @synthesize delegate = delegate_;
@@ -219,16 +223,17 @@ static const int kMaxScreenRows = 4096;
 
         numLock_ = YES;
         [self saveCursor];  // initialize save area
+        _unicodeVersionStack = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [_output release];
     [_parser release];
     [_termType release];
     [_answerBackString release];
+    [_unicodeVersionStack release];
 
     [super dealloc];
 }
@@ -588,6 +593,7 @@ static const int kMaxScreenRows = 4096;
                         [self saveCursor];
                         [delegate_ terminalShowAltBuffer];
                         [delegate_ terminalClearScreen];
+                        [delegate_ terminalMoveCursorToX:1 y:1];
                     } else {
                         [delegate_ terminalShowPrimaryBuffer];
                         [self restoreCursor];
@@ -1048,6 +1054,7 @@ static const int kMaxScreenRows = 4096;
     savedCursor->graphicRendition = graphicRendition_;
     savedCursor->origin = self.originMode;
     savedCursor->wraparound = self.wraparoundMode;
+    savedCursor->unicodeVersion = [delegate_ terminalUnicodeVersion];
 }
 
 - (void)resetSavedCursorPositions {
@@ -1080,6 +1087,7 @@ static const int kMaxScreenRows = 4096;
 
     self.originMode = savedCursor->origin;
     self.wraparoundMode = savedCursor->wraparound;
+    [delegate_ terminalSetUnicodeVersion:savedCursor->unicodeVersion];
 }
 
 // These steps are derived from xterm's source.
@@ -1346,10 +1354,27 @@ static const int kMaxScreenRows = 4096;
             [self saveCursor];
             break;
 
-        case VT100CSI_DECSTBM:
-            [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == -1 ? 0 : token.csi->p[0] - 1
-                                           bottom:token.csi->p[1] == -1 ? [delegate_ terminalHeight] - 1 : token.csi->p[1] - 1];
+        case VT100CSI_DECSTBM: {
+            int top;
+            if (token.csi->count == 0 || token.csi->p[0] < 0) {
+                top = 0;
+            } else {
+                top = MAX(1, token.csi->p[0]) - 1;
+            }
+
+            int bottom;
+            if (token.csi->count < 2 || token.csi->p[1] <= 0) {
+                bottom = delegate_.terminalHeight - 1;
+            } else {
+                bottom = MIN(delegate_.terminalHeight, token.csi->p[1]) - 1;
+            }
+
+            [delegate_ terminalSetScrollRegionTop:top
+                                           bottom:bottom];
+            // http://www.vt100.net/docs/vt510-rm/DECSTBM.html says:
+            // “DECSTBM moves the cursor to column 1, line 1 of the page.”
             break;
+        }
         case VT100CSI_DSR:
             [self handleDeviceStatusReportWithToken:token withQuestion:NO];
             break;
@@ -2087,6 +2112,7 @@ static const int kMaxScreenRows = 4096;
         } else {
             // Enter multitoken mode to avoid showing the base64 gubbins of the image.
             receivingFile_ = YES;
+            [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
     } else if ([key isEqualToString:@"BeginFile"]) {
         ELog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
@@ -2114,6 +2140,14 @@ static const int kMaxScreenRows = 4096;
             NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@\033\\",
                            height, width];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+    } else if ([key isEqualToString:@"UnicodeVersion"]) {
+        if ([value isEqualToString:@"push"]) {
+            [self pushUnicodeVersion];
+        } else if ([value isEqualToString:@"pop"]) {
+            [self popUnicodeVersion];
+        } else if ([value isNumeric]) {
+            [delegate_ terminalSetUnicodeVersion:[value integerValue]];
         }
     }
 }
@@ -2312,6 +2346,20 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+- (void)pushUnicodeVersion {
+    [_unicodeVersionStack addObject:@([delegate_ terminalUnicodeVersion])];
+}
+
+- (void)popUnicodeVersion {
+    if (_unicodeVersionStack.count == 0) {
+        return;
+    }
+    NSNumber *value = [_unicodeVersionStack lastObject];
+    [_unicodeVersionStack removeLastObject];
+    [delegate_ terminalSetUnicodeVersion:value.integerValue];
+}
+
+
 - (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
               kGraphicRenditionBlinkKey: @(graphicRendition.blink),
@@ -2361,7 +2409,8 @@ static const int kMaxScreenRows = 4096;
               kSavedCursorLineDrawingArrayKey: lineDrawingArray,
               kSavedCursorGraphicRenditionKey: [self dictionaryForGraphicRendition:savedCursor.graphicRendition],
               kSavedCursorOriginKey: @(savedCursor.origin),
-              kSavedCursorWraparoundKey: @(savedCursor.wraparound) };
+              kSavedCursorWraparoundKey: @(savedCursor.wraparound),
+              kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion) };
 }
 
 - (VT100SavedCursor)savedCursorFromDictionary:(NSDictionary *)dict {
@@ -2375,6 +2424,7 @@ static const int kMaxScreenRows = 4096;
     savedCursor.graphicRendition = [self graphicRenditionFromDictionary:dict[kSavedCursorGraphicRenditionKey]];
     savedCursor.origin = [dict[kSavedCursorOriginKey] boolValue];
     savedCursor.wraparound = [dict[kSavedCursorWraparoundKey] boolValue];
+    savedCursor.unicodeVersion = [dict[kSavedCursorUnicodeVersion] integerValue];
     return savedCursor;
 }
 
@@ -2408,7 +2458,8 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
            kTerminalStateColumnModeKey: @(self.columnMode),
            kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
-           kTerminalStateInCommandKey: @(inCommand_) };
+           kTerminalStateInCommandKey: @(inCommand_),
+           kTerminalStateUnicodeVersionStack: _unicodeVersionStack };
     return [dict dictionaryByRemovingNullValues];
 }
 
@@ -2450,6 +2501,10 @@ static const int kMaxScreenRows = 4096;
     self.columnMode = [dict[kTerminalStateColumnModeKey] boolValue];
     self.disableSmcupRmcup = [dict[kTerminalStateDisableSMCUPAndRMCUPKey] boolValue];
     inCommand_ = [dict[kTerminalStateInCommandKey] boolValue];
+    [_unicodeVersionStack removeAllObjects];
+    if (dict[kTerminalStateUnicodeVersionStack]) {
+        [_unicodeVersionStack addObjectsFromArray:dict[kTerminalStateUnicodeVersionStack]];
+    }
 }
 
 @end

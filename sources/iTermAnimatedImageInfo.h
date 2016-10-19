@@ -13,6 +13,7 @@
 
 @property(nonatomic, readonly) int currentFrame;
 @property(nonatomic, readonly) NSImage *currentImage;
+@property(nonatomic) BOOL paused;
 
 - (instancetype)initWithData:(NSData *)data;
 - (NSImage *)imageForFrame:(int)frame;

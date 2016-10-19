@@ -102,7 +102,12 @@ static NSString *const kImageInfoCodeKey = @"Code";
 
 
 - (BOOL)animated {
-    return _animatedImage != nil;
+    return !_paused && _animatedImage != nil;
+}
+
+- (void)setPaused:(BOOL)paused {
+    _paused = paused;
+    _animatedImage.paused = paused;
 }
 
 - (NSImage *)image {

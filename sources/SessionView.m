@@ -138,6 +138,23 @@ static NSDate* lastResizeDate_;
             [self updateScrollViewFrame];
             [self updateFindViewFrame];
         }
+    } else {
+        // Don't resize anything but do keep it all top-aligned.
+        if (self.showTitle) {
+            NSRect aRect = [self frame];
+            CGFloat maxY = aRect.size.height;
+            if (_showTitle) {
+                maxY -= _title.frame.size.height;
+                [_title setFrame:NSMakeRect(0,
+                                            maxY,
+                                            _title.frame.size.width,
+                                            _title.frame.size.height)];
+            }
+            NSRect frame = _scrollview.frame;
+            maxY -= frame.size.height;
+            frame.origin.y = maxY;
+            _scrollview.frame = frame;
+        }
     }
 }
 
@@ -206,7 +223,7 @@ static NSDate* lastResizeDate_;
 
 // It's very expensive for PTYTextView to own its own tracking events because its frame changes
 // constantly, plus it can miss mouse exit events and spurious mouse enter events (issue 3345).
-// I beleive it also caused hangs (issue 3974).
+// I believe it also caused hangs (issue 3974).
 - (void)updateTrackingAreas {
     if ([self window]) {
         int trackingOptions;
@@ -518,6 +535,9 @@ static NSDate* lastResizeDate_;
 - (NSSize)compactFrame {
     NSSize cellSize = [_delegate sessionViewCellSize];
     VT100GridSize gridSize = [_delegate sessionViewGridSize];
+    DLog(@"Compute smallest frame that contains a grid of size %@ with cell size %@",
+         VT100GridSizeDescription(gridSize), NSStringFromSize(cellSize));
+    
     NSSize dim = NSMakeSize(gridSize.width, gridSize.height);
     NSSize innerSize = NSMakeSize(cellSize.width * dim.width + MARGIN * 2,
                                   cellSize.height * dim.height + VMARGIN * 2);
@@ -533,6 +553,7 @@ static NSDate* lastResizeDate_;
     if (_showTitle) {
         size.height += kTitleHeight;
     }
+    DLog(@"Smallest such frame is %@", NSStringFromSize(size));
     return size;
 }
 
@@ -622,6 +643,14 @@ static NSDate* lastResizeDate_;
 
 - (void)beginDrag {
     [_delegate sessionViewBeginDrag];
+}
+
+- (void)doubleClickOnTitleView {
+    [_delegate sessionViewDoubleClickOnTitleBar];
+}
+
+- (void)sessionTitleViewBecomeFirstResponder {
+    [_delegate sessionViewBecomeFirstResponder];
 }
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {

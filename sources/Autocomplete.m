@@ -32,7 +32,7 @@ const int kMaxResultContextWords = 4;
     // Words before the word at the cursor.
     NSMutableArray* context_;
     
-    // x,y coords where prefix occured.
+    // x,y coords where prefix occurred.
     int startX_;
     long long startY_;  // absolute coord
     
@@ -119,7 +119,8 @@ const int kMaxResultContextWords = 4;
             break;
         }
 
-        VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)];
+        VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)
+                                                       maximumLength:kReasonableMaximumWordLength];
         NSString *s = [textExtractor contentInRange:range
                                   attributeProvider:nil
                                          nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -127,6 +128,7 @@ const int kMaxResultContextWords = 4;
                                  includeLastNewline:NO
                              trimTrailingWhitespace:NO
                                        cappedAtSize:-1
+                                       truncateTail:YES
                                   continuationChars:nil
                                              coords:nil];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
@@ -158,7 +160,8 @@ const int kMaxResultContextWords = 4;
         [prefix_ setString:@""];
     } else {
         iTermTextExtractor *extractor = [self textExtractor];
-        range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)];
+        range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)
+                            maximumLength:kReasonableMaximumWordLength];
         NSString *s = [extractor contentInRange:range
                               attributeProvider:nil
                                      nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -166,6 +169,7 @@ const int kMaxResultContextWords = 4;
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
                                    cappedAtSize:-1
+                                   truncateTail:YES
                               continuationChars:nil
                                          coords:nil];
         int maxWords = kMaxQueryContextWords;
@@ -502,7 +506,8 @@ const int kMaxResultContextWords = 4;
             AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
             VT100GridWindowedRange range;
             // Get the word that includes the match.
-            range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)];
+            range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)
+                                maximumLength:kReasonableMaximumWordLength];
             NSString *immutableWord = [extractor contentInRange:range
                                               attributeProvider:nil
                                                      nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -510,11 +515,13 @@ const int kMaxResultContextWords = 4;
                                              includeLastNewline:NO
                                          trimTrailingWhitespace:NO
                                                    cappedAtSize:-1
+                                                   truncateTail:YES
                                               continuationChars:nil
                                                          coords:nil];
             NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
             while ([firstWord length] < [prefix_ length]) {
-                range = [extractor rangeForWordAt:range.coordRange.end];
+                range = [extractor rangeForWordAt:range.coordRange.end
+                                    maximumLength:kReasonableMaximumWordLength];
                 NSString* part = [extractor contentInRange:range
                                          attributeProvider:nil
                                                 nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -522,6 +529,7 @@ const int kMaxResultContextWords = 4;
                                         includeLastNewline:NO
                                     trimTrailingWhitespace:NO
                                               cappedAtSize:-1
+                                              truncateTail:YES
                                          continuationChars:nil
                                                     coords:nil];
                 if ([part length] == 0) {
@@ -550,7 +558,8 @@ const int kMaxResultContextWords = 4;
                         ++endY;
                     }
 
-                    range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)];
+                    range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)
+                                        maximumLength:kReasonableMaximumWordLength];
                     word = [extractor contentInRange:range
                                    attributeProvider:nil
                                           nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -558,6 +567,7 @@ const int kMaxResultContextWords = 4;
                                   includeLastNewline:NO
                               trimTrailingWhitespace:NO
                                         cappedAtSize:-1
+                                        truncateTail:YES
                                    continuationChars:nil
                                               coords:nil];
                     AcLog(@"First candidate is at %@", VT100GridWindowedRangeDescription(range));
@@ -568,7 +578,8 @@ const int kMaxResultContextWords = 4;
                             ++range.coordRange.end.y;
                         }
                         if (range.coordRange.end.y < [screen numberOfLines]) {
-                            range = [extractor rangeForWordAt:range.coordRange.end];
+                            range = [extractor rangeForWordAt:range.coordRange.end
+                                                maximumLength:kReasonableMaximumWordLength];
                             word = [extractor contentInRange:range
                                            attributeProvider:nil
                                                   nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
@@ -576,6 +587,7 @@ const int kMaxResultContextWords = 4;
                                           includeLastNewline:NO
                                       trimTrailingWhitespace:NO
                                                 cappedAtSize:-1
+                                                truncateTail:YES
                                            continuationChars:nil
                                                       coords:nil];
                             if (!whitespaceBeforeCursor_) {

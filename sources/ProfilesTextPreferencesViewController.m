@@ -40,6 +40,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_asciiAntiAliased;
     IBOutlet NSButton *_nonasciiAntiAliased;
     IBOutlet NSPopUpButton *_thinStrokes;
+    IBOutlet NSButton *_unicodeVersion9;
 
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
@@ -134,6 +135,23 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                     key:KEY_USE_HFS_PLUS_MAPPING
                    type:kPreferenceInfoTypeCheckbox];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(unicodeVersionDidChange)
+                                                 name:iTermUnicodeVersionDidChangeNotification
+                                               object:nil];
+    info = [self defineControl:_unicodeVersion9
+                           key:KEY_UNICODE_VERSION
+                          type:kPreferenceInfoTypeCheckbox
+                settingChanged:^(id sender) {
+                    const NSInteger version = (_unicodeVersion9.state == NSOnState) ? 9 : 8;
+                    [self setInteger:version forKey:KEY_UNICODE_VERSION];
+                }
+                        update:^BOOL{
+                            _unicodeVersion9.state = [self integerForKey:KEY_UNICODE_VERSION] == 9 ? NSOnState : NSOffState;
+                            return YES;
+                        }];
+
+    
     [self defineControl:_horizontalSpacing
                     key:KEY_HORIZONTAL_SPACING
                    type:kPreferenceInfoTypeSlider];
@@ -159,6 +177,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];
+}
+
+- (void)unicodeVersionDidChange {
+    [self infoForControl:_unicodeVersion9].onUpdate();
 }
 
 - (void)reloadProfile {

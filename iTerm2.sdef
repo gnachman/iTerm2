@@ -77,7 +77,7 @@
       <cocoa class="iTermApplication"/>
       <property name="current window" code="Crwn" type="window"
         description="The frontmost window">
-        <cocoa key="currentWindow" />
+        <cocoa key="currentScriptingWindow" />
       </property>
 
       <property name="name" code="pnam" type="text" access="r" 
@@ -89,13 +89,21 @@
       <property name="version" code="vers" type="text" access="r" 
         description="The version of the application."/> 
       <element type="window" access="r"> 
-        <cocoa key="orderedTerminalWindows"/> 
+        <cocoa key="orderedScriptingWindows"/> 
       </element> 
     </class> 
     <class name="window" code="cwin" description="A window."> 
-      <cocoa class="PTYWindow"/> 
-      <property name="id" code="ID  " description="The unique identifier of the session." type="text" access="r">
-        <cocoa key="windowIdentifier"/>
+      <cocoa class="iTermScriptingWindow"/>
+      <!-- Prior to 3.0.4, id was a string with code "ID  " that had a value like "window-1" which
+       coincides with the unique identifier used in a window's object specifier. Issue 4825 points 
+       out this is problematic because integral window IDs are useful as arguments to 
+       screencapture -l. So the old id is now available as "alternate identifier" and id is now the
+       standard integer value. -->
+      <property name="id" code="ID  " description="The unique identifier of the session." type="integer" access="r">
+        <cocoa key="uniqueID"/>
+      </property>
+      <property name="alternate identifier" code="Twid" description="The alternate unique identifier of the session." type="text" access="r">
+          <cocoa key="windowIdentifier"/>
       </property>
       <property name="name" code="pnam" type="text" access="r"
         description="The full title of the window."> 
@@ -473,8 +481,11 @@
       <property name="tty" code="Stty" type="text" access="r">
         <cocoa key="tty" />
       </property>
-      <property name="contents" code="Cntt" type="text">
-        <cocoa key="contents" />
+      <property name="contents" code="Cntt" type="text" description="The currently visible contents of the session.">
+        <cocoa key="text" />
+      </property>
+      <property name="text" description="The currently visible contents of the session." code="pcnt" type="text" access="r">
+        <cocoa key="text" />
       </property>
       <property name="background color" code="Co00" type="RGB color">
         <cocoa key="backgroundColor" />
@@ -544,6 +555,14 @@
       </property>
       <property name="ANSI bright white color" code="Co22" type="RGB color">
         <cocoa key="ansiBrightWhiteColor" />
+      </property>
+
+      <property name="underline color" code="Co23" type="RGB color">
+        <cocoa key="underlineColor" />
+      </property>
+      <property name="use underline color" code="Undl" type="boolean"
+        description="Whether the use a dedicated color for underlining.">
+        <cocoa key="useUnderlineColor"/>
       </property>
 
       <property name="background image" code="Bgim" type="text">

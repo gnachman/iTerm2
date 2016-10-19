@@ -19,7 +19,6 @@ extern const CGFloat kPSMTabBarControlHeight;
 
 // internal cell border
 extern const CGFloat kSPMTabBarCellInternalXMargin;
-extern const CGFloat kSPMTabBarCellInternalYMargin;
 
 // padding between objects
 extern const CGFloat kPSMTabBarCellPadding;
@@ -162,6 +161,7 @@ enum {
 @property(nonatomic, assign) int cellMaxWidth;
 @property(nonatomic, assign) int cellOptimumWidth;
 @property(nonatomic, assign) BOOL sizeCellsToFit;
+@property(nonatomic, assign) BOOL stretchCellsToFit;
 @property(nonatomic, assign) BOOL useOverflowMenu;
 @property(nonatomic, assign) BOOL allowsBackgroundTabClosing;
 @property(nonatomic, assign) BOOL allowsResizing;

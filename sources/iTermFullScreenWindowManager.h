@@ -11,8 +11,11 @@
 
 @interface iTermFullScreenWindowManager : NSObject
 
-- (instancetype)initWithClass:(Class)class enterFullScreenSelector:(SEL)selector;
+@property(nonatomic, readonly) NSUInteger numberOfQueuedTransitions;
+
++ (instancetype)sharedInstance;
 
 - (void)makeWindowEnterFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window;
+- (void)makeWindowExitFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window;
 
 @end

@@ -8,6 +8,7 @@
 
 #import "NSDictionary+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 
 static NSString *const kGridCoordXKey = @"x";
 static NSString *const kGridCoordYKey = @"y";
@@ -20,6 +21,11 @@ static NSString *const kGridRangeLocation = @"Location";
 static NSString *const kGridRangeLength = @"Length";
 static NSString *const kGridSizeWidth = @"Width";
 static NSString *const kGridSizeHeight = @"Height";
+
+// Keys for hotkey dictionary
+static NSString *const kHotKeyKeyCode = @"keyCode";
+static NSString *const kHotKeyModifiers = @"modifiers";
+static NSString *const kHotKeyModifierActivation = @"modifier activation";
 
 @implementation NSDictionary (iTerm)
 
@@ -125,7 +131,7 @@ static NSString *const kGridSizeHeight = @"Height";
                                             green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
                                              blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
                                             alpha:alpha];
-        return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+        return srgb;
     } else {
         return [NSColor colorWithCalibratedRed:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
                                          green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
@@ -143,6 +149,91 @@ static NSString *const kGridSizeHeight = @"Height";
         }
     }
     return temp;
+}
+
+- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(id)key {
+    NSMutableDictionary *temp = [self mutableCopy];
+    temp[key] = object;
+    return temp;
+}
+
+- (NSData *)propertyListData {
+    NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
+    [self writeToFile:filename atomically:NO];
+    NSData *data = [NSData dataWithContentsOfFile:filename];
+    [[NSFileManager defaultManager] removeItemAtPath:filename error:nil];
+    return data;
+}
+
+@end
+
+@implementation NSDictionary(HotKey)
+
++ (NSDictionary *)descriptorWithKeyCode:(NSUInteger)keyCode
+                              modifiers:(NSEventModifierFlags)modifiers {
+    return @{ kHotKeyKeyCode: @(keyCode),
+              kHotKeyModifiers: @(modifiers) };
+}
+
++ (iTermHotKeyDescriptor *)descriptorWithModifierActivation:(iTermHotKeyModifierActivation)activation {
+    return @{ kHotKeyModifierActivation: @(activation) };
+}
+
+- (NSUInteger)hotKeyKeyCode {
+    return [self[kHotKeyKeyCode] unsignedIntegerValue];
+}
+
+- (NSEventModifierFlags)hotKeyModifiers {
+    return [self[kHotKeyModifiers] unsignedIntegerValue];
+}
+
+- (iTermHotKeyModifierActivation)hotKeyModifierActivation {
+    return [self[kHotKeyModifierActivation] unsignedIntegerValue];
+}
+
+- (BOOL)isEqualToDictionary:(NSDictionary *)other ignoringKeys:(NSSet *)keysToIgnore {
+    NSMutableSet *allKeys = [NSMutableSet set];
+    [allKeys addObjectsFromArray:self.allKeys];
+    [allKeys addObjectsFromArray:other.allKeys];
+
+    for (id key in allKeys) {
+        if ([keysToIgnore containsObject:key]) {
+            continue;
+        }
+        id myValue = self[key];
+        if (![myValue isEqual:other[key]]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (NSDictionary *)dictionaryByMergingDictionary:(NSDictionary *)other {
+    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
+    [other enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        temp[key] = obj;
+    }];
+    return temp;
+}
+
+- (BOOL)isExactlyEqualToDictionary:(NSDictionary *)other {
+    if (self.count != other.count) {
+        return NO;
+    }
+    __block BOOL result = YES;
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        if (other[key] != obj) {
+            *stop = YES;
+            result = NO;
+        }
+    }];
+    return result;
+}
+
+- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key {
+    NSMutableDictionary *mutableSelf = [[self mutableCopy] autorelease];
+    mutableSelf[key] = object;
+    return mutableSelf;
 }
 
 @end

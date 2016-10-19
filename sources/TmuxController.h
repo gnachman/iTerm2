@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermInitialDirectory.h"
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
 
@@ -38,6 +39,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, copy) NSString *sessionName;
 @property(nonatomic, retain) NSArray *sessions;
 @property(nonatomic, assign) BOOL ambiguousIsDoubleWidth;
+@property(nonatomic, assign) NSInteger unicodeVersion;
 @property(nonatomic, readonly) NSString *clientName;
 @property(nonatomic, readonly) int sessionId;
 @property(nonatomic, readonly) BOOL hasOutstandingWindowResize;
@@ -75,18 +77,29 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
+
+// Issue tmux commands to infer bounds on the version.
+- (void)guessVersion;
+
 - (void)setClientSize:(NSSize)size;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
-- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
-- (void)newWindowInSession:(NSString *)targetSession afterWindowWithName:(NSString *)predecessorWindow;
+- (void)splitWindowPane:(int)wp
+             vertically:(BOOL)splitVertically
+       initialDirectory:(iTermInitialDirectory *)initialDirectory;
+- (void)newWindowInSession:(NSString *)targetSession
+          initialDirectory:(iTermInitialDirectory *)initialDirectory;
+
+- (void)selectPane:(int)windowPane;
 
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
 // nil: Open in a new window
 // A string of a non-negative integer (e.g., @"2") means to open alongside a tmux window with that ID
 // A string of a negative integer (e.g., @"-2") means to open in an iTerm2 window with abs(windowId)==window number.
-- (void)newWindowWithAffinity:(NSString *)windowId;
+- (void)newWindowWithAffinity:(NSString *)windowId
+             initialDirectory:(iTermInitialDirectory *)initialDirectory;
+
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane
       isVertical:(BOOL)splitVertical

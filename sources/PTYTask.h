@@ -19,6 +19,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)brokenPipe;  // Called in main thread
 - (void)taskWasDeregistered;
 - (void)writeForCoprocessOnlyTask:(NSData *)data;
+
+// Called on main thread from within launchWithPath:arguments:environment:width:height:isUTF8:.
+- (void)taskDiedImmediately;
 @end
 
 @interface PTYTask : NSObject
@@ -39,7 +42,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, readonly) int fd;
 @property(atomic, readonly) pid_t pid;
 @property(atomic, readonly) int status;
-@property(atomic, readonly) NSString *tty;
+// Externally, only PTYSession should assign to this when reattaching to a server.
+@property(atomic, copy) NSString *tty;
 @property(atomic, readonly) NSString *path;
 @property(atomic, readonly) NSString *getWorkingDirectory;
 @property(atomic, readonly) NSString *description;
@@ -90,7 +94,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid;
 
 // Wire up the server as the task's file descriptor and process. The caller
-// will ahve connected to the server to get this info. Requires
+// will have connected to the server to get this info. Requires
 // [iTermAdvancedSettingsModel runJobsInServers].
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection;
 

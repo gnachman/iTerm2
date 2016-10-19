@@ -32,7 +32,6 @@
 #import "VT100Token.h"
 
 #import <apr-1/apr_base64.h>
-#include <string.h>
 
 NSString *const kScreenStateKey = @"Screen State";
 
@@ -156,7 +155,7 @@ static const double kInterBellQuietPeriod = 0.1;
 static NSString *const kInlineFileName = @"name";  // NSString
 static NSString *const kInlineFileWidth = @"width";  // NSNumber
 static NSString *const kInlineFileWidthUnits = @"width units";  // NSNumber of VT100TerminalUnits
-static NSString *const kInlineFileHeight = @"height";  // NSNumber
+static NSString *const kInlineFileHeight = @"height";  // NSNumb    er
 static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
 static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
 static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
@@ -860,9 +859,39 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)clearBuffer {
+    // Cancel out the current command if shell integration is in use and we are
+    // at the shell prompt.
+
+    // NOTE: This is in screen coords (y=0 is the top)
+    VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
+    if (commandStartX_ >= 0) {
+        // Save the start location of the command. If it's a multi-line command
+        // it'll get truncated and the display is hopelessly messed up, so
+        // while this is not the true start of the command it's better than not
+        // recording a start, which would break alt-click to move the cursor.
+        // The user will probably cancel the command or press ^L to redrasw.
+        newCommandStart = VT100GridCoordMake(commandStartX_, 0);
+
+        // Abort the current command.
+        [self commandWasAborted];
+    }
+    // There is no last command after clearing the screen, so reset it.
+    _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+
+    // Clear the grid by scrolling it up into history.
     [self clearAndResetScreenPreservingCursorLine];
+
+    // Erase history.
     [self clearScrollbackBuffer];
+
+    // Redraw soon.
     [delegate_ screenUpdateDisplay:NO];
+
+    if (newCommandStart.x >= 0) {
+        // Create a new mark and inform the delegate that there's new command start coord.
+        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+        [self commandDidStartAtCoord:newCommandStart];
+    }
 }
 
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
@@ -1012,7 +1041,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                         [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
                         NULL,
                         &dwc,
-                        _useHFSPlusMapping);
+                        _useHFSPlusMapping,
+                        [delegate_ screenUnicodeVersion]);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         screen_char_t *theLine = [self getLineAtScreenIndex:pred.y];
@@ -1093,7 +1123,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                        // more cooperation between VT100Screen and PTYTextView than is currently in place because
                                        // the selection could become truncated, and regardless, will need to move up a line in terms
                                        // of absolute Y position (normally when the screen scrolls the absolute Y position of the
-                                       // selection stays the same and the viewport moves down, or else there is soem scrollback
+                                       // selection stays the same and the viewport moves down, or else there is some scrollback
                                        // overflow and PTYTextView -refresh bumps the selection's Y position, but because in this
                                        // case we don't append to the line buffer, scrollback overflow will not increment).
                                        [delegate_ screenRemoveSelection];
@@ -1269,12 +1299,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     NSNumber *altSavedY = [state objectForKey:kStateDictAltSavedCY];
     if (altSavedX && altSavedY && inAltScreen) {
         primaryGrid_.cursor = VT100GridCoordMake([altSavedX intValue], [altSavedY intValue]);
-    }
-
-    NSNumber *savedX = [state objectForKey:kStateDictSavedCX];
-    NSNumber *savedY = [state objectForKey:kStateDictSavedCY];
-    if (savedX && savedY) {
-        [terminal_ setSavedCursorPosition:VT100GridCoordMake([savedX intValue], [savedY intValue])];
+        [terminal_ setSavedCursorPosition:primaryGrid_.cursor];
     }
 
     currentGrid_.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
@@ -1411,6 +1436,11 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)setCursorPosition:(VT100GridCoord)coord {
     currentGrid_.cursor = coord;
+}
+
+- (void)resetTimestamps {
+    [primaryGrid_ resetTimestamps];
+    [altGrid_ resetTimestamps];
 }
 
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
@@ -2508,7 +2538,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     } else {
         lineBuffer = linebuffer_;
     }
-    const int n = [currentGrid_ numberOfNonEmptyLines];
+    const int n = [currentGrid_ numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
             [currentGrid_ scrollWholeScreenUpIntoLineBuffer:lineBuffer
@@ -3613,8 +3643,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalCommandDidStart {
     DLog(@"FinalTerm: terminalCommandDidStart");
-    commandStartX_ = currentGrid_.cursorX;
-    commandStartY_ = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+    [self commandDidStartAtCoord:currentGrid_.cursor];
+}
+
+- (void)commandDidStartAtCoord:(VT100GridCoord)coord {
+    commandStartX_ = coord.x;
+    commandStartY_ = coord.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
     [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
 }
 
@@ -3632,6 +3666,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalAbortCommand {
     DLog(@"FinalTerm: terminalAbortCommand");
+    [self commandWasAborted];
+}
+
+- (void)commandWasAborted {
     VT100ScreenMark *screenMark = [self lastCommandMark];
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
@@ -3799,6 +3837,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (NSSize)terminalCellSizeInPoints {
     return [delegate_ screenCellSize];
+}
+
+- (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {
+    [delegate_ screenSetUnicodeVersion:unicodeVersion];
+}
+
+- (NSInteger)terminalUnicodeVersion {
+    return [delegate_ screenUnicodeVersion];
 }
 
 #pragma mark - Private
@@ -4199,10 +4245,10 @@ static void SwapInt(int *a, int *b) {
     collectInputForPrinting_ = NO;
 }
 
-- (BOOL)isDoubleWidthCharacter:(unichar)c
-{
+- (BOOL)isDoubleWidthCharacter:(unichar)c {
     return [NSString isDoubleWidthCharacter:c
-                     ambiguousIsDoubleWidth:[delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth]];
+                     ambiguousIsDoubleWidth:[delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth]
+                             unicodeVersion:[delegate_ screenUnicodeVersion]];
 }
 
 - (void)popScrollbackLines:(int)linesPushed
@@ -4471,7 +4517,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue ?: @{},
-           kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
+           kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
            };
     return [dict dictionaryByRemovingNullValues];
@@ -4509,8 +4555,8 @@ static void SwapInt(int *a, int *b) {
     }
 
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
-    if (includeRestorationBanner) {
-        [lineBuffer appendMessage:@"Session Restored"];
+    if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
+        [lineBuffer appendMessage:@"Session Contents Restored"];
     }
     [lineBuffer setMaxLines:maxScrollbackLines_];
     if (!unlimitedScrollback_) {

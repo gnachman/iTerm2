@@ -20,7 +20,7 @@ static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChan
 
 // key for userInfo dictionary of kPreferenceDidChangeFromOtherPanel notification having
 // key of changed preference.
-static NSString *const kKey = @"key";
+NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 @interface iTermPreferencesBaseViewController()
 // If set to YES, then controls won't be updated with values from backing store when it changes.
@@ -45,6 +45,11 @@ static NSString *const kKey = @"key";
                                                  selector:@selector(preferenceDidChangeFromOtherPanel:)
                                                      name:kPreferenceDidChangeFromOtherPanel
                                                    object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferencePanelWillClose:)
+                                                     name:kPreferencePanelWillCloseNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -68,6 +73,12 @@ static NSString *const kKey = @"key";
 
 #pragma mark - Methods to override
 
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [self setObject:obj forKey:key];
+    }];
+}
+
 - (BOOL)boolForKey:(NSString *)key {
     return [iTermPreferences boolForKey:key];
 }
@@ -82,6 +93,14 @@ static NSString *const kKey = @"key";
 
 - (void)setInt:(int)value forKey:(NSString *)key {
     [iTermPreferences setInt:value forKey:key];
+}
+
+- (NSInteger)integerForKey:(NSString *)key {
+    return [iTermPreferences integerForKey:key];
+}
+
+- (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    [iTermPreferences setInteger:value forKey:key];
 }
 
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key {
@@ -226,7 +245,7 @@ static NSString *const kKey = @"key";
     if ([self shouldUpdateOtherPanels]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kPreferenceDidChangeFromOtherPanel
                                                             object:self
-                                                          userInfo:@{ kKey: info.key }];
+                                                          userInfo:@{ kPreferenceDidChangeFromOtherPanelKeyUserInfoKey: info.key }];
     }
 
 }
@@ -401,6 +420,10 @@ static NSString *const kKey = @"key";
     return [_keys allObjects];
 }
 
+- (void)windowWillClose {
+    // Documented as doing nothing.
+}
+
 #pragma mark - Constraints
 
 // Pick out the digits from s and clamp it to a range.
@@ -505,13 +528,28 @@ static NSString *const kKey = @"key";
 #pragma mark - Notifications
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
-    NSString *key = notification.userInfo[kKey];
+    NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
     if (![_keys containsObject:key]) {
         return;
     }
     PreferenceInfo *info = [self infoForKey:key];
     assert(info);
     [self updateValueForInfo:info];
+}
+
+- (void)preferencePanelWillClose:(NSNotification *)notification {
+    if (_preferencePanel == notification.object) {
+        // Give subclasses a chance to do something first.
+        [self windowWillClose];
+
+        _preferencePanel = nil;
+        // Breaks reference cycles in settingChanged and update blocks.
+        for (NSControl *key in _keyMap) {
+            PreferenceInfo *info = [_keyMap objectForKey:key];
+            [info clearBlocks];
+        }
+        [_keyMap removeAllObjects];
+    }
 }
 
 @end

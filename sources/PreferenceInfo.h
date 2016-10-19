@@ -37,7 +37,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 
 // Called when the user changes a control's value by interacting with it (after the underlying user
 // default or profile is update), or after its value is changed programmatically. It is also invoked
-// by a delayed perform from setObserver:. It should be idempotent.
+// when the preference panel finishes loading. It should be idempotent.
 // This is typically used when changing one view's value affects another view's appearance. For
 // example, if turning on a checkbox causes a view to appear, the checkbox's observer would update
 // the view's hidden flag.
@@ -75,5 +75,8 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;
+
+// Set all blocks to nil to clean up cyclic references.
+- (void)clearBlocks;
 
 @end

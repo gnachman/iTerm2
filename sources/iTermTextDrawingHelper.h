@@ -119,9 +119,6 @@
 // Height of the "excess" region between the last line and the bottom of the view.
 @property(nonatomic, assign) double excess;
 
-// How transparent is the view?
-@property(nonatomic, assign) CGFloat transparency;
-
 // Total number of lines ever scrolled out of history.
 @property(nonatomic, assign) long long totalScrollbackOverflow;
 
@@ -164,7 +161,7 @@
 // Is there an underlined hostname?
 @property(nonatomic, assign) BOOL haveUnderlinedHostname;
 
-// Alpha value to use for cursor.
+// Background transparency level. Should be 1 if transparency is off for this view.
 @property(nonatomic, assign) double transparencyAlpha;
 
 // Is the cursor visible?
@@ -192,7 +189,7 @@
 @property(nonatomic, assign) BOOL blinkAllowed;
 
 // Underlined selection range (inclusive of all values), indicating clickable url.
-@property(nonatomic, assign) VT100GridWindowedRange underlineRange;
+@property(nonatomic, assign) VT100GridAbsWindowedRange underlinedRange;
 
 // If set, the last-modified time of each line on the screen is shown on the right side of the display.
 @property(nonatomic, assign) BOOL showTimestamps;
@@ -252,6 +249,19 @@
 // Line number that is being hovered over for drop
 @property(nonatomic, assign) int dropLine;
 
+// Smallest of the baseline offset for the available fonts. Is a negative number.
+@property(nonatomic, assign) CGFloat baselineOffset;
+
+// Underline offset to use. Negative.
+@property(nonatomic, assign) CGFloat underlineOffset;
+
+// Is bold text allowed? If so, then double struck text may be used when a bold version of the font
+// is not available.
+@property(nonatomic, assign) BOOL boldAllowed;
+
+// Version of unicode. Determines character widths.
+@property(nonatomic, assign) NSInteger unicodeVersion;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
@@ -259,9 +269,5 @@
 
 // Draw timestamps. Returns the width of the widest timestamp.
 - (CGFloat)drawTimestamps;
-
-#pragma mark - Testing Only
-
-- (void)clipAndDrawRect:(NSRect)rect;
 
 @end

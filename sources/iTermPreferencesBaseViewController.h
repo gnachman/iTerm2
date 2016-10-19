@@ -10,6 +10,9 @@
 #import "iTermPreferences.h"
 #import "PreferenceInfo.h"
 
+// Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
+extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
+
 // View controllers for tabs in the Preferences dialog inherit from this class. Consider it
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
@@ -18,6 +21,11 @@
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray *keysForBulkCopy;
+
+// This is used to release preference info objects when the owning window
+// controller goes away because there is a hard-to-remove retain cycle when
+// blocks are used (e.g., for observers).
+@property(nonatomic, assign) NSWindowController *preferencePanel;
 
 #pragma mark - Core Methods
 
@@ -57,6 +65,9 @@
 
 #pragma mark - Methods to override
 
+// Just a convenience method in the base class, but subclasses can use this to be "more atomic".
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary;
+
 // By default, this class uses iTermPreferences class methods to change settings. Override these
 // methods to use a different model.
 - (BOOL)boolForKey:(NSString *)key;
@@ -64,6 +75,9 @@
 
 - (int)intForKey:(NSString *)key;
 - (void)setInt:(int)value forKey:(NSString *)key;
+
+- (NSInteger)integerForKey:(NSString *)key;
+- (void)setInteger:(NSInteger)value forKey:(NSString *)key;
 
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key;
 - (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key;
@@ -86,5 +100,11 @@
 // If this returns YES, then changes to this panel will post a notification causing other panels to
 // update their values for the affected preference.
 - (BOOL)shouldUpdateOtherPanels;
+
+// Override this to handle updates of preferences from other panels.
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification NS_REQUIRES_SUPER;
+
+// The prefs panel this view controller belongs to will close. This implementation does nothing.
+- (void)windowWillClose;
 
 @end

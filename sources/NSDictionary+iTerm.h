@@ -7,9 +7,10 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 #import "VT100GridTypes.h"
 
-@interface NSDictionary (iTerm)
+@interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
 + (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord;
 - (VT100GridCoord)gridCoord;
@@ -39,5 +40,33 @@
 - (NSColor *)colorValueWithDefaultAlpha:(CGFloat)alpha;
 
 - (NSDictionary *)dictionaryByRemovingNullValues;
+- (NSDictionary *)dictionaryBySettingObject:(ObjectType)object forKey:(KeyType)key;
+
+- (NSData *)propertyListData;
+
+@end
+
+// A handy way of describing the essential parts of a hotkey, as far as being a uniquely registered
+// keystroke goes. Does not include any inessental information could is not related to the
+// bare-metal mechanics of a keypress. The modifier flags should be masked before the creation of
+// the dictionary.
+typedef NSDictionary iTermHotKeyDescriptor;
+
+@interface NSDictionary(HotKey)
++ (iTermHotKeyDescriptor *)descriptorWithKeyCode:(NSUInteger)keyCode
+                                       modifiers:(NSEventModifierFlags)modifiers;
++ (iTermHotKeyDescriptor *)descriptorWithModifierActivation:(iTermHotKeyModifierActivation)activation;
+
+- (NSUInteger)hotKeyKeyCode;
+- (NSEventModifierFlags)hotKeyModifiers;
+- (iTermHotKeyModifierActivation)hotKeyModifierActivation;
+
+- (BOOL)isEqualToDictionary:(NSDictionary *)other ignoringKeys:(NSSet *)keysToIgnore;
+- (NSDictionary *)dictionaryByMergingDictionary:(NSDictionary *)other;
+
+// Compares pointers only
+- (BOOL)isExactlyEqualToDictionary:(NSDictionary *)other;
+
+- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key;
 
 @end

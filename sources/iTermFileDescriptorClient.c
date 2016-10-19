@@ -18,11 +18,12 @@
 static ssize_t ReceiveMessageAndFileDescriptor(int fd,
                                                void *buffer,
                                                size_t bufferCapacity,
-                                               int *receivedFileDescriptorPtr) {
+                                               int *receivedFileDescriptorPtr,
+                                               int deadMansPipeReadEnd) {
     // Loop because sometimes the dynamic loader spews warnings (for example, when malloc logging
     // is enabled)
     while (1) {
-        syslog(LOG_NOTICE, "ReceiveMessageAndFileDescriptor\n");
+        syslog(LOG_DEBUG, "ReceiveMessageAndFileDescriptor\n");
         struct msghdr message;
         struct iovec ioVector[1];
         iTermFileDescriptorControlMessage controlMessage;
@@ -42,16 +43,27 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
         do {
             // There used to be a race condition where the server would die
             // really early and then we'd get stuck in recvmsg. See issue 4383.
-            syslog(LOG_NOTICE, "calling recvmsg...");
+            if (deadMansPipeReadEnd >= 0) {
+                syslog(LOG_DEBUG, "Calling select...");
+                int fds[2] = { fd, deadMansPipeReadEnd };
+                int readable[2];
+                iTermSelect(fds, 2, readable);
+                if (readable[1]) {
+                    syslog(LOG_DEBUG, "Server was dead before recevmsg. Did the shell terminate immediately?");
+                    return -1;
+                }
+                syslog(LOG_DEBUG, "assuming socket is readable");
+            }
+            syslog(LOG_DEBUG, "calling recvmsg...");
             n = recvmsg(fd, &message, 0);
-            syslog(LOG_NOTICE, "recvmsg returned %zd, errno=%s\n", n, (n < 0 ? strerror(errno) : "n/a"));
+            syslog(LOG_DEBUG, "recvmsg returned %zd, errno=%s\n", n, (n < 0 ? strerror(errno) : "n/a"));
         } while (n < 0 && errno == EINTR);
 
         if (n <= 0) {
             syslog(LOG_NOTICE, "error from recvmsg %s\n", strerror(errno));
             return n;
         }
-        syslog(LOG_NOTICE, "recvmsg returned %d\n", (int)n);
+        syslog(LOG_DEBUG, "recvmsg returned %d\n", (int)n);
 
         struct cmsghdr *messageHeader = CMSG_FIRSTHDR(&message);
         if (messageHeader != NULL && messageHeader->cmsg_len == CMSG_LEN(sizeof(int))) {
@@ -63,9 +75,9 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
                 syslog(LOG_NOTICE, "Wrong cmsg type\n");
                 return -1;
             }
-            syslog(LOG_NOTICE, "Got a fd\n");
+            syslog(LOG_DEBUG, "Got a fd\n");
             *receivedFileDescriptorPtr = *((int *)CMSG_DATA(messageHeader));
-            syslog(LOG_NOTICE, "Return %d\n", (int)n);
+            syslog(LOG_DEBUG, "Return %d\n", (int)n);
             return n;
         } else {
             syslog(LOG_NOTICE, "No descriptor passed\n");
@@ -100,12 +112,12 @@ int iTermFileDescriptorClientConnect(const char *path) {
         int rc = connect(socketFd, (struct sockaddr *)&remote, len);
         if (rc == -1) {
             interrupted = (errno == EINTR);
-            syslog(LOG_NOTICE, "Connect failed: %s\n", strerror(errno));
+            syslog(LOG_DEBUG, "Connect failed: %s\n", strerror(errno));
             close(socketFd);
             if (!interrupted) {
                 return -1;
             }
-            syslog(LOG_NOTICE, "Trying again because connect returned EINTR.");
+            syslog(LOG_DEBUG, "Trying again because connect returned EINTR.");
         } else {
             // Make socket block again.
             interrupted = 0;
@@ -120,7 +132,7 @@ static int FileDescriptorClientConnectPid(pid_t pid) {
     char path[PATH_MAX + 1];
     iTermFileDescriptorSocketPath(path, sizeof(path), pid);
 
-    syslog(LOG_NOTICE, "Connect to path %s\n", path);
+    syslog(LOG_DEBUG, "Connect to path %s\n", path);
     return iTermFileDescriptorClientConnect(path);
 }
 
@@ -132,20 +144,21 @@ iTermFileDescriptorServerConnection iTermFileDescriptorClientRun(pid_t pid) {
         return result;
     }
 
-    iTermFileDescriptorServerConnection result = iTermFileDescriptorClientRead(socketFd);
+    iTermFileDescriptorServerConnection result = iTermFileDescriptorClientRead(socketFd, -1);
     result.serverPid = pid;
-    syslog(LOG_NOTICE, "Success: process id is %d, pty master fd is %d\n\n",
+    syslog(LOG_DEBUG, "Success: process id is %d, pty master fd is %d\n\n",
            (int)pid, result.ptyMasterFd);
 
     return result;
 }
 
-iTermFileDescriptorServerConnection iTermFileDescriptorClientRead(int socketFd) {
+iTermFileDescriptorServerConnection iTermFileDescriptorClientRead(int socketFd, int deadMansPipeReadEnd) {
     iTermFileDescriptorServerConnection result = { 0 };
     int rc = ReceiveMessageAndFileDescriptor(socketFd,
                                              &result.childPid,
                                              sizeof(result.childPid),
-                                             &result.ptyMasterFd);
+                                             &result.ptyMasterFd,
+                                             deadMansPipeReadEnd);
     if (rc == -1 || result.ptyMasterFd == -1) {
         result.error = "Failed to read message from server";
         close(socketFd);

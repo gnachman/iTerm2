@@ -54,6 +54,24 @@ NS_ASSUME_NONNULL_BEGIN
     return [NSURL URLWithString:string];
 }
 
++ (NSURL *)URLWithUserSuppliedString:(NSString *)string {
+    NSCharacterSet *nonAsciiCharacterSet = [NSCharacterSet characterSetWithRange:NSMakeRange(128, 0x10FFFF - 128)];
+    if ([string rangeOfCharacterFromSet:nonAsciiCharacterSet].location != NSNotFound) {
+        NSUInteger fragmentIndex = [string rangeOfString:@"#"].location;
+        if (fragmentIndex != NSNotFound) {
+            // Don't want to percent encode a #.
+            NSString *before = [[string substringToIndex:fragmentIndex] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            NSString *after = [[string substringFromIndex:fragmentIndex + 1] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            NSString *combined = [NSString stringWithFormat:@"%@#%@", before, after];
+            return [NSURL URLWithString:combined];
+        } else {
+            return [NSURL URLWithString:[string stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        }
+    } else {
+        return [NSURL URLWithString:string];
+    }
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

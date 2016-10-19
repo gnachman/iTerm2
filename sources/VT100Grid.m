@@ -201,14 +201,21 @@ static NSString *const kGridSizeKey = @"Size";
     self.cursorY = MIN(size_.height - 1, MAX(0, coord.y));
 }
 
-- (int)numberOfNonEmptyLines {
+- (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)includeWhitespace {
     int numberOfLinesUsed = size_.height;
-
+    NSMutableCharacterSet *allowedCharacters = [[[NSMutableCharacterSet alloc] init] autorelease];
+    [allowedCharacters addCharactersInRange:NSMakeRange(0, 1)];
+    if (includeWhitespace) {
+        [allowedCharacters addCharactersInString:@" \t"];
+        [allowedCharacters addCharactersInRange:NSMakeRange(TAB_FILLER, 1)];
+        [allowedCharacters addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
+        [allowedCharacters addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
+    }
     for(; numberOfLinesUsed > 0; numberOfLinesUsed--) {
         screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
         int i;
         for (i = 0; i < size_.width; i++) {
-            if (line[i].code) {
+            if (line[i].complexChar || ![allowedCharacters characterIsMember:line[i].code]) {
                 break;
             }
         }
@@ -221,7 +228,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (int)numberOfLinesUsed {
-    return MAX(MIN(size_.height, cursor_.y + 1), self.numberOfNonEmptyLines);
+    return MAX(MIN(size_.height, cursor_.y + 1), [self numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:NO]);
 }
 
 - (int)appendLines:(int)numLines
@@ -1598,7 +1605,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)setStateFromDictionary:(NSDictionary *)dict {
-    if (!dict) {
+    if (!dict || [dict isKindOfClass:[NSNull class]]) {
         return;
     }
     VT100GridSize size = [dict[kGridSizeKey] gridSize];
@@ -1614,6 +1621,11 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (void)resetTimestamps {
+    for (VT100LineInfo *info in lineInfos_) {
+        info.timestamp = 0;
+    }
+}
 
 #pragma mark - Private
 
@@ -2002,7 +2014,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             [self class], self, size_.width, size_.height, cursor_.x, cursor_.y];
 }
 
-// Returns NSString representation of line. This exists to faciliate debugging only.
+// Returns NSString representation of line. This exists to facilitate debugging only.
 + (NSString *)stringForScreenChars:(screen_char_t *)theLine length:(int)length
 {
     NSMutableString* result = [NSMutableString stringWithCapacity:length];

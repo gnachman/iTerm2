@@ -10,6 +10,7 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermImageWell.h"
+#import "iTermPreferences.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -55,6 +56,11 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfile)  // In superclass
                                                  name:kReloadAllProfiles
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateLabels:)
+                                                 name:kUpdateLabelsNotification
                                                object:nil];
 
     PreferenceInfo *info;
@@ -118,17 +124,18 @@
         }
     };
     
-    [self defineControl:_syncTitle
-                    key:KEY_SYNC_TITLE
-                   type:kPreferenceInfoTypeCheckbox];
-    
+    info = [self defineControl:_syncTitle
+                           key:KEY_SYNC_TITLE
+                          type:kPreferenceInfoTypeCheckbox];
+    [self updateSyncTitleEnabled];
+
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
 
-   [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
-                   key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
-                  type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
+                    key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT
@@ -162,9 +169,20 @@
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
+- (void)updateSyncTitleEnabled {
+    _syncTitle.enabled = [iTermPreferences boolForKey:kPreferenceKeyShowProfileName];
+}
+
+#pragma mark - Notifications
+
+// This is also a superclass method.
 - (void)reloadProfile {
     [super reloadProfile];
     [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+}
+
+- (void)updateLabels:(NSNotification *)notification {
+    [self updateSyncTitleEnabled];
 }
 
 #pragma mark - Actions

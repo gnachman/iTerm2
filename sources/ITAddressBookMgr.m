@@ -29,7 +29,10 @@
 
 #import "DebugLogging.h"
 #import "iTermDynamicProfileManager.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermHotKeyMigrationHelper.h"
+#import "iTermHotKeyProfileBindingController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "PreferencePanel.h"
@@ -39,7 +42,10 @@
 #import "NSFont+iTerm.h"
 #include <arpa/inet.h>
 
+NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
+
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
+NSInteger iTermProfileJoinsAllSpaces = -1;
 
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;
@@ -133,6 +139,9 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
             // One of the dynamic profiles has the default guid.
             [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
         }
+        
+        [[iTermHotKeyMigrationHelper sharedInstance] migrateSingleHotkeyToMulti];
+        [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 
     return self;
@@ -204,9 +213,6 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     return [origColor dictionaryValue];
 }
 
-// This method always returns a color in the calibrated color space. If the
-// color space in the plist is not calibrated, it is converted (which preserves
-// the actual color values).
 + (NSColor *)decodeColor:(NSDictionary*)plist {
     return [plist colorValue];
 }
@@ -603,15 +609,16 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-               forObjectType:(iTermObjectType)objectType
-{
+               forObjectType:(iTermObjectType)objectType {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
-        return [bookmark objectForKey:KEY_COMMAND_LINE];
-    } else {
-        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
-                                                forObjectType:objectType];
+        NSString *command = [bookmark objectForKey:KEY_COMMAND_LINE];
+        if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
+            return command;
+        }
     }
+    return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
+                                            forObjectType:objectType];
 }
 
 + (NSString *)_advancedWorkingDirWithOption:(NSString *)option
@@ -676,12 +683,12 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     return YES;
 }
 
-+ (void)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
++ (BOOL)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
     NSString *guid = profile[KEY_GUID];
     DLog(@"Remove profile with guid %@...", guid);
     if ([model numberOfBookmarks] == 1) {
         DLog(@"Refusing to remove only profile");
-        return;
+        return NO;
     }
 
     DLog(@"Removing key bindings that reference the guid being removed");
@@ -694,6 +701,7 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
     [[NSNotificationCenter defaultCenter] postNotificationName:kProfileWasDeletedNotification
                                                         object:nil];
     [model flush];
+    return YES;
 }
 
 + (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {

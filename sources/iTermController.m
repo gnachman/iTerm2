@@ -29,13 +29,14 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
-#import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermHotKeyController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "NSWindow+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PasteboardHistory.h"
@@ -57,6 +58,7 @@
 #import "iTermRestorableSession.h"
 #import "iTermSystemVersion.h"
 #import "iTermWarning.h"
+#import "PTYWindow.h"
 #include <objc/runtime.h>
 
 @interface NSApplication (Undocumented)
@@ -75,6 +77,7 @@ static iTermController *gSharedInstance;
     PseudoTerminal *_frontTerminalWindowController;
     iTermFullScreenWindowManager *_fullScreenWindowManager;
     BOOL _willPowerOff;
+    BOOL _arrangeHorizontallyPendingFullScreenTransitions;
 }
 
 + (iTermController *)sharedInstance {
@@ -119,8 +122,6 @@ static iTermController *gSharedInstance;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
-        _fullScreenWindowManager = [[iTermFullScreenWindowManager alloc] initWithClass:[PTYWindow class]
-                                                               enterFullScreenSelector:@selector(toggleFullScreen:)];
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
         
@@ -128,6 +129,10 @@ static iTermController *gSharedInstance;
                                                                selector:@selector(workspaceWillPowerOff:)
                                                                    name:NSWorkspaceWillPowerOffNotification
                                                                  object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidExitFullScreen:)
+                                                     name:NSWindowDidExitFullScreenNotification
+                                                   object:nil];
     }
 
     return (self);
@@ -147,14 +152,16 @@ static iTermController *gSharedInstance;
     const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
                                       [iTermAdvancedSettingsModel restoreWindowContents] &&
                                       self.willRestoreWindowsAtNextLaunch);
-    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     return (sessionsWillRestore &&
             (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
     // Save hotkey window arrangement to user defaults before closing it.
-    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+    [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
     if (self.shouldLeaveSessionsRunningOnQuit) {
@@ -222,9 +229,11 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
+    DLog(@"newWindow:%@ posiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
+        DLog(@"Creating a new tmux window");
         [_frontTerminalWindowController newTmuxWindow:sender];
     } else {
         [self launchBookmark:nil inTerminal:nil];
@@ -255,7 +264,7 @@ static iTermController *gSharedInstance;
     if (!windowIsObscured) {
         // Try to refine the guess by seeing if another terminal is covering this one.
         static const double kOcclusionThreshold = 0.4;
-        if ([(PTYWindow *)terminal.window approximateFractionOccluded] > kOcclusionThreshold) {
+        if ([(iTermTerminalWindow *)terminal.window approximateFractionOccluded] > kOcclusionThreshold) {
             windowIsObscured = YES;
         }
     }
@@ -407,7 +416,8 @@ static iTermController *gSharedInstance;
         [self performSelector:_cmd withObject:terminalArrangement afterDelay:0.25];
     } else {
         DLog(@"Opening it.");
-        PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
+        PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:terminalArrangement
+                                              forceOpeningHotKeyWindow:NO];
         if (term) {
           [self addTerminalWindow:term];
         }
@@ -548,25 +558,40 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
+    DLog(@"Controller: window exited fullscreen");
+    if (_arrangeHorizontallyPendingFullScreenTransitions &&
+        [[iTermFullScreenWindowManager sharedInstance] numberOfQueuedTransitions] == 0) {
+        _arrangeHorizontallyPendingFullScreenTransitions = NO;
+        [self arrangeHorizontally];
+    }
+}
+
 - (void)arrangeHorizontally {
+    DLog(@"Arrange horizontally");
     [iTermExpose exitIfActive];
 
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreenMode deallocs self.
-    PseudoTerminal *waitFor = nil;
-    for (PseudoTerminal *t in _terminalWindows) {
-        if ([t anyFullScreen]) {
-            if ([t lionFullScreen]) {
-                waitFor = t;
+    for (PseudoTerminal *windowController in _terminalWindows) {
+        if ([windowController anyFullScreen]) {
+            if (windowController.window.isFullScreen) {
+                // Lion fullscreen
+                DLog(@"Enqueue window %@", windowController.window);
+                _arrangeHorizontallyPendingFullScreenTransitions = YES;
+                [[iTermFullScreenWindowManager sharedInstance] makeWindowExitFullScreen:windowController.ptyWindow];
+            } else if (windowController.fullScreen) {
+                // Traditional fullscreen
+                DLog(@"Exit traditional fullscreen");
+                [windowController toggleFullScreenMode:self];
             }
-            [t toggleFullScreenMode:self];
         }
     }
-
-    if (waitFor) {
-        [self performSelector:@selector(arrangeHorizontally) withObject:nil afterDelay:0.5];
+    if (_arrangeHorizontallyPendingFullScreenTransitions) {
         return;
     }
+    
+    DLog(@"Actually arranging");
 
     // For each screen, find the terminals in it and arrange them. This way
     // terminals don't move from screen to screen in this operation.
@@ -888,7 +913,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (int)windowTypeForBookmark:(Profile *)aDict {
+- (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
@@ -935,23 +960,33 @@ static iTermController *gSharedInstance;
                                           windowType:windowType
                                      savedWindowType:WINDOW_TYPE_NORMAL
                                               screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
-                                            isHotkey:NO] autorelease];
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone] autorelease];
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
+    iTermProfileHotKey *profileHotKey =
+        [[iTermHotKeyController sharedInstance] didCreateWindowController:term
+                                                              withProfile:profile
+                                                                     show:NO];
+    [profileHotKey setAllowsStateRestoration:NO];
+    
     [self addTerminalWindow:term];
     return term;
 }
 
+- (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController {
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:windowController] showHotKeyWindow];
+}
+
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {
-    [_fullScreenWindowManager makeWindowEnterFullScreen:term.ptyWindow];
+    [[iTermFullScreenWindowManager sharedInstance] makeWindowEnterFullScreen:term.ptyWindow];
 }
 
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
-                       isHotkey:NO
+                       hotkeyWindowType:iTermHotkeyWindowTypeNone
                         makeKey:YES
                     canActivate:YES
                         command:nil
@@ -1017,23 +1052,36 @@ static iTermController *gSharedInstance;
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
                     inTerminal:(PseudoTerminal *)theTerm
                        withURL:(NSString *)url
-                      isHotkey:(BOOL)isHotkey
+              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
                          block:(PTYSession *(^)(PseudoTerminal *))block {
+    DLog(@"launchBookmark:inTerminal:withUrl:isHotkey:makeKey:canActivate:command:block:");
+    DLog(@"Profile:\n%@", bookmarkData);
+    DLog(@"URL: %@", url);
+    DLog(@"hotkey window type: %@", @(hotkeyWindowType));
+    DLog(@"makeKey: %@", @(makeKey));
+    DLog(@"canActivate: %@", @(canActivate));
+    DLog(@"command: %@", command);
+    
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
-
+    const BOOL isHotkey = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
+    
     aDict = bookmarkData;
     if (aDict == nil) {
         aDict = [self defaultBookmark];
     }
 
     if (url) {
+        DLog(@"Add URL to profile");
         // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
         aDict = [self profile:aDict modifiedToOpenURL:url forObjectType:objectType];
+    }
+    if (!bookmarkData) {
+        DLog(@"Using profile:\n%@", aDict);
     }
     if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
         theTerm = nil;
@@ -1048,18 +1096,20 @@ static iTermController *gSharedInstance;
             windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         }
         if (theTerm) {
+            DLog(@"Finish initialization of an existing window controller");
             term = theTerm;
             [term finishInitializationWithSmartLayout:YES
                                            windowType:windowType
                                       savedWindowType:WINDOW_TYPE_NORMAL
                                                screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                             isHotkey:isHotkey];
+                                     hotkeyWindowType:hotkeyWindowType];
         } else {
+            DLog(@"Create a new window controller");
             term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                      windowType:windowType
                                                 savedWindowType:WINDOW_TYPE_NORMAL
                                                          screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                                       isHotkey:isHotkey] autorelease];
+                                               hotkeyWindowType:hotkeyWindowType] autorelease];
         }
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
             [term hideAfterOpening];
@@ -1072,14 +1122,17 @@ static iTermController *gSharedInstance;
             toggle = ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
         }
     } else {
+        DLog(@"Use an existing window");
         term = theTerm;
     }
 
     PTYSession* session = nil;
 
     if (block) {
+        DLog(@"Create a session via callback");
         session = block(term);
     } else if (url) {
+        DLog(@"Creating a new session");
         session = [term createSessionWithProfile:aDict
                                          withURL:url
                                    forObjectType:objectType
@@ -1099,6 +1152,9 @@ static iTermController *gSharedInstance;
         // When this function is activated from the dock icon's context menu make sure
         // that the new window is on top of all other apps' windows. For some reason,
         // makeKeyAndOrderFront does nothing.
+        if ([term.window isKindOfClass:[iTermPanel class]]) {
+            canActivate = NO;
+        }
         if (canActivate) {
             [NSApp activateIgnoringOtherApps:YES];
         }
@@ -1166,8 +1222,17 @@ static iTermController *gSharedInstance;
     return [_terminalWindows indexOfObject:terminal];
 }
 
--(PseudoTerminal*)terminalAtIndex:(int)i {
+-(PseudoTerminal *)terminalAtIndex:(int)i {
     return [_terminalWindows objectAtIndex:i];
+}
+
+- (PseudoTerminal *)terminalForWindow:(NSWindow *)window {
+    for (PseudoTerminal *term in _terminalWindows) {
+        if (term.window == window) {
+            return term;
+        }
+    }
+    return nil;
 }
 
 - (int)allocateWindowNumber {
@@ -1299,9 +1364,9 @@ static iTermController *gSharedInstance;
 }
 
 // This exists because I don't trust -[NSApp keyWindow]. I've seen all kinds of weird behavior from it.
-- (BOOL)anyOrderedWindowIsKey {
+- (BOOL)anyVisibleWindowIsKey {
     DLog(@"Searching for key window...");
-    for (NSWindow *window in [NSApp orderedWindows]) {
+    for (NSWindow *window in [(iTermApplication *)NSApp orderedWindowsPlusVisibleHotkeyPanels]) {
         if (window.isKeyWindow) {
             DLog(@"Key ordered window is %@", window);
             return YES;
@@ -1309,13 +1374,6 @@ static iTermController *gSharedInstance;
     }
     DLog(@"No key window");
     return NO;
-}
-
-- (BOOL)keystrokesBeingStolen {
-    // If we're active and have ordered windows but none of them are key then our keystrokes are
-    // being stolen by something else. This is meant to detect when Spotlight is open. It might
-    // also catch other things that act similarly.
-    return [NSApp isActive] && [[NSApp orderedWindows] count] > 0 && ![self anyOrderedWindowIsKey];
 }
 
 // I don't trust -[NSApp mainWindow].
@@ -1328,20 +1386,11 @@ static iTermController *gSharedInstance;
     return NO;
 }
 
-- (PseudoTerminal *)hotkeyWindow {
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if (term.isHotKeyWindow) {
-            return term;
-        }
-    }
-    return nil;
-}
-
 // Returns all terminal windows that are key.
-- (NSArray<PTYWindow *> *)keyTerminalWindows {
-    NSMutableArray<PTYWindow *> *temp = [NSMutableArray array];
+- (NSArray<iTermTerminalWindow *> *)keyTerminalWindows {
+    NSMutableArray<iTermTerminalWindow *> *temp = [NSMutableArray array];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        PTYWindow *window = [term ptyWindow];
+        iTermTerminalWindow *window = [term ptyWindow];
         if ([window isKeyWindow]) {
             [temp addObject:window];
         }
@@ -1350,8 +1399,8 @@ static iTermController *gSharedInstance;
 }
 
 // accessors for to-many relationships:
-- (NSArray*)terminals {
-    return (_terminalWindows);
+- (NSArray *)terminals {
+    return _terminalWindows;
 }
 
 - (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {

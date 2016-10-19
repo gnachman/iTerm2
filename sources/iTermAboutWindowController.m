@@ -7,6 +7,7 @@
 //
 
 #import "iTermAboutWindowController.h"
+#import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 
 @implementation iTermAboutWindowController {
@@ -39,7 +40,7 @@
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
                                               title:@"Credits\n\n"];
 
-        NSDictionary *linkTextViewAttributes = @{ NSUnderlineStyleAttributeName: @(NSSingleUnderlineStyle),
+        NSDictionary *linkTextViewAttributes = @{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
                                                   NSForegroundColorAttributeName: [NSColor blueColor],
                                                   NSCursorAttributeName: [NSCursor pointingHandCursor] };
 
@@ -82,7 +83,29 @@
 }
 
 - (NSAttributedString *)patronsString {
-    NSString *patrons = @"Aaron Kulbe, Filip, Ozzy Johnson, and Stefan Countryman";
+    NSArray *patronNames = @[@"James Dorn",
+                             @"Colin",
+                             @"Alex Howells",
+                             @"Stephan Telling",
+                             @"Matt Svoboda",
+                             @"Brian Gupta",
+                             @"Shunwen Hsiao",
+                             @"Han Zhang",
+                             @"Karl Bunch",
+                             @"Daniel Collin",
+                             @"Brod",
+                             @"Rob McGuire-Dale",
+                             @"Wayne Robinson",
+                             @"Travis",
+                             @"Mark H Berger",
+                             @"Roger Tokarek",
+                             @"Aaron Kulbe",
+                             @"Ozzy Johnson",
+                             @"Filip"];
+    NSArray *sortedNames = [patronNames sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        return [[obj1 surname] compare:[obj2 surname]];
+    }];
+    NSString *patrons = [sortedNames componentsJoinedWithOxfordComma];
     NSString *string = [NSString stringWithFormat:@"iTerm2 is generously supported by %@ on ", patrons];
     NSMutableAttributedString *attributedString =
         [[[NSMutableAttributedString alloc] initWithString:string] autorelease];

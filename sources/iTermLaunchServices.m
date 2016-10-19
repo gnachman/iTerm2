@@ -192,8 +192,6 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 }
 
 - (BOOL)iTermIsDefaultTerminal {
-    LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
-                                    (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
     CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
     CFStringRef unixHandler = LSCopyDefaultRoleHandlerForContentType(unixExecutableContentType, kLSRolesShell);
     NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
@@ -202,6 +200,15 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
         CFRelease(unixHandler);
     }
     return result;
+}
+
+- (BOOL)iTermIsDefaultForScheme:(NSString *)scheme {
+    CFStringRef handler = LSCopyDefaultHandlerForURLScheme((CFStringRef)scheme);
+    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
+    BOOL result = [iTermBundleId isEqualToString:(NSString *)handler];
+    CFRelease(handler);
+    return result;
+    
 }
 
 - (void)setDefaultTerminal:(NSString *)bundleId {

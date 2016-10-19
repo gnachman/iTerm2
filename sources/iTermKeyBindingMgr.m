@@ -74,10 +74,12 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermModifierRemapper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
-#import "HotkeyWindowController.h"
+#import "NSStringITerm.h"
 #import "PTYTextView.h"   // For selection movement units
 #import <Carbon/Carbon.h>
 
@@ -86,16 +88,10 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 @implementation iTermKeyBindingMgr
 
-+ (NSString *)formatKeyCombination:(NSString *)theKeyCombination
-{
-    unsigned int keyMods;
-    unsigned int keyCode;
-    NSString *aString;
-    NSMutableString *theKeyString;
-    keyCode = keyMods = 0;
-    sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyMods);
++ (NSString *)stringForCharacter:(unsigned int)character isArrow:(BOOL *)isArrowPtr {
     BOOL isArrow = NO;
-    switch (keyCode) {
+    NSString *aString = nil;
+    switch (character) {
         case NSDownArrowFunctionKey:
             aString = @"↓";
             isArrow = YES;
@@ -150,7 +146,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case NSF18FunctionKey:
         case NSF19FunctionKey:
         case NSF20FunctionKey:
-            aString = [NSString stringWithFormat: @"F%d", (keyCode - NSF1FunctionKey + 1)];
+            aString = [NSString stringWithFormat: @"F%d", (character - NSF1FunctionKey + 1)];
             break;
         case NSHelpFunctionKey:
             aString = NSLocalizedStringFromTableInBundle(@"Help",
@@ -184,7 +180,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case '7':
         case '8':
         case '9':
-            aString = [NSString stringWithFormat: @"%d", (keyCode - '0')];
+            aString = [NSString stringWithFormat: @"%d", (character - '0')];
             break;
         case '=':
             aString = @"=";
@@ -222,62 +218,125 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             break;
 
         default:
-            if (keyCode >= '!' && keyCode <= '~') {
-                aString = [NSString stringWithFormat:@"%c", keyCode];
+            if (character > ' ' && (character < 0xe800 || character > 0xfdff) && character < 0xffff) {
+                aString = [NSString stringWithFormat:@"%C", (unichar)character];
             } else {
-                switch (keyCode) {
+                switch (character) {
                     case ' ':
                         aString = @"Space";
                         break;
 
                     case '\r':
-                        aString = @"↩";
+                        aString = @"Return ↩";
                         break;
 
                     case 27:
-                        aString = @"⎋";
+                        aString = @"Esc ⎋";
                         break;
 
                     case '\t':
-                        aString = @"↦";
+                        aString = @"Tab ↦";
                         break;
 
                     case 0x19:
                         // back-tab
-                        aString = @"↤";
+                        aString = @"Tab ↤";
                         break;
 
                     default:
-                        aString = [NSString stringWithFormat: @"%@ 0x%x",
-                                   NSLocalizedStringFromTableInBundle(@"Hex Code",
-                                                                      @"iTerm",
-                                                                      [NSBundle bundleForClass: [self class]],
-                                                                      @"Key Names"),
-                                   keyCode];
+                        aString = [NSString stringWithFormat: @"Hex Code 0x%x", character];
                         break;
                 }
             }
             break;
     }
+    if (isArrowPtr) {
+        *isArrowPtr = isArrow;
+    }
+    return aString;
+}
 
-    theKeyString = [[NSMutableString alloc] initWithString: @""];
-    if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
++ (NSString *)stringForKeyCode:(CGKeyCode)virtualKeyCode
+                     character:(unichar)character
+                       isArrow:(BOOL *)isArrow {
+    TISInputSourceRef inputSource = NULL;
+    NSString *result = nil;
+
+    if (virtualKeyCode != 0) {
+        inputSource = TISCopyCurrentKeyboardInputSource();
+        if (inputSource == NULL) {
+            goto exit;
+        }
+
+        CFDataRef keyLayoutData = TISGetInputSourceProperty(inputSource,
+                                                            kTISPropertyUnicodeKeyLayoutData);
+        if (keyLayoutData == NULL) {
+            goto exit;
+        }
+
+        const UCKeyboardLayout *keyLayoutPtr = (const UCKeyboardLayout *)CFDataGetBytePtr(keyLayoutData);
+        if (keyLayoutPtr == NULL) {
+            goto exit;
+        }
+
+        UInt32 deadKeyState = 0;
+        UniChar unicodeString[4];
+        UniCharCount actualStringLength;
+
+        OSStatus status = UCKeyTranslate(keyLayoutPtr,
+                                         virtualKeyCode,
+                                         kUCKeyActionDisplay,
+                                         0,
+                                         LMGetKbdType(),
+                                         kUCKeyTranslateNoDeadKeysBit,
+                                         &deadKeyState,
+                                         sizeof(unicodeString) / sizeof(*unicodeString),
+                                         &actualStringLength,
+                                         unicodeString);
+        if (status != noErr) {
+            goto exit;
+        }
+
+        if (actualStringLength == 0) {
+            goto exit;
+        }
+
+        if (unicodeString[0] <= ' ' || unicodeString[0] == 127) {
+            goto exit;
+        }
+
+        result = [NSString stringWithCharacters:unicodeString length:actualStringLength];
     }
-    if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"⌥"];
+
+exit:
+    if (inputSource != NULL) {
+        CFRelease(inputSource);
     }
-    if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"⇧"];
+    if (result == nil) {
+        result = [self stringForCharacter:character isArrow:isArrow];
     }
-    if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
-    }
+    return result;
+}
+
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination {
+    return [self formatKeyCombination:theKeyCombination keyCode:0];
+}
+
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination keyCode:(NSUInteger)virtualKeyCode {
+    unsigned int keyMods = 0;
+    unsigned int keyCode = 0;
+
+    sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyMods);
+
+    BOOL isArrow = NO;
+    NSString *charactersAsString = [self stringForKeyCode:virtualKeyCode character:keyCode isArrow:&isArrow];
+
+    NSMutableString *result = [[[NSString stringForModifiersWithMask:keyMods] mutableCopy] autorelease];
     if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
-        [theKeyString appendString: @"num-"];
+        [result appendString: @"num-"];
     }
-    [theKeyString appendString: aString];
-    return [theKeyString autorelease];
+    [result appendString:charactersAsString];
+    return result;
 }
 
 + (NSString*)_bookmarkNameForGuid:(NSString*)guid
@@ -512,25 +571,33 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
     return [dict objectForKey:keyString] != nil;
 }
 
-+ (int)localActionForKeyCode:(unichar)keyCode
-                   modifiers:(unsigned int) keyMods
-                        text:(NSString **) text
-                 keyMappings:(NSDictionary *)keyMappings
-{
-    NSString *keyString;
-    NSDictionary *theKeyMapping;
-    int retCode = -1;
-    unsigned int theModifiers;
-
-    // turn off all the other modifier bits we don't care about
-    theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
-
++ (NSEventModifierFlags)modifiersForKeyCode:(int)keyCode modifiers:(NSEventModifierFlags)keyMods {
+    NSEventModifierFlags theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
+    
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
     }
+    return theModifiers;
+}
 
-    keyString = [NSString stringWithFormat: @"0x%x-0x%x", keyCode, theModifiers];
++ (NSString *)identifierForCharacterIgnoringModifiers:(unichar)characterIgnoringModifiers
+                                            modifiers:(NSEventModifierFlags)keyMods {
+    // turn off all the other modifier bits we don't care about
+    unsigned int theModifiers = [self modifiersForKeyCode:characterIgnoringModifiers modifiers:keyMods];
+    return [NSString stringWithFormat: @"0x%x-0x%x", characterIgnoringModifiers, theModifiers];
+}
+
++ (int)localActionForKeyCode:(unichar)keyCode
+                   modifiers:(unsigned int)keyMods
+                        text:(NSString **)text
+                 keyMappings:(NSDictionary *)keyMappings
+{
+    NSString *keyString = [self identifierForCharacterIgnoringModifiers:keyCode modifiers:keyMods];
+    
+    NSDictionary *theKeyMapping;
+    int retCode = -1;
+
     theKeyMapping = [keyMappings objectForKey: keyString];
     if (theKeyMapping == nil) {
         if (text) {
@@ -860,62 +927,62 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 + (NSInteger)_cgMaskForLeftCommandKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightCommandKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftCommandKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftCommandRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] leftCommandRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightCommandKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightCommandRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] rightCommandRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftAlternateKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightAlternateKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftAlternateKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] leftOptionRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] leftOptionRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightAlternateKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] rightOptionRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] rightOptionRemapping]];
 }
 
 + (NSInteger)_cgMaskForLeftControlKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightControlKey
 {
-    return [self _cgMaskForMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftControlKey
 {
-    return [self _nxMaskForLeftMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightControlKey
 {
-    return [self _nxMaskForRightMod:[[HotkeyWindowController sharedInstance] controlRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent

@@ -1,0 +1,20 @@
+Test number  Contents or Text     3.0.0   3.0.1   3.0.2
+ 1                          c     pass    fail    pass 
+ 2                          t     fail    fail    fail 
+
+ 3                          c     pass    fail    pass 
+ 4                          t     fail    pass    pass 
+
+ 5                          c     pass    fail    pass 
+ 6                          t     fail    pass    pass 
+
+11                          c     fail    fail    fail 
+12                          t     fail    fail    fail 
+
+15                          c     fail    fail    fail 
+16                          t     fail    pass    pass 
+
+
+Summary:
+3.0.1 Broke without replacing 1. Added 16 as an alternative to 15. Broke all use of "contents".
+3.0.2 restores support for "contents", as 3.0.0 had. Retains 16 as an alternative to 15. Fixes 4 and 6.

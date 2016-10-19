@@ -14,4 +14,8 @@
     [self close];
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 @end

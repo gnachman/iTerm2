@@ -28,10 +28,17 @@
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
 #import "iTermRestorableSession.h"
+#import "PTYWindow.h"
+
+typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
+    iTermHotkeyWindowTypeNone,
+    iTermHotkeyWindowTypeRegular,
+    iTermHotkeyWindowTypeFloatingPanel,  // joins all spaces and has a higher level than a regular window. Is an NSPanel.
+    iTermHotkeyWindowTypeFloatingWindow  // has a higher level than a regular window.
+};
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
-@class GTMCarbonHotKey;
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;
@@ -39,7 +46,6 @@
 @class PTYSession;
 @class PTYTab;
 @class PTYTextView;
-@class PTYWindow;
 
 @interface iTermController : NSObject
 
@@ -56,8 +62,7 @@
 @property(nonatomic, readonly) BOOL hasRestorableSession;
 @property(nonatomic, readonly) BOOL keystrokesBeingStolen;
 @property(nonatomic, readonly) BOOL anyWindowIsMain;
-@property(nonatomic, readonly) PseudoTerminal *hotkeyWindow;
-@property(nonatomic, readonly) NSArray<PTYWindow *> *keyTerminalWindows;
+@property(nonatomic, readonly) NSArray<iTermTerminalWindow *> *keyTerminalWindows;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;
@@ -96,8 +101,11 @@
                 startingAt:(int)startingAt;
 
 // Does not enter fullscreen automatically; that is left to the caller, since tmux has special
-// logic around this.
+// logic around this. Call -didFinishCreatingTmuxWindow: after it is doing being set up.
 - (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile;
+
+// This is called when the window created by -openTmuxIntegrationWindowUsingProfile is done being initialized.
+- (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController;
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
@@ -105,7 +113,7 @@
 - (PTYSession *)launchBookmark:(Profile *)bookmarkData
                     inTerminal:(PseudoTerminal *)theTerm
                        withURL:(NSString *)url
-                      isHotkey:(BOOL)isHotkey
+              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
@@ -113,14 +121,16 @@
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
+- (PseudoTerminal *)terminalForWindow:(NSWindow *)window;
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
 
 - (void)dumpViewHierarchy;
 
-- (int)windowTypeForBookmark:(Profile*)aDict;
+- (iTermWindowType)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;
+- (Profile *)defaultBookmark;
 
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session;
@@ -142,7 +152,7 @@
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (void)killRestorableSessions;
 
-- (NSArray<PseudoTerminal *>*)terminals;
+- (NSArray<PseudoTerminal *> *)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 
 void OnHotKeyEvent(void);

@@ -17,7 +17,7 @@
 
 @end
 
-// A customized verison of PSMTabBarControl.
+// A customized version of PSMTabBarControl.
 @interface iTermTabBarControlView : PSMTabBarControl
 
 @property(nonatomic, assign) id<iTermTabBarControlViewDelegate> itermTabBarDelegate;

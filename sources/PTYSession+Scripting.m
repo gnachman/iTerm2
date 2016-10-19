@@ -55,7 +55,6 @@
     NSString *text = [args objectForKey:@"text"];
     // optional argument follows (might be nil; if so, defaults to true):
     BOOL newline = ( [args objectForKey:@"newline"] ? [[args objectForKey:@"newline"] boolValue] : YES );
-    NSData *data = nil;
     NSString *aString = nil;
 
     if (text && contentsOfFile) {
@@ -75,9 +74,8 @@
     if (text != nil) {
         if (newline) {
             aString = [NSString stringWithFormat:@"%@\r", text];
-            data = [aString dataUsingEncoding:[self.terminal encoding]];
         } else {
-            data = [text dataUsingEncoding:[self.terminal encoding]];
+            aString = text;
         }
     }
 
@@ -85,12 +83,11 @@
         aString = [NSString stringWithContentsOfFile:contentsOfFile
                                             encoding:NSUTF8StringEncoding
                                                error:nil];
-        data = [aString dataUsingEncoding:[self.terminal encoding]];
     }
 
     if (self.tmuxMode == TMUX_CLIENT) {
-        [self writeTask:data];
-    } else if (data != nil && [self.shell pid] > 0) {
+        [self writeTask:aString];
+    } else if (aString != nil && [self.shell pid] > 0) {
         int i = 0;
         // wait here until we have had some output
         while ([self.shell hasOutput] == NO && i < 1000000) {
@@ -98,7 +95,7 @@
             i += 50000;
         }
 
-        [self writeTask:data];
+        [self writeTask:aString];
     }
 }
 
@@ -120,16 +117,19 @@
     if (!name) {
         [command setScriptErrorNumber:1];
         [command setScriptErrorString:@"No name given"];
+        return nil;
     }
     if (!value) {
         [command setScriptErrorNumber:2];
         [command setScriptErrorString:@"No value given"];
+        return nil;
     }
     if (![name hasPrefix:@"user."]) {
         [command setScriptErrorNumber:3];
         [command setScriptErrorString:@"Only user variables may be set. Name must start with “user.”."];
+        return nil;
     }
-    self.variables[[@"user." stringByAppendingString:name]] = value;
+    self.variables[name] = value;
     [self.textview setBadgeLabel:[self badgeLabel]];
     return value;
 }
@@ -284,6 +284,14 @@
     [self setSessionSpecificProfileValues:@{ KEY_FOREGROUND_COLOR: [color dictionaryValue] }];
 }
 
+- (NSColor *)underlineColor {
+    return [self.colorMap colorForKey:kColorMapUnderline];
+}
+
+- (void)setUnderlineColor:(NSColor *)color {
+    [self setSessionSpecificProfileValues:@{ KEY_UNDERLINE_COLOR: [color dictionaryValue] }];
+}
+
 - (NSColor *)selectedTextColor {
     return [self.colorMap colorForKey:kColorMapSelectedText];
 }
@@ -300,7 +308,7 @@
     [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
 }
 
-- (NSString *)contents {
+- (NSString *)text {
     return [self.textview content];
 }
 

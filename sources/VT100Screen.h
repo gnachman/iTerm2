@@ -191,6 +191,9 @@ extern int kVT100ScreenMinRows;
 // Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
 - (void)setCursorPosition:(VT100GridCoord)coord;
 
+// Uninitialize timestamps.
+- (void)resetTimestamps;
+
 @end
 
 @interface VT100Screen (Testing)

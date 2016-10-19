@@ -18,10 +18,10 @@
 + (NSString *)alternateMouseScrollStringForUp;
 + (NSString *)alternateMouseScrollStringForDown;
 + (BOOL)traditionalVisualBell;
-+ (double)hotkeyTermAnimationDuration;
-+ (BOOL)hotkeyWindowFloatsAboveOtherWindows;
++ (double)hotkeyTermAnimationDuration DEPRECATED_ATTRIBUTE;
++ (BOOL)hotkeyWindowFloatsAboveOtherWindows DEPRECATED_ATTRIBUTE;
 + (NSString *)searchCommand;
-+ (BOOL)dockIconTogglesWindow;
++ (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (double)timeBetweenBlinks;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;
@@ -100,6 +100,11 @@
 + (BOOL)killJobsInServersOnQuit;
 
 + (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
++ (NSString *)noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey;
++ (void)setNoSyncDoNotWarnBeforeMultilinePaste:(BOOL)value;
++ (BOOL)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt;
++ (NSString *)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey;
++ (void)setNoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt:(BOOL)value;
 
 + (BOOL)noSyncTipsDisabled;
 + (int)numberOfLinesForAccessibility;
@@ -124,8 +129,6 @@
 + (BOOL)typingClearsSelection;
 + (BOOL)focusReportingEnabled;
 
-+ (BOOL)hideFromDockAndAppSwitcher;
-+ (BOOL)hotkeyWindowIgnoresSpotlight;
 + (BOOL)tabTitlesUseSmartTruncation;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
@@ -135,10 +138,21 @@
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (BOOL)suppressRestartAnnouncement;
++ (BOOL)showSessionRestoredBanner;
 + (void)setSuppressRestartAnnouncement:(BOOL)value;
 + (BOOL)useAdaptiveFrameRate;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)experimentalKeyHandling;
++ (double)hotKeyDoubleTapMaxDelay;
++ (BOOL)hideStuckTooltips;
++ (BOOL)indicateBellsInDockBadgeLabel;
++ (double)tabFlashAnimationDuration;
++ (NSString *)downloadsDirectory;
++ (double)pointSizeOfTimeStamp;
++ (BOOL)showYellowMarkForJobStoppedBySignal;
++ (double)slowFrameRate;
++ (double)timeBetweenTips;
++ (void)setTimeBetweenTips:(double)time;
 
 @end

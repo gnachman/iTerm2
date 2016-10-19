@@ -8,6 +8,7 @@
 
 #import "iTermNewWindowCommand.h"
 #import "iTermController.h"
+#import "iTermScriptingWindow.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -38,12 +39,12 @@
             [[iTermController sharedInstance] launchBookmark:profile
                                                   inTerminal:nil
                                                      withURL:nil
-                                                    isHotkey:NO
+                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                      makeKey:YES
                                                  canActivate:YES
                                                      command:command
                                                        block:nil];
-        return session.delegate.realParentWindow.window;
+        return [iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window];
     }
     return nil;
 }

@@ -71,6 +71,10 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         int x = j;
         if (theLine[j].code == DWC_RIGHT) {
             x = j - 1;
+            if (x < 0) {
+                // AFAIK this only happens in tests, but it's a nice safety in case things go sideways.
+                continue;
+            }
         }
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
@@ -124,6 +128,21 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 
 - (iTermBackgroundColorRun *)valuePointer {
     return &_value;
+}
+
+- (BOOL)isEqual:(id)other {
+    if (other == self) {
+        return YES;
+    }
+    if (!other || ![other isKindOfClass:[self class]]) {
+        return NO;
+    }
+    return [self isEqualToBoxedBackgroundColorRun:other];
+}
+
+- (BOOL)isEqualToBoxedBackgroundColorRun:(iTermBoxedBackgroundColorRun *)other {
+    return (iTermBackgroundColorRunsEqual(&other->_value, &_value) &&
+            NSEqualRanges(other->_value.range, _value.range));
 }
 
 @end

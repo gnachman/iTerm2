@@ -34,6 +34,8 @@ static NSString* kParameterKey = @"parameter";
 - (void)dealloc
 {
     [_model release];
+    _tableView.delegate = nil;
+    _tableView.dataSource = nil;
     [super dealloc];
 }
 

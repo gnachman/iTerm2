@@ -631,7 +631,7 @@
         <string>[1;6C</string>
       </dict>
     </dict>
-    <key>Terminal.app Compatiblity</key>
+    <key>Terminal.app Compatibility</key>
     <dict>
       <key>0x2d-0x40000</key>
       <dict>

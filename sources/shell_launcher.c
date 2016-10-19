@@ -7,6 +7,7 @@
 #include "shell_launcher.h"
 #include <err.h>
 #include <errno.h>
+#include <paths.h>
 #include <sys/msg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +67,11 @@ static void ExecChild(int argc, char *const *argv) {
 
     // TODO: The first arg should be just the last path component.
     execvp(argv[0], argv);
+    int error = errno;
+    printf("Failed to exec %s: %s\n", argv[0], strerror(errno));
+    if (error == ENOENT) {
+        printf("PATH=%s\n", getenv("PATH") ?: _PATH_DEFPATH);
+    }
 }
 
 static void CreateProcessGroup() {

@@ -15,7 +15,7 @@
 }
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
-                          styleMask:(NSUInteger)aStyle
+                          styleMask:(NSWindowStyleMask)aStyle
                             backing:(NSBackingStoreType)bufferingType
                               defer:(BOOL)flag {
     self = [super initWithContentRect:contentRect
@@ -35,8 +35,11 @@
     [super dealloc];
 }
 
-- (BOOL)canBecomeKeyWindow
-{
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
+- (BOOL)canBecomeMainWindow {
     return YES;
 }
 
@@ -75,10 +78,14 @@
 
 - (void)twiddleKeyWindow
 {
-    iTermApplicationDelegate *theDelegate = iTermApplication.sharedApplication.delegate;
+    iTermApplicationDelegate *theDelegate = [iTermApplication.sharedApplication delegate];
     [theDelegate makeHotKeyWindowKeyIfOpen];
     [super close];
     [parentWindow_ makeKeyAndOrderFront:self];
+}
+
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
 }
 
 @end

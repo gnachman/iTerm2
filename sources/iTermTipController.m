@@ -9,6 +9,7 @@
 #import "iTermTipController.h"
 #import <Cocoa/Cocoa.h>
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermTip.h"
 #import "iTermTipData.h"
 #import "iTermTipWindowController.h"
@@ -70,6 +71,25 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 }
 
 - (void)applicationDidFinishLaunching {
+    // This must be done before the delay. If it's called at the wrong time while a window is
+    // becoming fullscreen, the app becomes unresponsive to mouse and keyboard events. Issue 4775.
+    [self askForPermissionIfNeeded];
+
+    // Wait until startup activity has settled down so there's enough CPU for the animation to
+    // look good.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(),
+                   ^{
+                       [self tryToShowTip];
+                       
+                       [[NSNotificationCenter defaultCenter] addObserver:self
+                                                                selector:@selector(applicationDidBecomeActive:)
+                                                                    name:NSApplicationDidBecomeActiveNotification
+                                                                  object:nil];
+                   });
+}
+
+- (void)askForPermissionIfNeeded {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval timeOfFirstLaunchOfVersionWithTip =
         [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfFirstLaunchOfVersionWithTip];
@@ -83,13 +103,6 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
             [self askForPermission];
         }
     }
-
-    [self tryToShowTip];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(applicationDidBecomeActive:)
-                                                 name:NSApplicationDidBecomeActiveNotification
-                                               object:nil];
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
@@ -107,7 +120,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (void)askForPermission {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"See Tips of the Day?";
-    alert.informativeText = @"iTerm2 can show you a Tip of the Day message help you learn about its many features. Are you interested?";
+    alert.informativeText = @"iTerm2 can show you a Tip of the Day message to help you learn about its many features. Are you interested?";
     [alert addButtonWithTitle:@"Yes"];
     [alert addButtonWithTitle:@"No"];
     BOOL havePermission = ([alert runModal] == NSAlertFirstButtonReturn);
@@ -129,13 +142,13 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
         return;
     }
     if (_showingTip || [self haveShownTipRecently]) {
-        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
+        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:[self timeBetweenTips]];
         return;
     }
     NSString *nextTipKey = [self nextTipKey];
     if (nextTipKey) {
         [self showTipForKey:nextTipKey];
-        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
+        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:[self timeBetweenTips]];
     }
 }
 
@@ -159,7 +172,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (BOOL)haveShownTipRecently {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval previous = [[NSUserDefaults standardUserDefaults] doubleForKey:kLastTipTimeKey];
-    return (now - previous) < kSecondsPerDay;
+    return (now - previous) < [self timeBetweenTips];
 }
 
 - (NSString *)nextTipKey {
@@ -269,6 +282,22 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (void)tipWindowWillShowTipWithIdentifier:(NSString *)identifier {
     [self doNotShowCurrentTipAgain];
     [self willShowTipWithIdentifier:identifier];
+}
+
+- (NSTimeInterval)timeBetweenTips {
+    return [iTermAdvancedSettingsModel timeBetweenTips];
+}
+
+- (BOOL)tipFrequencyIsHigh {
+    return [self timeBetweenTips] <= kSecondsPerDay;
+}
+
+- (void)toggleTipFrequency {
+    if ([self tipFrequencyIsHigh]) {
+        [iTermAdvancedSettingsModel setTimeBetweenTips:kSecondsPerDay * 7];
+    } else {
+        [iTermAdvancedSettingsModel setTimeBetweenTips:kSecondsPerDay];
+    }
 }
 
 @end

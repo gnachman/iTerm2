@@ -27,6 +27,7 @@
 
 #import "DebugLogging.h"
 #import "NSData+iTerm.h"
+#import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
@@ -43,28 +44,38 @@
 }
 
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth {
+        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                unicodeVersion:(NSInteger)version {
     if (unicode <= 0xa0 ||
         (unicode > 0x452 && unicode < 0x1100)) {
         // Quickly cover the common cases.
         return NO;
     }
 
-    if ([[NSCharacterSet fullWidthCharacterSet] longCharacterIsMember:unicode]) {
+    if ([[NSCharacterSet fullWidthCharacterSetForUnicodeVersion:version] longCharacterIsMember:unicode]) {
         return YES;
     }
     if (ambiguousIsDoubleWidth &&
-        [[NSCharacterSet ambiguousWidthCharacterSet] longCharacterIsMember:unicode]) {
+        [[NSCharacterSet ambiguousWidthCharacterSetForUnicodeVersion:version] longCharacterIsMember:unicode]) {
         return YES;
     }
     return NO;
+}
+
++ (NSString *)stringWithLongCharacter:(UTF32Char)longCharacter {
+    UniChar c[2];
+    CFStringGetSurrogatePairForLongCharacter(longCharacter, c);
+    return [[[NSString alloc] initWithCharacters:c length:2] autorelease];
 }
 
 + (NSString *)stringFromPasteboard {
     NSPasteboard *board;
 
     board = [NSPasteboard generalPasteboard];
-    assert(board != nil);
+    if (!board) {
+        DLog(@"Failed to get the general pasteboard!");
+        return nil;
+    }
 
     NSArray *supportedTypes = @[ NSFilenamesPboardType, NSStringPboardType ];
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
@@ -335,7 +346,7 @@ static int maximal_subpart_of_row(const unsigned char *datap,
     return bytesInRow;
 }
 
-// This function finds the longest intial sequence of bytes that look like a valid UTF-8 sequence.
+// This function finds the longest initial sequence of bytes that look like a valid UTF-8 sequence.
 // It's used to gobble them up and replace them with a <?> replacement mark in an invalid sequence.
 static int minimal_subpart(const unsigned char *datap, int datalen)
 {
@@ -653,20 +664,22 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByRemovingEnclosingBrackets {
-    int index;
-    for (index = 0; 2*index < self.length; index++) {
-      unichar start = [self characterAtIndex:index];
-      unichar end = [self characterAtIndex:self.length-index-1];
-      if (!((start == '(' && end == ')') ||
-            (start == '<' && end == '>') ||
-            (start == '[' && end == ']') ||
-            (start == '{' && end == '}') ||
-            (start == '\'' && end == '\'') ||
-            (start == '"' && end == '"'))) {
-          break;
-      }
+    if (self.length < 2) {
+        return self;
     }
-    return [self substringWithRange:NSMakeRange(index, self.length-2*index)];
+    NSString *trimmed = [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSArray *pairs = @[ @[ @"(", @")" ],
+                        @[ @"<", @">" ],
+                        @[ @"[", @"]" ],
+                        @[ @"{", @"}", ],
+                        @[ @"\'", @"\'" ],
+                        @[ @"\"", @"\"" ] ];
+    for (NSArray *pair in pairs) {
+        if ([trimmed hasPrefix:pair[0]] && [trimmed hasSuffix:pair[1]]) {
+            return [[self substringWithRange:NSMakeRange(1, self.length - 2)] stringByRemovingEnclosingBrackets];
+        }
+    }
+    return self;
 }
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
@@ -1367,16 +1380,16 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 + (NSString *)stringForModifiersWithMask:(NSUInteger)keyMods {
     NSMutableString *theKeyString = [NSMutableString string];
     if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
+        [theKeyString appendString:@"^"];
     }
     if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"⌥"];
+        [theKeyString appendString:@"⌥"];
     }
     if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"⇧"];
+        [theKeyString appendString:@"⇧"];
     }
     if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
+        [theKeyString appendString:@"⌘"];
     }
     return theKeyString;
 }
@@ -1517,6 +1530,104 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 
     return hash;
+}
+
+- (NSUInteger)firstCharacter {
+    if (self.length == 0) {
+        return 0;
+    } else {
+        unichar firstUTF16 = [self characterAtIndex:0];
+        if (self.length == 1 || !IsHighSurrogate(firstUTF16)) {
+            return firstUTF16;
+        }
+        unichar secondUTF16 = [self characterAtIndex:1];
+        if (!IsLowSurrogate(secondUTF16)) {
+            return 0;
+        }
+        return DecodeSurrogatePair(firstUTF16, secondUTF16);
+    }
+}
+
+- (BOOL)startsWithQuotationMark {
+    return [self hasPrefix:[[NSLocale currentLocale] objectForKey:NSLocaleQuotationBeginDelimiterKey]];
+}
+
+- (BOOL)endsWithQuotationMark {
+    return [self hasSuffix:[[NSLocale currentLocale] objectForKey:NSLocaleQuotationEndDelimiterKey]];
+}
+
+- (BOOL)isInQuotationMarks {
+    return [self startsWithQuotationMark] && [self endsWithQuotationMark];
+}
+
+- (NSString *)stringByInsertingTerminalPunctuation:(NSString *)punctuation {
+    if ([[NSLocale currentLocale] commasAndPeriodsGoInsideQuotationMarks] && [self endsWithQuotationMark]) {
+        NSString *endQuote = [[NSLocale currentLocale] objectForKey:NSLocaleQuotationEndDelimiterKey];
+        NSInteger quotationLength = [endQuote length];
+        NSString *stringWithoutEndQuote = [self substringToIndex:self.length - quotationLength];
+        return [[stringWithoutEndQuote stringByAppendingString:punctuation] stringByAppendingString:endQuote];
+    } else {
+        return [self stringByAppendingString:punctuation];
+    }
+}
+
+- (NSString *)stringByEscapingForJSON {
+    // Escape backslash and " with unicode literals.
+    NSString *escaped =
+	[[self stringByReplacingOccurrencesOfString:@"\\" withString:@"\\u005c"]
+               stringByReplacingOccurrencesOfString:@"\"" withString:@"\\u0022"];
+    return [NSString stringWithFormat:@"\"%@\"", escaped];
+}
+
+- (NSString *)stringByEscapingForXML {
+    return [[[[[self stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"]
+                     stringByReplacingOccurrencesOfString:@"\"" withString:@"&quot;"]
+                     stringByReplacingOccurrencesOfString:@"'" withString:@"&#39;"]
+                     stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"]
+                     stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
+}
+
+- (NSArray<NSNumber *> *)codePoints {
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    for (NSUInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        if (IsHighSurrogate(c) && i + 1 < self.length) {
+            i++;
+            unichar c2 = [self characterAtIndex:i];
+            [result addObject:@(DecodeSurrogatePair(c, c2))];
+        } else if (!IsHighSurrogate(c) && !IsLowSurrogate(c)) {
+            [result addObject:@(c)];
+        }
+    }
+    return result;
+}
+
+- (NSString *)surname {
+    return [[self componentsSeparatedByString:@" "] lastObject];
+}
+
+- (BOOL)isNumeric {
+    if (self.length == 0) {
+        return NO;
+    }
+    NSCharacterSet *nonNumericCharacterSet = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+    NSRange range = [self rangeOfCharacterFromSet:nonNumericCharacterSet];
+    return range.location == NSNotFound;
+}
+
+- (NSRange)makeRangeSafe:(NSRange)range {
+    if (range.location == NSNotFound || range.length == 0) {
+        return range;
+    }
+    unichar lastCharacter = [self characterAtIndex:NSMaxRange(range) - 1];
+    if (CFStringIsSurrogateHighCharacter(lastCharacter)) {
+        if (NSMaxRange(range) == self.length) {
+            range.length -= 1;
+        } else {
+            range.length += 1;
+        }
+    }
+    return range;
 }
 
 @end

@@ -38,7 +38,9 @@ id gAltOpenAllRepresentedObject;
 // standard.
 int gMigrated;
 
-@implementation ProfileModel
+@implementation ProfileModel {
+    NSString *_modelName;
+}
 
 + (void)initialize
 {
@@ -50,10 +52,10 @@ int gMigrated;
     return gMigrated;
 }
 
-- (ProfileModel*)init
-{
+- (ProfileModel*)initWithName:(NSString *)modelName {
     self = [super init];
     if (self) {
+        _modelName = [modelName copy];
         bookmarks_ = [[NSMutableArray alloc] init];
         defaultBookmarkGuid_ = @"";
         journal_ = [[NSMutableArray alloc] init];
@@ -66,7 +68,7 @@ int gMigrated;
     static ProfileModel* shared = nil;
 
     if (!shared) {
-        shared = [[ProfileModel alloc] init];
+        shared = [[ProfileModel alloc] initWithName:@"Shared"];
         shared->prefs_ = [NSUserDefaults standardUserDefaults];
         shared->postChanges_ = YES;
     }
@@ -79,7 +81,7 @@ int gMigrated;
     static ProfileModel* shared = nil;
 
     if (!shared) {
-        shared = [[ProfileModel alloc] init];
+        shared = [[ProfileModel alloc] initWithName:@"Sessions"];
         shared->prefs_ = nil;
         shared->postChanges_ = NO;
     }
@@ -89,10 +91,28 @@ int gMigrated;
 
 - (void)dealloc
 {
-    [super dealloc];
     [journal_ release];
+    [_modelName release];
     NSLog(@"Deallocating bookmark model!");
+    [super dealloc];
 }
+
+- (Profile *)tmuxProfile {
+    Profile *profile = [self bookmarkWithName:@"tmux"];
+    if (!profile) {
+        Profile *defaultBookmark = [self defaultBookmark];
+        NSMutableDictionary *tmuxProfile = [[defaultBookmark mutableCopy] autorelease];
+        [tmuxProfile setObject:@"tmux" forKey:KEY_NAME];
+        [tmuxProfile setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+        [tmuxProfile setObject:[NSNumber numberWithInt:1000]
+                         forKey:KEY_SCROLLBACK_LINES];
+        [self addBookmark:tmuxProfile];
+        [self postChangeNotification];
+        profile = tmuxProfile;
+    }
+    return profile;
+}
+
 
 - (int)numberOfBookmarks
 {
@@ -596,8 +616,18 @@ int gMigrated;
     return [tags allObjects];
 }
 
-- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark
-{
+- (Profile *)setObjectsFromDictionary:(NSDictionary *)dictionary inProfile:(Profile *)profile {
+    NSMutableDictionary *newDict = [[profile mutableCopy] autorelease];
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [newDict setObject:obj forKey:key];
+    }];
+    NSString *guid = [profile objectForKey:KEY_GUID];
+    Profile *newProfile = [NSDictionary dictionaryWithDictionary:newDict];
+    [self setBookmark:newProfile withGuid:guid];
+    return newProfile;
+}
+
+- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark {
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     if (object == nil) {
         [newDict removeObjectForKey:key];

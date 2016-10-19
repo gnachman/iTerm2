@@ -11,6 +11,12 @@
 
 @implementation iTermProfilePreferencesBaseViewController
 
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    ProfileModel *model = [_delegate profilePreferencesCurrentModel];
+    [iTermProfilePreferences setObjectsFromDictionary:dictionary inProfile:profile model:model];
+}
+
 - (NSObject *)objectForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences objectForKey:key inProfile:profile];
@@ -42,6 +48,17 @@
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setInt:value forKey:key inProfile:profile model:model];
+}
+
+- (NSInteger)integerForKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    return [iTermProfilePreferences integerForKey:key inProfile:profile];
+}
+
+- (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    ProfileModel *model = [_delegate profilePreferencesCurrentModel];
+    [iTermProfilePreferences setInteger:value forKey:key inProfile:profile model:model];
 }
 
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key {

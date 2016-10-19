@@ -28,7 +28,6 @@
 #import "iTermExpose.h"
 #import "FutureMethods.h"
 #import "GlobalSearch.h"
-#import "HotkeyWindowController.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
@@ -36,6 +35,7 @@
 #import "iTermExposeGridView.h"
 #import "iTermExposeView.h"
 #import "iTermExposeWindow.h"
+#import "iTermHotKeyController.h"
 
 const float kItermExposeThumbMargin = 25;
 
@@ -426,14 +426,12 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     return availableSpace;
 }
 
-- (void)_toggleOn
-{
-    iTermController* controller = [iTermController sharedInstance];
-    if ([[HotkeyWindowController sharedInstance] isHotKeyWindowOpen]) {
-        [[HotkeyWindowController sharedInstance] fastHideHotKeyWindow];
-    }
+- (void)_toggleOn { 
+    // Hide all open hotkey windows
+    [[iTermHotKeyController sharedInstance] fastHideAllHotKeyWindows];
 
     // Crete parallel arrays with info needed to create subviews.
+    iTermController *controller = [iTermController sharedInstance];
     NSMutableArray* images = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
     NSMutableArray* labels = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
@@ -483,17 +481,10 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     [window_ setContentView:view_];
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
     [window_ setOpaque:NO];
-
-    PseudoTerminal* hotKeyWindow = [[HotkeyWindowController sharedInstance] hotKeyWindow];
-    BOOL isHot = NO;
-    if (hotKeyWindow) {
-        isHot = [hotKeyWindow isHotKeyWindow];
-        [hotKeyWindow setIsHotKeyWindow:NO];
-    }
+    
+    // Note: we used to tell the hotkey window it's not a hotkey window before making this window
+    // key but I can't see why.
     [window_ makeKeyAndOrderFront:self];
-    if (hotKeyWindow) {
-        [hotKeyWindow setIsHotKeyWindow:isHot];
-    }
 }
 
 - (int)_populateArrays:(NSMutableArray *)images

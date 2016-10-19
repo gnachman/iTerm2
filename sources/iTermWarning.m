@@ -1,11 +1,30 @@
 #import "iTermWarning.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static NSString *const kCancel = @"Cancel";
 static id<iTermWarningHandler> gWarningHandler;
 static BOOL gShowingWarning;
+
+@implementation iTermWarningAction
+
++ (instancetype)warningActionWithLabel:(NSString *)label
+                                 block:(iTermWarningActionBlock)block {
+    iTermWarningAction *warningAction = [[[self alloc] init] autorelease];
+    warningAction.label = label;
+    warningAction.block = block;
+    return warningAction;
+}
+
+- (void)dealloc {
+    [_label release];
+    [_block release];
+    [super dealloc];
+}
+
+@end
 
 @interface iTermWarning()<NSAlertDelegate>
 @end
@@ -88,7 +107,7 @@ static BOOL gShowingWarning;
                                   cancelLabel:(NSString *)cancelLabel {
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = title;
-    warning.actions = actions;
+    warning.actionLabels = actions;
     warning.actionToSelectionMap = actionToSelectionMap;
     warning.accessory = accessory;
     warning.identifier = identifier;
@@ -98,7 +117,45 @@ static BOOL gShowingWarning;
     return [warning runModal];
 }
 
+- (void)dealloc {
+    [_title release];
+    [_warningActions release];
+    [_actionToSelectionMap release];
+    [_accessory release];
+    [_identifier release];
+    [_heading release];
+    [_cancelLabel release];
+    [_showHelpBlock release];
+    [super dealloc];
+}
+
+- (void)setActionLabels:(NSArray<NSString *> *)actionLabels {
+    self.warningActions = [[[actionLabels mapWithBlock:^id(NSString *label) {
+        return [iTermWarningAction warningActionWithLabel:label block:nil];
+    }] mutableCopy] autorelease];
+}
+
+- (NSArray<NSString *> *)actionLabels {
+    return [self.warningActions mapWithBlock:^id(iTermWarningAction *warningAction) {
+        return warningAction.label;
+    }];
+}
+
 - (iTermWarningSelection)runModal {
+    iTermWarningSelection selection = [self runModalImpl];
+
+    if (selection >= 0 && selection < _warningActions.count) {
+        iTermWarningActionBlock block = _warningActions[selection].block;
+        if (block) {
+            block(selection);
+        }
+    }
+    
+    return selection;
+}
+
+// Does not invoke the warning action's block
+- (iTermWarningSelection)runModalImpl {
     if (!gWarningHandler &&
         _warningType != kiTermWarningTypePersistent &&
         [self.class identifierIsSilenced:_identifier]) {
@@ -106,13 +163,13 @@ static BOOL gShowingWarning;
     }
 
     NSAlert *alert = [NSAlert alertWithMessageText:_heading ?: @"Warning"
-                                     defaultButton:_actions.count > 0 ? _actions[0] : nil
-                                   alternateButton:_actions.count > 1 ? _actions[1] : nil
-                                       otherButton:_actions.count > 2 ? _actions[2] : nil
+                                     defaultButton:_warningActions.count > 0 ? _warningActions[0].label : nil
+                                   alternateButton:_warningActions.count > 1 ? _warningActions[1].label : nil
+                                       otherButton:_warningActions.count > 2 ? _warningActions[2].label : nil
                          informativeTextWithFormat:@"%@", _title];
-    int numNonCancelActions = [_actions count];
-    for (NSString *string in _actions) {
-        if ([string isEqualToString:_cancelLabel]) {
+    int numNonCancelActions = [_warningActions count];
+    for (iTermWarningAction *warningAction in _warningActions) {
+        if ([warningAction.label isEqualToString:_cancelLabel]) {
             --numNonCancelActions;
         }
     }
@@ -158,15 +215,15 @@ static BOOL gShowingWarning;
     switch (result) {
         case NSAlertDefaultReturn:
             selection = [self.class remapSelection:kiTermWarningSelection0 withMapping:_actionToSelectionMap];
-            remember = ![_actions[0] isEqualToString:_cancelLabel];
+            remember = ![_warningActions[0].label isEqualToString:_cancelLabel];
             break;
         case NSAlertAlternateReturn:
             selection = [self.class remapSelection:kiTermWarningSelection1 withMapping:_actionToSelectionMap];
-            remember = ![_actions[1] isEqualToString:_cancelLabel];
+            remember = ![_warningActions[1].label isEqualToString:_cancelLabel];
             break;
         case NSAlertOtherReturn:
             selection = [self.class remapSelection:kiTermWarningSelection2 withMapping:_actionToSelectionMap];
-            remember = ![_actions[2] isEqualToString:_cancelLabel];
+            remember = ![_warningActions[2].label isEqualToString:_cancelLabel];
             break;
         default:
             selection = kItermWarningSelectionError;

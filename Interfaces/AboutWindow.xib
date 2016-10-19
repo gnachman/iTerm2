@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermAboutWindowController">
@@ -17,15 +17,15 @@
         <window title="About iTerm" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="vXx-6Q-DX3" userLabel="About" customClass="iTermAboutWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="386" y="524" width="354" height="227"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1057"/>
+            <rect key="contentRect" x="386" y="524" width="354" height="255"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <value key="minSize" type="size" width="213" height="107"/>
             <view key="contentView" id="Y6E-dl-YZS">
-                <rect key="frame" x="0.0" y="0.0" width="354" height="227"/>
+                <rect key="frame" x="0.0" y="0.0" width="354" height="255"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" preferredMaxLayoutWidth="86" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
-                        <rect key="frame" x="211" y="180" width="90" height="27"/>
+                        <rect key="frame" x="211" y="208" width="90" height="27"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="U4n-GV-8aZ">
                             <font key="font" metaFont="system" size="22"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -33,7 +33,7 @@
                         </textFieldCell>
                     </textField>
                     <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="591-57-qeA">
-                        <rect key="frame" x="169" y="83" width="165" height="92"/>
+                        <rect key="frame" x="169" y="111" width="165" height="92"/>
                         <clipView key="contentView" ambiguous="YES" id="aKk-Vf-QAt">
                             <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -60,23 +60,23 @@
                         </scroller>
                     </scrollView>
                     <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gde-AT-nev">
-                        <rect key="frame" x="20" y="95" width="128" height="128"/>
+                        <rect key="frame" x="20" y="123" width="128" height="128"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="NSApplicationIcon" id="b3m-Nh-0FF"/>
                     </imageView>
                     <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cIi-Dh-gHn">
-                        <rect key="frame" x="20" y="20" width="314" height="55"/>
+                        <rect key="frame" x="20" y="20" width="314" height="83"/>
                         <clipView key="contentView" ambiguous="YES" id="eAf-wk-9pT">
-                            <rect key="frame" x="0.0" y="0.0" width="314" height="55"/>
+                            <rect key="frame" x="0.0" y="0.0" width="314" height="83"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView ambiguous="YES" editable="NO" importsGraphics="NO" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="cP7-fE-CE6">
-                                    <rect key="frame" x="0.0" y="0.0" width="314" height="55"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="314" height="83"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="314" height="55"/>
+                                    <size key="minSize" width="314" height="83"/>
                                     <size key="maxSize" width="364" height="10000000"/>
                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="314" height="55"/>
+                                    <size key="minSize" width="314" height="83"/>
                                     <size key="maxSize" width="364" height="10000000"/>
                                 </textView>
                             </subviews>
@@ -92,7 +92,7 @@
                     </scrollView>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="241" y="498.5"/>
+            <point key="canvasLocation" x="241" y="512.5"/>
         </window>
     </objects>
     <resources>

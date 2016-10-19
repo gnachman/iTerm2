@@ -99,16 +99,20 @@
     self.delegate = delegate;
 
     [[self window] setParentWindow:delegate.popupWindowController.window];
-    if (delegate.popupWindowIsInHotkeyWindow &&
-        [iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
-        self.window.level = NSPopUpMenuWindowLevel;
-    }
 
     static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;
-    [self showWindow:delegate.popupWindowController];
-    [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
-
+    if (delegate.popupWindowIsInFloatingHotkeyWindow) {
+        self.window.styleMask = NSNonactivatingPanelMask;
+        self.window.collectionBehavior = (NSWindowCollectionBehaviorCanJoinAllSpaces |
+                                          NSWindowCollectionBehaviorIgnoresCycle |
+                                          NSWindowCollectionBehaviorFullScreenAuxiliary);
+        self.window.level = NSPopUpMenuWindowLevel;
+        [self.window makeKeyAndOrderFront:nil];
+    } else {
+        [self showWindow:delegate.popupWindowController];
+        [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
+    }
     [NSAnimationContext beginGrouping];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.window.animator.alphaValue = 1;

@@ -325,4 +325,8 @@ typedef enum {
     [[self window] invalidateRestorableState];
 }
 
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 @end

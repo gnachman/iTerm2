@@ -125,7 +125,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                 break;
 
             case 0:
-                [aSession tryToRunShellIntegrationInstaller];
+                [aSession tryToRunShellIntegrationInstallerWithPromptCheck:NO];
                 break;
 
             case 1:

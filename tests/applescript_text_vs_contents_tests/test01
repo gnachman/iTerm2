@@ -1,0 +1,5 @@
+tell application "iTerm2"
+	tell current session of current window
+		contents
+	end tell
+end tell

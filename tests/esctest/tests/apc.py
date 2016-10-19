@@ -6,7 +6,6 @@ from escutil import AssertScreenCharsInRectEqual, knownBug, optionRequired
 from esctypes import Rect
 
 class APCTests(object):
-  @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_APC_Basic(self):
     esccmd.APC()
     escio.Write("xyz")

@@ -10,6 +10,7 @@ extern NSString *const kTaskNotifierDidSpin;
 @interface TaskNotifier : NSObject
 
 + (instancetype)sharedInstance;
+- (instancetype)init NS_UNAVAILABLE;
 
 - (void)registerTask:(PTYTask *)task;
 - (void)deregisterTask:(PTYTask *)task;
@@ -23,5 +24,7 @@ extern NSString *const kTaskNotifierDidSpin;
 
 - (void)lock;
 - (void)unlock;
+
+void UnblockTaskNotifier(void);
 
 @end
