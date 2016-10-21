@@ -3562,9 +3562,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
 
-    if (now >= _lastInput + _antiIdlePeriod - kAntiIdleGracePeriod) {
+    if (![self isTmuxGateway] && now >= _lastInput + _antiIdlePeriod - kAntiIdleGracePeriod) {
+        // This feature is hopeless for tmux gateways. Issue 5231.
         [self writeLatin1EncodedData:[NSData dataWithBytes:&_antiIdleCode length:1]
-                 broadcastAllowed:NO];
+                    broadcastAllowed:NO];
         _lastInput = now;
     }
 }
