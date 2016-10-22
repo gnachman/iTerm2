@@ -1178,8 +1178,6 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalStartTmuxMode];
         return;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
-        // TODO: On session restore, the parser is in tmux mode but the gateway is nil.
-        // Prevent this when possible and reset the parser when necessary.
         [delegate_ terminalHandleTmuxInput:token];
         return;
     }
