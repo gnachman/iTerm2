@@ -5791,6 +5791,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)textViewBackgroundColorDidChange {
+    [_delegate sessionBackgroundColorDidChange:self];
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {

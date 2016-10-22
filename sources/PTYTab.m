@@ -733,7 +733,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([realParentWindow_ anyFullScreen]) {
         return [NSColor blackColor];
     } else {
-        return [NSColor windowBackgroundColor];
+        NSColor *backgroundColor = [self.activeSession.colorMap colorForKey:kColorMapBackground];
+        CGFloat components[4];
+        [backgroundColor getComponents:components];
+        CGFloat mix;
+        if (backgroundColor.brightnessComponent < 0.5) {
+            mix = 1;
+        } else {
+            mix = 0;
+        }
+        const CGFloat a = 0.1;
+        for (int i = 0; i < 3; i++) {
+            components[i] = a * mix + (1 - a) * components[i];
+        }
+        const CGFloat alpha = self.realParentWindow.useTransparency ? (1.0 - self.activeSession.transparency) : 1.0;
+        return [NSColor colorWithCalibratedRed:components[0] green:components[1] blue:components[2] alpha:alpha];
     }
 }
 
@@ -2111,6 +2125,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [parentWindow_ disableBlur];
         }
     }
+
+    // Handles a change to the parent window's useTransparency setting.
+    [self updateFlexibleViewColors];
 }
 
 - (NSDictionary<NSString *, id> *)_recursiveArrangement:(NSView *)view
@@ -4639,4 +4656,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return self.sessions.count - 1;
     }
 }
+
+- (void)sessionBackgroundColorDidChange:(PTYSession *)session {
+    if (session.isTmuxClient) {
+        [self updateFlexibleViewColors];
+    }
+}
+
 @end

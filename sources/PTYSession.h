@@ -175,6 +175,9 @@ typedef enum {
 // Returns the 0-based pane number to use in $ITERM_SESSION_ID.
 - (NSUInteger)sessionPaneNumber:(PTYSession *)session;
 
+// The background color changed.
+- (void)sessionBackgroundColorDidChange:(PTYSession *)session;
+
 @end
 
 @class SessionView;

@@ -5277,6 +5277,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _transparency = fVal;
     _drawingHelper.transparency = fVal;
     [self setNeedsDisplay:YES];
+    [_delegate textViewBackgroundColorDidChange];
 }
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
@@ -6795,6 +6796,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self updateScrollerForBackgroundColor];
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         [self recomputeBadgeLabel];
+        [_delegate textViewBackgroundColorDidChange];
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
     } else if (theKey == kColorMapSelection) {

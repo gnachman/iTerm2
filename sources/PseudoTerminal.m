@@ -3057,6 +3057,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     static const NSTimeInterval kTimeToPreserveTemporaryTitle = 0.7;
     return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
 }
+
 - (void)updateUseTransparency {
     iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateUseTransparencyMenuItem];

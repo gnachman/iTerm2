@@ -165,6 +165,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 // Update the text view's frame needed.
 - (void)textViewResizeFrameIfNeeded;
 
+// The background color in the color map changed.
+- (void)textViewBackgroundColorDidChange;
+
 @end
 
 @interface PTYTextView : NSView <
