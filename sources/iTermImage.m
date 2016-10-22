@@ -9,6 +9,7 @@
 #import "iTermImage.h"
 #import "DebugLogging.h"
 #import "iTermImageDecoderDriver.h"
+#import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
 
 static const CGFloat kMaxDimension = 10000;
@@ -107,7 +108,7 @@ static const CGFloat kMaxDimension = 10000;
                 DLog(@"Bogus image string of class %@", [imageString class]);
             }
 
-            NSData *data = [[[NSData alloc] initWithBase64EncodedString:imageString options:0] autorelease];
+            NSData *data = [NSData dataWithBase64EncodedString:imageString];
             if (!data || data.length > kMaxDimension * kMaxDimension * 4) {
                 DLog(@"Could not decode base64 encoded image string");
                 return nil;

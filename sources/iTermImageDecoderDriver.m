@@ -209,6 +209,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
     char *sandbox = strdup([sandboxString UTF8String]);
     int dtablesize = getdtablesize();
 
+    DLog(@"sandbox-exec -p '%@' '%@'", sandboxString, executable);
     pid_t pid = fork();
     switch (pid) {
         case -1:

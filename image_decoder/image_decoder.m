@@ -63,7 +63,9 @@ int main(int argc, const char * argv[]) {
         CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)data,
                                                               (CFDictionaryRef)@{});
         size_t count = CGImageSourceGetCount(source);
-        serializableImage.size = image.size;
+        NSImageRep *rep = [[image representations] firstObject];
+        NSSize imageSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
+        serializableImage.size = imageSize;
         
         if (count > 1) {
             syslog(LOG_DEBUG, "multiple frames found");
