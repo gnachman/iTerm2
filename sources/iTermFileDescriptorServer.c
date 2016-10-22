@@ -170,6 +170,7 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
         umask(oldMask);
         return -1;
     }
+    syslog(LOG_NOTICE, "bind() created %s", local.sun_path);
 
     if (listen(socketFd, kMaxConnections) == -1) {
         syslog(LOG_NOTICE, "listen() failed: %s", strerror(errno));
@@ -221,6 +222,8 @@ static void MainLoop(char *path) {
 }
 
 int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
+    // syslog raises sigpipe when the parent job dies on 10.12.
+    signal(SIGPIPE, SIG_IGN);
     int rc = Initialize(path, childPid);
     if (rc) {
         syslog(LOG_NOTICE, "Initialize failed with code %d", rc);
