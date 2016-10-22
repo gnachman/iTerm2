@@ -783,17 +783,18 @@ ITERM_WEAKLY_REFERENCEABLE
             // have to check if the arrangement was saved with that setting on.
             if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
                 DLog(@"Have a server PID in the arrangement");
-                // The arrangement was save with a process ID so the server may still exist.
-                if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
-                    DLog(@"Was a tmux gateway. Start recovery mode in parser.");
-                    // Before attaching to the server we can put the parser into "tmux recovery mode".
-                    [aSession.terminal.parser startTmuxRecoveryMode];
-                }
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 DLog(@"Try to attach to pid %d", (int)serverPid);
                 // serverPid might be -1 if the user turned on session restoration and then quit.
                 if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid]) {
                     DLog(@"Success!");
+
+                    if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
+                        DLog(@"Was a tmux gateway. Start recovery mode in parser.");
+                        // Before attaching to the server we can put the parser into "tmux recovery mode".
+                        [aSession.terminal.parser startTmuxRecoveryMode];
+                    }
+
                     runCommand = NO;
                     attachedToServer = YES;
                     aSession.shell.tty = arrangement[SESSION_ARRANGEMENT_TTY];
