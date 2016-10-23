@@ -27,7 +27,7 @@
 @property(nonatomic, readonly) BOOL rollingIn;
 @property(nonatomic, readonly) BOOL rollingOut;
 
-@property(nonatomic, readonly) BOOL autoHides;
+@property(nonatomic, assign) BOOL autoHides;
 
 // Is there a visible hotkey window right now?
 @property(nonatomic, readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
@@ -43,9 +43,6 @@
 
 // This is computed based on the current settings of the profile we were created with.
 @property(nonatomic, readonly) iTermHotkeyWindowType hotkeyWindowType;
-
-// If YES, then -autoHides will return NO.
-@property(nonatomic) BOOL pinned;
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
             hasModifierActivation:(BOOL)hasModifierActivation
