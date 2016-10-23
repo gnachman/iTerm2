@@ -476,7 +476,7 @@ exit:
             actionString = @"Toggle Fullscreen";
             break;
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
-            actionString = @"Toggle Hotkey Hides When Focus Lost";
+            actionString = @"Toggle Pin Hotkey Window";
             break;
         case KEY_ACTION_UNDO:
             actionString = @"Undo";
