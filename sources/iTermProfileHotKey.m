@@ -129,7 +129,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 
     if (self.floats) {
-        _windowController.window.level = NSFloatingWindowLevel;
+        _windowController.window.level = NSStatusWindowLevel;
     } else {
         _windowController.window.level = NSNormalWindowLevel;
     }
