@@ -2665,7 +2665,7 @@ ITERM_WEAKLY_REFERENCEABLE
             frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
 
             if (frame.size.width > 0) {
-                [[self window] setFrame:frame display:YES];
+                return frame;
             }
             break;
 
