@@ -89,14 +89,27 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)createWindow {
+    [self createWindowWithURL:nil];
+}
+
+- (void)createWindowWithURL:(NSURL *)url {
     if (self.windowController.weaklyReferencedObject) {
         return;
     }
 
     DLog(@"Create new window controller for profile hotkey");
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
-    if (!windowController) {
-        windowController = [self windowControllerFromProfile:[self profile]];
+    if (windowController) {
+        [[iTermController sharedInstance] launchBookmark:self.profile
+                                              inTerminal:windowController
+                                                 withURL:url.absoluteString
+                                        hotkeyWindowType:[self hotkeyWindowType]
+                                                 makeKey:YES
+                                             canActivate:YES
+                                                 command:nil
+                                                   block:nil];
+    } else {
+        windowController = [self windowControllerFromProfile:[self profile] url:url];
     }
     [_windowController release];
     _windowController = nil;
@@ -511,7 +524,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
-- (PseudoTerminal *)windowControllerFromProfile:(Profile *)hotkeyProfile {
+- (PseudoTerminal *)windowControllerFromProfile:(Profile *)hotkeyProfile url:(NSURL *)url {
     if (!hotkeyProfile) {
         return nil;
     }
@@ -526,7 +539,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     self.birthingWindow = YES;
     PTYSession *session = [[iTermController sharedInstance] launchBookmark:hotkeyProfile
                                                                 inTerminal:nil
-                                                                   withURL:nil
+                                                                   withURL:url.absoluteString
                                                           hotkeyWindowType:[self hotkeyWindowType]
                                                                    makeKey:YES
                                                                canActivate:YES
@@ -618,20 +631,27 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)showHotKeyWindow {
+    [self showHotKeyWindowCreatingWithURLIfNeeded:nil];
+}
+
+- (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url {
     DLog(@"showHotKeyWindow: %@", self);
     
     if (self.windowController.window.alphaValue == 1 && self.windowController.window.isVisible) {
         // This path is taken when you use a session hotkey to navigate to an already-open hotkey window.
         [self showAlreadyVisibleHotKeyWindow];
-        return;
+        return NO;
     }
     [self.delegate storePreviouslyActiveApp];
 
+    BOOL result = NO;
     if (!self.windowController.weaklyReferencedObject) {
         DLog(@"Create new hotkey window");
-        [self createWindow];
+        [self createWindowWithURL:url];
+        result = YES;
     }
     [self rollInAnimated:YES];
+    return result;
 }
 
 - (void)hideHotKeyWindowAnimated:(BOOL)animated

@@ -1452,7 +1452,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if ([self isHotKeyWindow]) {
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
-        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
+        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
     } else {
         [self.window makeKeyAndOrderFront:nil];
     }

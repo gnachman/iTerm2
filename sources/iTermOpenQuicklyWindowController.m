@@ -196,7 +196,7 @@
                                                            block:nil];
             } else {
                 // Create the hotkey window for this profile
-                [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey];
+                [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
             }
         } else if ([object isKindOfClass:[NSString class]]) {
             // Load window arrangement

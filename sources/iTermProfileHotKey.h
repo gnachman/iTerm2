@@ -70,6 +70,7 @@
 
 - (void)createWindow;
 - (void)showHotKeyWindow;
+- (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url;
 - (void)saveHotKeyWindowState;
 - (BOOL)loadRestorableStateFromArray:(NSArray *)states;
 - (void)setLegacyState:(NSDictionary *)state;

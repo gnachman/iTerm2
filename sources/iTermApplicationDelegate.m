@@ -957,7 +957,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
-    NSURL *url = [NSURL URLWithString: urlStr];
+    NSURL *url = [NSURL URLWithString:urlStr];
     NSString *scheme = [url scheme];
 
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
@@ -965,15 +965,29 @@ static BOOL hasBecomeActive = NO;
         profile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (profile) {
+        iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:profile[KEY_GUID]];
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:term
-                                                 withURL:urlStr
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:NO
-                                             canActivate:NO
-                                                 command:nil
-                                                   block:nil];
+        BOOL launch = NO;
+        if (profileHotkey) {
+            const BOOL newWindowCreated = [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey
+                                                                                                         url:url];
+            if (!newWindowCreated) {
+                launch = YES;
+                term = profileHotkey.windowController;
+            }
+        } else {
+            launch = YES;
+        }
+        if (launch) {
+            [[iTermController sharedInstance] launchBookmark:profile
+                                                  inTerminal:term
+                                                     withURL:urlStr
+                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                     makeKey:NO
+                                                 canActivate:NO
+                                                     command:nil
+                                                       block:nil];
+        }
     }
 }
 

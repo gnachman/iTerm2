@@ -153,7 +153,7 @@
                     if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
                         iTermProfileHotKey *hotKey =
                             [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:termWithNumber];
-                        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
+                        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
                     } else {
                         [[termWithNumber window] makeKeyAndOrderFront:self];
                     }
