@@ -893,6 +893,16 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (iTermProfileHotKey *)currentProfileHotkey {
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    return [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+}
+
+- (IBAction)togglePinHotkeyWindow:(id)sender {
+    iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
+    profileHotkey.pinned = !profileHotkey.pinned;
+}
+
 - (IBAction)openPasswordManager:(id)sender {
     DLog(@"Menu item selected");
     [self openPasswordManagerToAccountName:nil inSession:nil];
@@ -1796,6 +1806,10 @@ static BOOL hasBecomeActive = NO;
     } else if ([menuItem action] == @selector(toggleSecureInput:)) {
         menuItem.state = IsSecureEventInputEnabled() ? NSOnState : NSOffState;
         return YES;
+    } else if ([menuItem action] == @selector(togglePinHotkeyWindow:)) {
+        iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
+        menuItem.state = profileHotkey.pinned ? NSOnState : NSOffState;
+        return profileHotkey != nil;
     } else {
         return YES;
     }

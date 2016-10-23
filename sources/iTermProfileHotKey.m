@@ -45,6 +45,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 @property(nonatomic, retain) NSWindowController *windowControllerBeingBorn;
 @end
 
+static NSString *const kPinnedGUIDsUserDefaultKey = @"NoSyncPinnedHotkeyWindowGUIDs";
+
 @implementation iTermProfileHotKey
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
@@ -58,6 +60,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     if (self) {
         _allowsStateRestoration = YES;
         _profileGuid = [profile[KEY_GUID] copy];
+        _pinned = [[[NSUserDefaults standardUserDefaults] objectForKey:kPinnedGUIDsUserDefaultKey] containsObject:_profileGuid];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(terminalWindowControllerCreated:)
                                                      name:kTerminalWindowControllerWasCreatedNotification
@@ -587,7 +590,24 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (BOOL)autoHides {
-    return [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
+    return !self.pinned && [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
+}
+
+- (void)setPinned:(BOOL)pinned {
+    _pinned = pinned;
+
+    if (_profileGuid) {
+        NSMutableArray<NSString *> *pinnedProfiles = [[[[NSUserDefaults standardUserDefaults] objectForKey:kPinnedGUIDsUserDefaultKey] mutableCopy] autorelease];
+        if (!pinnedProfiles) {
+            pinnedProfiles = [NSMutableArray array];
+        }
+        if (self.pinned) {
+            [pinnedProfiles addObject:_profileGuid];
+        } else {
+            [pinnedProfiles removeObject:_profileGuid];
+        }
+        [[NSUserDefaults standardUserDefaults] setObject:pinnedProfiles forKey:kPinnedGUIDsUserDefaultKey];
+    }
 }
 
 // If there's a visible hotkey window that is either not key or is on another space, switch to it.
