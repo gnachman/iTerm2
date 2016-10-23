@@ -641,8 +641,7 @@ static BOOL hasBecomeActive = NO;
     DLog(@"applicationWillTerminate returning");
 }
 
-- (PseudoTerminal *)terminalToOpenFileIn
-{
+- (PseudoTerminal *)terminalToOpenFileIn {
     if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
         return nil;
     } else {
@@ -704,7 +703,14 @@ static BOOL hasBecomeActive = NO;
             }
         }
 
-        [controller launchBookmark:bookmark inTerminal:[self terminalToOpenFileIn]];
+        PseudoTerminal *term = [self terminalToOpenFileIn];
+        [controller launchBookmark:bookmark inTerminal:term];
+
+        // If term is a hotkey window, reveal it.
+        iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+        if (profileHotkey) {
+            [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+        }
     }
     return (YES);
 }
