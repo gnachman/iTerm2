@@ -56,4 +56,14 @@
   return visibleFrameIgnoringHiddenDock;
 }
 
+- (NSRect)frameExceptMenuBar {
+    if ([[NSScreen screens] firstObject] == self) {
+        NSRect frame = self.frame;
+        frame.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+        return frame;
+    } else {
+        return self.frame;
+    }
+}
+
 @end

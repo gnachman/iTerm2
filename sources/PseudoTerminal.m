@@ -2607,6 +2607,11 @@ ITERM_WEAKLY_REFERENCEABLE
     NSRect frame = [[self window] frame];
     NSRect screenVisibleFrame = [screen visibleFrame];
     NSRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
+
+    if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        screenVisibleFrame = screen.frameExceptMenuBar;
+        screenVisibleFrameIgnoringHiddenDock = screen.frameExceptMenuBar;
+    }
     PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
 
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point

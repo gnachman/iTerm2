@@ -17,4 +17,6 @@
 // Kind of a gross hack since the magic 4 pixel number could change in the future.
 - (NSRect)visibleFrameIgnoringHiddenDock;
 
+- (NSRect)frameExceptMenuBar;
+
 @end
