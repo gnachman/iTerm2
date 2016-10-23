@@ -10,7 +10,6 @@
                 <outlet property="_activateWithModifier" destination="TUZ-yR-tGv" id="qWa-eq-kTx"/>
                 <outlet property="_alwaysShowOnDockClick" destination="siA-bI-HmC" id="puK-WS-qHL"/>
                 <outlet property="_animate" destination="r46-pU-MRA" id="gdk-fK-tlN"/>
-                <outlet property="_autoHide" destination="T3p-0Y-eeA" id="bOc-sP-EKr"/>
                 <outlet property="_doNotShowOnDockClick" destination="roD-me-xYz" id="BCa-6E-83g"/>
                 <outlet property="_duplicateWarning" destination="jS4-oY-dcH" id="9vK-Vu-MHf"/>
                 <outlet property="_duplicateWarningForModifierActivation" destination="0iX-Ti-IRV" id="fGG-14-RCh"/>
@@ -21,6 +20,7 @@
                 <outlet property="_hotKey" destination="ko0-9s-c1g" id="Pnt-LJ-atE"/>
                 <outlet property="_modifierActivation" destination="rbU-t8-k9N" id="fh6-E4-2LJ"/>
                 <outlet property="_ok" destination="YEr-4l-tkF" id="yt0-Mr-n0r"/>
+                <outlet property="_pinned" destination="T3p-0Y-eeA" id="57w-n6-eDe"/>
                 <outlet property="_removeAdditional" destination="jYf-Zp-VXL" id="d1T-Td-z07"/>
                 <outlet property="_showAutoHiddenWindowOnAppActivation" destination="6tA-bg-olR" id="xeh-Kh-41E"/>
                 <outlet property="_showIfNoWindowsOpenOnDockClick" destination="ieU-bS-a2y" id="5dM-Ox-fcX"/>
@@ -71,9 +71,9 @@
                         </textFieldCell>
                     </textField>
                     <button id="T3p-0Y-eeA">
-                        <rect key="frame" x="144" y="224" width="242" height="18"/>
+                        <rect key="frame" x="144" y="224" width="372" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Auto-hide on loss of keyboard focus" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3jk-f9-QFs">
+                        <buttonCell key="cell" type="check" title="Pin hotkey window (stays open on loss of keyboard focus)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3jk-f9-QFs">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
