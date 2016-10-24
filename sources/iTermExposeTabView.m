@@ -154,7 +154,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
         if ([terminal isHotKeyWindow]) {
             iTermProfileHotKey *hotKey =
                 [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:terminal];
-            [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
+            [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
         } else {
             [controller setCurrentTerminal:terminal];
             [[terminal window] makeKeyAndOrderFront:self];

@@ -45,6 +45,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 @property(nonatomic, retain) NSWindowController *windowControllerBeingBorn;
 @end
 
+static NSString *const kPinnedGUIDsUserDefaultKey = @"NoSyncPinnedHotkeyWindowGUIDs";
+
 @implementation iTermProfileHotKey
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
@@ -58,6 +60,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     if (self) {
         _allowsStateRestoration = YES;
         _profileGuid = [profile[KEY_GUID] copy];
+        _pinned = [[[NSUserDefaults standardUserDefaults] objectForKey:kPinnedGUIDsUserDefaultKey] containsObject:_profileGuid];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(terminalWindowControllerCreated:)
                                                      name:kTerminalWindowControllerWasCreatedNotification
@@ -89,14 +92,27 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)createWindow {
+    [self createWindowWithURL:nil];
+}
+
+- (void)createWindowWithURL:(NSURL *)url {
     if (self.windowController.weaklyReferencedObject) {
         return;
     }
 
     DLog(@"Create new window controller for profile hotkey");
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
-    if (!windowController) {
-        windowController = [self windowControllerFromProfile:[self profile]];
+    if (windowController) {
+        [[iTermController sharedInstance] launchBookmark:self.profile
+                                              inTerminal:windowController
+                                                 withURL:url.absoluteString
+                                        hotkeyWindowType:[self hotkeyWindowType]
+                                                 makeKey:YES
+                                             canActivate:YES
+                                                 command:nil
+                                                   block:nil];
+    } else {
+        windowController = [self windowControllerFromProfile:[self profile] url:url];
     }
     [_windowController release];
     _windowController = nil;
@@ -116,7 +132,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 
     if (self.floats) {
-        _windowController.window.level = NSFloatingWindowLevel;
+        _windowController.window.level = NSStatusWindowLevel;
     } else {
         _windowController.window.level = NSNormalWindowLevel;
     }
@@ -511,7 +527,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
-- (PseudoTerminal *)windowControllerFromProfile:(Profile *)hotkeyProfile {
+- (PseudoTerminal *)windowControllerFromProfile:(Profile *)hotkeyProfile url:(NSURL *)url {
     if (!hotkeyProfile) {
         return nil;
     }
@@ -526,7 +542,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     self.birthingWindow = YES;
     PTYSession *session = [[iTermController sharedInstance] launchBookmark:hotkeyProfile
                                                                 inTerminal:nil
-                                                                   withURL:nil
+                                                                   withURL:url.absoluteString
                                                           hotkeyWindowType:[self hotkeyWindowType]
                                                                    makeKey:YES
                                                                canActivate:YES
@@ -574,7 +590,24 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (BOOL)autoHides {
-    return [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
+    return !self.pinned && [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
+}
+
+- (void)setPinned:(BOOL)pinned {
+    _pinned = pinned;
+
+    if (_profileGuid) {
+        NSMutableArray<NSString *> *pinnedProfiles = [[[[NSUserDefaults standardUserDefaults] objectForKey:kPinnedGUIDsUserDefaultKey] mutableCopy] autorelease];
+        if (!pinnedProfiles) {
+            pinnedProfiles = [NSMutableArray array];
+        }
+        if (self.pinned) {
+            [pinnedProfiles addObject:_profileGuid];
+        } else {
+            [pinnedProfiles removeObject:_profileGuid];
+        }
+        [[NSUserDefaults standardUserDefaults] setObject:pinnedProfiles forKey:kPinnedGUIDsUserDefaultKey];
+    }
 }
 
 // If there's a visible hotkey window that is either not key or is on another space, switch to it.
@@ -618,20 +651,27 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)showHotKeyWindow {
+    [self showHotKeyWindowCreatingWithURLIfNeeded:nil];
+}
+
+- (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url {
     DLog(@"showHotKeyWindow: %@", self);
     
     if (self.windowController.window.alphaValue == 1 && self.windowController.window.isVisible) {
         // This path is taken when you use a session hotkey to navigate to an already-open hotkey window.
         [self showAlreadyVisibleHotKeyWindow];
-        return;
+        return NO;
     }
     [self.delegate storePreviouslyActiveApp];
 
+    BOOL result = NO;
     if (!self.windowController.weaklyReferencedObject) {
         DLog(@"Create new hotkey window");
-        [self createWindow];
+        [self createWindowWithURL:url];
+        result = YES;
     }
     [self rollInAnimated:YES];
+    return result;
 }
 
 - (void)hideHotKeyWindowAnimated:(BOOL)animated

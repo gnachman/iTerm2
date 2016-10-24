@@ -85,9 +85,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 
 #pragma mark - APIs
 
-- (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey {
+- (BOOL)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey url:(NSURL *)url {
     DLog(@"Show window for profile hotkey %@", profileHotKey);
-    [profileHotKey showHotKeyWindow];
+    return [profileHotKey showHotKeyWindowCreatingWithURLIfNeeded:url];
 }
 
 - (BOOL)eventIsHotkey:(NSEvent *)event {

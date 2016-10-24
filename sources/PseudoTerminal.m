@@ -116,6 +116,23 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
+static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
+    CGFloat centerOfContainer = NSMidX(container);
+    CGFloat centerOfFrame = NSMidX(frameToCenter);
+    CGFloat diff = centerOfContainer - centerOfFrame;
+    frameToCenter.origin.x += diff;
+    return frameToCenter;
+}
+
+static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect container) {
+    CGFloat centerOfContainer = NSMidY(container);
+    CGFloat centerOfFrame = NSMidY(frameToCenter);
+    CGFloat diff = centerOfContainer - centerOfFrame;
+    frameToCenter.origin.y += diff;
+    return frameToCenter;
+}
+
+
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
@@ -1452,7 +1469,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if ([self isHotKeyWindow]) {
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
-        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
+        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
     } else {
         [self.window makeKeyAndOrderFront:nil];
     }
@@ -2603,10 +2620,25 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSRect)canonicalFrameForScreen:(NSScreen *)screen {
+    return [self canonicalFrameForScreen:screen windowFrame:self.window.frame preserveSize:NO];
+}
+
+- (NSRect)screenFrameForEdgeSpanningWindows:(NSScreen *)screen {
+    if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        return screen.frameExceptMenuBar;
+    } else {
+        return [screen visibleFrameIgnoringHiddenDock];
+    }
+}
+
+- (NSRect)canonicalFrameForScreen:(NSScreen *)screen windowFrame:(NSRect)frame preserveSize:(BOOL)preserveSize {
     PTYSession* session = [self currentSession];
-    NSRect frame = [[self window] frame];
     NSRect screenVisibleFrame = [screen visibleFrame];
-    NSRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
+    NSRect screenVisibleFrameIgnoringHiddenDock = [self screenFrameForEdgeSpanningWindows:screen];
+
+    if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        screenVisibleFrame = screen.frameExceptMenuBar;
+    }
     PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
 
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
@@ -2622,18 +2654,20 @@ ITERM_WEAKLY_REFERENCEABLE
             // Fall through
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
-            // If the screen grew and the window was smaller than the desired number of rows, grow it.
-            if (desiredRows_ > 0) {
-                frame.size.height = MIN(screenVisibleFrame.size.height,
-                                        ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
-            } else {
-                frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
+            if (!preserveSize) {
+                // If the screen grew and the window was smaller than the desired number of rows, grow it.
+                if (desiredRows_ > 0) {
+                    frame.size.height = MIN(screenVisibleFrame.size.height,
+                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+                } else {
+                    frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
+                }
             }
             if (!edgeSpanning) {
-                frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
-                frame.origin.x = MAX(frame.origin.x, screenVisibleFrameIgnoringHiddenDock.origin.x);
-                double freeSpaceOnLeft = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width - (frame.origin.x - screenVisibleFrameIgnoringHiddenDock.origin.x));
-                frame.origin.x += freeSpaceOnLeft;
+                if (!preserveSize) {
+                    frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
+                }
+                frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
                 frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
                 frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
@@ -2646,18 +2680,20 @@ ITERM_WEAKLY_REFERENCEABLE
             edgeSpanning = NO;
         case WINDOW_TYPE_BOTTOM:
             PtyLog(@"Window type = BOTTOM, desired rows=%d", desiredRows_);
-            // If the screen grew and the window was smaller than the desired number of rows, grow it.
-            if (desiredRows_ > 0) {
-                frame.size.height = MIN(screenVisibleFrame.size.height,
-                                        ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
-            } else {
-                frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
+            if (!preserveSize) {
+                // If the screen grew and the window was smaller than the desired number of rows, grow it.
+                if (desiredRows_ > 0) {
+                    frame.size.height = MIN(screenVisibleFrame.size.height,
+                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+                } else {
+                    frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
+                }
             }
             if (!edgeSpanning) {
-                frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
-                frame.origin.x = MAX(frame.origin.x, screenVisibleFrameIgnoringHiddenDock.origin.x);
-                double freeSpaceOnLeft = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width - (frame.origin.x - screenVisibleFrameIgnoringHiddenDock.origin.x));
-                frame.origin.x += freeSpaceOnLeft;
+                if (!preserveSize) {
+                    frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
+                }
+                frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
                 frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
                 frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
@@ -2665,7 +2701,7 @@ ITERM_WEAKLY_REFERENCEABLE
             frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
 
             if (frame.size.width > 0) {
-                [[self window] setFrame:frame display:YES];
+                return frame;
             }
             break;
 
@@ -2674,18 +2710,20 @@ ITERM_WEAKLY_REFERENCEABLE
             // Fall through
         case WINDOW_TYPE_LEFT:
             PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
-            // If the screen grew and the window was smaller than the desired number of columns, grow it.
-            if (desiredColumns_ > 0) {
-                frame.size.width = MIN(screenVisibleFrame.size.width,
-                                       [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
-            } else {
-                frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
+            if (!preserveSize) {
+                // If the screen grew and the window was smaller than the desired number of columns, grow it.
+                if (desiredColumns_ > 0) {
+                    frame.size.width = MIN(screenVisibleFrame.size.width,
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
+                } else {
+                    frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
+                }
             }
             if (!edgeSpanning) {
-                frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
-                frame.origin.y = MAX(frame.origin.y, screenVisibleFrameIgnoringHiddenDock.origin.y);
-                double freeSpaceOnBottom = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height - (frame.origin.y - screenVisibleFrameIgnoringHiddenDock.origin.y));
-                frame.origin.y += freeSpaceOnBottom;
+                if (!preserveSize) {
+                    frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
+                }
+                frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
                 frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
                 frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
@@ -2699,18 +2737,20 @@ ITERM_WEAKLY_REFERENCEABLE
             // Fall through
         case WINDOW_TYPE_RIGHT:
             PtyLog(@"Window type = RIGHT, desired cols=%d", desiredColumns_);
-            // If the screen grew and the window was smaller than the desired number of columns, grow it.
-            if (desiredColumns_ > 0) {
-                frame.size.width = MIN(screenVisibleFrame.size.width,
-                                       [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
-            } else {
-                frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
+            if (!preserveSize) {
+                // If the screen grew and the window was smaller than the desired number of columns, grow it.
+                if (desiredColumns_ > 0) {
+                    frame.size.width = MIN(screenVisibleFrame.size.width,
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
+                } else {
+                    frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
+                }
             }
             if (!edgeSpanning) {
-                frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
-                frame.origin.y = MAX(frame.origin.y, screenVisibleFrameIgnoringHiddenDock.origin.y);
-                double freeSpaceOnBottom = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height - (frame.origin.y - screenVisibleFrameIgnoringHiddenDock.origin.y));
-                frame.origin.y += freeSpaceOnBottom;
+                if (!preserveSize) {
+                    frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
+                }
+                frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
                 frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
                 frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
@@ -2724,7 +2764,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
-            return self.window.frame;
+            return frame;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
@@ -3418,15 +3458,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
     NSScreen *screen = self.window.screen;
-    NSRect frame = self.window.frame;
-    CGRect screenVisibleFrame = [screen visibleFrame];
-    CGRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
+
+    // Canonicalize the frame so that centered windows stay centered, edge-attached windows stay edge
+    // attached.
+    NSRect frame = [self canonicalFrameForScreen:self.window.screen windowFrame:self.window.frame preserveSize:YES];
+    NSRect screenFrameForEdgeSpanningWindow = [self screenFrameForEdgeSpanningWindows:screen];
 
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
-            frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
-            if ((frame.size.width < screenVisibleFrameIgnoringHiddenDock.size.width)) {
+            if ((frame.size.width < screenFrameForEdgeSpanningWindow.size.width)) {
                 windowType_ = WINDOW_TYPE_TOP_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_TOP;
@@ -3440,8 +3481,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
-            if (frame.size.width < screenVisibleFrameIgnoringHiddenDock.size.width) {
+            if (frame.size.width < screenFrameForEdgeSpanningWindow.size.width) {
                 windowType_ = WINDOW_TYPE_BOTTOM_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_BOTTOM;
@@ -3451,8 +3491,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
-            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
-            if (frame.size.height < screenVisibleFrameIgnoringHiddenDock.size.height) {
+            if (frame.size.height < screenFrameForEdgeSpanningWindow.size.height) {
                 windowType_ = WINDOW_TYPE_LEFT_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_LEFT;
@@ -3462,8 +3501,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
-            if (frame.size.height < screenVisibleFrameIgnoringHiddenDock.size.height) {
+            if (frame.size.height < screenFrameForEdgeSpanningWindow.size.height) {
                 windowType_ = WINDOW_TYPE_RIGHT_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_RIGHT;
@@ -5398,61 +5436,10 @@ ITERM_WEAKLY_REFERENCEABLE
     // for _PARTIAL window types.
     DLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
          NSStringFromRect(self.screen.frame));
-    switch (windowType_) {
-        case WINDOW_TYPE_BOTTOM:
-            frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
-            frame.size.width = [[self window] frame].size.width;
-            frame.origin.x = [[self window] frame].origin.x;
-            break;
 
-        case WINDOW_TYPE_TOP:
-            frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
-            frame.size.width = [[self window] frame].size.width;
-            frame.origin.x = [[self window] frame].origin.x;
-            break;
-
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-            frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
-            frame.size.height = self.screen.visibleFrameIgnoringHiddenDock.size.height;
-
-            PTYSession* session = [self currentSession];
-            if (desiredColumns_ > 0) {
-                frame.size.width = MIN(winSize.width,
-                                       ceil([[session textview] charWidth] *
-                                            desiredColumns_) + decorationSize.width + 2 * MARGIN);
-            } else {
-                frame.size.width = winSize.width;
-            }
-            if (windowType_ == WINDOW_TYPE_RIGHT) {
-                frame.origin.x = [[self window] frame].origin.x + [[self window] frame].size.width - frame.size.width;
-            } else {
-                frame.origin.x = [[self window] frame].origin.x;
-            }
-            break;
-
-        case WINDOW_TYPE_TOP_PARTIAL:
-            frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
-            break;
-
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-            frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
-            break;
-
-        case WINDOW_TYPE_LEFT_PARTIAL:
-            frame.origin.x = self.screen.visibleFrameIgnoringHiddenDock.origin.x;
-            break;
-
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-            frame.origin.x = self.screen.visibleFrameIgnoringHiddenDock.origin.x + self.screen.visibleFrameIgnoringHiddenDock.size.width - frame.size.width;
-            break;
-            
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            break;
-    }
+    // Update the frame for the window style, but don't mess with the size we've computed except
+    // as needed (e.g., for edge-spanning x-of-screen windows).
+    frame = [self canonicalFrameForScreen:self.screen windowFrame:frame preserveSize:YES];
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     DLog(@"Set window frame to %@", NSStringFromRect(frame));

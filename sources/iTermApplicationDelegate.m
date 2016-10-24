@@ -641,8 +641,7 @@ static BOOL hasBecomeActive = NO;
     DLog(@"applicationWillTerminate returning");
 }
 
-- (PseudoTerminal *)terminalToOpenFileIn
-{
+- (PseudoTerminal *)terminalToOpenFileIn {
     if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
         return nil;
     } else {
@@ -704,7 +703,14 @@ static BOOL hasBecomeActive = NO;
             }
         }
 
-        [controller launchBookmark:bookmark inTerminal:[self terminalToOpenFileIn]];
+        PseudoTerminal *term = [self terminalToOpenFileIn];
+        [controller launchBookmark:bookmark inTerminal:term];
+
+        // If term is a hotkey window, reveal it.
+        iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+        if (profileHotkey) {
+            [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+        }
     }
     return (YES);
 }
@@ -887,6 +893,16 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (iTermProfileHotKey *)currentProfileHotkey {
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    return [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+}
+
+- (IBAction)togglePinHotkeyWindow:(id)sender {
+    iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
+    profileHotkey.pinned = !profileHotkey.pinned;
+}
+
 - (IBAction)openPasswordManager:(id)sender {
     DLog(@"Menu item selected");
     [self openPasswordManagerToAccountName:nil inSession:nil];
@@ -957,7 +973,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
-    NSURL *url = [NSURL URLWithString: urlStr];
+    NSURL *url = [NSURL URLWithString:urlStr];
     NSString *scheme = [url scheme];
 
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
@@ -965,15 +981,29 @@ static BOOL hasBecomeActive = NO;
         profile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (profile) {
+        iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:profile[KEY_GUID]];
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:term
-                                                 withURL:urlStr
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:NO
-                                             canActivate:NO
-                                                 command:nil
-                                                   block:nil];
+        BOOL launch = NO;
+        if (profileHotkey) {
+            const BOOL newWindowCreated = [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey
+                                                                                                         url:url];
+            if (!newWindowCreated) {
+                launch = YES;
+                term = profileHotkey.windowController;
+            }
+        } else {
+            launch = YES;
+        }
+        if (launch) {
+            [[iTermController sharedInstance] launchBookmark:profile
+                                                  inTerminal:term
+                                                     withURL:urlStr
+                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                     makeKey:NO
+                                                 canActivate:NO
+                                                     command:nil
+                                                       block:nil];
+        }
     }
 }
 
@@ -1776,6 +1806,10 @@ static BOOL hasBecomeActive = NO;
     } else if ([menuItem action] == @selector(toggleSecureInput:)) {
         menuItem.state = IsSecureEventInputEnabled() ? NSOnState : NSOffState;
         return YES;
+    } else if ([menuItem action] == @selector(togglePinHotkeyWindow:)) {
+        iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
+        menuItem.state = profileHotkey.pinned ? NSOnState : NSOffState;
+        return profileHotkey != nil;
     } else {
         return YES;
     }

@@ -31,8 +31,10 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 // Returns the profile hotkey, if any, associated with a profile GUID.
 - (iTermProfileHotKey *)profileHotKeyForGUID:(NSString *)guid;
 
-// Reveal the hotkey window, creating it if needed.
-- (void)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey;
+// Reveal the hotkey window, creating it if needed. If url is non-nil and the window doesn't exist
+// yet its initial session will be opened to this URL. Returns YES if a new window was created,
+// or NO if an existing window was used.
+- (BOOL)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey url:(NSURL *)url;
 
 // Indicates if the event is a hotkey event. Assumes the event is a keydown event.
 - (BOOL)eventIsHotkey:(NSEvent *)event;

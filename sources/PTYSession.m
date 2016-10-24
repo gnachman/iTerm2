@@ -6423,7 +6423,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([terminal isHotKeyWindow]) {
         DLog(@"Showing hotkey window");
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)terminal];
-        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey];
+        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
         okToActivateApp = (hotKey.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel);
     } else {
         DLog(@"Making window current");

@@ -44,6 +44,9 @@
 // This is computed based on the current settings of the profile we were created with.
 @property(nonatomic, readonly) iTermHotkeyWindowType hotkeyWindowType;
 
+// If YES, then -autoHides will return NO.
+@property(nonatomic) BOOL pinned;
+
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
             hasModifierActivation:(BOOL)hasModifierActivation
                modifierActivation:(iTermHotKeyModifierActivation)modifierActivation
@@ -70,6 +73,7 @@
 
 - (void)createWindow;
 - (void)showHotKeyWindow;
+- (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url;
 - (void)saveHotKeyWindowState;
 - (BOOL)loadRestorableStateFromArray:(NSArray *)states;
 - (void)setLegacyState:(NSDictionary *)state;
