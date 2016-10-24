@@ -31,6 +31,7 @@ static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 static const CGFloat kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode = 7;
 static const CGFloat kSideMarginsWithinInnerTabView = 11;
 NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEditing";
+NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChange";
 
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
@@ -711,6 +712,11 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
 
 - (void)profilesGeneralPreferencesNameDidEndEditing {
     [[NSNotificationCenter defaultCenter] postNotificationName:kProfileSessionNameDidEndEditing
+                                                        object:[_profilesListView selectedGuid]];
+}
+
+- (void)profilesGeneralPreferencesSessionHotkeyDidChange {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kProfileSessionHotkeyDidChange
                                                         object:[_profilesListView selectedGuid]];
 }
 

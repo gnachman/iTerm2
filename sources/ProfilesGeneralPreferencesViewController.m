@@ -461,6 +461,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     [self setObject:view.shortcut.dictionaryValue forKey:KEY_SESSION_HOTKEY];
+    [_profileDelegate profilesGeneralPreferencesSessionHotkeyDidChange];
 }
 
 @end

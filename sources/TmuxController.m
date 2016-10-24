@@ -126,6 +126,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
     NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
     BOOL ambiguousIsDoubleWidth_;
+    NSMutableDictionary<NSNumber *, NSDictionary *> *_hotkeys;
 
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
@@ -149,6 +150,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         origins_ = [[NSMutableDictionary alloc] init];
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
         hiddenWindows_ = [[NSMutableSet alloc] init];
+        _hotkeys = [[NSMutableDictionary alloc] init];
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
@@ -170,6 +172,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [lastOrigins_ release];
     [_sessionGuid release];
     [_windowOpenerOptions release];
+    [_hotkeys release];
     [super dealloc];
 }
 
@@ -388,6 +391,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
     NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @origins", sessionId_];
+    NSString *getHotkeysCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hotkeys", sessionId_];
     NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hidden", sessionId_];
     NSArray *commands = @[ [gateway_ dictionaryForCommand:getSessionGuidCommand
                                            responseTarget:self
@@ -412,6 +416,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            [gateway_ dictionaryForCommand:getOriginsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getOriginsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:getHotkeysCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getHotkeysResponse:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:listSessionsCommand
@@ -832,6 +841,22 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
+- (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)dict {
+    _hotkeys[@(windowPane)] = dict;
+
+    NSString *command = [NSString stringWithFormat:@"set -t $%d @hotkeys \"%@\"",
+                         sessionId_, [self.hotkeysString stringByEscapingQuotes]];
+    [gateway_ sendCommand:command
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:0];
+}
+
+- (NSDictionary *)hotkeyForWindowPane:(int)windowPane {
+    return _hotkeys[@(windowPane)];
+}
+
 - (void)killWindow:(int)window
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
@@ -1237,6 +1262,31 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
       }
     }
   }
+}
+
+- (NSString *)hotkeysString {
+    // Convert number->dict to string->dict to be an acceptable JSON input.
+    NSMutableDictionary<NSString *, NSDictionary *> *hotkeysWithStringKeys = [NSMutableDictionary dictionary];
+    [_hotkeys enumerateKeysAndObjectsUsingBlock:^(NSNumber *  _Nonnull key, NSDictionary *_Nonnull obj, BOOL * _Nonnull stop) {
+        hotkeysWithStringKeys[key.stringValue] = obj;
+    }];
+    return [[[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:hotkeysWithStringKeys
+                                                                           options:0
+                                                                             error:nil]
+                                  encoding:NSUTF8StringEncoding] autorelease];
+}
+
+- (void)getHotkeysResponse:(NSString *)result {
+    [_hotkeys removeAllObjects];
+    if (result.length > 0) {
+        NSDictionary *hotkeysWithStringKeys = [NSJSONSerialization JSONObjectWithData:[result dataUsingEncoding:NSUTF8StringEncoding]
+                                                                              options:0
+                                                                                error:nil];
+        [_hotkeys removeAllObjects];
+        [hotkeysWithStringKeys enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSDictionary * _Nonnull obj, BOOL * _Nonnull stop) {
+            _hotkeys[@(key.intValue)] = obj;
+        }];
+    }
 }
 
 - (int)windowIdFromString:(NSString *)s
