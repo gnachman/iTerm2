@@ -472,6 +472,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                                                  selector:@selector(profileSessionNameDidEndEditing:)
                                                      name:kProfileSessionNameDidEndEditing
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionHotkeyDidChange:)
+                                                     name:kProfileSessionHotkeyDidChange
+                                                   object:nil];
         // Detach before windows get closed. That's why we have to use the
         // iTermApplicationWillTerminate notification instead of
         // NSApplicationWillTerminate, since this gets run before the windows
@@ -766,12 +770,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
 
-    NSDictionary *shortcutDictionary = arrangement[SESSION_ARRANGEMENT_HOTKEY];
-    if (shortcutDictionary) {
-        [[iTermSessionHotkeyController sharedInstance] setShortcut:[iTermShortcut shortcutWithDictionary:shortcutDictionary]
-                                                        forSession:aSession];
-    }
-
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
     } else {
@@ -904,6 +902,15 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession divorceAddressBookEntryFromPreferences];
         [aSession sessionProfileDidChange];
     }
+
+    // This is done after divorce out of paranoia, since it will modify the profile.
+    NSDictionary *shortcutDictionary = arrangement[SESSION_ARRANGEMENT_HOTKEY];
+    if (shortcutDictionary) {
+        [[iTermSessionHotkeyController sharedInstance] setShortcut:[iTermShortcut shortcutWithDictionary:shortcutDictionary]
+                                                        forSession:aSession];
+        [aSession setSessionSpecificProfileValues:@{ KEY_SESSION_HOTKEY: shortcutDictionary }];
+    }
+
 
     if (tmuxPaneNumber) {
         [aSession setTmuxPane:[tmuxPaneNumber intValue]];
@@ -3454,6 +3461,10 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = [bookmark objectForKey:KEY_NAME];
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    NSDictionary *hotkey = parseNode[kLayoutDictHotkeyKey];
+    if (hotkey) {
+        [result setObject:hotkey forKey:SESSION_ARRANGEMENT_HOTKEY];
+    }
     NSObject *value = [parseNode objectForKey:kLayoutDictHistoryKey];
     if (value) {
         [result setObject:value forKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
@@ -3704,6 +3715,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                   inSession:nil
                                      toName:profile[KEY_NAME]];
         _tmuxTitleOutOfSync = NO;
+    }
+    [self sanityCheck];
+}
+
+- (void)sessionHotkeyDidChange:(NSNotification *)notification {
+    NSString *theGuid = [notification object];
+    if ([self isTmuxClient] &&
+        [theGuid isEqualToString:_profile[KEY_GUID]]) {
+        Profile *profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:theGuid];
+        NSDictionary *dict = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:profile];
+        [_tmuxController setHotkeyForWindowPane:_tmuxPane to:dict];
     }
     [self sanityCheck];
 }

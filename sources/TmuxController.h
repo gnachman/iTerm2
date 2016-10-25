@@ -112,6 +112,9 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
 - (void)requestDetach;
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
+- (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)hotkey;
+- (NSDictionary *)hotkeyForWindowPane:(int)windowPane;
+
 - (void)linkWindowId:(int)windowId
            inSession:(NSString *)sessionName
            toSession:(NSString *)targetSession;

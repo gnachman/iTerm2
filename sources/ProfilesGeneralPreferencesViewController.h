@@ -17,6 +17,8 @@
 
 - (void)profilesGeneralPreferencesNameDidChange;
 
+- (void)profilesGeneralPreferencesSessionHotkeyDidChange;
+
 @end
 
 @interface ProfilesGeneralPreferencesViewController : iTermProfilePreferencesBaseViewController

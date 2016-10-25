@@ -27,6 +27,7 @@ extern NSString *kLayoutDictPixelHeightKey;
 extern NSString *kLayoutDictHistoryKey;       // Array of screen_char_t-filled NSData
 extern NSString *kLayoutDictAltHistoryKey;    // Alternate screen history
 extern NSString *kLayoutDictStateKey;         // see TmuxStateParser
+extern NSString *kLayoutDictHotkeyKey;        // Session hotkey dictionary
 
 typedef NS_ENUM(NSInteger, LayoutNodeType) {
     kLeafLayoutNode,
