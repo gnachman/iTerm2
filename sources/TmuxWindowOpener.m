@@ -432,6 +432,11 @@ static int OctalValue(const char *bytes) {
         [parseTree setObject:state forKey:kLayoutDictStateKey];
     }
 
+    NSDictionary *hotkey = [controller_ hotkeyForWindowPane:n.intValue];
+    if (hotkey) {
+        parseTree[kLayoutDictHotkeyKey] = hotkey;
+    }
+
     return nil;
 }
 

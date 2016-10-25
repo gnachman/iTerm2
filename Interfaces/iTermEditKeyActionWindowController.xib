@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16A320" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermEditKeyActionWindowController">
@@ -57,7 +57,7 @@
                             <popUpButton verticalHuggingPriority="750" id="GMz-jA-Nhg">
                                 <rect key="frame" x="146" y="88" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <popUpButtonCell key="cell" type="push" title="Ignore" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" tag="13" inset="2" pullsDown="YES" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="NkH-n8-Fjv">
+                                <popUpButtonCell key="cell" type="push" title="Select Action" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" tag="999" inset="2" pullsDown="YES" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="NkH-n8-Fjv">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="menu"/>
                                     <menu key="menu" title="OtherViews" id="BCW-Et-dPr">
@@ -166,7 +166,7 @@
                                             </menuItem>
                                             <menuItem isSeparatorItem="YES" id="2kX-33-g8o"/>
                                             <menuItem title="Toggle Fullscreen" tag="23" id="SzE-61-BL1"/>
-                                            <menuItem title="Toggle Hotkey Hides When Focus Lost" tag="43" id="foW-Ca-dgS">
+                                            <menuItem title="Toggle Pin Hotkey Window" tag="43" id="foW-Ca-dgS">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
                                             <menuItem isSeparatorItem="YES" id="svX-cj-e8M"/>

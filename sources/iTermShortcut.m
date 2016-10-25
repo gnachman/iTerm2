@@ -13,10 +13,14 @@
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 
+// IMPORTANT: When adding to this list also update the short string class methods.
 static NSString *const kKeyCode = @"keyCode";
 static NSString *const kModifiers = @"modifiers";
 static NSString *const kCharacters = @"characters";
 static NSString *const kCharactersIgnoringModifiers = @"charactersIgnoringModifiers";
+
+// Only append to this string! Its indexes count. Never make it longer than 10 characters. backslash -> \0, comma -> \1, space -> \2.
+static NSString *sCharsToEscape = @"\\, ";
 
 CGFloat kShortcutPreferredHeight = 22;
 
@@ -30,6 +34,51 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 
 @implementation iTermShortcut {
     NSEventModifierFlags _modifiers;
+}
+
++ (NSString *)escapedString:(NSString *)input {
+    NSString *escaped = input;
+    for (NSUInteger i = 0; i < sCharsToEscape.length; i++) {
+        NSString *replacement = [NSString stringWithFormat:@"\\%d", (int)i];
+        escaped = [escaped stringByReplacingOccurrencesOfString:[sCharsToEscape substringWithRange:NSMakeRange(i, 1)]
+                                                     withString:replacement];
+    }
+    return escaped;
+}
+
++ (NSString *)shortStringForDictionary:(NSDictionary *)dict {
+    return [NSString stringWithFormat:@"%@,%@,%@,%@", dict[kKeyCode], dict[kModifiers], [self escapedString:dict[kCharacters]], [self escapedString:dict[kCharactersIgnoringModifiers]]];
+}
+
++ (NSDictionary *)dictionaryForShortString:(NSString *)string {
+    NSMutableString *temp = [NSMutableString string];
+    NSMutableArray *parts = [NSMutableArray array];
+    BOOL esc = NO;
+    for (int i = 0; i < string.length; i++) {
+        unichar c = [string characterAtIndex:i];
+        if (esc) {
+            int j = (int)c - '0';
+            if (j >= 0 && j < sCharsToEscape.length) {
+                [temp appendCharacter:[sCharsToEscape characterAtIndex:j]];
+            }
+            esc = NO;
+        } else if (c == '\\') {
+            esc = YES;
+        } else if (c == ',') {
+            [parts addObject:temp];
+            temp = [NSMutableString string];
+        } else {
+            [temp appendCharacter:c];
+        }
+    }
+    [parts addObject:temp];
+    if (parts.count < 4) {
+        return nil;
+    }
+    return @{ kKeyCode: @([parts[0] iterm_unsignedIntegerValue]),
+              kModifiers: @([parts[1] iterm_unsignedIntegerValue]),
+              kCharacters: parts[2],
+              kCharactersIgnoringModifiers: parts[3] };
 }
 
 + (NSArray<iTermShortcut *> *)shortcutsForProfile:(Profile *)profile {

@@ -11,6 +11,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermShortcut.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -126,6 +127,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
     NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
     BOOL ambiguousIsDoubleWidth_;
+    NSMutableDictionary<NSNumber *, NSDictionary *> *_hotkeys;
+    NSMutableSet<NSNumber *> *_paneIDs;  // existing pane IDs
 
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
@@ -143,12 +146,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     self = [super init];
     if (self) {
         gateway_ = [gateway retain];
+        _paneIDs = [[NSMutableSet alloc] init];
         windowPanes_ = [[NSMutableDictionary alloc] init];
         windows_ = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
         origins_ = [[NSMutableDictionary alloc] init];
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
         hiddenWindows_ = [[NSMutableSet alloc] init];
+        _hotkeys = [[NSMutableDictionary alloc] init];
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
@@ -158,6 +163,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)dealloc {
     [_clientName release];
+    [_paneIDs release];
     [gateway_ release];
     [windowPanes_ release];
     [windows_ release];
@@ -170,6 +176,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [lastOrigins_ release];
     [_sessionGuid release];
     [_windowOpenerOptions release];
+    [_hotkeys release];
     [super dealloc];
 }
 
@@ -388,6 +395,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
     NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @origins", sessionId_];
+    NSString *getHotkeysCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hotkeys", sessionId_];
     NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hidden", sessionId_];
     NSArray *commands = @[ [gateway_ dictionaryForCommand:getSessionGuidCommand
                                            responseTarget:self
@@ -412,6 +420,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            [gateway_ dictionaryForCommand:getOriginsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getOriginsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:getHotkeysCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getHotkeysResponse:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:listSessionsCommand
@@ -832,6 +845,42 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
+- (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)dict {
+    _hotkeys[@(windowPane)] = dict;
+
+    // First get a list of existing panes so we can avoid setting hotkeys for any nonexistent panes. Keeps the string from getting too long.
+    NSString *getPaneIDsCommand = [NSString stringWithFormat:@"list-panes -s -t $%d -F \"#{pane_id}\"", sessionId_];
+    [gateway_ sendCommand:getPaneIDsCommand
+           responseTarget:self
+         responseSelector:@selector(getPaneIDsResponseAndSetHotkeys:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)getPaneIDsResponseAndSetHotkeys:(NSString *)response {
+    [_paneIDs removeAllObjects];
+    for (NSString *pane in [response componentsSeparatedByString:@"\n"]) {
+        if (pane.length) {
+            [_paneIDs addObject:@([[pane substringFromIndex:1] intValue])];
+        }
+    }
+    [self sendCommandToSetHotkeys];
+}
+
+- (void)sendCommandToSetHotkeys {
+    NSString *command = [NSString stringWithFormat:@"set -t $%d @hotkeys \"%@\"",
+                         sessionId_, [self.hotkeysString stringByEscapingQuotes]];
+    [gateway_ sendCommand:command
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:0];
+}
+
+- (NSDictionary *)hotkeyForWindowPane:(int)windowPane {
+    return _hotkeys[@(windowPane)];
+}
+
 - (void)killWindow:(int)window
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
@@ -1237,6 +1286,40 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
       }
     }
   }
+}
+
+- (NSString *)shortStringForHotkeyDictionary:(NSDictionary *)dict paneID:(int)wp {
+    return [NSString stringWithFormat:@"%d=%@", wp, [iTermShortcut shortStringForDictionary:dict]];
+}
+
+- (NSString *)hotkeysString {
+    NSMutableArray *parts = [NSMutableArray array];
+    [_hotkeys enumerateKeysAndObjectsUsingBlock:^(NSNumber *  _Nonnull key, NSDictionary *_Nonnull obj, BOOL * _Nonnull stop) {
+        if ([_paneIDs containsObject:key]) {
+            [parts addObject:[self shortStringForHotkeyDictionary:obj paneID:key.intValue]];
+        }
+    }];
+
+    return [parts componentsJoinedByString:@" "];
+}
+
+- (void)getHotkeysResponse:(NSString *)result {
+    [_hotkeys removeAllObjects];
+    if (result.length > 0) {
+        [_hotkeys removeAllObjects];
+        NSArray *parts = [result componentsSeparatedByString:@" "];
+        for (NSString *part in parts) {
+            NSInteger equals = [part rangeOfString:@"="].location;
+            if (equals != NSNotFound && equals + 1 < part.length) {
+                NSString *wp = [part substringToIndex:equals];
+                NSString *shortString = [part substringFromIndex:equals + 1];
+                NSDictionary *dict = [iTermShortcut dictionaryForShortString:shortString];
+                if (dict) {
+                    _hotkeys[@(wp.intValue)] = dict;
+                }
+            }
+        }
+    }
 }
 
 - (int)windowIdFromString:(NSString *)s

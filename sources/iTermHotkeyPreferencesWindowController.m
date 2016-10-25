@@ -23,7 +23,7 @@
     IBOutlet NSPopUpButton *_modifierActivation;
 
     // Check boxes
-    IBOutlet NSButton *_autoHide;
+    IBOutlet NSButton *_pinned;
     IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
     IBOutlet NSButton *_animate;
     IBOutlet NSButton *_floats;
@@ -79,14 +79,14 @@
 
 - (void)updateViewsEnabled {
     NSArray<NSView *> *buttons =
-        @[ _autoHide, _showAutoHiddenWindowOnAppActivation, _animate, _floats, _doNotShowOnDockClick,
+        @[ _pinned, _showAutoHiddenWindowOnAppActivation, _animate, _floats, _doNotShowOnDockClick,
            _alwaysShowOnDockClick, _showIfNoWindowsOpenOnDockClick ];
     for (NSButton *button in buttons) {
         button.enabled = self.model.hotKeyAssigned;
     }
     _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.model.primaryShortcut.descriptor];
     _duplicateWarningForModifierActivation.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.modifierActivationDescriptor];
-    _showAutoHiddenWindowOnAppActivation.enabled = (self.model.hotKeyAssigned && _autoHide.state == NSOnState);
+    _showAutoHiddenWindowOnAppActivation.enabled = (self.model.hotKeyAssigned && _pinned.state == NSOffState);
     _modifierActivation.enabled = (_activateWithModifier.state == NSOnState);
     _editAdditionalButton.enabled = self.model.primaryShortcut.isAssigned;
 }
@@ -104,7 +104,7 @@
     [_modifierActivation selectItemWithTag:_model.modifierActivation];
     [_hotKey setShortcut:_model.primaryShortcut];
 
-    _autoHide.state = _model.autoHide ? NSOnState : NSOffState;
+    _pinned.state = _model.autoHide ? NSOffState : NSOnState;
     _showAutoHiddenWindowOnAppActivation.enabled = _model.autoHide;
     _showAutoHiddenWindowOnAppActivation.state = _model.showAutoHiddenWindowOnAppActivation ? NSOnState : NSOffState;
     _animate.state = _model.animate ? NSOnState : NSOffState;
@@ -136,7 +136,7 @@
     _model.hasModifierActivation = _activateWithModifier.state == NSOnState;
     _model.modifierActivation = [_modifierActivation selectedTag];
 
-    _model.autoHide = _autoHide.state == NSOnState;
+    _model.autoHide = _pinned.state == NSOffState;
     _model.showAutoHiddenWindowOnAppActivation = _showAutoHiddenWindowOnAppActivation.state == NSOnState;
     _model.animate = _animate.state == NSOnState;
     _model.floats = _floats.state == NSOnState;

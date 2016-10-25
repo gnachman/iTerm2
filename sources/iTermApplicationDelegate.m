@@ -900,7 +900,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)togglePinHotkeyWindow:(id)sender {
     iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
-    profileHotkey.pinned = !profileHotkey.pinned;
+    profileHotkey.autoHides = !profileHotkey.autoHides;
 }
 
 - (IBAction)openPasswordManager:(id)sender {
@@ -1808,7 +1808,7 @@ static BOOL hasBecomeActive = NO;
         return YES;
     } else if ([menuItem action] == @selector(togglePinHotkeyWindow:)) {
         iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
-        menuItem.state = profileHotkey.pinned ? NSOnState : NSOffState;
+        menuItem.state = profileHotkey.autoHides ? NSOffState : NSOnState;
         return profileHotkey != nil;
     } else {
         return YES;
