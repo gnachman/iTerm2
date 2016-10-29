@@ -346,7 +346,15 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _cursorGuideSettingHasChanged;
 
     // Number of bytes received since an echo probe was sent.
-    int _bytesReceivedSinceSendingEchoProbe;
+    enum {
+        iTermEchoProbeOff = 0,
+        iTermEchoProbeWaiting = 1,
+        iTermEchoProbeOneAsterisk = 2,
+        iTermEchoProbeBackspaceOverAsterisk = 3,
+        iTermEchoProbeSpaceOverAsterisk = 4,
+        iTermEchoProbeBackspaceOverSpace = 5,
+        iTermEchoProbeFailed = 6,
+    } _echoProbeState;
 
     // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
     // checking long lines over and over.
@@ -1754,10 +1762,64 @@ ITERM_WEAKLY_REFERENCEABLE
     [self performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
 }
 
+- (void)updateEchoProbeStateWithBuffer:(char *)buffer length:(int)length {
+    for (int i = 0; i < length; i++) {
+        switch (_echoProbeState) {
+            case iTermEchoProbeOff:
+            case iTermEchoProbeFailed:
+                return;
+
+            case iTermEchoProbeWaiting:
+                if (buffer[i] == '*') {
+                    _echoProbeState = iTermEchoProbeOneAsterisk;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeOneAsterisk:
+                if (buffer[i] == '\b') {
+                    _echoProbeState = iTermEchoProbeBackspaceOverAsterisk;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeBackspaceOverAsterisk:
+                if (buffer[i] == ' ') {
+                    _echoProbeState = iTermEchoProbeSpaceOverAsterisk;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeSpaceOverAsterisk:
+                if (buffer[i] == '\b') {
+                    _echoProbeState = iTermEchoProbeBackspaceOverSpace;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeBackspaceOverSpace:
+                _echoProbeState = iTermEchoProbeFailed;
+                return;
+        }
+    }
+}
+
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
-    OSAtomicAdd32(length, &_bytesReceivedSinceSendingEchoProbe);
+    @synchronized (self) {
+        if (_echoProbeState != iTermEchoProbeOff) {
+            [self updateEchoProbeStateWithBuffer:buffer length:length];
+        }
+    }
 
     // Pass the input stream to the parser.
     [_terminal.parser putStreamData:buffer length:length];
@@ -3972,7 +4034,9 @@ ITERM_WEAKLY_REFERENCEABLE
         // send the password. Otherwise, ask for confirmation.
         [self writeTaskNoBroadcast:@" "];
         [self writeLatin1EncodedData:backspace broadcastAllowed:NO];
-        _bytesReceivedSinceSendingEchoProbe = 0;
+        @synchronized(self) {
+            _echoProbeState = iTermEchoProbeWaiting;
+        }
         [self performSelector:@selector(enterPasswordIfEchoProbeOk:)
                    withObject:password
                    afterDelay:[iTermAdvancedSettingsModel echoProbeDuration]];
@@ -3983,17 +4047,36 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)enterPasswordIfEchoProbeOk:(NSString *)password {
-    if (_bytesReceivedSinceSendingEchoProbe == 0) {
-        // It looks like we're at a password prompt. Send the password.
-        [self enterPasswordNoProbe:password];
-    } else {
-        if ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
-                                               @"like what you're typing is echoed to the screen."
-                                       actions:@[ @"Cancel", @"Enter Password" ]
-                                    identifier:nil
-                                   silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1) {
-            [self enterPasswordNoProbe:password];
+    BOOL ok = NO;
+    BOOL prompt = NO;
+    @synchronized (self) {
+        switch (_echoProbeState) {
+            case iTermEchoProbeWaiting:
+            case iTermEchoProbeBackspaceOverSpace:
+                // It looks like we're at a password prompt. Send the password.
+                ok = YES;
+                break;
+
+            case iTermEchoProbeFailed:
+            case iTermEchoProbeOff:
+            case iTermEchoProbeSpaceOverAsterisk:
+            case iTermEchoProbeBackspaceOverAsterisk:
+            case iTermEchoProbeOneAsterisk:
+                prompt = YES;
+                break;
         }
+        _echoProbeState = iTermEchoProbeOff;
+    }
+
+    if (prompt) {
+        ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
+                                                 @"like what you're typing is echoed to the screen."
+                                         actions:@[ @"Cancel", @"Enter Password" ]
+                                      identifier:nil
+                                     silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1);
+    }
+    if (ok) {
+        [self enterPasswordNoProbe:password];
     }
 }
 
