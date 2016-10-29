@@ -595,6 +595,7 @@ static BOOL hasBecomeActive = NO;
         } else {
             message = @"All sessions will be closed.";
         }
+        [NSApp activateIgnoringOtherApps:YES];
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
                                        @"%@",
                                        @"OK",
