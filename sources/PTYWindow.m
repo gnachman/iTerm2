@@ -387,6 +387,9 @@ end:
 }
 
 - (void)setAlphaValue:(CGFloat)alphaValue {
+    DLog(@"Alpha value changed to %@ from %@", @(alphaValue), [NSThread callStackSymbols]);
+    AppendPinnedDebugLogMessage(@"PTYWindow.setAlphaValue",
+                                @"WINDOW: %@  WINDOW CONTROLLER: %@   Alpha changed to %@ from %@", self, self.delegate, @(alphaValue), [NSThread callStackSymbols]);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super setAlphaValue:alphaValue];
