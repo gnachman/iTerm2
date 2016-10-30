@@ -936,7 +936,9 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
             } else {
                 [result appendString:string];
             }
-            [coords addObject:[NSValue valueWithGridCoord:coord]];
+            if (coords) {  // avoid creating NSValue when coords is nil
+                [coords addObject:[NSValue valueWithGridCoord:coord]];
+            }
         };
 
     if (attributeProvider) {
@@ -1318,22 +1320,24 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
                     charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock {
-    int width = [_dataSource width];
-    int startx = VT100GridWindowedRangeStart(range).x;
-    int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
-                                         : [_dataSource width];
-    int bound = [_dataSource numberOfLines] - 1;
-    BOOL fullWidth = ((range.columnWindow.location == 0 && range.columnWindow.length == width) ||
-                      range.columnWindow.length <= 0);
-    int left = range.columnWindow.length ? range.columnWindow.location : 0;
-    for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
+    const int width = [_dataSource width];
+    __block int startx = VT100GridWindowedRangeStart(range).x;
+    __block int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
+                                                 : [_dataSource width];
+    const int bound = [_dataSource numberOfLines] - 1;
+    const BOOL fullWidth = ((range.columnWindow.location == 0 && range.columnWindow.length == width) ||
+                            range.columnWindow.length <= 0);
+    const int left = range.columnWindow.length ? range.columnWindow.location : 0;
+
+    NSRange lineRange;
+    lineRange.location = MAX(0, range.coordRange.start.y);
+    lineRange.length = MIN(bound, range.coordRange.end.y) + 1 - lineRange.location;
+    [_dataSource enumerateLinesInRange:lineRange withBlock:^(int y, screen_char_t *theLine, BOOL *stopEnumeration) {
         if (y == range.coordRange.end.y) {
             // Reduce endx for last line.
             endx = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x
                                              : range.coordRange.end.x;
         }
-        screen_char_t *theLine = [_dataSource getLineAtIndex:y];
-
         // Count number of nulls at end of line.
         int numNulls = 0;
         for (int x = endx - 1; x >= range.columnWindow.location; x--) {
@@ -1357,6 +1361,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
         for (int x = MAX(range.columnWindow.location, startx); x < endx - numNulls; x++) {
             if (charBlock) {
                 if (charBlock(theLine, theLine[x], VT100GridCoordMake(x, y))) {
+                    *stopEnumeration = YES;
                     return;
                 }
             }
@@ -1374,11 +1379,12 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                 stop = eolBlock(numNulls ? EOL_HARD : EOL_SOFT, numNulls, y);
             }
             if (stop) {
+                *stopEnumeration = YES;
                 return;
             }
         }
         startx = left;
-    }
+    }];
 }
 
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range

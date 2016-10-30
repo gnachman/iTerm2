@@ -432,4 +432,15 @@ static const NSInteger kUnicodeVersion = 9;
     return 0;
 }
 
+- (void)enumerateLinesInRange:(NSRange)range withBlock:(void (^)(int, screen_char_t *, BOOL *))block {
+    for (NSInteger i = 0; i < range.length; i++) {
+        const int y = range.location + i;
+        BOOL stop = NO;
+        block(y, [self getLineAtIndex:y], &stop);
+        if (stop) {
+            break;
+        }
+    }
+}
+
 @end

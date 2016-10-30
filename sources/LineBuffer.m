@@ -49,7 +49,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 @implementation LineBuffer {
     // An array of LineBlock*s.
-    NSMutableArray* blocks;
+    NSMutableArray<LineBlock *>* blocks;
 
     // The default storage for a LineBlock (some may be larger to accomodate very long lines).
     int block_size;
@@ -419,21 +419,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (int)copyLineToBuffer:(screen_char_t *)buffer
                   width:(int)width
                 lineNum:(int)lineNum
-           continuation:(screen_char_t *)continuationPtr
-{
-    int line = lineNum;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex: i];
-        NSAssert(block, @"Null block");
+           continuation:(screen_char_t *)continuationPtr {
+    __block int line = lineNum;
+    __block int result = NO;
+    __block BOOL found = NO;
 
+    [blocks enumerateObjectsUsingBlock:^(LineBlock * _Nonnull block, NSUInteger i, BOOL * _Nonnull stop) {
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
         int block_lines = [block getNumLinesWithWrapWidth:width];
         if (block_lines < line) {
             line -= block_lines;
-            continue;
+            return;
         }
 
         int length;
@@ -451,13 +449,67 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             NSAssert(length <= width, @"Length too long");
             memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
             [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
-            return eol;
+            *stop = YES;
+            result = eol;
+            found = YES;
         }
-    }
-    NSLog(@"Couldn't find line %d", lineNum);
-    NSAssert(NO, @"Tried to get non-existent line");
-    return NO;
+    }];
+    NSAssert(found, @"Tried to get non-existent line %d", lineNum);
+    return result;
 }
+
+// This is a fancy version of copyLineToBuffer that does less redundant work when iterating a range
+// of lines.
+- (void)enumerateLinesInRange:(NSRange)range
+                       buffer:(screen_char_t *)buffer
+                        width:(int)width
+                        block:(void (^)(int theIndex, screen_char_t continuation, int eol, BOOL *stop))callback {
+    __block int line = 0;
+
+    [blocks enumerateObjectsUsingBlock:^(LineBlock * _Nonnull block, NSUInteger i, BOOL * _Nonnull outerStop) {
+        NSRange rangeOfLinesInCurrentBlock = NSMakeRange(line, [block getNumLinesWithWrapWidth:width]);
+        line = NSMaxRange(rangeOfLinesInCurrentBlock);
+
+        if (rangeOfLinesInCurrentBlock.location >= NSMaxRange(range)) {
+            // This block is entirely past the range of lines we want.
+            *outerStop = YES;
+            return;
+        }
+
+        if (NSMaxRange(rangeOfLinesInCurrentBlock) <= range.location) {
+            // Haven't yet found the first line we want.
+            return;
+        }
+
+        int blockRelativeStartingLineNumber;
+        if (rangeOfLinesInCurrentBlock.location < range.location) {
+            blockRelativeStartingLineNumber = range.location - rangeOfLinesInCurrentBlock.location;
+        } else {
+            blockRelativeStartingLineNumber = 0;
+        }
+
+        [block enumerateWrappedLinesWithWidth:width
+                                     fromLine:blockRelativeStartingLineNumber
+                                        block:^(screen_char_t *p, int lineNumberInBlock, int length, int eol, screen_char_t continuation, BOOL *innerStop) {
+                                            NSAssert(length <= width, @"Length too long");
+                                            const int lineNumber = rangeOfLinesInCurrentBlock.location + lineNumberInBlock;
+                                            if (lineNumber >= NSMaxRange(range)) {
+                                                *innerStop = YES;
+                                                *outerStop = YES;
+                                            } else {
+                                                memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
+                                                [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
+                                                BOOL shouldStop = NO;
+                                                callback(lineNumber, continuation, eol, &shouldStop);
+                                                if (shouldStop) {
+                                                    *innerStop = YES;
+                                                    *outerStop = YES;
+                                                }
+                                            }
+                                        }];
+    }];
+}
+
 
 - (void)extendContinuation:(screen_char_t)continuation
                   inBuffer:(screen_char_t *)buffer

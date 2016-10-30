@@ -305,6 +305,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return nil;
 }
 
+- (void)enumerateLinesInRange:(NSRange)range withBlock:(void (^)(int, screen_char_t *, BOOL *))block {
+}
+
 - (void)clearBuffer {
 }
 
@@ -516,6 +519,10 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (void)textViewResizeFrameIfNeeded {
+}
+
+- (NSInteger)textViewUnicodeVersion {
+    return 9;
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
