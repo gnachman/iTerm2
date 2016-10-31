@@ -21,9 +21,6 @@
 - (screen_char_t *)getLineAtIndex:(int)theIndex;
 - (long long)totalScrollbackOverflow;
 
-// Fast enumeration over a range of lines.
-- (void)enumerateLinesInRange:(NSRange)range withBlock:(void (^)(int, screen_char_t *, BOOL *))block;
-
 @end
 
 
