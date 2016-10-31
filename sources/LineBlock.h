@@ -177,4 +177,13 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 // Number of empty lines at the end of the block.
 - (int)numberOfTrailingEmptyLines;
 
+- (void)enumerateWrappedLinesWithWidth:(int)width
+                              fromLine:(int)startingLineNumber
+                                 block:(void (^)(screen_char_t *p,
+                                                 int lineNumberInBlock,
+                                                 int length,
+                                                 int eol,
+                                                 screen_char_t continuation,
+                                                 BOOL *stop))block;
+
 @end

@@ -507,6 +507,96 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     return NULL;
 }
 
+- (void)enumerateWrappedLinesWithWidth:(int)width
+                              fromLine:(int)startingLineNumber
+                                 block:(void (^)(screen_char_t *p,
+                                                 int lineNumberInBlock,
+                                                 int length,
+                                                 int eol,
+                                                 screen_char_t continuation,
+                                                 BOOL *stop))block {
+    int prev = 0;
+    int length;
+    int i;
+    int lineNum = startingLineNumber;
+    int blockRelativeWrappedLineNumber = startingLineNumber;
+    int lineLength = 0;
+    int includesEndOfLine = 0;
+    screen_char_t continuation;
+    BOOL haveFoundFirstLine = NO;
+
+    for (i = first_entry; i < cll_entries; ++i) {
+        int cll = cumulative_line_lengths[i] - start_offset;
+        length = cll - prev;
+
+        if (!haveFoundFirstLine) {
+            int spans = NumberOfFullLines(buffer_start + prev,
+                                          length,
+                                          width,
+                                          _mayHaveDoubleWidthCharacter);
+            if (lineNum > spans) {
+                // Consume the entire raw line and keep looking for more.
+                int consume = spans + 1;
+                lineNum -= consume;
+            } else {
+                haveFoundFirstLine = YES;
+            }
+        }
+
+        if (haveFoundFirstLine) {
+            BOOL haveUsedEntireLine = NO;
+            while (!haveUsedEntireLine) {
+                // We found the raw line that inclues the wrapped line we're searching for.
+                // eat up lineNum many width-sized wrapped lines from this start of the current full line
+                int offset = OffsetOfWrappedLine(buffer_start + prev,
+                                                 lineNum,
+                                                 length,
+                                                 width,
+                                                 _mayHaveDoubleWidthCharacter);
+                // offset: the relevant part of the raw line begins at this offset into it
+                lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
+                if (lineLength > width) {
+                    // return an infix of the full line
+                    if (buffer_start[prev + offset + width].code == DWC_RIGHT) {
+                        // Result would end with the first half of a double-width character
+                        lineLength = width - 1;
+                        includesEndOfLine = EOL_DWC;
+                    } else {
+                        lineLength = width;
+                        includesEndOfLine = EOL_SOFT;
+                    }
+                } else {
+                    // return a suffix of the full line
+                    haveUsedEntireLine = YES;
+                    if (i == cll_entries - 1 && is_partial) {
+                        // If this is the last line and it's partial then it doesn't have an end-of-line.
+                        includesEndOfLine = EOL_SOFT;
+                    } else {
+                        includesEndOfLine = EOL_HARD;
+                    }
+                }
+                continuation = metadata_[i].continuation;
+                continuation.code = includesEndOfLine;
+
+                BOOL stop = NO;
+                block(buffer_start + prev + offset,
+                      blockRelativeWrappedLineNumber,
+                      lineLength,
+                      includesEndOfLine,
+                      continuation,
+                      &stop);
+                if (stop) {
+                    return;
+                }
+                lineNum++;
+                blockRelativeWrappedLineNumber++;
+            }
+            lineNum = 0;
+        }
+        prev = cll;
+    }
+}
+
 - (int) getNumLinesWithWrapWidth: (int) width
 {
     if (width == cached_numlines_width) {
