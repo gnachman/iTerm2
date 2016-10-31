@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.iterm2.iTerm2Service</string>
+  <key>Program</key>
+  <string>$$PATH_TO_PROGRAM$$</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/iterm2service.stderr</string>
+  <key>StandardOutPath</key>
+  <string>/var/log/iterm2service.stdout</string>
+  <key>Debug</key>
+  <true/>
+</dict>
+</plist>

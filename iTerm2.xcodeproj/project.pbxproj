@@ -52,7 +52,7 @@
 		1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D300BA81BD9A8BB002043F7 /* NSDate+iTerm.h */; };
 		1D300BAB1BD9A8BB002043F7 /* NSDate+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D300BA91BD9A8BB002043F7 /* NSDate+iTerm.m */; };
 		1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
-		1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		1D3452471451475D007B1ECD /* Sparkle.framework in Copy Files (Frameworks) */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D373E4718F3613600773D3E /* iTermShortcutInputView.h */; };
 		1D374DEB1B349FC8007BE76A /* iTermTipData.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D374DE91B349FC8007BE76A /* iTermTipData.h */; };
@@ -1198,8 +1198,13 @@
 		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
+		53F171161DC7BAED00B09D62 /* iTerm2Service.m in Sources */ = {isa = PBXBuildFile; fileRef = 53F171151DC7BAED00B09D62 /* iTerm2Service.m */; };
+		53F171181DC7BAED00B09D62 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 53F171171DC7BAED00B09D62 /* main.m */; };
+		53F1711C1DC7BAED00B09D62 /* iTerm2Service.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = 53F171111DC7BAED00B09D62 /* iTerm2Service.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		53F171261DC7BB9900B09D62 /* launchd.plist in Resources */ = {isa = PBXBuildFile; fileRef = 53F171251DC7BB9900B09D62 /* launchd.plist */; };
+		53F171291DC7C2B300B09D62 /* iTerm2ServiceProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 53F171131DC7BAED00B09D62 /* iTerm2ServiceProtocol.h */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
-		5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		5ECE4AE814513F05002A9CC2 /* Growl.framework in Copy Files (Frameworks) */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
 		874206530564169600CFC3F1 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
@@ -1238,7 +1243,7 @@
 		A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
 		A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
 		A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
-		A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in Copy Files (Frameworks) */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6184F8F1BAB458B0088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
@@ -1260,7 +1265,7 @@
 		A624231E19CF6E2400182C08 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231319CF6B1600182C08 /* Growl.framework */; };
 		A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
 		A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
-		A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A624232619CF70DF00182C08 /* NMSSH.framework in Copy Files (Frameworks) */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
@@ -2202,6 +2207,13 @@
 			remoteGlobalIDString = 1D6ED85219AEA20D005A7799;
 			remoteInfo = iTerm2ForApplescriptTesting;
 		};
+		53F1711A1DC7BAED00B09D62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 53F171101DC7BAED00B09D62;
+			remoteInfo = iTerm2Service;
+		};
 		A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -2266,17 +2278,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		874206560564169600CFC3F1 /* CopyFiles */ = {
+		53F171221DC7BAED00B09D62 /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolderSpec = 16;
+			files = (
+				53F1711C1DC7BAED00B09D62 /* iTerm2Service.xpc in Embed XPC Services */,
+			);
+			name = "Embed XPC Services";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		874206560564169600CFC3F1 /* Copy Files (Frameworks) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
-				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
-				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
-				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
+				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in Copy Files (Frameworks) */,
+				A624232619CF70DF00182C08 /* NMSSH.framework in Copy Files (Frameworks) */,
+				1D3452471451475D007B1ECD /* Sparkle.framework in Copy Files (Frameworks) */,
+				5ECE4AE814513F05002A9CC2 /* Growl.framework in Copy Files (Frameworks) */,
 			);
+			name = "Copy Files (Frameworks)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -2788,6 +2812,13 @@
 		5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImage@2x.png"; sourceTree = "<group>"; };
 		5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QLPreviewPanel+iTerm.h"; sourceTree = "<group>"; };
 		5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QLPreviewPanel+iTerm.m"; sourceTree = "<group>"; };
+		53F171111DC7BAED00B09D62 /* iTerm2Service.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = iTerm2Service.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		53F171131DC7BAED00B09D62 /* iTerm2ServiceProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTerm2ServiceProtocol.h; sourceTree = "<group>"; };
+		53F171141DC7BAED00B09D62 /* iTerm2Service.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTerm2Service.h; sourceTree = "<group>"; };
+		53F171151DC7BAED00B09D62 /* iTerm2Service.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTerm2Service.m; sourceTree = "<group>"; };
+		53F171171DC7BAED00B09D62 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		53F171191DC7BAED00B09D62 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		53F171251DC7BB9900B09D62 /* launchd.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = launchd.plist; sourceTree = "<group>"; };
 		5BC84AA2F3A178CCEF36EB64 /* Pods-iTerm2XCTests.nightly.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.nightly.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.nightly.xcconfig"; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -3646,6 +3677,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		53F1710E1DC7BAED00B09D62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		874206510564169600CFC3F1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -3700,6 +3738,7 @@
 				1D5FD9AD11F61CA900C46BA3 /* Applescript Tests */,
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
 				A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */,
+				53F171121DC7BAED00B09D62 /* iTerm2Service */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 				966A367E350AB4DF5F07DC83 /* Pods */,
@@ -4127,6 +4166,7 @@
 				1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */,
 				A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */,
 				A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */,
+				53F171111DC7BAED00B09D62 /* iTerm2Service.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -4661,6 +4701,19 @@
 				1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */,
 			);
 			name = SSKeychain;
+			sourceTree = "<group>";
+		};
+		53F171121DC7BAED00B09D62 /* iTerm2Service */ = {
+			isa = PBXGroup;
+			children = (
+				53F171131DC7BAED00B09D62 /* iTerm2ServiceProtocol.h */,
+				53F171141DC7BAED00B09D62 /* iTerm2Service.h */,
+				53F171151DC7BAED00B09D62 /* iTerm2Service.m */,
+				53F171171DC7BAED00B09D62 /* main.m */,
+				53F171191DC7BAED00B09D62 /* Info.plist */,
+				53F171251DC7BB9900B09D62 /* launchd.plist */,
+			);
+			path = iTerm2Service;
 			sourceTree = "<group>";
 		};
 		966A367E350AB4DF5F07DC83 /* Pods */ = {
@@ -6180,6 +6233,7 @@
 				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
 				A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */,
 				A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */,
+				53F171291DC7C2B300B09D62 /* iTerm2ServiceProtocol.h in Headers */,
 				1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */,
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
@@ -6280,6 +6334,23 @@
 			productReference = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		53F171101DC7BAED00B09D62 /* iTerm2Service */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 53F171211DC7BAED00B09D62 /* Build configuration list for PBXNativeTarget "iTerm2Service" */;
+			buildPhases = (
+				53F1710D1DC7BAED00B09D62 /* Sources */,
+				53F1710E1DC7BAED00B09D62 /* Frameworks */,
+				53F1710F1DC7BAED00B09D62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iTerm2Service;
+			productName = iTerm2Service;
+			productReference = 53F171111DC7BAED00B09D62 /* iTerm2Service.xpc */;
+			productType = "com.apple.product-type.xpc-service";
+		};
 		874206460564169600CFC3F1 /* iTerm2 */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */;
@@ -6289,7 +6360,8 @@
 				8742064E0564169600CFC3F1 /* Sources */,
 				874206510564169600CFC3F1 /* Frameworks */,
 				874206550564169600CFC3F1 /* Rez */,
-				874206560564169600CFC3F1 /* CopyFiles */,
+				53F171221DC7BAED00B09D62 /* Embed XPC Services */,
+				874206560564169600CFC3F1 /* Copy Files (Frameworks) */,
 				93BD20450FE16DD50059656D /* Update SVN Revision */,
 			);
 			buildRules = (
@@ -6297,6 +6369,7 @@
 			dependencies = (
 				A6C763D11B45C55200E3C992 /* PBXTargetDependency */,
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
+				53F1711B1DC7BAED00B09D62 /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			productName = "JTerminal (Application)";
@@ -6358,8 +6431,13 @@
 					1DFA7C661923E83500DF1410 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
+					53F171101DC7BAED00B09D62 = {
+						CreatedOnToolsVersion = 8.0;
+						DevelopmentTeam = CMC4EL7UVS;
+						ProvisioningStyle = Automatic;
+					};
 					874206460564169600CFC3F1 = {
-						DevelopmentTeam = H7V7XYVQ7D;
+						DevelopmentTeam = CMC4EL7UVS;
 					};
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -6398,6 +6476,7 @@
 				1D6ED85219AEA20D005A7799 /* iTerm2ForApplescriptTesting */,
 				A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */,
 				A6C7641B1B45CB2800E3C992 /* iTerm2XCTests */,
+				53F171101DC7BAED00B09D62 /* iTerm2Service */,
 			);
 		};
 /* End PBXProject section */
@@ -6942,6 +7021,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		53F1710F1DC7BAED00B09D62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8742064A0564169600CFC3F1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -7100,6 +7186,7 @@
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */,
+				53F171261DC7BB9900B09D62 /* launchd.plist in Resources */,
 				A6B3A73B1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
@@ -7541,6 +7628,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		53F1710D1DC7BAED00B09D62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				53F171181DC7BAED00B09D62 /* main.m in Sources */,
+				53F171161DC7BAED00B09D62 /* iTerm2Service.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8742064E0564169600CFC3F1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -7971,6 +8067,11 @@
 			target = 1D6ED85219AEA20D005A7799 /* iTerm2ForApplescriptTesting */;
 			targetProxy = 1D6EDB0C19AEA276005A7799 /* PBXContainerItemProxy */;
 		};
+		53F1711B1DC7BAED00B09D62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 53F171101DC7BAED00B09D62 /* iTerm2Service */;
+			targetProxy = 53F1711A1DC7BAED00B09D62 /* PBXContainerItemProxy */;
+		};
 		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 1DFA7C661923E83500DF1410 /* SSKeychain */;
@@ -8060,7 +8161,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -8811,6 +8912,197 @@
 			};
 			name = Default;
 		};
+		53F1711D1DC7BAED00B09D62 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2Service/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2Service;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Development;
+		};
+		53F1711E1DC7BAED00B09D62 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2Service/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2Service;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Deployment;
+		};
+		53F1711F1DC7BAED00B09D62 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2Service/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2Service;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Nightly;
+		};
+		53F171201DC7BAED00B09D62 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2Service/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2Service;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Default;
+		};
 		A6C7604C1B45C4CF00E3C992 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -9206,7 +9498,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -9275,7 +9567,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -9340,7 +9632,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = CMC4EL7UVS;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -9544,6 +9836,16 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Default;
+		};
+		53F171211DC7BAED00B09D62 /* Build configuration list for PBXNativeTarget "iTerm2Service" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53F1711D1DC7BAED00B09D62 /* Development */,
+				53F1711E1DC7BAED00B09D62 /* Deployment */,
+				53F1711F1DC7BAED00B09D62 /* Nightly */,
+				53F171201DC7BAED00B09D62 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		A6C7604B1B45C4CF00E3C992 /* Build configuration list for PBXNativeTarget "iTerm2Shared" */ = {
 			isa = XCConfigurationList;

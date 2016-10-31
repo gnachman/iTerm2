@@ -30,6 +30,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2ServiceProtocol.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -455,7 +456,44 @@ static BOOL hasBecomeActive = NO;
         [alert runModal];
     }
 }
+
+- (void)installServiceLaunchdPlist {
+    NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"launchd" ofType:@"plist"]];
+    if (!plist) {
+        ELog(@"Couldn't get path to launchd.plist");
+        return;
+    }
+
+    NSString *pathToService = [NSString stringWithFormat:@"%@/Contents/XPCServices/iTerm2Service.xpc", [[NSBundle mainBundle] bundlePath]];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:pathToService]) {
+        ELog(@"Service not present at %@", pathToService);
+    }
+
+    NSMutableDictionary *mutablePlist = [[plist mutableCopy] autorelease];
+    mutablePlist[@"Program"] = pathToService;
+
+    NSString *pathToPlist = [NSString stringWithFormat:@"%@/Library/LaunchAgents/com.iterm2.iTerm2Service.plist", NSHomeDirectory()];
+    [mutablePlist writeToFile:pathToPlist atomically:YES];
+}
+
+- (void)testService {
+    NSXPCInterface *serviceInterface = [NSXPCInterface interfaceWithProtocol:@protocol(iTerm2ServiceProtocol)];
+    NSXPCConnection *serviceConnection = [[NSXPCConnection alloc] initWithMachServiceName:@"com.iterm2.iTerm2Service" options:0];
+    serviceConnection.remoteObjectInterface = serviceInterface;
+    [serviceConnection resume];
+
+    id<iTerm2ServiceProtocol> proxy = [serviceConnection remoteObjectProxyWithErrorHandler:^(NSError * _Nonnull error) {
+        NSLog(@"Remote object proxy error: %@", error);
+    }];
+    [proxy upperCaseString:@"abc" withReply:^(NSString *reply) {
+        NSLog(@"Reply is %@", reply);
+    }];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [self installServiceLaunchdPlist];
+    [self testService];
+
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
