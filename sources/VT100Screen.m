@@ -1451,30 +1451,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
 }
 
-static void UpdateContinuationMarkInBuffer(screen_char_t *buffer,
-                                           int cont,
-                                           int theIndex,
-                                           VT100Grid *grid,
-                                           int gridWidth,
-                                           int numLinesInLineBuffer,
-                                           screen_char_t *continuation) {
-    if (cont == EOL_SOFT &&
-        theIndex == numLinesInLineBuffer - 1 &&
-        [grid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
-        buffer[gridWidth - 1].code == 0) {
-        // The last line in the scrollback buffer is actually a split DWC
-        // if the first char on the screen is double-width and the buffer is soft-wrapped without
-        // a last char.
-        cont = EOL_DWC;
-    }
-    if (cont == EOL_DWC) {
-        buffer[gridWidth - 1].code = DWC_SKIP;
-        buffer[gridWidth - 1].complexChar = NO;
-    }
-    buffer[gridWidth] = *continuation;
-    buffer[gridWidth].code = cont;
-}
-
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
 - (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
@@ -1490,67 +1466,23 @@ static void UpdateContinuationMarkInBuffer(screen_char_t *buffer,
                                            width:currentGrid_.size.width
                                          lineNum:theIndex
                                     continuation:&continuation];
-        UpdateContinuationMarkInBuffer(buffer,
-                                       cont,
-                                       theIndex,
-                                       currentGrid_,
-                                       currentGrid_.size.width,
-                                       numLinesInLineBuffer,
-                                       &continuation);
+        if (cont == EOL_SOFT &&
+            theIndex == numLinesInLineBuffer - 1 &&
+            [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
+            buffer[currentGrid_.size.width - 1].code == 0) {
+            // The last line in the scrollback buffer is actually a split DWC
+            // if the first char on the screen is double-width and the buffer is soft-wrapped without
+            // a last char.
+            cont = EOL_DWC;
+        }
+        if (cont == EOL_DWC) {
+            buffer[currentGrid_.size.width - 1].code = DWC_SKIP;
+            buffer[currentGrid_.size.width - 1].complexChar = NO;
+        }
+        buffer[currentGrid_.size.width] = continuation;
+        buffer[currentGrid_.size.width].code = cont;
 
         return buffer;
-    }
-}
-
-- (void)enumerateLinesInRange:(NSRange)range withBlock:(void (^)(int, screen_char_t *, BOOL *))block {
-    NSRange rangeInBuffer;
-    NSRange rangeOnScreen;
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    if (range.location >= numLinesInLineBuffer) {
-        rangeInBuffer = NSMakeRange(NSNotFound, 0);
-        rangeOnScreen = range;
-    } else {
-        rangeInBuffer.location = range.location;
-
-        if (NSMaxRange(range) > numLinesInLineBuffer) {
-            // Range crosses into screen
-            rangeInBuffer.length = numLinesInLineBuffer - range.location;
-            rangeOnScreen = NSMakeRange(numLinesInLineBuffer, NSMaxRange(range) - numLinesInLineBuffer);
-        } else {
-            // Range is entirely in buffer
-            rangeInBuffer.length = range.length;
-            rangeOnScreen = NSMakeRange(NSNotFound, 0);
-        }
-    }
-
-    screen_char_t *storage = [currentGrid_ resultLine];
-    const int gridWidth = currentGrid_.size.width;
-    __block BOOL stop = NO;
-    // First enumerate lines in buffer
-    [linebuffer_ enumerateLinesInRange:rangeInBuffer
-                                buffer:storage
-                                 width:currentGrid_.size.width
-                                 block:^(int theIndex, screen_char_t continuation, int eol, BOOL *lineBufferStop) {
-                                     UpdateContinuationMarkInBuffer(storage,
-                                                                    eol,
-                                                                    theIndex,
-                                                                    currentGrid_,
-                                                                    gridWidth,
-                                                                    numLinesInLineBuffer,
-                                                                    &continuation);
-                                     block(theIndex, storage, &stop);
-                                     *lineBufferStop = stop;
-    }];
-
-    if (!stop && rangeOnScreen.location != NSNotFound) {
-        for (int i = 0; i < rangeOnScreen.length; i++) {
-            const int y = rangeOnScreen.location + i;
-            screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:y];
-            block(y, line, &stop);
-            if (stop) {
-                break;
-            }
-        }
     }
 }
 

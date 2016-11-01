@@ -151,19 +151,6 @@ NSString* ScreenCharToStr(screen_char_t* sct)
 
 NSString* CharToStr(unichar code, BOOL isComplex)
 {
-    if (!isComplex && code >= ' ' && code < 127) {
-        // Fast path for ASCII
-        static NSString *asciiStrings[128];
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            for (int i = ' '; i < 128; i++) {
-                unichar c = i;
-                asciiStrings[i] = [[NSString stringWithCharacters:&c length:1] retain];
-            }
-        });
-        return asciiStrings[code];
-    }
-
     if (code == UNICODE_REPLACEMENT_CHAR) {
         return ReplacementString();
     }

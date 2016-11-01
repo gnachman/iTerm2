@@ -181,9 +181,4 @@
 // Make a copy of the last |minLines| at width |width|. May copy more than |minLines| for speed.
 - (LineBuffer *)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width;
 
-- (void)enumerateLinesInRange:(NSRange)range
-                       buffer:(screen_char_t *)buffer
-                        width:(int)width
-                        block:(void (^)(int theIndex, screen_char_t continuation, int eol, BOOL *stop))block;
-
 @end
