@@ -151,6 +151,8 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
+
+    int _secureInputCount;
 }
 
 // NSApplication delegate methods
@@ -1343,21 +1345,34 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)setSecureInput:(BOOL)secure {
-    DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+    if (secure && _secureInputCount > 0) {
+        ELog(@"Want to turn on secure input but it's already on");
+        return;
+    }
+
+    if (!secure && _secureInputCount == 0) {
+        ELog(@"Want to turn off secure input but it's already off");
+        return;
+    }
+    ELog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
     if (secure) {
         OSErr err = EnableSecureEventInput();
-        DLog(@"EnableSecureEventInput err=%d", (int)err);
+        NSLog(@"EnableSecureEventInput err=%d", (int)err);
         if (err) {
             NSLog(@"EnableSecureEventInput failed with error %d", (int)err);
+        } else {
+            ++_secureInputCount;
         }
     } else {
         OSErr err = DisableSecureEventInput();
-        DLog(@"DisableSecureEventInput err=%d", (int)err);
+        NSLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
             NSLog(@"DisableSecureEventInput failed with error %d", (int)err);
+        } else {
+            --_secureInputCount;
         }
     }
-    DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
+    NSLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
 }
 
 - (BOOL)warnBeforeMultiLinePaste {
@@ -1383,7 +1398,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)toggleSecureInput:(id)sender {
     // Set secureInputDesired_ to the opposite of the current state.
     secureInputDesired_ = !IsSecureEventInputEnabled();
-    DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
+    ELog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
 
     // Try to set the system's state of secure input to the desired state.
     [self setSecureInput:secureInputDesired_];
@@ -1396,7 +1411,7 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
     if (secureInputDesired_) {
-        DLog(@"Application becoming active. Enable secure input.");
+        ELog(@"Application becoming active. Enable secure input.");
         [self setSecureInput:YES];
     }
 
@@ -1441,7 +1456,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
     if (secureInputDesired_) {
-        DLog(@"Application resigning active. Disabling secure input.");
+        ELog(@"Application resigning active. Disabling secure input.");
         [self setSecureInput:NO];
     }
 }
