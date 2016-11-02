@@ -64,6 +64,7 @@ const CGFloat kDefaultTagsWidth = 80;
     ProfileTagsView *tagsView_;
     NSSplitView *splitView_;
     CGFloat lastTagsWidth_;
+    NSMutableDictionary<NSNumber *, NSNumber *> *_savedHeights;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -74,6 +75,7 @@ const CGFloat kDefaultTagsWidth = 80;
 - (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource {
     self = [super initWithFrame:frameRect];
     if (self) {
+        _savedHeights = [[NSMutableDictionary alloc] init];
         margin_ = kInterWidgetMargin;
         [self setUnderlyingDatasource:dataSource];
         debug = NO;
@@ -180,6 +182,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [_savedHeights release];
     [dataSource_ release];
     [selectedGuids_ release];
     // These if statements are pure paranoia because this thing gets used all
@@ -476,7 +479,9 @@ const CGFloat kDefaultTagsWidth = 80;
 
     // I have no idea why I need extraHeight but maybe cellSizeForBounds: doesn't center content
     // properly with attributed strings.
-    return naturalSize.height + [self extraHeight];
+    CGFloat height = naturalSize.height + [self extraHeight];
+    _savedHeights[@(rowIndex)] = @(height);
+    return height;
 }
 
 - (CGFloat)extraHeight {
@@ -861,8 +866,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                                              object:nil]];
 }
 
-- (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize
-{
+- (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize {
     NSRect frame = [self frame];
 
     NSRect searchFieldFrame;
@@ -877,6 +881,18 @@ const CGFloat kDefaultTagsWidth = 80;
                                        frame.size.width,
                                        frame.size.height - kSearchWidgetHeight - margin_);
     splitView_.frame = splitViewFrame;
+
+    NSMutableIndexSet *rowsWithHeightChange = [NSMutableIndexSet indexSet];
+    for (NSInteger i = 0; i < self.numberOfRows; i++) {
+        CGFloat savedHeight = [_savedHeights[@(i)] doubleValue];
+        CGFloat height = [self tableView:tableView_ heightOfRow:i];
+        if (round(height) != round(savedHeight)) {
+            [rowsWithHeightChange addIndex:i];
+        }
+    }
+    if (rowsWithHeightChange.count > 0) {
+        [tableView_ noteHeightOfRowsWithIndexesChanged:rowsWithHeightChange];
+    }
 }
 
 - (void)turnOnDebug
