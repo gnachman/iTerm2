@@ -6433,8 +6433,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 // Add a tab to the tabview.
-- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex
-{
+- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
@@ -6449,10 +6448,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
         [aTabViewItem release];
         [_contentView.tabView selectTabViewItemAtIndex:anIndex];
-        if (self.windowInitialized && !_fullScreen) {
+        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
             [[self window] makeKeyAndOrderFront:self];
         } else {
-            PtyLog(@"window not initialized or is fullscreen %@", [NSThread callStackSymbols]);
+            PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
         [[iTermController sharedInstance] setCurrentTerminal:self];
     }
