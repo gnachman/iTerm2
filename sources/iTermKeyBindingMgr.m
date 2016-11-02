@@ -989,6 +989,7 @@ exit:
 {
     // This function copied from cmd-key happy. See copyright notice at top.
     CGEventFlags flags = CGEventGetFlags(cgEvent);
+    NSLog(@"Performing remapping. On input CGEventFlags=%@", @(flags));
     const CGEventFlags origFlags = flags;
     CGEventFlags andMask = -1;
     CGEventFlags orMask = 0;
@@ -1031,6 +1032,7 @@ exit:
             orMask |= [self _nxMaskForRightControlKey];
         }
     }
+    NSLog(@"On output CGEventFlags=%@", @((flags & andMask) | orMask));
 
     CGEventSetFlags(cgEvent, (flags & andMask) | orMask);
     return cgEvent;

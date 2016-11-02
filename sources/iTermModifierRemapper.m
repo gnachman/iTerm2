@@ -69,9 +69,11 @@
 #pragma mark - Private
 
 - (void)beginRemappingModifiers {
+    NSLog(@"Begin remapping modifiers");
     [[iTermEventTap sharedInstance] setRemappingDelegate:self];
     
     if (![[iTermEventTap sharedInstance] isEnabled]) {
+        NSLog(@"The event tap is NOT enabled");
         if (IsMavericksOrLater()) {
             [self requestAccessibilityPermissionMavericks];
             return;
@@ -99,6 +101,7 @@
 }
 
 - (void)requestAccessibilityPermissionMavericks {
+    NSLog(@"Requesting mavericks accessibility permission");
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
       NSDictionary *options = @{ (NSString *)kAXTrustedCheckOptionPrompt: @YES };
@@ -122,11 +125,14 @@
 #pragma mark - iTermEventTapRemappingDelegate
 
 - (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event {
+    NSLog(@"Modifier remapper got an event");
   if ([NSApp isActive]) {
+      NSLog(@"App is active, performing remapping");
       // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
       // OS's remap feature.
       return [self eventByRemappingEvent:event];
   } else {
+      NSLog(@"App not active");
       return event;
   }
 }
@@ -134,6 +140,7 @@
 // Only called when the app is active.
 - (CGEventRef)eventByRemappingEvent:(CGEventRef)event {
   NSEvent *cocoaEvent = [NSEvent eventWithCGEvent:event];
+    NSLog(@"Remapping event %@", cocoaEvent);
   iTermShortcutInputView *shortcutView = nil;
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
     if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
@@ -141,6 +148,7 @@
     }
 
   if (shortcutView.disableKeyRemapping) {
+      NSLog(@"Shortcut view is active so return nil");
       // Send keystroke directly to preference panel when setting do-not-remap for a key; for
       // system keys, NSApp sendEvent: is never called so this is the last chance.
       [shortcutView handleShortcutEvent:cocoaEvent];
@@ -149,14 +157,17 @@
 
   switch ([self boundActionForEvent:cocoaEvent]) {
       case KEY_ACTION_REMAP_LOCALLY:
+          NSLog(@"Calling sendEvent:");
           [iTermKeyBindingMgr remapModifiersInCGEvent:event];
           [NSApp sendEvent:[NSEvent eventWithCGEvent:event]];
           return nil;
 
       case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+          NSLog(@"Action is do not remap");
           return event;
 
       default:
+          NSLog(@"Remapping as usual");
           [iTermKeyBindingMgr remapModifiersInCGEvent:event];
           return event;
   }
