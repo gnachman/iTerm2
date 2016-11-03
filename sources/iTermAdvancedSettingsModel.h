@@ -154,5 +154,6 @@
 + (double)slowFrameRate;
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;
++ (BOOL)openFileOverridesSendText;
 
 @end

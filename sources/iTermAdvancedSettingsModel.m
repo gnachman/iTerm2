@@ -100,7 +100,7 @@ DEFINE_BOOL(doNotSetCtype, NO, @"Terminal: Never set the CTYPE environment varia
 DEFINE_FLOAT(smartCursorColorBgThreshold, 0.5, @"Terminal: Threshold for Smart Cursor Color for background color (0 to 1).\n0 means the cursor’s background color will always be the cell’s text color, while 1 means it will always be black or white.");
 DEFINE_FLOAT(smartCursorColorFgThreshold, 0.75, @"Terminal: Threshold for Smart Cursor Color for text color (0 to 1).\n0 means the cursor’s text color will always be the cell’s background color, while 1 means it will always be black or white.");
 DEFINE_STRING(findUrlsRegex,
-              @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?[-a-z0-9A-Z\\-]+(\\.[-a-z0-9A-Z\\-]+)*"
+              @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?[a-z0-9A-Z\\-]+(\\.[a-z0-9A-Z\\-]+)*"
               @"((:[0-9]+)?)(/[a-zA-Z0-9;:/\\.\\-_+%~?&amp;@=#\\(\\)]*)?",
               @"Terminal: Regular expression for “Find URLs” command.");
 DEFINE_FLOAT(echoProbeDuration, 0.5, @"Terminal: Amount of time to wait while testing if echo is on (seconds).\nThis is used by the password manager to ensure you're at a password prompt.");
@@ -221,5 +221,6 @@ DEFINE_BOOL(tabTitlesUseSmartTruncation, NO, @"Experimental Features: Use “sma
 DEFINE_BOOL(experimentalKeyHandling, NO, @"Experimental Features: Improved support for input method editors like AquaSKK.");
 DEFINE_BOOL(hideStuckTooltips, NO, @"Experimental Features: Hide stuck tooltips.\nWhen you hide iTerm2 using a hotkey while a tooltip is fading out it gets stuck because of an OS bug. Work around it with a nasty hack by enabling this feature.")
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, NO, @"Experimental Features: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
+DEFINE_BOOL(openFileOverridesSendText, YES, @"Experimental Features: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed inl lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
 
 @end
