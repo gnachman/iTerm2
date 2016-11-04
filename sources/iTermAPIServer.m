@@ -222,6 +222,7 @@ static NSString *const kProtocolName = @"api.iterm2.com";
 - (NSURLRequest *)readRequest;
 - (void)sendResultCode:(int)code;
 - (void)close;
+- (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue;
 
 @end
 
@@ -250,6 +251,12 @@ static NSString *const kProtocolName = @"api.iterm2.com";
     [super dealloc];
 }
 
+- (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
+    return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
+        // TODO: Figure out what to do here
+        assert(false);
+    });
+}
 - (void)close {
     if (_fd >= 0) {
         close(_fd);
@@ -402,7 +409,7 @@ static NSString *const kProtocolName = @"api.iterm2.com";
     return bytes;
 }
 
-- (BOOL)readFromFileDescriptor {
+- (BOOL)waitForIO:(BOOL)read {
     if (_fd < 0) {
         return NO;
     }
@@ -419,13 +426,26 @@ static NSString *const kProtocolName = @"api.iterm2.com";
     timeout.tv_usec = fmod(dt, 1.0) * 1000000;
     int rc;
     do {
-        rc = select(_fd + 1, &set, NULL, NULL, &timeout);
+        if (read) {
+            rc = select(_fd + 1, &set, NULL, NULL, &timeout);
+        } else {
+            rc = select(_fd + 1, NULL, &set, NULL, &timeout);
+        }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
         return NO;
     }
 
+    return YES;
+}
+
+- (BOOL)readFromFileDescriptor {
+    if (![self waitForIO:YES]) {
+        return NO;
+    }
+
     char buffer[4096];
+    int rc;
     do {
         rc = read(_fd, buffer, sizeof(buffer));
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
@@ -443,11 +463,12 @@ static NSString *const kProtocolName = @"api.iterm2.com";
 }
 
 - (BOOL)writeData:(NSData *)data {
-    if (_fd < 0) {
-        return NO;
-    }
     NSInteger offset = 0;
     while (offset < data.length) {
+        if (![self waitForIO:NO]) {
+            return NO;
+        }
+
         int rc;
         do {
             rc = write(_fd, data.bytes + offset, data.length - offset);
@@ -740,6 +761,75 @@ typedef NS_ENUM(int, iTermWebSocketOpcode) {
 
 @end
 
+@interface iTermWebSocketFrameBuilder : NSObject
+- (void)addData:(NSData *)data frame:(void (^)(iTermWebSocketFrame *, BOOL *))frameBlock;
+@end
+
+@implementation iTermWebSocketFrameBuilder {
+    NSMutableData *_data;
+    iTermWebSocketFrame *_fragment;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _data = [[NSMutableData alloc] init];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_data release];
+    [super dealloc];
+}
+
+- (void)addData:(NSData *)data frame:(void (^)(iTermWebSocketFrame *, BOOL *))frameBlock {
+    [_data appendData:data];
+
+    __block int64_t offset = 0;
+    __block BOOL eof = NO;
+    while (!eof) {
+        iTermWebSocketFrame *frame = [iTermWebSocketFrame frameWithDataSource:^unsigned char *(int64_t bytesWanted) {
+            if (_data.length < bytesWanted) {
+                eof = YES;
+                return NULL;
+            } else {
+                offset += bytesWanted;
+                return _data.mutableBytes + offset;
+            }
+        }];
+        if (!eof) {
+            [_data replaceBytesInRange:NSMakeRange(0, offset) withBytes:"" length:0];
+        }
+        if (frame) {
+            if (_fragment) {
+                [_fragment appendFragment:frame];
+                if (_fragment.fin) {
+                    BOOL stop = NO;
+                    frameBlock(_fragment, &stop);
+                    [_fragment release];
+                    _fragment = nil;
+                    if (stop) {
+                        return;
+                    }
+                }
+            } else {
+                if (frame.fin) {
+                    BOOL stop = NO;
+                    frameBlock(frame, &stop);
+                    if (stop) {
+                        return;
+                    }
+                } else {
+                    _fragment = [frame retain];
+                }
+            }
+        }
+    }
+}
+
+@end
+
 @class iTermWebSocketConnection;
 
 @protocol iTermWebSocketConnectionDelegate<NSObject>
@@ -753,7 +843,7 @@ typedef NS_ENUM(int, iTermWebSocketOpcode) {
 - (instancetype)initWithConnection:(iTermAPIServerConnection *)connection;
 - (void)start;
 - (void)close;
-- (void)enqueueData:(NSData *)data;
+- (void)sendData:(NSData *)data;
 
 @end
 
@@ -768,21 +858,28 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermAPIServerConnection *_connection;
     iTermWebSocketConnectionState _state;
     iTermWebSocketFrame *_fragment;
-    NSMutableArray<NSData *> *_dataQueue;
+    dispatch_queue_t _queue;
+    iTermWebSocketFrameBuilder *_frameBuilder;
+    dispatch_io_t _channel;
 }
 
 - (instancetype)initWithConnection:(iTermAPIServerConnection *)connection {
     self = [super init];
     if (self) {
         _connection = [connection retain];
-        _dataQueue = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)dealloc {
     [_connection release];
-    [_dataQueue release];
+    if (_queue) {
+        dispatch_release(_queue);
+    }
+    if (_channel) {
+        dispatch_release(_channel);
+    }
+    [_frameBuilder release];
     [super dealloc];
 }
 
@@ -806,34 +903,67 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
     _state = iTermWebSocketConnectionStateOpen;
 
-    // TODO: Use dispatch_io to read and write asynchronously since we could block while reading
-    // and then suddenly another queue wants to write.
-    while (_state != iTermWebSocketConnectionStateClosed) {
-        [self readFrame];
-        if (_state == iTermWebSocketConnectionStateOpen) {
-            [self writeQueuedFrames];
+    _frameBuilder = [[iTermWebSocketFrameBuilder alloc] init];
+    _queue = dispatch_queue_create("com.iterm2.api-io", NULL);
+    _channel = [_connection newChannelOnQueue:_queue];
+    dispatch_io_set_low_water(_channel, 1);
+    dispatch_io_read(_channel, 0, SIZE_MAX, _queue, ^(bool done, dispatch_data_t data, int error) {
+        if (data) {
+            dispatch_data_apply(data, ^bool(dispatch_data_t  _Nonnull region, size_t offset, const void * _Nonnull buffer, size_t size) {
+                [_frameBuilder addData:[NSMutableData dataWithBytes:buffer length:size]
+                                 frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
+                                     if (_state != iTermWebSocketConnectionStateClosed) {
+                                         [self handleFrame:frame];
+                                     }
+                                     *stop = (_state == iTermWebSocketConnectionStateClosed);
+                                 }];
+                return _state != iTermWebSocketConnectionStateClosed;
+            });
         }
-    }
-    [_connection close];
+        if (error || done) {
+            [self abort];
+        }
+    });
 }
 
-- (void)enqueueData:(NSData *)data {
-    @synchronized (self) {
-        [_dataQueue addObject:data];
+- (void)sendBinary:(NSData *)binaryData {
+    if (_state == iTermWebSocketConnectionStateOpen) {
+        [self sendFrame:[iTermWebSocketFrame binaryFrameWithData:binaryData]];
     }
+}
+
+- (void)sendText:(NSString *)text {
+    if (_state == iTermWebSocketConnectionStateOpen) {
+        [self sendFrame:[iTermWebSocketFrame textFrameWithString:text]];
+    }
+}
+
+- (void)sendFrame:(iTermWebSocketFrame *)frame {
+    [self sendData:frame.data];
+}
+
+- (void)sendData:(NSData *)data {
+    [data retain];
+    dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _queue, ^{
+        [data release];
+    });
+
+    dispatch_io_write(_channel, 0, dispatchData, _queue, ^(bool done, dispatch_data_t  _Nullable data, int error) {
+        if (error || done) {
+            [self abort];
+        }
+    });
 }
 
 - (void)abort {
-    [_delegate webSocketConnectionDidTerminate:self];
-    [_connection close];
-    _state = iTermWebSocketConnectionStateClosed;
+    if (_state != iTermWebSocketConnectionStateClosed) {
+        [_delegate webSocketConnectionDidTerminate:self];
+        [_connection close];
+        _state = iTermWebSocketConnectionStateClosed;
+    }
 }
 
-- (void)readFrame {
-    iTermWebSocketFrame *frame = [iTermWebSocketFrame frameWithDataSource:^unsigned char *(int64_t length) {
-        return (unsigned char *)[[_connection nextBytes:length] mutableBytes];
-    }];
-
+- (void)handleFrame:(iTermWebSocketFrame *)frame {
     switch (frame.opcode) {
         case iTermWebSocketOpcodeBinary:
         case iTermWebSocketOpcodeText:
@@ -852,9 +982,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
         case iTermWebSocketOpcodePing:
             if (_state == iTermWebSocketConnectionStateOpen) {
-                if (![_connection writeData:[[iTermWebSocketFrame pongFrameForPingFrame:frame] data]]) {
-                    [self abort];
-                }
+                [self sendFrame:[iTermWebSocketFrame pongFrameForPingFrame:frame]];
             } else {
                 [self abort];
             }
@@ -882,11 +1010,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
         case iTermWebSocketOpcodeConnectionClose:
             if (_state == iTermWebSocketConnectionStateOpen) {
-                if (![_connection writeData:[[iTermWebSocketFrame closeFrame] data]]) {
-                    [self abort];
-                } else {
-                    _state = iTermWebSocketConnectionStateClosing;
-                }
+                _state = iTermWebSocketConnectionStateClosing;
+                [self sendFrame:[iTermWebSocketFrame closeFrame]];
             } else if (_state == iTermWebSocketConnectionStateClosing) {
                 _state = iTermWebSocketConnectionStateClosed;
             }
@@ -896,11 +1021,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
 - (void)close {
     if (_state == iTermWebSocketConnectionStateOpen) {
-        if (![_connection writeData:[[iTermWebSocketFrame closeFrame] data]]) {
-            [self abort];
-        } else {
-            _state = iTermWebSocketConnectionStateClosing;
-        }
+        _state = iTermWebSocketConnectionStateClosing;
+        [self sendFrame:[iTermWebSocketFrame closeFrame]];
     }
 }
 
@@ -1032,5 +1154,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     [_connections removeObject:webSocketConnection];
 }
 
+- (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
+    NSLog(@"Got a frame: %@", frame);
+}
 
 @end
