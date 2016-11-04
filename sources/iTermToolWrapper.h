@@ -48,6 +48,7 @@
 - (CGFloat)minimumHeight;
 
 @optional
+- (instancetype)initWithFrame:(NSRect)frame URL:(NSURL *)url;
 - (void)relayout;
 - (void)shutdown;
 @end

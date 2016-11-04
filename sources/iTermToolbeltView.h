@@ -15,6 +15,7 @@ extern NSString *const kJobsToolName;
 extern NSString *const kNotesToolName;
 extern NSString *const kPasteHistoryToolName;
 extern NSString *const kProfilesToolName;
+extern NSString *const kDynamicToolsDidChange;
 
 // Notification posted when all windows should hide their toolbelts.
 extern NSString *const kToolbeltShouldHide;
@@ -35,6 +36,8 @@ extern NSString *const kToolbeltShouldHide;
 + (void)toggleShouldShowTool:(NSString *)theName;
 + (int)numberOfVisibleTools;
 + (BOOL)shouldShowTool:(NSString *)name;
++ (NSArray<NSString *> *)builtInToolNames;
++ (void)registerDynamicToolWithIdentifier:(NSString *)identifier name:(NSString *)name URL:(NSString *)url revealIfAlreadyRegistered:(BOOL)revealIfAlreadyRegistered;
 
 - (instancetype)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate;
 

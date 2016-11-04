@@ -47,6 +47,10 @@ NSString *VT100GridSizeDescription(VT100GridSize size) {
     return [[[NSValue alloc] initWithBytes:&coord objCType:@encode(VT100GridCoord)] autorelease];
 }
 
++ (NSValue *)valueWithGridAbsCoord:(VT100GridAbsCoord)absCoord {
+    return [[[NSValue alloc] initWithBytes:&absCoord objCType:@encode(VT100GridAbsCoord)] autorelease];
+}
+
 + (NSValue *)valueWithGridSize:(VT100GridSize)size {
     return [[[NSValue alloc] initWithBytes:&size objCType:@encode(VT100GridSize)] autorelease];
 }
@@ -67,10 +71,20 @@ NSString *VT100GridSizeDescription(VT100GridSize size) {
     return [[[NSValue alloc] initWithBytes:&coordRange objCType:@encode(VT100GridCoordRange)] autorelease];
 }
 
++ (NSValue *)valueWithGridAbsCoordRange:(VT100GridAbsCoordRange)absCoordRange {
+    return [[[NSValue alloc] initWithBytes:&absCoordRange objCType:@encode(VT100GridAbsCoordRange)] autorelease];
+}
+
 - (VT100GridCoord)gridCoordValue {
     VT100GridCoord coord;
     [self getValue:&coord];
     return coord;
+}
+
+- (VT100GridAbsCoord)gridAbsCoordValue {
+    VT100GridAbsCoord absCoord;
+    [self getValue:&absCoord];
+    return absCoord;
 }
 
 - (VT100GridSize)gridSizeValue {
@@ -101,6 +115,12 @@ NSString *VT100GridSizeDescription(VT100GridSize size) {
   VT100GridCoordRange coordRange;
   [self getValue:&coordRange];
   return coordRange;
+}
+
+- (VT100GridAbsCoordRange)gridAbsCoordRangeValue {
+    VT100GridAbsCoordRange absCoordRange;
+    [self getValue:&absCoordRange];
+    return absCoordRange;
 }
 
 - (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other {
