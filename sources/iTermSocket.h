@@ -10,6 +10,7 @@
 
 @class iTermSocketAddress;
 
+// A humane interface for Berkeley sockets.
 @interface iTermSocket : NSObject
 @property (nonatomic, readonly) int fd;
 

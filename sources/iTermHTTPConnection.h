@@ -1,5 +1,5 @@
 //
-//  iTermAPIServerConnection.h
+//  iTermHTTPConnection.h
 //  iTerm2
 //
 //  Created by George Nachman on 11/4/16.
@@ -10,7 +10,7 @@
 
 @class iTermSocketAddress;
 
-@interface iTermAPIServerConnection : NSObject
+@interface iTermHTTPConnection : NSObject
 
 - (instancetype)initWithFileDescriptor:(int)fd clientAddress:(iTermSocketAddress *)address;
 - (NSURLRequest *)readRequest;

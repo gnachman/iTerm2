@@ -22,11 +22,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [_data release];
-    [super dealloc];
-}
-
 - (void)addData:(NSData *)data frame:(void (^)(iTermWebSocketFrame *, BOOL *))frameBlock {
     [_data appendData:data];
 
@@ -51,7 +46,6 @@
                 if (_fragment.fin) {
                     BOOL stop = NO;
                     frameBlock(_fragment, &stop);
-                    [_fragment release];
                     _fragment = nil;
                     if (stop) {
                         return;
@@ -65,7 +59,7 @@
                         return;
                     }
                 } else {
-                    _fragment = [frame retain];
+                    _fragment = frame;
                 }
             }
         }

@@ -26,8 +26,8 @@
     return self;
 }
 
-- (struct sockaddr *)sockaddr {
-    return (struct sockaddr *)&_sockaddr;
+- (const struct sockaddr *)sockaddr {
+    return (const struct sockaddr *)&_sockaddr;
 }
 
 - (socklen_t)sockaddrSize {
@@ -35,11 +35,8 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    iTermSocketIPV4Address *other = [[iTermSocketIPV4Address alloc] init];
-    if (other) {
-        other->_sockaddr = _sockaddr;
-    }
-    return other;
+    iTermIPV4Address *address = [[iTermIPV4Address alloc] initWithInetAddr:_sockaddr.sin_addr.s_addr];
+    return [[iTermSocketIPV4Address alloc] initWithIPV4Address:address port:ntohs(_sockaddr.sin_port)];
 }
 
 @end

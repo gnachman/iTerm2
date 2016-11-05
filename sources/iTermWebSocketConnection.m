@@ -7,7 +7,7 @@
 //
 
 #import "iTermWebSocketConnection.h"
-#import "iTermAPIServerConnection.h"
+#import "iTermHTTPConnection.h"
 #import "iTermWebSocketFrame.h"
 #import "iTermWebSocketFrameBuilder.h"
 #import "NSData+iTerm.h"
@@ -24,7 +24,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 };
 
 @implementation iTermWebSocketConnection {
-    iTermAPIServerConnection *_connection;
+    iTermHTTPConnection *_connection;
     iTermWebSocketConnectionState _state;
     iTermWebSocketFrame *_fragment;
     dispatch_queue_t _queue;
@@ -32,67 +32,86 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     dispatch_io_t _channel;
 }
 
-- (instancetype)initWithConnection:(iTermAPIServerConnection *)connection {
++ (BOOL)validateRequest:(NSURLRequest *)request {
+    if (![request.HTTPMethod isEqualToString:@"GET"]) {
+        return NO;
+    }
+    if (request.URL.path.length == 0) {
+        return NO;
+    }
+    NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
+    NSDictionary<NSString *, NSString *> *requiredValues =
+        @{ @"host": @"localhost",
+           @"upgrade": @"websocket",
+           @"connection": @"Upgrade",
+           @"sec-websocket-protocol": kProtocolName,
+           @"sec-websocket-version": @"1",
+           @"origin": @"localhost" };
+    for (NSString *key in requiredValues) {
+        if (![headers[key] isEqualToString:requiredValues[key]]) {
+            return NO;
+        }
+    }
+
+    NSArray<NSString *> *requiredKeys =
+        @[ @"sec-websocket-key",
+           @"origin" ];
+    for (NSString *key in requiredKeys) {
+        if ([headers[key] length] == 0) {
+            return NO;
+        }
+    }
+
+    return YES;
+}
+
+- (instancetype)initWithConnection:(iTermHTTPConnection *)connection {
     self = [super init];
     if (self) {
-        _connection = [connection retain];
+        _connection = connection;
     }
     return self;
 }
 
-- (void)dealloc {
-    [_connection release];
-    if (_queue) {
-        dispatch_release(_queue);
-    }
-    if (_channel) {
-        dispatch_release(_channel);
-    }
-    [_frameBuilder release];
-    [super dealloc];
-}
-
-- (void)start {
-    NSURLRequest *request = [_connection readRequest];
-    if (!request) {
-        [_delegate webSocketConnectionDidTerminate:self];
-        return;
-    }
-
-    if (![self validateRequest:request]) {
-        [_connection badRequest];
-        [_delegate webSocketConnectionDidTerminate:self];
-        return;
-    }
+- (void)handleRequest:(NSURLRequest *)request {
+    NSAssert(_state == iTermWebSocketConnectionStateConnecting, @"Request already handled");
 
     if (![self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]]) {
         [_connection badRequest];
+        _state = iTermWebSocketConnectionStateClosed;
         [_delegate webSocketConnectionDidTerminate:self];
         return;
     }
+
     _state = iTermWebSocketConnectionStateOpen;
 
     _frameBuilder = [[iTermWebSocketFrameBuilder alloc] init];
     _queue = dispatch_queue_create("com.iterm2.api-io", NULL);
     _channel = [_connection newChannelOnQueue:_queue];
+
+    __weak __typeof(self) weakSelf = self;
     dispatch_io_set_low_water(_channel, 1);
     dispatch_io_read(_channel, 0, SIZE_MAX, _queue, ^(bool done, dispatch_data_t data, int error) {
         if (data) {
             dispatch_data_apply(data, ^bool(dispatch_data_t  _Nonnull region, size_t offset, const void * _Nonnull buffer, size_t size) {
-                [_frameBuilder addData:[NSMutableData dataWithBytes:buffer length:size]
-                                 frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
-                                     if (_state != iTermWebSocketConnectionStateClosed) {
-                                         [self handleFrame:frame];
-                                     }
-                                     *stop = (_state == iTermWebSocketConnectionStateClosed);
-                                 }];
-                return _state != iTermWebSocketConnectionStateClosed;
+                return [weakSelf didReceiveData:[NSMutableData dataWithBytes:buffer length:size]];
             });
         }
         if (error || done) {
             [self abort];
         }
     });
+}
+
+- (BOOL)didReceiveData:(NSMutableData *)data {
+    [_frameBuilder addData:data
+                     frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
+                         if (_state != iTermWebSocketConnectionStateClosed) {
+                             [self handleFrame:frame];
+                         }
+                         *stop = (_state == iTermWebSocketConnectionStateClosed);
+                     }];
+    return _state != iTermWebSocketConnectionStateClosed;
 }
 
 - (void)sendBinary:(NSData *)binaryData {
@@ -112,14 +131,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 }
 
 - (void)sendData:(NSData *)data {
-    [data retain];
     dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _queue, ^{
-        [data release];
+        [data length];  // Keep a reference to data
     });
 
+    __weak __typeof(self) weakSelf = self;
     dispatch_io_write(_channel, 0, dispatchData, _queue, ^(bool done, dispatch_data_t  _Nullable data, int error) {
         if (error || done) {
-            [self abort];
+            [weakSelf abort];
         }
     });
 }
@@ -140,7 +159,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 if (frame.fin) {
                     [_delegate webSocketConnection:self didReadFrame:frame];
                 } else if (_fragment == nil) {
-                    _fragment = [frame retain];
+                    _fragment = frame;
                 } else {
                     [self abort];
                 }
@@ -169,7 +188,6 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 [_fragment appendFragment:frame];
                 if (frame.fin) {
                     [_delegate webSocketConnection:self didReadFrame:_fragment];
-                    [_fragment release];
                     _fragment = nil;
                 }
             } else {
@@ -193,42 +211,6 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         _state = iTermWebSocketConnectionStateClosing;
         [self sendFrame:[iTermWebSocketFrame closeFrame]];
     }
-}
-
-- (BOOL)validateRequest:(NSURLRequest *)request {
-    if (![request.HTTPMethod isEqualToString:@"GET"]) {
-        return NO;
-    }
-    if (request.URL.path.length == 0) {
-        return NO;
-    }
-    NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
-    NSDictionary<NSString *, NSString *> *requiredValues =
-        @{ @"host": @"localhost",
-           @"upgrade": @"websocket",
-           @"connection": @"Upgrade",
-           @"sec-websocket-protocol": kProtocolName,
-           @"sec-websocket-version": @"1",
-           @"origin": @"localhost" };
-    for (NSString *key in requiredValues) {
-        if (![headers[key] isEqualToString:requiredValues[key]]) {
-            return NO;
-        }
-    }
-    NSArray<NSString *> *requiredKeys =
-        @[ @"sec-websocket-key",
-           @"origin" ];
-    for (NSString *key in requiredKeys) {
-        if (!headers[key]) {
-            return NO;
-        }
-    }
-
-    if ([headers[@"sec-websocket-key"] length] == 0) {
-        return NO;
-    }
-
-    return YES;
 }
 
 - (BOOL)sendUpgradeResponseWithKey:(NSString *)key {

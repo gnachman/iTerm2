@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class iTermAPIServerConnection;
+@class iTermHTTPConnection;
 @class iTermWebSocketConnection;
 @class iTermWebSocketFrame;
 
@@ -20,8 +20,10 @@
 @interface iTermWebSocketConnection : NSObject
 @property(nonatomic, assign) id<iTermWebSocketConnectionDelegate> delegate;
 
-- (instancetype)initWithConnection:(iTermAPIServerConnection *)connection;
-- (void)start;
++ (BOOL)validateRequest:(NSURLRequest *)request;
+
+- (instancetype)initWithConnection:(iTermHTTPConnection *)connection;
+- (void)handleRequest:(NSURLRequest *)request;
 - (void)close;
 - (void)sendData:(NSData *)data;
 

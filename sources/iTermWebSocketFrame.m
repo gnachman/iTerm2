@@ -19,14 +19,14 @@
 }
 
 + (instancetype)closeFrame {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
     frame.fin = YES;
     frame.opcode = iTermWebSocketOpcodeConnectionClose;
     return frame;
 }
 
 + (instancetype)closeFrameWithCode:(uint16_t)code reason:(NSString *)reason {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
     frame.fin = YES;
     frame.opcode = iTermWebSocketOpcodeConnectionClose;
     uint16_t networkCode = htons(code);
@@ -41,7 +41,7 @@
 }
 
 + (instancetype)pingFrameWithData:(NSData *)data {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
     frame.fin = YES;
     frame.opcode = iTermWebSocketOpcodePing;
     frame.payload = data;
@@ -53,7 +53,7 @@
 }
 
 + (instancetype)pongFrameForPingFrame:(iTermWebSocketFrame *)ping  {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
     frame.fin = YES;
     frame.opcode = iTermWebSocketOpcodePong;
     frame.payload = ping.payload;
@@ -65,7 +65,7 @@
 }
 
 + (instancetype)textFrameWithData:(NSData *)data {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
     frame.fin = YES;
     frame.opcode = iTermWebSocketOpcodeText;
     frame.payload = data;
@@ -77,7 +77,7 @@
 }
 
 + (instancetype)binaryFrameWithData:(NSData *)data {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
     frame.fin = YES;
     frame.opcode = iTermWebSocketOpcodeBinary;
     frame.payload = data;
@@ -85,7 +85,7 @@
 }
 
 + (instancetype)frameWithDataSource:(unsigned char *(^)(int64_t))dataSource {
-    iTermWebSocketFrame *frame = [[[iTermWebSocketFrame alloc] init] autorelease];
+    iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
 
     unsigned char *data;
     data = dataSource(1);
@@ -179,7 +179,7 @@
         // Do not encode masking key since we're a server.
 
         [data appendData:self.payload];
-        _data = [data retain];
+        _data = data;
     }
     return _data;
 }
@@ -198,7 +198,7 @@
         return nil;
     }
     NSData *data = [self.payload subdataWithRange:NSMakeRange(2, self.payload.length - 2)];
-    return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
 - (void)appendFragment:(iTermWebSocketFrame *)fragment {
@@ -207,7 +207,7 @@
 
     self.fin = fragment.fin;
     @autoreleasepool {
-        NSMutableData *temp = [[self.payload mutableCopy] autorelease];
+        NSMutableData *temp = [self.payload mutableCopy];
         [temp appendData:fragment.payload];
         self.payload = temp;
     }

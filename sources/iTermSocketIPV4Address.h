@@ -11,6 +11,7 @@
 
 @class iTermIPV4Address;
 
+// An IPv4 address and port.
 @interface iTermSocketIPV4Address : iTermSocketAddress
-- (instancetype)initWithIPV4Address:(iTermIPV4Address *)address port:(uint16_t)port;
+- (instancetype)init NS_UNAVAILABLE;
 @end

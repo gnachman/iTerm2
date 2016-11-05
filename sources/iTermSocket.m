@@ -13,24 +13,21 @@
 #include <arpa/inet.h>
 
 @implementation iTermSocket {
-    int _addressFamily;
-    int _socketType;
     iTermSocketAddress *_boundAddress;
     dispatch_queue_t _acceptQueue;
 }
 
 + (instancetype)tcpIPV4Socket {
-    return [[[self alloc] initWithAddressFamily:AF_INET socketType:SOCK_STREAM] autorelease];
+    return [[self alloc] initWithAddressFamily:AF_INET socketType:SOCK_STREAM];
 }
 
 - (instancetype)initWithAddressFamily:(int)addressFamily
                            socketType:(int)socketType {
     self = [super init];
     if (self) {
-        _addressFamily = addressFamily;
-        _socketType = socketType;
-        _fd = socket(_addressFamily, _socketType, 0);
+        _fd = socket(addressFamily, socketType, 0);
         if (_fd < 0) {
+            ELog(@"socket failed with %s", strerror(errno));
             return nil;
         }
     }
@@ -41,57 +38,61 @@
     if (_fd >= 0) {
         close(_fd);
     }
-    [_boundAddress release];
-    if (_acceptQueue) {
-        dispatch_release(_acceptQueue);
-    }
-    [super dealloc];
 }
 
 - (void)setReuseAddr:(BOOL)reuse {
     int optionValue = reuse ? 1 : 0;
-    setsockopt(_fd,
-               SOL_SOCKET,
-               SO_REUSEADDR,
-               (const void *)&optionValue,
-               sizeof(optionValue));
+    int rc = setsockopt(_fd,
+                        SOL_SOCKET,
+                        SO_REUSEADDR,
+                        (const void *)&optionValue,
+                        sizeof(optionValue));
+    if (rc) {
+        ELog(@"setsockopt failed with %s", strerror(errno));
+    }
 }
 
 - (BOOL)bindToAddress:(iTermSocketAddress *)address {
     if (bind(_fd, address.sockaddr, address.sockaddrSize) == 0) {
-        [_boundAddress release];
         _boundAddress = [address copy];
         return YES;
+    } else {
+        ELog(@"bind failed with %s", strerror(errno));
     }
     return NO;
 }
 
 - (BOOL)listenWithBacklog:(int)backlog accept:(void (^)(int, iTermSocketAddress *))acceptBlock {
+    if (!_boundAddress) {
+        return NO;
+    }
+    if (_acceptQueue) {
+        return NO;
+    }
     if (listen(_fd, backlog) < 0) {
+        ELog(@"listen failed with %s", strerror(errno));
         return NO;
     }
 
-    if (!_acceptQueue) {
-        _acceptQueue = dispatch_queue_create("com.iterm2.accept", NULL);
-    };
+    _acceptQueue = dispatch_queue_create("com.iterm2.accept", NULL);
 
     int fd = _fd;
     dispatch_async(_acceptQueue, ^{
         while (1) {
             @autoreleasepool {
-                iTermSocketAddress *clientSocketAddress = [[[_boundAddress class] alloc] init];
-                socklen_t clientAddressLength = clientSocketAddress.sockaddrSize;
-                int acceptFd = accept(fd, clientSocketAddress.sockaddr, &clientAddressLength);
+                struct sockaddr sockaddr;
+                socklen_t clientAddressLength = sizeof(sockaddr);
+                int acceptFd = accept(fd, &sockaddr, &clientAddressLength);
                 if (acceptFd < 0) {
                     if (errno == EINTR || errno == EWOULDBLOCK) {
                         continue;
                     } else {
-                        ELog(@"Accept failed with %s", strerror(errno));
+                        ELog(@"accept failed with %s", strerror(errno));
                         return;
                     }
                 }
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    acceptBlock(acceptFd, clientSocketAddress);
+                    acceptBlock(acceptFd, [iTermSocketAddress socketAddressWithSockaddr:sockaddr]);
                 });
             }
         }

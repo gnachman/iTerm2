@@ -9,7 +9,7 @@
 #import "iTermAPIServer.h"
 
 #import "DebugLogging.h"
-#import "iTermAPIServerConnection.h"
+#import "iTermHTTPConnection.h"
 #import "iTermWebSocketConnection.h"
 #import "iTermSocket.h"
 #import "iTermIPV4Address.h"
@@ -39,15 +39,15 @@
     self = [super init];
     if (self) {
         _connections = [[NSMutableArray alloc] init];
-        _socket = [[iTermSocket tcpIPV4Socket] retain];
+        _socket = [iTermSocket tcpIPV4Socket];
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         if (!_socket) {
             return nil;
         }
         [_socket setReuseAddr:YES];
         iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
-        iTermSocketAddress *socketAddress = [[[iTermSocketIPV4Address alloc] initWithIPV4Address:[loopback autorelease]
-                                                                                            port:1912] autorelease];
+        iTermSocketAddress *socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
+                                                                                        port:1912];
         if (![_socket bindToAddress:socketAddress]) {
             return nil;
         }
@@ -62,20 +62,24 @@
     return self;
 }
 
-- (void)dealloc {
-    dispatch_release(_queue);
-    [_socket release];
-    [_connections release];
-    [super dealloc];
-}
-
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     dispatch_async(_queue, ^{
-        iTermAPIServerConnection *connection = [[[iTermAPIServerConnection alloc] initWithFileDescriptor:fd clientAddress:address] autorelease];
-        iTermWebSocketConnection *webSocketConnection = [[[iTermWebSocketConnection alloc] initWithConnection:connection] autorelease];
-        webSocketConnection.delegate = self;
-        [_connections addObject:webSocketConnection];
-        [webSocketConnection start];
+        iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
+        NSURLRequest *request = [connection readRequest];
+        if (!request) {
+            ELog(@"Failed to read request from HTTP connection");
+            [connection badRequest];
+            return;
+        }
+
+        if ([iTermWebSocketConnection validateRequest:request]) {
+            iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
+            webSocketConnection.delegate = self;
+            [_connections addObject:webSocketConnection];
+            [webSocketConnection handleRequest:request];
+        } else {
+            [connection badRequest];
+        }
     });
 }
 

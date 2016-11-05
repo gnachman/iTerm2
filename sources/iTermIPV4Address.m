@@ -8,16 +8,18 @@
 
 #import "iTermIPV4Address.h"
 
-#include <arpa/inet.h>
-
 @implementation iTermIPV4Address
 
-- (instancetype)initWithLoopback {
+- (instancetype)initWithInetAddr:(in_addr_t)addr {
     self = [super init];
     if (self) {
-        _address = INADDR_LOOPBACK;
+        _address = addr;
     }
     return self;
+}
+
+- (instancetype)initWithLoopback {
+    return [self initWithInetAddr:INADDR_LOOPBACK];
 }
 
 - (in_addr_t)networkByteOrderAddress {

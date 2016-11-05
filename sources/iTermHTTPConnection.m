@@ -1,16 +1,16 @@
 //
-//  iTermAPIServerConnection.m
+//  iTermHTTPConnection.m
 //  iTerm2
 //
 //  Created by George Nachman on 11/4/16.
 //
 //
 
-#import "iTermAPIServerConnection.h"
+#import "iTermHTTPConnection.h"
 
 #import "iTermSocketAddress.h"
 
-@implementation iTermAPIServerConnection {
+@implementation iTermHTTPConnection {
     int _fd;
     iTermSocketAddress *_clientAddress;
     NSURLRequest *_request;
@@ -23,16 +23,9 @@
     if (self) {
         _fd = fd;
         _buffer = [[NSMutableData alloc] init];
-        _clientAddress = [address retain];
+        _clientAddress = address;
     }
     return self;
-}
-
-- (void)dealloc {
-    [_clientAddress release];
-    [_request release];
-    [_buffer release];
-    [super dealloc];
 }
 
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
@@ -78,7 +71,7 @@
 
 - (NSURLRequest *)readRequest {
     _deadline = [NSDate timeIntervalSinceReferenceDate] + 30;
-    NSMutableURLRequest *request = [[[NSMutableURLRequest alloc] init] autorelease];
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     NSString *requestLine = [self nextLine];
     if (!requestLine) {
         [self badRequest];
@@ -151,7 +144,7 @@
         if (data) {
             [bytes appendData:data];
             if (bytes.length > 2 && [[bytes subdataWithRange:NSMakeRange(bytes.length - 2, 2)] isEqualToData:crlfData]) {
-                return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
+                return [[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding];
             }
         } else {
             return nil;
