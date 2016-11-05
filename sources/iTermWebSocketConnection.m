@@ -15,9 +15,16 @@
 
 #import <CommonCrypto/CommonDigest.h>
 
+#if DEBUG
+#define ENABLE_WEBSOCKET_TESTING 1
+#else
+#define ENABLE_WEBSOCKET_TESTING 0
+#endif
+
 #define ILog ELog
 
 static NSString *const kProtocolName = @"api.iterm2.com";
+static const NSInteger kWebSocketVersion = 13;
 
 typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketConnectionStateConnecting,
@@ -46,12 +53,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
     NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
     NSDictionary<NSString *, NSString *> *requiredValues =
-        @{ @"host": @"localhost",
-           @"upgrade": @"websocket",
+        @{ @"upgrade": @"websocket",
            @"connection": @"Upgrade",
            @"sec-websocket-protocol": kProtocolName,
-           @"sec-websocket-version": @"1",
-           @"origin": @"localhost" };
+#if !ENABLE_WEBSOCKET_TESTING
+           @"host": @"localhost",
+           @"origin": @"localhost"
+#endif
+         };
     for (NSString *key in requiredValues) {
         if (![headers[key] isEqualToString:requiredValues[key]]) {
             ILog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
@@ -61,12 +70,19 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
     NSArray<NSString *> *requiredKeys =
         @[ @"sec-websocket-key",
+           @"sec-websocket-version",
            @"origin" ];
     for (NSString *key in requiredKeys) {
         if ([headers[key] length] == 0) {
             ILog(@"Empty or missing value for header %@", key);
             return NO;
         }
+    }
+
+    NSString *version = headers[@"sec-websocket-version"];
+    if ([version integerValue] < kWebSocketVersion) {
+        ILog(@"websocket version too old");
+        return NO;
     }
 
     ILog(@"Request validates as websocket upgrade request");
@@ -85,7 +101,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     ILog(@"Handling websocket request %@", request);
     NSAssert(_state == iTermWebSocketConnectionStateConnecting, @"Request already handled");
 
-    if (![self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]]) {
+    if (![self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]
+                                  version:[request.allHTTPHeaderFields[@"sec-websocket-version"] integerValue]]) {
         [_connection badRequest];
         _state = iTermWebSocketConnectionStateClosed;
         [_delegate webSocketConnectionDidTerminate:self];
@@ -118,6 +135,9 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     __weak __typeof(self) weakSelf = self;
     [_frameBuilder addData:data
                      frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
+                         if (!stop) {
+                             [weakSelf abort];
+                         }
                          *stop = [weakSelf didReceiveFrame:frame];
                      }];
     return _state != iTermWebSocketConnectionStateClosed;
@@ -162,7 +182,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     __weak __typeof(self) weakSelf = self;
     dispatch_io_write(_channel, 0, dispatchData, _queue, ^(bool done, dispatch_data_t  _Nullable data, int error) {
         ILog(@"Write progress: done=%d error=%d", (int)done, (int)error);
-        if (error || done) {
+        if (error) {
             [weakSelf abort];
         }
     });
@@ -235,6 +255,10 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 ILog(@"open->closing");
                 _state = iTermWebSocketConnectionStateClosing;
                 [self sendFrame:[iTermWebSocketFrame closeFrame]];
+
+                _state = iTermWebSocketConnectionStateClosed;
+                [_delegate webSocketConnectionDidTerminate:self];
+                [_connection close];
             } else if (_state == iTermWebSocketConnectionStateClosing) {
                 ILog(@"closing->closed");
                 _state = iTermWebSocketConnectionStateClosed;
@@ -254,9 +278,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
 }
 
-- (BOOL)sendUpgradeResponseWithKey:(NSString *)key {
+- (BOOL)sendUpgradeResponseWithKey:(NSString *)key version:(NSInteger)version {
     ILog(@"Upgrading with key %@", key);
-    key = [key stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     key = [key stringByAppendingString:@"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"];
 
     NSData *data = [key dataUsingEncoding:NSUTF8StringEncoding];
@@ -264,10 +287,17 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     if (CC_SHA1([data bytes], [data length], hash) ) {
         NSData *sha1 = [NSData dataWithBytes:hash length:CC_SHA1_DIGEST_LENGTH];
         NSDictionary<NSString *, NSString *> *headers =
-            @{ @"Upgrade": @"websocket",
+            @{
+               @"Upgrade": @"websocket",
                @"Connection": @"Upgrade",
-               @"Sec-WebSocket-Accept": [sha1 stringWithBase64EncodingWithLineBreak:NO],
-               @"Sec-WebSocket-Protocol": kProtocolName };
+               @"Sec-WebSocket-Accept": [sha1 stringWithBase64EncodingWithLineBreak:@""],
+               @"Sec-WebSocket-Protocol": kProtocolName
+             };
+        if (version > kWebSocketVersion) {
+            NSMutableDictionary *temp = [headers mutableCopy];
+            temp[@"Sec-Websocket-Version"] = [@(kWebSocketVersion) stringValue];
+            headers = temp;
+        }
         ILog(@"Send headers %@", headers);
         return [_connection sendResponseWithCode:101
                                           reason:@"Switching Protocols"

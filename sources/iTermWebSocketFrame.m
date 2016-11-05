@@ -107,7 +107,7 @@
     }
     BOOL mask = !!(data[0] & 0x80);
 
-    payloadLength = (mask & 0x7f);
+    payloadLength = (data[0] & 0x7f);
     if (payloadLength == 126) {
         ILog(@"Read medium length payload size");
         data = dataSource(2);
@@ -258,9 +258,20 @@
     return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
-- (void)appendFragment:(iTermWebSocketFrame *)fragment {
-    assert(fragment.opcode == iTermWebSocketOpcodeContinuation);
-    assert(!self.fin);
+- (NSString *)text {
+    NSAssert(self.opcode == iTermWebSocketOpcodeText, @"Not a text frame");
+    return [[NSString alloc] initWithData:self.payload encoding:NSUTF8StringEncoding];
+}
+
+- (BOOL)appendFragment:(iTermWebSocketFrame *)fragment {
+    if (fragment.opcode != iTermWebSocketOpcodeContinuation) {
+        ELog(@"Fragment opcode not continuation");
+        return NO;
+    }
+    if (!self.fin) {
+        ELog(@"Appending fragment to finished frame");
+        return NO;
+    }
 
     ILog(@"Appending fragment to frame %@", self);
 
@@ -271,6 +282,8 @@
         self.payload = temp;
     }
     ILog(@"Frame is now %@", self);
+
+    return YES;
 }
 
 - (iTermWebSocketFrame *)fragmentFromStartWithPayloadLength:(uint64_t)length {

@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermHTTPConnection.h"
 #import "iTermWebSocketConnection.h"
+#import "iTermWebSocketFrame.h"
 #import "iTermSocket.h"
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
@@ -98,7 +99,10 @@
 }
 
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
+#if DEBUG
+    [webSocketConnection sendText:[NSString stringWithFormat:@"You said: %@", frame.text]];
     ILog(@"Got a frame: %@", frame);
+#endif
 }
 
 @end

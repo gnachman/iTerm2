@@ -44,6 +44,7 @@ typedef NS_ENUM(int, iTermWebSocketOpcode) {
 @property (nonatomic, readonly) BOOL fin;
 @property (nonatomic, readonly) iTermWebSocketOpcode opcode;
 @property (nonatomic, readonly) NSData *payload;
+@property (nonatomic, readonly) NSString *text;
 @property (nonatomic, readonly) NSData *data;
 
 + (instancetype)closeFrame;
@@ -58,6 +59,6 @@ typedef NS_ENUM(int, iTermWebSocketOpcode) {
 - (uint16_t)closeFrameCode;
 - (NSString *)closeFrameReason;
 
-- (void)appendFragment:(iTermWebSocketFrame *)fragment;
+- (BOOL)appendFragment:(iTermWebSocketFrame *)fragment;
 
 @end

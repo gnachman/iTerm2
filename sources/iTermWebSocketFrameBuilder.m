@@ -29,12 +29,13 @@
     __block BOOL eof = NO;
     while (!eof) {
         iTermWebSocketFrame *frame = [iTermWebSocketFrame frameWithDataSource:^unsigned char *(int64_t bytesWanted) {
-            if (_data.length < bytesWanted) {
+            if (_data.length < offset + bytesWanted) {
                 eof = YES;
                 return NULL;
             } else {
+                unsigned char *result = _data.mutableBytes + offset;
                 offset += bytesWanted;
-                return _data.mutableBytes + offset;
+                return result;
             }
         }];
         if (!eof) {
@@ -42,7 +43,11 @@
         }
         if (frame) {
             if (_fragment) {
-                [_fragment appendFragment:frame];
+                if (![_fragment appendFragment:frame]) {
+                    BOOL stop = NO;
+                    frameBlock(NULL, &stop);
+                    return;
+                }
                 if (_fragment.fin) {
                     BOOL stop = NO;
                     frameBlock(_fragment, &stop);

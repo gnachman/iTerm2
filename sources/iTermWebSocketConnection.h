@@ -25,6 +25,7 @@
 - (instancetype)initWithConnection:(iTermHTTPConnection *)connection;
 - (void)handleRequest:(NSURLRequest *)request;
 - (void)close;
-- (void)sendData:(NSData *)data;
+- (void)sendBinary:(NSData *)binaryData;
+- (void)sendText:(NSString *)text;
 
 @end

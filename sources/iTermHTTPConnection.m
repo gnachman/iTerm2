@@ -32,8 +32,7 @@
 
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
     return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
-        // TODO: Figure out what to do here
-        assert(false);
+        ILog(@"Channel closed");
     });
 }
 
@@ -63,6 +62,11 @@
             [self close];
             return NO;
         }
+    }
+    ok = [self writeString:[NSString stringWithFormat:@"\r\n"]];
+    if (!ok) {
+        [self close];
+        return NO;
     }
 
     if (code >= 100 && code < 200) {
@@ -147,7 +151,7 @@
 
         NSString *key = [[line substringToIndex:colon] lowercaseString];
         NSString *value = [line substringFromIndex:colon + 1];
-        headers[key] = value;
+        headers[key] = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         ILog(@"Add header: %@: %@", key, value);
     }
     if (headers.count == kMaxHeaders) {
@@ -165,7 +169,7 @@
         NSData *data = [self nextByte];
         if (data) {
             [bytes appendData:data];
-            if (bytes.length > 2 && [[bytes subdataWithRange:NSMakeRange(bytes.length - 2, 2)] isEqualToData:crlfData]) {
+            if (bytes.length >= 2 && [[bytes subdataWithRange:NSMakeRange(bytes.length - 2, 2)] isEqualToData:crlfData]) {
                 return [[NSString alloc] initWithData:[bytes subdataWithRange:NSMakeRange(0, bytes.length - 2)]
                                              encoding:NSISOLatin1StringEncoding];
             }
@@ -237,6 +241,10 @@
 
     struct timeval timeout;
     CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
+    if (!read) {
+        // The deadline for writes is extended so we can send an error after timing out.
+        dt += 5;
+    }
     if (dt < 0) {
         return NO;
     }
