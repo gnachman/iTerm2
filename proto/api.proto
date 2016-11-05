@@ -2,6 +2,13 @@ syntax = "proto2";
 option objc_class_prefix = "ITM";
 package iterm2;
 
+message Request {
+  enum Type {
+    GET_BUFFER = 0;
+  }
+  optional Type type = 1;
+}
+
 message GetBufferRequest {
   // Only one of these fields should be set:
   // ---------------------------------------
@@ -80,8 +87,3 @@ message CodePointsPerCell {
   // Number of adjacent cells with this number of code points (always one or more).
   optional int32 repeats = 2;
 }
-
-service iTerm2Service {
-  rpc GetBuffer (GetBufferRequest) returns (GetBufferResponse);
-}
-

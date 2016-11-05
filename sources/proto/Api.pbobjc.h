@@ -33,6 +33,20 @@ CF_EXTERN_C_BEGIN
 
 NS_ASSUME_NONNULL_BEGIN
 
+#pragma mark - Enum ITMRequest_Type
+
+typedef GPB_ENUM(ITMRequest_Type) {
+  ITMRequest_Type_GetBuffer = 0,
+};
+
+GPBEnumDescriptor *ITMRequest_Type_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRequest_Type_IsValidValue(int32_t value);
+
 #pragma mark - ITMApiRoot
 
 /**
@@ -46,6 +60,19 @@ NS_ASSUME_NONNULL_BEGIN
  * this file and all files that it depends on.
  **/
 @interface ITMApiRoot : GPBRootObject
+@end
+
+#pragma mark - ITMRequest
+
+typedef GPB_ENUM(ITMRequest_FieldNumber) {
+  ITMRequest_FieldNumber_Type = 1,
+};
+
+@interface ITMRequest : GPBMessage
+
+@property(nonatomic, readwrite) ITMRequest_Type type;
+
+@property(nonatomic, readwrite) BOOL hasType;
 @end
 
 #pragma mark - ITMGetBufferRequest

@@ -43,6 +43,81 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
   return descriptor;
 }
 
+#pragma mark - ITMRequest
+
+@implementation ITMRequest
+
+@dynamic hasType, type;
+
+typedef struct ITMRequest__storage_ {
+  uint32_t _has_storage_[1];
+  ITMRequest_Type type;
+} ITMRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "type",
+        .dataTypeSpecific.enumDescFunc = ITMRequest_Type_EnumDescriptor,
+        .number = ITMRequest_FieldNumber_Type,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, type),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMRequest_Type
+
+GPBEnumDescriptor *ITMRequest_Type_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "GetBuffer\000";
+    static const int32_t values[] = {
+        ITMRequest_Type_GetBuffer,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRequest_Type)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRequest_Type_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRequest_Type_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRequest_Type_GetBuffer:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMGetBufferRequest
 
 @implementation ITMGetBufferRequest
