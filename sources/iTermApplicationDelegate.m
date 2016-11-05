@@ -30,6 +30,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAPIServer.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -456,6 +457,7 @@ static BOOL hasBecomeActive = NO;
     }
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [[iTermAPIServer alloc] init];
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }

@@ -15,9 +15,10 @@
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
 
-
 @interface iTermAPIServer()<iTermWebSocketConnectionDelegate>
 @end
+
+#define ILog ELog
 
 @implementation iTermAPIServer {
     iTermSocket *_socket;
@@ -40,15 +41,17 @@
     if (self) {
         _connections = [[NSMutableArray alloc] init];
         _socket = [iTermSocket tcpIPV4Socket];
-        _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         if (!_socket) {
+            ELog(@"Failed to create socket");
             return nil;
         }
+        _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         [_socket setReuseAddr:YES];
         iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
         iTermSocketAddress *socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
                                                                                         port:1912];
         if (![_socket bindToAddress:socketAddress]) {
+            ELog(@"Failed to bind");
             return nil;
         }
 
@@ -56,6 +59,7 @@
             [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress];
         }];
         if (!ok) {
+            ELog(@"Failed to listen");
             return nil;
         }
     }
@@ -63,6 +67,7 @@
 }
 
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
+    ILog(@"Accepted connection");
     dispatch_async(_queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
         NSURLRequest *request = [connection readRequest];
@@ -73,11 +78,13 @@
         }
 
         if ([iTermWebSocketConnection validateRequest:request]) {
+            ILog(@"Upgrading request to websocket");
             iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
             webSocketConnection.delegate = self;
             [_connections addObject:webSocketConnection];
             [webSocketConnection handleRequest:request];
         } else {
+            ELog(@"Bad request %@", request);
             [connection badRequest];
         }
     });
@@ -86,11 +93,12 @@
 #pragma mark - iTermWebSocketConnectionDelegate
 
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
+    ILog(@"Connection terminated");
     [_connections removeObject:webSocketConnection];
 }
 
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
-    NSLog(@"Got a frame: %@", frame);
+    ILog(@"Got a frame: %@", frame);
 }
 
 @end
