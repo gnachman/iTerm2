@@ -19,4 +19,7 @@
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue;
 - (void)badRequest;
 
+// For testing
+- (NSData *)nextByte;
+
 @end

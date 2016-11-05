@@ -39,7 +39,10 @@
 - (void)close {
     if (_fd >= 0) {
         ILog(@"Close http connection from %@", [NSThread callStackSymbols]);
-        close(_fd);
+        int rc = close(_fd);
+        if (rc != 0) {
+            ILog(@"close failed with %s", strerror(errno));
+        }
         _fd = -1;
     }
 }
@@ -71,7 +74,7 @@
 
     if (code >= 100 && code < 200) {
         ILog(@"Removing deadline because code is in the 100s");
-        _deadline = DBL_MAX;
+        _deadline = INFINITY;
     } else {
         ILog(@"Non-10x code, closing connection");
         [self close];
@@ -239,23 +242,27 @@
     FD_ZERO(&set);
     FD_SET(_fd, &set);
 
+    struct timeval *timeoutPointer = NULL;
     struct timeval timeout;
-    CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
-    if (!read) {
-        // The deadline for writes is extended so we can send an error after timing out.
-        dt += 5;
+    if (!isinf(_deadline)) {
+        CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
+        if (!read) {
+            // The deadline for writes is extended so we can send an error after timing out.
+            dt += 5;
+        }
+        if (dt < 0) {
+            return NO;
+        }
+        timeout.tv_sec = floor(dt);
+        timeout.tv_usec = fmod(dt, 1.0) * 1000000;
+        timeoutPointer = &timeout;
     }
-    if (dt < 0) {
-        return NO;
-    }
-    timeout.tv_sec = floor(dt);
-    timeout.tv_usec = fmod(dt, 1.0) * 1000000;
     int rc;
     do {
         if (read) {
-            rc = select(_fd + 1, &set, NULL, NULL, &timeout);
+            rc = select(_fd + 1, &set, NULL, NULL, timeoutPointer);
         } else {
-            rc = select(_fd + 1, NULL, &set, NULL, &timeout);
+            rc = select(_fd + 1, NULL, &set, NULL, timeoutPointer);
         }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {

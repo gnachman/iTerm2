@@ -100,7 +100,12 @@
 
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
 #if DEBUG
-    [webSocketConnection sendText:[NSString stringWithFormat:@"You said: %@", frame.text]];
+    if (frame.opcode == iTermWebSocketOpcodeText) {
+        [webSocketConnection sendText:[NSString stringWithFormat:@"You said: %@", frame.text]];
+    } else {
+        char data[4] = { 0x0b, 0xad, 0xf0, 0x0d };
+        [webSocketConnection sendBinary:[NSData dataWithBytes:data length:sizeof(data)]];
+    }
     ILog(@"Got a frame: %@", frame);
 #endif
 }

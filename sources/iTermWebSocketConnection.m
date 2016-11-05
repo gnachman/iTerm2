@@ -112,9 +112,13 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     _state = iTermWebSocketConnectionStateOpen;
 
     _frameBuilder = [[iTermWebSocketFrameBuilder alloc] init];
-    _queue = dispatch_queue_create("com.iterm2.api-io", NULL);
+    _queue = dispatch_get_global_queue(0, 0); //dispatch_queue_create("com.iterm2.api-io", NULL);
     _channel = [_connection newChannelOnQueue:_queue];
 
+    static int dotest=0;
+    if (dotest) {
+        [_connection nextByte];
+    }
     __weak __typeof(self) weakSelf = self;
     dispatch_io_set_low_water(_channel, 1);
     dispatch_io_read(_channel, 0, SIZE_MAX, _queue, ^(bool done, dispatch_data_t data, int error) {
