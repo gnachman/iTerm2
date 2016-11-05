@@ -184,6 +184,18 @@
     return nil;
 }
 
+- (NSMutableData *)read {
+    if (!_buffer.length) {
+        [self readFromFileDescriptor];
+    }
+    if (_buffer.length) {
+        NSMutableData *result = _buffer;
+        _buffer = [NSMutableData data];
+        return result;
+    } else {
+        return nil;
+    }
+}
 - (NSData *)nextByte {
     return [self nextBytes:1];
 }

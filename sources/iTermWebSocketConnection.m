@@ -112,24 +112,18 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     _state = iTermWebSocketConnectionStateOpen;
 
     _frameBuilder = [[iTermWebSocketFrameBuilder alloc] init];
-    _queue = dispatch_get_global_queue(0, 0); //dispatch_queue_create("com.iterm2.api-io", NULL);
+    _queue = dispatch_queue_create("com.iterm2.api-io", NULL);
     _channel = [_connection newChannelOnQueue:_queue];
 
-    static int dotest=0;
-    if (dotest) {
-        [_connection nextByte];
-    }
+    // I tried using dispatch_read but it didn't work reliably. Seems to work OK for writing.
     __weak __typeof(self) weakSelf = self;
-    dispatch_io_set_low_water(_channel, 1);
-    dispatch_io_read(_channel, 0, SIZE_MAX, _queue, ^(bool done, dispatch_data_t data, int error) {
-        if (data) {
-            dispatch_data_apply(data, ^bool(dispatch_data_t  _Nonnull region, size_t offset, const void * _Nonnull buffer, size_t size) {
-                return [weakSelf didReceiveData:[NSMutableData dataWithBytes:buffer length:size]];
-            });
-        }
-        if (error || done) {
-            ILog(@"File descriptor closed. error=%d done=%d", error, (int)done);
-            [self abort];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        while (weakSelf) {
+            NSMutableData *data = [_connection read];
+            if (!data) {
+                return;
+            }
+            [weakSelf didReceiveData:data];
         }
     });
 }

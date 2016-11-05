@@ -19,6 +19,9 @@
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue;
 - (void)badRequest;
 
+// read a chunk of bytes. blocks.
+- (NSMutableData *)read;
+
 // For testing
 - (NSData *)nextByte;
 
