@@ -13,9 +13,7 @@ var ProtoBuf = dcodeIO.ProtoBuf;
 var builder = ProtoBuf.loadProtoFile("./api.proto")
 console.log("Builder is " + builder)
 var Request = builder.build("iterm2.Request");
-var Message = ProtoBuf.loadProtoFile("./example.proto").build("Message");
-console.log("Request is " + Request)
-console.log("Message is " + Message)
+var Response = builder.build("iterm2.Response");
 </script>
 </head>
 <body>
@@ -60,7 +58,7 @@ socket.onmessage = function(evt) {
     try {
         // Decode the Response
         var msg = Response.decode(evt.data);
-        log.value += "Received: "+msg+"\n";
+        log.value += "Received: "+JSON.stringify(JSON.parse(msg.encodeJSON(msg)), null, 2)+"\n";
     } catch (err) {
         log.value += "Error: "+err+"\n";
     }
