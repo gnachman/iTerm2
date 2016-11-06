@@ -1,0 +1,107 @@
+syntax = "proto2";
+option objc_class_prefix = "ITM";
+package iterm2;
+
+message Request {
+  optional int64 id = 1;
+
+  optional GetBufferRequest get_buffer_request = 100;
+}
+
+message Response {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    INVALID_LINE_RANGE = 2;
+  }
+
+  optional Status status = 1;
+  optional int64 id = 2;
+
+  optional GetBufferResponse get_buffer_response = 100;
+}
+
+// Possible errors:
+// SESSION_NOT_FOUND
+// INVALID_LINE_RANGE
+message GetBufferRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  // Only one of these fields should be set:
+  // ---------------------------------------
+  // Return just the current contents of the screen.
+  optional bool screen_contents_only = 2;
+
+  // Return the final `trailing lines`.
+  optional int32 trailing_lines = 3;
+}
+
+message GetBufferResponse {
+  optional LineRange range = 1;
+  repeated CompactScreenLine compact_screen_lines = 2;
+}
+
+message LineRange {
+  optional int64 location = 1;
+  optional int64 length = 2;
+}
+
+message CompactScreenLine {
+  optional string text = 1;
+
+  // Some cells do not contain one code point. Use this to map code points in
+  // `text` to a screen position.
+  //
+  // For example, consider a line of text that appears on your display like:
+  // xyz compañía
+  //
+  // The corresponding value of `text` would be:
+  // xyzcompan~i'a
+  //
+  // Each code point in "xyz", as well as each of the non-accented letters in
+  // compañía, takes one cell.
+  //
+  // The blank following 'z' is an uninitialized cell that has no code points,
+  // so the z and the c in `text` are adjacent.
+  //
+  // The ñ is composed of the letter n and a combining tilde (U+0303)
+  // (indicated in our example as ~), while í
+  // is composed of the leter i and a combining acute accent (U+0301)
+  // (indicated in our example as ').
+  //
+  // To map code points in `text` to screen positions, `code_points_per_cell`
+  // provides the number of code points in each cell. In our example you would
+  // get:
+  //
+  //   num_code_points=1, repeats=3
+  //   num_code_points=0, repeats=1
+  //   num_code_points=1, repeats=5
+  //   num_code_points=2, repeats=2
+  //   num_code_points=1, repeats=1
+  //
+  // Lines usually end with a series of uninitialized cells. These are not
+  // included here.
+  //
+  // Here is psuedocode to interpret code_points_per_cell:
+  //
+  // text_index_to_screen_coord = {}
+  // screen_coord_to_text_index = {}
+  // text_index = 0
+  // screen_coord = 0
+  // for cpps in code_points_per_cell:
+  //   repeat cpps.repeats times:
+  //     text_index_to_screen_coord[text_index] = screen_coord
+  //     screen_coord_to_text_index[screen_coord] = text_index
+  //     text_index += cpps.num_code_points
+  //     screen_coord += 1
+  repeated CodePointsPerCell code_points_per_cell = 2;
+}
+
+message CodePointsPerCell {
+  // Number of code points per cell
+  optional int32 num_code_points = 1 [default = 1];
+
+  // Number of adjacent cells with this number of code points (always one or more).
+  optional int32 repeats = 2;
+}

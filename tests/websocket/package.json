@@ -1,0 +1,16 @@
+{
+    "name": "protobufjs-websocket-example",
+    "version": "1.1.0",
+    "dependencies": {
+        "protobufjs": "~3",
+        "ws": "~0.4",
+        "open": "0.0.3"
+    },
+    "engines": {
+        "node": ">=0.8"
+    },
+    "scripts": {
+        "run": "node server.js"
+    },
+    "private": true
+}
