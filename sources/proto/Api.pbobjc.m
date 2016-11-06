@@ -206,13 +206,12 @@ BOOL ITMResponse_Status_IsValidValue(int32_t value__) {
 @implementation ITMGetBufferRequest
 
 @dynamic hasSession, session;
-@dynamic hasScreenContentsOnly, screenContentsOnly;
-@dynamic hasTrailingLines, trailingLines;
+@dynamic hasLineRange, lineRange;
 
 typedef struct ITMGetBufferRequest__storage_ {
   uint32_t _has_storage_[1];
-  int32_t trailingLines;
   NSString *session;
+  ITMLineRange *lineRange;
 } ITMGetBufferRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -231,22 +230,13 @@ typedef struct ITMGetBufferRequest__storage_ {
         .dataType = GPBDataTypeString,
       },
       {
-        .name = "screenContentsOnly",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMGetBufferRequest_FieldNumber_ScreenContentsOnly,
+        .name = "lineRange",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMLineRange),
+        .number = ITMGetBufferRequest_FieldNumber_LineRange,
         .hasIndex = 1,
-        .offset = 2,  // Stored in _has_storage_ to save space.
+        .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, lineRange),
         .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeBool,
-      },
-      {
-        .name = "trailingLines",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMGetBufferRequest_FieldNumber_TrailingLines,
-        .hasIndex = 3,
-        .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, trailingLines),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeInt32,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -270,12 +260,12 @@ typedef struct ITMGetBufferRequest__storage_ {
 @implementation ITMGetBufferResponse
 
 @dynamic hasRange, range;
-@dynamic compactScreenLinesArray, compactScreenLinesArray_Count;
+@dynamic contentsArray, contentsArray_Count;
 
 typedef struct ITMGetBufferResponse__storage_ {
   uint32_t _has_storage_[1];
-  ITMLineRange *range;
-  NSMutableArray *compactScreenLinesArray;
+  ITMRange *range;
+  NSMutableArray *contentsArray;
 } ITMGetBufferResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -286,7 +276,7 @@ typedef struct ITMGetBufferResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "range",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMLineRange),
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRange),
         .number = ITMGetBufferResponse_FieldNumber_Range,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, range),
@@ -294,11 +284,11 @@ typedef struct ITMGetBufferResponse__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
-        .name = "compactScreenLinesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCompactScreenLine),
-        .number = ITMGetBufferResponse_FieldNumber_CompactScreenLinesArray,
+        .name = "contentsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMLineContents),
+        .number = ITMGetBufferResponse_FieldNumber_ContentsArray,
         .hasIndex = GPBNoHasBit,
-        .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, compactScreenLinesArray),
+        .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, contentsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
       },
@@ -323,13 +313,12 @@ typedef struct ITMGetBufferResponse__storage_ {
 
 @implementation ITMLineRange
 
-@dynamic hasLocation, location;
-@dynamic hasLength, length;
+@dynamic hasScreenContentsOnly, screenContentsOnly;
+@dynamic hasTrailingLines, trailingLines;
 
 typedef struct ITMLineRange__storage_ {
   uint32_t _has_storage_[1];
-  int64_t location;
-  int64_t length;
+  int32_t trailingLines;
 } ITMLineRange__storage_;
 
 // This method is threadsafe because it is initially called
@@ -339,22 +328,22 @@ typedef struct ITMLineRange__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "location",
+        .name = "screenContentsOnly",
         .dataTypeSpecific.className = NULL,
-        .number = ITMLineRange_FieldNumber_Location,
+        .number = ITMLineRange_FieldNumber_ScreenContentsOnly,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMLineRange__storage_, location),
+        .offset = 1,  // Stored in _has_storage_ to save space.
         .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeInt64,
+        .dataType = GPBDataTypeBool,
       },
       {
-        .name = "length",
+        .name = "trailingLines",
         .dataTypeSpecific.className = NULL,
-        .number = ITMLineRange_FieldNumber_Length,
-        .hasIndex = 1,
-        .offset = (uint32_t)offsetof(ITMLineRange__storage_, length),
+        .number = ITMLineRange_FieldNumber_TrailingLines,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMLineRange__storage_, trailingLines),
         .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeInt64,
+        .dataType = GPBDataTypeInt32,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -373,18 +362,18 @@ typedef struct ITMLineRange__storage_ {
 
 @end
 
-#pragma mark - ITMCompactScreenLine
+#pragma mark - ITMRange
 
-@implementation ITMCompactScreenLine
+@implementation ITMRange
 
-@dynamic hasText, text;
-@dynamic codePointsPerCellArray, codePointsPerCellArray_Count;
+@dynamic hasLocation, location;
+@dynamic hasLength, length;
 
-typedef struct ITMCompactScreenLine__storage_ {
+typedef struct ITMRange__storage_ {
   uint32_t _has_storage_[1];
-  NSString *text;
-  NSMutableArray *codePointsPerCellArray;
-} ITMCompactScreenLine__storage_;
+  int64_t location;
+  int64_t length;
+} ITMRange__storage_;
 
 // This method is threadsafe because it is initially called
 // in +initialize for each subclass.
@@ -393,31 +382,31 @@ typedef struct ITMCompactScreenLine__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "text",
+        .name = "location",
         .dataTypeSpecific.className = NULL,
-        .number = ITMCompactScreenLine_FieldNumber_Text,
+        .number = ITMRange_FieldNumber_Location,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMCompactScreenLine__storage_, text),
+        .offset = (uint32_t)offsetof(ITMRange__storage_, location),
         .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
+        .dataType = GPBDataTypeInt64,
       },
       {
-        .name = "codePointsPerCellArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCodePointsPerCell),
-        .number = ITMCompactScreenLine_FieldNumber_CodePointsPerCellArray,
-        .hasIndex = GPBNoHasBit,
-        .offset = (uint32_t)offsetof(ITMCompactScreenLine__storage_, codePointsPerCellArray),
-        .flags = GPBFieldRepeated,
-        .dataType = GPBDataTypeMessage,
+        .name = "length",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRange_FieldNumber_Length,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRange__storage_, length),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
       },
     };
     GPBDescriptor *localDescriptor =
-        [GPBDescriptor allocDescriptorForClass:[ITMCompactScreenLine class]
+        [GPBDescriptor allocDescriptorForClass:[ITMRange class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
-                                   storageSize:sizeof(ITMCompactScreenLine__storage_)
+                                   storageSize:sizeof(ITMRange__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
@@ -426,6 +415,108 @@ typedef struct ITMCompactScreenLine__storage_ {
 }
 
 @end
+
+#pragma mark - ITMLineContents
+
+@implementation ITMLineContents
+
+@dynamic hasText, text;
+@dynamic codePointsPerCellArray, codePointsPerCellArray_Count;
+@dynamic hasContinuation, continuation;
+
+typedef struct ITMLineContents__storage_ {
+  uint32_t _has_storage_[1];
+  ITMLineContents_Continuation continuation;
+  NSString *text;
+  NSMutableArray *codePointsPerCellArray;
+} ITMLineContents__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "text",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMLineContents_FieldNumber_Text,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, text),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "codePointsPerCellArray",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMCodePointsPerCell),
+        .core.number = ITMLineContents_FieldNumber_CodePointsPerCellArray,
+        .core.hasIndex = GPBNoHasBit,
+        .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, codePointsPerCellArray),
+        .core.flags = GPBFieldRepeated,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueEnum = ITMLineContents_Continuation_ContinuationHardEol,
+        .core.name = "continuation",
+        .core.dataTypeSpecific.enumDescFunc = ITMLineContents_Continuation_EnumDescriptor,
+        .core.number = ITMLineContents_FieldNumber_Continuation,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, continuation),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMLineContents class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMLineContents__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMLineContents_Continuation
+
+GPBEnumDescriptor *ITMLineContents_Continuation_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "ContinuationHardEol\000ContinuationSoftEol\000";
+    static const int32_t values[] = {
+        ITMLineContents_Continuation_ContinuationHardEol,
+        ITMLineContents_Continuation_ContinuationSoftEol,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMLineContents_Continuation)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMLineContents_Continuation_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMLineContents_Continuation_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMLineContents_Continuation_ContinuationHardEol:
+    case ITMLineContents_Continuation_ContinuationSoftEol:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMCodePointsPerCell
 

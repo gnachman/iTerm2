@@ -2,12 +2,14 @@ syntax = "proto2";
 option objc_class_prefix = "ITM";
 package iterm2;
 
+// All requests are wrapped in this message.
 message Request {
   optional int64 id = 1;
 
   optional GetBufferRequest get_buffer_request = 100;
 }
 
+// All responses are wrapped in this message.
 message Response {
   enum Status {
     OK = 0;
@@ -22,6 +24,7 @@ message Response {
   optional GetBufferResponse get_buffer_response = 100;
 }
 
+// Requests the contents of a range of lines.
 // Possible errors:
 // SESSION_NOT_FOUND
 // INVALID_LINE_RANGE
@@ -29,6 +32,21 @@ message GetBufferRequest {
   // Leave this empty to use the current session, if any.
   optional string session = 1;
 
+  // Which lines to return?
+  optional LineRange line_range = 2;
+}
+
+// Contains the contents of a range of lines.
+message GetBufferResponse {
+  // Which lines were returned
+  optional Range range = 1;
+
+  // Those lines' contents.
+  repeated LineContents contents = 2;
+}
+
+// Describes a range of lines.
+message LineRange {
   // Only one of these fields should be set:
   // ---------------------------------------
   // Return just the current contents of the screen.
@@ -39,17 +57,14 @@ message GetBufferRequest {
   optional int32 trailing_lines = 3;
 }
 
-message GetBufferResponse {
-  optional LineRange range = 1;
-  repeated CompactScreenLine compact_screen_lines = 2;
-}
-
-message LineRange {
+// Describes a range of values.
+message Range {
   optional int64 location = 1;
   optional int64 length = 2;
 }
 
-message CompactScreenLine {
+// Describes the content of a line.
+message LineContents {
   optional string text = 1;
 
   // Some cells do not contain one code point. Use this to map code points in
@@ -98,6 +113,16 @@ message CompactScreenLine {
   //     text_index += cpps.num_code_points
   //     screen_coord += 1
   repeated CodePointsPerCell code_points_per_cell = 2;
+
+  // How does this line end?
+  enum Continuation {
+    // This line is not wrapped.
+    CONTINUATION_HARD_EOL = 1;
+
+    // The next line is a continuation of this line.
+    CONTINUATION_SOFT_EOL = 2;
+  }
+  optional Continuation continuation = 3 [default = CONTINUATION_HARD_EOL];
 }
 
 message CodePointsPerCell {

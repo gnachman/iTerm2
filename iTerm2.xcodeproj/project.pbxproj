@@ -3186,6 +3186,7 @@
 		A63F40A3183F3B78003A6A6D /* LineBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBlock.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; tabWidth = 4; };
+		A64203171DCF7DEE0074DC6C /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = api.proto; path = proto/api.proto; sourceTree = SOURCE_ROOT; };
 		A647E39718C3504100450FA1 /* VT100Token.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Token.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E39818C3515900450FA1 /* VT100AnsiParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100AnsiParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E39918C3515900450FA1 /* VT100AnsiParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100AnsiParser.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -5577,6 +5578,7 @@
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
 			isa = PBXGroup;
 			children = (
+				A64203171DCF7DEE0074DC6C /* api.proto */,
 				A6CEC1061DCE8139009F4FD2 /* iTerm2 */,
 				A6CEC0B11DCE811E009F4FD2 /* Runtime */,
 				A6CEC0B01DCE810D009F4FD2 /* google */,

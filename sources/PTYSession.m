@@ -7693,44 +7693,66 @@ ITERM_WEAKLY_REFERENCEABLE
     return string;
 }
 
-- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
-                                          status:(ITMResponse_Status *)status {
+- (NSRange)rangeFromLineRange:(ITMLineRange *)lineRange {
     int n = 0;
-    if (request.hasScreenContentsOnly) {
+    if (lineRange.hasScreenContentsOnly) {
         n++;
     }
-    if (request.hasTrailingLines) {
+    if (lineRange.hasTrailingLines) {
         n++;
     }
     if (n != 1) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+
+    NSRange range;
+    if (lineRange.hasScreenContentsOnly) {
+        range.location = [_screen numberOfScrollbackLines] + _screen.totalScrollbackOverflow;
+        range.length = _screen.height;
+    } else if (lineRange.hasTrailingLines) {
+        // Requests are capped at 1M lines to avoid doing too much work.
+        int64_t length = MIN(1000000, MIN(lineRange.trailingLines, _screen.numberOfLines));
+        range.location = _screen.numberOfLines + _screen.totalScrollbackOverflow - length;
+        range.length = length;
+    } else {
+        range = NSMakeRange(NSNotFound, 0);
+    }
+    return range;
+}
+- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
+                                          status:(ITMResponse_Status *)status {
+    NSRange lineRange = [self rangeFromLineRange:request.lineRange];
+    if (lineRange.location == NSNotFound) {
         *status = ITMResponse_Status_RequestMalformed;
         return nil;
     }
 
-    ITMLineRange *range = [[[ITMLineRange alloc] init] autorelease];
-    if (request.hasScreenContentsOnly) {
-        range.location = [_screen numberOfScrollbackLines] + _screen.totalScrollbackOverflow;
-        range.length = _screen.height;
-    }
-    if (request.hasTrailingLines) {
-        // Requests are capped at 1M lines to avoid doing too much work.
-        int64_t length = MIN(1000000, MIN(range.length, _screen.numberOfLines));
-        range.location = _screen.numberOfLines + _screen.totalScrollbackOverflow - length;
-        range.length = length;
-    }
     ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
-    response.range = range;
+    response.range = [[[ITMRange alloc] init] autorelease];
+    response.range.location = lineRange.location;
+    response.range.length = lineRange.length;
+
     int width = _screen.width;
-    for (int64_t i = 0; i < range.length; i++) {
-        int64_t y = range.location + i;
-        ITMCompactScreenLine *compactLine = [[[ITMCompactScreenLine alloc] init] autorelease];
+    for (int64_t i = 0; i < lineRange.length; i++) {
+        int64_t y = lineRange.location + i;
+        ITMLineContents *lineContents = [[[ITMLineContents alloc] init] autorelease];
         screen_char_t *line = [_screen getLineAtIndex:y - _screen.totalScrollbackOverflow];
         int lineLength = width;
         while (lineLength > 0 && line[lineLength - 1].code == 0 && !line[lineLength - 1].complexChar) {
             --lineLength;
         }
-        compactLine.text = [self stringForLine:line length:lineLength cppsArray:compactLine.codePointsPerCellArray];
-        [response.compactScreenLinesArray addObject:compactLine];
+        lineContents.text = [self stringForLine:line length:lineLength cppsArray:lineContents.codePointsPerCellArray];
+        switch (line[_screen.width].code) {
+            case EOL_HARD:
+                lineContents.continuation = ITMLineContents_Continuation_ContinuationHardEol;
+                break;
+
+            case EOL_SOFT:
+            case EOL_DWC:
+                lineContents.continuation = ITMLineContents_Continuation_ContinuationSoftEol;
+                break;
+        }
+        [response.contentsArray addObject:lineContents];
     }
     *status = ITMResponse_Status_Ok;
     return response;

@@ -28,10 +28,11 @@
 CF_EXTERN_C_BEGIN
 
 @class ITMCodePointsPerCell;
-@class ITMCompactScreenLine;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
+@class ITMLineContents;
 @class ITMLineRange;
+@class ITMRange;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -51,6 +52,25 @@ GPBEnumDescriptor *ITMResponse_Status_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMLineContents_Continuation
+
+/** How does this line end? */
+typedef GPB_ENUM(ITMLineContents_Continuation) {
+  /** This line is not wrapped. */
+  ITMLineContents_Continuation_ContinuationHardEol = 1,
+
+  /** The next line is a continuation of this line. */
+  ITMLineContents_Continuation_ContinuationSoftEol = 2,
+};
+
+GPBEnumDescriptor *ITMLineContents_Continuation_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMLineContents_Continuation_IsValidValue(int32_t value);
 
 #pragma mark - ITMApiRoot
 
@@ -74,6 +94,9 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_GetBufferRequest = 100,
 };
 
+/**
+ * All requests are wrapped in this message.
+ **/
 @interface ITMRequest : GPBMessage
 
 @property(nonatomic, readwrite) int64_t id_p;
@@ -93,6 +116,9 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_GetBufferResponse = 100,
 };
 
+/**
+ * All responses are wrapped in this message.
+ **/
 @interface ITMResponse : GPBMessage
 
 @property(nonatomic, readwrite) ITMResponse_Status status;
@@ -111,11 +137,11 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 
 typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
   ITMGetBufferRequest_FieldNumber_Session = 1,
-  ITMGetBufferRequest_FieldNumber_ScreenContentsOnly = 2,
-  ITMGetBufferRequest_FieldNumber_TrailingLines = 3,
+  ITMGetBufferRequest_FieldNumber_LineRange = 2,
 };
 
 /**
+ * Requests the contents of a range of lines.
  * Possible errors:
  * SESSION_NOT_FOUND
  * INVALID_LINE_RANGE
@@ -127,6 +153,49 @@ typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
 
+/** Which lines to return? */
+@property(nonatomic, readwrite, strong, null_resettable) ITMLineRange *lineRange;
+/** Test to see if @c lineRange has been set. */
+@property(nonatomic, readwrite) BOOL hasLineRange;
+
+@end
+
+#pragma mark - ITMGetBufferResponse
+
+typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
+  ITMGetBufferResponse_FieldNumber_Range = 1,
+  ITMGetBufferResponse_FieldNumber_ContentsArray = 2,
+};
+
+/**
+ * Contains the contents of a range of lines.
+ **/
+@interface ITMGetBufferResponse : GPBMessage
+
+/** Which lines were returned */
+@property(nonatomic, readwrite, strong, null_resettable) ITMRange *range;
+/** Test to see if @c range has been set. */
+@property(nonatomic, readwrite) BOOL hasRange;
+
+/** Those lines' contents. */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMLineContents*> *contentsArray;
+/** The number of items in @c contentsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger contentsArray_Count;
+
+@end
+
+#pragma mark - ITMLineRange
+
+typedef GPB_ENUM(ITMLineRange_FieldNumber) {
+  ITMLineRange_FieldNumber_ScreenContentsOnly = 2,
+  ITMLineRange_FieldNumber_TrailingLines = 3,
+};
+
+/**
+ * Describes a range of lines.
+ **/
+@interface ITMLineRange : GPBMessage
+
 /**
  * Only one of these fields should be set:
  * ---------------------------------------
@@ -135,39 +204,26 @@ typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
 @property(nonatomic, readwrite) BOOL screenContentsOnly;
 
 @property(nonatomic, readwrite) BOOL hasScreenContentsOnly;
-/** Return the final `trailing lines`. */
+/**
+ * Return the last `trailing lines` of the buffer, which could go back into
+ * scrollback history.
+ **/
 @property(nonatomic, readwrite) int32_t trailingLines;
 
 @property(nonatomic, readwrite) BOOL hasTrailingLines;
 @end
 
-#pragma mark - ITMGetBufferResponse
+#pragma mark - ITMRange
 
-typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
-  ITMGetBufferResponse_FieldNumber_Range = 1,
-  ITMGetBufferResponse_FieldNumber_CompactScreenLinesArray = 2,
+typedef GPB_ENUM(ITMRange_FieldNumber) {
+  ITMRange_FieldNumber_Location = 1,
+  ITMRange_FieldNumber_Length = 2,
 };
 
-@interface ITMGetBufferResponse : GPBMessage
-
-@property(nonatomic, readwrite, strong, null_resettable) ITMLineRange *range;
-/** Test to see if @c range has been set. */
-@property(nonatomic, readwrite) BOOL hasRange;
-
-@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMCompactScreenLine*> *compactScreenLinesArray;
-/** The number of items in @c compactScreenLinesArray without causing the array to be created. */
-@property(nonatomic, readonly) NSUInteger compactScreenLinesArray_Count;
-
-@end
-
-#pragma mark - ITMLineRange
-
-typedef GPB_ENUM(ITMLineRange_FieldNumber) {
-  ITMLineRange_FieldNumber_Location = 1,
-  ITMLineRange_FieldNumber_Length = 2,
-};
-
-@interface ITMLineRange : GPBMessage
+/**
+ * Describes a range of values.
+ **/
+@interface ITMRange : GPBMessage
 
 @property(nonatomic, readwrite) int64_t location;
 
@@ -177,14 +233,18 @@ typedef GPB_ENUM(ITMLineRange_FieldNumber) {
 @property(nonatomic, readwrite) BOOL hasLength;
 @end
 
-#pragma mark - ITMCompactScreenLine
+#pragma mark - ITMLineContents
 
-typedef GPB_ENUM(ITMCompactScreenLine_FieldNumber) {
-  ITMCompactScreenLine_FieldNumber_Text = 1,
-  ITMCompactScreenLine_FieldNumber_CodePointsPerCellArray = 2,
+typedef GPB_ENUM(ITMLineContents_FieldNumber) {
+  ITMLineContents_FieldNumber_Text = 1,
+  ITMLineContents_FieldNumber_CodePointsPerCellArray = 2,
+  ITMLineContents_FieldNumber_Continuation = 3,
 };
 
-@interface ITMCompactScreenLine : GPBMessage
+/**
+ * Describes the content of a line.
+ **/
+@interface ITMLineContents : GPBMessage
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *text;
 /** Test to see if @c text has been set. */
@@ -241,6 +301,9 @@ typedef GPB_ENUM(ITMCompactScreenLine_FieldNumber) {
 /** The number of items in @c codePointsPerCellArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger codePointsPerCellArray_Count;
 
+@property(nonatomic, readwrite) ITMLineContents_Continuation continuation;
+
+@property(nonatomic, readwrite) BOOL hasContinuation;
 @end
 
 #pragma mark - ITMCodePointsPerCell
