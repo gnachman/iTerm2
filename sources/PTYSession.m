@@ -7654,4 +7654,72 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.textview.window makeFirstResponder:self.textview];
 }
 
+#pragma mark - API
+
+- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
+                                          status:(ITMResponse_Status *)status {
+    int n = 0;
+    if (request.hasScreenContentsOnly) {
+        n++;
+    }
+    if (request.hasTrailingLines) {
+        n++;
+    }
+    if (n != 1) {
+        *status = ITMResponse_Status_RequestMalformed;
+        return nil;
+    }
+
+    ITMLineRange *range = [[[ITMLineRange alloc] init] autorelease];
+    if (request.hasScreenContentsOnly) {
+        range.location = [_screen numberOfScrollbackLines] + _screen.totalScrollbackOverflow;
+        range.length = _screen.height;
+    }
+    if (request.hasTrailingLines) {
+        // Requests are capped at 1M lines to avoid doing too much work.
+        int64_t length = MIN(1000000, MIN(range.length, _screen.numberOfLines));
+        range.location = _screen.numberOfLines + _screen.totalScrollbackOverflow - length;
+        range.length = length;
+    }
+    ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
+    response.range = range;
+    int width = _screen.width;
+    for (int64_t i = 0; i < range.length; i++) {
+        int64_t y = range.location + i;
+        ITMCompactScreenLine *compactLine = [[[ITMCompactScreenLine alloc] init] autorelease];
+        screen_char_t *line = [_screen getLineAtIndex:y - _screen.totalScrollbackOverflow];
+        unichar *storage = nil;
+        int *deltas = nil;
+        compactLine.text = ScreenCharArrayToString(line, 0, width, &storage, &deltas);
+
+        int size = 1;
+        int reps = 0;
+        int lastDelta = 0;
+        int stringLength = compactLine.text.length;
+        for (int j = 0; j < stringLength; j++) {
+            if (deltas[j] == lastDelta) {
+                ++reps;
+            } else {
+                ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
+                cpps.numCodePoints = size;
+                cpps.repeats = reps;
+                [compactLine.codePointsPerCellArray addObject:cpps];
+
+                size += (deltas[j] - lastDelta);
+                reps = 1;
+                lastDelta = deltas[j];
+            }
+        }
+        ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
+        cpps.numCodePoints = size;
+        cpps.repeats = reps;
+        [compactLine.codePointsPerCellArray addObject:cpps];
+
+        [response.compactScreenLinesArray addObject:compactLine];
+    }
+    *status = ITMResponse_Status_Ok;
+    return response;
+}
+
+
 @end

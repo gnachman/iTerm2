@@ -2159,6 +2159,70 @@
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
+		A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */; };
+		A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */; };
+		A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */; };
+		A6CEC0711DCE80C9009F4FD2 /* Any.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0491DCE80C1009F4FD2 /* Any.pbobjc.m */; };
+		A6CEC0721DCE80C9009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC04A1DCE80C1009F4FD2 /* Api.pbobjc.h */; };
+		A6CEC0731DCE80C9009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC04B1DCE80C1009F4FD2 /* Api.pbobjc.m */; };
+		A6CEC0741DCE80C9009F4FD2 /* Duration.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC04C1DCE80C1009F4FD2 /* Duration.pbobjc.h */; };
+		A6CEC0751DCE80C9009F4FD2 /* Duration.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC04D1DCE80C1009F4FD2 /* Duration.pbobjc.m */; };
+		A6CEC0761DCE80C9009F4FD2 /* Empty.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC04E1DCE80C1009F4FD2 /* Empty.pbobjc.h */; };
+		A6CEC0771DCE80C9009F4FD2 /* Empty.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC04F1DCE80C1009F4FD2 /* Empty.pbobjc.m */; };
+		A6CEC0781DCE80C9009F4FD2 /* FieldMask.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0501DCE80C1009F4FD2 /* FieldMask.pbobjc.h */; };
+		A6CEC0791DCE80C9009F4FD2 /* FieldMask.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0511DCE80C1009F4FD2 /* FieldMask.pbobjc.m */; };
+		A6CEC07A1DCE80C9009F4FD2 /* SourceContext.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0521DCE80C1009F4FD2 /* SourceContext.pbobjc.h */; };
+		A6CEC07B1DCE80C9009F4FD2 /* SourceContext.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0531DCE80C1009F4FD2 /* SourceContext.pbobjc.m */; };
+		A6CEC07C1DCE80C9009F4FD2 /* Struct.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0541DCE80C1009F4FD2 /* Struct.pbobjc.h */; };
+		A6CEC07D1DCE80C9009F4FD2 /* Struct.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0551DCE80C1009F4FD2 /* Struct.pbobjc.m */; };
+		A6CEC07E1DCE80C9009F4FD2 /* Timestamp.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0561DCE80C1009F4FD2 /* Timestamp.pbobjc.h */; };
+		A6CEC07F1DCE80C9009F4FD2 /* Timestamp.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0571DCE80C1009F4FD2 /* Timestamp.pbobjc.m */; };
+		A6CEC0801DCE80C9009F4FD2 /* Type.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0581DCE80C1009F4FD2 /* Type.pbobjc.h */; };
+		A6CEC0811DCE80C9009F4FD2 /* Type.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0591DCE80C1009F4FD2 /* Type.pbobjc.m */; };
+		A6CEC0821DCE80C9009F4FD2 /* Wrappers.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC05A1DCE80C1009F4FD2 /* Wrappers.pbobjc.h */; };
+		A6CEC0831DCE80C9009F4FD2 /* Wrappers.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC05B1DCE80C1009F4FD2 /* Wrappers.pbobjc.m */; };
+		A6CEC1071DCE8146009F4FD2 /* GPBArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B21DCE812F009F4FD2 /* GPBArray.m */; };
+		A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B31DCE812F009F4FD2 /* GPBCodedInputStream.m */; };
+		A6CEC1091DCE8146009F4FD2 /* GPBCodedOutputStream.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B41DCE812F009F4FD2 /* GPBCodedOutputStream.m */; };
+		A6CEC10A1DCE8146009F4FD2 /* GPBDescriptor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B51DCE812F009F4FD2 /* GPBDescriptor.m */; };
+		A6CEC10B1DCE8146009F4FD2 /* GPBDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B61DCE812F009F4FD2 /* GPBDictionary.m */; };
+		A6CEC10C1DCE8146009F4FD2 /* GPBExtensionInternals.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B71DCE812F009F4FD2 /* GPBExtensionInternals.m */; };
+		A6CEC10D1DCE8146009F4FD2 /* GPBExtensionRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B81DCE812F009F4FD2 /* GPBExtensionRegistry.m */; };
+		A6CEC10E1DCE8146009F4FD2 /* GPBMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0B91DCE812F009F4FD2 /* GPBMessage.m */; };
+		A6CEC10F1DCE8146009F4FD2 /* GPBRootObject.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0BA1DCE812F009F4FD2 /* GPBRootObject.m */; };
+		A6CEC1101DCE8146009F4FD2 /* GPBUnknownField.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0BB1DCE812F009F4FD2 /* GPBUnknownField.m */; };
+		A6CEC1111DCE8146009F4FD2 /* GPBUnknownFieldSet.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0BC1DCE812F009F4FD2 /* GPBUnknownFieldSet.m */; };
+		A6CEC1121DCE8146009F4FD2 /* GPBUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0BD1DCE812F009F4FD2 /* GPBUtilities.m */; };
+		A6CEC1131DCE8146009F4FD2 /* GPBWellKnownTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0BE1DCE812F009F4FD2 /* GPBWellKnownTypes.m */; };
+		A6CEC1141DCE8146009F4FD2 /* GPBWireFormat.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEC0BF1DCE812F009F4FD2 /* GPBWireFormat.m */; };
+		A6CEC1151DCE8146009F4FD2 /* GPBArray_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C01DCE812F009F4FD2 /* GPBArray_PackagePrivate.h */; };
+		A6CEC1161DCE8146009F4FD2 /* GPBArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C11DCE812F009F4FD2 /* GPBArray.h */; };
+		A6CEC1171DCE8146009F4FD2 /* GPBBootstrap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C21DCE812F009F4FD2 /* GPBBootstrap.h */; };
+		A6CEC1181DCE8146009F4FD2 /* GPBCodedInputStream_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C31DCE812F009F4FD2 /* GPBCodedInputStream_PackagePrivate.h */; };
+		A6CEC1191DCE8146009F4FD2 /* GPBCodedInputStream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C41DCE812F009F4FD2 /* GPBCodedInputStream.h */; };
+		A6CEC11A1DCE8146009F4FD2 /* GPBCodedOutputStream_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C51DCE812F009F4FD2 /* GPBCodedOutputStream_PackagePrivate.h */; };
+		A6CEC11B1DCE8146009F4FD2 /* GPBCodedOutputStream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C61DCE812F009F4FD2 /* GPBCodedOutputStream.h */; };
+		A6CEC11C1DCE8146009F4FD2 /* GPBDescriptor_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C71DCE812F009F4FD2 /* GPBDescriptor_PackagePrivate.h */; };
+		A6CEC11D1DCE8146009F4FD2 /* GPBDescriptor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C81DCE812F009F4FD2 /* GPBDescriptor.h */; };
+		A6CEC11E1DCE8146009F4FD2 /* GPBDictionary_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0C91DCE812F009F4FD2 /* GPBDictionary_PackagePrivate.h */; };
+		A6CEC11F1DCE8146009F4FD2 /* GPBDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0CA1DCE812F009F4FD2 /* GPBDictionary.h */; };
+		A6CEC1201DCE8146009F4FD2 /* GPBExtensionInternals.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0CB1DCE812F009F4FD2 /* GPBExtensionInternals.h */; };
+		A6CEC1211DCE8146009F4FD2 /* GPBExtensionRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0CC1DCE812F009F4FD2 /* GPBExtensionRegistry.h */; };
+		A6CEC1221DCE8146009F4FD2 /* GPBMessage_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0CD1DCE812F009F4FD2 /* GPBMessage_PackagePrivate.h */; };
+		A6CEC1231DCE8146009F4FD2 /* GPBMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0CE1DCE812F009F4FD2 /* GPBMessage.h */; };
+		A6CEC1241DCE8146009F4FD2 /* GPBProtocolBuffers_RuntimeSupport.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0CF1DCE812F009F4FD2 /* GPBProtocolBuffers_RuntimeSupport.h */; };
+		A6CEC1251DCE8146009F4FD2 /* GPBProtocolBuffers.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D01DCE812F009F4FD2 /* GPBProtocolBuffers.h */; };
+		A6CEC1261DCE8146009F4FD2 /* GPBRootObject_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D11DCE812F009F4FD2 /* GPBRootObject_PackagePrivate.h */; };
+		A6CEC1271DCE8146009F4FD2 /* GPBRootObject.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D21DCE812F009F4FD2 /* GPBRootObject.h */; };
+		A6CEC1281DCE8146009F4FD2 /* GPBRuntimeTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D31DCE812F009F4FD2 /* GPBRuntimeTypes.h */; };
+		A6CEC1291DCE8146009F4FD2 /* GPBUnknownField_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D41DCE812F009F4FD2 /* GPBUnknownField_PackagePrivate.h */; };
+		A6CEC12A1DCE8146009F4FD2 /* GPBUnknownField.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D51DCE812F009F4FD2 /* GPBUnknownField.h */; };
+		A6CEC12B1DCE8146009F4FD2 /* GPBUnknownFieldSet_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D61DCE812F009F4FD2 /* GPBUnknownFieldSet_PackagePrivate.h */; };
+		A6CEC12C1DCE8146009F4FD2 /* GPBUnknownFieldSet.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D71DCE812F009F4FD2 /* GPBUnknownFieldSet.h */; };
+		A6CEC12D1DCE8146009F4FD2 /* GPBUtilities_PackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D81DCE812F009F4FD2 /* GPBUtilities_PackagePrivate.h */; };
+		A6CEC12E1DCE8146009F4FD2 /* GPBUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0D91DCE812F009F4FD2 /* GPBUtilities.h */; };
+		A6CEC12F1DCE8146009F4FD2 /* GPBWellKnownTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0DA1DCE812F009F4FD2 /* GPBWellKnownTypes.h */; };
+		A6CEC1301DCE8146009F4FD2 /* GPBWireFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0DB1DCE812F009F4FD2 /* GPBWireFormat.h */; };
 		A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
 		A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
 		A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
@@ -3517,6 +3581,70 @@
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
+		A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = proto/Api.pbobjc.h; sourceTree = "<group>"; };
+		A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = proto/Api.pbobjc.m; sourceTree = "<group>"; };
+		A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Any.pbobjc.h; path = ThirdParty/google/protobuf/Any.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0491DCE80C1009F4FD2 /* Any.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Any.pbobjc.m; path = ThirdParty/google/protobuf/Any.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC04A1DCE80C1009F4FD2 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = ThirdParty/google/protobuf/Api.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC04B1DCE80C1009F4FD2 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = ThirdParty/google/protobuf/Api.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC04C1DCE80C1009F4FD2 /* Duration.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Duration.pbobjc.h; path = ThirdParty/google/protobuf/Duration.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC04D1DCE80C1009F4FD2 /* Duration.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Duration.pbobjc.m; path = ThirdParty/google/protobuf/Duration.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC04E1DCE80C1009F4FD2 /* Empty.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Empty.pbobjc.h; path = ThirdParty/google/protobuf/Empty.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC04F1DCE80C1009F4FD2 /* Empty.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Empty.pbobjc.m; path = ThirdParty/google/protobuf/Empty.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0501DCE80C1009F4FD2 /* FieldMask.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FieldMask.pbobjc.h; path = ThirdParty/google/protobuf/FieldMask.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0511DCE80C1009F4FD2 /* FieldMask.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FieldMask.pbobjc.m; path = ThirdParty/google/protobuf/FieldMask.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0521DCE80C1009F4FD2 /* SourceContext.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SourceContext.pbobjc.h; path = ThirdParty/google/protobuf/SourceContext.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0531DCE80C1009F4FD2 /* SourceContext.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SourceContext.pbobjc.m; path = ThirdParty/google/protobuf/SourceContext.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0541DCE80C1009F4FD2 /* Struct.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Struct.pbobjc.h; path = ThirdParty/google/protobuf/Struct.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0551DCE80C1009F4FD2 /* Struct.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Struct.pbobjc.m; path = ThirdParty/google/protobuf/Struct.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0561DCE80C1009F4FD2 /* Timestamp.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Timestamp.pbobjc.h; path = ThirdParty/google/protobuf/Timestamp.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0571DCE80C1009F4FD2 /* Timestamp.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Timestamp.pbobjc.m; path = ThirdParty/google/protobuf/Timestamp.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0581DCE80C1009F4FD2 /* Type.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Type.pbobjc.h; path = ThirdParty/google/protobuf/Type.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0591DCE80C1009F4FD2 /* Type.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Type.pbobjc.m; path = ThirdParty/google/protobuf/Type.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC05A1DCE80C1009F4FD2 /* Wrappers.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Wrappers.pbobjc.h; path = ThirdParty/google/protobuf/Wrappers.pbobjc.h; sourceTree = SOURCE_ROOT; };
+		A6CEC05B1DCE80C1009F4FD2 /* Wrappers.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Wrappers.pbobjc.m; path = ThirdParty/google/protobuf/Wrappers.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B21DCE812F009F4FD2 /* GPBArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBArray.m; path = ThirdParty/ProtobufRuntime/GPBArray.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B31DCE812F009F4FD2 /* GPBCodedInputStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBCodedInputStream.m; path = ThirdParty/ProtobufRuntime/GPBCodedInputStream.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B41DCE812F009F4FD2 /* GPBCodedOutputStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBCodedOutputStream.m; path = ThirdParty/ProtobufRuntime/GPBCodedOutputStream.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B51DCE812F009F4FD2 /* GPBDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBDescriptor.m; path = ThirdParty/ProtobufRuntime/GPBDescriptor.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B61DCE812F009F4FD2 /* GPBDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBDictionary.m; path = ThirdParty/ProtobufRuntime/GPBDictionary.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B71DCE812F009F4FD2 /* GPBExtensionInternals.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBExtensionInternals.m; path = ThirdParty/ProtobufRuntime/GPBExtensionInternals.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B81DCE812F009F4FD2 /* GPBExtensionRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBExtensionRegistry.m; path = ThirdParty/ProtobufRuntime/GPBExtensionRegistry.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0B91DCE812F009F4FD2 /* GPBMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBMessage.m; path = ThirdParty/ProtobufRuntime/GPBMessage.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0BA1DCE812F009F4FD2 /* GPBRootObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBRootObject.m; path = ThirdParty/ProtobufRuntime/GPBRootObject.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0BB1DCE812F009F4FD2 /* GPBUnknownField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBUnknownField.m; path = ThirdParty/ProtobufRuntime/GPBUnknownField.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0BC1DCE812F009F4FD2 /* GPBUnknownFieldSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBUnknownFieldSet.m; path = ThirdParty/ProtobufRuntime/GPBUnknownFieldSet.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0BD1DCE812F009F4FD2 /* GPBUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBUtilities.m; path = ThirdParty/ProtobufRuntime/GPBUtilities.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0BE1DCE812F009F4FD2 /* GPBWellKnownTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBWellKnownTypes.m; path = ThirdParty/ProtobufRuntime/GPBWellKnownTypes.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0BF1DCE812F009F4FD2 /* GPBWireFormat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBWireFormat.m; path = ThirdParty/ProtobufRuntime/GPBWireFormat.m; sourceTree = SOURCE_ROOT; };
+		A6CEC0C01DCE812F009F4FD2 /* GPBArray_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBArray_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBArray_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C11DCE812F009F4FD2 /* GPBArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBArray.h; path = ThirdParty/ProtobufRuntime/GPBArray.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C21DCE812F009F4FD2 /* GPBBootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBBootstrap.h; path = ThirdParty/ProtobufRuntime/GPBBootstrap.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C31DCE812F009F4FD2 /* GPBCodedInputStream_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBCodedInputStream_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBCodedInputStream_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C41DCE812F009F4FD2 /* GPBCodedInputStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBCodedInputStream.h; path = ThirdParty/ProtobufRuntime/GPBCodedInputStream.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C51DCE812F009F4FD2 /* GPBCodedOutputStream_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBCodedOutputStream_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBCodedOutputStream_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C61DCE812F009F4FD2 /* GPBCodedOutputStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBCodedOutputStream.h; path = ThirdParty/ProtobufRuntime/GPBCodedOutputStream.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C71DCE812F009F4FD2 /* GPBDescriptor_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBDescriptor_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBDescriptor_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C81DCE812F009F4FD2 /* GPBDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBDescriptor.h; path = ThirdParty/ProtobufRuntime/GPBDescriptor.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0C91DCE812F009F4FD2 /* GPBDictionary_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBDictionary_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBDictionary_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0CA1DCE812F009F4FD2 /* GPBDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBDictionary.h; path = ThirdParty/ProtobufRuntime/GPBDictionary.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0CB1DCE812F009F4FD2 /* GPBExtensionInternals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBExtensionInternals.h; path = ThirdParty/ProtobufRuntime/GPBExtensionInternals.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0CC1DCE812F009F4FD2 /* GPBExtensionRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBExtensionRegistry.h; path = ThirdParty/ProtobufRuntime/GPBExtensionRegistry.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0CD1DCE812F009F4FD2 /* GPBMessage_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBMessage_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBMessage_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0CE1DCE812F009F4FD2 /* GPBMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBMessage.h; path = ThirdParty/ProtobufRuntime/GPBMessage.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0CF1DCE812F009F4FD2 /* GPBProtocolBuffers_RuntimeSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBProtocolBuffers_RuntimeSupport.h; path = ThirdParty/ProtobufRuntime/GPBProtocolBuffers_RuntimeSupport.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D01DCE812F009F4FD2 /* GPBProtocolBuffers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBProtocolBuffers.h; path = ThirdParty/ProtobufRuntime/GPBProtocolBuffers.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D11DCE812F009F4FD2 /* GPBRootObject_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBRootObject_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBRootObject_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D21DCE812F009F4FD2 /* GPBRootObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBRootObject.h; path = ThirdParty/ProtobufRuntime/GPBRootObject.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D31DCE812F009F4FD2 /* GPBRuntimeTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBRuntimeTypes.h; path = ThirdParty/ProtobufRuntime/GPBRuntimeTypes.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D41DCE812F009F4FD2 /* GPBUnknownField_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBUnknownField_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBUnknownField_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D51DCE812F009F4FD2 /* GPBUnknownField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBUnknownField.h; path = ThirdParty/ProtobufRuntime/GPBUnknownField.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D61DCE812F009F4FD2 /* GPBUnknownFieldSet_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBUnknownFieldSet_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBUnknownFieldSet_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D71DCE812F009F4FD2 /* GPBUnknownFieldSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBUnknownFieldSet.h; path = ThirdParty/ProtobufRuntime/GPBUnknownFieldSet.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D81DCE812F009F4FD2 /* GPBUtilities_PackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBUtilities_PackagePrivate.h; path = ThirdParty/ProtobufRuntime/GPBUtilities_PackagePrivate.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0D91DCE812F009F4FD2 /* GPBUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBUtilities.h; path = ThirdParty/ProtobufRuntime/GPBUtilities.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0DA1DCE812F009F4FD2 /* GPBWellKnownTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBWellKnownTypes.h; path = ThirdParty/ProtobufRuntime/GPBWellKnownTypes.h; sourceTree = SOURCE_ROOT; };
+		A6CEC0DB1DCE812F009F4FD2 /* GPBWireFormat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBWireFormat.h; path = ThirdParty/ProtobufRuntime/GPBWireFormat.h; sourceTree = SOURCE_ROOT; };
 		A6CEDA5D19988A7300BB57EC /* LogoFrame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoFrame.png; path = images/LogoParts/LogoFrame.png; sourceTree = "<group>"; };
 		A6CEDA5E19988A7300BB57EC /* LogoShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoShadow.png; path = images/LogoParts/LogoShadow.png; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3838,6 +3966,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6CEBF5F1DCE7DF3009F4FD2 /* Proto */,
 				53EBF29A1DCBFF6D00766613 /* API */,
 				A6FEA2651CF2C80700376F28 /* Hotkey */,
 				A62C3B371BD40D1400B5629D /* Marks */,
@@ -5445,6 +5574,101 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
+			isa = PBXGroup;
+			children = (
+				A6CEC1061DCE8139009F4FD2 /* iTerm2 */,
+				A6CEC0B11DCE811E009F4FD2 /* Runtime */,
+				A6CEC0B01DCE810D009F4FD2 /* google */,
+			);
+			name = Proto;
+			sourceTree = "<group>";
+		};
+		A6CEC0B01DCE810D009F4FD2 /* google */ = {
+			isa = PBXGroup;
+			children = (
+				A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */,
+				A6CEC0491DCE80C1009F4FD2 /* Any.pbobjc.m */,
+				A6CEC04A1DCE80C1009F4FD2 /* Api.pbobjc.h */,
+				A6CEC04B1DCE80C1009F4FD2 /* Api.pbobjc.m */,
+				A6CEC04C1DCE80C1009F4FD2 /* Duration.pbobjc.h */,
+				A6CEC04D1DCE80C1009F4FD2 /* Duration.pbobjc.m */,
+				A6CEC04E1DCE80C1009F4FD2 /* Empty.pbobjc.h */,
+				A6CEC04F1DCE80C1009F4FD2 /* Empty.pbobjc.m */,
+				A6CEC0501DCE80C1009F4FD2 /* FieldMask.pbobjc.h */,
+				A6CEC0511DCE80C1009F4FD2 /* FieldMask.pbobjc.m */,
+				A6CEC0521DCE80C1009F4FD2 /* SourceContext.pbobjc.h */,
+				A6CEC0531DCE80C1009F4FD2 /* SourceContext.pbobjc.m */,
+				A6CEC0541DCE80C1009F4FD2 /* Struct.pbobjc.h */,
+				A6CEC0551DCE80C1009F4FD2 /* Struct.pbobjc.m */,
+				A6CEC0561DCE80C1009F4FD2 /* Timestamp.pbobjc.h */,
+				A6CEC0571DCE80C1009F4FD2 /* Timestamp.pbobjc.m */,
+				A6CEC0581DCE80C1009F4FD2 /* Type.pbobjc.h */,
+				A6CEC0591DCE80C1009F4FD2 /* Type.pbobjc.m */,
+				A6CEC05A1DCE80C1009F4FD2 /* Wrappers.pbobjc.h */,
+				A6CEC05B1DCE80C1009F4FD2 /* Wrappers.pbobjc.m */,
+			);
+			name = google;
+			sourceTree = "<group>";
+		};
+		A6CEC0B11DCE811E009F4FD2 /* Runtime */ = {
+			isa = PBXGroup;
+			children = (
+				A6CEC0B21DCE812F009F4FD2 /* GPBArray.m */,
+				A6CEC0B31DCE812F009F4FD2 /* GPBCodedInputStream.m */,
+				A6CEC0B41DCE812F009F4FD2 /* GPBCodedOutputStream.m */,
+				A6CEC0B51DCE812F009F4FD2 /* GPBDescriptor.m */,
+				A6CEC0B61DCE812F009F4FD2 /* GPBDictionary.m */,
+				A6CEC0B71DCE812F009F4FD2 /* GPBExtensionInternals.m */,
+				A6CEC0B81DCE812F009F4FD2 /* GPBExtensionRegistry.m */,
+				A6CEC0B91DCE812F009F4FD2 /* GPBMessage.m */,
+				A6CEC0BA1DCE812F009F4FD2 /* GPBRootObject.m */,
+				A6CEC0BB1DCE812F009F4FD2 /* GPBUnknownField.m */,
+				A6CEC0BC1DCE812F009F4FD2 /* GPBUnknownFieldSet.m */,
+				A6CEC0BD1DCE812F009F4FD2 /* GPBUtilities.m */,
+				A6CEC0BE1DCE812F009F4FD2 /* GPBWellKnownTypes.m */,
+				A6CEC0BF1DCE812F009F4FD2 /* GPBWireFormat.m */,
+				A6CEC0C01DCE812F009F4FD2 /* GPBArray_PackagePrivate.h */,
+				A6CEC0C11DCE812F009F4FD2 /* GPBArray.h */,
+				A6CEC0C21DCE812F009F4FD2 /* GPBBootstrap.h */,
+				A6CEC0C31DCE812F009F4FD2 /* GPBCodedInputStream_PackagePrivate.h */,
+				A6CEC0C41DCE812F009F4FD2 /* GPBCodedInputStream.h */,
+				A6CEC0C51DCE812F009F4FD2 /* GPBCodedOutputStream_PackagePrivate.h */,
+				A6CEC0C61DCE812F009F4FD2 /* GPBCodedOutputStream.h */,
+				A6CEC0C71DCE812F009F4FD2 /* GPBDescriptor_PackagePrivate.h */,
+				A6CEC0C81DCE812F009F4FD2 /* GPBDescriptor.h */,
+				A6CEC0C91DCE812F009F4FD2 /* GPBDictionary_PackagePrivate.h */,
+				A6CEC0CA1DCE812F009F4FD2 /* GPBDictionary.h */,
+				A6CEC0CB1DCE812F009F4FD2 /* GPBExtensionInternals.h */,
+				A6CEC0CC1DCE812F009F4FD2 /* GPBExtensionRegistry.h */,
+				A6CEC0CD1DCE812F009F4FD2 /* GPBMessage_PackagePrivate.h */,
+				A6CEC0CE1DCE812F009F4FD2 /* GPBMessage.h */,
+				A6CEC0CF1DCE812F009F4FD2 /* GPBProtocolBuffers_RuntimeSupport.h */,
+				A6CEC0D01DCE812F009F4FD2 /* GPBProtocolBuffers.h */,
+				A6CEC0D11DCE812F009F4FD2 /* GPBRootObject_PackagePrivate.h */,
+				A6CEC0D21DCE812F009F4FD2 /* GPBRootObject.h */,
+				A6CEC0D31DCE812F009F4FD2 /* GPBRuntimeTypes.h */,
+				A6CEC0D41DCE812F009F4FD2 /* GPBUnknownField_PackagePrivate.h */,
+				A6CEC0D51DCE812F009F4FD2 /* GPBUnknownField.h */,
+				A6CEC0D61DCE812F009F4FD2 /* GPBUnknownFieldSet_PackagePrivate.h */,
+				A6CEC0D71DCE812F009F4FD2 /* GPBUnknownFieldSet.h */,
+				A6CEC0D81DCE812F009F4FD2 /* GPBUtilities_PackagePrivate.h */,
+				A6CEC0D91DCE812F009F4FD2 /* GPBUtilities.h */,
+				A6CEC0DA1DCE812F009F4FD2 /* GPBWellKnownTypes.h */,
+				A6CEC0DB1DCE812F009F4FD2 /* GPBWireFormat.h */,
+			);
+			name = Runtime;
+			sourceTree = "<group>";
+		};
+		A6CEC1061DCE8139009F4FD2 /* iTerm2 */ = {
+			isa = PBXGroup;
+			children = (
+				A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */,
+				A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */,
+			);
+			name = iTerm2;
+			sourceTree = "<group>";
+		};
 		A6D22A701BC8C27E004084E0 /* NSManagedObjects */ = {
 			isa = PBXGroup;
 			children = (
@@ -6385,21 +6609,34 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6BDB0BB1B470CBE00F511E6 /* iTermRootTerminalView.h in Headers */,
+				A6CEC11B1DCE8146009F4FD2 /* GPBCodedOutputStream.h in Headers */,
+				A6CEC1251DCE8146009F4FD2 /* GPBProtocolBuffers.h in Headers */,
 				A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */,
 				A6FCB60E1C6714C70019184E /* iTermWeakReference.h in Headers */,
 				A62C3B271BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
 				A62C3B3A1BD40D2400B5629D /* iTermMark.h in Headers */,
+				A6CEC1281DCE8146009F4FD2 /* GPBRuntimeTypes.h in Headers */,
+				A6CEC0741DCE80C9009F4FD2 /* Duration.pbobjc.h in Headers */,
 				A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */,
 				A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */,
 				A62C3B2D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h in Headers */,
+				A6CEC1241DCE8146009F4FD2 /* GPBProtocolBuffers_RuntimeSupport.h in Headers */,
+				A6CEC11F1DCE8146009F4FD2 /* GPBDictionary.h in Headers */,
 				A66DB83A1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h in Headers */,
 				A6FEA2681CF2C83700376F28 /* iTermPreviousState.h in Headers */,
 				A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */,
+				A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */,
+				A6CEC1151DCE8146009F4FD2 /* GPBArray_PackagePrivate.h in Headers */,
+				A6CEC0781DCE80C9009F4FD2 /* FieldMask.pbobjc.h in Headers */,
 				A6FEA2781CF2CBCC00376F28 /* iTermAppHotKeyProvider.h in Headers */,
 				A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				A6FEA26C1CF2C86800376F28 /* iTermBaseHotKey.h in Headers */,
+				A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */,
 				A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */,
+				A6CEC07C1DCE80C9009F4FD2 /* Struct.pbobjc.h in Headers */,
+				A6CEC0801DCE80C9009F4FD2 /* Type.pbobjc.h in Headers */,
+				A6CEC0821DCE80C9009F4FD2 /* Wrappers.pbobjc.h in Headers */,
 				1DF121091C344DF100E39F1F /* iTermDynamicProfileManager.h in Headers */,
 				A6FEA2741CF2C9D400376F28 /* iTermAppHotKey.h in Headers */,
 				A6EFF2201D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h in Headers */,
@@ -6407,33 +6644,49 @@
 				1D6578421CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h in Headers */,
 				A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */,
 				A6936B491D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
+				A6CEC12A1DCE8146009F4FD2 /* GPBUnknownField.h in Headers */,
 				5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
 				1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */,
+				A6CEC1181DCE8146009F4FD2 /* GPBCodedInputStream_PackagePrivate.h in Headers */,
 				A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */,
+				A6CEC12C1DCE8146009F4FD2 /* GPBUnknownFieldSet.h in Headers */,
 				A62C3B231BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				A62C3A911BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.h in Headers */,
+				A6CEC12B1DCE8146009F4FD2 /* GPBUnknownFieldSet_PackagePrivate.h in Headers */,
 				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
 				A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */,
+				A6CEC1221DCE8146009F4FD2 /* GPBMessage_PackagePrivate.h in Headers */,
 				A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */,
 				1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */,
+				A6CEC11D1DCE8146009F4FD2 /* GPBDescriptor.h in Headers */,
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
 				A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
+				A6CEC1171DCE8146009F4FD2 /* GPBBootstrap.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
 				A62C3B291BCC24AB00B5629D /* iTermHostRecordMO.h in Headers */,
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
+				A6CEC1301DCE8146009F4FD2 /* GPBWireFormat.h in Headers */,
+				A6CEC11E1DCE8146009F4FD2 /* GPBDictionary_PackagePrivate.h in Headers */,
+				A6CEC1161DCE8146009F4FD2 /* GPBArray.h in Headers */,
+				A6CEC12F1DCE8146009F4FD2 /* GPBWellKnownTypes.h in Headers */,
 				A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */,
 				1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */,
 				A6FEA2701CF2C8EE00376F28 /* iTermProfileHotKey.h in Headers */,
+				A6CEC1271DCE8146009F4FD2 /* GPBRootObject.h in Headers */,
 				A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */,
 				A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A6EFF21C1D1CA9F800806EEF /* NSLocale+iTerm.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
+				A6CEC11C1DCE8146009F4FD2 /* GPBDescriptor_PackagePrivate.h in Headers */,
+				A6CEC1231DCE8146009F4FD2 /* GPBMessage.h in Headers */,
+				A6CEC07E1DCE80C9009F4FD2 /* Timestamp.pbobjc.h in Headers */,
 				A66DB8361C8E4CBB00233E88 /* iTermOpenQuicklyCommands.h in Headers */,
+				A6CEC1211DCE8146009F4FD2 /* GPBExtensionRegistry.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A6936B4D1D2E0ABF00521B04 /* iTermScriptingWindow.h in Headers */,
@@ -6442,16 +6695,26 @@
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
 				A6936B551D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A6FEA2881CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h in Headers */,
+				A6CEC1291DCE8146009F4FD2 /* GPBUnknownField_PackagePrivate.h in Headers */,
+				A6CEC12D1DCE8146009F4FD2 /* GPBUtilities_PackagePrivate.h in Headers */,
+				A6CEC07A1DCE80C9009F4FD2 /* SourceContext.pbobjc.h in Headers */,
 				A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */,
+				A6CEC12E1DCE8146009F4FD2 /* GPBUtilities.h in Headers */,
 				A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */,
 				A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */,
 				A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */,
+				A6CEC1201DCE8146009F4FD2 /* GPBExtensionInternals.h in Headers */,
 				1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */,
 				A6AC81931D4923DC006F2ADC /* iTermPreferences.h in Headers */,
 				A62C3B2F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
 				1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */,
+				A6CEC11A1DCE8146009F4FD2 /* GPBCodedOutputStream_PackagePrivate.h in Headers */,
+				A6CEC0761DCE80C9009F4FD2 /* Empty.pbobjc.h in Headers */,
 				A6EEA6681C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h in Headers */,
+				A6CEC0721DCE80C9009F4FD2 /* Api.pbobjc.h in Headers */,
 				A62C3B311BCC24AB00B5629D /* iTermRecentDirectoryMO.h in Headers */,
+				A6CEC1261DCE8146009F4FD2 /* GPBRootObject_PackagePrivate.h in Headers */,
+				A6CEC1191DCE8146009F4FD2 /* GPBCodedInputStream.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6616,6 +6879,7 @@
 					};
 					874206460564169600CFC3F1 = {
 						DevelopmentTeam = H7V7XYVQ7D;
+						ProvisioningStyle = Manual;
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -7856,6 +8120,7 @@
 				A6C763481B45C52B00E3C992 /* iTermShortcutInputView.m in Sources */,
 				A6C763191B45C52B00E3C992 /* iTermPasteHelper.m in Sources */,
 				A6C763281B45C52B00E3C992 /* ProcessCache.m in Sources */,
+				A6CEC10C1DCE8146009F4FD2 /* GPBExtensionInternals.m in Sources */,
 				A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */,
 				A6C763E01B45C6DD00E3C992 /* PSMTabBarControl.m in Sources */,
 				A6C7638B1B45C52B00E3C992 /* ProfileTableRow.m in Sources */,
@@ -7865,12 +8130,16 @@
 				A6C7639B1B45C52B00E3C992 /* TmuxHistoryParser.m in Sources */,
 				A6C763761B45C52B00E3C992 /* PointerPreferencesViewController.m in Sources */,
 				A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */,
+				A6CEC0751DCE80C9009F4FD2 /* Duration.pbobjc.m in Sources */,
 				A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */,
 				A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */,
 				A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */,
 				A686F38A1D36A49100F08ED7 /* iTermPreciseTimer.m in Sources */,
+				A6CEC10A1DCE8146009F4FD2 /* GPBDescriptor.m in Sources */,
+				A6CEC0771DCE80C9009F4FD2 /* Empty.pbobjc.m in Sources */,
 				A6C763741B45C52B00E3C992 /* iTermSizeRememberingView.m in Sources */,
 				A6C763881B45C52B00E3C992 /* ProfileListView.m in Sources */,
+				A6CEC10E1DCE8146009F4FD2 /* GPBMessage.m in Sources */,
 				A6C763271B45C52B00E3C992 /* PointerController.m in Sources */,
 				A6C7637C1B45C52B00E3C992 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A6C763E21B45C6DD00E3C992 /* PSMTabDragWindow.m in Sources */,
@@ -7883,6 +8152,7 @@
 				A6C763B01B45C52B00E3C992 /* GrowlTrigger.m in Sources */,
 				A6C762D11B45C52B00E3C992 /* iTermSemanticHistoryController.m in Sources */,
 				5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */,
+				A6CEC10F1DCE8146009F4FD2 /* GPBRootObject.m in Sources */,
 				A6C762D61B45C52B00E3C992 /* LineBufferPosition.m in Sources */,
 				A6C762BA1B45C52B00E3C992 /* NSMutableData+iTerm.m in Sources */,
 				A6C763941B45C52B00E3C992 /* iTermFileDescriptorSocketPath.c in Sources */,
@@ -7905,8 +8175,11 @@
 				A6C763321B45C52B00E3C992 /* iTermInstantReplayWindowController.m in Sources */,
 				A686F38E1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m in Sources */,
 				A6C762AC1B45C52B00E3C992 /* NSArray+iTerm.m in Sources */,
+				A6CEC1091DCE8146009F4FD2 /* GPBCodedOutputStream.m in Sources */,
+				A6CEC0791DCE80C9009F4FD2 /* FieldMask.pbobjc.m in Sources */,
 				1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */,
 				A6C762AE1B45C52B00E3C992 /* NSCharacterSet+iTerm.m in Sources */,
+				A6CEC1131DCE8146009F4FD2 /* GPBWellKnownTypes.m in Sources */,
 				A6C763E11B45C6DD00E3C992 /* PSMTabDragAssistant.m in Sources */,
 				A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */,
 				A6C763411B45C52B00E3C992 /* iTermFindCursorView.m in Sources */,
@@ -7915,10 +8188,12 @@
 				A6C762F71B45C52B00E3C992 /* iTermExposeGridView.m in Sources */,
 				A6C762B11B45C52B00E3C992 /* NSData+iTerm.m in Sources */,
 				A6C7635C1B45C52B00E3C992 /* CommandHistoryPopup.m in Sources */,
+				A6CEC0811DCE80C9009F4FD2 /* Type.pbobjc.m in Sources */,
 				A6C763A91B45C52B00E3C992 /* ToolProfiles.m in Sources */,
 				A6C763C31B45C52B00E3C992 /* VT100OtherParser.m in Sources */,
 				A6C762A91B45C52B00E3C992 /* PTYTab+Scripting.m in Sources */,
 				A62C3A921BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.m in Sources */,
+				A6CEC1121DCE8146009F4FD2 /* GPBUtilities.m in Sources */,
 				A667F3941B4CC8BA00705186 /* iTermBadgeLabel.m in Sources */,
 				A6C762BE1B45C52B00E3C992 /* NSPopUpButton+iTerm.m in Sources */,
 				A6C762AA1B45C52B00E3C992 /* PTYWindow+Scripting.m in Sources */,
@@ -7956,6 +8231,7 @@
 				A67778CD1CFFAE8D00DEED78 /* NSApplication+iTerm.m in Sources */,
 				A6C763C81B45C52B00E3C992 /* VT100StateTransition.m in Sources */,
 				A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */,
+				A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */,
 				A6C7638D1B45C52B00E3C992 /* ProfileTagsView.m in Sources */,
 				A6C763781B45C52B00E3C992 /* PreferenceInfo.m in Sources */,
 				A6C763381B45C52B00E3C992 /* PasteViewController.m in Sources */,
@@ -7976,6 +8252,7 @@
 				A6C7630D1B45C52B00E3C992 /* iTermAnimatedImageInfo.m in Sources */,
 				A6C763871B45C52B00E3C992 /* iTermProfilesWindowController.m in Sources */,
 				A6FCB60F1C6714C70019184E /* iTermWeakReference.m in Sources */,
+				A6CEC07D1DCE80C9009F4FD2 /* Struct.pbobjc.m in Sources */,
 				A6C763151B45C52B00E3C992 /* iTermLogoGenerator.m in Sources */,
 				A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */,
 				A6C7635B1B45C52B00E3C992 /* Autocomplete.m in Sources */,
@@ -8034,6 +8311,7 @@
 				A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */,
 				A6C763001B45C52B00E3C992 /* TransferrableFileMenuItemView.m in Sources */,
 				A6C763201B45C52B00E3C992 /* iTermTextViewAccessibilityHelper.m in Sources */,
+				A6CEC1071DCE8146009F4FD2 /* GPBArray.m in Sources */,
 				A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */,
 				A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */,
 				A6C7631F1B45C52B00E3C992 /* iTermTextDrawingHelper.m in Sources */,
@@ -8057,6 +8335,7 @@
 				A6FEA2601CF0F20B00376F28 /* iTermEventTap.m in Sources */,
 				A6C763961B45C52B00E3C992 /* iTermOrphanServerAdopter.m in Sources */,
 				A6C763CC1B45C52B00E3C992 /* VT100Token.m in Sources */,
+				A6CEC1141DCE8146009F4FD2 /* GPBWireFormat.m in Sources */,
 				A6C7637A1B45C52B00E3C992 /* ProfilePreferencesViewController.m in Sources */,
 				A6C762AD1B45C52B00E3C992 /* NSBezierPath+iTerm.m in Sources */,
 				A6C7639A1B45C52B00E3C992 /* TmuxGateway.m in Sources */,
@@ -8093,6 +8372,7 @@
 				A6C763DC1B45C6DD00E3C992 /* PSMOverflowPopUpButton.m in Sources */,
 				A6C763521B45C52B00E3C992 /* iTermOpenQuicklyItem.m in Sources */,
 				A6C763351B45C52B00E3C992 /* iTermPasteSpecialViewController.m in Sources */,
+				A6CEC1101DCE8146009F4FD2 /* GPBUnknownField.m in Sources */,
 				A6C7635A1B45C52B00E3C992 /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6C7632C1B45C52B00E3C992 /* TemporaryNumberAllocator.m in Sources */,
 				1DF1210A1C344DF100E39F1F /* iTermDynamicProfileManager.m in Sources */,
@@ -8108,10 +8388,14 @@
 				A6C763401B45C52B00E3C992 /* iTermDragHandleView.m in Sources */,
 				A6C7632F1B45C52B00E3C992 /* FindViewController.m in Sources */,
 				A6C763951B45C52B00E3C992 /* shell_launcher.c in Sources */,
+				A6CEC1111DCE8146009F4FD2 /* GPBUnknownFieldSet.m in Sources */,
 				A6C763551B45C52B00E3C992 /* iTermOpenQuicklyTableRowView.m in Sources */,
+				A6CEC07F1DCE80C9009F4FD2 /* Timestamp.pbobjc.m in Sources */,
 				A6C763E31B45C6DD00E3C992 /* PSMYosemiteTabStyle.m in Sources */,
 				A6C763091B45C52B00E3C992 /* iTermCommandHistoryCommandUseMO+Addtions.m in Sources */,
 				A6C763061B45C52B00E3C992 /* BackgroundThread.m in Sources */,
+				A6CEC0711DCE80C9009F4FD2 /* Any.pbobjc.m in Sources */,
+				A6CEC10D1DCE8146009F4FD2 /* GPBExtensionRegistry.m in Sources */,
 				A6C763211B45C52B00E3C992 /* iTermLaunchServices.m in Sources */,
 				A6C763C51B45C52B00E3C992 /* VT100Parser.m in Sources */,
 				A62C3B2A1BCC24AB00B5629D /* iTermHostRecordMO.m in Sources */,
@@ -8137,17 +8421,20 @@
 				A6C763861B45C52B00E3C992 /* iTermProfilesPanel.m in Sources */,
 				1DDC09441B4DB9A600B1A910 /* iTermClearView.m in Sources */,
 				A6C763161B45C52B00E3C992 /* iTermMinimumSubsequenceMatcher.m in Sources */,
+				A6CEC10B1DCE8146009F4FD2 /* GPBDictionary.m in Sources */,
 				A6C763131B45C52B00E3C992 /* iTermIndicatorsHelper.m in Sources */,
 				A6C763BD1B45C52B00E3C992 /* iTermTipRootView.m in Sources */,
 				A6C763BE1B45C52B00E3C992 /* iTermTipWindowController.m in Sources */,
 				A6C762F81B45C52B00E3C992 /* iTermExposeTabView.m in Sources */,
 				A6C762CD1B45C52B00E3C992 /* iTermGrowlDelegate.m in Sources */,
+				A6CEC0731DCE80C9009F4FD2 /* Api.pbobjc.m in Sources */,
 				A6C763DD1B45C6DD00E3C992 /* PSMProgressIndicator.m in Sources */,
 				A6C7631C1B45C52B00E3C992 /* iTermRule.m in Sources */,
 				A6C763B11B45C52B00E3C992 /* HighlightTrigger.m in Sources */,
 				A6C7638E1B45C52B00E3C992 /* iTermShellHistoryController.m in Sources */,
 				A6C763301B45C52B00E3C992 /* iTermAboutWindowController.m in Sources */,
 				A6C762E91B45C52B00E3C992 /* VT100Screen.m in Sources */,
+				A6CEC07B1DCE80C9009F4FD2 /* SourceContext.pbobjc.m in Sources */,
 				A6C7638A1B45C52B00E3C992 /* ProfileModelWrapper.m in Sources */,
 				A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */,
 				A6C763BF1B45C52B00E3C992 /* VT100AnsiParser.m in Sources */,
@@ -8177,11 +8464,13 @@
 				A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */,
 				A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */,
 				A6C762D81B45C52B00E3C992 /* PseudoTerminal.m in Sources */,
+				A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */,
 				A6C762C81B45C52B00E3C992 /* ITAddressBookMgr.m in Sources */,
 				A6C763431B45C52B00E3C992 /* iTermImageWell.m in Sources */,
 				A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */,
 				A6C762BF1B45C52B00E3C992 /* NSScreen+iTerm.m in Sources */,
 				A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */,
+				A6CEC0831DCE80C9009F4FD2 /* Wrappers.pbobjc.m in Sources */,
 				A6C7639F1B45C52B00E3C992 /* TmuxWindowOpener.m in Sources */,
 				A6C763991B45C52B00E3C992 /* TmuxDashboardController.m in Sources */,
 				A6C763141B45C52B00E3C992 /* iTermIntegerNumberFormatter.m in Sources */,
@@ -8341,7 +8630,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -9134,6 +9423,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
@@ -9180,6 +9470,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -9224,6 +9515,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -9268,6 +9560,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -9317,6 +9610,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
@@ -9363,6 +9657,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
@@ -9407,6 +9702,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
@@ -9451,6 +9747,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
@@ -9666,7 +9963,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -9739,7 +10036,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -9804,7 +10101,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",

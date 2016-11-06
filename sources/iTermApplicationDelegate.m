@@ -110,7 +110,7 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -161,6 +161,8 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
+
+    iTermAPIServer *_apiServer;
 }
 
 - (void)updateProcessType {
@@ -457,7 +459,9 @@ static BOOL hasBecomeActive = NO;
     }
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    [[iTermAPIServer alloc] init];
+    _apiServer = [[iTermAPIServer alloc] init];
+    _apiServer.delegate = self;
+
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
@@ -1979,7 +1983,36 @@ static BOOL hasBecomeActive = NO;
                                        action:@selector(terminate:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
-return menu;
+    return menu;
+}
+
+#pragma mark - iTermAPIServerDelegate
+
+- (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
+    if (identifier) {
+        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+            for (PTYSession *session in term.allSessions) {
+                if ([session.guid isEqualToString:identifier]) {
+                    return session;
+                }
+            }
+        }
+        return nil;
+    } else {
+        return [[[iTermController sharedInstance] currentTerminal] currentSession];
+    }
+}
+
+- (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
+                   handler:(void (^)(ITMResponse_Status, ITMGetBufferResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.session];
+    if (!session) {
+        handler(ITMResponse_Status_SessionNotFound, nil);
+    } else {
+        ITMResponse_Status status;
+        ITMGetBufferResponse *response = [session handleGetBufferRequest:request status:&status];
+        handler(status, response);
+    }
 }
 
 @end

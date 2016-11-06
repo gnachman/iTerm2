@@ -1,5 +1,6 @@
 // Implements the model class for a terminal session.
 
+#import "Api.pbobjc.h"
 #import "DVR.h"
 #import "FindViewController.h"
 #import "iTermFileDescriptorClient.h"
@@ -656,6 +657,11 @@ typedef enum {
 
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
+
+#pragma mark - API
+
+- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
+                                          status:(ITMResponse_Status *)status;
 
 #pragma mark - Testing utilities
 

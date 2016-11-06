@@ -29,23 +29,28 @@ CF_EXTERN_C_BEGIN
 
 @class ITMCodePointsPerCell;
 @class ITMCompactScreenLine;
+@class ITMGetBufferRequest;
+@class ITMGetBufferResponse;
 @class ITMLineRange;
 
 NS_ASSUME_NONNULL_BEGIN
 
-#pragma mark - Enum ITMRequest_Type
+#pragma mark - Enum ITMResponse_Status
 
-typedef GPB_ENUM(ITMRequest_Type) {
-  ITMRequest_Type_GetBuffer = 0,
+typedef GPB_ENUM(ITMResponse_Status) {
+  ITMResponse_Status_Ok = 0,
+  ITMResponse_Status_SessionNotFound = 1,
+  ITMResponse_Status_InvalidLineRange = 2,
+  ITMResponse_Status_RequestMalformed = 3,
 };
 
-GPBEnumDescriptor *ITMRequest_Type_EnumDescriptor(void);
+GPBEnumDescriptor *ITMResponse_Status_EnumDescriptor(void);
 
 /**
  * Checks to see if the given value is defined by the enum or was not known at
  * the time this source was generated.
  **/
-BOOL ITMRequest_Type_IsValidValue(int32_t value);
+BOOL ITMResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - ITMApiRoot
 
@@ -65,24 +70,62 @@ BOOL ITMRequest_Type_IsValidValue(int32_t value);
 #pragma mark - ITMRequest
 
 typedef GPB_ENUM(ITMRequest_FieldNumber) {
-  ITMRequest_FieldNumber_Type = 1,
+  ITMRequest_FieldNumber_Id_p = 1,
+  ITMRequest_FieldNumber_GetBufferRequest = 100,
 };
 
 @interface ITMRequest : GPBMessage
 
-@property(nonatomic, readwrite) ITMRequest_Type type;
+@property(nonatomic, readwrite) int64_t id_p;
 
-@property(nonatomic, readwrite) BOOL hasType;
+@property(nonatomic, readwrite) BOOL hasId_p;
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferRequest *getBufferRequest;
+/** Test to see if @c getBufferRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasGetBufferRequest;
+
+@end
+
+#pragma mark - ITMResponse
+
+typedef GPB_ENUM(ITMResponse_FieldNumber) {
+  ITMResponse_FieldNumber_Status = 1,
+  ITMResponse_FieldNumber_Id_p = 2,
+  ITMResponse_FieldNumber_GetBufferResponse = 100,
+};
+
+@interface ITMResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite) int64_t id_p;
+
+@property(nonatomic, readwrite) BOOL hasId_p;
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferResponse *getBufferResponse;
+/** Test to see if @c getBufferResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasGetBufferResponse;
+
 @end
 
 #pragma mark - ITMGetBufferRequest
 
 typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
-  ITMGetBufferRequest_FieldNumber_ScreenContentsOnly = 1,
-  ITMGetBufferRequest_FieldNumber_TrailingLines = 2,
+  ITMGetBufferRequest_FieldNumber_Session = 1,
+  ITMGetBufferRequest_FieldNumber_ScreenContentsOnly = 2,
+  ITMGetBufferRequest_FieldNumber_TrailingLines = 3,
 };
 
+/**
+ * Possible errors:
+ * SESSION_NOT_FOUND
+ * INVALID_LINE_RANGE
+ **/
 @interface ITMGetBufferRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 /**
  * Only one of these fields should be set:

@@ -3,20 +3,40 @@ option objc_class_prefix = "ITM";
 package iterm2;
 
 message Request {
-  enum Type {
-    GET_BUFFER = 0;
-  }
-  optional Type type = 1;
+  optional int64 id = 1;
+
+  optional GetBufferRequest get_buffer_request = 100;
 }
 
+message Response {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    INVALID_LINE_RANGE = 2;
+    REQUEST_MALFORMED = 3;
+  }
+
+  optional Status status = 1;
+  optional int64 id = 2;
+
+  optional GetBufferResponse get_buffer_response = 100;
+}
+
+// Possible errors:
+// SESSION_NOT_FOUND
+// INVALID_LINE_RANGE
 message GetBufferRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
   // Only one of these fields should be set:
   // ---------------------------------------
   // Return just the current contents of the screen.
-  optional bool screen_contents_only = 1;
+  optional bool screen_contents_only = 2;
 
-  // Return the final `trailing lines`.
-  optional int32 trailing_lines = 2;
+  // Return the last `trailing lines` of the buffer, which could go back into
+  // scrollback history.
+  optional int32 trailing_lines = 3;
 }
 
 message GetBufferResponse {

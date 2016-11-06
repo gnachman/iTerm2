@@ -15,6 +15,7 @@
 #import "iTermSocket.h"
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
+#import "Api.pbobjc.h"
 
 @interface iTermAPIServer()<iTermWebSocketConnectionDelegate>
 @end
@@ -91,6 +92,25 @@
     });
 }
 
+- (void)sendResponse:(ITMResponse *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
+    ILog(@"Sending response %@", response);
+    [webSocketConnection sendBinary:[response data]];
+}
+
+- (void)dispatchRequest:(ITMRequest *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    if (request.getBufferRequest) {
+        __weak __typeof(self) weakSelf = self;
+        [_delegate apiServerGetBuffer:request.getBufferRequest
+                              handler:^(ITMResponse_Status status, ITMGetBufferResponse *getBufferResponse) {
+                                  ITMResponse *response = [[ITMResponse alloc] init];
+                                  response.status = status;
+                                  response.id_p = request.id_p;
+                                  response.getBufferResponse = getBufferResponse;
+                              [weakSelf sendResponse:response onConnection:webSocketConnection];
+                              }];
+    }
+}
+
 #pragma mark - iTermWebSocketConnectionDelegate
 
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
@@ -103,8 +123,14 @@
     if (frame.opcode == iTermWebSocketOpcodeText) {
         [webSocketConnection sendText:[NSString stringWithFormat:@"You said: %@", frame.text]];
     } else {
-        char data[4] = { 0x0b, 0xad, 0xf0, 0x0d };
-        [webSocketConnection sendBinary:[NSData dataWithBytes:data length:sizeof(data)]];
+        ITMRequest *request = [ITMRequest parseFromData:frame.payload error:nil];
+        if (request) {
+            ILog(@"Received request: %@", request);
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf dispatchRequest:request connection:webSocketConnection];
+            });
+        }
     }
     ILog(@"Got a frame: %@", frame);
 #endif

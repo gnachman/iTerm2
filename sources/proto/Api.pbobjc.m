@@ -47,11 +47,13 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
 
 @implementation ITMRequest
 
-@dynamic hasType, type;
+@dynamic hasId_p, id_p;
+@dynamic hasGetBufferRequest, getBufferRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
-  ITMRequest_Type type;
+  ITMGetBufferRequest *getBufferRequest;
+  int64_t id_p;
 } ITMRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -61,13 +63,22 @@ typedef struct ITMRequest__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "type",
-        .dataTypeSpecific.enumDescFunc = ITMRequest_Type_EnumDescriptor,
-        .number = ITMRequest_FieldNumber_Type,
+        .name = "id_p",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRequest_FieldNumber_Id_p,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMRequest__storage_, type),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
-        .dataType = GPBDataTypeEnum,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, id_p),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
+      },
+      {
+        .name = "getBufferRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferRequest),
+        .number = ITMRequest_FieldNumber_GetBufferRequest,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, getBufferRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -86,22 +97,91 @@ typedef struct ITMRequest__storage_ {
 
 @end
 
-#pragma mark - Enum ITMRequest_Type
+#pragma mark - ITMResponse
 
-GPBEnumDescriptor *ITMRequest_Type_EnumDescriptor(void) {
+@implementation ITMResponse
+
+@dynamic hasStatus, status;
+@dynamic hasId_p, id_p;
+@dynamic hasGetBufferResponse, getBufferResponse;
+
+typedef struct ITMResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMResponse_Status status;
+  ITMGetBufferResponse *getBufferResponse;
+  int64_t id_p;
+} ITMResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMResponse_Status_EnumDescriptor,
+        .number = ITMResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "id_p",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMResponse_FieldNumber_Id_p,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, id_p),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
+      },
+      {
+        .name = "getBufferResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferResponse),
+        .number = ITMResponse_FieldNumber_GetBufferResponse,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, getBufferResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMResponse_Status
+
+GPBEnumDescriptor *ITMResponse_Status_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "GetBuffer\000";
+        "Ok\000SessionNotFound\000InvalidLineRange\000Requ"
+        "estMalformed\000";
     static const int32_t values[] = {
-        ITMRequest_Type_GetBuffer,
+        ITMResponse_Status_Ok,
+        ITMResponse_Status_SessionNotFound,
+        ITMResponse_Status_InvalidLineRange,
+        ITMResponse_Status_RequestMalformed,
     };
     GPBEnumDescriptor *worker =
-        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRequest_Type)
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMResponse_Status)
                                        valueNames:valueNames
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
-                                     enumVerifier:ITMRequest_Type_IsValidValue];
+                                     enumVerifier:ITMResponse_Status_IsValidValue];
     if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
       [worker release];
     }
@@ -109,9 +189,12 @@ GPBEnumDescriptor *ITMRequest_Type_EnumDescriptor(void) {
   return descriptor;
 }
 
-BOOL ITMRequest_Type_IsValidValue(int32_t value__) {
+BOOL ITMResponse_Status_IsValidValue(int32_t value__) {
   switch (value__) {
-    case ITMRequest_Type_GetBuffer:
+    case ITMResponse_Status_Ok:
+    case ITMResponse_Status_SessionNotFound:
+    case ITMResponse_Status_InvalidLineRange:
+    case ITMResponse_Status_RequestMalformed:
       return YES;
     default:
       return NO;
@@ -122,12 +205,14 @@ BOOL ITMRequest_Type_IsValidValue(int32_t value__) {
 
 @implementation ITMGetBufferRequest
 
+@dynamic hasSession, session;
 @dynamic hasScreenContentsOnly, screenContentsOnly;
 @dynamic hasTrailingLines, trailingLines;
 
 typedef struct ITMGetBufferRequest__storage_ {
   uint32_t _has_storage_[1];
   int32_t trailingLines;
+  NSString *session;
 } ITMGetBufferRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -137,11 +222,20 @@ typedef struct ITMGetBufferRequest__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetBufferRequest_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
         .name = "screenContentsOnly",
         .dataTypeSpecific.className = NULL,
         .number = ITMGetBufferRequest_FieldNumber_ScreenContentsOnly,
-        .hasIndex = 0,
-        .offset = 1,  // Stored in _has_storage_ to save space.
+        .hasIndex = 1,
+        .offset = 2,  // Stored in _has_storage_ to save space.
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeBool,
       },
@@ -149,7 +243,7 @@ typedef struct ITMGetBufferRequest__storage_ {
         .name = "trailingLines",
         .dataTypeSpecific.className = NULL,
         .number = ITMGetBufferRequest_FieldNumber_TrailingLines,
-        .hasIndex = 2,
+        .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, trailingLines),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeInt32,
