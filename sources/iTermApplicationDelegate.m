@@ -2005,7 +2005,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
                    handler:(void (^)(ITMResponse_Status, ITMGetBufferResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.session];
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
     if (!session) {
         handler(ITMResponse_Status_SessionNotFound, nil);
     } else {

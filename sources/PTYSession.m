@@ -7656,6 +7656,43 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - API
 
+- (NSString *)stringForLine:(screen_char_t *)screenChars
+                     length:(int)length
+                  cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
+    unichar *characters = malloc(sizeof(unichar) * length * kMaxParts + 1);
+    ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
+    cpps.numCodePoints = 1;
+    cpps.repeats = 0;
+    int o = 0;
+    for (int i = 0; i < length; ++i) {
+        int numCodePoints = cpps.numCodePoints;
+
+        unichar c = screenChars[i].code;
+        if (c == DWC_RIGHT) {
+            numCodePoints = 0;
+        } else {
+            const int len = ExpandScreenChar(&screenChars[i], characters + o);
+            o += len;
+            numCodePoints = len;
+        }
+
+        if (numCodePoints != cpps.numCodePoints && cpps.repeats > 0) {
+            [cppsArray addObject:cpps];
+            cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
+            cpps.numCodePoints = numCodePoints;
+            cpps.repeats = 0;
+        }
+        cpps.numCodePoints = numCodePoints;
+        cpps.repeats = cpps.repeats + 1;
+    }
+    if (cpps.repeats > 0) {
+        [cppsArray addObject:cpps];
+    }
+    NSString *string = CharArrayToString(characters, o);
+    free(characters);
+    return string;
+}
+
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
                                           status:(ITMResponse_Status *)status {
     int n = 0;
@@ -7688,33 +7725,11 @@ ITERM_WEAKLY_REFERENCEABLE
         int64_t y = range.location + i;
         ITMCompactScreenLine *compactLine = [[[ITMCompactScreenLine alloc] init] autorelease];
         screen_char_t *line = [_screen getLineAtIndex:y - _screen.totalScrollbackOverflow];
-        unichar *storage = nil;
-        int *deltas = nil;
-        compactLine.text = ScreenCharArrayToString(line, 0, width, &storage, &deltas);
-
-        int size = 1;
-        int reps = 0;
-        int lastDelta = 0;
-        int stringLength = compactLine.text.length;
-        for (int j = 0; j < stringLength; j++) {
-            if (deltas[j] == lastDelta) {
-                ++reps;
-            } else {
-                ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
-                cpps.numCodePoints = size;
-                cpps.repeats = reps;
-                [compactLine.codePointsPerCellArray addObject:cpps];
-
-                size += (deltas[j] - lastDelta);
-                reps = 1;
-                lastDelta = deltas[j];
-            }
+        int lineLength = width;
+        while (lineLength > 0 && line[lineLength - 1].code == 0 && !line[lineLength - 1].complexChar) {
+            --lineLength;
         }
-        ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
-        cpps.numCodePoints = size;
-        cpps.repeats = reps;
-        [compactLine.codePointsPerCellArray addObject:cpps];
-
+        compactLine.text = [self stringForLine:line length:lineLength cppsArray:compactLine.codePointsPerCellArray];
         [response.compactScreenLinesArray addObject:compactLine];
     }
     *status = ITMResponse_Status_Ok;
