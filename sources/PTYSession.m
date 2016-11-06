@@ -7688,7 +7688,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (cpps.repeats > 0) {
         [cppsArray addObject:cpps];
     }
-    NSString *string = CharArrayToString(characters, o);
+    NSString *string = [[[NSString alloc] initWithCharacters:characters length:o] autorelease];
     free(characters);
     return string;
 }
