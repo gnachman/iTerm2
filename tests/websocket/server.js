@@ -8,9 +8,9 @@ var http = require("http"),
 
 // Copy dependencies to "www/" (example specific, you usually don't have to care
 var deps = [
-      ["Long.min.js", "./node_modules/long/dist/Long.min.js"],
-      ["ByteBufferAB.min.js", "./node_modules/bytebuffer/dist/ByteBufferAB.min.js"],
-      ["ProtoBuf.min.js", "./node_modules/protobufjs/dist/ProtoBuf.min.js"]
+      ["Long.min.js", "./node_modules/long/dist/long.min.js"],
+      ["ByteBufferAB.min.js", "./node_modules/bytebuffer/dist/bytebuffer.min.js"],
+      ["ProtoBuf.min.js", "./node_modules/protobufjs/dist/protobuf.min.js"]
 ];
 for (var i=0, dep, data; i<deps.length; i++) {
     dep = deps[i];
