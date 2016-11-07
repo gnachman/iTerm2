@@ -91,9 +91,7 @@
                         return;
                     }
                 }
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    acceptBlock(acceptFd, [iTermSocketAddress socketAddressWithSockaddr:sockaddr]);
-                });
+                acceptBlock(acceptFd, [iTermSocketAddress socketAddressWithSockaddr:sockaddr]);
             }
         }
     });
