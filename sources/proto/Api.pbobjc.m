@@ -50,11 +50,13 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
 @dynamic hasId_p, id_p;
 @dynamic hasGetBufferRequest, getBufferRequest;
 @dynamic hasGetPromptRequest, getPromptRequest;
+@dynamic hasTransactionRequest, transactionRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
   ITMGetBufferRequest *getBufferRequest;
   ITMGetPromptRequest *getPromptRequest;
+  ITMTransactionRequest *transactionRequest;
   int64_t id_p;
 } ITMRequest__storage_;
 
@@ -91,6 +93,15 @@ typedef struct ITMRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "transactionRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTransactionRequest),
+        .number = ITMRequest_FieldNumber_TransactionRequest,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, transactionRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
@@ -115,11 +126,13 @@ typedef struct ITMRequest__storage_ {
 @dynamic hasId_p, id_p;
 @dynamic hasGetBufferResponse, getBufferResponse;
 @dynamic hasGetPromptResponse, getPromptResponse;
+@dynamic hasTransactionResponse, transactionResponse;
 
 typedef struct ITMResponse__storage_ {
   uint32_t _has_storage_[1];
   ITMGetBufferResponse *getBufferResponse;
   ITMGetPromptResponse *getPromptResponse;
+  ITMTransactionResponse *transactionResponse;
   int64_t id_p;
 } ITMResponse__storage_;
 
@@ -153,6 +166,15 @@ typedef struct ITMResponse__storage_ {
         .number = ITMResponse_FieldNumber_GetPromptResponse,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMResponse__storage_, getPromptResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "transactionResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTransactionResponse),
+        .number = ITMResponse_FieldNumber_TransactionResponse,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, transactionResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -483,6 +505,127 @@ BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value__) {
     case ITMGetPromptResponse_Status_SessionNotFound:
     case ITMGetPromptResponse_Status_RequestMalformed:
     case ITMGetPromptResponse_Status_PromptUnavailable:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMTransactionRequest
+
+@implementation ITMTransactionRequest
+
+@dynamic hasBegin, begin;
+
+typedef struct ITMTransactionRequest__storage_ {
+  uint32_t _has_storage_[1];
+} ITMTransactionRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "begin",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTransactionRequest_FieldNumber_Begin,
+        .hasIndex = 0,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTransactionRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTransactionRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTransactionResponse
+
+@implementation ITMTransactionResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMTransactionResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMTransactionResponse_Status status;
+} ITMTransactionResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMTransactionResponse_Status_EnumDescriptor,
+        .number = ITMTransactionResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTransactionResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTransactionResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTransactionResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMTransactionResponse_Status
+
+GPBEnumDescriptor *ITMTransactionResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000NoTransaction\000AlreadyInTransaction\000";
+    static const int32_t values[] = {
+        ITMTransactionResponse_Status_Ok,
+        ITMTransactionResponse_Status_NoTransaction,
+        ITMTransactionResponse_Status_AlreadyInTransaction,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMTransactionResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMTransactionResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMTransactionResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMTransactionResponse_Status_Ok:
+    case ITMTransactionResponse_Status_NoTransaction:
+    case ITMTransactionResponse_Status_AlreadyInTransaction:
       return YES;
     default:
       return NO;

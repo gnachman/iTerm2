@@ -37,6 +37,8 @@ CF_EXTERN_C_BEGIN
 @class ITMLineContents;
 @class ITMLineRange;
 @class ITMRange;
+@class ITMTransactionRequest;
+@class ITMTransactionResponse;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -73,6 +75,22 @@ GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMTransactionResponse_Status
+
+typedef GPB_ENUM(ITMTransactionResponse_Status) {
+  ITMTransactionResponse_Status_Ok = 0,
+  ITMTransactionResponse_Status_NoTransaction = 1,
+  ITMTransactionResponse_Status_AlreadyInTransaction = 2,
+};
+
+GPBEnumDescriptor *ITMTransactionResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMTransactionResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMLineContents_Continuation
 
@@ -114,6 +132,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_Id_p = 1,
   ITMRequest_FieldNumber_GetBufferRequest = 100,
   ITMRequest_FieldNumber_GetPromptRequest = 101,
+  ITMRequest_FieldNumber_TransactionRequest = 102,
 };
 
 /**
@@ -132,6 +151,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c getPromptRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasGetPromptRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMTransactionRequest *transactionRequest;
+/** Test to see if @c transactionRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasTransactionRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -140,6 +163,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_Id_p = 1,
   ITMResponse_FieldNumber_GetBufferResponse = 100,
   ITMResponse_FieldNumber_GetPromptResponse = 101,
+  ITMResponse_FieldNumber_TransactionResponse = 102,
 };
 
 /**
@@ -157,6 +181,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetPromptResponse *getPromptResponse;
 /** Test to see if @c getPromptResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetPromptResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTransactionResponse *transactionResponse;
+/** Test to see if @c transactionResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasTransactionResponse;
 
 @end
 
@@ -259,6 +287,37 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 /** Test to see if @c outputRange has been set. */
 @property(nonatomic, readwrite) BOOL hasOutputRange;
 
+@end
+
+#pragma mark - ITMTransactionRequest
+
+typedef GPB_ENUM(ITMTransactionRequest_FieldNumber) {
+  ITMTransactionRequest_FieldNumber_Begin = 1,
+};
+
+@interface ITMTransactionRequest : GPBMessage
+
+/**
+ * Set to true to begin a new transaction or false to end the most recently
+ * begun transaction. The app's main loop will not advance while in a
+ * transaction.
+ **/
+@property(nonatomic, readwrite) BOOL begin;
+
+@property(nonatomic, readwrite) BOOL hasBegin;
+@end
+
+#pragma mark - ITMTransactionResponse
+
+typedef GPB_ENUM(ITMTransactionResponse_FieldNumber) {
+  ITMTransactionResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMTransactionResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMTransactionResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMLineRange
