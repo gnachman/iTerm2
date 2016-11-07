@@ -6976,6 +6976,14 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL hadCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
     _commandRange = range;
     BOOL haveCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
+
+    if (haveCommand) {
+        VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
+        mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
+        if (!hadCommand) {
+            mark.promptRange = VT100GridAbsCoordRangeMake(0, _lastPromptLine, range.start.x, mark.commandRange.end.y);
+        }
+    }
     if (!haveCommand && hadCommand) {
         DLog(@"Hide because don't have a command, but just had one");
         [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
@@ -7006,6 +7014,9 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
+            mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
+            mark.outputStart = VT100GridAbsCoordMake(_screen.currentGrid.cursor.x,
+                                                     _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow);
             [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
                                                  onHost:[_screen remoteHostOnLine:range.end.y]
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
@@ -7719,15 +7730,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     return range;
 }
-- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
-                                          status:(ITMResponse_Status *)status {
+
+- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request {
+    ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
+
     NSRange lineRange = [self rangeFromLineRange:request.lineRange];
     if (lineRange.location == NSNotFound) {
-        *status = ITMResponse_Status_RequestMalformed;
+        response.status = ITMGetBufferResponse_Status_InvalidLineRange;
         return nil;
     }
 
-    ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
     response.range = [[[ITMRange alloc] init] autorelease];
     response.range.location = lineRange.location;
     response.range.length = lineRange.length;
@@ -7754,9 +7766,42 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [response.contentsArray addObject:lineContents];
     }
-    *status = ITMResponse_Status_Ok;
+    response.status = ITMGetBufferResponse_Status_Ok;
     return response;
 }
 
+- (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request {
+    VT100ScreenMark *mark = [_screen lastPromptMark];
+    ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
+    if (!mark) {
+        response.status = ITMGetPromptResponse_Status_PromptUnavailable;
+        return response;
+    }
+
+    if (mark.promptRange.start.x >= 0) {
+        response.promptRange = [[[ITMCoordRange alloc] init] autorelease];
+        response.promptRange.start.x = mark.promptRange.start.x;
+        response.promptRange.start.y = mark.promptRange.start.y;
+        response.promptRange.end.x = mark.promptRange.end.x;
+        response.promptRange.end.y = mark.promptRange.end.y;
+    }
+    if (mark.commandRange.start.x >= 0) {
+        response.commandRange = [[[ITMCoordRange alloc] init] autorelease];
+        response.commandRange.start.x = mark.commandRange.start.x;
+        response.commandRange.start.y = mark.commandRange.start.y;
+        response.commandRange.end.x = mark.commandRange.end.x;
+        response.commandRange.end.y = mark.commandRange.end.y;
+    }
+    if (mark.outputStart.x >= 0) {
+        response.outputRange = [[[ITMCoordRange alloc] init] autorelease];
+        response.outputRange.start.x = mark.outputStart.x;
+        response.outputRange.start.y = mark.outputStart.y;
+        response.outputRange.end.x = _screen.currentGrid.cursor.x;
+        response.outputRange.end.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+    }
+
+    response.status = ITMGetPromptResponse_Status_Ok;
+    return response;
+}
 
 @end

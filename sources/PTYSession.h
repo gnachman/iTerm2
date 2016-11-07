@@ -660,8 +660,8 @@ typedef enum {
 
 #pragma mark - API
 
-- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request
-                                          status:(ITMResponse_Status *)status;
+- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
+- (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
 
 #pragma mark - Testing utilities
 

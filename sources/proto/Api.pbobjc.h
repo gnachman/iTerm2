@@ -28,30 +28,51 @@
 CF_EXTERN_C_BEGIN
 
 @class ITMCodePointsPerCell;
+@class ITMCoord;
+@class ITMCoordRange;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
+@class ITMGetPromptRequest;
+@class ITMGetPromptResponse;
 @class ITMLineContents;
 @class ITMLineRange;
 @class ITMRange;
 
 NS_ASSUME_NONNULL_BEGIN
 
-#pragma mark - Enum ITMResponse_Status
+#pragma mark - Enum ITMGetBufferResponse_Status
 
-typedef GPB_ENUM(ITMResponse_Status) {
-  ITMResponse_Status_Ok = 0,
-  ITMResponse_Status_SessionNotFound = 1,
-  ITMResponse_Status_InvalidLineRange = 2,
-  ITMResponse_Status_RequestMalformed = 3,
+typedef GPB_ENUM(ITMGetBufferResponse_Status) {
+  ITMGetBufferResponse_Status_Ok = 0,
+  ITMGetBufferResponse_Status_SessionNotFound = 1,
+  ITMGetBufferResponse_Status_InvalidLineRange = 2,
+  ITMGetBufferResponse_Status_RequestMalformed = 3,
 };
 
-GPBEnumDescriptor *ITMResponse_Status_EnumDescriptor(void);
+GPBEnumDescriptor *ITMGetBufferResponse_Status_EnumDescriptor(void);
 
 /**
  * Checks to see if the given value is defined by the enum or was not known at
  * the time this source was generated.
  **/
-BOOL ITMResponse_Status_IsValidValue(int32_t value);
+BOOL ITMGetBufferResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMGetPromptResponse_Status
+
+typedef GPB_ENUM(ITMGetPromptResponse_Status) {
+  ITMGetPromptResponse_Status_Ok = 0,
+  ITMGetPromptResponse_Status_SessionNotFound = 1,
+  ITMGetPromptResponse_Status_RequestMalformed = 2,
+  ITMGetPromptResponse_Status_PromptUnavailable = 3,
+};
+
+GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMLineContents_Continuation
 
@@ -92,6 +113,7 @@ BOOL ITMLineContents_Continuation_IsValidValue(int32_t value);
 typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_Id_p = 1,
   ITMRequest_FieldNumber_GetBufferRequest = 100,
+  ITMRequest_FieldNumber_GetPromptRequest = 101,
 };
 
 /**
@@ -106,14 +128,18 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c getBufferRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasGetBufferRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetPromptRequest *getPromptRequest;
+/** Test to see if @c getPromptRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasGetPromptRequest;
+
 @end
 
 #pragma mark - ITMResponse
 
 typedef GPB_ENUM(ITMResponse_FieldNumber) {
-  ITMResponse_FieldNumber_Status = 1,
-  ITMResponse_FieldNumber_Id_p = 2,
+  ITMResponse_FieldNumber_Id_p = 1,
   ITMResponse_FieldNumber_GetBufferResponse = 100,
+  ITMResponse_FieldNumber_GetPromptResponse = 101,
 };
 
 /**
@@ -121,15 +147,16 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
  **/
 @interface ITMResponse : GPBMessage
 
-@property(nonatomic, readwrite) ITMResponse_Status status;
-
-@property(nonatomic, readwrite) BOOL hasStatus;
 @property(nonatomic, readwrite) int64_t id_p;
 
 @property(nonatomic, readwrite) BOOL hasId_p;
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferResponse *getBufferResponse;
 /** Test to see if @c getBufferResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetBufferResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetPromptResponse *getPromptResponse;
+/** Test to see if @c getPromptResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasGetPromptResponse;
 
 @end
 
@@ -142,9 +169,6 @@ typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
 
 /**
  * Requests the contents of a range of lines.
- * Possible errors:
- * SESSION_NOT_FOUND
- * INVALID_LINE_RANGE
  **/
 @interface ITMGetBufferRequest : GPBMessage
 
@@ -163,8 +187,9 @@ typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
 #pragma mark - ITMGetBufferResponse
 
 typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
-  ITMGetBufferResponse_FieldNumber_Range = 1,
-  ITMGetBufferResponse_FieldNumber_ContentsArray = 2,
+  ITMGetBufferResponse_FieldNumber_Status = 1,
+  ITMGetBufferResponse_FieldNumber_Range = 2,
+  ITMGetBufferResponse_FieldNumber_ContentsArray = 3,
 };
 
 /**
@@ -172,6 +197,9 @@ typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
  **/
 @interface ITMGetBufferResponse : GPBMessage
 
+@property(nonatomic, readwrite) ITMGetBufferResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 /** Which lines were returned */
 @property(nonatomic, readwrite, strong, null_resettable) ITMRange *range;
 /** Test to see if @c range has been set. */
@@ -181,6 +209,55 @@ typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMLineContents*> *contentsArray;
 /** The number of items in @c contentsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger contentsArray_Count;
+
+@end
+
+#pragma mark - ITMGetPromptRequest
+
+typedef GPB_ENUM(ITMGetPromptRequest_FieldNumber) {
+  ITMGetPromptRequest_FieldNumber_Session = 1,
+};
+
+/**
+ * Requests metadata about the current shell prompt.
+ **/
+@interface ITMGetPromptRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+@end
+
+#pragma mark - ITMGetPromptResponse
+
+typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
+  ITMGetPromptResponse_FieldNumber_Status = 1,
+  ITMGetPromptResponse_FieldNumber_PromptRange = 2,
+  ITMGetPromptResponse_FieldNumber_CommandRange = 3,
+  ITMGetPromptResponse_FieldNumber_OutputRange = 4,
+};
+
+/**
+ * Reponds with metadata about the current shell prompt, if possible.
+ **/
+@interface ITMGetPromptResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMGetPromptResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, strong, null_resettable) ITMCoordRange *promptRange;
+/** Test to see if @c promptRange has been set. */
+@property(nonatomic, readwrite) BOOL hasPromptRange;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCoordRange *commandRange;
+/** Test to see if @c commandRange has been set. */
+@property(nonatomic, readwrite) BOOL hasCommandRange;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCoordRange *outputRange;
+/** Test to see if @c outputRange has been set. */
+@property(nonatomic, readwrite) BOOL hasOutputRange;
 
 @end
 
@@ -231,6 +308,53 @@ typedef GPB_ENUM(ITMRange_FieldNumber) {
 @property(nonatomic, readwrite) int64_t length;
 
 @property(nonatomic, readwrite) BOOL hasLength;
+@end
+
+#pragma mark - ITMCoordRange
+
+typedef GPB_ENUM(ITMCoordRange_FieldNumber) {
+  ITMCoordRange_FieldNumber_Start = 1,
+  ITMCoordRange_FieldNumber_End = 2,
+};
+
+/**
+ * Describes a range of cells.
+ * |..xxxxx|
+ * |xxxx...|
+ * start=(0,2) end=(4, 1)
+ * The end coordinate is the first cell *after* the end of the range described (so an empty range
+ * has start == end)
+ **/
+@interface ITMCoordRange : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCoord *start;
+/** Test to see if @c start has been set. */
+@property(nonatomic, readwrite) BOOL hasStart;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCoord *end;
+/** Test to see if @c end has been set. */
+@property(nonatomic, readwrite) BOOL hasEnd;
+
+@end
+
+#pragma mark - ITMCoord
+
+typedef GPB_ENUM(ITMCoord_FieldNumber) {
+  ITMCoord_FieldNumber_X = 1,
+  ITMCoord_FieldNumber_Y = 2,
+};
+
+/**
+ * Describes a cell's location.
+ **/
+@interface ITMCoord : GPBMessage
+
+@property(nonatomic, readwrite) int32_t x;
+
+@property(nonatomic, readwrite) BOOL hasX;
+@property(nonatomic, readwrite) int64_t y;
+
+@property(nonatomic, readwrite) BOOL hasY;
 @end
 
 #pragma mark - ITMLineContents

@@ -2004,14 +2004,26 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
-                   handler:(void (^)(ITMResponse_Status, ITMGetBufferResponse *))handler {
+                   handler:(void (^)(ITMGetBufferResponse *))handler {
     PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
     if (!session) {
-        handler(ITMResponse_Status_SessionNotFound, nil);
+        ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
+        response.status = ITMGetBufferResponse_Status_SessionNotFound;
+        handler(response);
     } else {
-        ITMResponse_Status status;
-        ITMGetBufferResponse *response = [session handleGetBufferRequest:request status:&status];
-        handler(status, response);
+        handler([session handleGetBufferRequest:request]);
+    }
+}
+
+- (void)apiServerGetPrompt:(ITMGetPromptRequest *)request
+                   handler:(void (^)(ITMGetPromptResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session) {
+        ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
+        response.status = ITMGetPromptResponse_Status_SessionNotFound;
+        handler(response);
+    } else {
+        handler([session handleGetPromptRequest:request]);
     }
 }
 

@@ -98,16 +98,23 @@
 }
 
 - (void)dispatchRequest:(ITMRequest *)request connection:(iTermWebSocketConnection *)webSocketConnection {
-    if (request.getBufferRequest) {
-        __weak __typeof(self) weakSelf = self;
+    __weak __typeof(self) weakSelf = self;
+    if (request.hasGetBufferRequest) {
         [_delegate apiServerGetBuffer:request.getBufferRequest
-                              handler:^(ITMResponse_Status status, ITMGetBufferResponse *getBufferResponse) {
+                              handler:^(ITMGetBufferResponse *getBufferResponse) {
                                   ITMResponse *response = [[ITMResponse alloc] init];
-                                  response.status = status;
                                   response.id_p = request.id_p;
                                   response.getBufferResponse = getBufferResponse;
-                              [weakSelf sendResponse:response onConnection:webSocketConnection];
+                                  [weakSelf sendResponse:response onConnection:webSocketConnection];
                               }];
+    }
+    if (request.hasGetPromptRequest) {
+        [_delegate apiServerGetPrompt:request.getPromptRequest handler:^(ITMGetPromptResponse *getPromptResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.getPromptResponse = getPromptResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
     }
 }
 

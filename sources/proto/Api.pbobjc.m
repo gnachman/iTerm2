@@ -49,10 +49,12 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
 
 @dynamic hasId_p, id_p;
 @dynamic hasGetBufferRequest, getBufferRequest;
+@dynamic hasGetPromptRequest, getPromptRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
   ITMGetBufferRequest *getBufferRequest;
+  ITMGetPromptRequest *getPromptRequest;
   int64_t id_p;
 } ITMRequest__storage_;
 
@@ -80,6 +82,15 @@ typedef struct ITMRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "getPromptRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptRequest),
+        .number = ITMRequest_FieldNumber_GetPromptRequest,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, getPromptRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
@@ -101,14 +112,14 @@ typedef struct ITMRequest__storage_ {
 
 @implementation ITMResponse
 
-@dynamic hasStatus, status;
 @dynamic hasId_p, id_p;
 @dynamic hasGetBufferResponse, getBufferResponse;
+@dynamic hasGetPromptResponse, getPromptResponse;
 
 typedef struct ITMResponse__storage_ {
   uint32_t _has_storage_[1];
-  ITMResponse_Status status;
   ITMGetBufferResponse *getBufferResponse;
+  ITMGetPromptResponse *getPromptResponse;
   int64_t id_p;
 } ITMResponse__storage_;
 
@@ -119,19 +130,10 @@ typedef struct ITMResponse__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "status",
-        .dataTypeSpecific.enumDescFunc = ITMResponse_Status_EnumDescriptor,
-        .number = ITMResponse_FieldNumber_Status,
-        .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMResponse__storage_, status),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
-        .dataType = GPBDataTypeEnum,
-      },
-      {
         .name = "id_p",
         .dataTypeSpecific.className = NULL,
         .number = ITMResponse_FieldNumber_Id_p,
-        .hasIndex = 1,
+        .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMResponse__storage_, id_p),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeInt64,
@@ -140,8 +142,17 @@ typedef struct ITMResponse__storage_ {
         .name = "getBufferResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferResponse),
         .number = ITMResponse_FieldNumber_GetBufferResponse,
-        .hasIndex = 2,
+        .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMResponse__storage_, getBufferResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getPromptResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptResponse),
+        .number = ITMResponse_FieldNumber_GetPromptResponse,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, getPromptResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -161,45 +172,6 @@ typedef struct ITMResponse__storage_ {
 }
 
 @end
-
-#pragma mark - Enum ITMResponse_Status
-
-GPBEnumDescriptor *ITMResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
-  if (!descriptor) {
-    static const char *valueNames =
-        "Ok\000SessionNotFound\000InvalidLineRange\000Requ"
-        "estMalformed\000";
-    static const int32_t values[] = {
-        ITMResponse_Status_Ok,
-        ITMResponse_Status_SessionNotFound,
-        ITMResponse_Status_InvalidLineRange,
-        ITMResponse_Status_RequestMalformed,
-    };
-    GPBEnumDescriptor *worker =
-        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMResponse_Status)
-                                       valueNames:valueNames
-                                           values:values
-                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
-                                     enumVerifier:ITMResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
-      [worker release];
-    }
-  }
-  return descriptor;
-}
-
-BOOL ITMResponse_Status_IsValidValue(int32_t value__) {
-  switch (value__) {
-    case ITMResponse_Status_Ok:
-    case ITMResponse_Status_SessionNotFound:
-    case ITMResponse_Status_InvalidLineRange:
-    case ITMResponse_Status_RequestMalformed:
-      return YES;
-    default:
-      return NO;
-  }
-}
 
 #pragma mark - ITMGetBufferRequest
 
@@ -259,11 +231,13 @@ typedef struct ITMGetBufferRequest__storage_ {
 
 @implementation ITMGetBufferResponse
 
+@dynamic hasStatus, status;
 @dynamic hasRange, range;
 @dynamic contentsArray, contentsArray_Count;
 
 typedef struct ITMGetBufferResponse__storage_ {
   uint32_t _has_storage_[1];
+  ITMGetBufferResponse_Status status;
   ITMRange *range;
   NSMutableArray *contentsArray;
 } ITMGetBufferResponse__storage_;
@@ -275,10 +249,19 @@ typedef struct ITMGetBufferResponse__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMGetBufferResponse_Status_EnumDescriptor,
+        .number = ITMGetBufferResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
         .name = "range",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMRange),
         .number = ITMGetBufferResponse_FieldNumber_Range,
-        .hasIndex = 0,
+        .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, range),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -308,6 +291,203 @@ typedef struct ITMGetBufferResponse__storage_ {
 }
 
 @end
+
+#pragma mark - Enum ITMGetBufferResponse_Status
+
+GPBEnumDescriptor *ITMGetBufferResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000InvalidLineRange\000Requ"
+        "estMalformed\000";
+    static const int32_t values[] = {
+        ITMGetBufferResponse_Status_Ok,
+        ITMGetBufferResponse_Status_SessionNotFound,
+        ITMGetBufferResponse_Status_InvalidLineRange,
+        ITMGetBufferResponse_Status_RequestMalformed,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMGetBufferResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMGetBufferResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMGetBufferResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMGetBufferResponse_Status_Ok:
+    case ITMGetBufferResponse_Status_SessionNotFound:
+    case ITMGetBufferResponse_Status_InvalidLineRange:
+    case ITMGetBufferResponse_Status_RequestMalformed:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMGetPromptRequest
+
+@implementation ITMGetPromptRequest
+
+@dynamic hasSession, session;
+
+typedef struct ITMGetPromptRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *session;
+} ITMGetPromptRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetPromptRequest_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMGetPromptRequest__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMGetPromptRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMGetPromptRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMGetPromptResponse
+
+@implementation ITMGetPromptResponse
+
+@dynamic hasStatus, status;
+@dynamic hasPromptRange, promptRange;
+@dynamic hasCommandRange, commandRange;
+@dynamic hasOutputRange, outputRange;
+
+typedef struct ITMGetPromptResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMGetPromptResponse_Status status;
+  ITMCoordRange *promptRange;
+  ITMCoordRange *commandRange;
+  ITMCoordRange *outputRange;
+} ITMGetPromptResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMGetPromptResponse_Status_EnumDescriptor,
+        .number = ITMGetPromptResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "promptRange",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .number = ITMGetPromptResponse_FieldNumber_PromptRange,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, promptRange),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "commandRange",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .number = ITMGetPromptResponse_FieldNumber_CommandRange,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, commandRange),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "outputRange",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .number = ITMGetPromptResponse_FieldNumber_OutputRange,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, outputRange),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMGetPromptResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMGetPromptResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMGetPromptResponse_Status
+
+GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000RequestMalformed\000Prom"
+        "ptUnavailable\000";
+    static const int32_t values[] = {
+        ITMGetPromptResponse_Status_Ok,
+        ITMGetPromptResponse_Status_SessionNotFound,
+        ITMGetPromptResponse_Status_RequestMalformed,
+        ITMGetPromptResponse_Status_PromptUnavailable,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMGetPromptResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMGetPromptResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMGetPromptResponse_Status_Ok:
+    case ITMGetPromptResponse_Status_SessionNotFound:
+    case ITMGetPromptResponse_Status_RequestMalformed:
+    case ITMGetPromptResponse_Status_PromptUnavailable:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMLineRange
 
@@ -407,6 +587,114 @@ typedef struct ITMRange__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRange__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCoordRange
+
+@implementation ITMCoordRange
+
+@dynamic hasStart, start;
+@dynamic hasEnd, end;
+
+typedef struct ITMCoordRange__storage_ {
+  uint32_t _has_storage_[1];
+  ITMCoord *start;
+  ITMCoord *end;
+} ITMCoordRange__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "start",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoord),
+        .number = ITMCoordRange_FieldNumber_Start,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMCoordRange__storage_, start),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "end",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoord),
+        .number = ITMCoordRange_FieldNumber_End,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMCoordRange__storage_, end),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCoordRange class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCoordRange__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCoord
+
+@implementation ITMCoord
+
+@dynamic hasX, x;
+@dynamic hasY, y;
+
+typedef struct ITMCoord__storage_ {
+  uint32_t _has_storage_[1];
+  int32_t x;
+  int64_t y;
+} ITMCoord__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "x",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCoord_FieldNumber_X,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMCoord__storage_, x),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "y",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCoord_FieldNumber_Y,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMCoord__storage_, y),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCoord class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCoord__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;

@@ -7,27 +7,18 @@ message Request {
   optional int64 id = 1;
 
   optional GetBufferRequest get_buffer_request = 100;
+  optional GetPromptRequest get_prompt_request = 101;
 }
 
 // All responses are wrapped in this message.
 message Response {
-  enum Status {
-    OK = 0;
-    SESSION_NOT_FOUND = 1;
-    INVALID_LINE_RANGE = 2;
-    REQUEST_MALFORMED = 3;
-  }
-
-  optional Status status = 1;
-  optional int64 id = 2;
+  optional int64 id = 1;
 
   optional GetBufferResponse get_buffer_response = 100;
+  optional GetPromptResponse get_prompt_response = 101;
 }
 
 // Requests the contents of a range of lines.
-// Possible errors:
-// SESSION_NOT_FOUND
-// INVALID_LINE_RANGE
 message GetBufferRequest {
   // Leave this empty to use the current session, if any.
   optional string session = 1;
@@ -38,11 +29,42 @@ message GetBufferRequest {
 
 // Contains the contents of a range of lines.
 message GetBufferResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    INVALID_LINE_RANGE = 2;
+    REQUEST_MALFORMED = 3;
+  }
+
+  optional Status status = 1 [default = OK];
+
   // Which lines were returned
-  optional Range range = 1;
+  optional Range range = 2;
 
   // Those lines' contents.
-  repeated LineContents contents = 2;
+  repeated LineContents contents = 3;
+}
+
+// Requests metadata about the current shell prompt.
+message GetPromptRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+}
+
+// Reponds with metadata about the current shell prompt, if possible.
+message GetPromptResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    PROMPT_UNAVAILABLE = 3;
+  }
+
+  optional Status status = 1 [default = OK];
+
+  optional CoordRange prompt_range = 2;
+  optional CoordRange command_range = 3;
+  optional CoordRange output_range = 4;
 }
 
 // Describes a range of lines.
@@ -61,6 +83,23 @@ message LineRange {
 message Range {
   optional int64 location = 1;
   optional int64 length = 2;
+}
+
+// Describes a range of cells.
+// |..xxxxx|
+// |xxxx...|
+// start=(0,2) end=(4, 1)
+// The end coordinate is the first cell *after* the end of the range described (so an empty range
+// has start == end)
+message CoordRange {
+  optional Coord start = 1;
+  optional Coord end = 2;
+}
+
+// Describes a cell's location.
+message Coord {
+  optional int32 x = 1;
+  optional int64 y = 2;
 }
 
 // Describes the content of a line.
