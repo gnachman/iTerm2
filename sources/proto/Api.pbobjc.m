@@ -43,6 +43,43 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
   return descriptor;
 }
 
+#pragma mark - Enum ITMNotificationType
+
+GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
+        "otifyOnPrompt\000";
+    static const int32_t values[] = {
+        ITMNotificationType_NotifyOnKeystroke,
+        ITMNotificationType_NotifyOnScreenUpdate,
+        ITMNotificationType_NotifyOnPrompt,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMNotificationType_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMNotificationType_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMNotificationType_NotifyOnKeystroke:
+    case ITMNotificationType_NotifyOnScreenUpdate:
+    case ITMNotificationType_NotifyOnPrompt:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMRequest
 
 @implementation ITMRequest
@@ -51,12 +88,14 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
 @dynamic hasGetBufferRequest, getBufferRequest;
 @dynamic hasGetPromptRequest, getPromptRequest;
 @dynamic hasTransactionRequest, transactionRequest;
+@dynamic hasNotificationRequest, notificationRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
   ITMGetBufferRequest *getBufferRequest;
   ITMGetPromptRequest *getPromptRequest;
   ITMTransactionRequest *transactionRequest;
+  ITMNotificationRequest *notificationRequest;
   int64_t id_p;
 } ITMRequest__storage_;
 
@@ -102,6 +141,15 @@ typedef struct ITMRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "notificationRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMNotificationRequest),
+        .number = ITMRequest_FieldNumber_NotificationRequest,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, notificationRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
@@ -127,12 +175,16 @@ typedef struct ITMRequest__storage_ {
 @dynamic hasGetBufferResponse, getBufferResponse;
 @dynamic hasGetPromptResponse, getPromptResponse;
 @dynamic hasTransactionResponse, transactionResponse;
+@dynamic hasNotificationResponse, notificationResponse;
+@dynamic hasNotification, notification;
 
 typedef struct ITMResponse__storage_ {
   uint32_t _has_storage_[1];
   ITMGetBufferResponse *getBufferResponse;
   ITMGetPromptResponse *getPromptResponse;
   ITMTransactionResponse *transactionResponse;
+  ITMNotificationResponse *notificationResponse;
+  ITMNotification *notification;
   int64_t id_p;
 } ITMResponse__storage_;
 
@@ -178,6 +230,24 @@ typedef struct ITMResponse__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "notificationResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMNotificationResponse),
+        .number = ITMResponse_FieldNumber_NotificationResponse,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, notificationResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "notification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
+        .number = ITMResponse_FieldNumber_Notification,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, notification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMResponse class]
@@ -186,6 +256,406 @@ typedef struct ITMResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMNotificationRequest
+
+@implementation ITMNotificationRequest
+
+@dynamic hasSession, session;
+@dynamic hasSubscribe, subscribe;
+@dynamic hasNotificationType, notificationType;
+
+typedef struct ITMNotificationRequest__storage_ {
+  uint32_t _has_storage_[1];
+  ITMNotificationType notificationType;
+  NSString *session;
+} ITMNotificationRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "session",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMNotificationRequest_FieldNumber_Session,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, session),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueBool = NO,
+        .core.name = "subscribe",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMNotificationRequest_FieldNumber_Subscribe,
+        .core.hasIndex = 1,
+        .core.offset = 2,  // Stored in _has_storage_ to save space.
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeBool,
+      },
+      {
+        .defaultValue.valueEnum = ITMNotificationType_NotifyOnKeystroke,
+        .core.name = "notificationType",
+        .core.dataTypeSpecific.enumDescFunc = ITMNotificationType_EnumDescriptor,
+        .core.number = ITMNotificationRequest_FieldNumber_NotificationType,
+        .core.hasIndex = 3,
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, notificationType),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMNotificationRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMNotificationRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMNotificationResponse
+
+@implementation ITMNotificationResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMNotificationResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMNotificationResponse_Status status;
+} ITMNotificationResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMNotificationResponse_Status_EnumDescriptor,
+        .number = ITMNotificationResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMNotificationResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMNotificationResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMNotificationResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMNotificationResponse_Status
+
+GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000RequestMalformed\000NotS"
+        "ubscribed\000AlreadySubscribed\000";
+    static const int32_t values[] = {
+        ITMNotificationResponse_Status_Ok,
+        ITMNotificationResponse_Status_SessionNotFound,
+        ITMNotificationResponse_Status_RequestMalformed,
+        ITMNotificationResponse_Status_NotSubscribed,
+        ITMNotificationResponse_Status_AlreadySubscribed,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMNotificationResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMNotificationResponse_Status_Ok:
+    case ITMNotificationResponse_Status_SessionNotFound:
+    case ITMNotificationResponse_Status_RequestMalformed:
+    case ITMNotificationResponse_Status_NotSubscribed:
+    case ITMNotificationResponse_Status_AlreadySubscribed:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMNotification
+
+@implementation ITMNotification
+
+@dynamic hasKeystrokeNotification, keystrokeNotification;
+@dynamic hasScreenUpdateNotification, screenUpdateNotification;
+@dynamic hasPromptNotification, promptNotification;
+
+typedef struct ITMNotification__storage_ {
+  uint32_t _has_storage_[1];
+  ITMKeystrokeNotification *keystrokeNotification;
+  ITMScreenUpdateNotification *screenUpdateNotification;
+  ITMPromptNotification *promptNotification;
+} ITMNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "keystrokeNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokeNotification),
+        .number = ITMNotification_FieldNumber_KeystrokeNotification,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, keystrokeNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "screenUpdateNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMScreenUpdateNotification),
+        .number = ITMNotification_FieldNumber_ScreenUpdateNotification,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, screenUpdateNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "promptNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMPromptNotification),
+        .number = ITMNotification_FieldNumber_PromptNotification,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, promptNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMKeystrokeNotification
+
+@implementation ITMKeystrokeNotification
+
+@dynamic hasCharacters, characters;
+@dynamic hasCharactersIgnoringModifiers, charactersIgnoringModifiers;
+@dynamic modifiersArray, modifiersArray_Count;
+@dynamic hasKeyCode, keyCode;
+
+typedef struct ITMKeystrokeNotification__storage_ {
+  uint32_t _has_storage_[1];
+  int32_t keyCode;
+  NSString *characters;
+  NSString *charactersIgnoringModifiers;
+  GPBEnumArray *modifiersArray;
+} ITMKeystrokeNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "characters",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokeNotification_FieldNumber_Characters,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, characters),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "charactersIgnoringModifiers",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokeNotification_FieldNumber_CharactersIgnoringModifiers,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, charactersIgnoringModifiers),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "modifiersArray",
+        .dataTypeSpecific.enumDescFunc = ITMKeystrokeNotification_Modifiers_EnumDescriptor,
+        .number = ITMKeystrokeNotification_FieldNumber_ModifiersArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, modifiersArray),
+        .flags = (GPBFieldFlags)(GPBFieldRepeated | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "keyCode",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokeNotification_FieldNumber_KeyCode,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, keyCode),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMKeystrokeNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMKeystrokeNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    static const char *extraTextFormatInfo =
+        "\002\002\033\000\004\007\000";
+    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
+#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMKeystrokeNotification_Modifiers
+
+GPBEnumDescriptor *ITMKeystrokeNotification_Modifiers_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Control\000Option\000Command\000Shift\000Function\000Nu"
+        "mpad\000";
+    static const int32_t values[] = {
+        ITMKeystrokeNotification_Modifiers_Control,
+        ITMKeystrokeNotification_Modifiers_Option,
+        ITMKeystrokeNotification_Modifiers_Command,
+        ITMKeystrokeNotification_Modifiers_Shift,
+        ITMKeystrokeNotification_Modifiers_Function,
+        ITMKeystrokeNotification_Modifiers_Numpad,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMKeystrokeNotification_Modifiers)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMKeystrokeNotification_Modifiers_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMKeystrokeNotification_Modifiers_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMKeystrokeNotification_Modifiers_Control:
+    case ITMKeystrokeNotification_Modifiers_Option:
+    case ITMKeystrokeNotification_Modifiers_Command:
+    case ITMKeystrokeNotification_Modifiers_Shift:
+    case ITMKeystrokeNotification_Modifiers_Function:
+    case ITMKeystrokeNotification_Modifiers_Numpad:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMScreenUpdateNotification
+
+@implementation ITMScreenUpdateNotification
+
+
+typedef struct ITMScreenUpdateNotification__storage_ {
+  uint32_t _has_storage_[1];
+} ITMScreenUpdateNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMScreenUpdateNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMScreenUpdateNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMPromptNotification
+
+@implementation ITMPromptNotification
+
+
+typedef struct ITMPromptNotification__storage_ {
+  uint32_t _has_storage_[1];
+} ITMPromptNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMPromptNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMPromptNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;

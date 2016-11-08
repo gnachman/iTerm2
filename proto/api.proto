@@ -11,6 +11,7 @@ message Request {
   optional GetBufferRequest get_buffer_request = 100;
   optional GetPromptRequest get_prompt_request = 101;
   optional TransactionRequest transaction_request = 102;
+  optional NotificationRequest notification_request = 103;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -21,6 +22,65 @@ message Response {
   optional GetBufferResponse get_buffer_response = 100;
   optional GetPromptResponse get_prompt_response = 101;
   optional TransactionResponse transaction_response = 102;
+  optional NotificationResponse notification_response = 103;
+
+  // This is the only response that is sent spontaneously. The 'id' field will not be set.
+  optional Notification notification = 1000;
+}
+
+enum NotificationType {
+  NOTIFY_ON_KEYSTROKE = 1;
+  NOTIFY_ON_SCREEN_UPDATE = 2;
+  NOTIFY_ON_PROMPT = 3;
+}
+
+message NotificationRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  // Set to true to subscribe, false to unsubscribe.
+  optional bool subscribe = 2;
+
+  // When to be notified (or notification to unsubscribe from)
+  optional NotificationType notification_type = 3;
+}
+
+message NotificationResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    NOT_SUBSCRIBED = 3;
+    ALREADY_SUBSCRIBED = 4;
+  }
+  optional Status status = 1;
+}
+
+message Notification {
+  optional KeystrokeNotification keystroke_notification = 1;
+  optional ScreenUpdateNotification screen_update_notification = 2;
+  optional PromptNotification prompt_notification = 3;
+}
+
+message KeystrokeNotification {
+  optional string characters = 1;
+  optional string charactersIgnoringModifiers = 2;
+  enum Modifiers {
+    CONTROL = 1;
+    OPTION = 2;
+    COMMAND = 3;
+    SHIFT = 4;
+    FUNCTION = 5;
+    NUMPAD = 6;
+  }
+  repeated Modifiers modifiers = 3;
+  optional int32 keyCode = 4;
+}
+
+message ScreenUpdateNotification {
+}
+
+message PromptNotification {
 }
 
 // Requests the contents of a range of lines.
@@ -79,7 +139,7 @@ message GetPromptResponse {
   optional CoordRange output_range = 4;
 
   optional string working_directory = 5;
-optional string command = 6;
+  optional string command = 6;
 }
 
 message TransactionRequest {

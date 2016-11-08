@@ -34,13 +34,72 @@ CF_EXTERN_C_BEGIN
 @class ITMGetBufferResponse;
 @class ITMGetPromptRequest;
 @class ITMGetPromptResponse;
+@class ITMKeystrokeNotification;
 @class ITMLineContents;
 @class ITMLineRange;
+@class ITMNotification;
+@class ITMNotificationRequest;
+@class ITMNotificationResponse;
+@class ITMPromptNotification;
 @class ITMRange;
+@class ITMScreenUpdateNotification;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
 
 NS_ASSUME_NONNULL_BEGIN
+
+#pragma mark - Enum ITMNotificationType
+
+typedef GPB_ENUM(ITMNotificationType) {
+  ITMNotificationType_NotifyOnKeystroke = 1,
+  ITMNotificationType_NotifyOnScreenUpdate = 2,
+  ITMNotificationType_NotifyOnPrompt = 3,
+};
+
+GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMNotificationResponse_Status
+
+typedef GPB_ENUM(ITMNotificationResponse_Status) {
+  ITMNotificationResponse_Status_Ok = 0,
+  ITMNotificationResponse_Status_SessionNotFound = 1,
+  ITMNotificationResponse_Status_RequestMalformed = 2,
+  ITMNotificationResponse_Status_NotSubscribed = 3,
+  ITMNotificationResponse_Status_AlreadySubscribed = 4,
+};
+
+GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMKeystrokeNotification_Modifiers
+
+typedef GPB_ENUM(ITMKeystrokeNotification_Modifiers) {
+  ITMKeystrokeNotification_Modifiers_Control = 1,
+  ITMKeystrokeNotification_Modifiers_Option = 2,
+  ITMKeystrokeNotification_Modifiers_Command = 3,
+  ITMKeystrokeNotification_Modifiers_Shift = 4,
+  ITMKeystrokeNotification_Modifiers_Function = 5,
+  ITMKeystrokeNotification_Modifiers_Numpad = 6,
+};
+
+GPBEnumDescriptor *ITMKeystrokeNotification_Modifiers_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMKeystrokeNotification_Modifiers_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMGetBufferResponse_Status
 
@@ -133,6 +192,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_GetBufferRequest = 100,
   ITMRequest_FieldNumber_GetPromptRequest = 101,
   ITMRequest_FieldNumber_TransactionRequest = 102,
+  ITMRequest_FieldNumber_NotificationRequest = 103,
 };
 
 /**
@@ -157,6 +217,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c transactionRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasTransactionRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMNotificationRequest *notificationRequest;
+/** Test to see if @c notificationRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasNotificationRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -166,6 +230,8 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_GetBufferResponse = 100,
   ITMResponse_FieldNumber_GetPromptResponse = 101,
   ITMResponse_FieldNumber_TransactionResponse = 102,
+  ITMResponse_FieldNumber_NotificationResponse = 103,
+  ITMResponse_FieldNumber_Notification = 1000,
 };
 
 /**
@@ -188,6 +254,118 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMTransactionResponse *transactionResponse;
 /** Test to see if @c transactionResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasTransactionResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMNotificationResponse *notificationResponse;
+/** Test to see if @c notificationResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasNotificationResponse;
+
+/** This is the only response that is sent spontaneously. The 'id' field will not be set. */
+@property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
+/** Test to see if @c notification has been set. */
+@property(nonatomic, readwrite) BOOL hasNotification;
+
+@end
+
+#pragma mark - ITMNotificationRequest
+
+typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
+  ITMNotificationRequest_FieldNumber_Session = 1,
+  ITMNotificationRequest_FieldNumber_Subscribe = 2,
+  ITMNotificationRequest_FieldNumber_NotificationType = 3,
+};
+
+@interface ITMNotificationRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+/** Set to true to subscribe, false to unsubscribe. */
+@property(nonatomic, readwrite) BOOL subscribe;
+
+@property(nonatomic, readwrite) BOOL hasSubscribe;
+/** When to be notified (or notification to unsubscribe from) */
+@property(nonatomic, readwrite) ITMNotificationType notificationType;
+
+@property(nonatomic, readwrite) BOOL hasNotificationType;
+@end
+
+#pragma mark - ITMNotificationResponse
+
+typedef GPB_ENUM(ITMNotificationResponse_FieldNumber) {
+  ITMNotificationResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMNotificationResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMNotificationResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
+
+#pragma mark - ITMNotification
+
+typedef GPB_ENUM(ITMNotification_FieldNumber) {
+  ITMNotification_FieldNumber_KeystrokeNotification = 1,
+  ITMNotification_FieldNumber_ScreenUpdateNotification = 2,
+  ITMNotification_FieldNumber_PromptNotification = 3,
+};
+
+@interface ITMNotification : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMKeystrokeNotification *keystrokeNotification;
+/** Test to see if @c keystrokeNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasKeystrokeNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMScreenUpdateNotification *screenUpdateNotification;
+/** Test to see if @c screenUpdateNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasScreenUpdateNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotification *promptNotification;
+/** Test to see if @c promptNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasPromptNotification;
+
+@end
+
+#pragma mark - ITMKeystrokeNotification
+
+typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
+  ITMKeystrokeNotification_FieldNumber_Characters = 1,
+  ITMKeystrokeNotification_FieldNumber_CharactersIgnoringModifiers = 2,
+  ITMKeystrokeNotification_FieldNumber_ModifiersArray = 3,
+  ITMKeystrokeNotification_FieldNumber_KeyCode = 4,
+};
+
+@interface ITMKeystrokeNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *characters;
+/** Test to see if @c characters has been set. */
+@property(nonatomic, readwrite) BOOL hasCharacters;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *charactersIgnoringModifiers;
+/** Test to see if @c charactersIgnoringModifiers has been set. */
+@property(nonatomic, readwrite) BOOL hasCharactersIgnoringModifiers;
+
+// |modifiersArray| contains |ITMKeystrokeNotification_Modifiers|
+@property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *modifiersArray;
+/** The number of items in @c modifiersArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger modifiersArray_Count;
+
+@property(nonatomic, readwrite) int32_t keyCode;
+
+@property(nonatomic, readwrite) BOOL hasKeyCode;
+@end
+
+#pragma mark - ITMScreenUpdateNotification
+
+@interface ITMScreenUpdateNotification : GPBMessage
+
+@end
+
+#pragma mark - ITMPromptNotification
+
+@interface ITMPromptNotification : GPBMessage
 
 @end
 

@@ -191,6 +191,7 @@
 - (void)screenSaveScrollPosition;
 - (VT100ScreenMark *)screenAddMarkOnLine:(int)line;
 - (void)screenPromptDidStartAtLine:(int)line;
+- (void)screenPromptDidEndAtLine:(int)line;
 
 - (void)screenActivateWindow;
 

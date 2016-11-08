@@ -94,6 +94,7 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
+NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
@@ -2025,6 +2026,27 @@ static BOOL hasBecomeActive = NO;
     } else {
         handler([session handleGetPromptRequest:request]);
     }
+}
+
+- (void)apiServerNotification:(ITMNotificationRequest *)request
+                   connection:(id)connection
+                      handler:(void (^)(ITMNotificationResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session) {
+        ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
+        response.status = ITMNotificationResponse_Status_SessionNotFound;
+        handler(response);
+    } else {
+        handler([session handleAPINotificationRequest:request connection:connection]);
+    }
+}
+
+- (void)apiServerRemoveSubscriptionsForConnection:(id)connection {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connection];
+}
+
+- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
+    [_apiServer postAPINotification:notification toConnection:connection];
 }
 
 @end

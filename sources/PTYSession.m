@@ -387,6 +387,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     
     // Current unicode version.
     NSInteger _unicodeVersion;
+
+    NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -452,6 +456,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         _guid = [[NSString uuid] retain];
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
 
+        _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
+        _updateSubscriptions = [[NSMutableDictionary alloc] init];
+        _promptSubscriptions = [[NSMutableDictionary alloc] init];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -475,6 +483,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionHotkeyDidChange:)
                                                      name:kProfileSessionHotkeyDidChange
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(apiServerUnsubscribe:)
+                                                     name:iTermRemoveAPIServerSubscriptionsNotification
                                                    object:nil];
         // Detach before windows get closed. That's why we have to use the
         // iTermApplicationWillTerminate notification instead of
@@ -547,6 +559,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_jobName release];
     [_automaticProfileSwitcher release];
     [_throughputEstimator release];
+    [_keystrokeSubscriptions release];
+    [_updateSubscriptions release];
+    [_promptSubscriptions release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -3730,6 +3745,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [self sanityCheck];
 }
 
+- (void)apiServerUnsubscribe:(NSNotification *)notification {
+    [_promptSubscriptions removeObjectForKey:notification.object];
+    [_keystrokeSubscriptions removeObjectForKey:notification.object];
+    [_updateSubscriptions removeObjectForKey:notification.object];
+}
+
 - (void)applicationWillTerminate:(NSNotification *)notification {
     // See comment where we observe this notification for why this is done.
     [self tmuxDetach];
@@ -4639,6 +4660,36 @@ ITERM_WEAKLY_REFERENCEABLE
         [_view.currentAnnouncement dismiss];
         return NO;
     } else {
+        if (_keystrokeSubscriptions.count) {
+            ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
+            keystrokeNotification.characters = event.characters;
+            keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
+            if (event.modifierFlags & NSControlKeyMask) {
+                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Control];
+            }
+            if (event.modifierFlags & NSAlternateKeyMask) {
+                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Option];
+            }
+            if (event.modifierFlags & NSCommandKeyMask) {
+                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Command];
+            }
+            if (event.modifierFlags & NSShiftKeyMask) {
+                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Shift];
+            }
+            if (event.modifierFlags & NSNumericPadKeyMask) {
+                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Numpad];
+            }
+            if (event.modifierFlags & NSFunctionKeyMask) {
+                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Function];
+            }
+            keystrokeNotification.keyCode = event.keyCode;
+            ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+            notification.keystrokeNotification = keystrokeNotification;
+
+            [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+                [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+            }];
+        }
         return YES;
     }
 }
@@ -5447,6 +5498,17 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)textViewInvalidateRestorableState {
     if ([iTermAdvancedSettingsModel restoreWindowContents]) {
         [_delegate.realParentWindow invalidateRestorableState];
+    }
+}
+
+- (void)textViewDidFindDirtyRects {
+    if (_updateSubscriptions.count) {
+        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+        notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
+
+        [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+            [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+        }];
     }
 }
 
@@ -6510,6 +6572,14 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     [[self screenAddMarkOnLine:line] setIsPrompt:YES];
     [_pasteHelper unblock];
+}
+
+- (void)screenPromptDidEndAtLine:(int)line {
+    [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+        notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
 }
 
 - (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
@@ -7810,6 +7880,47 @@ ITERM_WEAKLY_REFERENCEABLE
     response.workingDirectory = [_screen workingDirectoryOnLine:[_screen coordRangeForInterval:mark.entry.interval].end.y];
     response.command = mark.command ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
+    return response;
+}
+
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection {
+    ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
+    if (!request.hasSubscribe) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+
+    NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions = nil;
+    switch (request.notificationType) {
+        case ITMNotificationType_NotifyOnPrompt:
+            subscriptions = _promptSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnKeystroke:
+            subscriptions = _keystrokeSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnScreenUpdate:
+            subscriptions = _updateSubscriptions;
+            break;
+    }
+    if (!subscriptions) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+    if (request.subscribe) {
+        if (subscriptions[connection]) {
+            response.status = ITMNotificationResponse_Status_AlreadySubscribed;
+            return response;
+        }
+        subscriptions[connection] = request;
+    } else {
+        if (!subscriptions[connection]) {
+            response.status = ITMNotificationResponse_Status_NotSubscribed;
+            return response;
+        }
+        [subscriptions removeObjectForKey:connection];
+    }
+
+    response.status = ITMNotificationResponse_Status_Ok;
     return response;
 }
 

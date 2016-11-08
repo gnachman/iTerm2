@@ -3644,6 +3644,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 - (void)terminalCommandDidStart {
     DLog(@"FinalTerm: terminalCommandDidStart");
     [self commandDidStartAtCoord:currentGrid_.cursor];
+    [delegate_ screenPromptDidEndAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
 
 - (void)commandDidStartAtCoord:(VT100GridCoord)coord {

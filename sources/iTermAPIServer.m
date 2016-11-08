@@ -16,6 +16,28 @@
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
 #import "Api.pbobjc.h"
+#import <objc/runtime.h>
+
+@interface iTermWebSocketConnection(Handle)
+@property(nonatomic, readonly) id handle;
+@end
+
+@implementation iTermWebSocketConnection(Handle)
+
+const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectionHandleAssociatedObjectKey";
+
+- (id)handle {
+    @synchronized (self) {
+        id handle = objc_getAssociatedObject(self, kWebSocketConnectionHandleAssociatedObjectKey);
+        if (!handle) {
+            handle = [NSUUID UUID];
+            objc_setAssociatedObject(self, kWebSocketConnectionHandleAssociatedObjectKey, handle, OBJC_ASSOCIATION_RETAIN);
+        }
+        return handle;
+    }
+}
+
+@end
 
 @interface iTermAPIServer()<iTermWebSocketConnectionDelegate>
 @end
@@ -123,7 +145,7 @@
 
 @implementation iTermAPIServer {
     iTermSocket *_socket;
-    NSMutableArray<iTermWebSocketConnection *> *_connections;
+    NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;
     dispatch_queue_t _queue;
     dispatch_queue_t _executionQueue;
 }
@@ -141,7 +163,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _connections = [[NSMutableArray alloc] init];
+        _connections = [[NSMutableDictionary alloc] init];
         _socket = [iTermSocket tcpIPV4Socket];
         if (!_socket) {
             ELog(@"Failed to create socket");
@@ -170,6 +192,19 @@
     return self;
 }
 
+- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
+    dispatch_async(_queue, ^{
+        iTermWebSocketConnection *webSocketConnection = _connections[connection];
+        if (webSocketConnection) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.notification = notification;
+            dispatch_async(_executionQueue, ^{
+                [self sendResponse:response onConnection:webSocketConnection];
+            });
+        }
+    });
+}
+
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     ILog(@"Accepted connection");
     dispatch_async(_queue, ^{
@@ -185,7 +220,7 @@
             ILog(@"Upgrading request to websocket");
             iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
             webSocketConnection.delegate = self;
-            [_connections addObject:webSocketConnection];
+            _connections[webSocketConnection.handle] = webSocketConnection;
             [webSocketConnection handleRequest:request];
         } else {
             ELog(@"Bad request %@", request);
@@ -308,6 +343,17 @@
         }];
         return;
     }
+    if (request.hasNotificationRequest) {
+        [_delegate apiServerNotification:request.notificationRequest
+                              connection:webSocketConnection.handle
+                                 handler:^(ITMNotificationResponse *notificationResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.notificationResponse = notificationResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
+    }
 }
 
 // Runs on execution queue.
@@ -335,14 +381,19 @@
 #pragma mark - iTermWebSocketConnectionDelegate
 
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
-    ILog(@"Connection terminated");
-    [_connections removeObject:webSocketConnection];
-    dispatch_async(_executionQueue, ^{
-        if (self.transaction.connection == webSocketConnection) {
-            iTermAPITransaction *transaction = self.transaction;
-            self.transaction = nil;
-            [transaction signal];
-        }
+    dispatch_async(_queue, ^{
+        ILog(@"Connection terminated");
+        [_connections removeObjectForKey:webSocketConnection.handle];
+        dispatch_async(_executionQueue, ^{
+            if (self.transaction.connection == webSocketConnection) {
+                iTermAPITransaction *transaction = self.transaction;
+                self.transaction = nil;
+                [transaction signal];
+            }
+        });
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [_delegate apiServerRemoveSubscriptionsForConnection:webSocketConnection.handle];
+        });
     });
 }
 

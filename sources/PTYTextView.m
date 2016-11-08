@@ -6525,6 +6525,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (foundDirty) {
         [_dataSource saveToDvr];
         [_delegate textViewInvalidateRestorableState];
+        [_delegate textViewDidFindDirtyRects];
     }
 
     if (foundDirty && [_dataSource shouldSendContentsChangedNotification]) {
