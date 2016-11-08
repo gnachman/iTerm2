@@ -48,6 +48,13 @@ message GetBufferResponse {
 
   // Those lines' contents.
   repeated LineContents contents = 3;
+
+  optional Coord cursor = 4;
+
+  // The number of lines (including lines lost from the head of scrollback history) that precede
+  // the screen. Subtract this from cursor.y to get the cursor's position on the screen when it
+  // is scrolled to the bottom.
+  optional int64 num_lines_above_screen = 5;
 }
 
 // Requests metadata about the current shell prompt.
@@ -70,6 +77,9 @@ message GetPromptResponse {
   optional CoordRange prompt_range = 2;
   optional CoordRange command_range = 3;
   optional CoordRange output_range = 4;
+
+  optional string working_directory = 5;
+optional string command = 6;
 }
 
 message TransactionRequest {

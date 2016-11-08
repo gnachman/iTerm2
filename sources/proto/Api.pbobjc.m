@@ -256,12 +256,16 @@ typedef struct ITMGetBufferRequest__storage_ {
 @dynamic hasStatus, status;
 @dynamic hasRange, range;
 @dynamic contentsArray, contentsArray_Count;
+@dynamic hasCursor, cursor;
+@dynamic hasNumLinesAboveScreen, numLinesAboveScreen;
 
 typedef struct ITMGetBufferResponse__storage_ {
   uint32_t _has_storage_[1];
   ITMGetBufferResponse_Status status;
   ITMRange *range;
   NSMutableArray *contentsArray;
+  ITMCoord *cursor;
+  int64_t numLinesAboveScreen;
 } ITMGetBufferResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -296,6 +300,24 @@ typedef struct ITMGetBufferResponse__storage_ {
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, contentsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "cursor",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoord),
+        .number = ITMGetBufferResponse_FieldNumber_Cursor,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, cursor),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "numLinesAboveScreen",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetBufferResponse_FieldNumber_NumLinesAboveScreen,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, numLinesAboveScreen),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -404,6 +426,8 @@ typedef struct ITMGetPromptRequest__storage_ {
 @dynamic hasPromptRange, promptRange;
 @dynamic hasCommandRange, commandRange;
 @dynamic hasOutputRange, outputRange;
+@dynamic hasWorkingDirectory, workingDirectory;
+@dynamic hasCommand, command;
 
 typedef struct ITMGetPromptResponse__storage_ {
   uint32_t _has_storage_[1];
@@ -411,6 +435,8 @@ typedef struct ITMGetPromptResponse__storage_ {
   ITMCoordRange *promptRange;
   ITMCoordRange *commandRange;
   ITMCoordRange *outputRange;
+  NSString *workingDirectory;
+  NSString *command;
 } ITMGetPromptResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -454,6 +480,24 @@ typedef struct ITMGetPromptResponse__storage_ {
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, outputRange),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "workingDirectory",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetPromptResponse_FieldNumber_WorkingDirectory,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, workingDirectory),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "command",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetPromptResponse_FieldNumber_Command,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, command),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =

@@ -7767,6 +7767,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [response.contentsArray addObject:lineContents];
     }
+    response.numLinesAboveScreen = _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+
+    response.cursor = [[ITMCoord alloc] init];
+    response.cursor.x = _screen.currentGrid.cursor.x;
+    response.cursor.y = _screen.currentGrid.cursor.y + response.numLinesAboveScreen;
+
     response.status = ITMGetBufferResponse_Status_Ok;
     return response;
 }
@@ -7801,6 +7807,8 @@ ITERM_WEAKLY_REFERENCEABLE
         response.outputRange.end.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
     }
 
+    response.workingDirectory = [_screen workingDirectoryOnLine:[_screen coordRangeForInterval:mark.entry.interval].end.y];
+    response.command = mark.command ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
     return response;
 }

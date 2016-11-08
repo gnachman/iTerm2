@@ -194,6 +194,8 @@ extern int kVT100ScreenMinRows;
 // Uninitialize timestamps.
 - (void)resetTimestamps;
 
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
+
 @end
 
 @interface VT100Screen (Testing)

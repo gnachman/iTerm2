@@ -221,6 +221,8 @@ typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
   ITMGetBufferResponse_FieldNumber_Status = 1,
   ITMGetBufferResponse_FieldNumber_Range = 2,
   ITMGetBufferResponse_FieldNumber_ContentsArray = 3,
+  ITMGetBufferResponse_FieldNumber_Cursor = 4,
+  ITMGetBufferResponse_FieldNumber_NumLinesAboveScreen = 5,
 };
 
 /**
@@ -241,6 +243,18 @@ typedef GPB_ENUM(ITMGetBufferResponse_FieldNumber) {
 /** The number of items in @c contentsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger contentsArray_Count;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMCoord *cursor;
+/** Test to see if @c cursor has been set. */
+@property(nonatomic, readwrite) BOOL hasCursor;
+
+/**
+ * The number of lines (including lines lost from the head of scrollback history) that precede
+ * the screen. Subtract this from cursor.y to get the cursor's position on the screen when it
+ * is scrolled to the bottom.
+ **/
+@property(nonatomic, readwrite) int64_t numLinesAboveScreen;
+
+@property(nonatomic, readwrite) BOOL hasNumLinesAboveScreen;
 @end
 
 #pragma mark - ITMGetPromptRequest
@@ -268,6 +282,8 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
   ITMGetPromptResponse_FieldNumber_PromptRange = 2,
   ITMGetPromptResponse_FieldNumber_CommandRange = 3,
   ITMGetPromptResponse_FieldNumber_OutputRange = 4,
+  ITMGetPromptResponse_FieldNumber_WorkingDirectory = 5,
+  ITMGetPromptResponse_FieldNumber_Command = 6,
 };
 
 /**
@@ -289,6 +305,14 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMCoordRange *outputRange;
 /** Test to see if @c outputRange has been set. */
 @property(nonatomic, readwrite) BOOL hasOutputRange;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *workingDirectory;
+/** Test to see if @c workingDirectory has been set. */
+@property(nonatomic, readwrite) BOOL hasWorkingDirectory;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *command;
+/** Test to see if @c command has been set. */
+@property(nonatomic, readwrite) BOOL hasCommand;
 
 @end
 
@@ -488,6 +512,8 @@ typedef GPB_ENUM(ITMLineContents_FieldNumber) {
  *       screen_coord_to_text_index[screen_coord] = text_index
  *       text_index += cpps.num_code_points
  *       screen_coord += 1
+ *
+ * Cells with images are omitted.
  **/
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMCodePointsPerCell*> *codePointsPerCellArray;
 /** The number of items in @c codePointsPerCellArray without causing the array to be created. */
