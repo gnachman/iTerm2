@@ -139,6 +139,19 @@
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
                                             <menuItem isSeparatorItem="YES" id="Wdb-df-nzr"/>
+                                            <menuItem title="Swap With Split Pane Above" tag="55" id="ode-hA-x73">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem title="Swap With Split Pane Below" tag="56" id="ZY0-cI-XLp">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem title="Swap With Split Pane on Left" tag="53" id="FzR-E6-3aa">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem title="Swap With Split Pane on Right" tag="54" id="FxY-zD-K4z">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem isSeparatorItem="YES" id="3ly-ho-Okc"/>
                                             <menuItem title="Send ^H Backspace" tag="16" id="h8d-9v-j74">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>

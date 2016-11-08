@@ -5527,6 +5527,38 @@ ITERM_WEAKLY_REFERENCEABLE
                                       horizontally:NO];
 }
 
+- (void)swapPaneLeft
+{
+    PTYSession* session = [[self currentTab] sessionLeftOf:[[self currentTab] activeSession]];
+    if (session) {
+        [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
+    }
+}
+
+- (void)swapPaneRight
+{
+    PTYSession* session = [[self currentTab] sessionRightOf:[[self currentTab] activeSession]];
+    if (session) {
+        [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
+    }
+}
+
+- (void)swapPaneUp
+{
+    PTYSession* session = [[self currentTab] sessionAbove:[[self currentTab] activeSession]];
+    if (session) {
+        [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
+    }
+}
+
+- (void)swapPaneDown
+{
+    PTYSession* session = [[self currentTab] sessionBelow:[[self currentTab] activeSession]];
+    if (session) {
+        [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
+    }
+}
+
 - (IBAction)addNoteAtCursor:(id)sender {
     [[self currentSession] addNoteAtCursor];
 }

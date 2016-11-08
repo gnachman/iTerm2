@@ -4992,7 +4992,6 @@ ITERM_WEAKLY_REFERENCEABLE
             case KEY_ACTION_DECREASE_HEIGHT:
                 [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
                 break;
-
             case KEY_ACTION_INCREASE_HEIGHT:
                 [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
                 break;
@@ -5000,9 +4999,21 @@ ITERM_WEAKLY_REFERENCEABLE
             case KEY_ACTION_DECREASE_WIDTH:
                 [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
                 break;
-
             case KEY_ACTION_INCREASE_WIDTH:
                 [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
+                break;
+
+            case KEY_ACTION_SWAP_PANE_LEFT:
+                [[[iTermController sharedInstance] currentTerminal] swapPaneLeft];
+                break;
+            case KEY_ACTION_SWAP_PANE_RIGHT:
+                [[[iTermController sharedInstance] currentTerminal] swapPaneRight];
+                break;
+            case KEY_ACTION_SWAP_PANE_ABOVE:
+                [[[iTermController sharedInstance] currentTerminal] swapPaneUp];
+                break;
+            case KEY_ACTION_SWAP_PANE_BELOW:
+                [[[iTermController sharedInstance] currentTerminal] swapPaneDown];
                 break;
 
             default:
