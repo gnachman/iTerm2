@@ -7679,7 +7679,9 @@ ITERM_WEAKLY_REFERENCEABLE
         int numCodePoints = cpps.numCodePoints;
 
         unichar c = screenChars[i].code;
-        if (c == DWC_RIGHT) {
+        if (!screenChars[i].complexChar && c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
+            numCodePoints = 0;
+        } else if (screenChars[i].image) {
             numCodePoints = 0;
         } else {
             const int len = ExpandScreenChar(&screenChars[i], characters + o);
@@ -7690,7 +7692,6 @@ ITERM_WEAKLY_REFERENCEABLE
         if (numCodePoints != cpps.numCodePoints && cpps.repeats > 0) {
             [cppsArray addObject:cpps];
             cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
-            cpps.numCodePoints = numCodePoints;
             cpps.repeats = 0;
         }
         cpps.numCodePoints = numCodePoints;

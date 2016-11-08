@@ -136,13 +136,15 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 };
 
 /**
- * All requests are wrapped in this message.
+ * All requests are wrapped in this message. This encoded message is the entirety of the payload
+ * of messages sent over WebSocket from client to iTerm2.
  **/
 @interface ITMRequest : GPBMessage
 
 @property(nonatomic, readwrite) int64_t id_p;
 
 @property(nonatomic, readwrite) BOOL hasId_p;
+/** Set exactly one of these fields. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferRequest *getBufferRequest;
 /** Test to see if @c getBufferRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasGetBufferRequest;
@@ -167,7 +169,8 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 };
 
 /**
- * All responses are wrapped in this message.
+ * All responses are wrapped in this message. This encoded message is the entirety of the payload
+ * of messages sent over WebSocket from iTerm2 to client.
  **/
 @interface ITMResponse : GPBMessage
 
@@ -298,9 +301,9 @@ typedef GPB_ENUM(ITMTransactionRequest_FieldNumber) {
 @interface ITMTransactionRequest : GPBMessage
 
 /**
- * Set to true to begin a new transaction or false to end the most recently
- * begun transaction. The app's main loop will not advance while in a
- * transaction.
+ * Set to true to begin a new transaction or false to end the current
+ * transaction. The app's main loop will not advance while in a
+ * transaction. This effectively freezes time. Keep transactions short.
  **/
 @property(nonatomic, readwrite) BOOL begin;
 
@@ -323,8 +326,8 @@ typedef GPB_ENUM(ITMTransactionResponse_FieldNumber) {
 #pragma mark - ITMLineRange
 
 typedef GPB_ENUM(ITMLineRange_FieldNumber) {
-  ITMLineRange_FieldNumber_ScreenContentsOnly = 2,
-  ITMLineRange_FieldNumber_TrailingLines = 3,
+  ITMLineRange_FieldNumber_ScreenContentsOnly = 1,
+  ITMLineRange_FieldNumber_TrailingLines = 2,
 };
 
 /**
@@ -380,7 +383,7 @@ typedef GPB_ENUM(ITMCoordRange_FieldNumber) {
  * Describes a range of cells.
  * |..xxxxx|
  * |xxxx...|
- * start=(0,2) end=(4, 1)
+ * In the example above, the range of x's is: {start: {x:2, y:0}, end: {x:4, y:1}}
  * The end coordinate is the first cell *after* the end of the range described (so an empty range
  * has start == end)
  **/
@@ -411,6 +414,11 @@ typedef GPB_ENUM(ITMCoord_FieldNumber) {
 @property(nonatomic, readwrite) int32_t x;
 
 @property(nonatomic, readwrite) BOOL hasX;
+/**
+ * y=0 describes the first line. When the scrollback buffer is full and history is lost, the first
+ * lines become unavailable, but the numbering is stable (so the Nth line is always the Nth line,
+ * even if it's not the Nth *visible* line).
+ **/
 @property(nonatomic, readwrite) int64_t y;
 
 @property(nonatomic, readwrite) BOOL hasY;
@@ -435,50 +443,51 @@ typedef GPB_ENUM(ITMLineContents_FieldNumber) {
 
 /**
  * Some cells do not contain one code point. Use this to map code points in
- * `text` to a screen position.
+ * `text` to a screen position. If the line has no uninitialized cells at its end, then the
+ * sum of `repeats` equals the width of the display.
  *
  * For example, consider a line of text that appears on your display like:
- * xyz compañía
+ *   xyz compañía
  *
  * The corresponding value of `text` would be:
- * xyzcompan~i'a
+ *   xyzcompan~i'a
+ * Note: ~ and ' are combining marks, but are shown uncombined for illustrative purposes.
  *
- * Each code point in "xyz", as well as each of the non-accented letters in
- * compañía, takes one cell.
+ * Each code point in "xyz" as well as each of the non-accented letters in compañía takes one
+ * cell.
  *
  * The blank following 'z' is an uninitialized cell that has no code points,
- * so the z and the c in `text` are adjacent.
+ * so the z and the c in `text` are adjacent. It's unusual for these to occur in the middle
+ * of a line, but it is possible.
  *
- * The ñ is composed of the letter n and a combining tilde (U+0303)
- * (indicated in our example as ~), while í
- * is composed of the leter i and a combining acute accent (U+0301)
- * (indicated in our example as ').
+ * The ñ is composed of the letter n and a combining tilde (U+0303) (indicated in our example
+ * as ~), while í is composed of the leter i and a combining acute accent (U+0301) (indicated in
+ * our example as ').
  *
  * To map code points in `text` to screen positions, `code_points_per_cell`
  * provides the number of code points in each cell. In our example you would
  * get:
  *
- *   num_code_points=1, repeats=3
- *   num_code_points=0, repeats=1
- *   num_code_points=1, repeats=5
- *   num_code_points=2, repeats=2
- *   num_code_points=1, repeats=1
+ *   num_code_points=1, repeats=3     // x, y, z
+ *   num_code_points=0, repeats=1     // uninitialized cell
+ *   num_code_points=1, repeats=5     // c, o, m, p, a
+ *   num_code_points=2, repeats=2     // n + combining tilde, i + combining acute accent
+ *   num_code_points=1, repeats=1     // a
  *
- * Lines usually end with a series of uninitialized cells. These are not
- * included here.
+ * Lines usually end with a series of uninitialized cells. These are not included.
  *
  * Here is psuedocode to interpret code_points_per_cell:
  *
- * text_index_to_screen_coord = {}
- * screen_coord_to_text_index = {}
- * text_index = 0
- * screen_coord = 0
- * for cpps in code_points_per_cell:
- *   repeat cpps.repeats times:
- *     text_index_to_screen_coord[text_index] = screen_coord
- *     screen_coord_to_text_index[screen_coord] = text_index
- *     text_index += cpps.num_code_points
- *     screen_coord += 1
+ *   text_index_to_screen_coord = {}
+ *   screen_coord_to_text_index = {}
+ *   text_index = 0
+ *   screen_coord = 0
+ *   for cpps in code_points_per_cell:
+ *     repeat cpps.repeats times:
+ *       text_index_to_screen_coord[text_index] = screen_coord
+ *       screen_coord_to_text_index[screen_coord] = text_index
+ *       text_index += cpps.num_code_points
+ *       screen_coord += 1
  **/
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMCodePointsPerCell*> *codePointsPerCellArray;
 /** The number of items in @c codePointsPerCellArray without causing the array to be created. */

@@ -17,8 +17,16 @@ var Response = builder.build("iterm2.Response");
 </script>
 </head>
 <body>
-<textarea id="log" style="width: 100%; height: 200px"></textarea><br />
-<textarea type="text" id="text" style="width: 100%; height: 400px">
+<div style="display:flex; flex-direction: column; align-items: stretch; height: 100vh; width: 100hw">
+<div style="display:flex; flex-direction: row; align-items: stretch; flex-grow: 1">
+  <div style="flex-grow: 3">
+        <textarea id="log" style="width:100%; height:100%"></textarea>
+  </div>
+  <div style="min-width: 10px"></div>
+  <div style="flex-grow: 1">
+    <div style="display:flex; flex-direction: column; align-items: stretch'.
+      <div style="min-height: 400px;">
+        <textarea type="text" id="text" style="width: 100%; height: 400px">
 {
   "id": 1,
   "get_buffer_request": {
@@ -27,7 +35,50 @@ var Response = builder.build("iterm2.Response");
     }
   }
 }
-</textarea><button onclick="send()">Send</button>
+        </textarea>
+      </div>
+      <div>
+        <button onclick="send()">Send</button>
+      </div>
+      <div style="flex-grow: 1; overflow-y: scroll">
+Sample requests:
+<pre>
+{
+  "id": 1,
+  "get_buffer_request": {
+    "line_range": {
+      "screen_contents_only": true
+    }
+  }
+}
+
+{
+  "id": 1,
+  "get_prompt_request": {
+    "line_range": {
+      "screen_contents_only": true
+    }
+  }
+}
+
+{
+  "id": 1,
+  "transaction_request": { "begin": true }
+}
+
+{
+  "id": 1,
+  "transaction_request": { "begin": false }
+}
+</pre>
+      </div>
+
+  </div>
+</div>
+
+<div style="height:20pt"></div>
+</div>
+
 
 <script>
 var log = document.getElementById("log");

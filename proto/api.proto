@@ -2,16 +2,19 @@ syntax = "proto2";
 option objc_class_prefix = "ITM";
 package iterm2;
 
-// All requests are wrapped in this message.
+// All requests are wrapped in this message. This encoded message is the entirety of the payload
+// of messages sent over WebSocket from client to iTerm2.
 message Request {
   optional int64 id = 1;
 
+  // Set exactly one of these fields.
   optional GetBufferRequest get_buffer_request = 100;
   optional GetPromptRequest get_prompt_request = 101;
   optional TransactionRequest transaction_request = 102;
 }
 
-// All responses are wrapped in this message.
+// All responses are wrapped in this message. This encoded message is the entirety of the payload
+// of messages sent over WebSocket from iTerm2 to client.
 message Response {
   optional int64 id = 1;
 
@@ -90,11 +93,11 @@ message LineRange {
   // Only one of these fields should be set:
   // ---------------------------------------
   // Return just the current contents of the screen.
-  optional bool screen_contents_only = 2;
+  optional bool screen_contents_only = 1;
 
   // Return the last `trailing lines` of the buffer, which could go back into
   // scrollback history.
-  optional int32 trailing_lines = 3;
+  optional int32 trailing_lines = 2;
 }
 
 // Describes a range of values.
@@ -106,7 +109,7 @@ message Range {
 // Describes a range of cells.
 // |..xxxxx|
 // |xxxx...|
-// start=(0,2) end=(4, 1)
+// In the example above, the range of x's is: {start: {x:2, y:0}, end: {x:4, y:1}}
 // The end coordinate is the first cell *after* the end of the range described (so an empty range
 // has start == end)
 message CoordRange {
@@ -117,6 +120,9 @@ message CoordRange {
 // Describes a cell's location.
 message Coord {
   optional int32 x = 1;
+  // y=0 describes the first line. When the scrollback buffer is full and history is lost, the first
+  // lines become unavailable, but the numbering is stable (so the Nth line is always the Nth line,
+  // even if it's not the Nth *visible* line).
   optional int64 y = 2;
 }
 
@@ -125,50 +131,53 @@ message LineContents {
   optional string text = 1;
 
   // Some cells do not contain one code point. Use this to map code points in
-  // `text` to a screen position.
+  // `text` to a screen position. If the line has no uninitialized cells at its end, then the
+  // sum of `repeats` equals the width of the display.
   //
   // For example, consider a line of text that appears on your display like:
-  // xyz compañía
+  //   xyz compañía
   //
   // The corresponding value of `text` would be:
-  // xyzcompan~i'a
+  //   xyzcompan~i'a
+  // Note: ~ and ' are combining marks, but are shown uncombined for illustrative purposes.
   //
-  // Each code point in "xyz", as well as each of the non-accented letters in
-  // compañía, takes one cell.
+  // Each code point in "xyz" as well as each of the non-accented letters in compañía takes one
+  // cell.
   //
   // The blank following 'z' is an uninitialized cell that has no code points,
-  // so the z and the c in `text` are adjacent.
+  // so the z and the c in `text` are adjacent. It's unusual for these to occur in the middle
+  // of a line, but it is possible.
   //
-  // The ñ is composed of the letter n and a combining tilde (U+0303)
-  // (indicated in our example as ~), while í
-  // is composed of the leter i and a combining acute accent (U+0301)
-  // (indicated in our example as ').
+  // The ñ is composed of the letter n and a combining tilde (U+0303) (indicated in our example
+  // as ~), while í is composed of the leter i and a combining acute accent (U+0301) (indicated in
+  // our example as ').
   //
   // To map code points in `text` to screen positions, `code_points_per_cell`
   // provides the number of code points in each cell. In our example you would
   // get:
   //
-  //   num_code_points=1, repeats=3
-  //   num_code_points=0, repeats=1
-  //   num_code_points=1, repeats=5
-  //   num_code_points=2, repeats=2
-  //   num_code_points=1, repeats=1
+  //   num_code_points=1, repeats=3     // x, y, z
+  //   num_code_points=0, repeats=1     // uninitialized cell
+  //   num_code_points=1, repeats=5     // c, o, m, p, a
+  //   num_code_points=2, repeats=2     // n + combining tilde, i + combining acute accent
+  //   num_code_points=1, repeats=1     // a
   //
-  // Lines usually end with a series of uninitialized cells. These are not
-  // included here.
+  // Lines usually end with a series of uninitialized cells. These are not included.
   //
   // Here is psuedocode to interpret code_points_per_cell:
   //
-  // text_index_to_screen_coord = {}
-  // screen_coord_to_text_index = {}
-  // text_index = 0
-  // screen_coord = 0
-  // for cpps in code_points_per_cell:
-  //   repeat cpps.repeats times:
-  //     text_index_to_screen_coord[text_index] = screen_coord
-  //     screen_coord_to_text_index[screen_coord] = text_index
-  //     text_index += cpps.num_code_points
-  //     screen_coord += 1
+  //   text_index_to_screen_coord = {}
+  //   screen_coord_to_text_index = {}
+  //   text_index = 0
+  //   screen_coord = 0
+  //   for cpps in code_points_per_cell:
+  //     repeat cpps.repeats times:
+  //       text_index_to_screen_coord[text_index] = screen_coord
+  //       screen_coord_to_text_index[screen_coord] = text_index
+  //       text_index += cpps.num_code_points
+  //       screen_coord += 1
+  //
+  // Cells with images are omitted.
   repeated CodePointsPerCell code_points_per_cell = 2;
 
   // How does this line end?

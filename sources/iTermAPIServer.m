@@ -347,10 +347,7 @@
 }
 
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
-#if DEBUG
-    if (frame.opcode == iTermWebSocketOpcodeText) {
-        [webSocketConnection sendText:[NSString stringWithFormat:@"You said: %@", frame.text]];
-    } else {
+    if (frame.opcode == iTermWebSocketOpcodeBinary) {
         ITMRequest *request = [ITMRequest parseFromData:frame.payload error:nil];
         if (request) {
             ILog(@"Received request: %@", request);
@@ -361,7 +358,6 @@
         }
     }
     ILog(@"Got a frame: %@", frame);
-#endif
 }
 
 @end
