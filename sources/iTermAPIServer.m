@@ -62,21 +62,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 - (void)addRequest:(iTermAPIRequest *)request;
 
 // Dequeue a request. You normally call -wait before this.
-- (iTermAPIRequest *)dequeueRequest;
-
-// Post a requst to the deferred queue to be run after the nondeferred requests.
-- (void)deferRequest:(iTermAPIRequest *)request;
-
-// Dequeue a deferred request.
-- (iTermAPIRequest *)dequeueDeferredRequest;
-
-// Move all requests to the end of the deferred queue.
-- (void)deferAllRequests;
+- (iTermAPIRequest *)dequeueRequestFromAnyConnection:(BOOL)anyConnection;
 @end
 
 @implementation iTermAPITransaction {
     NSMutableArray<iTermAPIRequest *> *_requests;
-    NSMutableArray<iTermAPIRequest *> *_deferredRequests;
+    NSInteger _base;
     dispatch_semaphore_t _sema;
 }
 
@@ -85,7 +76,6 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (self) {
         _sema = dispatch_semaphore_create(0);
         _requests = [NSMutableArray array];
-        _deferredRequests = [NSMutableArray array];
     }
     return self;
 }
@@ -104,36 +94,25 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }
 }
 
-- (iTermAPIRequest *)dequeueRequest {
+- (iTermAPIRequest *)dequeueRequestFromAnyConnection:(BOOL)anyConnection {
     @synchronized(self) {
-        iTermAPIRequest *request = _requests.firstObject;
-        if (request) {
-            [_requests removeObjectAtIndex:0];
+        if (anyConnection) {
+            iTermAPIRequest *request = _requests.firstObject;
+            if (request) {
+                [_requests removeObjectAtIndex:0];
+            }
+            return request;
+        } else {
+            while (_requests.count > _base) {
+                iTermAPIRequest *request = _requests[_base];
+                if (request.connection == self.connection) {
+                    [_requests removeObjectAtIndex:_base];
+                    return request;
+                }
+                _base++;
+            }
+            return nil;
         }
-        return request;
-    }
-}
-
-- (void)deferRequest:(iTermAPIRequest *)request {
-    @synchronized(self) {
-        [_deferredRequests addObject:request];
-    }
-}
-
-- (iTermAPIRequest *)dequeueDeferredRequest {
-    @synchronized(self) {
-        iTermAPIRequest *request = _deferredRequests.firstObject;
-        if (request) {
-            [_deferredRequests removeObjectAtIndex:0];
-        }
-        return request;
-    }
-}
-
-- (void)deferAllRequests {
-    @synchronized(self) {
-        [_deferredRequests addObjectsFromArray:_requests];
-        [_requests removeAllObjects];
     }
 }
 
@@ -280,7 +259,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             // Connection must have been terminated.
             break;
         }
-        iTermAPIRequest *transactionRequest = [transaction dequeueRequest];
+        iTermAPIRequest *transactionRequest = [transaction dequeueRequestFromAnyConnection:NO];
 
         if (transactionRequest.request.hasTransactionRequest &&
             !transactionRequest.request.transactionRequest.begin) {
@@ -300,13 +279,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         if (self.transaction == transaction) {
             self.transaction = nil;
         }
-        [transaction deferAllRequests];
-        iTermAPIRequest *deferred = [transaction dequeueDeferredRequest];
-        while (deferred) {
-            if (deferred.connection) {
-                [self enqueueOrDispatchRequest:deferred.request onConnection:deferred.connection];
+        iTermAPIRequest *apiRequest = [transaction dequeueRequestFromAnyConnection:YES];
+        while (apiRequest) {
+            if (apiRequest.connection) {
+                [self enqueueOrDispatchRequest:apiRequest.request onConnection:apiRequest.connection];
             }
-            deferred = [transaction dequeueDeferredRequest];
+            apiRequest = [transaction dequeueRequestFromAnyConnection:YES];
         }
     });
 }
@@ -362,7 +340,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         [self.transaction addRequest:apiRequest];
         [self.transaction signal];
     } else {
-        [self.transaction deferRequest:apiRequest];
+        [self.transaction addRequest:apiRequest];
     }
 }
 
