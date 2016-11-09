@@ -190,7 +190,8 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     ILog(@"Accepted connection");
     __weak __typeof(self) weakSelf = self;
-    dispatch_async(_queue, ^{
+    dispatch_queue_t queue = _queue;
+    dispatch_async(queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
 
         pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
@@ -201,8 +202,8 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            if ([weakSelf authenticateProcess:pid]) {
-                dispatch_async(_queue, ^{ [weakSelf startRequestOnConnection:connection]; });
+            if ([weakSelf.delegate apiServerAuthorizeProcess:pid]) {
+                dispatch_async(queue, ^{ [weakSelf startRequestOnConnection:connection]; });
             } else {
                 ELog(@"Reject unauthenticated process (pid %d)", pid);
                 [connection unauthorized];
@@ -210,22 +211,6 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             }
         });
     });
-}
-
-- (BOOL)authenticateProcess:(pid_t)pid {
-    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-    if (!app) {
-        ELog(@"No running app with pid %d", (int)pid);
-        return NO;
-    }
-
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"API Access Request";
-    alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", app.localizedName, app.bundleIdentifier, app.localizedName];
-    [alert addButtonWithTitle:@"Deny"];
-    [alert addButtonWithTitle:@"Allow"];
-    NSModalResponse response = [alert runModal];
-    return response == NSAlertSecondButtonReturn;
 }
 
 - (void)startRequestOnConnection:(iTermHTTPConnection *)connection {

@@ -111,6 +111,14 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
+static NSString *const kBundlesWithAPIAccessSettingKey = @"NoSyncBundlesWithAPIAccessSettings";
+static NSString *const kAPIAccessAllowed = @"allowed";
+static NSString *const kAPIAccessDate = @"date";
+static NSString *const kAPINextConfirmationDate = @"next confirmation";
+static NSString *const kAPIAccessLocalizedName = @"app name";
+static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
+
+
 @interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
@@ -1988,6 +1996,75 @@ static BOOL hasBecomeActive = NO;
 }
 
 #pragma mark - iTermAPIServerDelegate
+
+- (BOOL)apiServerAuthorizeProcess:(pid_t)pid {
+    NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
+    if (!bundles) {
+        bundles = [NSMutableDictionary dictionary];
+    }
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+    if (!app) {
+        ELog(@"No running app with pid %d", (int)pid);
+        return NO;
+    }
+    if (!app.localizedName || !app.bundleIdentifier) {
+        ELog(@"App is missing name or bundle ID");
+        return NO;
+    }
+    NSString *key = [NSString stringWithFormat:@"bundle=%@", app.bundleIdentifier];
+    NSDictionary *setting = bundles[key];
+    BOOL reauth = NO;
+    if (setting) {
+        if (![setting[kAPIAccessAllowed] boolValue]) {
+            // Access permanently disallowed.
+            return NO;
+        }
+
+        NSString *name = setting[kAPIAccessLocalizedName];
+        if ([app.localizedName isEqualToString:name]) {
+            // Access is permanently allowed and the display name is unchanged. Do we need to reauth?
+
+            NSDate *confirm = setting[kAPINextConfirmationDate];
+            if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
+                // No need to reauth, allow it.
+                ELog(@"Allowing API access to process id %d, name %@, bundle ID %@", pid, app.localizedName, app.bundleIdentifier);
+                return YES;
+            }
+
+            // It's been a month since API access was confirmed. Request it again.
+            reauth = YES;
+        }
+    }
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    if (reauth) {
+        alert.messageText = @"Reauthorize API Access";
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) has API access, which grants it permission to see and control your activity. Would you like it to continue?", app.localizedName, app.bundleIdentifier];
+    } else {
+        alert.messageText = @"API Access Request";
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", app.localizedName, app.bundleIdentifier, app.localizedName];
+    }
+    [alert addButtonWithTitle:@"Deny"];
+    [alert addButtonWithTitle:@"Allow"];
+    if (!reauth) {
+        // Reauth is always persistent so don't show the button.
+        alert.suppressionButton.title = @"Remember my selection";
+        alert.showsSuppressionButton = YES;
+    }
+    NSModalResponse response = [alert runModal];
+    BOOL allow = (response == NSAlertSecondButtonReturn);
+
+    if (reauth || alert.suppressionButton.state == NSOnState) {
+        bundles[key] = @{ kAPIAccessAllowed: @(allow),
+                          kAPIAccessDate: [NSDate date],
+                          kAPINextConfirmationDate: [[NSDate date] dateByAddingTimeInterval:kOneMonth],
+                          kAPIAccessLocalizedName: app.localizedName };
+    } else {
+        [bundles removeObjectForKey:key];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:bundles forKey:kBundlesWithAPIAccessSettingKey];
+
+    return allow;
+}
 
 - (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
     if (identifier) {

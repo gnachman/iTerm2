@@ -23,14 +23,12 @@
 
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
     __block pid_t result = -1;
-    pid_t pid = 319;
-//    [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
+    [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
         [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *stop) {
             int family = [self addressFamilyForFDInfo:fdInfo];
             if (family != AF_INET && family != AF_INET6) {
                 return;
             }
-            NSLog(@"Consider port %d or %d", fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport, ntohs(fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport));
             struct sockaddr_storage local = [self localSocketAddressInFDInfo:fdInfo];
             if (![socketAddress isEqualToSockAddr:(struct sockaddr *)&local]) {
                 return;
@@ -42,7 +40,7 @@
             result = pid;
             *stop = YES;
         }];
-//    }];
+    }];
     return result;
 }
 
@@ -89,7 +87,6 @@
     BOOL stop = NO;
     for (int j = 0; j < count; j++) {
         struct proc_fdinfo *fdinfo = &fds[j];
-        NSLog(@"file descriptor %d", fdinfo->proc_fd);
         if (fdinfo->proc_fdtype == PROX_FDTYPE_SOCKET) {
             int fd = fdinfo->proc_fd;
             struct socket_fdinfo socketFileDescriptorInfo;

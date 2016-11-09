@@ -10,6 +10,7 @@
 #import "Api.pbobjc.h"
 
 @protocol iTermAPIServerDelegate<NSObject>
+- (BOOL)apiServerAuthorizeProcess:(pid_t)pid;
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request handler:(void (^)(ITMGetBufferResponse *))handler;
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request handler:(void (^)(ITMGetPromptResponse *))handler;
 - (void)apiServerNotification:(ITMNotificationRequest *)request
