@@ -910,7 +910,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                           } else if (theChar.complexChar ||
                                      theChar.code < ITERM2_PRIVATE_BEGIN ||
                                      theChar.code > ITERM2_PRIVATE_END) {
-                              NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                              NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
                               [joinedLines appendString:string];
                               for (int i = 0; i < [string length]; i++) {
                                   [coords addObject:[NSValue valueWithGridCoord:charCoord]];
