@@ -26,6 +26,10 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%s:%d", inet_ntoa(_sockaddr.sin_addr), ntohs(_sockaddr.sin_port)];
+}
+
 - (const struct sockaddr *)sockaddr {
     return (const struct sockaddr *)&_sockaddr;
 }
@@ -37,6 +41,14 @@
 - (id)copyWithZone:(NSZone *)zone {
     iTermIPV4Address *address = [[iTermIPV4Address alloc] initWithInetAddr:_sockaddr.sin_addr.s_addr];
     return [[iTermSocketIPV4Address alloc] initWithIPV4Address:address port:ntohs(_sockaddr.sin_port)];
+}
+
+- (BOOL)isLoopback {
+    return _sockaddr.sin_addr.s_addr == [[[iTermIPV4Address alloc] initWithLoopback] networkByteOrderAddress];
+}
+
+- (uint16)port {
+    return ntohs(_sockaddr.sin_port);
 }
 
 @end

@@ -18,6 +18,7 @@
 - (void)close;
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue;
 - (void)badRequest;
+- (void)unauthorized;
 
 // read a chunk of bytes. blocks.
 - (NSMutableData *)read;

@@ -86,6 +86,10 @@
     [self sendResponseWithCode:400 reason:@"Bad Request" headers:@{}];
 }
 
+- (void)unauthorized {
+    [self sendResponseWithCode:401 reason:@"Unauthorized" headers:@{}];
+}
+
 - (NSURLRequest *)readRequest {
     ILog(@"Begin reading request. Begin clock towards deadline.");
     _deadline = [NSDate timeIntervalSinceReferenceDate] + 30;

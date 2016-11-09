@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermHTTPConnection.h"
+#import "iTermLSOF.h"
 #import "iTermWebSocketConnection.h"
 #import "iTermWebSocketFrame.h"
 #import "iTermSocket.h"
@@ -17,6 +18,8 @@
 #import "iTermSocketIPV4Address.h"
 #import "Api.pbobjc.h"
 #import <objc/runtime.h>
+
+#import <Cocoa/Cocoa.h>
 
 @interface iTermWebSocketConnection(Handle)
 @property(nonatomic, readonly) id handle;
@@ -186,26 +189,65 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     ILog(@"Accepted connection");
+    __weak __typeof(self) weakSelf = self;
     dispatch_async(_queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
-        NSURLRequest *request = [connection readRequest];
-        if (!request) {
-            ELog(@"Failed to read request from HTTP connection");
-            [connection badRequest];
+
+        pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
+        /*
+        if (pid == -1) {
+            ELog(@"Reject connection from unidentifiable process with address %@", address);
+            [connection unauthorized];
             return;
         }
+         */
 
-        if ([iTermWebSocketConnection validateRequest:request]) {
-            ILog(@"Upgrading request to websocket");
-            iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
-            webSocketConnection.delegate = self;
-            _connections[webSocketConnection.handle] = webSocketConnection;
-            [webSocketConnection handleRequest:request];
-        } else {
-            ELog(@"Bad request %@", request);
-            [connection badRequest];
-        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([weakSelf authenticateProcess:pid]) {
+                dispatch_async(_queue, ^{ [weakSelf startRequestOnConnection:connection]; });
+            } else {
+                ELog(@"Reject unauthenticated process (pid %d)", pid);
+                [connection unauthorized];
+                return;
+            }
+        });
     });
+}
+
+- (BOOL)authenticateProcess:(pid_t)pid {
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+    if (!app) {
+        ELog(@"No running app with pid %d", (int)pid);
+        return NO;
+    }
+
+#warning TODO: Always allow/deny
+    NSAlert *alert = [NSAlert alertWithMessageText:@"Access Request"
+                                     defaultButton:@"Deny"
+                                   alternateButton:@"Allow"
+                                       otherButton:nil
+                         informativeTextWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", app.localizedName, app.bundleIdentifier, app.localizedName];
+    return [alert runModal] == NSAlertSecondButtonReturn;
+}
+
+- (void)startRequestOnConnection:(iTermHTTPConnection *)connection {
+    NSURLRequest *request = [connection readRequest];
+    if (!request) {
+        ELog(@"Failed to read request from HTTP connection");
+        [connection badRequest];
+        return;
+    }
+
+    if ([iTermWebSocketConnection validateRequest:request]) {
+        ILog(@"Upgrading request to websocket");
+        iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
+        webSocketConnection.delegate = self;
+        _connections[webSocketConnection.handle] = webSocketConnection;
+        [webSocketConnection handleRequest:request];
+    } else {
+        ELog(@"Bad request %@", request);
+        [connection badRequest];
+    }
 }
 
 - (void)sendResponse:(ITMResponse *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {

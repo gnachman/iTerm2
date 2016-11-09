@@ -40,4 +40,9 @@
     return nil;
 }
 
+- (BOOL)isLoopback {
+    [self doesNotRecognizeSelector:_cmd];
+    return NO;
+}
+
 @end
