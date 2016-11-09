@@ -51,4 +51,13 @@
     return ntohs(_sockaddr.sin_port);
 }
 
+- (BOOL)isEqualToSockAddr:(struct sockaddr *)other {
+    if (other->sa_family != AF_INET) {
+        return NO;
+    }
+    struct sockaddr_in *otherIn = (struct sockaddr_in *)other;
+    return (_sockaddr.sin_addr.s_addr == otherIn->sin_addr.s_addr &&
+            _sockaddr.sin_port == otherIn->sin_port);
+}
+
 @end

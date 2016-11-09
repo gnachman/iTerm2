@@ -35,6 +35,30 @@
     }
 }
 
++ (int)socketAddressPort:(struct sockaddr *)sa {
+    if (sa->sa_family == AF_INET) {
+        struct sockaddr_in *addr = (struct sockaddr_in *)sa;
+        return ntohs(addr->sin_port);
+    } else if (sa->sa_family == AF_INET6) {
+        struct sockaddr_in6 *addr = (struct sockaddr_in6 *)sa;
+        return ntohs(addr->sin6_port);
+    } else {
+        return 0;
+    }
+}
+
++ (BOOL)socketAddressIsLoopback:(struct sockaddr *)sa {
+    if (sa->sa_family == AF_INET) {
+        struct sockaddr_in *addr = (struct sockaddr_in *)sa;
+        return IN_LOOPBACK(ntohl(addr->sin_addr.s_addr));
+    } else if (sa->sa_family == AF_INET6) {
+        struct sockaddr_in6 *addr = (struct sockaddr_in6 *)sa;
+        return IN6_IS_ADDR_LOOPBACK(&addr->sin6_addr);
+    } else {
+        return 0;
+    }
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     [self doesNotRecognizeSelector:_cmd];
     return nil;
@@ -43,6 +67,14 @@
 - (BOOL)isLoopback {
     [self doesNotRecognizeSelector:_cmd];
     return NO;
+}
+
+- (BOOL)isEqualToSockAddr:(struct sockaddr *)other {
+    const struct sockaddr *mine = self.sockaddr;
+    if (mine->sa_len != other->sa_len) {
+        return NO;
+    }
+    return memcmp(mine, other, mine->sa_len) == 0;
 }
 
 @end

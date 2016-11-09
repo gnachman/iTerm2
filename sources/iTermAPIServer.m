@@ -194,13 +194,11 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
 
         pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
-        /*
         if (pid == -1) {
             ELog(@"Reject connection from unidentifiable process with address %@", address);
             [connection unauthorized];
             return;
         }
-         */
 
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([weakSelf authenticateProcess:pid]) {
@@ -221,13 +219,13 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         return NO;
     }
 
-#warning TODO: Always allow/deny
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Access Request"
-                                     defaultButton:@"Deny"
-                                   alternateButton:@"Allow"
-                                       otherButton:nil
-                         informativeTextWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", app.localizedName, app.bundleIdentifier, app.localizedName];
-    return [alert runModal] == NSAlertSecondButtonReturn;
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"API Access Request";
+    alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", app.localizedName, app.bundleIdentifier, app.localizedName];
+    [alert addButtonWithTitle:@"Deny"];
+    [alert addButtonWithTitle:@"Allow"];
+    NSModalResponse response = [alert runModal];
+    return response == NSAlertSecondButtonReturn;
 }
 
 - (void)startRequestOnConnection:(iTermHTTPConnection *)connection {

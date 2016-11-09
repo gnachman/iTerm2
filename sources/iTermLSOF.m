@@ -17,91 +17,122 @@
 #include <string.h>
 #include <sys/sysctl.h>
 
-#define IPv6_2_IPv4(v6) (((uint8_t *)((struct in6_addr *)v6)->s6_addr)+12)
-
 @implementation iTermLSOF {
     iTermSocketAddress *_socketAddress;
 }
 
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
-    iTermLSOF *lsof = [[self alloc] initWithSocketAddress:socketAddress];
-    return [lsof processId];
+    __block pid_t result = -1;
+    pid_t pid = 319;
+//    [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
+        [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *stop) {
+            int family = [self addressFamilyForFDInfo:fdInfo];
+            if (family != AF_INET && family != AF_INET6) {
+                return;
+            }
+            NSLog(@"Consider port %d or %d", fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport, ntohs(fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport));
+            struct sockaddr_storage local = [self localSocketAddressInFDInfo:fdInfo];
+            if (![socketAddress isEqualToSockAddr:(struct sockaddr *)&local]) {
+                return;
+            }
+            struct sockaddr_storage foreign = [self foreignSocketAddressInFDInfo:fdInfo];
+            if (![iTermSocketAddress socketAddressIsLoopback:(struct sockaddr *)&foreign]) {
+                return;
+            }
+            result = pid;
+            *stop = YES;
+        }];
+//    }];
+    return result;
 }
 
-- (instancetype)initWithSocketAddress:(iTermSocketAddress *)socketAddress {
-    self = [super init];
-    if (self) {
-        _socketAddress = socketAddress;
-    }
-    return self;
-}
-
-- (pid_t)processId {
-    if (!_socketAddress.isLoopback) {
-        return -1;
-    }
-
++ (void)enumerateProcesses:(void(^)(pid_t, BOOL*))block {
+    BOOL stop = NO;
     for (NSNumber *pidNumber in [ProcessCache allPids]) {
-        if ([self checkProcess:pidNumber.intValue]) {
-            return pidNumber.intValue;
+        block(pidNumber.intValue, &stop);
+        if (stop) {
+            break;
         }
     }
-
-    return -1;
 }
 
-- (BOOL)checkProcess:(pid_t)pid {
-    NSLog(@"Check pid %d", pid);
++ (void)enumerateFileDescriptorsInfoInProcess:(pid_t)pid
+                        withFilePortInfoArray:(struct proc_fileportinfo *)filePortInfoArray
+                                       length:(int)count
+                                       ofType:(int)fdType
+                                        block:(void(^)(struct socket_fdinfo *, BOOL *))block {
+    BOOL stop = NO;
+    for (int j = 0; j < count; j++) {
+        struct proc_fileportinfo *filePortInfo = &filePortInfoArray[j];
+        if (filePortInfo->proc_fdtype == fdType) {
+            struct socket_fdinfo socketFileDescriptorInfo;
+            int numBytes = proc_pidfileportinfo(pid,
+                                                filePortInfo->proc_fileport,
+                                                PROC_PIDFILEPORTSOCKETINFO,
+                                                &socketFileDescriptorInfo,
+                                                sizeof(socketFileDescriptorInfo));
+            if (numBytes > 0) {
+                block(&socketFileDescriptorInfo, &stop);
+                if (stop) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
++ (void)enumerateFileDescriptorsInfoInProcess:(pid_t)pid
+                              withFDInfoArray:(struct proc_fdinfo *)fds
+                                       length:(int)count
+                                       ofType:(int)fdType
+                                        block:(void(^)(struct socket_fdinfo *, BOOL *))block {
+    BOOL stop = NO;
+    for (int j = 0; j < count; j++) {
+        struct proc_fdinfo *fdinfo = &fds[j];
+        NSLog(@"file descriptor %d", fdinfo->proc_fd);
+        if (fdinfo->proc_fdtype == PROX_FDTYPE_SOCKET) {
+            int fd = fdinfo->proc_fd;
+            struct socket_fdinfo socketFileDescriptorInfo;
+            int numBytes = proc_pidfdinfo(pid,
+                                          fd,
+                                          PROC_PIDFDSOCKETINFO,
+                                          &socketFileDescriptorInfo,
+                                          sizeof(socketFileDescriptorInfo));
+            if (numBytes > 0) {
+                block(&socketFileDescriptorInfo, &stop);
+                if (stop) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
++ (void)enumerateFileDescriptorsInfoInProcess:(pid_t)pid ofType:(int)fdType block:(void(^)(struct socket_fdinfo *, BOOL *))block {
     int count = 0;
     struct proc_fileportinfo *filePortInfoArray = [self newFilePortsForProcess:pid count:&count];
     if (filePortInfoArray) {
-        NSLog(@"Using port info");
-        for (int j = 0; j < count; j++) {
-            struct proc_fileportinfo *filePortInfo = &filePortInfoArray[j];
-            if (filePortInfo->proc_fdtype == PROX_FDTYPE_SOCKET) {
-                struct socket_fdinfo socketFileDescriptorInfo;
-                int numBytes = proc_pidfileportinfo(pid,
-                                                    filePortInfo->proc_fileport,
-                                                    PROC_PIDFILEPORTSOCKETINFO,
-                                                    &socketFileDescriptorInfo,
-                                                    sizeof(socketFileDescriptorInfo));
-                if (numBytes > 0) {
-                    if ([self checkSocketFileDescriptorInfo:socketFileDescriptorInfo process:pid]) {
-                        return YES;
-                    }
-                }
-            }
-        }
+        [self enumerateFileDescriptorsInfoInProcess:pid
+                              withFilePortInfoArray:filePortInfoArray
+                                             length:count
+                                             ofType:fdType
+                                              block:block];
+        free(filePortInfoArray);
     } else {
-        NSLog(@"Trying fds");
         struct proc_fdinfo *fds = [self newFileDescriptorsForProcess:pid count:&count];
-        if (!fds) {
-            return NO;
-        }
-        NSLog(@"Using fds. Have %d of them", count);
-        for (int j = 0; j < count; j++) {
-            struct proc_fdinfo *fdinfo = &fds[j];
-            if (fdinfo->proc_fdtype == PROX_FDTYPE_SOCKET) {
-                NSLog(@"fd index %d is a socket. proc_fd=%d", j, fdinfo->proc_fd);
-                int fd = fdinfo->proc_fd;
-                struct socket_fdinfo socketFileDescriptorInfo;
-                int numBytes = proc_pidfdinfo(pid,
-                                              fd,
-                                              PROC_PIDFDSOCKETINFO,
-                                              &socketFileDescriptorInfo,
-                                              sizeof(socketFileDescriptorInfo));
-                if (numBytes > 0) {
-                    if ([self checkSocketFileDescriptorInfo:socketFileDescriptorInfo process:pid]) {
-                        return YES;
-                    }
-                }
-            }
+        if (fds) {
+            [self enumerateFileDescriptorsInfoInProcess:pid
+                                        withFDInfoArray:fds
+                                                 length:count
+                                                 ofType:fdType
+                                                  block:block];
+            free(fds);
+            return;
         }
     }
-    return NO;
 }
 
-- (size_t)numberOfFileDescriptorsForProcess:(pid_t)pid {
++ (size_t)maximumNumberOfFileDescriptorsForProcess:(pid_t)pid {
     struct proc_taskallinfo tai;
     memset(&tai, 0, sizeof(tai));
     int numBytes = proc_pidinfo(pid, PROC_PIDTASKALLINFO, 0, &tai, sizeof(tai));
@@ -111,7 +142,7 @@
     return tai.pbsd.pbi_nfiles;
 }
 
-- (int)numberOfFilePortsForProcess:(pid_t)pid {
++ (int)numberOfFilePortsForProcess:(pid_t)pid {
     int numBytes = proc_pidinfo(pid, PROC_PIDLISTFILEPORTS, 0, NULL, 0);
     if (numBytes <= 0) {
         return 0;
@@ -119,9 +150,8 @@
     return numBytes / sizeof(struct proc_fileportinfo);
 }
 
-- (struct proc_fdinfo *)newFileDescriptorsForProcess:(pid_t)pid count:(int *)count {
-    *count = [self numberOfFileDescriptorsForProcess:pid];
-    size_t maxSize = *count * sizeof(struct proc_fdinfo);
++ (struct proc_fdinfo *)newFileDescriptorsForProcess:(pid_t)pid count:(int *)count {
+    size_t maxSize = [self maximumNumberOfFileDescriptorsForProcess:pid] * sizeof(struct proc_fdinfo);
     if (maxSize == 0) {
         return NULL;
     }
@@ -135,7 +165,7 @@
     return fds;
 }
 
-- (struct proc_fileportinfo *)newFilePortsForProcess:(pid_t)pid count:(int *)count {
++ (struct proc_fileportinfo *)newFilePortsForProcess:(pid_t)pid count:(int *)count {
     *count = [self numberOfFilePortsForProcess:pid];
     int size = *count * sizeof(struct proc_fileportinfo);
     if (size <= 0) {
@@ -150,51 +180,90 @@
     return filePortInfoArray;
 }
 
-- (BOOL)checkSocketFileDescriptorInfo:(struct socket_fdinfo)socketFileDescriptorInfo
-                              process:(pid_t)pid {
-    int addressFamily = socketFileDescriptorInfo.psi.soi_family;
++ (BOOL)fdInfoIsTCPSocket:(struct socket_fdinfo *)fdInfo {
+    int addressFamily = fdInfo->psi.soi_family;
     if (addressFamily != AF_INET && addressFamily != AF_INET6) {
         return NO;
     }
 
-    if (socketFileDescriptorInfo.psi.soi_kind != SOCKINFO_TCP) {
+    if (fdInfo->psi.soi_kind != SOCKINFO_TCP) {
         return NO;
     }
-    if (socketFileDescriptorInfo.psi.soi_protocol != IPPROTO_TCP) {
+    if (fdInfo->psi.soi_protocol != IPPROTO_TCP) {
         return NO;
     }
 
-    void *localAddress = &socketFileDescriptorInfo.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6;
-    void *foreignAddress = &socketFileDescriptorInfo.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6;
-    int localPort = ntohs(socketFileDescriptorInfo.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
-    int foreignPort = ntohs(socketFileDescriptorInfo.psi.soi_proto.pri_tcp.tcpsi_ini.insi_fport);
-    NSLog(@"%d->%d pid=%d", localPort, foreignPort, pid);
-    if (IN6_IS_ADDR_UNSPECIFIED((struct in6_addr *)foreignAddress) && foreignPort == 0) {
-        foreignAddress = NULL;
-    }
+    return YES;
+}
 
-    if (socketFileDescriptorInfo.psi.soi_proto.pri_tcp.tcpsi_ini.insi_vflag & INI_IPV4) {
++ (int)addressFamilyForFDInfo:(struct socket_fdinfo *)fdInfo {
+    int addressFamily;
+    if (fdInfo->psi.soi_family == AF_INET6 && (fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_vflag & INI_IPV4)) {
         addressFamily = AF_INET;
-        if (localAddress) {
-            localAddress = IPv6_2_IPv4(localAddress);
-        }
-        if (foreignAddress) {
-            foreignAddress = IPv6_2_IPv4(foreignAddress);
-        }
+    } else {
+        addressFamily = fdInfo->psi.soi_family;
     }
-    if (addressFamily == AF_INET && localAddress && foreignAddress) {
-        struct in_addr *ip4LocalAddress = (struct in_addr *)localAddress;
-        struct in_addr *ip4ForeignAddress = (struct in_addr *)foreignAddress;
+    return addressFamily;
+}
 
-        NSLog(@"%x:%d -> %x:%d pid=%d", ip4LocalAddress->s_addr, localPort, ip4ForeignAddress->s_addr, foreignPort, pid);
-        if (ntohl(ip4LocalAddress->s_addr) == INADDR_LOOPBACK &&
-            ntohl(ip4ForeignAddress->s_addr) == INADDR_LOOPBACK &&
-            localPort == _socketAddress.port) {
-            return YES;
++ (struct sockaddr_storage)localSocketAddressInFDInfo:(struct socket_fdinfo *)fdInfo {
+    int addressFamily = [self addressFamilyForFDInfo:fdInfo];
+    int localPort = fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport;
+    struct sockaddr_storage storage = { 0 };
+    storage.ss_family = addressFamily;
+
+    switch (addressFamily) {
+        case AF_INET: {
+            struct sockaddr_in *result = (struct sockaddr_in *)&storage;
+            result->sin_len = sizeof(struct sockaddr_in);
+            result->sin_port = localPort;
+            result->sin_addr = fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4;
+            break;
         }
-    }
 
-    return NO;
+        case AF_INET6: {
+            struct sockaddr_in6 *result = (struct sockaddr_in6 *)&storage;
+            result->sin6_len = sizeof(struct sockaddr_in);
+            result->sin6_family = addressFamily;
+            result->sin6_port = localPort;
+            result->sin6_addr = fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6;
+            break;
+        }
+
+        default:
+            assert(false);
+    }
+    return storage;
+}
+
++ (struct sockaddr_storage)foreignSocketAddressInFDInfo:(struct socket_fdinfo *)fdInfo {
+    int addressFamily = [self addressFamilyForFDInfo:fdInfo];
+    int foreignPort = fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport;
+    struct sockaddr_storage storage = { 0 };
+    storage.ss_family = addressFamily;
+
+    switch (addressFamily) {
+        case AF_INET: {
+            struct sockaddr_in *result = (struct sockaddr_in *)&storage;
+            result->sin_len = sizeof(struct sockaddr_in);
+            result->sin_port = foreignPort;
+            result->sin_addr = fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4;
+            break;
+        }
+
+        case AF_INET6: {
+            struct sockaddr_in6 *result = (struct sockaddr_in6 *)&storage;
+            result->sin6_len = sizeof(struct sockaddr_in);
+            result->sin6_family = addressFamily;
+            result->sin6_port = foreignPort;
+            result->sin6_addr = fdInfo->psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6;
+            break;
+        }
+
+        default:
+            assert(false);
+    }
+    return storage;
 }
 
 @end

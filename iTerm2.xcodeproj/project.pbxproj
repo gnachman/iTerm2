@@ -6887,7 +6887,7 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					874206460564169600CFC3F1 = {
-						DevelopmentTeam = CMC4EL7UVS;
+						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Manual;
 					};
 					A66717851DCE36C3000CE608 = {
@@ -9973,11 +9973,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = CMC4EL7UVS;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",

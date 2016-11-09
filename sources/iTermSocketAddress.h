@@ -20,7 +20,10 @@
 
 + (instancetype)socketAddressWithIPV4Address:(iTermIPV4Address *)address port:(uint16_t)port;
 + (instancetype)socketAddressWithSockaddr:(struct sockaddr)sockaddr;
++ (int)socketAddressPort:(struct sockaddr *)sa;
++ (BOOL)socketAddressIsLoopback:(struct sockaddr *)sa;
 
 - (BOOL)isLoopback;
+- (BOOL)isEqualToSockAddr:(struct sockaddr *)other;
 
 @end
