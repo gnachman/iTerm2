@@ -59,6 +59,7 @@
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
+#import "iTermToolbeltView.h"
 #import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -542,6 +543,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                              selector:@selector(processTypeDidChange:)
                                                  name:iTermProcessTypeDidChangeNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(dynamicToolsDidChange:)
+                                                 name:kDynamicToolsDidChange
+                                               object:nil];
 
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isApplescriptTestApp) {
@@ -549,6 +554,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
         }];
     }
+}
+
+- (void)dynamicToolsDidChange:(NSNotification *)notification {
+    [iTermToolbeltView populateMenu:toolbeltMenu];
 }
 
 - (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
@@ -1997,7 +2006,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 #pragma mark - iTermAPIServerDelegate
 
-- (BOOL)apiServerAuthorizeProcess:(pid_t)pid {
+- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid {
     NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
     if (!bundles) {
         bundles = [NSMutableDictionary dictionary];
@@ -2005,19 +2014,20 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
     if (!app) {
         ELog(@"No running app with pid %d", (int)pid);
-        return NO;
+        return nil;
     }
     if (!app.localizedName || !app.bundleIdentifier) {
         ELog(@"App is missing name or bundle ID");
-        return NO;
+        return nil;
     }
+    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: app.bundleIdentifier };
     NSString *key = [NSString stringWithFormat:@"bundle=%@", app.bundleIdentifier];
     NSDictionary *setting = bundles[key];
     BOOL reauth = NO;
     if (setting) {
         if (![setting[kAPIAccessAllowed] boolValue]) {
             // Access permanently disallowed.
-            return NO;
+            return nil;
         }
 
         NSString *name = setting[kAPIAccessLocalizedName];
@@ -2028,7 +2038,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
                 // No need to reauth, allow it.
                 ELog(@"Allowing API access to process id %d, name %@, bundle ID %@", pid, app.localizedName, app.bundleIdentifier);
-                return YES;
+                return authorizedIdentity;
             }
 
             // It's been a month since API access was confirmed. Request it again.
@@ -2063,7 +2073,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     [[NSUserDefaults standardUserDefaults] setObject:bundles forKey:kBundlesWithAPIAccessSettingKey];
 
-    return allow;
+    return allow ? authorizedIdentity : nil;
 }
 
 - (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
@@ -2124,6 +2134,46 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
     [_apiServer postAPINotification:notification toConnection:connection];
+}
+
+- (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
+                 peerIdentity:(NSDictionary *)peerIdentity
+                      handler:(void (^)(ITMRegisterToolResponse *))handler {
+    ITMRegisterToolResponse *response = [[[ITMRegisterToolResponse alloc] init] autorelease];
+    if (!IsYosemiteOrLater()) {
+        response.status = ITMRegisterToolResponse_Status_PermissionDenied;
+        handler(response);
+        return;
+    }
+    if (!request.hasName || !request.hasIdentifier || !request.hasURL) {
+        response.status = ITMRegisterToolResponse_Status_RequestMalformed;
+        handler(response);
+        return;
+    }
+    NSURL *url = [NSURL URLWithString:request.URL];
+    if (!url || !url.host) {
+        response.status = ITMRegisterToolResponse_Status_RequestMalformed;
+        handler(response);
+        return;
+    }
+
+    NSString *bundleId = peerIdentity[iTermWebSocketConnectionPeerIdentityBundleIdentifier];
+    if (![request.identifier hasPrefix:bundleId]) {
+        response.status = ITMRegisterToolResponse_Status_PermissionDenied;
+        handler(response);
+        return;
+    }
+
+    if ([[iTermToolbeltView builtInToolNames] containsObject:request.name]) {
+        response.status = ITMRegisterToolResponse_Status_PermissionDenied;
+        handler(response);
+        return;
+    }
+
+    [iTermToolbeltView registerDynamicToolWithIdentifier:request.identifier
+                                                    name:request.name
+                                                     URL:request.URL
+                               revealIfAlreadyRegistered:request.revealIfAlreadyRegistered];
 }
 
 @end

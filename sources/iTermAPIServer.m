@@ -21,6 +21,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier = @"bundle id";
+
+
 @interface iTermWebSocketConnection(Handle)
 @property(nonatomic, readonly) id handle;
 @end
@@ -202,8 +205,9 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            if ([weakSelf.delegate apiServerAuthorizeProcess:pid]) {
-                dispatch_async(queue, ^{ [weakSelf startRequestOnConnection:connection]; });
+            NSDictionary *identity = [weakSelf.delegate apiServerAuthorizeProcess:pid];
+            if (identity) {
+                dispatch_async(queue, ^{ [weakSelf startRequestOnConnection:connection identity:identity]; });
             } else {
                 ELog(@"Reject unauthenticated process (pid %d)", pid);
                 [connection unauthorized];
@@ -213,7 +217,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     });
 }
 
-- (void)startRequestOnConnection:(iTermHTTPConnection *)connection {
+- (void)startRequestOnConnection:(iTermHTTPConnection *)connection identity:(NSDictionary *)identity {
     NSURLRequest *request = [connection readRequest];
     if (!request) {
         ELog(@"Failed to read request from HTTP connection");
@@ -224,6 +228,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if ([iTermWebSocketConnection validateRequest:request]) {
         ILog(@"Upgrading request to websocket");
         iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
+        webSocketConnection.peerIdentity = identity;
         webSocketConnection.delegate = self;
         _connections[webSocketConnection.handle] = webSocketConnection;
         [webSocketConnection handleRequest:request];
@@ -353,6 +358,17 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMResponse *response = [[ITMResponse alloc] init];
             response.id_p = request.id_p;
             response.notificationResponse = notificationResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
+    }
+    if (request.registerToolRequest) {
+        [_delegate apiServerRegisterTool:request.registerToolRequest
+                            peerIdentity:webSocketConnection.peerIdentity
+                                 handler:^(ITMRegisterToolResponse *registerToolResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.registerToolResponse = registerToolResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;

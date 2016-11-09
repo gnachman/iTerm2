@@ -42,6 +42,8 @@ CF_EXTERN_C_BEGIN
 @class ITMNotificationResponse;
 @class ITMPromptNotification;
 @class ITMRange;
+@class ITMRegisterToolRequest;
+@class ITMRegisterToolResponse;
 @class ITMScreenUpdateNotification;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
@@ -63,6 +65,36 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMRegisterToolRequest_ToolType
+
+typedef GPB_ENUM(ITMRegisterToolRequest_ToolType) {
+  ITMRegisterToolRequest_ToolType_WebViewTool = 1,
+};
+
+GPBEnumDescriptor *ITMRegisterToolRequest_ToolType_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMRegisterToolResponse_Status
+
+typedef GPB_ENUM(ITMRegisterToolResponse_Status) {
+  ITMRegisterToolResponse_Status_Ok = 0,
+  ITMRegisterToolResponse_Status_RequestMalformed = 1,
+  ITMRegisterToolResponse_Status_PermissionDenied = 2,
+};
+
+GPBEnumDescriptor *ITMRegisterToolResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRegisterToolResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMNotificationResponse_Status
 
@@ -193,6 +225,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_GetPromptRequest = 101,
   ITMRequest_FieldNumber_TransactionRequest = 102,
   ITMRequest_FieldNumber_NotificationRequest = 103,
+  ITMRequest_FieldNumber_RegisterToolRequest = 104,
 };
 
 /**
@@ -221,6 +254,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c notificationRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasNotificationRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMRegisterToolRequest *registerToolRequest;
+/** Test to see if @c registerToolRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasRegisterToolRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -231,6 +268,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_GetPromptResponse = 101,
   ITMResponse_FieldNumber_TransactionResponse = 102,
   ITMResponse_FieldNumber_NotificationResponse = 103,
+  ITMResponse_FieldNumber_RegisterToolResponse = 104,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -259,11 +297,66 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 /** Test to see if @c notificationResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasNotificationResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMRegisterToolResponse *registerToolResponse;
+/** Test to see if @c registerToolResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasRegisterToolResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;
 
+@end
+
+#pragma mark - ITMRegisterToolRequest
+
+typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
+  ITMRegisterToolRequest_FieldNumber_Name = 1,
+  ITMRegisterToolRequest_FieldNumber_Identifier = 2,
+  ITMRegisterToolRequest_FieldNumber_ToolType = 3,
+  ITMRegisterToolRequest_FieldNumber_URL = 4,
+  ITMRegisterToolRequest_FieldNumber_RevealIfAlreadyRegistered = 5,
+};
+
+@interface ITMRegisterToolRequest : GPBMessage
+
+/** This name is displayed to the user. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+/**
+ * The tool's identifier should be unique. Prefix it with your app bundle. For example:
+ * com.example.mytool
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *identifier;
+/** Test to see if @c identifier has been set. */
+@property(nonatomic, readwrite) BOOL hasIdentifier;
+
+@property(nonatomic, readwrite) BOOL revealIfAlreadyRegistered;
+
+@property(nonatomic, readwrite) BOOL hasRevealIfAlreadyRegistered;
+@property(nonatomic, readwrite) ITMRegisterToolRequest_ToolType toolType;
+
+@property(nonatomic, readwrite) BOOL hasToolType;
+/** For web view tools: The URL loaded at startup */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *URL;
+/** Test to see if @c URL has been set. */
+@property(nonatomic, readwrite) BOOL hasURL;
+
+@end
+
+#pragma mark - ITMRegisterToolResponse
+
+typedef GPB_ENUM(ITMRegisterToolResponse_FieldNumber) {
+  ITMRegisterToolResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMRegisterToolResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMRegisterToolResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMNotificationRequest

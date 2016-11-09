@@ -89,6 +89,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic hasGetPromptRequest, getPromptRequest;
 @dynamic hasTransactionRequest, transactionRequest;
 @dynamic hasNotificationRequest, notificationRequest;
+@dynamic hasRegisterToolRequest, registerToolRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -96,6 +97,7 @@ typedef struct ITMRequest__storage_ {
   ITMGetPromptRequest *getPromptRequest;
   ITMTransactionRequest *transactionRequest;
   ITMNotificationRequest *notificationRequest;
+  ITMRegisterToolRequest *registerToolRequest;
   int64_t id_p;
 } ITMRequest__storage_;
 
@@ -150,6 +152,15 @@ typedef struct ITMRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "registerToolRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRegisterToolRequest),
+        .number = ITMRequest_FieldNumber_RegisterToolRequest,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, registerToolRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
@@ -176,6 +187,7 @@ typedef struct ITMRequest__storage_ {
 @dynamic hasGetPromptResponse, getPromptResponse;
 @dynamic hasTransactionResponse, transactionResponse;
 @dynamic hasNotificationResponse, notificationResponse;
+@dynamic hasRegisterToolResponse, registerToolResponse;
 @dynamic hasNotification, notification;
 
 typedef struct ITMResponse__storage_ {
@@ -184,6 +196,7 @@ typedef struct ITMResponse__storage_ {
   ITMGetPromptResponse *getPromptResponse;
   ITMTransactionResponse *transactionResponse;
   ITMNotificationResponse *notificationResponse;
+  ITMRegisterToolResponse *registerToolResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMResponse__storage_;
@@ -240,10 +253,19 @@ typedef struct ITMResponse__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "registerToolResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRegisterToolResponse),
+        .number = ITMResponse_FieldNumber_RegisterToolResponse,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, registerToolResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMResponse_FieldNumber_Notification,
-        .hasIndex = 5,
+        .hasIndex = 6,
         .offset = (uint32_t)offsetof(ITMResponse__storage_, notification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -264,6 +286,213 @@ typedef struct ITMResponse__storage_ {
 }
 
 @end
+
+#pragma mark - ITMRegisterToolRequest
+
+@implementation ITMRegisterToolRequest
+
+@dynamic hasName, name;
+@dynamic hasIdentifier, identifier;
+@dynamic hasRevealIfAlreadyRegistered, revealIfAlreadyRegistered;
+@dynamic hasToolType, toolType;
+@dynamic hasURL, URL;
+
+typedef struct ITMRegisterToolRequest__storage_ {
+  uint32_t _has_storage_[1];
+  ITMRegisterToolRequest_ToolType toolType;
+  NSString *name;
+  NSString *identifier;
+  NSString *URL;
+} ITMRegisterToolRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "name",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRegisterToolRequest_FieldNumber_Name,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, name),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "identifier",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRegisterToolRequest_FieldNumber_Identifier,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, identifier),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueEnum = ITMRegisterToolRequest_ToolType_WebViewTool,
+        .core.name = "toolType",
+        .core.dataTypeSpecific.enumDescFunc = ITMRegisterToolRequest_ToolType_EnumDescriptor,
+        .core.number = ITMRegisterToolRequest_FieldNumber_ToolType,
+        .core.hasIndex = 4,
+        .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, toolType),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "URL",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRegisterToolRequest_FieldNumber_URL,
+        .core.hasIndex = 5,
+        .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, URL),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueBool = NO,
+        .core.name = "revealIfAlreadyRegistered",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRegisterToolRequest_FieldNumber_RevealIfAlreadyRegistered,
+        .core.hasIndex = 2,
+        .core.offset = 3,  // Stored in _has_storage_ to save space.
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue),
+        .core.dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRegisterToolRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMRegisterToolRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    static const char *extraTextFormatInfo =
+        "\001\004\003\000";
+    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
+#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMRegisterToolRequest_ToolType
+
+GPBEnumDescriptor *ITMRegisterToolRequest_ToolType_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "WebViewTool\000";
+    static const int32_t values[] = {
+        ITMRegisterToolRequest_ToolType_WebViewTool,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRegisterToolRequest_ToolType)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRegisterToolRequest_ToolType_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRegisterToolRequest_ToolType_WebViewTool:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMRegisterToolResponse
+
+@implementation ITMRegisterToolResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMRegisterToolResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMRegisterToolResponse_Status status;
+} ITMRegisterToolResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMRegisterToolResponse_Status_EnumDescriptor,
+        .number = ITMRegisterToolResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRegisterToolResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRegisterToolResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRegisterToolResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMRegisterToolResponse_Status
+
+GPBEnumDescriptor *ITMRegisterToolResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000RequestMalformed\000PermissionDenied\000";
+    static const int32_t values[] = {
+        ITMRegisterToolResponse_Status_Ok,
+        ITMRegisterToolResponse_Status_RequestMalformed,
+        ITMRegisterToolResponse_Status_PermissionDenied,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRegisterToolResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRegisterToolResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRegisterToolResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRegisterToolResponse_Status_Ok:
+    case ITMRegisterToolResponse_Status_RequestMalformed:
+    case ITMRegisterToolResponse_Status_PermissionDenied:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMNotificationRequest
 

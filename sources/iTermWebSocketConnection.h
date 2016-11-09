@@ -19,6 +19,7 @@
 
 @interface iTermWebSocketConnection : NSObject
 @property(nonatomic, assign) id<iTermWebSocketConnectionDelegate> delegate;
+@property(nonatomic, copy) NSDictionary *peerIdentity;
 
 + (BOOL)validateRequest:(NSURLRequest *)request;
 
