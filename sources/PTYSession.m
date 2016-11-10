@@ -1373,7 +1373,7 @@ ITERM_WEAKLY_REFERENCEABLE
     env[@"TERM_PROGRAM_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
     env[@"TERM_SESSION_ID"] = itermId;
     env[@"TERM_PROGRAM"] = @"iTerm.app";
-
+    env[@"COLORTERM"] = @"truecolor";
 
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
