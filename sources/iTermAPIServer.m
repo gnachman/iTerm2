@@ -224,7 +224,11 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         [connection badRequest];
         return;
     }
-
+    if (![request.URL.path isEqualToString:@"/"]) {
+        ELog(@"Path %@ not known", request.URL.path);
+        [connection badRequest];
+        return;
+    }
     if ([iTermWebSocketConnection validateRequest:request]) {
         ILog(@"Upgrading request to websocket");
         iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
