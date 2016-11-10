@@ -288,6 +288,9 @@ typedef enum {
 // True if mouse movements are sent to the host.
 @property(nonatomic, assign) BOOL xtermMouseReporting;
 
+// True if the mouse wheel movements are sent to the host.
+@property(nonatomic, assign) BOOL xtermMouseReportingAllowMouseWheel;
+
 // Profile for this session
 @property(nonatomic, copy) Profile *profile;
 

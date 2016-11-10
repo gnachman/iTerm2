@@ -228,6 +228,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TERMINAL_TYPE: @"xterm",
                   KEY_ANSWERBACK_STRING: @"",
                   KEY_XTERM_MOUSE_REPORTING: @NO,
+                  KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL: @YES,
                   KEY_UNICODE_VERSION: @8,
                   KEY_ALLOW_TITLE_REPORTING: @NO,
                   KEY_ALLOW_TITLE_SETTING: @YES,

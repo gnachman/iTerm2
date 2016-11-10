@@ -469,6 +469,10 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
+- (BOOL)xtermMouseReportingAllowMouseWheel {
+    return YES;
+}
+
 - (void)textViewBeginDrag {
 }
 
