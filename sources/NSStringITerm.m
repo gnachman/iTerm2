@@ -632,9 +632,10 @@ int decode_utf8_char(const unsigned char *datap,
     NSRange range = [trimmedURLString rangeOfString:@":"];
     if (range.location != NSNotFound) {
         // Search backward to find the start of the scheme.
-        NSCharacterSet *alphaNumericCharset = [NSCharacterSet alphanumericCharacterSet];
+        NSMutableCharacterSet *schemeCharacterSet = [NSMutableCharacterSet alphanumericCharacterSet];
+        [schemeCharacterSet addCharactersInString:@"-"];  // for chrome-devtools:, issue 5298
         for (NSInteger i = ((NSInteger)range.location) - 1; i >= 0; i--) {
-            if (![alphaNumericCharset characterIsMember:[trimmedURLString characterAtIndex:i]]) {
+            if (![schemeCharacterSet characterIsMember:[trimmedURLString characterAtIndex:i]]) {
                 trimmedURLString = [trimmedURLString substringFromIndex:i];
 
                 // Handle URLs like *(http://example.com)
