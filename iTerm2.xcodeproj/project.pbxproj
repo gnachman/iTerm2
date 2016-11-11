@@ -1212,6 +1212,8 @@
 		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
+		539325F21DD66EFA00CABCEF /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = 539325EE1DD66EF100CABCEF /* iTermPreciseTimer.h */; };
+		539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */; };
@@ -2780,6 +2782,8 @@
 		5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImage@2x.png"; sourceTree = "<group>"; };
 		5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QLPreviewPanel+iTerm.h"; sourceTree = "<group>"; };
 		5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QLPreviewPanel+iTerm.m"; sourceTree = "<group>"; };
+		539325EE1DD66EF100CABCEF /* iTermPreciseTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreciseTimer.h; sourceTree = "<group>"; };
+		539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreciseTimer.m; sourceTree = "<group>"; };
 		5BC84AA2F3A178CCEF36EB64 /* Pods-iTerm2XCTests.nightly.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.nightly.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.nightly.xcconfig"; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -5071,6 +5075,8 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				539325EE1DD66EF100CABCEF /* iTermPreciseTimer.h */,
+				539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */,
 				A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
 				A67F57D31B11882900B4F135 /* CapturedOutput.m */,
@@ -6136,6 +6142,7 @@
 				A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */,
 				1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */,
 				A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */,
+				539325F21DD66EFA00CABCEF /* iTermPreciseTimer.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
 				A66DB8361C8E4CBB00233E88 /* iTermOpenQuicklyCommands.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
@@ -7523,6 +7530,7 @@
 				A6C7639B1B45C52B00E3C992 /* TmuxHistoryParser.m in Sources */,
 				A6C763761B45C52B00E3C992 /* PointerPreferencesViewController.m in Sources */,
 				A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */,
+				539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */,
 				A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */,
 				A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */,
 				A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */,

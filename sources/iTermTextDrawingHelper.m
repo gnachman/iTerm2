@@ -19,6 +19,7 @@
 #import "iTermFindCursorView.h"
 #import "iTermImageInfo.h"
 #import "iTermIndicatorsHelper.h"
+#import "iTermPreciseTimer.h"
 #import "iTermSelection.h"
 #import "iTermTextExtractor.h"
 #import "MovingAverage.h"
@@ -32,6 +33,19 @@ static const int kBadgeMargin = 4;
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
+
+enum {
+    TIMER_TOTAL_DRAW_RECT,
+    TIMER_CONSTRUCT_BACKGROUND_RUNS,
+    TIMER_DRAW_BACKGROUND,
+
+    TIMER_STAT_CONSTRUCTION,
+    TIMER_STAT_DRAW,
+
+    TIMER_BETWEEN_CALLS_TO_DRAW_RECT,
+
+    TIMER_STAT_MAX
+};
 
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
@@ -49,9 +63,6 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     BOOL _blinkingFound;
 
-    MovingAverage *_drawRectDuration;
-    MovingAverage *_drawRectInterval;
-
     // Frame of the view we're drawing into.
     NSRect _frame;
 
@@ -65,17 +76,21 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     NSImage *_backgroundStripesImage;
     
     NSMutableSet<NSString *> *_missingImages;
+    iTermPreciseTimerStats _stats[TIMER_STAT_MAX];
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
-            NSLog(@"** Drawing performance timing enabled **");
-            _drawRectDuration = [[MovingAverage alloc] init];
-            _drawRectInterval = [[MovingAverage alloc] init];
-            _drawRectDuration.alpha = 0.95;
-            _drawRectInterval.alpha = 0.95;
+            iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
+
+            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_CONSTRUCTION], "Construction");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_DRAW], "Drawing");
+
+            iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
         }
         _missingImages = [[NSMutableSet alloc] init];
     }
@@ -91,8 +106,6 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     [_colorMap release];
 
     [_selectedFont release];
-    [_drawRectDuration release];
-    [_drawRectInterval release];
 
     [_backgroundStripesImage release];
     [_missingImages release];
@@ -114,9 +127,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
-    if (_drawRectDuration) {
-        [self startTiming];
-    }
+    [self startTiming];
 
     for (int i = 0; i < rectCount; i++) {
         DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
@@ -128,9 +139,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         [self drawDropTargets];
     }
 
-    if (_drawRectDuration) {
-        [self stopTiming];
-    }
+    [self stopTiming];
 }
 
 - (void)clipAndDrawRect:(NSRect)rect {
@@ -194,6 +203,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     double y = coordRange.start.y * _cellSize.height;
     // An array of PTYTextViewBackgroundRunArray objects (one element per line).
     NSMutableArray *backgroundRunArrays = [NSMutableArray array];
+
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
     for (int line = coordRange.start.y; line < coordRange.end.y; line++, y += _cellSize.height) {
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
         screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
@@ -212,7 +223,9 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                                                             line:line];
         [backgroundRunArrays addObject:runsInLine];
     }
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
 
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_DRAW_BACKGROUND]);
     // If a background image is in use, draw the whole rect at once.
     if (_hasBackgroundImage) {
         [self.delegate drawingHelperDrawBackgroundImageInRect:rect
@@ -229,6 +242,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:rect coordRange:coordRange];
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_DRAW_BACKGROUND]);
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
@@ -793,6 +807,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                             bgColor:(NSColor*)bgColor
                             matches:(NSData*)matches
                             context:(CGContextRef)ctx {
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     const int width = _gridSize.width;
     CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:width];
     CRun *run = [self constructTextRuns:theLine
@@ -802,10 +817,13 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                         backgroundColor:bgColor
                                 matches:matches
                                 storage:storage];
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_CONSTRUCTION]);
 
     if (run) {
+        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
         [self drawRunsAt:initialPoint run:run storage:storage context:ctx];
         CRunFree(run);
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_DRAW]);
     }
 }
 
@@ -1945,18 +1963,21 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 }
 
 - (void)startTiming {
-    [_drawRectDuration startTimer];
-    NSTimeInterval interval = [_drawRectInterval timeSinceTimerStarted];
-    if ([_drawRectInterval haveStartedTimer]) {
-        [_drawRectInterval addValue:interval];
-    }
-    [_drawRectInterval startTimer];
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT]);
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_TOTAL_DRAW_RECT]);
 }
 
 - (void)stopTiming {
-    [_drawRectDuration addValue:[_drawRectDuration timeSinceTimerStarted]];
-    NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
-          self, _drawRectDuration.value, _drawRectInterval.value);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_TOTAL_DRAW_RECT]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_DRAW_BACKGROUND]);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_DRAW]);
+
+    if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
+        iTermPreciseTimerPeriodicLog(_stats, sizeof(_stats) / sizeof(*_stats), 5);
+    }
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT]);
 }
 
 #pragma mark - iTermCursorDelegate
