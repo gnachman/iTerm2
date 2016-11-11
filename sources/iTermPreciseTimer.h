@@ -50,7 +50,7 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
 #else
 static inline void iTermPreciseTimerStart(iTermPreciseTimer *timer) { }
 static inline NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer) { return 0; }
-static inline NSTimeInterval iTermPreciseTimerMeasureAndAccumulate(iTermPreciseTimer *timer) { }
+static inline NSTimeInterval iTermPreciseTimerMeasureAndAccumulate(iTermPreciseTimer *timer) { return 0; }
 static inline void iTermPreciseTimerReset(iTermPreciseTimer *timer) { }
 static inline NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) { return 0; }
 
