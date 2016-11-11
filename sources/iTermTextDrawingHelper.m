@@ -62,6 +62,10 @@ typedef struct {
 } iTermCharacterAttributes;
 
 enum {
+    TIMER_TOTAL_DRAW_RECT,
+    TIMER_CONSTRUCT_BACKGROUND_RUNS,
+    TIMER_DRAW_BACKGROUND,
+
     TIMER_STAT_CONSTRUCTION,
     TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING,
     TIMER_STAT_DRAW,
@@ -70,7 +74,9 @@ enum {
     TIMER_SHOULD_SEGMENT,
     TIMER_ADVANCES,
     TIMER_UPDATE_BUILDER,
-    
+
+    TIMER_BETWEEN_CALLS_TO_DRAW_RECT,
+
     TIMER_STAT_MAX
 };
 
@@ -115,9 +121,6 @@ typedef struct iTermTextColorContext {
 
     BOOL _blinkingFound;
 
-    MovingAverage *_drawRectDuration;
-    MovingAverage *_drawRectInterval;
-
     // Frame of the view we're drawing into.
     NSRect _frame;
 
@@ -139,11 +142,10 @@ typedef struct iTermTextColorContext {
     if (self) {
         if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
-            _drawRectDuration = [[MovingAverage alloc] init];
-            _drawRectInterval = [[MovingAverage alloc] init];
-            _drawRectDuration.alpha = 0.95;
-            _drawRectInterval.alpha = 0.95;
-            
+            iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
+
             iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_CONSTRUCTION], "Construction");
             iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING], "Builder");
             iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_DRAW], "Drawing");
@@ -152,6 +154,7 @@ typedef struct iTermTextColorContext {
             iTermPreciseTimerStatsInit(&_stats[TIMER_SHOULD_SEGMENT], "Segment");
             iTermPreciseTimerStatsInit(&_stats[TIMER_UPDATE_BUILDER], "Update Builder");
             iTermPreciseTimerStatsInit(&_stats[TIMER_ADVANCES], "Advances");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
         }
     }
     return self;
@@ -166,8 +169,6 @@ typedef struct iTermTextColorContext {
     [_colorMap release];
 
     [_selectedFont release];
-    [_drawRectDuration release];
-    [_drawRectInterval release];
 
     [_backgroundStripesImage release];
 
@@ -188,9 +189,7 @@ typedef struct iTermTextColorContext {
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
-    if (_drawRectDuration) {
-        [self startTiming];
-    }
+    [self startTiming];
 
     const int haloWidth = 4;
     NSInteger yLimit = _numberOfLines;
@@ -239,12 +238,10 @@ typedef struct iTermTextColorContext {
         [self drawDropTargets];
     }
 
-    if (_drawRectDuration) {
-        [self stopTiming];
-    }
-    
+    [self stopTiming];
+
     if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
-        iTermPreciseTimerPeriodicLog(_stats, sizeof(_stats) / sizeof(*_stats), 0);
+        iTermPreciseTimerPeriodicLog(_stats, sizeof(_stats) / sizeof(*_stats), 5);
     }
 
 
@@ -286,6 +283,7 @@ typedef struct iTermTextColorContext {
         if (line >= NSMaxRange(visibleLines)) {
             continue;
         }
+        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
         NSRange charRange = ranges[i];
         // We work hard to paint all the backgrounds first and then all the foregrounds. The reason this
         // is necessary is because sometimes a glyph is larger than its cell. Some fonts draw narrow-
@@ -320,8 +318,10 @@ typedef struct iTermTextColorContext {
                                                                y:y
                                                             line:line];
         [backgroundRunArrays addObject:runsInLine];
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
     }
 
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_DRAW_BACKGROUND]);
     // If a background image is in use, draw the whole rect at once.
     if (_hasBackgroundImage) {
         [self.delegate drawingHelperDrawBackgroundImageInRect:boundingRect
@@ -342,6 +342,7 @@ typedef struct iTermTextColorContext {
         }
         i += rows;
     }
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_DRAW_BACKGROUND]);
 
     // Draw default background color over the line under the last drawn line so the tops of
     // characters aren't visible there. If there is an IME, that could be many lines tall.
@@ -951,7 +952,7 @@ typedef struct iTermTextColorContext {
                                                                           findMatches:matches
                                                                       underlinedRange:[self underlinedRangeOnLine:row + _totalScrollbackOverflow]
                                                                             positions:&positions];
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_CONSTRUCTION]);
     
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
     [self drawMultipartAttributedString:attributedStrings
@@ -962,7 +963,7 @@ typedef struct iTermTextColorContext {
                         backgroundColor:processedBackgroundColor];
     
     CTVectorDestroy(&positions);
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_DRAW]);
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_DRAW]);
 }
 
 - (void)drawMultipartAttributedString:(NSArray<NSAttributedString *> *)attributedStrings
@@ -1592,7 +1593,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                        textColorContext:&textColorContext
                              attributes:&characterAttributes];
 
-        iTermPreciseTimerStatsAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
         
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
 
@@ -1621,7 +1622,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         ++segmentLength;
         memcpy(&previousCharacterAttributes, &characterAttributes, sizeof(previousCharacterAttributes));
         previousImageAttributes = [[imageAttributes copy] autorelease];
-        iTermPreciseTimerStatsAccumulate(&_stats[TIMER_SHOULD_SEGMENT]);
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_SHOULD_SEGMENT]);
 
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_UPDATE_BUILDER]);
         
@@ -1641,7 +1642,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             [builder appendCharacter:code];
             length = 1;
         }
-        iTermPreciseTimerStatsAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
 
         
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
@@ -1650,7 +1651,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         for (NSUInteger j = 0; j < length; j++) {
             CTVectorAppend(positions, offset);
         }
-        iTermPreciseTimerStatsAccumulate(&_stats[TIMER_ADVANCES]);
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
     }
     if (builder.length) {
         iTermPreciseTimerStart(&buildTimer);
@@ -1663,13 +1664,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
         [attributedStrings addObject:mutableAttributedString];
     }
-    iTermPreciseTimerStatsRecord(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
-                                 totalBuilderTime);
-    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
-    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_SHOULD_SEGMENT]);
-    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ADVANCES]);
-    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_UPDATE_BUILDER]);
-    
+    iTermPreciseTimerStatsAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
+                                     totalBuilderTime);
+
     return attributedStrings;
 }
 
@@ -2220,18 +2217,24 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 }
 
 - (void)startTiming {
-    [_drawRectDuration startTimer];
-    NSTimeInterval interval = [_drawRectInterval timeSinceTimerStarted];
-    if ([_drawRectInterval haveStartedTimer]) {
-        [_drawRectInterval addValue:interval];
-    }
-    [_drawRectInterval startTimer];
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT]);
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_TOTAL_DRAW_RECT]);
 }
 
 - (void)stopTiming {
-    [_drawRectDuration addValue:[_drawRectDuration timeSinceTimerStarted]];
-    NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
-          self, _drawRectDuration.value, _drawRectInterval.value);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_STAT_DRAW]);
+
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_DRAW_BACKGROUND]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_SHOULD_SEGMENT]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ADVANCES]);
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_UPDATE_BUILDER]);
+    
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_TOTAL_DRAW_RECT]);
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT]);
 }
 
 #pragma mark - iTermCursorDelegate

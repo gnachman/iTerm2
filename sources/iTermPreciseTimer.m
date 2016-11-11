@@ -19,13 +19,19 @@ void iTermPreciseTimerStart(iTermPreciseTimer *timer) {
     timer->start = mach_absolute_time();
 }
 
-NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer) {
+NSTimeInterval iTermPreciseTimerMeasureAndAccumulate(iTermPreciseTimer *timer) {
     timer->total += iTermPreciseTimerMeasure(timer);
+    timer->eventCount += 1;
+    return timer->total;
+}
+
+NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer, NSTimeInterval value) {
     return timer->total;
 }
 
 void iTermPreciseTimerReset(iTermPreciseTimer *timer) {
     timer->total = 0;
+    timer->eventCount = 0;
 }
 
 NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) {
@@ -46,6 +52,7 @@ NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) {
 
 void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, char *name) {
     stats->n = 0;
+    stats->totalEventCount = 0;
     stats->mean = 0;
     stats->m2 = 0;
     iTermPreciseTimerReset(&stats->timer);
@@ -63,20 +70,30 @@ void iTermPreciseTimerStatsStartTimer(iTermPreciseTimerStats *stats) {
 }
 
 void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) {
-    iTermPreciseTimerStatsRecord(stats, iTermPreciseTimerAccumulate(&stats->timer));
-    iTermPreciseTimerReset(&stats->timer);
+    if (stats->timer.start) {
+        NSTimeInterval total = iTermPreciseTimerMeasureAndAccumulate(&stats->timer);
+        int eventCount = stats->timer.eventCount;
+        iTermPreciseTimerStatsRecord(stats, total, eventCount);
+        iTermPreciseTimerReset(&stats->timer);
+    }
 }
 
 void iTermPreciseTimerStatsRecordTimer(iTermPreciseTimerStats *stats) {
-    iTermPreciseTimerStatsRecord(stats, stats->timer.total);
+    iTermPreciseTimerStatsRecord(stats, stats->timer.total, stats->timer.eventCount);
     iTermPreciseTimerReset(&stats->timer);
 }
 
-void iTermPreciseTimerStatsAccumulate(iTermPreciseTimerStats *stats) {
-    iTermPreciseTimerAccumulate(&stats->timer);
+void iTermPreciseTimerStatsMeasureAndAccumulate(iTermPreciseTimerStats *stats) {
+    iTermPreciseTimerMeasureAndAccumulate(&stats->timer);
 }
 
-void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval value) {
+void iTermPreciseTimerStatsAccumulate(iTermPreciseTimerStats *stats, NSTimeInterval value) {
+    iTermPreciseTimerAccumulate(&stats->timer, value);
+}
+
+void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval value, int eventCount) {
+    stats->totalEventCount += eventCount;
+    
     // Welford's online variance algorithm, adopted from:
     // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Higher-order_statistics
     stats->n += 1;
@@ -104,15 +121,21 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
     if (!gLastLog.start) {
         iTermPreciseTimerStart(&gLastLog);
     }
-    
+
     if (iTermPreciseTimerMeasure(&gLastLog) >= interval) {
+        NSLog(@"-- Precise Timers --");
         for (size_t i = 0; i < count; i++) {
-            NSLog(@"%20s: %0.3fms ±%.03fms (2σ) total=%.2fms n=%@",
+            NSTimeInterval mean = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
+            NSTimeInterval stddev = iTermPreciseTimerStatsGetStddev(&stats[i]) * 1000.0;
+            NSLog(@"%20s: µ=%0.3fms σ=%.03fms (95%% CI ≅ %0.3fms–%0.3fms) 𝚺=%.2fms N=%@ avg. events=%01.f",
                   stats[i].name,
-                  iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0,
-                  iTermPreciseTimerStatsGetStddev(&stats[i]) * 1000.0 * 2,
-                  stats[i].n * iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0,
-                  @(stats[i].n));
+                  mean,
+                  stddev,
+                  MAX(0, mean - stddev),
+                  mean + stddev,
+                  stats[i].n * mean,
+                  @(stats[i].n),
+                  (double)stats[i].totalEventCount / (double)stats[i].n);
             iTermPreciseTimerStatsInit(&stats[i], NULL);
         }
         NSLog(@"");
