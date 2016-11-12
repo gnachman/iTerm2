@@ -59,7 +59,8 @@ static inline void iTermPreciseTimerStatsStartTimer(iTermPreciseTimerStats *stat
 static inline void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) { }
 static inline void iTermPreciseTimerStatsRecordTimer(iTermPreciseTimerStats *stats) { }
 
-static inline void iTermPreciseTimerStatsAccumulate(iTermPreciseTimerStats *stats) { }
+static inline void iTermPreciseTimerStatsMeasureAndAccumulate(iTermPreciseTimerStats *stats) { }
+static inline void iTermPreciseTimerStatsAccumulate(iTermPreciseTimerStats *stats, NSTimeInterval value) { }
 static inline void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval value, int eventCount) { }
 static inline NSInteger iTermPreciseTimerStatsGetCount(iTermPreciseTimerStats *stats) { return 0; }
 static inline NSTimeInterval iTermPreciseTimerStatsGetMean(iTermPreciseTimerStats *stats) { return 0; }
