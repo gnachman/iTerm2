@@ -1045,7 +1045,7 @@ typedef struct iTermTextColorContext {
         CGFloat width = positions[attributedString.length - 1] + _cellSize.width;
         NSPoint offsetPoint = point;
         offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
-        [self drawTextOnlyAttributedString:attributedString atPoint:offsetPoint positions:positions width:width backgroundColor:backgroundColor];
+        [self drawTextOnlyAttributedString:attributedString atPoint:offsetPoint positions:positions backgroundColor:backgroundColor];
         DLog(@"Return width of %d", (int)round(width));
         return width;
     } else {
@@ -1057,7 +1057,6 @@ typedef struct iTermTextColorContext {
 - (void)drawTextOnlyAttributedStringWithoutUnderline:(NSAttributedString *)attributedString
                                              atPoint:(NSPoint)origin
                                            positions:(CGFloat *)stringPositions
-                                               width:(CGFloat)width
                                      backgroundColor:(NSColor *)backgroundColor
                                      graphicsContext:(NSGraphicsContext *)ctx
                                                smear:(BOOL)smear {
@@ -1185,14 +1184,12 @@ typedef struct iTermTextColorContext {
 - (void)drawTextOnlyAttributedString:(NSAttributedString *)attributedString
                                 atPoint:(NSPoint)origin
                            positions:(CGFloat *)stringPositions
-                               width:(CGFloat)width
                      backgroundColor:(NSColor *)backgroundColor {
     NSGraphicsContext *graphicsContet = [NSGraphicsContext currentContext];
     
     [self drawTextOnlyAttributedStringWithoutUnderline:attributedString
                                                atPoint:origin
                                              positions:stringPositions
-                                                 width:width
                                        backgroundColor:backgroundColor
                                        graphicsContext:graphicsContet
                                                  smear:NO];
@@ -1207,59 +1204,64 @@ typedef struct iTermTextColorContext {
                                  options:0
                               usingBlock:^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
                                   if (value.integerValue) {
-                                      if (!maskGraphicsContext) {
-                                          // Create a mask image.
-                                          maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(origin.x + width, _cellSize.height)];
-                                          [NSGraphicsContext saveGraphicsState];
-                                          [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:maskGraphicsContext
-                                                                                                                          flipped:NO]];
-
-                                          // Draw the background
-                                          [[NSColor whiteColor] setFill];
-                                          CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, origin.x + width, _cellSize.height));
-                                          
-                                          // Draw text into the mask
-                                          NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
-                                          NSRange fullRange = NSMakeRange(0, modifiedAttributedString.length);
-                                          [modifiedAttributedString removeAttribute:NSForegroundColorAttributeName range:fullRange];
-                                          [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
-
-                                          [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
-                                                                                     atPoint:NSMakePoint(origin.x, 0)
-                                                                                   positions:stringPositions
-                                                                                       width:width
-                                                                             backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
-                                                                             graphicsContext:[NSGraphicsContext currentContext]
-                                                                                       smear:YES];
-
-                                          // Switch back to the window's context
-                                          [NSGraphicsContext restoreGraphicsState];
-                                          
-                                          // Create an image mask from what we've drawn so far
-                                          alphaMask = CGBitmapContextCreateImage(maskGraphicsContext);
-                                      }
-
-                                      // Mask it
-                                      CGContextSaveGState(cgContext);
-                                      CGContextClipToMask(cgContext,
-                                                          NSMakeRect(0,
-                                                                     origin.y,
-                                                                     origin.x + width,
-                                                                     _cellSize.height),
-                                                          alphaMask);
-
+                                      CGFloat xOrigin = origin.x + stringPositions[range.location];
+                                      const BOOL mask = YES;
                                       NSDictionary *attributes = [attributedString attributesAtIndex:range.location
                                                                                       effectiveRange:nil];
+                                      const CGFloat width = [attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width;
+                                      if (mask) {
+                                          if (!maskGraphicsContext) {
+                                              // Create a mask image.
+                                              maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(width, _cellSize.height)];
+                                              [NSGraphicsContext saveGraphicsState];
+                                              [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:maskGraphicsContext
+                                                                                                                              flipped:NO]];
+
+                                              // Draw the background
+                                              [[NSColor whiteColor] setFill];
+                                              CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, width, _cellSize.height));
+                                              
+                                              // Draw text into the mask
+                                              NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
+                                              NSRange fullRange = NSMakeRange(0, modifiedAttributedString.length);
+                                              [modifiedAttributedString removeAttribute:NSForegroundColorAttributeName range:fullRange];
+                                              [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
+
+                                              [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
+                                                                                         atPoint:NSMakePoint(0, 0)
+                                                                                       positions:stringPositions
+                                                                                 backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
+                                                                                 graphicsContext:[NSGraphicsContext currentContext]
+                                                                                           smear:YES];
+
+                                              // Switch back to the window's context
+                                              [NSGraphicsContext restoreGraphicsState];
+                                              
+                                              // Create an image mask from what we've drawn so far
+                                              alphaMask = CGBitmapContextCreateImage(maskGraphicsContext);
+                                          }
+
+                                          // Mask it
+                                          CGContextSaveGState(cgContext);
+                                          CGContextClipToMask(cgContext,
+                                                              NSMakeRect(xOrigin,
+                                                                         origin.y,
+                                                                         width,
+                                                                         _cellSize.height),
+                                                              alphaMask);
+                                      }
+
                                       NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
                                       NSColor *color = (underline ? underline : attributes[NSForegroundColorAttributeName]);
-                                      const CGFloat width = [attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width;
                                       [self drawUnderlineOfColor:color
-                                                    atCellOrigin:NSMakePoint(origin.x + stringPositions[range.location], origin.y)
+                                                    atCellOrigin:NSMakePoint(xOrigin, origin.y)
                                                             font:attributes[NSFontAttributeName]
                                                            width:width];
-                                      
-                                      // Remove mask
-                                      CGContextRestoreGState(cgContext);
+
+                                      if (mask) {
+                                          // Remove mask
+                                          CGContextRestoreGState(cgContext);
+                                      }
                                   }
                               }];
 
@@ -1471,9 +1473,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                           atIndex:(NSInteger)i
                    forceTextColor:(NSColor *)forceTextColor
                    forceUnderline:(BOOL)inUnderlinedRange
+                         drawable:(BOOL)drawable
                  textColorContext:(iTermTextColorContext *)textColorContext
                        attributes:(iTermCharacterAttributes *)attributes {
-
     attributes->initialized = YES;
     attributes->shouldAntiAlias = iTermTextDrawingHelperShouldAntiAlias(c,
                                                                        _useNonAsciiFont,
@@ -1504,7 +1506,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     attributes->font = fontInfo.font;
     attributes->ligatureLevel = fontInfo.ligatureLevel;
     attributes->underline = (c->underline || inUnderlinedRange);
-    attributes->drawable = YES;
+    attributes->drawable = drawable;
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
@@ -1580,16 +1582,19 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed);
         if (!drawable) {
-            if (characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) {
+            if ((characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) ||
+                (i > indexRange.location && !memcmp(&c, &line[i - 1], sizeof(c)))) {
+                // This optimization short-circuits long runs of terminal nulls.
                 ++segmentLength;
+                characterAttributes.drawable = NO;
+                continue;
             }
-            characterAttributes.drawable = NO;
-            continue;
         }
         [self getAttributesForCharacter:&c
                                 atIndex:i
                          forceTextColor:forceTextColor
                          forceUnderline:NSLocationInRange(i, underlinedRange)
+                               drawable:drawable
                        textColorContext:&textColorContext
                              attributes:&characterAttributes];
 
@@ -1616,7 +1621,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             }
             segmentLength = 0;
             totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
-            [attributedStrings addObject:mutableAttributedString];
+            if (mutableAttributedString.length > 0) {
+                [attributedStrings addObject:mutableAttributedString];
+            }
             builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
         }
         ++segmentLength;
@@ -1634,24 +1641,33 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             [builder setAttributes:combinedAttributes];
         }
 
-        NSUInteger length;
-        if (charAsString) {
-            [builder appendString:charAsString];
-            length = charAsString.length;
-        } else {
-            [builder appendCharacter:code];
-            length = 1;
-        }
-        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
+        if (drawable || (characterAttributes.underline && segmentLength == 1)) {
+            NSUInteger length;
+            if (!drawable) {
+                // Prevent 0-length attributed strings when an underline is
+                // present. If we get here's because there's an underline
+                // (which isn't quite obvious from the if statement's
+                // condition).
+                [builder appendCharacter:' '];
+                length = 1;
+            } else if (charAsString) {
+                [builder appendString:charAsString];
+                length = charAsString.length;
+            } else {
+                [builder appendCharacter:code];
+                length = 1;
+            }
+            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
 
-        
-        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
-        // Append to positions.
-        CGFloat offset = (i - indexRange.location) * _cellSize.width;
-        for (NSUInteger j = 0; j < length; j++) {
-            CTVectorAppend(positions, offset);
+            
+            iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
+            // Append to positions.
+            CGFloat offset = (i - indexRange.location) * _cellSize.width;
+            for (NSUInteger j = 0; j < length; j++) {
+                CTVectorAppend(positions, offset);
+            }
+            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
         }
-        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
     }
     if (builder.length) {
         iTermPreciseTimerStart(&buildTimer);
@@ -1662,7 +1678,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                             range:NSMakeRange(0, mutableAttributedString.length)];
         }
         totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
-        [attributedStrings addObject:mutableAttributedString];
+        if (mutableAttributedString.length > 0) {
+            [attributedStrings addObject:mutableAttributedString];
+        }
     }
     iTermPreciseTimerStatsAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
                                      totalBuilderTime);
