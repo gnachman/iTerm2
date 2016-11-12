@@ -68,14 +68,14 @@ enum {
 
     TIMER_STAT_CONSTRUCTION,
     TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING,
-    TIMER_STAT_DRAW,
-
     TIMER_ATTRS_FOR_CHAR,
     TIMER_SHOULD_SEGMENT,
     TIMER_ADVANCES,
+    TIMER_COMBINE_ATTRIBUTES,
     TIMER_UPDATE_BUILDER,
-
+    TIMER_STAT_DRAW,
     TIMER_BETWEEN_CALLS_TO_DRAW_RECT,
+
 
     TIMER_STAT_MAX
 };
@@ -147,12 +147,13 @@ typedef struct iTermTextColorContext {
             iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
 
             iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_CONSTRUCTION], "Construction");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING], "Builder");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING], "Build attr strings");
             iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_DRAW], "Drawing");
 
             iTermPreciseTimerStatsInit(&_stats[TIMER_ATTRS_FOR_CHAR], "Compute Attrs");
             iTermPreciseTimerStatsInit(&_stats[TIMER_SHOULD_SEGMENT], "Segment");
             iTermPreciseTimerStatsInit(&_stats[TIMER_UPDATE_BUILDER], "Update Builder");
+            iTermPreciseTimerStatsInit(&_stats[TIMER_COMBINE_ATTRIBUTES], "Combine Attrs");
             iTermPreciseTimerStatsInit(&_stats[TIMER_ADVANCES], "Advances");
             iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
         }
@@ -1531,6 +1532,32 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 }
 
+- (BOOL)character:(screen_char_t *)c isEquivalentToCharacter:(screen_char_t *)pc {
+    if (c->complexChar != pc->complexChar) {
+        return NO;
+    }
+    if (!c->complexChar) {
+        BOOL ascii = c->code < 128;
+        BOOL pcAscii = c->code < 128;
+        if (ascii != pcAscii) {
+            return NO;
+        }
+        if (!ascii) {
+            NSCharacterSet *boxSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths];
+            BOOL box = [boxSet characterIsMember:c->code];
+            BOOL pcBox = [boxSet characterIsMember:pc->code];
+            if (box != pcBox) {
+                return NO;
+            }
+        }
+    }
+    if (!ScreenCharacterAttributesEqual(c, pc)) {
+        return NO;
+    }
+
+    return YES;
+}
+
 - (NSArray<NSAttributedString *> *)attributedStringsForLine:(screen_char_t *)line
                                                       range:(NSRange)indexRange
                                             hasSelectedText:(BOOL)hasSelectedText
@@ -1558,11 +1585,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     };
     NSDictionary *previousImageAttributes = nil;
     iTermMutableAttributedStringBuilder *builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
-    iTermPreciseTimer buildTimer = { 0 };
-    NSTimeInterval totalBuilderTime = 0;
     iTermCharacterAttributes characterAttributes = { 0 };
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
     int segmentLength = 0;
+    BOOL previousDrawable = YES;
 
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
@@ -1590,6 +1616,24 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                 continue;
             }
         }
+
+        if (likely(underlinedRange.length == 0) &&
+            likely(drawable == previousDrawable) &&
+            likely(i > indexRange.location) &&
+            [self character:&c isEquivalentToCharacter:&line[i-1]]) {
+            ++segmentLength;
+            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
+            if (drawable || (characterAttributes.underline && segmentLength == 1)) {
+                [self updateBuilder:builder
+                         withString:drawable ? charAsString : @" "
+                        orCharacter:code
+                          positions:positions
+                             offset:(i - indexRange.location) * _cellSize.width];
+            }
+            continue;
+        }
+        previousDrawable = drawable;
+
         [self getAttributesForCharacter:&c
                                 atIndex:i
                          forceTextColor:forceTextColor
@@ -1612,7 +1656,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                      combinedAttributesChanged:&combinedAttributesChanged]) {
             justSegmented = YES;
             
-            iTermPreciseTimerStart(&buildTimer);
+            iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
             NSMutableAttributedString *mutableAttributedString = builder.attributedString;
             if (previousCharacterAttributes.underline) {
                 [mutableAttributedString addAttribute:iTermUnderlineLengthAttribute
@@ -1620,7 +1664,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                 range:NSMakeRange(0, mutableAttributedString.length)];
             }
             segmentLength = 0;
-            totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
+            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
+            
             if (mutableAttributedString.length > 0) {
                 [attributedStrings addObject:mutableAttributedString];
             }
@@ -1631,8 +1676,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         previousImageAttributes = [[imageAttributes copy] autorelease];
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_SHOULD_SEGMENT]);
 
-        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_UPDATE_BUILDER]);
-        
+        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_COMBINE_ATTRIBUTES]);
         if (combinedAttributesChanged) {
             NSDictionary *combinedAttributes = [self dictionaryForCharacterAttributes:&characterAttributes];
             if (imageAttributes) {
@@ -1640,52 +1684,59 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             }
             [builder setAttributes:combinedAttributes];
         }
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_COMBINE_ATTRIBUTES]);
 
         if (drawable || (characterAttributes.underline && segmentLength == 1)) {
-            NSUInteger length;
-            if (!drawable) {
-                // Prevent 0-length attributed strings when an underline is
-                // present. If we get here's because there's an underline
-                // (which isn't quite obvious from the if statement's
-                // condition).
-                [builder appendCharacter:' '];
-                length = 1;
-            } else if (charAsString) {
-                [builder appendString:charAsString];
-                length = charAsString.length;
-            } else {
-                [builder appendCharacter:code];
-                length = 1;
-            }
-            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
-
-            
-            iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
-            // Append to positions.
-            CGFloat offset = (i - indexRange.location) * _cellSize.width;
-            for (NSUInteger j = 0; j < length; j++) {
-                CTVectorAppend(positions, offset);
-            }
-            iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
+            // Use " " when not drawable to prevent 0-length attributed strings when an underline is
+            // present. If we get here's because there's an underline (which isn't quite obvious
+            // from the if statement's condition).
+            [self updateBuilder:builder
+                     withString:drawable ? charAsString : @" "
+                    orCharacter:code
+                      positions:positions
+                         offset:(i - indexRange.location) * _cellSize.width];
         }
     }
     if (builder.length) {
-        iTermPreciseTimerStart(&buildTimer);
+        iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
         NSMutableAttributedString *mutableAttributedString = builder.attributedString;
         if (previousCharacterAttributes.underline) {
             [mutableAttributedString addAttribute:iTermUnderlineLengthAttribute
                                             value:@(segmentLength)
                                             range:NSMakeRange(0, mutableAttributedString.length)];
         }
-        totalBuilderTime += iTermPreciseTimerMeasure(&buildTimer);
+        iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
+
         if (mutableAttributedString.length > 0) {
             [attributedStrings addObject:mutableAttributedString];
         }
     }
-    iTermPreciseTimerStatsAccumulate(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING],
-                                     totalBuilderTime);
 
     return attributedStrings;
+}
+
+- (void)updateBuilder:(iTermMutableAttributedStringBuilder *)builder
+           withString:(NSString *)string
+          orCharacter:(unichar)code
+            positions:(CTVector(CGFloat) *)positions
+               offset:(CGFloat)offset {
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_UPDATE_BUILDER]);
+    NSUInteger length;
+    if (string) {
+        [builder appendString:string];
+        length = string.length;
+    } else {
+        [builder appendCharacter:code];
+        length = 1;
+    }
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_UPDATE_BUILDER]);
+
+    iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ADVANCES]);
+    // Append to positions.
+    for (NSUInteger j = 0; j < length; j++) {
+        CTVectorAppend(positions, offset);
+    }
+    iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
 }
 
 - (BOOL)useThinStrokes {
@@ -2250,7 +2301,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_SHOULD_SEGMENT]);
     iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_ADVANCES]);
     iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_UPDATE_BUILDER]);
-    
+    iTermPreciseTimerStatsRecordTimer(&_stats[TIMER_COMBINE_ATTRIBUTES]);
+
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_TOTAL_DRAW_RECT]);
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT]);
 }
