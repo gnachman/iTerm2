@@ -42,7 +42,6 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @end
 
 @interface iTermCheapAttributedString : NSObject<iTermAttributedString>
-#warning An unsafe unretained reference to the buffer internal to the builder. This only works by accident and I need to improve it.
 @property (nonatomic, readonly) unichar *characters;
 @property (nonatomic, readonly) NSDictionary *attributes;
 - (void)addAttribute:(NSString *)name value:(id)value;

@@ -10,12 +10,8 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
-#warning Use a dynamically sized buffer to avoid wasting memory. Never stop because you hit the max size.
-#define MAX_CHARACTERS 300
-
 @interface iTermCheapAttributedString()
-@property (nonatomic, assign) unichar *characters;
-@property (assign) NSUInteger length;
+@property (nonatomic, retain) NSMutableData *characterData;
 @property (nonatomic, retain) NSDictionary *attributes;
 @end
 
@@ -23,7 +19,16 @@
 
 - (void)dealloc {
     [_attributes release];
+    [_characterData release];
     [super dealloc];
+}
+
+- (unichar *)characters {
+    return _characterData.mutableBytes;
+}
+
+- (NSUInteger)length {
+    return _characterData.length / sizeof(unichar);
 }
 
 - (void)addAttribute:(NSString *)name value:(id)value {
@@ -47,15 +52,13 @@
 @implementation iTermMutableAttributedStringBuilder {
     id<iTermAttributedString> _attributedString;
     NSMutableString *_string;
-    unichar _characters[MAX_CHARACTERS];
-    NSInteger _numCharacters;
+    NSMutableData *_characterData;
     BOOL _canUseFastPath;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _string = [[NSMutableString alloc] init];
 #if ENABLE_TEXT_DRAWING_FAST_PATH
         _canUseFastPath = YES;
 #endif
@@ -80,15 +83,14 @@
 }
 
 - (void)build {
-    if (_canUseFastPath && !_attributedString && _numCharacters && !_string.length) {
+    if (_canUseFastPath && !_attributedString && _characterData.length / sizeof(unichar) && !_string.length) {
         iTermCheapAttributedString *cheap = [[iTermCheapAttributedString alloc] init];
-        cheap.characters = _characters;
-        cheap.length = _numCharacters;
+        cheap.characterData = _characterData;
         cheap.attributes = _attributes;
         _attributedString = cheap;
         return;
     }
-    if (_numCharacters) {
+    if (_characterData.length > 0) {
         [self flushCharacters];
     }
     if (_string.length) {
@@ -112,28 +114,35 @@
 
 - (void)appendString:(NSString *)string {
     _canUseFastPath = NO;
-    if (_numCharacters) {
+    if (_characterData.length > 0) {
         [self flushCharacters];
+    }
+    if (!_string) {
+        _string = [[NSMutableString alloc] init];
     }
     [_string appendString:string];
 }
 
 - (void)flushCharacters {
-    [_string appendString:[NSString stringWithCharacters:_characters length:_numCharacters]];
+    if (!_string) {
+        _string = [[NSMutableString alloc] init];
+    }
+    [_string appendString:[NSString stringWithCharacters:_characterData.mutableBytes length:_characterData.length / sizeof(unichar)]];
     _canUseFastPath = NO;
-    _numCharacters = 0;
+    [_characterData release];
+    _characterData = nil;
 }
 
 - (void)appendCharacter:(unichar)code {
     _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
-    if (_numCharacters == MAX_CHARACTERS) {
-        [self flushCharacters];
+    if (!_characterData) {
+        _characterData = [[NSMutableData alloc] init];
     }
-    _characters[_numCharacters++] = code;
+    [_characterData appendBytes:&code length:sizeof(unichar)];
 }
 
 - (NSInteger)length {
-    return _string.length + _attributedString.length + _numCharacters;
+    return _string.length + _attributedString.length + _characterData.length / sizeof(unichar);
 }
 
 @end
