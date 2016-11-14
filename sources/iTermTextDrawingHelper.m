@@ -37,6 +37,10 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
+// I couldn't get masking to work with fastpath, so for now just use the slow path for underlined
+// text (which should be rare, and hopefully renders just like the fastpath).
+#define ENABLE_FASTPATH_UNDERLINES 0
+
 static const int kBadgeMargin = 4;
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
@@ -1718,6 +1722,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         if (likely(underlinedRange.length == 0) &&
             likely(drawable == previousDrawable) &&
             likely(i > indexRange.location) &&
+#if !ENABLE_FASTPATH_UNDERLINES
+            likely(!c.underline) &&
+#endif
             [self character:&c isEquivalentToCharacter:&line[i-1]]) {
             ++segmentLength;
             iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
@@ -1772,6 +1779,11 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         ++segmentLength;
         memcpy(&previousCharacterAttributes, &characterAttributes, sizeof(previousCharacterAttributes));
         previousImageAttributes = [[imageAttributes copy] autorelease];
+#if !ENABLE_FASTPATH_UNDERLINES
+        if (characterAttributes.underline) {
+            [builder disableFastPath];
+        }
+#endif
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_SHOULD_SEGMENT]);
 
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_COMBINE_ATTRIBUTES]);

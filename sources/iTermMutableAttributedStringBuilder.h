@@ -38,6 +38,7 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 
 - (void)appendString:(NSString *)string;
 - (void)appendCharacter:(unichar)code;
+- (void)disableFastPath;
 
 @end
 

@@ -145,6 +145,10 @@
     return _string.length + _attributedString.length + _characterData.length / sizeof(unichar);
 }
 
+- (void)disableFastPath {
+    _canUseFastPath = NO;
+}
+
 @end
 
 @implementation NSMutableAttributedString(iTermMutableAttributedStringBuilder)
