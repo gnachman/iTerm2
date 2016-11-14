@@ -3,6 +3,7 @@
 #import "SessionView.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermPreferences.h"
 #import "NSView+iTerm.h"
@@ -47,6 +48,7 @@ static NSDate* lastResizeDate_;
     SessionTitleView *_title;
     
     BOOL _inAddSubview;
+    NSView *_subviewWithLayer;
 }
 
 + (double)titleHeight {
@@ -109,13 +111,45 @@ static NSDate* lastResizeDate_;
     [_currentAnnouncement dismiss];
     [_currentAnnouncement release];
     [_announcements release];
+    [_subviewWithLayer release];
     while (self.trackingAreas.count) {
         [self removeTrackingArea:self.trackingAreas[0]];
     }
     [super dealloc];
 }
 
+- (void)setUseSubviewWithLayer:(BOOL)useSubviewWithLayer {
+    if (useSubviewWithLayer == _useSubviewWithLayer) {
+        return;
+    }
+    _useSubviewWithLayer = useSubviewWithLayer;
+
+    if (!_subviewWithLayer && _useSubviewWithLayer) {
+        _subviewWithLayer = [[NSView alloc] initWithFrame:self.bounds];
+        _subviewWithLayer.wantsLayer = YES;
+        [_subviewWithLayer addSubview:_scrollview];
+        if (_currentAnnouncement.view) {
+            [_subviewWithLayer addSubview:_currentAnnouncement.view];
+        }
+        [_subviewWithLayer addSubview:_findView.view];
+        [self addSubview:_subviewWithLayer];
+    } else if (_subviewWithLayer && !_useSubviewWithLayer) {
+        [self addSubview:_scrollview];
+        if (_currentAnnouncement.view) {
+            [self addSubview:_currentAnnouncement.view];
+        }
+        [self addSubview:_findView.view];
+        [_subviewWithLayer removeFromSuperview];
+        [_subviewWithLayer release];
+        _subviewWithLayer = nil;
+    }
+}
+
 - (void)addSubview:(NSView *)aView {
+    if (_useSubviewWithLayer) {
+        [super addSubview:aView];
+        return;
+    }
     BOOL wasRunning = _inAddSubview;
     _inAddSubview = YES;
     if (!wasRunning && _findView && aView != [_findView view]) {
@@ -131,6 +165,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateLayout {
+    [_subviewWithLayer setFrame:self.bounds];
     if ([_delegate sessionViewShouldUpdateSubviewsFramesAutomatically]) {
         if (self.showTitle) {
             [self updateTitleFrame];
@@ -353,6 +388,7 @@ static NSDate* lastResizeDate_;
                                                                session:session
                                                               delegate:[MovePaneController sharedInstance]
                                                                   move:move];
+    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useLayers];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     [self addSubview:_splitSelectionView];
@@ -424,6 +460,7 @@ static NSDate* lastResizeDate_;
                                                                                0,
                                                                                frame.size.width,
                                                                                frame.size.height)];
+    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useLayers];
     [self addSubview:_splitSelectionView];
     [_splitSelectionView release];
     [[self window] orderFront:nil];

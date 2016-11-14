@@ -222,5 +222,6 @@ DEFINE_BOOL(experimentalKeyHandling, NO, @"Experimental Features: Improved suppo
 DEFINE_BOOL(hideStuckTooltips, NO, @"Experimental Features: Hide stuck tooltips.\nWhen you hide iTerm2 using a hotkey while a tooltip is fading out it gets stuck because of an OS bug. Work around it with a nasty hack by enabling this feature.")
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, NO, @"Experimental Features: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
 DEFINE_BOOL(openFileOverridesSendText, YES, @"Experimental Features: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed inl lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
+DEFINE_BOOL(useLayers, YES, @"Experimental Features: Use Core Animation layers for opaque terminal views");
 
 @end

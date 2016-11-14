@@ -1118,7 +1118,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _antiIdleTimer = nil;
     _newOutput = NO;
     [_view updateScrollViewFrame];
-
+    [self useTransparencyDidChange];
     return YES;
 }
 
@@ -2965,6 +2965,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Fit layout to window on session delegate change");
     [_tmuxController fitLayoutToWindows];
+    [self useTransparencyDidChange];
 }
 
 - (NSString*)name
@@ -3170,7 +3171,27 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self textview] setMinimumContrast:value];
 }
 
-// Changes transparency
+- (BOOL)viewShouldWantLayer {
+    if (![iTermAdvancedSettingsModel useLayers]) {
+        return NO;
+    }
+    if (!_delegate.realParentWindow || !_textview) {
+        return YES;
+    }
+    BOOL isTransparent = ([[_delegate realParentWindow] useTransparency] && [_textview transparency] > 0);
+    return !isTransparent;
+}
+
+- (void)useTransparencyDidChange {
+    // The view does not like getting replaced during the spin of the runloop during which it is created.
+    if (_view.window && _delegate.realParentWindow && _textview && self.viewShouldWantLayer != _view.useSubviewWithLayer) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (_view.window && _delegate.realParentWindow && _textview && self.viewShouldWantLayer != _view.useSubviewWithLayer) {
+                _view.useSubviewWithLayer = self.viewShouldWantLayer;
+            }
+        });
+    }
+}
 
 - (float)transparency
 {
@@ -3184,6 +3205,7 @@ ITERM_WEAKLY_REFERENCEABLE
         transparency = 0.9;
     }
     [_textview setTransparency:transparency];
+    [self useTransparencyDidChange];
 }
 
 - (float)blend {

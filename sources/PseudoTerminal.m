@@ -3128,6 +3128,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self allSessions]) {
+        [aSession useTransparencyDidChange];
         [[aSession view] setNeedsDisplay:YES];
     }
     [[self currentTab] recheckBlur];

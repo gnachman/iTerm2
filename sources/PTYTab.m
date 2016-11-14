@@ -763,6 +763,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
     [self updateFlexibleViewColors];
+    for (PTYSession *session in self.sessions) {
+        [session useTransparencyDidChange];
+    }
 }
 
 - (void)setFakeParentWindow:(FakeWindow *)theParent {

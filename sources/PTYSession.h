@@ -657,6 +657,8 @@ typedef enum {
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 
+- (void)useTransparencyDidChange;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;
