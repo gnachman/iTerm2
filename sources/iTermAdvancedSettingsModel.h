@@ -155,5 +155,6 @@
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;
 + (BOOL)openFileOverridesSendText;
++ (BOOL)useLayers;
 
 @end
