@@ -10,6 +10,7 @@
 #import "FindContext.h"
 #import "LineBufferHelpers.h"
 #import "RegexKitLite.h"
+#import "DebugLogging.h"
 
 NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
@@ -1147,12 +1148,15 @@ static int Search(NSString* needle,
                     toX:(int*)x
                     toY:(int*)y
 {
+    DLog(@"Entering convertPosition:%@ withWidth:%@", @(position), @(width));
     int i;
     *x = 0;
     *y = 0;
     int prev = start_offset;
+    DLog(@"Begin iterating %d cll entries and initialize y to 0", cll_entries);
     for (i = first_entry; i < cll_entries; ++i) {
         int eol = cumulative_line_lengths[i];
+        DLog(@"cll[%d]=%d", i, eol);
         int line_length = eol - prev;
         if (position >= eol) {
             // Get the number of full-width lines in the raw line. If there were
@@ -1163,18 +1167,26 @@ static int Search(NSString* needle,
                                           width,
                                           _mayHaveDoubleWidthCharacter);
             *y += spans + 1;
+            DLog(@"Skip past %d spans, advance *y to %d", spans, *y);
         } else {
+            DLog(@"Found the full line. Everything will be fine.");
             // The position we're searching for is in this (unwrapped) line.
             int bytes_to_consume_in_this_line = position - prev;
             int dwc_peek = 0;
-
+            DLog(@"Bytes to consume=%@, line length=%@ prev=%@, eol=%@",
+                 @(bytes_to_consume_in_this_line),
+                 @(line_length),
+                 @(prev),
+                 @(eol));
             // If the position is the left half of a double width char then include the right half in
             // the following call to NumberOfFullLines.
 
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
+                DLog(@"Hit the left half of a DWC?");
                 assert(prev + bytes_to_consume_in_this_line + 1 < buffer_size);
                 if (raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
+                    DLog(@"Advance to include the right half");
                     ++dwc_peek;
                 }
             }
@@ -1183,6 +1195,7 @@ static int Search(NSString* needle,
                                             width,
                                             _mayHaveDoubleWidthCharacter);
             *y += consume;
+            DLog(@"consume=%@, advance *y to %@", @(consume), @(*y));
             if (consume > 0) {
                 // Offset from prev where the consume'th line begin.
                 int offset = OffsetOfWrappedLine(raw_buffer + prev,
@@ -1190,6 +1203,7 @@ static int Search(NSString* needle,
                                                  line_length,
                                                  width,
                                                  _mayHaveDoubleWidthCharacter);
+                DLog(@"Offset is %@", @(offset));
                 // We know that position falls in this line. Set x to the number
                 // of chars after the beginning on the line. If there were only
                 // single-width chars the formula would be:

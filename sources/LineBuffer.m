@@ -30,6 +30,7 @@
 #import "LineBuffer.h"
 
 #import "BackgroundThread.h"
+#import "DebugLogging.h"
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
@@ -896,7 +897,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                   width:(int)width
                                      ok:(BOOL *)ok
 {
+    DLog(@"Entering coordinateForPosition:%@ width:%@ ok:&ok", position, @(width));
     if (position.absolutePosition == [self lastPos] + droppedChars) {
+        DLog(@"absolute position equals the very last position. droppedChars=%@", @(droppedChars));
         VT100GridCoord result;
         // If the absolute position is equal to the last position, then
         // numLinesWithWidth: will give the wrapped line number after all
@@ -920,26 +923,33 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         if (ok) {
             *ok = YES;
         }
+        DLog(@"Returning. This was easy");
         return result;
     }
     int i;
     int yoffset = 0;
     int p = position.absolutePosition - droppedChars;
+    DLog(@"Begin iterating blocks. p=%d", p);
     for (i = 0; p >= 0 && i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex:i];
         int used = [block rawSpaceUsed];
         if (p >= used) {
             p -= used;
             yoffset += [block getNumLinesWithWrapWidth:width];
+            DLog(@"p becomes %d", p);
         } else {
             int y;
             int x;
+            DLog(@"Found the block.");
             BOOL positionIsValid = [block convertPosition:p
                                                 withWidth:width
                                                       toX:&x
                                                       toY:&y];
+            DLog(@"convertPosition returned %@", @(positionIsValid));
             if (ok) {
                 *ok = positionIsValid;
+            } else {
+                DLog(@"fml convertPosition failed");
             }
             if (position.yOffset > 0) {
                 x = 0;

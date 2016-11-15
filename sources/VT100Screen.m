@@ -479,6 +479,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     NSMutableArray *altScreenNotes = nil;
 
     if (wasShowingAltScreen) {
+        DLog(@"Was showing alt screen");
         if (couldHaveSelection) {
             // In alternate screen mode, get the original positions of the
             // selection. Later this will be used to set the selection positions
@@ -594,18 +595,23 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
         // Convert ranges of notes to their new coordinates and replace the interval tree.
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
+        DLog(@"Checking interval tree");
         for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
+            DLog(@"Consider interval tree object: %@ with interval %@", note, note.entry.interval);
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
             if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
+                DLog(@"It has scrolled off the top. Its range is %@", VT100GridCoordRangeDescription(noteRange));
                 // note has scrolled off top
                 [intervalTree_ removeObject:note];
             } else {
+                DLog(@"Converting the range %@ to the new width %@", VT100GridCoordRangeDescription(noteRange), @(newSize.width));
                 if ([self convertRange:noteRange
                                toWidth:newSize.width
                                     to:&newRange
                           inLineBuffer:linebuffer_
                          tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+                    DLog(@"LGTM new range is %@", VT100GridCoordRangeDescription(newRange));
                     assert(noteRange.start.y >= 0);
                     assert(noteRange.end.y >= 0);
                     Interval *newInterval = [self intervalForGridCoordRange:newRange
@@ -614,6 +620,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                     [[note retain] autorelease];
                     [intervalTree_ removeObject:note];
                     [replacementTree addObject:note withInterval:newInterval];
+                } else {
+                    DLog(@"Shit that failed");
                 }
             }
         }
@@ -3480,6 +3488,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
                                                        oneLine:YES
                                                        ofClass:[iTermImageMark class]];
+    DLog(@"Add image mark %@ at absolute line %@, interval %@", mark, @(absLine), mark.entry.interval);
     mark.imageCode = @(c.code);
     [delegate_ screenNeedsRedraw];
 }
@@ -4122,6 +4131,7 @@ static void SwapInt(int *a, int *b) {
         inLineBuffer:(LineBuffer *)lineBuffer
        tolerateEmpty:(BOOL)tolerateEmpty {
     if (range.start.y < 0 || range.end.y < 0) {
+        DLog(@"Failing because range's start or end is negative");
         return NO;
     }
     LineBufferPositionRange *selectionRange;
@@ -4136,6 +4146,7 @@ static void SwapInt(int *a, int *b) {
         // One case where this happens is when the start and end of the range are past the last
         // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
         // null line.
+        DLog(@"position range is nil");
         return NO;
     }
 
@@ -4147,6 +4158,7 @@ static void SwapInt(int *a, int *b) {
                                                         width:newWidth
                                                            ok:&ok];
     if (ok) {
+        DLog(@"Converted range's end successfully");
         newEnd.x++;
         if (newEnd.x > newWidth) {
             newEnd.y++;
@@ -4154,6 +4166,8 @@ static void SwapInt(int *a, int *b) {
         }
         resultPtr->end = newEnd;
     } else {
+        DLog(@"Failed to convert selection range's end. It was %@", selectionRange.end);
+        
         // I'm not sure how to get here. It would happen if the endpoint of the selection could
         // be converted into a LineBufferPosition with the original width but that LineBufferPosition
         // could not be converted back into a VT100GridCoord with the new width.
@@ -4163,6 +4177,7 @@ static void SwapInt(int *a, int *b) {
     if (selectionRange.end.extendsToEndOfLine) {
         resultPtr->end.x = newWidth;
     }
+    DLog(@"Returning success");
     return YES;
 }
 
