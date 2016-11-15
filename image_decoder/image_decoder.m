@@ -53,7 +53,7 @@ int main(int argc, const char * argv[]) {
             syslog(LOG_ERR, "Failed to read: %s", [[exception debugDescription] UTF8String]);
             exit(1);
         }
-        
+
         NSImage *image = [[NSImage alloc] initWithData:data];
         if (!image) {
             syslog(LOG_ERR, "data did not produce valid image");
@@ -65,6 +65,16 @@ int main(int argc, const char * argv[]) {
         size_t count = CGImageSourceGetCount(source);
         NSImageRep *rep = [[image representations] firstObject];
         NSSize imageSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
+
+        if (imageSize.width == 0 && imageSize.height == 0) {
+            // PDFs can hit this case.
+            if (image.size.width != 0 && image.size.height != 0) {
+                imageSize = image.size;
+            } else {
+                syslog(LOG_ERR, "extracted image was 0x0");
+                exit(1);
+            }
+        }
         serializableImage.size = imageSize;
         
         if (count > 1) {
