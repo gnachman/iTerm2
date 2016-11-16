@@ -151,6 +151,8 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
+
+    int _secureInputCount;
 }
 
 // NSApplication delegate methods
@@ -1343,18 +1345,31 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)setSecureInput:(BOOL)secure {
+    if (secure && _secureInputCount > 0) {
+        ELog(@"Want to turn on secure input but it's already on");
+        return;
+    }
+
+    if (!secure && _secureInputCount == 0) {
+        ELog(@"Want to turn off secure input but it's already off");
+        return;
+    }
     DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
     if (secure) {
         OSErr err = EnableSecureEventInput();
         DLog(@"EnableSecureEventInput err=%d", (int)err);
         if (err) {
             NSLog(@"EnableSecureEventInput failed with error %d", (int)err);
+        } else {
+            ++_secureInputCount;
         }
     } else {
         OSErr err = DisableSecureEventInput();
         DLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
-            NSLog(@"DisableSecureEventInput failed with error %d", (int)err);
+            ELog(@"DisableSecureEventInput failed with error %d", (int)err);
+        } else {
+            --_secureInputCount;
         }
     }
     DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
