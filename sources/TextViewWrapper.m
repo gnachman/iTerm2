@@ -80,4 +80,14 @@
     }
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    NSLog(@"Text view wrapper setNeedsDisplay");
+    [super setNeedsDisplay:needsDisplay];
+}
+
+- (void)setNeedsDisplayInRect:(NSRect)invalidRect {
+    NSLog(@"Text view wrapper setNeedsDisplayInRect");
+    [super setNeedsDisplayInRect:invalidRect];
+}
+
 @end

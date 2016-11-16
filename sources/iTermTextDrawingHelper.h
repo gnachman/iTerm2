@@ -270,4 +270,6 @@
 // Draw timestamps. Returns the width of the widest timestamp.
 - (CGFloat)drawTimestamps;
 
+- (void)drawStripesInRect:(NSRect)rect;
+
 @end

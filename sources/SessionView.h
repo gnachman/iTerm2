@@ -33,6 +33,7 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
+@class iTermBottomMarginView;
 @class PTYSession;
 @class SplitSelectionView;
 @class SessionTitleView;
@@ -113,6 +114,9 @@
 // Make the textview the first responder
 - (void)sessionViewBecomeFirstResponder;
 
+// Height of bottom of textview that should be obscured.
+- (CGFloat)sessionViewBottomMarginHeight;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
@@ -125,6 +129,7 @@
 @property(nonatomic, assign) id<iTermSessionViewDelegate> delegate;
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, assign) BOOL useSubviewWithLayer;
+@property(nonatomic, readonly) iTermBottomMarginView *bottomMarginView;
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;

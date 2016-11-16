@@ -5,6 +5,7 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermBottomMarginView.h"
 #import "iTermPreferences.h"
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
@@ -14,6 +15,7 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "SessionTitleView.h"
+#import "SolidColorView.h"
 #import "SplitSelectionView.h"
 
 static int nextViewId;
@@ -91,6 +93,10 @@ static NSDate* lastResizeDate_;
                                                                       aRect.size.width,
                                                                       aRect.size.height)
                                        hasVerticalScroller:NO];
+
+        _bottomMarginView = [[iTermBottomMarginView alloc] init];
+        [_scrollview addFloatingSubview:_bottomMarginView forAxis:NSEventGestureAxisVertical];
+
         [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
 
         // assign the main view
@@ -191,6 +197,12 @@ static NSDate* lastResizeDate_;
             _scrollview.frame = frame;
         }
     }
+    _bottomMarginView.frame = self.frameForBottomMargin;
+}
+
+- (NSRect)frameForBottomMargin {
+    CGFloat bottomMarginHeight = _delegate.sessionViewBottomMarginHeight;
+    return NSMakeRect(0, 0, _scrollview.frame.size.width, bottomMarginHeight);
 }
 
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {

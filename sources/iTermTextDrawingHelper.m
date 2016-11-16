@@ -263,6 +263,14 @@ typedef struct iTermTextColorContext {
         NSFrameRect(rect);
     }
 
+    for (int i = 0; i < rectCount; i++) {
+        [[NSColor colorWithRed:arc4random_uniform(255) / 255.0
+                         green:arc4random_uniform(255) / 255.0
+                          blue:arc4random_uniform(255) / 255.0
+                         alpha:0.5] set];
+        NSFrameRectWithWidthUsingOperation(rectArray[i], 1, NSCompositeSourceOver);
+    }
+
     [_selectedFont release];
     _selectedFont = nil;
 }
@@ -359,8 +367,8 @@ typedef struct iTermTextColorContext {
     // Draw default background color over the line under the last drawn line so the tops of
     // characters aren't visible there. If there is an IME, that could be many lines tall.
     VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRect];
-    [self drawExcessAtLine:drawableCoordRange.end.y];
-    
+//    [self drawExcessAtLine:drawableCoordRange.end.y];
+
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect];
 
@@ -389,7 +397,7 @@ typedef struct iTermTextColorContext {
         }
     }
 
-    [self drawTopMargin];
+//    [self drawTopMargin];
 
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
@@ -485,59 +493,59 @@ typedef struct iTermTextColorContext {
     return [color colorWithAlphaComponent:alpha];
 }
 
-- (void)drawExcessAtLine:(int)line {
-    NSRect excessRect;
-    if (_numberOfIMELines) {
-        // Draw a default-color rectangle from below the last line of text to
-        // the bottom of the frame to make sure that IME offset lines are
-        // cleared when the screen is scrolled up.
-        excessRect.origin.x = 0;
-        excessRect.origin.y = line * _cellSize.height;
-        excessRect.size.width = _scrollViewContentSize.width;
-        excessRect.size.height = _frame.size.height - excessRect.origin.y;
-    } else  {
-        // Draw the excess bar at the bottom of the visible rect the in case
-        // that some other tab has a larger font and these lines don't fit
-        // evenly in the available space.
-        NSRect visibleRect = _visibleRect;
-        excessRect.origin.x = 0;
-        excessRect.origin.y = NSMaxY(visibleRect) - _excess;
-        excessRect.size.width = _scrollViewContentSize.width;
-        excessRect.size.height = _excess;
-    }
+//- (void)drawExcessAtLine:(int)line {
+//    NSRect excessRect;
+//    if (_numberOfIMELines) {
+//        // Draw a default-color rectangle from below the last line of text to
+//        // the bottom of the frame to make sure that IME offset lines are
+//        // cleared when the screen is scrolled up.
+//        excessRect.origin.x = 0;
+//        excessRect.origin.y = line * _cellSize.height;
+//        excessRect.size.width = _scrollViewContentSize.width;
+//        excessRect.size.height = _frame.size.height - excessRect.origin.y;
+//    } else  {
+//        // Draw the excess bar at the bottom of the visible rect the in case
+//        // that some other tab has a larger font and these lines don't fit
+//        // evenly in the available space.
+//        NSRect visibleRect = _visibleRect;
+//        excessRect.origin.x = 0;
+//        excessRect.origin.y = NSMaxY(visibleRect) - _excess;
+//        excessRect.size.width = _scrollViewContentSize.width;
+//        excessRect.size.height = _excess;
+//    }
+//
+//    [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect
+//                                   blendDefaultBackground:YES];
+//    
+//    if (_debug) {
+//        [[NSColor blueColor] set];
+//        NSBezierPath *path = [NSBezierPath bezierPath];
+//        [path moveToPoint:excessRect.origin];
+//        [path lineToPoint:NSMakePoint(NSMaxX(excessRect), NSMaxY(excessRect))];
+//        [path stroke];
+//        
+//        NSFrameRect(excessRect);
+//    }
+//    
+//    if (_showStripes) {
+//        [self drawStripesInRect:excessRect];
+//    }
+//}
 
-    [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect
-                                   blendDefaultBackground:YES];
-    
-    if (_debug) {
-        [[NSColor blueColor] set];
-        NSBezierPath *path = [NSBezierPath bezierPath];
-        [path moveToPoint:excessRect.origin];
-        [path lineToPoint:NSMakePoint(NSMaxX(excessRect), NSMaxY(excessRect))];
-        [path stroke];
-        
-        NSFrameRect(excessRect);
-    }
-    
-    if (_showStripes) {
-        [self drawStripesInRect:excessRect];
-    }
-}
-
-- (void)drawTopMargin {
-    // Draw a margin at the top of the visible area.
-    NSRect topMarginRect = _visibleRect;
-    topMarginRect.origin.y -=
-        MAX(0, VMARGIN - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
-
-    topMarginRect.size.height = VMARGIN;
-    [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
-                                   blendDefaultBackground:YES];
-
-    if (_showStripes) {
-        [self drawStripesInRect:topMarginRect];
-    }
-}
+//- (void)drawTopMargin {
+//    // Draw a margin at the top of the visible area.
+//    NSRect topMarginRect = _visibleRect;
+//    topMarginRect.origin.y -=
+//        MAX(0, VMARGIN - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
+//
+//    topMarginRect.size.height = VMARGIN;
+//    [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
+//                                   blendDefaultBackground:YES];
+//
+//    if (_showStripes) {
+//        [self drawStripesInRect:topMarginRect];
+//    }
+//}
 
 - (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
     NSRect leftMargin = NSMakeRect(0, y, MARGIN, _cellSize.height);
@@ -2286,7 +2294,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 #pragma mark - Coord/Rect Utilities
 
 - (NSRange)rangeOfVisibleRows {
-    int visibleRows = floor((_scrollViewContentSize.height - VMARGIN * 2) / _cellSize.height);
+    int visibleRows = ceil((_scrollViewContentSize.height - VMARGIN * 2) / _cellSize.height);
     CGFloat top = _scrollViewDocumentVisibleRect.origin.y;
     int firstVisibleRow = floor(top / _cellSize.height);
     if (firstVisibleRow < 0) {

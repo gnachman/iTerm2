@@ -1074,6 +1074,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
                                           colorMap:_colorMap];
+    _textview.bottomMarginView = _view.bottomMarginView;
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
@@ -7685,6 +7686,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewBecomeFirstResponder {
     [self.textview.window makeFirstResponder:self.textview];
+}
+
+- (CGFloat)sessionViewBottomMarginHeight {
+    return self.textview.excess;
 }
 
 @end

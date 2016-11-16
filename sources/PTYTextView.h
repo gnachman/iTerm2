@@ -15,6 +15,7 @@
 #include <sys/time.h>
 
 @class CRunStorage;
+@class iTermBottomMarginView;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
 @class iTermQuickLookController;
@@ -291,6 +292,13 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Returns the desired height of this view that exactly fits its contents.
 @property(nonatomic, readonly) CGFloat desiredHeight;
+
+// Height of bottom margin
+@property(nonatomic, readonly) double excess;
+
+// View that draws the bottom margin. Floats over this view. Must draw the background color, image,
+// and maybe stripes.
+@property(nonatomic, retain) iTermBottomMarginView *bottomMarginView;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

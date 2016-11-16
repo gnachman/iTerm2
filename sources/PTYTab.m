@@ -2484,7 +2484,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [term appendTab:theTab];
     [theTab didAddToTerminal:term
              withArrangement:arrangement];
-    return theTab;
+    for (PTYSession *session in theTab.sessions) {
+        [session useTransparencyDidChange];
+    }
+   return theTab;
 }
 
 // Uses idMap_ to reconstitute the TAB_ARRANGEMENT_SESSION elements of an arrangement including their

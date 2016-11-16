@@ -12,6 +12,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermAltScreenMouseScrollInferer.h"
 #import "iTermBadgeLabel.h"
+#import "iTermBottomMarginView.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermCPS.h"
@@ -129,7 +130,6 @@ static const int kDragThreshold = 3;
 // See issue 4048.
 @property(nonatomic, copy) NSString *savedSelectedText;
 @end
-
 
 @implementation PTYTextView {
     // -refresh does not want to be reentrant.
@@ -413,6 +413,7 @@ static const int kDragThreshold = 3;
     [_savedSelectedText release];
     [_keyBindingEmulator release];
     [_altScreenMouseScrollInferer release];
+    [_bottomMarginView release];
 
     [super dealloc];
 }
@@ -666,6 +667,20 @@ static const int kDragThreshold = 3;
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace
 {
     return [PTYTextView charSizeForFont:aFont horizontalSpacing:hspace verticalSpacing:vspace baseline:nil];
+}
+
+- (void)setBottomMarginView:(iTermBottomMarginView *)bottomMarginView {
+    _bottomMarginView.drawRect = nil;
+    [_bottomMarginView autorelease];
+    _bottomMarginView = bottomMarginView;
+    __unsafe_unretained __typeof(self) unretainedSelf = self;
+    _bottomMarginView.drawRect = ^(NSRect rect) {
+        [unretainedSelf.delegate textViewDrawBackgroundImageInView:unretainedSelf.bottomMarginView
+                                                          viewRect:rect
+                                            blendDefaultBackground:YES];
+    TODO: This needs to change its phase when scrolled up. Also, indicators need to be in a floating view.
+        [_drawingHelper drawStripesInRect:rect];
+    };
 }
 
 - (void)setFont:(NSFont*)aFont
@@ -1055,7 +1070,11 @@ static const int kDragThreshold = 3;
 }
 
 - (void)drawRect:(NSRect)rect {
-    BOOL savedCursorVisible = _drawingHelper.cursorVisible;
+    NSLog(@"draw %d-%d of %d", (int)((rect.origin.y - VMARGIN) / _lineHeight),
+          (int)((rect.origin.y + rect.size.height - VMARGIN) / _lineHeight),
+          (int)((self.frame.size.height - VMARGIN) / _lineHeight));
+
+          BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
     // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
     // recently hidden and what we're drawing is how the screen looked just before the cursor was
@@ -6764,6 +6783,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self updateScrollerForBackgroundColor];
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         [self recomputeBadgeLabel];
+        [_bottomMarginView setNeedsDisplay:YES];
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
     } else if (theKey == kColorMapSelection) {

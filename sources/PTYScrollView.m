@@ -86,6 +86,14 @@
 
 @end
 
+@interface PTYClipView : NSClipView
+@property (nonatomic) NSRect previousDocumentVisibleRect;
+@end
+
+@implementation PTYClipView
+@end
+
+
 @implementation PTYScrollView {
     // Used for working around Lion bug described in setHasVerticalScroller:inInit:
     NSDate *creationDate_;
@@ -95,6 +103,13 @@
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
+        self.contentView = [[[PTYClipView alloc] init] autorelease];
+        self.contentView.postsBoundsChangedNotifications = YES;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(boundsDidChangeNotification:)
+                                                     name:NSViewBoundsDidChangeNotification
+                                                   object:[self contentView]];
+
         [self setHasVerticalScroller:hasVerticalScroller inInit:YES];
 
         assert([self contentView] != nil);
@@ -117,6 +132,51 @@
     timer_ = nil;
 
     [super dealloc];
+}
+
+- (void)redrawSubviewsInRect:(NSRect)rect {
+    NSLog(@"Redraw %@", NSStringFromRect(rect));
+    [self.documentView setNeedsDisplayInRect:rect];
+    for (NSView *view in self.documentView.subviews) {
+        NSRect viewRect = [view convertRect:rect fromView:self.documentView];
+        [view setNeedsDisplayInRect:viewRect];
+    }
+}
+
+- (void)boundsDidChangeNotification:(NSNotification *)notification {
+    NSRect newDocumentVisibleRect = self.documentVisibleRect;
+    PTYClipView *clipView = (PTYClipView *)self.contentView;
+    NSRect lastDocumentVisibleRect = clipView.previousDocumentVisibleRect;
+    NSLog(@"Bounds changed (%f-%f) -> (%f-%f)",
+          lastDocumentVisibleRect.origin.y,
+          lastDocumentVisibleRect.origin.y + lastDocumentVisibleRect.size.height,
+          newDocumentVisibleRect.origin.y,
+          newDocumentVisibleRect.origin.y + newDocumentVisibleRect.size.height);
+    if (newDocumentVisibleRect.size.width == lastDocumentVisibleRect.size.width) {
+        CGFloat newMin = newDocumentVisibleRect.origin.y;
+        CGFloat newMax = CGRectGetMaxY(newDocumentVisibleRect);
+        CGFloat cleanMin = lastDocumentVisibleRect.origin.y;
+        CGFloat cleanMax = CGRectGetMaxY(lastDocumentVisibleRect);
+        NSArray *points = @[ @(newMin), @(cleanMin), @(newMax), @(cleanMax) ];
+        points = [points sortedArrayUsingSelector:@selector(compare:)];
+        __block CGFloat lastValue;
+        [points enumerateObjectsUsingBlock:^(id  _Nonnull number, NSUInteger idx, BOOL * _Nonnull stop) {
+            CGFloat value = [number doubleValue];
+            if (idx > 0) {
+                if (lastValue < cleanMin) {
+                    // Found a region above cleanMin that needs redrawing
+                    [self redrawSubviewsInRect:NSMakeRect(0, lastValue, newDocumentVisibleRect.size.width, value - lastValue)];
+                } else if (value > cleanMax) {
+                    // Found a region below cleanMax that needs redrawing
+                    CGFloat dirtyMin = MAX(cleanMax, lastValue);
+                    [self redrawSubviewsInRect:NSMakeRect(0, dirtyMin, newDocumentVisibleRect.size.width, value - dirtyMin)];
+                };
+            }
+            lastValue = value;
+        }];
+    }
+
+    clipView.previousDocumentVisibleRect = newDocumentVisibleRect;
 }
 
 - (NSString *)description {
