@@ -306,5 +306,11 @@ extern NSString *const kCurrentSessionDidChange;
 // Returns the preferred frame for the window if it were on a given screen.
 - (NSRect)canonicalFrameForScreen:(NSScreen *)screen;
 
+// Swap pane with another in that direction
+- (void)swapPaneLeft;
+- (void)swapPaneRight;
+- (void)swapPaneUp;
+- (void)swapPaneDown;
+
 @end
 

@@ -996,8 +996,10 @@ typedef struct iTermTextColorContext {
                                                inContext:ctx
                                          backgroundColor:backgroundColor];
         } else {
+            NSPoint offsetPoint = point;
+            offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
             numCellsDrawn = [self drawFastPathString:(iTermCheapAttributedString *)singlePartAttributedString
-                                             atPoint:point
+                                             atPoint:offsetPoint
                                            positions:subpositions
                                            inContext:ctx
                                      backgroundColor:backgroundColor];
@@ -1052,11 +1054,24 @@ typedef struct iTermTextColorContext {
                 inContext:(CGContextRef)ctx
           backgroundColor:(NSColor *)backgroundColor {
     CGGlyph glyphs[cheapString.length];
-    NSFont *font = cheapString.attributes[NSFontAttributeName];
-    NSColor *color = cheapString.attributes[NSForegroundColorAttributeName];
-    BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
-    BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
-    BOOL antiAlias = [cheapString.attributes[iTermAntiAliasAttribute] boolValue];
+    NSFont *const font = cheapString.attributes[NSFontAttributeName];
+    NSColor *const color = cheapString.attributes[NSForegroundColorAttributeName];
+    const BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
+    const BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
+    const BOOL antiAlias = [cheapString.attributes[iTermAntiAliasAttribute] boolValue];
+
+    CGContextSetShouldAntialias(ctx, antiAlias);
+
+    int savedFontSmoothingStyle = 0;
+    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
+    if (useThinStrokes) {
+        CGContextSetShouldSmoothFonts(ctx, YES);
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
+        CGContextSetFontSmoothingStyle(ctx, 16);
+    }
+
     BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
                                            cheapString.characters,
                                            glyphs,
@@ -1104,6 +1119,11 @@ typedef struct iTermTextColorContext {
     [[NSColor yellowColor] set];
     NSFrameRect(NSMakeRect(point.x + positions[0], point.y, positions[length - 1] - positions[0] + _cellSize.width, _cellSize.height));
 #endif
+
+    if (useThinStrokes) {
+        CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
+    }
+
     return length;
 }
 
@@ -1871,8 +1891,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     // Keep the underline a reasonable distance from the baseline.
     CGFloat underlineOffset = _underlineOffset;
     CGFloat distanceFromBaseline = underlineOffset - _baselineOffset;
-    if (distanceFromBaseline < 1.5) {
-        underlineOffset = _baselineOffset + 1.5;
+    if (distanceFromBaseline < 2) {
+        underlineOffset = _baselineOffset + 2;
     } else if (distanceFromBaseline > font.xHeight / 2) {
         underlineOffset = _baselineOffset + font.xHeight / 2;
     }
@@ -2396,7 +2416,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                       isComplex:NO
                                                      renderBold:&ignore1
                                                    renderItalic:&ignore2];
-    _asciiLigaturesAvailable = fontInfo.ligatureLevel > 0;
+    _asciiLigaturesAvailable = fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures;
 }
 
 - (void)startTiming {
