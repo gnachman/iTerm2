@@ -18,6 +18,7 @@
 @property(nonatomic, retain) PTYFontInfo *italicVersion;
 @property(nonatomic, retain) PTYFontInfo *boldItalicVersion;
 @property(nonatomic, readonly) NSInteger ligatureLevel;
+@property(nonatomic, readonly) BOOL hasDefaultLigatures;
 
 + (PTYFontInfo *)fontInfoWithFont:(NSFont *)font;
 

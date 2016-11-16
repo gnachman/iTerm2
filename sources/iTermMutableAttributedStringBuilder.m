@@ -89,6 +89,9 @@
         cheap.attributes = _attributes;
         _attributedString = cheap;
         return;
+    } else if ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]) {
+        [_attributedString release];
+        _attributedString = nil;
     }
     if (_characterData.length > 0) {
         [self flushCharacters];

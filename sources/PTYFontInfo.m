@@ -40,6 +40,7 @@
     // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
     // you ligatures whether you like it or not.
     static NSDictionary *fontNameToLigatureLevel;
+    static NSSet *fontsWithDefaultLigatures;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         fontNameToLigatureLevel = @{ @"PragmataPro": @1,
@@ -67,9 +68,15 @@
                                      @"OperatorMono-MediumItalic": @1,
                                      @"OperatorMono-Bold": @1,
                                      @"OperatorMono-BoldItalic": @1 };
+        fontsWithDefaultLigatures = [[NSSet setWithArray:@[ @"FiraCode-Bold",
+                                                            @"FiraCode-Light",
+                                                            @"FiraCode-Medium",
+                                                            @"FiraCode-Regular",
+                                                            @"FiraCode-Retina" ]] retain];
         [fontNameToLigatureLevel retain];
     });
     _ligatureLevel = [fontNameToLigatureLevel[font.fontName] integerValue];
+    _hasDefaultLigatures = [fontsWithDefaultLigatures containsObject:font.fontName];
 
     _baselineOffset = [self computedBaselineOffset];
     _underlineOffset = [self computedUnderlineOffset];

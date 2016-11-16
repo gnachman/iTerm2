@@ -996,8 +996,10 @@ typedef struct iTermTextColorContext {
                                                inContext:ctx
                                          backgroundColor:backgroundColor];
         } else {
+            NSPoint offsetPoint = point;
+            offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
             numCellsDrawn = [self drawFastPathString:(iTermCheapAttributedString *)singlePartAttributedString
-                                             atPoint:point
+                                             atPoint:offsetPoint
                                            positions:subpositions
                                            inContext:ctx
                                      backgroundColor:backgroundColor];
@@ -2414,7 +2416,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                       isComplex:NO
                                                      renderBold:&ignore1
                                                    renderItalic:&ignore2];
-    _asciiLigaturesAvailable = fontInfo.ligatureLevel > 0;
+    _asciiLigaturesAvailable = fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures;
 }
 
 - (void)startTiming {
