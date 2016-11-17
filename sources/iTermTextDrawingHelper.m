@@ -528,7 +528,7 @@ typedef struct iTermTextColorContext {
 //    }
 //    
 //    if (_showStripes) {
-//        [self drawStripesInRect:excessRect];
+//        [self drawStripesInRect:excessRect phaseShift:NSZeroPoint];
 //    }
 //}
 
@@ -543,7 +543,7 @@ typedef struct iTermTextColorContext {
 //                                   blendDefaultBackground:YES];
 //
 //    if (_showStripes) {
-//        [self drawStripesInRect:topMarginRect];
+//        [self drawStripesInRect:topMarginRect phaseShift:NSZeroPoint];
 //    }
 //}
 
@@ -565,7 +565,7 @@ typedef struct iTermTextColorContext {
     [self drawMarkIfNeededOnLine:line leftMarginRect:leftMargin];
 }
 
-- (void)drawStripesInRect:(NSRect)rect {
+- (void)drawStripesInRect:(NSRect)rect phaseShift:(NSPoint)phaseShift {
     if (!_backgroundStripesImage) {
         _backgroundStripesImage = [[NSImage imageNamed:@"BackgroundStripes"] retain];
     }
@@ -573,7 +573,7 @@ typedef struct iTermTextColorContext {
     [color set];
 
     [NSGraphicsContext saveGraphicsState];
-    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0, 0)];
+    [[NSGraphicsContext currentContext] setPatternPhase:phaseShift];
     NSRectFillUsingOperation(rect, NSCompositeSourceOver);
     [NSGraphicsContext restoreGraphicsState];
 }
@@ -586,7 +586,7 @@ typedef struct iTermTextColorContext {
 
     // Draw red stripes in the background if sending input to all sessions
     if (_showStripes) {
-        [self drawStripesInRect:bgRect];
+        [self drawStripesInRect:bgRect phaseShift:NSZeroPoint];
     }
 
     // Highlight cursor line if the cursor is on this line and it's on.

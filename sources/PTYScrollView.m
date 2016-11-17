@@ -98,6 +98,7 @@
     // Used for working around Lion bug described in setHasVerticalScroller:inInit:
     NSDate *creationDate_;
     NSTimer *timer_;
+    NSMutableArray<NSView *> *_floatingSubviews;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
@@ -129,6 +130,7 @@
 - (void)dealloc {
     [creationDate_ release];
     [timer_ invalidate];
+    [_floatingSubviews release];
     timer_ = nil;
 
     [super dealloc];
@@ -144,6 +146,11 @@
 }
 
 - (void)boundsDidChangeNotification:(NSNotification *)notification {
+    if (self.contentView.copiesOnScroll) {
+        [self redrawSubviewsInRect:self.documentVisibleRect];
+        [self redrawFloatingSubviews];
+        return;
+    }
     NSRect newDocumentVisibleRect = self.documentVisibleRect;
     PTYClipView *clipView = (PTYClipView *)self.contentView;
     NSRect lastDocumentVisibleRect = clipView.previousDocumentVisibleRect;
@@ -177,6 +184,21 @@
     }
 
     clipView.previousDocumentVisibleRect = newDocumentVisibleRect;
+    [self redrawFloatingSubviews];
+}
+
+- (void)redrawFloatingSubviews {
+    for (NSView *view in _floatingSubviews) {
+        [view setNeedsDisplay:YES];
+    }
+}
+
+- (void)addFloatingSubview:(NSView *)view forAxis:(NSEventGestureAxis)axis {
+    [super addFloatingSubview:view forAxis:axis];
+    if (!_floatingSubviews) {
+        _floatingSubviews = [[NSMutableArray alloc] init];
+    }
+    [_floatingSubviews addObject:view];
 }
 
 - (NSString *)description {

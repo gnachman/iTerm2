@@ -3135,6 +3135,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_shell tty];
 }
 
+- (void)setBackgroundImage:(NSImage *)backgroundImage {
+    [_backgroundImage autorelease];
+    _backgroundImage = [backgroundImage retain];
+    _view.scrollview.contentView.copiesOnScroll = (backgroundImage != nil);
+}
+
 - (void)setBackgroundImageTiled:(BOOL)set
 {
     _backgroundImageTiled = set;
@@ -5642,8 +5648,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_delegate sessionIsActiveInTab:self];
 }
 
-- (BOOL)textViewSessionIsBroadcastingInput
-{
+- (BOOL)textViewSessionIsBroadcastingInput {
     return [[_delegate realParentWindow] broadcastInputToSession:self];
 }
 

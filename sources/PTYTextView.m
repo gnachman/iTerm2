@@ -678,8 +678,18 @@ static const int kDragThreshold = 3;
         [unretainedSelf.delegate textViewDrawBackgroundImageInView:unretainedSelf.bottomMarginView
                                                           viewRect:rect
                                             blendDefaultBackground:YES];
-    TODO: This needs to change its phase when scrolled up. Also, indicators need to be in a floating view.
-        [_drawingHelper drawStripesInRect:rect];
+
+        if (unretainedSelf.shouldShowStripes) {
+            CGFloat visibleBottom = NSMaxY(self.enclosingScrollView.contentView.bounds);
+            CGFloat limit = NSMaxY(self.enclosingScrollView.documentView.frame);
+            CGFloat dy = limit - visibleBottom;
+            NSRect noMarginsRect = NSMakeRect(MARGIN,
+                                              0,
+                                              unretainedSelf.bottomMarginView.bounds.size.width - MARGIN * 2,
+                                              unretainedSelf.bottomMarginView.bounds.size.height);
+            rect = NSIntersectionRect(rect, noMarginsRect);
+            [_drawingHelper drawStripesInRect:rect phaseShift:NSMakePoint(0, -dy)];
+        }
     };
 }
 
@@ -950,6 +960,12 @@ static const int kDragThreshold = 3;
     return [self updateDirtyRects] || [self isCursorBlinking];
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [super setNeedsDisplay:needsDisplay];
+    PTYScrollView *scrollView = (PTYScrollView *)[self enclosingScrollView];
+    [scrollView redrawFloatingSubviews];
+}
+
 - (void)setNeedsDisplayOnLine:(int)line
 {
     [self setNeedsDisplayOnLine:line inRange:VT100GridRangeMake(0, _dataSource.width)];
@@ -1069,6 +1085,11 @@ static const int kDragThreshold = 3;
     return _primaryFont.underlineOffset;
 }
 
+- (BOOL)shouldShowStripes {
+    return (_showStripesWhenBroadcastingInput &&
+            [_delegate textViewSessionIsBroadcastingInput]);
+}
+
 - (void)drawRect:(NSRect)rect {
     NSLog(@"draw %d-%d of %d", (int)((rect.origin.y - VMARGIN) / _lineHeight),
           (int)((rect.origin.y + rect.size.height - VMARGIN) / _lineHeight),
@@ -1084,8 +1105,7 @@ static const int kDragThreshold = 3;
         _drawingHelper.cursorVisible = YES;
     }
 
-    _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
-                                  [_delegate textViewSessionIsBroadcastingInput]);
+    _drawingHelper.showStripes = [self shouldShowStripes];
     _drawingHelper.cursorBlinking = [self isCursorBlinking];
     _drawingHelper.excess = [self excess];
     _drawingHelper.selection = _selection;

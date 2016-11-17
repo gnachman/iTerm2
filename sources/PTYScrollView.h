@@ -49,4 +49,6 @@
 // integer.
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent;
 
+- (void)redrawFloatingSubviews;
+
 @end

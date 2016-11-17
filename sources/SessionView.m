@@ -102,9 +102,7 @@ static NSDate* lastResizeDate_;
         // assign the main view
         [self addSubview:_scrollview];
 
-        // setCopiesOnScroll is off because there is a top and bottom margin in the PTYTextView and
-        // we would not want that copied.
-        [[_scrollview contentView] setCopiesOnScroll:NO];
+        [[_scrollview contentView] setCopiesOnScroll:YES];
     }
     return self;
 }

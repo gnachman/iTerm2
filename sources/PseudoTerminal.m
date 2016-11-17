@@ -1603,8 +1603,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)broadcastInputToSession:(PTYSession *)session
-{
+- (BOOL)broadcastInputToSession:(PTYSession *)session {
     switch ([self broadcastMode]) {
         case BROADCAST_OFF:
             return NO;
@@ -5670,13 +5669,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return [NSDate dateWithTimeIntervalSince1970:lastResizeTime_];
 }
 
-- (BroadcastMode)broadcastMode
-{
+- (BroadcastMode)broadcastMode {
     if ([[self currentTab] isBroadcasting]) {
-                    return BROADCAST_TO_ALL_PANES;
-        } else {
-                    return broadcastMode_;
-        }
+        return BROADCAST_TO_ALL_PANES;
+    } else {
+        return broadcastMode_;
+    }
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode
@@ -5693,15 +5691,18 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (mode == BROADCAST_TO_ALL_PANES) {
-            [[self currentTab] setBroadcasting:YES];
-            mode = BROADCAST_OFF;
+        [[self currentTab] setBroadcasting:YES];
+        mode = BROADCAST_OFF;
     } else {
-            [[self currentTab] setBroadcasting:NO];
+        [[self currentTab] setBroadcasting:NO];
     }
     broadcastMode_ = mode;
-        [self setDimmingForSessions];
+    [self setDimmingForSessions];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
+    for (PTYSession *session in self.currentTab.sessions) {
+        [session.textview setNeedsDisplay:YES];
+    }
 }
 
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session
