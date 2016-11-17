@@ -117,6 +117,8 @@
 // Height of bottom of textview that should be obscured.
 - (CGFloat)sessionViewBottomMarginHeight;
 
+- (void)sessionViewDidLayoutSubviews;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

@@ -7706,4 +7706,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.textview.excess;
 }
 
+- (void)sessionViewDidLayoutSubviews {
+    [self useTransparencyDidChange];
+}
+
 @end

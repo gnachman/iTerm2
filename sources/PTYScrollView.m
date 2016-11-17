@@ -146,10 +146,12 @@
 }
 
 - (void)boundsDidChangeNotification:(NSNotification *)notification {
+    if (!self.layer) {
+        return;
+    }
     if (!self.contentView.copiesOnScroll) {
         [self redrawSubviewsInRect:self.documentVisibleRect];
         [self redrawFloatingSubviews];
-        return;
     }
     NSRect newDocumentVisibleRect = self.documentVisibleRect;
     PTYClipView *clipView = (PTYClipView *)self.contentView;

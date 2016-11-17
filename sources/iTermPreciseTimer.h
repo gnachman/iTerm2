@@ -23,7 +23,7 @@ typedef struct {
     double m2;
 } iTermPreciseTimerStats;
 
-#define ENABLE_PRECISE_TIMERS 0
+#define ENABLE_PRECISE_TIMERS 1
 
 #if ENABLE_PRECISE_TIMERS
 void iTermPreciseTimerStart(iTermPreciseTimer *timer);

@@ -196,6 +196,8 @@ static NSDate* lastResizeDate_;
         }
     }
     _bottomMarginView.frame = self.frameForBottomMargin;
+
+    [_delegate sessionViewDidLayoutSubviews];
 }
 
 - (NSRect)frameForBottomMargin {
