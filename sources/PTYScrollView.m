@@ -146,7 +146,7 @@
 }
 
 - (void)boundsDidChangeNotification:(NSNotification *)notification {
-    if (self.contentView.copiesOnScroll) {
+    if (!self.contentView.copiesOnScroll) {
         [self redrawSubviewsInRect:self.documentVisibleRect];
         [self redrawFloatingSubviews];
         return;

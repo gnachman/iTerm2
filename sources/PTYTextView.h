@@ -166,6 +166,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewResizeFrameIfNeeded;
 
 - (NSInteger)textViewUnicodeVersion;
+- (void)textViewBadgeLabelDidChange;
 
 @end
 

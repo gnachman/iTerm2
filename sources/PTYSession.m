@@ -3138,7 +3138,12 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setBackgroundImage:(NSImage *)backgroundImage {
     [_backgroundImage autorelease];
     _backgroundImage = [backgroundImage retain];
-    _view.scrollview.contentView.copiesOnScroll = (backgroundImage != nil);
+    [self updateCopiesOnScroll];
+}
+
+- (void)updateCopiesOnScroll {
+    _view.scrollview.contentView.copiesOnScroll = (_backgroundImage == nil &&
+                                                   _badgeFormat.length == 0);
 }
 
 - (void)setBackgroundImageTiled:(BOOL)set
@@ -5925,6 +5930,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSInteger)textViewUnicodeVersion {
     return _unicodeVersion;
+}
+
+- (void)textViewBadgeLabelDidChange {
+    [self updateCopiesOnScroll];
 }
 
 - (void)sendEscapeSequence:(NSString *)text

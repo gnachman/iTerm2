@@ -5177,6 +5177,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _drawingHelper.badgeImage = _badgeLabel.image;
         [self setNeedsDisplay:YES];
     }
+    [_delegate textViewBadgeLabelDidChange];
 }
 
 - (BOOL)growSelectionLeft {
