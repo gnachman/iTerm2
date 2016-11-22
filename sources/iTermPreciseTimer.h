@@ -57,6 +57,7 @@ static inline NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) 
 static inline void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, char *name) { }
 static inline void iTermPreciseTimerStatsStartTimer(iTermPreciseTimerStats *stats) { }
 static inline void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) { }
+static inline void iTermPreciseTimerStatsMeasureAndAccumulate(iTermPreciseTimerStats *stats) { }
 static inline void iTermPreciseTimerStatsRecordTimer(iTermPreciseTimerStats *stats) { }
 
 static inline void iTermPreciseTimerStatsAccumulate(iTermPreciseTimerStats *stats) { }
