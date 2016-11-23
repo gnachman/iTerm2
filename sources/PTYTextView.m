@@ -122,6 +122,7 @@ static const int kDragThreshold = 3;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, retain) iTermQuickLookController *quickLookController;
+@property (strong, readwrite, nullable) NSTouchBar *touchBar;
 
 // Set when a context menu opens, nilled when it closes. If the data source changes between when we
 // ask the context menu to open and when the main thread enters a tracking runloop, the text under
@@ -7227,6 +7228,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying {
     [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
+}
+
+#pragma mark - NSTouchBarProvider
+
+- (NSTouchBar *)makeTouchBar {
+    if (!_touchBar) {
+        _touchBar = [_delegate textViewTouchBar];
+    }
+    return _touchBar;
 }
 
 @end

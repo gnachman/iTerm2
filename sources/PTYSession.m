@@ -196,7 +196,9 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     iTermAutomaticProfileSwitcherDelegate,
     iTermHotKeyNavigableSession,
     iTermPasteHelperDelegate,
-    iTermSessionViewDelegate>
+    iTermSessionViewDelegate,
+    NSTouchBarProvider,
+    NSTouchBarDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 
@@ -5921,6 +5923,18 @@ ITERM_WEAKLY_REFERENCEABLE
     return _unicodeVersion;
 }
 
+- (NSTouchBar *)textViewTouchBar {
+    NSTouchBar *touchBar = [[NSTouchBar alloc] init];
+    touchBar.delegate = self;
+    touchBar.customizationIdentifier = self.profile[KEY_GUID];
+    touchBar.defaultItemIdentifiers = @[ NSTouchBarItemIdentifierFlexibleSpace,
+                                         NSTouchBarItemIdentifierOtherItemsProxy ];
+    NSArray *ids = @[ NSTouchBarItemIdentifierFlexibleSpace ];
+    ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:self.profile[KEY_TOUCHBAR_MAP]]];
+    touchBar.customizationAllowedItemIdentifiers = ids;
+    return touchBar;
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {
@@ -7685,6 +7699,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewBecomeFirstResponder {
     [self.textview.window makeFirstResponder:self.textview];
+}
+
+#pragma mark - NSTouchBarDelegate
+
+- (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
+    NSDictionary *map = [iTermKeyBindingMgr touchBarItemsForProfile:self.profile];
+    NSDictionary *binding = map[identifier];
+    NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:identifier];
+    item.view = [NSTextField labelWithString:[iTermKeyBindingMgr formatAction:binding]];
+    item.customizationLabel = [iTermKeyBindingMgr formatAction:binding];
+    return item;
 }
 
 @end

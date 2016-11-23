@@ -86,7 +86,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 }
 
 - (NSArray *)keysForBulkCopy {
-    NSArray *keys = @[ KEY_KEYBOARD_MAP ];
+    NSArray *keys = @[ KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_OPTION_KEY_SENDS, KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
@@ -212,8 +212,25 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     return [iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile];
 }
 
+- (NSArray *)keyMappingSortedTouchBarKeys:(iTermKeyMappingViewController *)viewController {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    if (!profile) {
+        return nil;
+    }
+    return [iTermKeyBindingMgr sortedTouchBarItemsForProfile:profile];
+}
+
+- (NSDictionary *)keyMappingTouchBarItems {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    if (!profile) {
+        return nil;
+    }
+    return [iTermKeyBindingMgr touchBarItemsForProfile:profile];
+}
+
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
- didChangeKeyCombo:(NSString *)keyCombo
+      didChangeKey:(NSString *)keyCombo
+    isTouchBarItem:(BOOL)isTouchBarItem
            atIndex:(NSInteger)index
           toAction:(int)action
          parameter:(NSString *)parameter
@@ -221,19 +238,23 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
-    
-    if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyCombo]) {
-        if (![self warnAboutOverride]) {
-            return;
+
+    if (isTouchBarItem) {
+        [iTermKeyBindingMgr setTouchBarItemWithKey:keyCombo toAction:action value:parameter inProfile:dict];
+    } else {
+        if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyCombo]) {
+            if (![self warnAboutOverride]) {
+                return;
+            }
         }
+        
+        [iTermKeyBindingMgr setMappingAtIndex:index
+                                       forKey:keyCombo
+                                       action:action
+                                        value:parameter
+                                    createNew:addition
+                                   inBookmark:dict];
     }
-    
-    [iTermKeyBindingMgr setMappingAtIndex:index
-                                   forKey:keyCombo
-                                   action:action
-                                    value:parameter
-                                createNew:addition
-                               inBookmark:dict];
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
@@ -241,25 +262,29 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                                         object:nil];
 }
 
-
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-    removeKeyCombo:(NSString *)keyCombo {
-    
+         removeKey:(NSString *)keyCombo
+    isTouchBarItem:(BOOL)isTouchBarItem {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
     
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
-    NSUInteger index =
-        [[iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile] indexOfObject:keyCombo];
-    assert(index != NSNotFound);
-    
-    [iTermKeyBindingMgr removeMappingAtIndex:index inBookmark:dict];
+    if (isTouchBarItem) {
+        [iTermKeyBindingMgr removeTouchBarItemWithKey:keyCombo inMutableProfile:dict];
+    } else {
+        NSUInteger index =
+            [[iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile] indexOfObject:keyCombo];
+        assert(index != NSNotFound);
+        
+        [iTermKeyBindingMgr removeMappingAtIndex:index inBookmark:dict];
+    }
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil];
 }
+
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
     return [iTermKeyBindingMgr presetKeyMappingsNames];

@@ -79,3 +79,7 @@ BOOL IsMavericksOrLater(void) {
 BOOL IsYosemiteOrLater(void) {
     return SystemVersionIsGreaterOrEqualTo(10, 10, 0);
 }
+
+BOOL IsTouchBarAvailable(void) {
+    return SystemVersionIsGreaterOrEqualTo(10, 12, 1);
+}

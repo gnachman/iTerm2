@@ -15,16 +15,21 @@
 - (NSDictionary *)keyMappingDictionary:(iTermKeyMappingViewController *)viewController;
 
 - (NSArray *)keyMappingSortedKeys:(iTermKeyMappingViewController *)viewController;
+- (NSArray *)keyMappingSortedTouchBarKeys:(iTermKeyMappingViewController *)viewController;
+
+- (NSDictionary *)keyMappingTouchBarItems;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-    didChangeKeyCombo:(NSString *)keyCombo
-              atIndex:(NSInteger)index
-             toAction:(int)action
-            parameter:(NSString *)parameter
-           isAddition:(BOOL)addition;
+      didChangeKey:(NSString *)keyCombo
+    isTouchBarItem:(BOOL)isTouchBarItem
+           atIndex:(NSInteger)index
+          toAction:(int)action
+         parameter:(NSString *)parameter
+        isAddition:(BOOL)addition;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-    removeKeyCombo:(NSString *)keyCombo;
+         removeKey:(NSString *)keyCombo
+    isTouchBarItem:(BOOL)isTouchBarItem;
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController;
 

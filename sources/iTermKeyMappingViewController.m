@@ -11,9 +11,7 @@
 #import "iTermEditKeyActionWindowController.h"
 #import "PreferencePanel.h"
 
-@interface iTermKeyMappingViewController ()
-
-@end
+static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 @implementation iTermKeyMappingViewController {
     IBOutlet NSTableView *_tableView;
@@ -69,22 +67,37 @@
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     NSDictionary *dict = [_delegate keyMappingDictionary:self];
-    return [dict count];
+    return [dict count] + [[_delegate keyMappingTouchBarItems] count];
 }
 
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
                           row:(NSInteger)rowIndex {
     NSDictionary *dict = [_delegate keyMappingDictionary:self];
-    NSArray *sortedKeys = [_delegate keyMappingSortedKeys:self];
-    NSString *keyCombination = sortedKeys[rowIndex];
+    if (rowIndex < dict.count) {
+        NSArray *sortedKeys = [_delegate keyMappingSortedKeys:self];
+        NSString *keyCombination = sortedKeys[rowIndex];
 
-    if (aTableColumn == _keyCombinationColumn) {
-        return [iTermKeyBindingMgr formatKeyCombination:keyCombination];
-    } else if (aTableColumn == _actionColumn) {
-        return [iTermKeyBindingMgr formatAction:dict[keyCombination]];
+        if (aTableColumn == _keyCombinationColumn) {
+            return [iTermKeyBindingMgr formatKeyCombination:keyCombination];
+        } else if (aTableColumn == _actionColumn) {
+            return [iTermKeyBindingMgr formatAction:dict[keyCombination]];
+        } else {
+            return nil;
+        }
     } else {
-        return nil;
+        rowIndex -= dict.count;
+        dict = [_delegate keyMappingTouchBarItems];
+        NSArray *sortedKeys = [_delegate keyMappingSortedTouchBarKeys:self];
+        NSString *key = sortedKeys[rowIndex];
+
+        if (aTableColumn == _keyCombinationColumn) {
+            return @"Touch Bar Item";
+        } else if (aTableColumn == _actionColumn) {
+            return [iTermKeyBindingMgr formatAction:dict[key]];
+        } else {
+            return nil;
+        }
     }
 }
 
@@ -104,7 +117,8 @@
               contextInfo:(iTermEditKeyActionWindowController *)editActionWindowController {
     if (editActionWindowController.ok) {
         [_delegate keyMapping:self
-            didChangeKeyCombo:editActionWindowController.currentKeyCombination
+                 didChangeKey:editActionWindowController.isTouchBarItem ? editActionWindowController.touchBarItemID : editActionWindowController.currentKeyCombination
+               isTouchBarItem:editActionWindowController.isTouchBarItem
                       atIndex:[_tableView selectedRow]
                      toAction:editActionWindowController.action
                     parameter:editActionWindowController.parameterValue
@@ -130,8 +144,17 @@
 
 #pragma mark - Actions
 
-- (IBAction)addNewMapping:(id)sender
-{
+- (IBAction)addTouchBarItem:(id)sender {
+    iTermEditKeyActionWindowController *editActionWindowController;
+    editActionWindowController = [[[iTermEditKeyActionWindowController alloc] init] autorelease];
+    editActionWindowController.isNewMapping = YES;
+    editActionWindowController.isTouchBarItem = YES;
+    editActionWindowController.touchBarItemID = [iTermTouchBarIDPrefix stringByAppendingString:[NSString uuid]];
+    editActionWindowController.action = KEY_ACTION_IGNORE;
+    [self presentEditActionSheet:editActionWindowController];
+}
+
+- (IBAction)addNewMapping:(id)sender {
     iTermEditKeyActionWindowController *editActionWindowController;
     editActionWindowController = [[[iTermEditKeyActionWindowController alloc] init] autorelease];
     editActionWindowController.isNewMapping = YES;
@@ -147,7 +170,13 @@
         return;
     }
     NSArray *sortedKeys = [_delegate keyMappingSortedKeys:self];
-    [_delegate keyMapping:self removeKeyCombo:sortedKeys[row]];
+    if (row < sortedKeys.count) {
+        [_delegate keyMapping:self removeKey:sortedKeys[row] isTouchBarItem:NO];
+    } else {
+        row -= sortedKeys.count;
+        sortedKeys = [_delegate keyMappingSortedTouchBarKeys:self];
+        [_delegate keyMapping:self removeKey:sortedKeys[row] isTouchBarItem:YES];
+    }
     [_tableView reloadData];
 }
 
@@ -160,14 +189,28 @@
 
     NSDictionary *dict = [_delegate keyMappingDictionary:self];
     NSArray *sortedKeys = [_delegate keyMappingSortedKeys:self];
-    NSString *keyCombination = sortedKeys[rowIndex];
-
+    NSString *selectedKey;
+    BOOL isTouchBarItem = NO;
+    if (rowIndex < sortedKeys.count) {
+        selectedKey = sortedKeys[rowIndex];
+    } else {
+        isTouchBarItem = YES;
+        rowIndex -= sortedKeys.count;
+        sortedKeys = [_delegate keyMappingSortedTouchBarKeys:self];
+        selectedKey = sortedKeys[rowIndex];
+        dict = [_delegate keyMappingTouchBarItems];
+    }
     iTermEditKeyActionWindowController *editActionWindowController;
     editActionWindowController = [[[iTermEditKeyActionWindowController alloc] init] autorelease];
+    editActionWindowController.isTouchBarItem = isTouchBarItem;
     editActionWindowController.isNewMapping = NO;
-    editActionWindowController.currentKeyCombination = keyCombination;
-    editActionWindowController.parameterValue = dict[keyCombination][@"Text"];  // TODO
-    editActionWindowController.action = [dict[keyCombination][@"Action"] intValue];  // TODO
+    if (isTouchBarItem) {
+        editActionWindowController.touchBarItemID = selectedKey;
+    } else {
+        editActionWindowController.currentKeyCombination = selectedKey;
+    }
+    editActionWindowController.parameterValue = dict[selectedKey][@"Text"];
+    editActionWindowController.action = [dict[selectedKey][@"Action"] intValue];
     [self presentEditActionSheet:editActionWindowController];
 }
 

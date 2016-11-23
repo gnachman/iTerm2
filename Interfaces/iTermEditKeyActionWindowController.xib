@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16A320" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11760" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11760"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermEditKeyActionWindowController">
@@ -10,6 +11,7 @@
                 <outlet property="_actionPopup" destination="GMz-jA-Nhg" id="FTh-b5-yVm"/>
                 <outlet property="_colorPresetsLabel" destination="TtY-N0-xlA" id="WGZ-eQ-7DP"/>
                 <outlet property="_colorPresetsPopup" destination="tld-gp-ZWP" id="pmR-N0-sjS"/>
+                <outlet property="_keyboardShortcutLabel" destination="K5J-cS-cKV" id="OHV-3k-HGx"/>
                 <outlet property="_menuToSelectPopup" destination="Lul-IP-GkH" id="LCb-mY-zgC"/>
                 <outlet property="_parameter" destination="7JT-ar-Qef" id="2uA-Zc-mij"/>
                 <outlet property="_parameterLabel" destination="q03-HA-vno" id="4oO-Om-1Ub"/>

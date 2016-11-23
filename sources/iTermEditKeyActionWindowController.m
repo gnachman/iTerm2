@@ -22,6 +22,7 @@
 
 @implementation iTermEditKeyActionWindowController {
     IBOutlet iTermShortcutInputView *_shortcutField;
+    IBOutlet NSTextField *_keyboardShortcutLabel;
     IBOutlet NSPopUpButton *_actionPopup;
     IBOutlet NSTextField *_parameter;
     IBOutlet NSTextField *_parameterLabel;
@@ -42,6 +43,7 @@
 
 - (void)dealloc {
     [_pasteSpecialViewController release];
+    [_touchBarItemID release];
     [super dealloc];
 }
 
@@ -132,6 +134,9 @@
 
 - (void)updateViewsAnimated:(BOOL)animated {
     int tag = [[_actionPopup selectedItem] tag];
+    _shortcutField.enabled = !self.isTouchBarItem;
+    _keyboardShortcutLabel.enabled = !self.isTouchBarItem;
+    
     switch (tag) {
         case KEY_ACTION_HEX_CODE:
             [_parameter setHidden:NO];
@@ -448,9 +453,11 @@
 
 
 - (IBAction)ok:(id)sender {
-    if (!self.currentKeyCombination) {
-        NSBeep();
-        return;
+    if (!self.isTouchBarItem) {
+        if (!self.currentKeyCombination) {
+            NSBeep();
+            return;
+        }
     }
     
     self.action = [[_actionPopup selectedItem] tag];

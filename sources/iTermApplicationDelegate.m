@@ -456,6 +456,9 @@ static BOOL hasBecomeActive = NO;
     }
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    if (IsTouchBarAvailable()) {
+        NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
+    }
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
