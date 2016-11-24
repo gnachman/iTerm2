@@ -7720,7 +7720,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return nil;
     }
     NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:identifier];
-    iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:[iTermKeyBindingMgr formatAction:binding]
+    iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:[iTermKeyBindingMgr touchBarLabelForBinding:binding]
                                                                 target:self
                                                                 action:@selector(touchBarItemSelected:)];
     button.keyBindingAction = binding;

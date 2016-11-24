@@ -345,6 +345,10 @@ exit:
     return [[[ProfileModel sharedInstance] bookmarkWithGuid:guid] objectForKey:KEY_NAME];
 }
 
++ (NSString *)touchBarLabelForBinding:(NSDictionary *)binding {
+    return binding[@"Label"] ?: @"?";
+}
+
 + (NSString *)formatAction:(NSDictionary *)keyInfo
 {
     NSString *actionString;
@@ -820,12 +824,16 @@ exit:
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
 
-+ (void)setTouchBarItemWithKey:(NSString *)key toAction:(int)action value:(NSString *)value inProfile:(MutableProfile *)profile {
++ (void)setTouchBarItemWithKey:(NSString *)key
+                      toAction:(int)action
+                         value:(NSString *)value
+                         label:(NSString *)label
+                     inProfile:(MutableProfile *)profile {
     NSMutableDictionary *map = [[profile[KEY_TOUCHBAR_MAP] mutableCopy] autorelease];
     if (!map) {
         map = [NSMutableDictionary dictionary];
     }
-    [self updateDictionary:map forTouchBarItem:key action:action value:value];
+    [self updateDictionary:map forTouchBarItem:key action:action value:value label:label];
     profile[KEY_TOUCHBAR_MAP] = map;
 }
 
@@ -839,12 +847,17 @@ exit:
     return keys;
 }
 
-+ (void)updateDictionary:(NSMutableDictionary *)dict forTouchBarItem:(NSString *)key action:(int)action value:(NSString *)parameter {
++ (void)updateDictionary:(NSMutableDictionary *)dict
+         forTouchBarItem:(NSString *)key
+                  action:(int)action
+                   value:(NSString *)parameter
+                   label:(NSString *)label {
     NSMutableDictionary *binding = [NSMutableDictionary dictionary];
     binding[@"Action"] = @(action);
     if (parameter) {
         binding[@"Text"] = parameter;
     }
+    binding[@"Label"] = label ?: @"?";
     dict[key] = binding;
 }
 

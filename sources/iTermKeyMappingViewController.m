@@ -92,7 +92,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
         NSString *key = sortedKeys[rowIndex];
 
         if (aTableColumn == _keyCombinationColumn) {
-            return @"Touch Bar Item";
+            return [iTermKeyBindingMgr touchBarLabelForBinding:dict[key]];
         } else if (aTableColumn == _actionColumn) {
             return [iTermKeyBindingMgr formatAction:dict[key]];
         } else {
@@ -122,6 +122,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
                       atIndex:[_tableView selectedRow]
                      toAction:editActionWindowController.action
                     parameter:editActionWindowController.parameterValue
+                        label:editActionWindowController.label
                    isAddition:editActionWindowController.isNewMapping];
     }
     [editActionWindowController close];
@@ -203,6 +204,9 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     iTermEditKeyActionWindowController *editActionWindowController;
     editActionWindowController = [[[iTermEditKeyActionWindowController alloc] init] autorelease];
     editActionWindowController.isTouchBarItem = isTouchBarItem;
+    if (isTouchBarItem) {
+        editActionWindowController.label = [iTermKeyBindingMgr touchBarLabelForBinding:dict];
+    }
     editActionWindowController.isNewMapping = NO;
     if (isTouchBarItem) {
         editActionWindowController.touchBarItemID = selectedKey;

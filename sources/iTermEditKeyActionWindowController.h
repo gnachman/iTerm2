@@ -13,6 +13,7 @@
 @property(nonatomic, copy) NSString *currentKeyCombination;
 @property(nonatomic, copy) NSString *touchBarItemID;
 @property(nonatomic, copy) NSString *parameterValue;
+@property(nonatomic, copy) NSString *label;
 @property(nonatomic, assign) int action;
 @property(nonatomic, readonly) BOOL ok;
 

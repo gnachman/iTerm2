@@ -23,6 +23,7 @@
 @implementation iTermEditKeyActionWindowController {
     IBOutlet iTermShortcutInputView *_shortcutField;
     IBOutlet NSTextField *_keyboardShortcutLabel;
+    IBOutlet NSTextField *_touchBarLabel;
     IBOutlet NSPopUpButton *_actionPopup;
     IBOutlet NSTextField *_parameter;
     IBOutlet NSTextField *_parameterLabel;
@@ -61,6 +62,7 @@
         formattedString = [iTermKeyBindingMgr formatKeyCombination:self.currentKeyCombination];
     }
     _shortcutField.stringValue = formattedString;
+    _touchBarLabel.stringValue = self.label ?: @"";
     [_actionPopup selectItemWithTag:self.action];
     [_actionPopup setTitle:[self titleOfActionWithTag:self.action]];
     _parameter.stringValue = self.parameterValue ?: @"";
@@ -134,8 +136,15 @@
 
 - (void)updateViewsAnimated:(BOOL)animated {
     int tag = [[_actionPopup selectedItem] tag];
-    _shortcutField.enabled = !self.isTouchBarItem;
-    _keyboardShortcutLabel.enabled = !self.isTouchBarItem;
+    if (self.isTouchBarItem) {
+        _keyboardShortcutLabel.stringValue = @"Touch Bar Label";
+        _touchBarLabel.hidden = NO;
+        _shortcutField.hidden = YES;
+    } else {
+        _keyboardShortcutLabel.stringValue = @"Keyboard Shortcut";
+        _touchBarLabel.hidden = YES;
+        _shortcutField.hidden = NO;
+    }
     
     switch (tag) {
         case KEY_ACTION_HEX_CODE:
@@ -453,7 +462,13 @@
 
 
 - (IBAction)ok:(id)sender {
-    if (!self.isTouchBarItem) {
+    if (self.isTouchBarItem) {
+        if (!_touchBarLabel.stringValue.length) {
+            NSBeep();
+            return;
+        }
+        self.label = _touchBarLabel.stringValue;
+    } else {
         if (!self.currentKeyCombination) {
             NSBeep();
             return;

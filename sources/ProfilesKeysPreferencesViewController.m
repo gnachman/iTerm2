@@ -234,13 +234,14 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
            atIndex:(NSInteger)index
           toAction:(int)action
          parameter:(NSString *)parameter
+             label:(NSString *)label
         isAddition:(BOOL)addition {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
 
     if (isTouchBarItem) {
-        [iTermKeyBindingMgr setTouchBarItemWithKey:keyCombo toAction:action value:parameter inProfile:dict];
+        [iTermKeyBindingMgr setTouchBarItemWithKey:keyCombo toAction:action value:parameter label:label inProfile:dict];
     } else {
         if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyCombo]) {
             if (![self warnAboutOverride]) {

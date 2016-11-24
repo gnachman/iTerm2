@@ -233,8 +233,17 @@
              inDictionary:(NSMutableDictionary*)km;
 
 // Change or add a touchbar item.
-+ (void)setTouchBarItemWithKey:(NSString *)key toAction:(int)action value:(NSString *)value inProfile:(MutableProfile *)profile;
-+ (void)updateDictionary:(NSMutableDictionary *)dict forTouchBarItem:(NSString *)key action:(int)action value:(NSString *)parameter;
++ (void)setTouchBarItemWithKey:(NSString *)key
+                      toAction:(int)action
+                         value:(NSString *)value
+                         label:(NSString *)label
+                     inProfile:(MutableProfile *)profile;
+
++ (void)updateDictionary:(NSMutableDictionary *)dict
+         forTouchBarItem:(NSString *)key
+                  action:(int)action
+                   value:(NSString *)parameter
+                   label:(NSString *)label;
 
 + (void)removeTouchBarItem:(NSString *)key;
 
@@ -303,6 +312,8 @@
 
 + (int)actionForTouchBarItemBinding:(NSDictionary *)binding;
 + (NSString *)parameterForTouchBarItemBinding:(NSDictionary *)binding;
+
++ (NSString *)touchBarLabelForBinding:(NSDictionary *)binding;
 
 @end
 

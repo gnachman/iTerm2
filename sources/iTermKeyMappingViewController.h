@@ -25,6 +25,7 @@
            atIndex:(NSInteger)index
           toAction:(int)action
          parameter:(NSString *)parameter
+             label:(NSString *)label
         isAddition:(BOOL)addition;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
