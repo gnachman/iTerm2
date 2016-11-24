@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16A320" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
         <capability name="box content view" minToolsVersion="7.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
@@ -1568,6 +1569,7 @@ DQ
                 <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
                 <outlet property="_hasHotkey" destination="he1-vO-4KV" id="kDr-tW-FQn"/>
                 <outlet property="_hotKeyContainerView" destination="Rmc-92-zTk" id="hRa-hQ-fI5"/>
+                <outlet property="_keyMappingViewController" destination="ANy-SZ-4JP" id="cji-9x-lSb"/>
                 <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
                 <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>

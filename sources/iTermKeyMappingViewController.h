@@ -46,4 +46,6 @@
 @property(nonatomic, assign) IBOutlet id<iTermKeyMappingViewControllerDelegate> delegate;
 @property(nonatomic, retain) IBOutlet NSView *placeholderView;
 
+- (void)hideAddTouchBarItem;
+
 @end

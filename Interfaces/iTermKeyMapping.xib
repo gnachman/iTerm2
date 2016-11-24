@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11760" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11760"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermKeyMappingViewController">
             <connections>
                 <outlet property="_actionColumn" destination="8iu-ei-TS7" id="Gcv-RR-t3T"/>
+                <outlet property="_addTouchBarItem" destination="mE2-Fe-MAY" id="p0R-31-Bdr"/>
                 <outlet property="_keyCombinationColumn" destination="Qlz-bw-G7W" id="cSj-S6-11C"/>
                 <outlet property="_presetsPopup" destination="G8O-KW-SKT" id="kIL-c2-Euc"/>
                 <outlet property="_removeMappingButton" destination="csN-Fw-hKk" id="FuP-tp-Nfr"/>

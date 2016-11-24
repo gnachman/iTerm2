@@ -14,6 +14,7 @@
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 @implementation iTermKeyMappingViewController {
+    IBOutlet NSButton *_addTouchBarItem;
     IBOutlet NSTableView *_tableView;
     IBOutlet NSTableColumn *_keyCombinationColumn;
     IBOutlet NSTableColumn *_actionColumn;
@@ -61,6 +62,10 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
         [_presetsPopup setFont:[NSFont boldSystemFontOfSize:12]];
         [_presetsPopup setStringValue:@"Error"];
     }
+}
+
+- (void)hideAddTouchBarItem {
+    _addTouchBarItem.hidden = YES;
 }
 
 #pragma mark - NSTableViewDataSource

@@ -30,6 +30,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSButton *_hasHotkey;
     IBOutlet NSButton *_configureHotKey;
     IBOutlet NSView *_hotKeyContainerView;
+    IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
 }
 
 - (void)dealloc {
@@ -83,6 +84,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     CGSize size = sizeRememberingView.originalSize;
     size.height -= _hotKeyContainerView.frame.size.height;
     sizeRememberingView.originalSize = size;
+    [_keyMappingViewController hideAddTouchBarItem];
 }
 
 - (NSArray *)keysForBulkCopy {
