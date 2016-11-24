@@ -36,6 +36,7 @@
 #import "iTermSystemVersion.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
+#import "iTermTouchBarButton.h"
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
@@ -87,6 +88,7 @@ NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
+static NSString *const iTermTabBarTouchBarIdentifier = @"tab bar";
 
 #define PtyLog DLog
 
@@ -3918,9 +3920,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
-    if (IsTouchBarAvailable()) {
-        self.touchBar = [self.currentSession makeTouchBar];
-    }
+    [self updateTouchBarIfNeeded];
 }
 
 - (void)notifyTmuxOfTabChange {
@@ -5311,9 +5311,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
-    if (IsTouchBarAvailable()) {
-        self.touchBar = [self.currentSession makeTouchBar];
-    }
+    [self updateTouchBarIfNeeded];
 }
 
 
@@ -6994,9 +6992,49 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [oldName release];
     }
+    [self updateTouchBarIfNeeded];
+}
+
+- (void)updateTouchBarIfNeeded {
     if (IsTouchBarAvailable()) {
-        self.touchBar = [self.currentSession makeTouchBar];
+        self.touchBar = [self amendTouchBar:[self.currentSession makeTouchBar]];
     }
+}
+
+- (NSTouchBar *)amendTouchBar:(NSTouchBar *)touchBar {
+    if (self.anyFullScreen) {
+        touchBar.defaultItemIdentifiers = [touchBar.defaultItemIdentifiers arrayByAddingObject:iTermTabBarTouchBarIdentifier];
+        touchBar.customizationAllowedItemIdentifiers = [touchBar.customizationAllowedItemIdentifiers arrayByAddingObjectsFromArray:@[ iTermTabBarTouchBarIdentifier ]];
+    }
+    return touchBar;
+}
+
+// iTermWindowController method
+- (NSTouchBarItem *)touchBarItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
+    if ([identifier isEqualToString:iTermTabBarTouchBarIdentifier]) {
+        NSMutableArray<NSTouchBarItem *> *items = [NSMutableArray array];
+        NSInteger i = 0;
+        for (PTYTab *tab in self.tabs) {
+            iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:tab.activeSession.name ?: [NSString stringWithFormat:@"Tab %@", @(i + 1)]
+                                                                        target:self
+                                                                        action:@selector(touchBarTabSelected:)];
+            button.keyBindingAction = @{ @"tab": @(i) };
+            NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:[NSString stringWithFormat:@"tab %@", @(i + 1)]];
+            item.view = button;
+            [items addObject:item];
+            i++;
+        }
+        NSGroupTouchBarItem *group = [NSGroupTouchBarItem groupItemWithIdentifier:identifier items:items];
+        group.customizationLabel = @"Tab Bar";
+        return group;
+    } else {
+        return nil;
+    }
+}
+
+- (void)touchBarTabSelected:(iTermTouchBarButton *)button {
+    NSInteger i = [button.keyBindingAction[@"tab"] integerValue];
+    [self.tabView selectTabViewItemAtIndex:i];
 }
 
 // Called when the parameter panel should close.

@@ -7710,6 +7710,10 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - NSTouchBarDelegate
 
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
+    NSTouchBarItem *delegateItem = [_delegate.realParentWindow touchBarItemForIdentifier:identifier];
+    if (delegateItem) {
+        return delegateItem;
+    }
     NSDictionary *map = [iTermKeyBindingMgr touchBarItemsForProfile:self.profile];
     NSDictionary *binding = map[identifier];
     if (!binding) {
