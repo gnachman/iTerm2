@@ -3918,6 +3918,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
+    if (IsTouchBarAvailable()) {
+        self.touchBar = [self.currentSession makeTouchBar];
+    }
 }
 
 - (void)notifyTmuxOfTabChange {
@@ -5307,6 +5310,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
+    }
+    if (IsTouchBarAvailable()) {
+        self.touchBar = [self.currentSession makeTouchBar];
     }
 }
 
@@ -6987,6 +6993,9 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
         [oldName release];
+    }
+    if (IsTouchBarAvailable()) {
+        self.touchBar = [self.currentSession makeTouchBar];
     }
 }
 

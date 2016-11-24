@@ -166,8 +166,6 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 
 - (NSInteger)textViewUnicodeVersion;
 
-- (NSTouchBar *)textViewTouchBar;
-
 @end
 
 @interface PTYTextView : NSView <
@@ -175,7 +173,6 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
   iTermSemanticHistoryControllerDelegate,
   NSDraggingDestination,
   NSTextInputClient,
-  NSTouchBarProvider,
   PointerControllerDelegate>
 
 // Current selection

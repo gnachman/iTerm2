@@ -6,7 +6,7 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 BOOL IsYosemiteOrLater(void);
 BOOL IsMavericksOrLater(void);

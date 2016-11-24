@@ -36,6 +36,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermTouchBarButton.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -4667,6 +4668,268 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
+    BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
+
+    switch (keyBindingAction) {
+        case KEY_ACTION_MOVE_TAB_LEFT:
+            [[_delegate realParentWindow] moveTabLeft:nil];
+            break;
+        case KEY_ACTION_MOVE_TAB_RIGHT:
+            [[_delegate realParentWindow] moveTabRight:nil];
+            break;
+        case KEY_ACTION_NEXT_MRU_TAB:
+            [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                                 forwards:YES];
+            break;
+        case KEY_ACTION_PREVIOUS_MRU_TAB:
+            [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                                 forwards:NO];
+            break;
+        case KEY_ACTION_NEXT_PANE:
+            [_delegate nextSession];
+            break;
+        case KEY_ACTION_PREVIOUS_PANE:
+            [_delegate previousSession];
+            break;
+        case KEY_ACTION_NEXT_SESSION:
+            [[_delegate parentWindow] nextTab:nil];
+            break;
+        case KEY_ACTION_NEXT_WINDOW:
+            [[iTermController sharedInstance] nextTerminal];
+            break;
+        case KEY_ACTION_PREVIOUS_SESSION:
+            [[_delegate parentWindow] previousTab:nil];
+            break;
+        case KEY_ACTION_PREVIOUS_WINDOW:
+            [[iTermController sharedInstance] previousTerminal];
+            break;
+        case KEY_ACTION_SCROLL_END:
+            [_textview scrollEnd];
+            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            break;
+        case KEY_ACTION_SCROLL_HOME:
+            [_textview scrollHome];
+            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            break;
+        case KEY_ACTION_SCROLL_LINE_DOWN:
+            [_textview scrollLineDown:self];
+            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            break;
+        case KEY_ACTION_SCROLL_LINE_UP:
+            [_textview scrollLineUp:self];
+            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            break;
+        case KEY_ACTION_SCROLL_PAGE_DOWN:
+            [_textview scrollPageDown:self];
+            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            break;
+        case KEY_ACTION_SCROLL_PAGE_UP:
+            [_textview scrollPageUp:self];
+            [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+            break;
+        case KEY_ACTION_ESCAPE_SEQUENCE:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self sendEscapeSequence:keyBindingText];
+            break;
+        case KEY_ACTION_HEX_CODE:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self sendHexCode:keyBindingText];
+            break;
+        case KEY_ACTION_TEXT:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self sendText:keyBindingText];
+            break;
+        case KEY_ACTION_VIM_TEXT:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
+            break;
+        case KEY_ACTION_RUN_COPROCESS:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self launchCoprocessWithCommand:keyBindingText];
+            break;
+        case KEY_ACTION_SELECT_MENU_ITEM:
+            [PTYSession selectMenuItem:keyBindingText];
+            break;
+
+        case KEY_ACTION_SEND_C_H_BACKSPACE:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self writeStringWithLatin1Encoding:@"\010"];
+            break;
+        case KEY_ACTION_SEND_C_QM_BACKSPACE:
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            [self writeStringWithLatin1Encoding:@"\177"]; // decimal 127
+            break;
+        case KEY_ACTION_IGNORE:
+            break;
+        case KEY_ACTION_IR_FORWARD:
+            break;
+        case KEY_ACTION_IR_BACKWARD:
+            if (isTmuxGateway) {
+                return;
+            }
+            [[iTermController sharedInstance] irAdvance:-1];
+            break;
+        case KEY_ACTION_SELECT_PANE_LEFT:
+            [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+            break;
+        case KEY_ACTION_SELECT_PANE_RIGHT:
+            [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+            break;
+        case KEY_ACTION_SELECT_PANE_ABOVE:
+            [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+            break;
+        case KEY_ACTION_SELECT_PANE_BELOW:
+            [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+            break;
+        case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+        case KEY_ACTION_REMAP_LOCALLY:
+            break;
+        case KEY_ACTION_TOGGLE_FULLSCREEN:
+            [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
+            break;
+        case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+            [[_delegate realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
+            break;
+        case KEY_ACTION_NEW_TAB_WITH_PROFILE:
+            [[_delegate realParentWindow] newTabWithBookmarkGuid:keyBindingText];
+            break;
+        case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+            [[_delegate realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
+            break;
+        case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+            [[_delegate realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
+            break;
+        case KEY_ACTION_SET_PROFILE: {
+            Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            if (newProfile) {
+                [self setProfile:newProfile preservingName:YES];
+            }
+            break;
+        }
+        case KEY_ACTION_LOAD_COLOR_PRESET: {
+            ProfileModel *model = [ProfileModel sharedInstance];
+            Profile *profile;
+            if (_isDivorced) {
+                profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]];
+            } else {
+                profile = self.profile;
+            }
+            BOOL ok = [model addColorPresetNamed:keyBindingText toProfile:profile];
+            if (!ok) {
+                ELog(@"Color preset %@ not found", keyBindingText);
+                NSBeep();
+            }
+            break;
+        }
+
+        case KEY_ACTION_FIND_REGEX:
+            [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
+                                                                  ignoringCase:NO
+                                                                         regex:YES];
+            break;
+
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
+            NSString *string = [self mostRecentlySelectedText];
+            if (string.length) {
+                [_pasteHelper pasteString:string
+                             stringConfig:keyBindingText];
+            }
+            break;
+        }
+
+        case KEY_ACTION_PASTE_SPECIAL: {
+            NSString *string = [NSString stringFromPasteboard];
+            if (string.length) {
+                [_pasteHelper pasteString:string
+                             stringConfig:keyBindingText];
+            }
+            break;
+        }
+            
+        case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING: {
+            DLog(@"Toggle pinning");
+            BOOL autoHid = [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
+            DLog(@"Getting profile with guid %@ from originalProfile %p", self.originalProfile[KEY_GUID], self.originalProfile);
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:self.originalProfile[KEY_GUID]];
+            if (profile) {
+                DLog(@"Found a profile");
+                [iTermProfilePreferences setBool:!autoHid forKey:KEY_HOTKEY_AUTOHIDE inProfile:profile model:[ProfileModel sharedInstance]];
+            }
+            break;
+        }
+        case KEY_ACTION_UNDO:
+            [PTYSession selectMenuItemWithSelector:@selector(undo:)];
+            break;
+
+        case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
+            [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
+                                 inDirection:kPTYTextViewSelectionExtensionDirectionLeft
+                                          by:[keyBindingText integerValue]];
+            break;
+        case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
+            [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
+                                 inDirection:kPTYTextViewSelectionExtensionDirectionRight
+                                          by:[keyBindingText integerValue]];
+            break;
+        case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
+            [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
+                                 inDirection:kPTYTextViewSelectionExtensionDirectionLeft
+                                          by:[keyBindingText integerValue]];
+            break;
+        case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
+            [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
+                                 inDirection:kPTYTextViewSelectionExtensionDirectionRight
+                                          by:[keyBindingText integerValue]];
+            break;
+
+        case KEY_ACTION_DECREASE_HEIGHT:
+            [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
+            break;
+        case KEY_ACTION_INCREASE_HEIGHT:
+            [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
+            break;
+
+        case KEY_ACTION_DECREASE_WIDTH:
+            [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
+            break;
+        case KEY_ACTION_INCREASE_WIDTH:
+            [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
+            break;
+
+        case KEY_ACTION_SWAP_PANE_LEFT:
+            [[[iTermController sharedInstance] currentTerminal] swapPaneLeft];
+            break;
+        case KEY_ACTION_SWAP_PANE_RIGHT:
+            [[[iTermController sharedInstance] currentTerminal] swapPaneRight];
+            break;
+        case KEY_ACTION_SWAP_PANE_ABOVE:
+            [[[iTermController sharedInstance] currentTerminal] swapPaneUp];
+            break;
+        case KEY_ACTION_SWAP_PANE_BELOW:
+            [[[iTermController sharedInstance] currentTerminal] swapPaneDown];
+            break;
+
+        default:
+            ELog(@"Unknown key action %d", keyBindingAction);
+            break;
+    }
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event {
@@ -4753,297 +5016,39 @@ ITERM_WEAKLY_REFERENCEABLE
         if (profileAction == keyBindingAction &&  // Don't warn if it's a global mapping
             (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
              keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
-                // Warn users about outdated default key bindings.
-                int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
-                int tempKeyCode = unmodunicode;
-                if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
-                    (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
-                    [[_delegate sessions] count] > 1) {
-                    if ([self _askAboutOutdatedKeyMappings]) {
-                        int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
-                                                     @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
-                                                     @"Remove it",
-                                                     @"Remind me later",
-                                                     @"Keep it");
-                        switch (result) {
-                            case NSAlertDefaultReturn:
-                                // Remove it
-                                [self _removeOutdatedKeyMapping];
-                                return;
-                                break;
-                            case NSAlertAlternateReturn:
-                                // Remind me later
-                                break;
-                            case NSAlertOtherReturn:
-                                // Keep it
-                                [self _setKeepOutdatedKeyMapping];
-                                break;
-                            default:
-                                break;
-                        }
+            // Warn users about outdated default key bindings.
+            int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
+            int tempKeyCode = unmodunicode;
+            if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
+                (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
+                [[_delegate sessions] count] > 1) {
+                if ([self _askAboutOutdatedKeyMappings]) {
+                    int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
+                                                 @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
+                                                 @"Remove it",
+                                                 @"Remind me later",
+                                                 @"Keep it");
+                    switch (result) {
+                        case NSAlertDefaultReturn:
+                            // Remove it
+                            [self _removeOutdatedKeyMapping];
+                            return;
+                            break;
+                        case NSAlertAlternateReturn:
+                            // Remind me later
+                            break;
+                        case NSAlertOtherReturn:
+                            // Keep it
+                            [self _setKeepOutdatedKeyMapping];
+                            break;
+                        default:
+                            break;
                     }
                 }
             }
-
-        BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
-
-        switch (keyBindingAction) {
-            case KEY_ACTION_MOVE_TAB_LEFT:
-                [[_delegate realParentWindow] moveTabLeft:nil];
-                break;
-            case KEY_ACTION_MOVE_TAB_RIGHT:
-                [[_delegate realParentWindow] moveTabRight:nil];
-                break;
-            case KEY_ACTION_NEXT_MRU_TAB:
-                [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
-                                                                     forwards:YES];
-                break;
-            case KEY_ACTION_PREVIOUS_MRU_TAB:
-                [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
-                                                                     forwards:NO];
-                break;
-            case KEY_ACTION_NEXT_PANE:
-                [_delegate nextSession];
-                break;
-            case KEY_ACTION_PREVIOUS_PANE:
-                [_delegate previousSession];
-                break;
-            case KEY_ACTION_NEXT_SESSION:
-                [[_delegate parentWindow] nextTab:nil];
-                break;
-            case KEY_ACTION_NEXT_WINDOW:
-                [[iTermController sharedInstance] nextTerminal];
-                break;
-            case KEY_ACTION_PREVIOUS_SESSION:
-                [[_delegate parentWindow] previousTab:nil];
-                break;
-            case KEY_ACTION_PREVIOUS_WINDOW:
-                [[iTermController sharedInstance] previousTerminal];
-                break;
-            case KEY_ACTION_SCROLL_END:
-                [_textview scrollEnd];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                break;
-            case KEY_ACTION_SCROLL_HOME:
-                [_textview scrollHome];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                break;
-            case KEY_ACTION_SCROLL_LINE_DOWN:
-                [_textview scrollLineDown:self];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                break;
-            case KEY_ACTION_SCROLL_LINE_UP:
-                [_textview scrollLineUp:self];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                break;
-            case KEY_ACTION_SCROLL_PAGE_DOWN:
-                [_textview scrollPageDown:self];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                break;
-            case KEY_ACTION_SCROLL_PAGE_UP:
-                [_textview scrollPageUp:self];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                break;
-            case KEY_ACTION_ESCAPE_SEQUENCE:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self sendEscapeSequence:keyBindingText];
-                break;
-            case KEY_ACTION_HEX_CODE:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self sendHexCode:keyBindingText];
-                break;
-            case KEY_ACTION_TEXT:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self sendText:keyBindingText];
-                break;
-            case KEY_ACTION_VIM_TEXT:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
-                break;
-            case KEY_ACTION_RUN_COPROCESS:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self launchCoprocessWithCommand:keyBindingText];
-                break;
-            case KEY_ACTION_SELECT_MENU_ITEM:
-                [PTYSession selectMenuItem:keyBindingText];
-                break;
-
-            case KEY_ACTION_SEND_C_H_BACKSPACE:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self writeStringWithLatin1Encoding:@"\010"];
-                break;
-            case KEY_ACTION_SEND_C_QM_BACKSPACE:
-                if (_exited || isTmuxGateway) {
-                    return;
-                }
-                [self writeStringWithLatin1Encoding:@"\177"]; // decimal 127
-                break;
-            case KEY_ACTION_IGNORE:
-                break;
-            case KEY_ACTION_IR_FORWARD:
-                break;
-            case KEY_ACTION_IR_BACKWARD:
-                if (isTmuxGateway) {
-                    return;
-                }
-                [[iTermController sharedInstance] irAdvance:-1];
-                break;
-            case KEY_ACTION_SELECT_PANE_LEFT:
-                [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
-                break;
-            case KEY_ACTION_SELECT_PANE_RIGHT:
-                [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
-                break;
-            case KEY_ACTION_SELECT_PANE_ABOVE:
-                [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
-                break;
-            case KEY_ACTION_SELECT_PANE_BELOW:
-                [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
-                break;
-            case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
-            case KEY_ACTION_REMAP_LOCALLY:
-                break;
-            case KEY_ACTION_TOGGLE_FULLSCREEN:
-                [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
-                break;
-            case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
-                [[_delegate realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
-                break;
-            case KEY_ACTION_NEW_TAB_WITH_PROFILE:
-                [[_delegate realParentWindow] newTabWithBookmarkGuid:keyBindingText];
-                break;
-            case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
-                [[_delegate realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
-                break;
-            case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
-                [[_delegate realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
-                break;
-            case KEY_ACTION_SET_PROFILE: {
-                Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
-                if (newProfile) {
-                    [self setProfile:newProfile preservingName:YES];
-                }
-                break;
-            }
-            case KEY_ACTION_LOAD_COLOR_PRESET: {
-                ProfileModel *model = [ProfileModel sharedInstance];
-                Profile *profile;
-                if (_isDivorced) {
-                    profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]];
-                } else {
-                    profile = self.profile;
-                }
-                BOOL ok = [model addColorPresetNamed:keyBindingText toProfile:profile];
-                if (!ok) {
-                    ELog(@"Color preset %@ not found", keyBindingText);
-                    NSBeep();
-                }
-                break;
-            }
-
-            case KEY_ACTION_FIND_REGEX:
-                [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
-                                                                      ignoringCase:NO
-                                                                             regex:YES];
-                break;
-
-            case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
-                NSString *string = [self mostRecentlySelectedText];
-                if (string.length) {
-                    [_pasteHelper pasteString:string
-                                 stringConfig:keyBindingText];
-                }
-                break;
-            }
-
-            case KEY_ACTION_PASTE_SPECIAL: {
-                NSString *string = [NSString stringFromPasteboard];
-                if (string.length) {
-                    [_pasteHelper pasteString:string
-                                 stringConfig:keyBindingText];
-                }
-                break;
-            }
-                
-            case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING: {
-                DLog(@"Toggle pinning");
-                BOOL autoHid = [iTermProfilePreferences boolForKey:KEY_HOTKEY_AUTOHIDE inProfile:self.profile];
-                DLog(@"Getting profile with guid %@ from originalProfile %p", self.originalProfile[KEY_GUID], self.originalProfile);
-                Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:self.originalProfile[KEY_GUID]];
-                if (profile) {
-                    DLog(@"Found a profile");
-                    [iTermProfilePreferences setBool:!autoHid forKey:KEY_HOTKEY_AUTOHIDE inProfile:profile model:[ProfileModel sharedInstance]];
-                }
-                break;
-            }
-            case KEY_ACTION_UNDO:
-                [PTYSession selectMenuItemWithSelector:@selector(undo:)];
-                break;
-
-            case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
-                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
-                                     inDirection:kPTYTextViewSelectionExtensionDirectionLeft
-                                              by:[keyBindingText integerValue]];
-                break;
-            case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
-                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
-                                     inDirection:kPTYTextViewSelectionExtensionDirectionRight
-                                              by:[keyBindingText integerValue]];
-                break;
-            case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
-                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
-                                     inDirection:kPTYTextViewSelectionExtensionDirectionLeft
-                                              by:[keyBindingText integerValue]];
-                break;
-            case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
-                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
-                                     inDirection:kPTYTextViewSelectionExtensionDirectionRight
-                                              by:[keyBindingText integerValue]];
-                break;
-
-            case KEY_ACTION_DECREASE_HEIGHT:
-                [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
-                break;
-            case KEY_ACTION_INCREASE_HEIGHT:
-                [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
-                break;
-
-            case KEY_ACTION_DECREASE_WIDTH:
-                [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
-                break;
-            case KEY_ACTION_INCREASE_WIDTH:
-                [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
-                break;
-
-            case KEY_ACTION_SWAP_PANE_LEFT:
-                [[[iTermController sharedInstance] currentTerminal] swapPaneLeft];
-                break;
-            case KEY_ACTION_SWAP_PANE_RIGHT:
-                [[[iTermController sharedInstance] currentTerminal] swapPaneRight];
-                break;
-            case KEY_ACTION_SWAP_PANE_ABOVE:
-                [[[iTermController sharedInstance] currentTerminal] swapPaneUp];
-                break;
-            case KEY_ACTION_SWAP_PANE_BELOW:
-                [[[iTermController sharedInstance] currentTerminal] swapPaneDown];
-                break;
-
-            default:
-                ELog(@"Unknown key action %d", keyBindingAction);
-                break;
         }
+
+        [self performKeyBindingAction:keyBindingAction parameter:keyBindingText event:event];
     } else {
         // Key is not bound to an action.
         if (!_exited && self.tmuxMode == TMUX_GATEWAY) {
@@ -5923,14 +5928,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return _unicodeVersion;
 }
 
-- (NSTouchBar *)textViewTouchBar {
-    NSTouchBar *touchBar = [[NSTouchBar alloc] init];
+- (NSTouchBar *)makeTouchBar {
+    NSTouchBar *touchBar = [[[NSTouchBar alloc] init] autorelease];
     touchBar.delegate = self;
-    touchBar.customizationIdentifier = self.profile[KEY_GUID];
+    touchBar.customizationIdentifier = self.profile[KEY_ORIGINAL_GUID] ?: self.profile[KEY_GUID];
     touchBar.defaultItemIdentifiers = @[ NSTouchBarItemIdentifierFlexibleSpace,
                                          NSTouchBarItemIdentifierOtherItemsProxy ];
     NSArray *ids = @[ NSTouchBarItemIdentifierFlexibleSpace ];
     ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:self.profile[KEY_TOUCHBAR_MAP]]];
+    ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
     touchBar.customizationAllowedItemIdentifiers = ids;
     return touchBar;
 }
@@ -7706,10 +7712,30 @@ ITERM_WEAKLY_REFERENCEABLE
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
     NSDictionary *map = [iTermKeyBindingMgr touchBarItemsForProfile:self.profile];
     NSDictionary *binding = map[identifier];
+    if (!binding) {
+        map = [iTermKeyBindingMgr globalTouchBarMap];
+        binding = map[identifier];
+    }
+    if (!binding) {
+        return nil;
+    }
     NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:identifier];
-    item.view = [NSTextField labelWithString:[iTermKeyBindingMgr formatAction:binding]];
+    iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:[iTermKeyBindingMgr formatAction:binding]
+                                                                target:self
+                                                                action:@selector(touchBarItemSelected:)];
+    button.keyBindingAction = binding;
+    item.view = button;
+    item.view.identifier = identifier;
     item.customizationLabel = [iTermKeyBindingMgr formatAction:binding];
+
     return item;
+}
+
+- (void)touchBarItemSelected:(iTermTouchBarButton *)sender {
+    NSDictionary *binding = sender.keyBindingAction;
+    [self performKeyBindingAction:[iTermKeyBindingMgr actionForTouchBarItemBinding:binding]
+                        parameter:[iTermKeyBindingMgr parameterForTouchBarItemBinding:binding]
+                            event:[NSApp currentEvent]];
 }
 
 @end

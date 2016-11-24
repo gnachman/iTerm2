@@ -182,6 +182,7 @@ typedef enum {
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
     iTermWeaklyReferenceable,
+    NSTouchBarProvider,
     PopupDelegate,
     PTYTaskDelegate,
     PTYTextViewDelegate,

@@ -1541,6 +1541,8 @@
 		A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A310D186E2EDA007F550F /* PopupEntry.h */; };
 		A68A3114186E2F14007F550F /* PopupWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3112186E2F14007F550F /* PopupWindow.h */; };
 		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
+		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
+		A68E332C1DE6AFC6003F1D8E /* iTermTouchBarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */; };
 		A690F7011B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7021B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7031B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
@@ -3272,6 +3274,8 @@
 		A68A3113186E2F14007F550F /* PopupWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupWindow.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3117186E2F54007F550F /* PopupModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PopupModel.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; tabWidth = 4; };
+		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
+		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
 		A690F7001B424C55009F76D8 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; tabWidth = 4; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -4388,6 +4392,8 @@
 				A667F3961B4F71AE00705186 /* iTermSavePanel.m */,
 				1D72A4D31BE9707A0042174A /* iTermWebViewWrapperViewController.h */,
 				1D72A4D41BE9707A0042174A /* iTermWebViewWrapperViewController.m */,
+				A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */,
+				A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -5996,6 +6002,7 @@
 				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
 				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
 				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
+				A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */,
 				A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */,
 				1D5655C919AD2B1A001C460B /* PTYTab+Scripting.h in Headers */,
 				A6E713BA18FCCDD1008D94DD /* iTermLaunchServices.h in Headers */,
@@ -7549,6 +7556,7 @@
 				A6E761651D39D216005C0E5C /* iTermMutableAttributedStringBuilder.m in Sources */,
 				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
+				A68E332C1DE6AFC6003F1D8E /* iTermTouchBarButton.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

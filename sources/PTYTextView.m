@@ -7230,14 +7230,5 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
 }
 
-#pragma mark - NSTouchBarProvider
-
-- (NSTouchBar *)makeTouchBar {
-    if (!_touchBar) {
-        _touchBar = [_delegate textViewTouchBar];
-    }
-    return _touchBar;
-}
-
 @end
 
