@@ -6855,7 +6855,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  makeKey:YES
                                              canActivate:YES
                                                  command:nil
-                                                   block:^PTYSession *(PseudoTerminal *term) {
+                                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                                                        // Keep session size stable.
                                                        for (PTYSession* aSession in [copyOfTab sessions]) {
                                                            [aSession setIgnoreResizeNotifications:YES];

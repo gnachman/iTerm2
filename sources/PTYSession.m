@@ -5934,21 +5934,32 @@ ITERM_WEAKLY_REFERENCEABLE
     return _unicodeVersion;
 }
 
-- (void)textViewDidRefresh {
-    NSTouchBarItem *item = [[[_delegate realParentWindow] touchBar] itemForIdentifier:iTermTouchBarIdentifierManPage];
-    if (item) {
-        iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
-        NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
-        iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
-        if (word) {
-            button.title = [NSString stringWithFormat:@"Man Page for %@", word];
+- (void)updateManPageButton:(iTermTouchBarButton *)button {
+    iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+    NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
+    if (word) {
+        if (![button.title isEqualToString:word]) {
+            button.title = word;
+            button.imagePosition = NSImageLeft;
             button.enabled = YES;
             button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharacters]] };
-        } else {
-            button.title = @"Man Page";
-            button.enabled = NO;
-            button.keyBindingAction = nil;
         }
+    } else if (button.enabled) {
+        button.title = @"";
+        button.imagePosition = NSImageOnly;
+        button.enabled = NO;
+        button.keyBindingAction = nil;
+    }
+}
+
+- (void)textViewDidRefresh {
+    if (_textview.window.firstResponder != _textview) {
+        return;
+    }
+    NSTouchBarItem *item = [[[_delegate realParentWindow] touchBar] itemForIdentifier:iTermTouchBarIdentifierManPage];
+    if (item) {
+        iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
+        [self updateManPageButton:button];
     }
 }
 
@@ -7778,6 +7789,13 @@ ITERM_WEAKLY_REFERENCEABLE
         NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         item.view = button;
         item.customizationLabel = label;
+        if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
+            button.title = @"";
+            button.image = [NSImage imageNamed:@"Man Page Touch Bar Icon"];
+            button.imagePosition = NSImageOnly;
+            button.enabled = NO;
+            [self updateManPageButton:button];
+        }
         return item;
     }
     NSDictionary *map = [iTermKeyBindingMgr touchBarItemsForProfile:self.profile];
@@ -7830,7 +7848,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  makeKey:YES
                                              canActivate:YES
                                                  command:command
-                                                   block:nil];
+                                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+                                                       profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
+                                                       return [term createTabWithProfile:profile withCommand:command];
+                                                   }];
     }
 }
 
