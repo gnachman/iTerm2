@@ -902,7 +902,6 @@ static const int kDragThreshold = 3;
     int scrollbackOverflow = [_dataSource scrollbackOverflow];
     [_dataSource resetScrollbackOverflow];
     [_delegate textViewResizeFrameIfNeeded];
-
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (scrollbackOverflow > 0) {
@@ -930,6 +929,8 @@ static const int kDragThreshold = 3;
             [subview setNeedsDisplay:YES];
         }
     }
+
+    [_delegate textViewDidRefresh];
 
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.

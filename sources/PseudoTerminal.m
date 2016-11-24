@@ -3281,8 +3281,7 @@ ITERM_WEAKLY_REFERENCEABLE
                       VMARGIN * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
-- (void)toggleTraditionalFullScreenMode
-{
+- (void)toggleTraditionalFullScreenMode {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
     CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
@@ -3426,6 +3425,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTools];
     [self updateTabColors];
     [self saveTmuxWindowOrigins];
+
+    [self updateTouchBarIfNeeded];
 }
 
 - (BOOL)fullScreen
@@ -3563,6 +3564,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_didEnterLionFullscreen release];
         _didEnterLionFullscreen = nil;
     }
+    [self updateTouchBarIfNeeded];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -3598,6 +3600,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self notifyTmuxOfWindowResize];
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
+    [self updateTouchBarIfNeeded];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame

@@ -87,6 +87,12 @@
 static const NSInteger kMinimumUnicodeVersion = 8;
 static const NSInteger kMaximumUnicodeVersion = 9;
 
+static NSString *const iTermTouchBarIdentifierAddMark = @"iTermTouchBarIdentifierAddMark";
+static NSString *const iTermTouchBarIdentifierNextMark = @"iTermTouchBarIdentifierNextMark";
+static NSString *const iTermTouchBarIdentifierPreviousMark = @"iTermTouchBarIdentifierPreviousMark";
+static NSString *const iTermTouchBarIdentifierManPage = @"iTermTouchBarIdentifierManPage";
+
+
 // The format for a user defaults key that recalls if the user has already been pestered about
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
 static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
@@ -5928,13 +5934,39 @@ ITERM_WEAKLY_REFERENCEABLE
     return _unicodeVersion;
 }
 
+- (void)textViewDidRefresh {
+    NSTouchBarItem *item = [[[_delegate realParentWindow] touchBar] itemForIdentifier:iTermTouchBarIdentifierManPage];
+    if (item) {
+        iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+        NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
+        iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
+        if (word) {
+            button.title = [NSString stringWithFormat:@"Man Page for %@", word];
+            button.enabled = YES;
+            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharacters]] };
+        } else {
+            button.title = @"Man Page";
+            button.enabled = NO;
+            button.keyBindingAction = nil;
+        }
+    }
+}
+
 - (NSTouchBar *)makeTouchBar {
     NSTouchBar *touchBar = [[[NSTouchBar alloc] init] autorelease];
     touchBar.delegate = self;
     touchBar.customizationIdentifier = self.profile[KEY_ORIGINAL_GUID] ?: self.profile[KEY_GUID];
-    touchBar.defaultItemIdentifiers = @[ NSTouchBarItemIdentifierFlexibleSpace,
-                                         NSTouchBarItemIdentifierOtherItemsProxy ];
-    NSArray *ids = @[ NSTouchBarItemIdentifierFlexibleSpace ];
+    touchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierManPage,
+                                         NSTouchBarItemIdentifierFlexibleSpace,
+                                         NSTouchBarItemIdentifierOtherItemsProxy,
+                                         iTermTouchBarIdentifierAddMark,
+                                         iTermTouchBarIdentifierPreviousMark,
+                                         iTermTouchBarIdentifierNextMark ];
+    NSArray *ids = @[ iTermTouchBarIdentifierManPage,
+                      NSTouchBarItemIdentifierFlexibleSpace,
+                      iTermTouchBarIdentifierAddMark,
+                      iTermTouchBarIdentifierNextMark,
+                      iTermTouchBarIdentifierPreviousMark ];
     ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:self.profile[KEY_TOUCHBAR_MAP]]];
     ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
     touchBar.customizationAllowedItemIdentifiers = ids;
@@ -7714,6 +7746,40 @@ ITERM_WEAKLY_REFERENCEABLE
     if (delegateItem) {
         return delegateItem;
     }
+
+    NSImage *image = nil;
+    SEL selector = NULL;
+    NSString *label = nil;
+
+    if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
+        selector = @selector(manPageTouchBarItemSelected:);
+        label = @"Man Page";
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierAddMark]) {
+        image = [NSImage imageNamed:@"Add Mark Touch Bar Icon"];
+        selector = @selector(addMarkTouchBarItemSelected:);
+        label = @"Add Mark";
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierNextMark]) {
+        image = [NSImage imageNamed:@"Next Mark Touch Bar Icon"];
+        selector = @selector(nextMarkTouchBarItemSelected:);
+        label = @"Next Mark";
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierPreviousMark]) {
+        image = [NSImage imageNamed:@"Previous Mark Touch Bar Icon"];
+        selector = @selector(previuosMarkTouchBarItemSelected:);
+        label = @"Previous Mark";
+    }
+
+    if (image || label) {
+        iTermTouchBarButton *button;
+        if (image) {
+            button = [iTermTouchBarButton buttonWithImage:image target:self action:selector];
+        } else {
+            button = [iTermTouchBarButton buttonWithTitle:label target:self action:selector];
+        }
+        NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
+        item.view = button;
+        item.customizationLabel = label;
+        return item;
+    }
     NSDictionary *map = [iTermKeyBindingMgr touchBarItemsForProfile:self.profile];
     NSDictionary *binding = map[identifier];
     if (!binding) {
@@ -7723,7 +7789,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!binding) {
         return nil;
     }
-    NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:identifier];
+    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
     iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:[iTermKeyBindingMgr touchBarLabelForBinding:binding]
                                                                 target:self
                                                                 action:@selector(touchBarItemSelected:)];
@@ -7740,6 +7806,32 @@ ITERM_WEAKLY_REFERENCEABLE
     [self performKeyBindingAction:[iTermKeyBindingMgr actionForTouchBarItemBinding:binding]
                         parameter:[iTermKeyBindingMgr parameterForTouchBarItemBinding:binding]
                             event:[NSApp currentEvent]];
+}
+
+- (void)addMarkTouchBarItemSelected:(id)sender {
+    [self screenSaveScrollPosition];
+}
+
+- (void)nextMarkTouchBarItemSelected:(id)sender {
+    [self nextMarkOrNote];
+}
+
+- (void)previuosMarkTouchBarItemSelected:(id)sender {
+    [self previousMarkOrNote];
+}
+
+- (void)manPageTouchBarItemSelected:(iTermTouchBarButton *)sender {
+    NSString *command = sender.keyBindingAction[@"command"];
+    if (command) {
+        [[iTermController sharedInstance] launchBookmark:nil
+                                              inTerminal:nil
+                                                 withURL:nil
+                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                 makeKey:YES
+                                             canActivate:YES
+                                                 command:command
+                                                   block:nil];
+    }
 }
 
 @end

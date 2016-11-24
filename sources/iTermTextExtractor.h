@@ -175,4 +175,9 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 // on the same DWC.
 - (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2;
 
+// Gets the word at a location. Doesn't sweat fancy word segmentation, and won't return anything
+// terribly long. Also uses a stricter definition of what characters can be in a word, excluding
+// all punctuation except -.
+- (NSString *)fastWordAt:(VT100GridCoord)location;
+
 @end
