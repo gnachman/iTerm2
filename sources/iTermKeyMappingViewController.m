@@ -72,7 +72,11 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     NSDictionary *dict = [_delegate keyMappingDictionary:self];
-    return [dict count] + [[_delegate keyMappingTouchBarItems] count];
+    if (_addTouchBarItem.hidden) {
+        return [dict count];
+    } else {
+        return [dict count] + [[_delegate keyMappingTouchBarItems] count];
+    }
 }
 
 - (id)tableView:(NSTableView *)aTableView
