@@ -16,6 +16,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
 #import "iTermFindCursorView.h"
@@ -668,6 +669,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateFullScreenTabBar:)
                                                  name:kShowFullscreenTabsSettingDidChange
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(colorPresetsDidChange:)
+                                                 name:kRebuildColorPresetsMenuNotification
                                                object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
@@ -1380,6 +1385,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [self repositionWidgets];
         [self fitTabsToWindow];
     }
+}
+
+- (void)colorPresetsDidChange:(NSNotification *)notification {
+    [self updateTouchBarIfNeeded];
 }
 
 - (IBAction)closeCurrentTab:(id)sender {

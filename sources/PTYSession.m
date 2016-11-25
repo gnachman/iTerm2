@@ -91,6 +91,8 @@ static NSString *const iTermTouchBarIdentifierAddMark = @"iTermTouchBarIdentifie
 static NSString *const iTermTouchBarIdentifierNextMark = @"iTermTouchBarIdentifierNextMark";
 static NSString *const iTermTouchBarIdentifierPreviousMark = @"iTermTouchBarIdentifierPreviousMark";
 static NSString *const iTermTouchBarIdentifierManPage = @"iTermTouchBarIdentifierManPage";
+static NSString *const iTermTouchBarIdentifierColorPreset = @"iTermTouchBarIdentifierColorPreset";
+static NSString *const iTermTouchBarIdentifierColorPresetScrollview = @"iTermTouchBarIdentifierColorPresetScrollview";
 
 
 // The format for a user defaults key that recalls if the user has already been pestered about
@@ -4828,6 +4830,11 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         }
         case KEY_ACTION_LOAD_COLOR_PRESET: {
+            // Divorce & update self
+            [self setColorsFromPresetNamed:keyBindingText];
+
+            // Try to update the backing profile if possible, which may undivorce you. The original
+            // profile may not exist so this could do nothing.
             ProfileModel *model = [ProfileModel sharedInstance];
             Profile *profile;
             if (_isDivorced) {
@@ -4835,10 +4842,8 @@ ITERM_WEAKLY_REFERENCEABLE
             } else {
                 profile = self.profile;
             }
-            BOOL ok = [model addColorPresetNamed:keyBindingText toProfile:profile];
-            if (!ok) {
-                ELog(@"Color preset %@ not found", keyBindingText);
-                NSBeep();
+            if (profile) {
+                [model addColorPresetNamed:keyBindingText toProfile:profile];
             }
             break;
         }
@@ -5968,12 +5973,14 @@ ITERM_WEAKLY_REFERENCEABLE
     touchBar.delegate = self;
     touchBar.customizationIdentifier = self.profile[KEY_ORIGINAL_GUID] ?: self.profile[KEY_GUID];
     touchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierManPage,
+                                         iTermTouchBarIdentifierColorPreset,
                                          NSTouchBarItemIdentifierFlexibleSpace,
                                          NSTouchBarItemIdentifierOtherItemsProxy,
                                          iTermTouchBarIdentifierAddMark,
                                          iTermTouchBarIdentifierPreviousMark,
                                          iTermTouchBarIdentifierNextMark ];
     NSArray *ids = @[ iTermTouchBarIdentifierManPage,
+                      iTermTouchBarIdentifierColorPreset,
                       NSTouchBarItemIdentifierFlexibleSpace,
                       iTermTouchBarIdentifierAddMark,
                       iTermTouchBarIdentifierNextMark,
@@ -7750,6 +7757,84 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.textview.window makeFirstResponder:self.textview];
 }
 
+- (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
+    NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
+    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
+    item.view = scrollView;
+    NSView *documentView = [[NSView alloc] init];
+    documentView.translatesAutoresizingMaskIntoConstraints = NO;
+    scrollView.documentView = documentView;
+    NSButton *previous = nil;
+    for (NSDictionary *dict in @[ [iTermColorPresets builtInColorPresets] ?: @{},
+                                  [iTermColorPresets customColorPresets] ?: @{} ]) {
+        for (NSString *name in dict) {
+            iTermTouchBarButton *button;
+            NSColor *textColor = nil;
+            NSColor *backgroundColor = nil;
+            textColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_FOREGROUND_COLOR]];
+            backgroundColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_BACKGROUND_COLOR]];
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor };
+            NSAttributedString *title = [[[NSAttributedString alloc] initWithString:name
+                                                                         attributes:attributes] autorelease];
+            button = [iTermTouchBarButton buttonWithTitle:@""
+                                                   target:self
+                                                       action:@selector(colorPresetTouchBarItemSelected:)];
+            [button sizeToFit];
+            button.attributedTitle = title;
+            button.bezelColor = backgroundColor;
+            button.keyBindingAction = @{ @"presetName": name };
+            [documentView addSubview:button];
+            button.translatesAutoresizingMaskIntoConstraints = NO;
+            if (previous == nil) {
+                // Constrain the first item's left to the document view's left
+                [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                         attribute:NSLayoutAttributeLeft
+                                                                         relatedBy:NSLayoutRelationEqual
+                                                                            toItem:documentView
+                                                                         attribute:NSLayoutAttributeLeft
+                                                                        multiplier:1
+                                                                          constant:0]];
+            } else {
+                // Constrain non-first button's left to predecessor's right + 8pt
+                [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                         attribute:NSLayoutAttributeLeft
+                                                                         relatedBy:NSLayoutRelationEqual
+                                                                            toItem:previous
+                                                                         attribute:NSLayoutAttributeRight
+                                                                        multiplier:1
+                                                                          constant:8]];
+            }
+            // Constrain top and bottom to document view's top and bottom
+            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                     attribute:NSLayoutAttributeTop
+                                                                     relatedBy:NSLayoutRelationEqual
+                                                                        toItem:documentView
+                                                                     attribute:NSLayoutAttributeTop
+                                                                    multiplier:1
+                                                                      constant:0]];
+            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                     attribute:NSLayoutAttributeBottom
+                                                                     relatedBy:NSLayoutRelationEqual
+                                                                        toItem:documentView
+                                                                     attribute:NSLayoutAttributeBottom
+                                                                    multiplier:1
+                                                                      constant:0]];
+            previous = button;
+        }
+    }
+    if (previous) {
+        // Constrain last button's right to document view's right
+        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:previous
+                                                                 attribute:NSLayoutAttributeRight
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:documentView
+                                                                 attribute:NSLayoutAttributeRight
+                                                                multiplier:1
+                                                                  constant:0]];
+    }
+    return item;
+}
+
 #pragma mark - NSTouchBarDelegate
 
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
@@ -7775,8 +7860,23 @@ ITERM_WEAKLY_REFERENCEABLE
         label = @"Next Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierPreviousMark]) {
         image = [NSImage imageNamed:@"Previous Mark Touch Bar Icon"];
-        selector = @selector(previuosMarkTouchBarItemSelected:);
+        selector = @selector(previousMarkTouchBarItemSelected:);
         label = @"Previous Mark";
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPreset]) {
+        image = [NSImage imageNamed:@"Color Preset Touch Bar Icon"];
+        selector = @selector(colorPresetTouchBarItemSelected:);
+        NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
+        item.customizationLabel = @"Color Preset";
+        item.showsCloseButton = YES;
+        item.collapsedRepresentationImage = image;
+
+        NSTouchBar *secondaryTouchBar = [[NSTouchBar alloc] init];
+        secondaryTouchBar.delegate = self;
+        secondaryTouchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierColorPresetScrollview ];
+        item.popoverTouchBar = secondaryTouchBar;
+        return item;
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPresetScrollview]) {
+        return [self colorPresetsScrollViewTouchBarItem];
     }
 
     if (image || label) {
@@ -7834,7 +7934,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self nextMarkOrNote];
 }
 
-- (void)previuosMarkTouchBarItemSelected:(id)sender {
+- (void)previousMarkTouchBarItemSelected:(id)sender {
     [self previousMarkOrNote];
 }
 
@@ -7852,6 +7952,23 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
                                                        return [term createTabWithProfile:profile withCommand:command];
                                                    }];
+    }
+}
+
+- (void)colorPresetTouchBarItemSelected:(iTermTouchBarButton *)sender {
+    [self setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
+}
+
+- (void)setColorsFromPresetNamed:(NSString *)presetName {
+    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
+    if (!settings) {
+        return;
+    }
+    for (NSString *colorName in [ProfileModel colorKeys]) {
+        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
+        if (colorDict) {
+            [self setSessionSpecificProfileValues:@{ colorName: colorDict }];
+        }
     }
 }
 
