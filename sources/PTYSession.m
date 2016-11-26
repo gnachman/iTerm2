@@ -44,6 +44,7 @@
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -5971,7 +5972,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSTouchBar *)makeTouchBar {
     NSTouchBar *touchBar = [[[NSTouchBar alloc] init] autorelease];
     touchBar.delegate = self;
-    touchBar.customizationIdentifier = self.profile[KEY_ORIGINAL_GUID] ?: self.profile[KEY_GUID];
     touchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierManPage,
                                          iTermTouchBarIdentifierColorPreset,
                                          NSTouchBarItemIdentifierFlexibleSpace,
@@ -7851,19 +7851,19 @@ ITERM_WEAKLY_REFERENCEABLE
         selector = @selector(manPageTouchBarItemSelected:);
         label = @"Man Page";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAddMark]) {
-        image = [NSImage imageNamed:@"Add Mark Touch Bar Icon"];
+        image = [[NSImage imageNamed:@"Add Mark Touch Bar Icon"] imageWithColor:[NSColor labelColor]];
         selector = @selector(addMarkTouchBarItemSelected:);
         label = @"Add Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierNextMark]) {
-        image = [NSImage imageNamed:@"Next Mark Touch Bar Icon"];
+        image = [NSImage imageNamed:NSImageNameTouchBarGoDownTemplate];
         selector = @selector(nextMarkTouchBarItemSelected:);
         label = @"Next Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierPreviousMark]) {
-        image = [NSImage imageNamed:@"Previous Mark Touch Bar Icon"];
+        image = [NSImage imageNamed:NSImageNameTouchBarGoUpTemplate];
         selector = @selector(previousMarkTouchBarItemSelected:);
         label = @"Previous Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPreset]) {
-        image = [NSImage imageNamed:@"Color Preset Touch Bar Icon"];
+        image = [NSImage imageNamed:NSImageNameTouchBarColorPickerFill];
         selector = @selector(colorPresetTouchBarItemSelected:);
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         item.customizationLabel = @"Color Preset";

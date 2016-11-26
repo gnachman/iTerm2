@@ -90,6 +90,7 @@ NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWin
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const iTermTabBarTouchBarIdentifier = @"tab bar";
+static NSString *const iTermTabBarItemTouchBarIdentifier = @"tab bar item";
 
 #define PtyLog DLog
 
@@ -145,7 +146,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermPasswordManagerDelegate,
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
-    iTermToolbeltViewDelegate>
+    iTermToolbeltViewDelegate,
+    NSScrubberDelegate,
+    NSScrubberDataSource,
+    NSTouchBarDelegate>
+
 @property(nonatomic, assign) BOOL windowInitialized;
 
 // Session ID of session that currently has an auto-command history window open
@@ -350,6 +355,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     // Number of tabs since last change.
     NSInteger _previousNumberOfTabs;
+
+    NSCustomTouchBarItem *_tabsTouchBarItem;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -5671,9 +5678,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return allSubstitutions;
 }
 
-- (NSArray*)tabs {
+- (NSArray<PTYTab *>*)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
-    NSMutableArray *tabs = [NSMutableArray arrayWithCapacity:n];
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
         NSTabViewItem* theItem = [_contentView.tabView tabViewItemAtIndex:i];
         [tabs addObject:[theItem identifier]];
@@ -7009,13 +7016,29 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateTouchBarIfNeeded {
     if (IsTouchBarAvailable()) {
-        self.touchBar = [self amendTouchBar:[self.currentSession makeTouchBar]];
+        NSTouchBar *replacement = [self amendTouchBar:[self.currentSession makeTouchBar]];
+        if (![replacement.customizationIdentifier isEqualToString:self.touchBar.customizationIdentifier]) {
+            self.touchBar = replacement;
+        } else {
+            NSScrubber *scrubber = (NSScrubber *)_tabsTouchBarItem.view;
+            [scrubber reloadData];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
+            });
+        }
     }
 }
 
 - (NSTouchBar *)amendTouchBar:(NSTouchBar *)touchBar {
+    touchBar.customizationIdentifier = @"regular";
     if (self.anyFullScreen) {
-        touchBar.defaultItemIdentifiers = [touchBar.defaultItemIdentifiers arrayByAddingObject:iTermTabBarTouchBarIdentifier];
+        NSMutableArray *temp = [[touchBar.defaultItemIdentifiers mutableCopy] autorelease];
+        NSInteger index = [temp indexOfObject:NSTouchBarItemIdentifierOtherItemsProxy];
+        if (index != NSNotFound) {
+            touchBar.customizationIdentifier = @"full screen";
+            [temp insertObject:iTermTabBarTouchBarIdentifier atIndex:index];
+            touchBar.defaultItemIdentifiers = temp;
+        }
         touchBar.customizationAllowedItemIdentifiers = [touchBar.customizationAllowedItemIdentifiers arrayByAddingObjectsFromArray:@[ iTermTabBarTouchBarIdentifier ]];
     }
     return touchBar;
@@ -7024,29 +7047,39 @@ ITERM_WEAKLY_REFERENCEABLE
 // iTermWindowController method
 - (NSTouchBarItem *)touchBarItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
     if ([identifier isEqualToString:iTermTabBarTouchBarIdentifier]) {
-        NSMutableArray<NSTouchBarItem *> *items = [NSMutableArray array];
-        NSInteger i = 0;
-        for (PTYTab *tab in self.tabs) {
-            iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:tab.activeSession.name ?: [NSString stringWithFormat:@"Tab %@", @(i + 1)]
-                                                                        target:self
-                                                                        action:@selector(touchBarTabSelected:)];
-            button.keyBindingAction = @{ @"tab": @(i) };
-            NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:[NSString stringWithFormat:@"tab %@", @(i + 1)]];
-            item.view = button;
-            [items addObject:item];
-            i++;
+        NSScrubber *scrubber;
+        if (!_tabsTouchBarItem) {
+            _tabsTouchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:identifier];
+            _tabsTouchBarItem.customizationLabel = @"Full Screen Tab Bar";
+
+            scrubber = [[NSScrubber alloc] initWithFrame:NSMakeRect(0, 0, 320, 30)];
+            scrubber.delegate = self;   // So we can respond to selection.
+            scrubber.dataSource = self;
+            scrubber.showsAdditionalContentIndicators = YES;
+
+            [scrubber registerClass:[NSScrubberTextItemView class] forItemIdentifier:iTermTabBarItemTouchBarIdentifier];
+
+            // Use the flow layout.
+            NSScrubberLayout *scrubberLayout = [[NSScrubberFlowLayout alloc] init];
+            scrubber.scrubberLayout = scrubberLayout;
+
+            scrubber.mode = NSScrubberModeFree;
+
+            NSScrubberSelectionStyle *outlineStyle = [NSScrubberSelectionStyle outlineOverlayStyle];
+            scrubber.selectionBackgroundStyle = outlineStyle;
+
+            _tabsTouchBarItem.view = scrubber;
+        } else {
+            scrubber = (NSScrubber *)_tabsTouchBarItem.view;
         }
-        NSGroupTouchBarItem *group = [NSGroupTouchBarItem groupItemWithIdentifier:identifier items:items];
-        group.customizationLabel = @"Tab Bar";
-        return group;
+        [scrubber reloadData];
+        [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
+
+
+        return _tabsTouchBarItem;
     } else {
         return nil;
     }
-}
-
-- (void)touchBarTabSelected:(iTermTouchBarButton *)button {
-    NSInteger i = [button.keyBindingAction[@"tab"] integerValue];
-    [self.tabView selectTabViewItemAtIndex:i];
 }
 
 // Called when the parameter panel should close.
@@ -7577,5 +7610,26 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)endPreviewPanelControl:(QLPreviewPanel *)panel {
     [self.currentSession.quickLookController endPreviewPanelControl:panel];
 }
+
+#pragma mark - NSScrubberDelegate
+
+- (void)scrubber:(NSScrubber *)scrubber didSelectItemAtIndex:(NSInteger)selectedIndex {
+    [self.tabView selectTabViewItemAtIndex:selectedIndex];
+}
+
+#pragma mark - NSScrubberDataSource
+
+- (NSInteger)numberOfItemsForScrubber:(NSScrubber *)scrubber {
+    return [_contentView.tabView numberOfTabViewItems];
+}
+
+- (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
+    NSScrubberTextItemView *itemView = [scrubber makeItemWithIdentifier:iTermTabBarItemTouchBarIdentifier owner:nil];
+    itemView.textField.stringValue = self.tabs[index].activeSession.name;
+    itemView.highlighted = YES;
+    return itemView;
+}
+
+#pragma mark - NSTouchBarDelegate
 
 @end
