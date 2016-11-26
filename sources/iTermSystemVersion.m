@@ -7,6 +7,7 @@
 //
 
 #import "iTermSystemVersion.h"
+#import <Cocoa/Cocoa.h>
 
 #import "DebugLogging.h"
 
@@ -78,4 +79,9 @@ BOOL IsMavericksOrLater(void) {
 
 BOOL IsYosemiteOrLater(void) {
     return SystemVersionIsGreaterOrEqualTo(10, 10, 0);
+}
+
+BOOL IsTouchBarAvailable(void) {
+    // Checking for OS version doesn't work because there were two different 10.12.1's.
+    return [NSApp respondsToSelector:@selector(setAutomaticCustomizeTouchBarMenuItemEnabled:)];
 }

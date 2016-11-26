@@ -347,38 +347,59 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     return [iTermKeyBindingMgr sortedGlobalKeyCombinations];
 }
 
+- (NSArray *)keyMappingSortedTouchBarKeys:(iTermKeyMappingViewController *)viewController {
+    NSDictionary *dict = [iTermKeyBindingMgr globalTouchBarMap];
+    return [iTermKeyBindingMgr sortedTouchBarKeysInDictionary:dict];
+}
+
+- (NSDictionary *)keyMappingTouchBarItems {
+    return [iTermKeyBindingMgr globalTouchBarMap];
+}
+
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
- didChangeKeyCombo:(NSString *)keyCombo
+      didChangeKey:(NSString *)theKey
+    isTouchBarItem:(BOOL)isTouchBarItem
             atIndex:(NSInteger)index
           toAction:(int)action
          parameter:(NSString *)parameter
+             label:(NSString *)label  // for touch bar only
         isAddition:(BOOL)addition {
-    NSMutableDictionary *dict =
-            [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalKeyMap]];
-    if ([self anyBookmarkHasKeyMapping:keyCombo]) {
-        if (![self warnAboutPossibleOverride]) {
-            return;
+    NSMutableDictionary *dict;
+    if (isTouchBarItem) {
+        dict = [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalTouchBarMap]];
+        [iTermKeyBindingMgr updateDictionary:dict forTouchBarItem:theKey action:action value:parameter label:label];
+        [iTermKeyBindingMgr setGlobalTouchBarMap:dict];
+    } else {
+        dict = [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalKeyMap]];
+        if ([self anyBookmarkHasKeyMapping:theKey]) {
+            if (![self warnAboutPossibleOverride]) {
+                return;
+            }
         }
+        [iTermKeyBindingMgr setMappingAtIndex:index
+                                       forKey:theKey
+                                       action:action
+                                        value:parameter
+                                    createNew:addition
+                                 inDictionary:dict];
+        [iTermKeyBindingMgr setGlobalKeyMap:dict];
     }
-    [iTermKeyBindingMgr setMappingAtIndex:index
-                                   forKey:keyCombo
-                                   action:action
-                                    value:parameter
-                                createNew:addition
-                             inDictionary:dict];
-    [iTermKeyBindingMgr setGlobalKeyMap:dict];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
 }
 
-
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-    removeKeyCombo:(NSString *)keyCombo {
-    NSUInteger index = [[iTermKeyBindingMgr sortedGlobalKeyCombinations] indexOfObject:keyCombo];
-    assert(index != NSNotFound);
-    [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:index
-                                                                    inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
+         removeKey:(NSString *)key
+    isTouchBarItem:(BOOL)isTouchBarItem {
+    if (isTouchBarItem) {
+        [iTermKeyBindingMgr removeTouchBarItem:key];
+    } else {
+        NSUInteger index = [[iTermKeyBindingMgr sortedGlobalKeyCombinations] indexOfObject:key];
+        assert(index != NSNotFound);
+        [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:index
+                                                                        inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];

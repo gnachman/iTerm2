@@ -27,6 +27,20 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "ProfilesSessionPreferencesViewController.h"
 
+@interface NSWindow(LazyHacks)
+- (void)safeMakeFirstResponder:(id)view;
+@end
+
+@implementation NSWindow(LazyHacks)
+
+- (void)safeMakeFirstResponder:(NSView *)view {
+    if (view.window == self) {
+        [self makeFirstResponder:self];
+    }
+}
+
+@end
+
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 static const CGFloat kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode = 7;
 static const CGFloat kSideMarginsWithinInnerTabView = 11;
@@ -291,7 +305,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     if (selectGeneralTab && !self.view.window.attachedSheet) {
         [_tabView selectTabViewItem:_generalTab];
     }
-    [self.view.window performSelector:@selector(makeFirstResponder:)
+    // Use safeMakeFirstResponder in case the profile name is not visible at the time it is called.
+    // Prevents an annoying message threatening a crash that never comes.
+    [self.view.window performSelector:@selector(safeMakeFirstResponder:)
                            withObject:_generalViewController.profileNameFieldForEditCurrentSession
                            afterDelay:0];
 }

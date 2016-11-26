@@ -117,7 +117,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
-                         block:(PTYSession *(^)(PseudoTerminal *))block;
+                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block;
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
 - (PseudoTerminal*)terminalAtIndex:(int)i;

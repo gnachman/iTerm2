@@ -659,6 +659,8 @@ typedef enum {
 
 - (void)useTransparencyDidChange;
 
+- (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

@@ -1541,6 +1541,18 @@
 		A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A310D186E2EDA007F550F /* PopupEntry.h */; };
 		A68A3114186E2F14007F550F /* PopupWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3112186E2F14007F550F /* PopupWindow.h */; };
 		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
+		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
+		A68E332C1DE6AFC6003F1D8E /* iTermTouchBarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */; };
+		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
+		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
+		A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332F1DE746F5003F1D8E /* Next Mark Touch Bar Icon.png */; };
+		A68E33361DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E33301DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png */; };
+		A68E33371DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E33311DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png */; };
+		A68E33381DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E33321DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png */; };
+		A68E333B1DE78D08003F1D8E /* Man Page Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E33391DE78D08003F1D8E /* Man Page Touch Bar Icon.png */; };
+		A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E333A1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png */; };
+		A68E333F1DE79284003F1D8E /* Color Preset Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E333D1DE79284003F1D8E /* Color Preset Touch Bar Icon.png */; };
+		A68E33401DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E333E1DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png */; };
 		A690F7011B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7021B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7031B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
@@ -3272,6 +3284,18 @@
 		A68A3113186E2F14007F550F /* PopupWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupWindow.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3117186E2F54007F550F /* PopupModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PopupModel.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; tabWidth = 4; };
+		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
+		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
+		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
+		A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon@2x.png"; path = "images/Add Mark Touch Bar Icon@2x.png"; sourceTree = "<group>"; };
+		A68E332F1DE746F5003F1D8E /* Next Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Next Mark Touch Bar Icon.png"; path = "images/Next Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
+		A68E33301DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Next Mark Touch Bar Icon@2x.png"; path = "images/Next Mark Touch Bar Icon@2x.png"; sourceTree = "<group>"; };
+		A68E33311DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Previous Mark Touch Bar Icon.png"; path = "images/Previous Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
+		A68E33321DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Previous Mark Touch Bar Icon@2x.png"; path = "images/Previous Mark Touch Bar Icon@2x.png"; sourceTree = "<group>"; };
+		A68E33391DE78D08003F1D8E /* Man Page Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Man Page Touch Bar Icon.png"; path = "images/Man Page Touch Bar Icon.png"; sourceTree = "<group>"; };
+		A68E333A1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Man Page Touch Bar Icon@2x.png"; path = "images/Man Page Touch Bar Icon@2x.png"; sourceTree = "<group>"; };
+		A68E333D1DE79284003F1D8E /* Color Preset Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Color Preset Touch Bar Icon.png"; path = "images/Color Preset Touch Bar Icon.png"; sourceTree = "<group>"; };
+		A68E333E1DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Color Preset Touch Bar Icon@2x.png"; path = "images/Color Preset Touch Bar Icon@2x.png"; sourceTree = "<group>"; };
 		A690F7001B424C55009F76D8 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; tabWidth = 4; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -4195,6 +4219,16 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A68E333D1DE79284003F1D8E /* Color Preset Touch Bar Icon.png */,
+				A68E333E1DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png */,
+				A68E33391DE78D08003F1D8E /* Man Page Touch Bar Icon.png */,
+				A68E333A1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png */,
+				A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */,
+				A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */,
+				A68E332F1DE746F5003F1D8E /* Next Mark Touch Bar Icon.png */,
+				A68E33301DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png */,
+				A68E33311DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png */,
+				A68E33321DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png */,
 				A69A15711D7FD78200A9E7EF /* TipCalendar.png */,
 				A69A15721D7FD78200A9E7EF /* TipCalendar@2x.png */,
 				A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */,
@@ -4388,6 +4422,8 @@
 				A667F3961B4F71AE00705186 /* iTermSavePanel.m */,
 				1D72A4D31BE9707A0042174A /* iTermWebViewWrapperViewController.h */,
 				1D72A4D41BE9707A0042174A /* iTermWebViewWrapperViewController.m */,
+				A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */,
+				A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -5996,6 +6032,7 @@
 				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
 				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
 				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
+				A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */,
 				A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */,
 				1D5655C919AD2B1A001C460B /* PTYTab+Scripting.h in Headers */,
 				A6E713BA18FCCDD1008D94DD /* iTermLaunchServices.h in Headers */,
@@ -6971,6 +7008,7 @@
 				A67D0D531A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A66DB8331C8E4C2E00233E88 /* ChangeProfile@2x.png in Resources */,
+				A68E33381DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				A6EFF2311D2049A300806EEF /* Erase.png in Resources */,
 				A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */,
@@ -7003,6 +7041,7 @@
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
 				A6FD85301B767D6300EB9DCE /* Hamburger.png in Resources */,
+				A68E33401DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png in Resources */,
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,
 				1D8BBA731B30F7FB0005A852 /* Dismiss.png in Resources */,
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
@@ -7011,8 +7050,10 @@
 				A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
+				A68E33361DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
+				A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */,
 				A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
@@ -7032,8 +7073,10 @@
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
+				A68E33371DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png in Resources */,
 				A65B72B11B33C07D00F947A7 /* NextTip.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
+				A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
@@ -7056,6 +7099,7 @@
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				A690F7011B424C55009F76D8 /* Media.xcassets in Resources */,
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
+				A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */,
 				A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A6339DDB1D232DF2000BAD78 /* StatusItemAlt.png in Resources */,
@@ -7073,6 +7117,7 @@
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
 				A67D0D4D1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
 				1DBBA5E11B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
+				A68E333B1DE78D08003F1D8E /* Man Page Touch Bar Icon.png in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
 				A67D0D621A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
@@ -7100,6 +7145,7 @@
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */,
+				A68E333F1DE79284003F1D8E /* Color Preset Touch Bar Icon.png in Resources */,
 				A6B3A73B1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
@@ -7109,6 +7155,7 @@
 				A67D0D8C1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
+				A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */,
 				1DA76A241B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				9DB3D6F0176CCABE0071CCF8 /* PrefsArrangements.png in Resources */,
 				9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */,
@@ -7549,6 +7596,7 @@
 				A6E761651D39D216005C0E5C /* iTermMutableAttributedStringBuilder.m in Sources */,
 				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
+				A68E332C1DE6AFC6003F1D8E /* iTermTouchBarButton.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

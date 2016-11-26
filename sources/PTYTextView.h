@@ -165,7 +165,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewResizeFrameIfNeeded;
 
 - (NSInteger)textViewUnicodeVersion;
-
+- (void)textViewDidRefresh;
 @end
 
 @interface PTYTextView : NSView <

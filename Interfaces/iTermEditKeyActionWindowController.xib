@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16A320" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermEditKeyActionWindowController">
@@ -10,6 +11,7 @@
                 <outlet property="_actionPopup" destination="GMz-jA-Nhg" id="FTh-b5-yVm"/>
                 <outlet property="_colorPresetsLabel" destination="TtY-N0-xlA" id="WGZ-eQ-7DP"/>
                 <outlet property="_colorPresetsPopup" destination="tld-gp-ZWP" id="pmR-N0-sjS"/>
+                <outlet property="_keyboardShortcutLabel" destination="K5J-cS-cKV" id="OHV-3k-HGx"/>
                 <outlet property="_menuToSelectPopup" destination="Lul-IP-GkH" id="LCb-mY-zgC"/>
                 <outlet property="_parameter" destination="7JT-ar-Qef" id="2uA-Zc-mij"/>
                 <outlet property="_parameterLabel" destination="q03-HA-vno" id="4oO-Om-1Ub"/>
@@ -18,6 +20,7 @@
                 <outlet property="_profilePopup" destination="a20-Tf-Nfn" id="DgR-fn-bWA"/>
                 <outlet property="_selectionMovementUnit" destination="otv-pU-Wmk" id="00N-Yc-D4i"/>
                 <outlet property="_shortcutField" destination="OcE-sI-T64" id="El9-Wc-JTH"/>
+                <outlet property="_touchBarLabel" destination="oHw-49-aB1" id="SwV-cq-OK3"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -249,6 +252,15 @@ Gw
                                     <outlet property="nextKeyView" destination="GMz-jA-Nhg" id="guP-x7-Cen"/>
                                     <outlet property="shortcutDelegate" destination="-2" id="gNJ-U2-3Ko"/>
                                 </connections>
+                            </textField>
+                            <textField verticalHuggingPriority="750" misplaced="YES" id="oHw-49-aB1" userLabel="Touch Bar Label">
+                                <rect key="frame" x="150" y="119" width="273" height="22"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Label to show in Touch Bar" drawsBackground="YES" id="mYT-YJ-w7Z">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" id="7JT-ar-Qef" userLabel="Parameter">
                                 <rect key="frame" x="149" y="62" width="273" height="22"/>

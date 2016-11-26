@@ -1,13 +1,15 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A284" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermKeyMappingViewController">
             <connections>
                 <outlet property="_actionColumn" destination="8iu-ei-TS7" id="Gcv-RR-t3T"/>
+                <outlet property="_addTouchBarItem" destination="mE2-Fe-MAY" id="p0R-31-Bdr"/>
                 <outlet property="_keyCombinationColumn" destination="Qlz-bw-G7W" id="cSj-S6-11C"/>
                 <outlet property="_presetsPopup" destination="G8O-KW-SKT" id="kIL-c2-Euc"/>
                 <outlet property="_removeMappingButton" destination="csN-Fw-hKk" id="FuP-tp-Nfr"/>
@@ -31,7 +33,6 @@
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="9am-Ja-chV" id="ba5-LU-f2s">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="228"/>
                                 <autoresizingMask key="autoresizingMask"/>
-                                <animations/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <tableViewGridLines key="gridStyleMask" vertical="YES" horizontal="YES"/>
@@ -70,24 +71,18 @@
                                 </connections>
                             </tableView>
                         </subviews>
-                        <animations/>
-                        <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </clipView>
-                    <animations/>
                     <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="dX4-0X-Caj">
                         <rect key="frame" x="-100" y="-100" width="266" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                     </scroller>
                     <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="B0m-r4-UO4">
                         <rect key="frame" x="508" y="17" width="16" height="228"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                     </scroller>
                     <tableHeaderView key="headerView" id="9am-Ja-chV">
                         <rect key="frame" x="0.0" y="0.0" width="523" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                     </tableHeaderView>
                     <connections>
                         <outlet property="nextKeyView" destination="D4A-qx-BsH" id="0Lx-JL-HpM"/>
@@ -96,7 +91,6 @@
                 <button id="D4A-qx-BsH">
                     <rect key="frame" x="0.0" y="3" width="21" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
-                    <animations/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="jzp-Du-pvI">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -109,7 +103,6 @@
                 <button id="csN-Fw-hKk">
                     <rect key="frame" x="20" y="3" width="20" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
-                    <animations/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="h8l-hr-iTp">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -122,7 +115,6 @@
                 <popUpButton id="G8O-KW-SKT">
                     <rect key="frame" x="39" y="3" width="144" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <animations/>
                     <popUpButtonCell key="cell" type="square" title="Load Preset..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="0rv-a0-ans" id="Tmb-OS-Cqe">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
@@ -138,8 +130,20 @@
                         <action selector="loadPresets:" target="-2" id="vvS-N2-cM0"/>
                     </connections>
                 </popUpButton>
+                <button misplaced="YES" id="mE2-Fe-MAY">
+                    <rect key="frame" x="394" y="3" width="131" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                    <buttonCell key="cell" type="square" title="Add Touch Bar Item" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" borderStyle="border" inset="2" id="2Vc-Od-Zym">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="smallSystem"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="addTouchBarItem:" target="-2" id="ldc-TE-cdk"/>
+                        <outlet property="nextKeyView" destination="csN-Fw-hKk" id="pDo-gD-8zm"/>
+                    </connections>
+                </button>
             </subviews>
-            <animations/>
+            <point key="canvasLocation" x="139.5" y="168.5"/>
         </customView>
     </objects>
     <resources>
