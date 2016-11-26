@@ -36,7 +36,6 @@
 #import "iTermShortcutInputView.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
-#import "iTermTouchBarButton.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -87,13 +86,6 @@
 
 static const NSInteger kMinimumUnicodeVersion = 8;
 static const NSInteger kMaximumUnicodeVersion = 9;
-
-static NSString *const iTermTouchBarIdentifierAddMark = @"iTermTouchBarIdentifierAddMark";
-static NSString *const iTermTouchBarIdentifierNextMark = @"iTermTouchBarIdentifierNextMark";
-static NSString *const iTermTouchBarIdentifierPreviousMark = @"iTermTouchBarIdentifierPreviousMark";
-static NSString *const iTermTouchBarIdentifierManPage = @"iTermTouchBarIdentifierManPage";
-static NSString *const iTermTouchBarIdentifierColorPreset = @"iTermTouchBarIdentifierColorPreset";
-static NSString *const iTermTouchBarIdentifierColorPresetScrollview = @"iTermTouchBarIdentifierColorPresetScrollview";
 
 
 // The format for a user defaults key that recalls if the user has already been pestered about
@@ -206,9 +198,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     iTermAutomaticProfileSwitcherDelegate,
     iTermHotKeyNavigableSession,
     iTermPasteHelperDelegate,
-    iTermSessionViewDelegate,
-    NSTouchBarProvider,
-    NSTouchBarDelegate>
+    iTermSessionViewDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 
@@ -5940,55 +5930,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return _unicodeVersion;
 }
 
-- (void)updateManPageButton:(iTermTouchBarButton *)button {
-    iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
-    NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
-    if (word) {
-        if (![button.title isEqualToString:word]) {
-            button.title = word;
-            button.imagePosition = NSImageLeft;
-            button.enabled = YES;
-            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharacters]] };
-        }
-    } else if (button.enabled) {
-        button.title = @"";
-        button.imagePosition = NSImageOnly;
-        button.enabled = NO;
-        button.keyBindingAction = nil;
-    }
-}
-
 - (void)textViewDidRefresh {
     if (_textview.window.firstResponder != _textview) {
         return;
     }
-    NSTouchBarItem *item = [[[_delegate realParentWindow] touchBar] itemForIdentifier:iTermTouchBarIdentifierManPage];
-    if (item) {
-        iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
-        [self updateManPageButton:button];
-    }
-}
-
-- (NSTouchBar *)makeTouchBar {
-    NSTouchBar *touchBar = [[[NSTouchBar alloc] init] autorelease];
-    touchBar.delegate = self;
-    touchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierManPage,
-                                         iTermTouchBarIdentifierColorPreset,
-                                         NSTouchBarItemIdentifierFlexibleSpace,
-                                         NSTouchBarItemIdentifierOtherItemsProxy,
-                                         iTermTouchBarIdentifierAddMark,
-                                         iTermTouchBarIdentifierPreviousMark,
-                                         iTermTouchBarIdentifierNextMark ];
-    NSArray *ids = @[ iTermTouchBarIdentifierManPage,
-                      iTermTouchBarIdentifierColorPreset,
-                      NSTouchBarItemIdentifierFlexibleSpace,
-                      iTermTouchBarIdentifierAddMark,
-                      iTermTouchBarIdentifierNextMark,
-                      iTermTouchBarIdentifierPreviousMark ];
-    ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:self.profile[KEY_TOUCHBAR_MAP]]];
-    ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
-    touchBar.customizationAllowedItemIdentifiers = ids;
-    return touchBar;
+    iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+    NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
+    [[_delegate realParentWindow] currentSessionWordAtCursorDidBecome:word];
 }
 
 - (void)sendEscapeSequence:(NSString *)text
@@ -7755,221 +7703,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewBecomeFirstResponder {
     [self.textview.window makeFirstResponder:self.textview];
-}
-
-- (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
-    NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
-    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
-    item.view = scrollView;
-    NSView *documentView = [[NSView alloc] init];
-    documentView.translatesAutoresizingMaskIntoConstraints = NO;
-    scrollView.documentView = documentView;
-    NSButton *previous = nil;
-    for (NSDictionary *dict in @[ [iTermColorPresets builtInColorPresets] ?: @{},
-                                  [iTermColorPresets customColorPresets] ?: @{} ]) {
-        for (NSString *name in dict) {
-            iTermTouchBarButton *button;
-            NSColor *textColor = nil;
-            NSColor *backgroundColor = nil;
-            textColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_FOREGROUND_COLOR]];
-            backgroundColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_BACKGROUND_COLOR]];
-            NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor };
-            NSAttributedString *title = [[[NSAttributedString alloc] initWithString:name
-                                                                         attributes:attributes] autorelease];
-            button = [iTermTouchBarButton buttonWithTitle:@""
-                                                   target:self
-                                                       action:@selector(colorPresetTouchBarItemSelected:)];
-            [button sizeToFit];
-            button.attributedTitle = title;
-            button.bezelColor = backgroundColor;
-            button.keyBindingAction = @{ @"presetName": name };
-            [documentView addSubview:button];
-            button.translatesAutoresizingMaskIntoConstraints = NO;
-            if (previous == nil) {
-                // Constrain the first item's left to the document view's left
-                [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                         attribute:NSLayoutAttributeLeft
-                                                                         relatedBy:NSLayoutRelationEqual
-                                                                            toItem:documentView
-                                                                         attribute:NSLayoutAttributeLeft
-                                                                        multiplier:1
-                                                                          constant:0]];
-            } else {
-                // Constrain non-first button's left to predecessor's right + 8pt
-                [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                         attribute:NSLayoutAttributeLeft
-                                                                         relatedBy:NSLayoutRelationEqual
-                                                                            toItem:previous
-                                                                         attribute:NSLayoutAttributeRight
-                                                                        multiplier:1
-                                                                          constant:8]];
-            }
-            // Constrain top and bottom to document view's top and bottom
-            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                     attribute:NSLayoutAttributeTop
-                                                                     relatedBy:NSLayoutRelationEqual
-                                                                        toItem:documentView
-                                                                     attribute:NSLayoutAttributeTop
-                                                                    multiplier:1
-                                                                      constant:0]];
-            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                     attribute:NSLayoutAttributeBottom
-                                                                     relatedBy:NSLayoutRelationEqual
-                                                                        toItem:documentView
-                                                                     attribute:NSLayoutAttributeBottom
-                                                                    multiplier:1
-                                                                      constant:0]];
-            previous = button;
-        }
-    }
-    if (previous) {
-        // Constrain last button's right to document view's right
-        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:previous
-                                                                 attribute:NSLayoutAttributeRight
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:documentView
-                                                                 attribute:NSLayoutAttributeRight
-                                                                multiplier:1
-                                                                  constant:0]];
-    }
-    return item;
-}
-
-#pragma mark - NSTouchBarDelegate
-
-- (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
-    NSTouchBarItem *delegateItem = [_delegate.realParentWindow touchBarItemForIdentifier:identifier];
-    if (delegateItem) {
-        return delegateItem;
-    }
-
-    NSImage *image = nil;
-    SEL selector = NULL;
-    NSString *label = nil;
-
-    if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
-        selector = @selector(manPageTouchBarItemSelected:);
-        label = @"Man Page";
-    } else if ([identifier isEqualToString:iTermTouchBarIdentifierAddMark]) {
-        image = [[NSImage imageNamed:@"Add Mark Touch Bar Icon"] imageWithColor:[NSColor labelColor]];
-        selector = @selector(addMarkTouchBarItemSelected:);
-        label = @"Add Mark";
-    } else if ([identifier isEqualToString:iTermTouchBarIdentifierNextMark]) {
-        image = [NSImage imageNamed:NSImageNameTouchBarGoDownTemplate];
-        selector = @selector(nextMarkTouchBarItemSelected:);
-        label = @"Next Mark";
-    } else if ([identifier isEqualToString:iTermTouchBarIdentifierPreviousMark]) {
-        image = [NSImage imageNamed:NSImageNameTouchBarGoUpTemplate];
-        selector = @selector(previousMarkTouchBarItemSelected:);
-        label = @"Previous Mark";
-    } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPreset]) {
-        image = [NSImage imageNamed:NSImageNameTouchBarColorPickerFill];
-        selector = @selector(colorPresetTouchBarItemSelected:);
-        NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-        item.customizationLabel = @"Color Preset";
-        item.showsCloseButton = YES;
-        item.collapsedRepresentationImage = image;
-
-        NSTouchBar *secondaryTouchBar = [[NSTouchBar alloc] init];
-        secondaryTouchBar.delegate = self;
-        secondaryTouchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierColorPresetScrollview ];
-        item.popoverTouchBar = secondaryTouchBar;
-        return item;
-    } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPresetScrollview]) {
-        return [self colorPresetsScrollViewTouchBarItem];
-    }
-
-    if (image || label) {
-        iTermTouchBarButton *button;
-        if (image) {
-            button = [iTermTouchBarButton buttonWithImage:image target:self action:selector];
-        } else {
-            button = [iTermTouchBarButton buttonWithTitle:label target:self action:selector];
-        }
-        NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-        item.view = button;
-        item.customizationLabel = label;
-        if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
-            button.title = @"";
-            button.image = [NSImage imageNamed:@"Man Page Touch Bar Icon"];
-            button.imagePosition = NSImageOnly;
-            button.enabled = NO;
-            [self updateManPageButton:button];
-        }
-        return item;
-    }
-    NSDictionary *map = [iTermKeyBindingMgr touchBarItemsForProfile:self.profile];
-    NSDictionary *binding = map[identifier];
-    if (!binding) {
-        map = [iTermKeyBindingMgr globalTouchBarMap];
-        binding = map[identifier];
-    }
-    if (!binding) {
-        return nil;
-    }
-    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-    iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:[iTermKeyBindingMgr touchBarLabelForBinding:binding]
-                                                                target:self
-                                                                action:@selector(touchBarItemSelected:)];
-    button.keyBindingAction = binding;
-    item.view = button;
-    item.view.identifier = identifier;
-    item.customizationLabel = [iTermKeyBindingMgr formatAction:binding];
-
-    return item;
-}
-
-- (void)touchBarItemSelected:(iTermTouchBarButton *)sender {
-    NSDictionary *binding = sender.keyBindingAction;
-    [self performKeyBindingAction:[iTermKeyBindingMgr actionForTouchBarItemBinding:binding]
-                        parameter:[iTermKeyBindingMgr parameterForTouchBarItemBinding:binding]
-                            event:[NSApp currentEvent]];
-}
-
-- (void)addMarkTouchBarItemSelected:(id)sender {
-    [self screenSaveScrollPosition];
-}
-
-- (void)nextMarkTouchBarItemSelected:(id)sender {
-    [self nextMarkOrNote];
-}
-
-- (void)previousMarkTouchBarItemSelected:(id)sender {
-    [self previousMarkOrNote];
-}
-
-- (void)manPageTouchBarItemSelected:(iTermTouchBarButton *)sender {
-    NSString *command = sender.keyBindingAction[@"command"];
-    if (command) {
-        [[iTermController sharedInstance] launchBookmark:nil
-                                              inTerminal:nil
-                                                 withURL:nil
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:YES
-                                             canActivate:YES
-                                                 command:command
-                                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
-                                                       profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
-                                                       return [term createTabWithProfile:profile withCommand:command];
-                                                   }];
-    }
-}
-
-- (void)colorPresetTouchBarItemSelected:(iTermTouchBarButton *)sender {
-    [self setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
-}
-
-- (void)setColorsFromPresetNamed:(NSString *)presetName {
-    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
-    if (!settings) {
-        return;
-    }
-    for (NSString *colorName in [ProfileModel colorKeys]) {
-        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
-        if (colorDict) {
-            [self setSessionSpecificProfileValues:@{ colorName: colorDict }];
-        }
-    }
 }
 
 @end
