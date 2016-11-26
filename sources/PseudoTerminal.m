@@ -7050,8 +7050,8 @@ ITERM_WEAKLY_REFERENCEABLE
             self.touchBar = replacement;
         } else {
             NSScrubber *scrubber = (NSScrubber *)_tabsTouchBarItem.view;
-            [scrubber reloadData];
             dispatch_async(dispatch_get_main_queue(), ^{
+                [scrubber reloadData];
                 [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
             });
         }
@@ -7725,12 +7725,30 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_contentView.tabView numberOfTabViewItems];
 }
 
+- (NSString *)scrubberLabelAtIndex:(NSInteger)index {
+    NSArray<PTYTab *> *tabs = self.tabs;
+    return index < tabs.count ?  self.tabs[index].activeSession.name : @"";
+}
+
 - (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
     NSScrubberTextItemView *itemView = [scrubber makeItemWithIdentifier:iTermTabBarItemTouchBarIdentifier owner:nil];
-    NSArray<PTYTab *> *tabs = self.tabs;
-    itemView.textField.stringValue = index < tabs.count ?  self.tabs[index].activeSession.name : @"";
-    itemView.highlighted = YES;
+    itemView.textField.stringValue = [self scrubberLabelAtIndex:index];
+//    [itemView.textField sizeToFit];
     return itemView;
+}
+
+- (NSSize)scrubber:(NSScrubber *)scrubber layout:(NSScrubberFlowLayout *)layout sizeForItemAtIndex:(NSInteger)itemIndex {
+    NSSize size = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX);
+
+    NSString *title = [self scrubberLabelAtIndex:itemIndex];
+    NSRect textRect = [title boundingRectWithSize:size
+                                          options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
+                                       attributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:0]}];
+    // Apple says: "+10: NSTextField horizontal padding, no good way to retrieve this though. +6 for spacing."
+    // 8 is because the items become smaller the first time you change tabs for some mysterious reason
+    // and that leaves enough room for them. :(
+    // The 30 is also Apple's magic number.
+    return NSMakeSize(textRect.size.width + 10 + 6 + 8, 30);
 }
 
 #pragma mark - NSTouchBarDelegate
@@ -7762,8 +7780,13 @@ ITERM_WEAKLY_REFERENCEABLE
         } else {
             scrubber = (NSScrubber *)_tabsTouchBarItem.view;
         }
-        [scrubber reloadData];
-        [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
+        // Reload the scrubber after a spin of the runloop bacause it gets laid out tighter after the
+        // rest of the toolbar is created. If we reloadData now then it jumps the first time we change
+        // tabs.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scrubber reloadData];
+            [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
+        });
 
 
         return _tabsTouchBarItem;

@@ -214,7 +214,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     editActionWindowController = [[[iTermEditKeyActionWindowController alloc] init] autorelease];
     editActionWindowController.isTouchBarItem = isTouchBarItem;
     if (isTouchBarItem) {
-        editActionWindowController.label = [iTermKeyBindingMgr touchBarLabelForBinding:dict];
+        editActionWindowController.label = [iTermKeyBindingMgr touchBarLabelForBinding:dict[selectedKey]];
     }
     editActionWindowController.isNewMapping = NO;
     if (isTouchBarItem) {
