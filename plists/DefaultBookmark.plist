@@ -538,8 +538,6 @@
 	<array/>
 	<key>Mouse Reporting</key>
 	<true/>
-	<key>Mouse Reporting allow mouse wheel</key>
-	<false/>
 	<key>Name</key>
 	<string>Default</string>
 	<key>Ambiguous Double Width</key>

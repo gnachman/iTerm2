@@ -3288,11 +3288,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview updateCursor:[NSApp currentEvent]];
 }
 
-- (void)setXtermMouseReportingAllowMouseWheel:(BOOL)set
-{
-    _xtermMouseReportingAllowMouseWheel = set;
-}
-
 - (BOOL)logging
 {
     return [_shell logging];
