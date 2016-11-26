@@ -1490,10 +1490,6 @@ static const int kDragThreshold = 3;
             !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
 }
 
-- (BOOL)xtermMouseReportingAllowMouseWheel {
-    return [[self delegate] xtermMouseReportingAllowMouseWheel];
-}
-
 // If mouse reports are sent to the delegate, will it use them? Use with -xtermMouseReporting, which
 // understands Option to turn off reporting.
 - (BOOL)terminalWantsMouseReports {
@@ -6818,7 +6814,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return NO;
     }
     if (event.type == NSScrollWheel) {
-        return ([self xtermMouseReporting] && [self xtermMouseReportingAllowMouseWheel]);
+        return [self xtermMouseReporting];
     } else {
         PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
         return (frontTextView == self && [self xtermMouseReporting]);

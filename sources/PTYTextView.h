@@ -63,7 +63,6 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 @protocol PTYTextViewDelegate <NSObject>
 
 - (BOOL)xtermMouseReporting;
-- (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)isPasting;
 - (void)queueKeyDown:(NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;

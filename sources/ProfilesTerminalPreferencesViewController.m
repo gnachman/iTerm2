@@ -21,7 +21,6 @@
     IBOutlet NSComboBox *_terminalType;
     IBOutlet NSTextField *_answerBackString;
     IBOutlet NSButton *_xtermMouseReporting;
-    IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_disablePrinting;
@@ -94,12 +93,6 @@
     [self defineControl:_xtermMouseReporting
                     key:KEY_XTERM_MOUSE_REPORTING
                    type:kPreferenceInfoTypeCheckbox];
-    
-    [self defineControl:_xtermMouseReportingAllowMouseWheel
-                    key:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL
-                   type:kPreferenceInfoTypeCheckbox];
-    
-    [_xtermMouseReportingAllowMouseWheel setEnabled: ([self boolForKey: KEY_XTERM_MOUSE_REPORTING])];
     
     [self defineControl:_allowTitleReporting
                     key:KEY_ALLOW_TITLE_REPORTING
@@ -225,17 +218,6 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
                     returnCode:(int)returnCode
                    contextInfo:(id)contextInfo {
     [sheet close];
-}
-
-
-#pragma mark - APIs
-
-- (IBAction)settingChanged:(id)sender {
-    if (sender == _xtermMouseReporting) {
-        [_xtermMouseReportingAllowMouseWheel setEnabled: ([_xtermMouseReporting state] == NSOnState)];
-    }
-    
-    return [super settingChanged: sender];
 }
 
 @end
