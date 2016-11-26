@@ -182,7 +182,6 @@ typedef enum {
 @interface PTYSession : NSResponder <
     FindViewControllerDelegate,
     iTermWeaklyReferenceable,
-    NSTouchBarProvider,
     PopupDelegate,
     PTYTaskDelegate,
     PTYTextViewDelegate,
@@ -659,6 +658,8 @@ typedef enum {
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 
 - (void)useTransparencyDidChange;
+
+- (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event;
 
 #pragma mark - Testing utilities
 
