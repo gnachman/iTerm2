@@ -13,4 +13,6 @@
 
 - (instancetype)initWithWebView:(FutureWKWebView *)webView;
 
+- (void)terminateWebView;
+
 @end

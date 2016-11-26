@@ -8,6 +8,7 @@
 
 #import "iTermWebViewWrapperViewController.h"
 #import "iTermFlippedView.h"
+#import <WebKit/WebKit.h>
 
 @interface iTermWebViewWrapperViewController ()
 @property(nonatomic, retain) FutureWKWebView *webView;
@@ -68,6 +69,12 @@
         }
     }
     return @"Default Browser";
+}
+
+- (void)terminateWebView {
+    WKWebView *webView = (WKWebView *)self.webView;
+    [webView stopLoading];
+    [webView loadHTMLString:@"<html/>" baseURL:nil];
 }
 
 @end

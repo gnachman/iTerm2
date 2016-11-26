@@ -114,7 +114,8 @@ static const int kDragThreshold = 3;
     iTermSelectionDelegate,
     iTermSelectionScrollHelperDelegate,
     NSDraggingSource,
-    NSMenuDelegate>
+    NSMenuDelegate,
+    NSPopoverDelegate>
 
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
@@ -2749,6 +2750,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  _lineHeight);
         rect = [self convertRect:rect fromView:nil];
         popover.behavior = NSPopoverBehaviorSemitransient;
+        popover.delegate = self;
         [popover showRelativeToRect:rect
                              ofView:self
                       preferredEdge:NSRectEdgeMinY];
@@ -7260,6 +7262,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying {
     [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
+}
+
+#pragma mark - NSPopoverDelegate
+
+- (void)popoverDidClose:(NSNotification *)notification {
+    NSPopover *popover = notification.object;
+    iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
+    [viewController terminateWebView];
+
 }
 
 @end
