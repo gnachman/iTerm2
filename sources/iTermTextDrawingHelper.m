@@ -1010,7 +1010,7 @@ typedef struct iTermTextColorContext {
 //                         alpha:1] set];
 //        NSFrameRect(NSMakeRect(point.x + positions->elements[0], point.y, width, _cellSize.height));
 
-        origin.x += numCellsDrawn * _cellSize.width;
+        origin.x += numCellsDrawn;
 
     }
 }
@@ -1339,7 +1339,7 @@ typedef struct iTermTextColorContext {
                                               [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
 
                                               [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
-                                                                                         atPoint:NSMakePoint(0, 0)
+                                                                                         atPoint:NSMakePoint(-stringPositions[range.location], 0)
                                                                                        positions:stringPositions
                                                                                  backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
                                                                                  graphicsContext:[NSGraphicsContext currentContext]
