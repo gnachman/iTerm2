@@ -1056,7 +1056,7 @@ static iTermController *gSharedInstance;
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
-                         block:(PTYSession *(^)(PseudoTerminal *))block {
+                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block {
     DLog(@"launchBookmark:inTerminal:withUrl:isHotkey:makeKey:canActivate:command:block:");
     DLog(@"Profile:\n%@", bookmarkData);
     DLog(@"URL: %@", url);
@@ -1130,7 +1130,7 @@ static iTermController *gSharedInstance;
 
     if (block) {
         DLog(@"Create a session via callback");
-        session = block(term);
+        session = block(aDict, term);
     } else if (url) {
         DLog(@"Creating a new session");
         session = [term createSessionWithProfile:aDict

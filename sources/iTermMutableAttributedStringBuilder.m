@@ -8,22 +8,60 @@
 
 #import "iTermMutableAttributedStringBuilder.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSDictionary+iTerm.h"
 
-#define MAX_CHARACTERS 100
+@interface iTermCheapAttributedString()
+@property (nonatomic, retain) NSMutableData *characterData;
+@property (nonatomic, retain) NSDictionary *attributes;
+@end
+
+@implementation iTermCheapAttributedString
+
+- (void)dealloc {
+    [_attributes release];
+    [_characterData release];
+    [super dealloc];
+}
+
+- (unichar *)characters {
+    return _characterData.mutableBytes;
+}
+
+- (NSUInteger)length {
+    return _characterData.length / sizeof(unichar);
+}
+
+- (void)addAttribute:(NSString *)name value:(id)value {
+    self.attributes = [self.attributes dictionaryBySettingObject:value forKey:name];
+}
+
+- (void)beginEditing {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
+- (void)endEditing {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
+- (void)appendAttributedString:(NSAttributedString *)attrString {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
+@end
 
 @implementation iTermMutableAttributedStringBuilder {
-    NSMutableAttributedString *_attributedString;
+    id<iTermAttributedString> _attributedString;
     NSMutableString *_string;
-    unichar _characters[MAX_CHARACTERS];
-    NSInteger _numCharacters;
+    NSMutableData *_characterData;
+    BOOL _canUseFastPath;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _attributedString = [[NSMutableAttributedString alloc] init];
-        [_attributedString beginEditing];
-        _string = [[NSMutableString alloc] init];
+#if ENABLE_TEXT_DRAWING_FAST_PATH
+        _canUseFastPath = YES;
+#endif
     }
     return self;
 }
@@ -45,42 +83,81 @@
 }
 
 - (void)build {
-    if (_numCharacters) {
+    if (_canUseFastPath && !_attributedString && _characterData.length / sizeof(unichar) && !_string.length) {
+        iTermCheapAttributedString *cheap = [[iTermCheapAttributedString alloc] init];
+        cheap.characterData = _characterData;
+        cheap.attributes = _attributes;
+        _attributedString = cheap;
+        return;
+    } else if ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]) {
+        [_attributedString release];
+        _attributedString = nil;
+    }
+    if (_characterData.length > 0) {
         [self flushCharacters];
     }
     if (_string.length) {
+        _canUseFastPath = NO;
+        if (!_attributedString) {
+            _attributedString = [[NSMutableAttributedString alloc] init];
+            [_attributedString beginEditing];
+        }
         [_attributedString appendAttributedString:[NSAttributedString attributedStringWithString:_string
                                                                                       attributes:_attributes]];
         [_string setString:@""];
     }
 }
-- (NSMutableAttributedString *)attributedString {
+- (id<iTermAttributedString>)attributedString {
     [self build];
-    [_attributedString endEditing];
+    if ([_attributedString isKindOfClass:[NSAttributedString class]]) {
+        [_attributedString endEditing];
+    }
     return _attributedString;
 }
 
 - (void)appendString:(NSString *)string {
-    if (_numCharacters) {
+    _canUseFastPath = NO;
+    if (_characterData.length > 0) {
         [self flushCharacters];
+    }
+    if (!_string) {
+        _string = [[NSMutableString alloc] init];
     }
     [_string appendString:string];
 }
 
 - (void)flushCharacters {
-    [_string appendString:[NSString stringWithCharacters:_characters length:_numCharacters]];
-    _numCharacters = 0;
+    if (!_string) {
+        _string = [[NSMutableString alloc] init];
+    }
+    [_string appendString:[NSString stringWithCharacters:_characterData.mutableBytes length:_characterData.length / sizeof(unichar)]];
+    _canUseFastPath = NO;
+    [_characterData release];
+    _characterData = nil;
 }
 
 - (void)appendCharacter:(unichar)code {
-    if (_numCharacters == MAX_CHARACTERS) {
-        [self flushCharacters];
+    _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
+    if (!_characterData) {
+        _characterData = [[NSMutableData alloc] init];
     }
-    _characters[_numCharacters++] = code;
+    [_characterData appendBytes:&code length:sizeof(unichar)];
 }
 
 - (NSInteger)length {
-    return _string.length + _attributedString.length + _numCharacters;
+    return _string.length + _attributedString.length + _characterData.length / sizeof(unichar);
+}
+
+- (void)disableFastPath {
+    _canUseFastPath = NO;
+}
+
+@end
+
+@implementation NSMutableAttributedString(iTermMutableAttributedStringBuilder)
+
+- (void)addAttribute:(NSString *)name value:(id)value {
+    [self addAttribute:name value:value range:NSMakeRange(0, self.length)];
 }
 
 @end

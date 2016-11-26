@@ -124,6 +124,7 @@
 @property(nonatomic, readonly) iTermAnnouncementViewController *currentAnnouncement;
 @property(nonatomic, assign) id<iTermSessionViewDelegate> delegate;
 @property(nonatomic, readonly) PTYScrollView *scrollview;
+@property(nonatomic, assign) BOOL useSubviewWithLayer;
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;

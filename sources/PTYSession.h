@@ -660,6 +660,10 @@ typedef enum {
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 
+- (void)useTransparencyDidChange;
+
+- (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

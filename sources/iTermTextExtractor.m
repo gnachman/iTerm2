@@ -80,6 +80,111 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     _logicalWindow.length = dividerAfter - dividerBefore;
 }
 
+- (NSString *)fastWordAt:(VT100GridCoord)location {
+    location = [self coordLockedToWindow:location];
+    iTermTextExtractorClass theClass =
+        [self classForCharacter:[self characterAt:location]];
+    if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
+        VT100GridCoord predecessor = [self predecessorOfCoord:location];
+        if (predecessor.x != location.x || predecessor.y != location.y) {
+            return [self fastWordAt:predecessor];
+        }
+    } else if (theClass == kTextExtractorClassOther) {
+        return nil;
+    }
+
+    const int xLimit = [self xLimit];
+    const int width = [_dataSource width];
+    int numberOfLines = [_dataSource numberOfLines];
+    if (location.y >= numberOfLines) {
+        return nil;
+    }
+    __block int iterations = 0;
+    const int maxLength = 20;
+    const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
+    const BOOL windowTouchesRightMargin = (xLimit == width);
+    VT100GridCoordRange theRange = VT100GridCoordRangeMake(location.x,
+                                                           location.y,
+                                                           width,
+                                                           location.y + 1);
+    __block BOOL foundWord = (theClass = kTextExtractorClassWord);
+    NSMutableString *word = [NSMutableString string];
+    if (theClass == kTextExtractorClassWord) {
+        // Search forward for the end of the word if the cursor was over a letter.
+        [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange,
+                                                               _logicalWindow.location,
+                                                               _logicalWindow.length)
+                          charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                              if (++iterations == maxLength) {
+                                  return YES;
+                              }
+                              iTermTextExtractorClass newClass = [self classForCharacter:theChar broadDefinitionOfAlphanumeric:NO];
+                              if (newClass == kTextExtractorClassWord) {
+                                  foundWord = YES;
+                                  if (theChar.complexChar ||
+                                      theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                      theChar.code > ITERM2_PRIVATE_END) {
+                                      NSString *s = [self stringForCharacter:theChar];
+                                      [word appendString:s];
+                                  }
+                                  return NO;
+                              } else {
+                                  return foundWord;
+                              }
+                          }
+                           eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                               return [self shouldStopEnumeratingWithCode:code
+                                                                 numNulls:numPreceedingNulls
+                                                  windowTouchesLeftMargin:windowTouchesLeftMargin
+                                                 windowTouchesRightMargin:windowTouchesRightMargin
+                                                         ignoringNewlines:NO];
+                           }];
+    }
+    if (iterations == maxLength) {
+        return nil;
+    }
+
+    // Search backward for the beginning of the word
+    theRange = VT100GridCoordRangeMake(0, 0, location.x, location.y);
+    [self enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
+                                                                    _logicalWindow.location,
+                                                                    _logicalWindow.length)
+                               charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
+                                   if (++iterations == maxLength) {
+                                       return YES;
+                                   }
+                                   iTermTextExtractorClass newClass = [self classForCharacter:theChar broadDefinitionOfAlphanumeric:NO];
+                                   if (newClass == kTextExtractorClassWord) {
+                                       foundWord = YES;
+                                       if (theChar.complexChar ||
+                                           theChar.code < ITERM2_PRIVATE_BEGIN ||
+                                           theChar.code > ITERM2_PRIVATE_END) {
+                                           NSString *s = [self stringForCharacter:theChar];
+                                           [word insertString:s atIndex:0];
+                                       }
+                                       return NO;
+                                   } else {
+                                       return foundWord;
+                                   }
+
+                               }
+                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                    return [self shouldStopEnumeratingWithCode:code
+                                                                      numNulls:numPreceedingNulls
+                                                       windowTouchesLeftMargin:windowTouchesLeftMargin
+                                                      windowTouchesRightMargin:windowTouchesRightMargin
+                                                              ignoringNewlines:NO];
+                                }];
+    if (iterations == maxLength) {
+        return nil;
+    }
+    if (foundWord && word.length) {
+        return word;
+    } else {
+        return nil;
+    }
+}
+
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
     location = [self coordLockedToWindow:location];
@@ -363,7 +468,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 
 - (BOOL)isWhitelistedAlphanumericAtCoord:(VT100GridCoord)coord {
     screen_char_t theChar = [self characterAt:coord];
-    return [self characterShouldBeTreatedAsAlphanumeric:ScreenCharToStr(&theChar)];
+    return [self characterShouldBeTreatedAsAlphanumeric:ScreenCharToStr(&theChar) broadDefinitionOfAlphanumeric:YES];
 }
 
 - (NSString *)stringForCharacter:(screen_char_t)theChar {
@@ -504,6 +609,11 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 
 // Returns the class for a character.
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter {
+    return [self classForCharacter:theCharacter broadDefinitionOfAlphanumeric:YES];
+}
+
+- (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
+               broadDefinitionOfAlphanumeric:(BOOL)broadDefinitionOfAlphanumeric {
     if (!theCharacter.complexChar) {
         if (theCharacter.code == TAB_FILLER) {
             return kTextExtractorClassWhitespace;
@@ -524,7 +634,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     }
 
     if ([self characterIsAlphanumeric:asString] ||
-        [self characterShouldBeTreatedAsAlphanumeric:asString]) {
+        [self characterShouldBeTreatedAsAlphanumeric:asString broadDefinitionOfAlphanumeric:broadDefinitionOfAlphanumeric]) {
         return kTextExtractorClassWord;
     }
 
@@ -536,10 +646,16 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     return (range.length == characterAsString.length);
 }
 
-- (BOOL)characterShouldBeTreatedAsAlphanumeric:(NSString *)characterAsString {
-    NSRange range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
-                        rangeOfString:characterAsString];
-    return (range.length == characterAsString.length);
+- (BOOL)characterShouldBeTreatedAsAlphanumeric:(NSString *)characterAsString
+                 broadDefinitionOfAlphanumeric:(BOOL)broadDefinitionOfAlphanumeric {
+    if (broadDefinitionOfAlphanumeric) {
+        NSRange range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
+                            rangeOfString:characterAsString];
+        return (range.length == characterAsString.length);
+    } else {
+        // The narrow definition only allows hyphen.
+        return [characterAsString isEqualToString:@"-"];
+    }
 }
 
 - (VT100GridWindowedRange)rangeOfParentheticalSubstringAtLocation:(VT100GridCoord)location {

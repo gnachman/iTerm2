@@ -890,18 +890,34 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                     flags:0];
 }
 
+- (NSString *)breakPaneWindowPaneFlag {
+    NSDecimalNumber *version2_1 = [NSDecimalNumber decimalNumberWithString:@"2.1"];
+
+    if ([gateway_.maximumServerVersion compare:version2_1] == NSOrderedAscending) {
+        // 2.0 and earlier versions take -t for the window pane
+        return @"-t";
+    }
+    if ([gateway_.minimumServerVersion compare:version2_1] != NSOrderedAscending) {
+        // 2.1+ takes -s for the window pane
+        return @"-s";
+    }
+
+    // You shouldn't get here.
+    return @"-s";
+}
+
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint
 {
     [windowPositions_ setObject:[NSValue valueWithPoint:screenPoint]
                          forKey:[NSNumber numberWithInt:windowPane]];
-    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -t %%%d", windowPane]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane %@ %%%d", [self breakPaneWindowPaneFlag], windowPane]
            responseTarget:nil
          responseSelector:nil];
 }
 
 - (void)breakOutWindowPane:(int)windowPane toTabAside:(NSString *)sibling
 {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -P -F \"#{window_id}\" -t %%%d", windowPane]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -P -F \"#{window_id}\" %@ %%%d", [self breakPaneWindowPaneFlag], windowPane]
            responseTarget:self
          responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
            responseObject:sibling

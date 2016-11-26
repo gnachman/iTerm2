@@ -169,6 +169,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)clearTransientTitle;
 - (BOOL)isShowingTransientTitle;
 
+- (void)currentSessionWordAtCursorDidBecome:(NSString *)word;
 
 #pragma mark - Tabs
 

@@ -33,6 +33,7 @@ extern NSString *const kReloadAllProfiles;
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
 #define Profile NSDictionary
+#define MutableProfile NSMutableDictionary
 
 typedef struct {
     SEL selector;                  // normal action

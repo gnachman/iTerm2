@@ -6,9 +6,9 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 BOOL IsYosemiteOrLater(void);
 BOOL IsMavericksOrLater(void);
 BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix);
-
+BOOL IsTouchBarAvailable(void);

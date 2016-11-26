@@ -122,6 +122,7 @@ static const int kDragThreshold = 3;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, retain) iTermQuickLookController *quickLookController;
+@property (strong, readwrite, nullable) NSTouchBar *touchBar;
 
 // Set when a context menu opens, nilled when it closes. If the data source changes between when we
 // ask the context menu to open and when the main thread enters a tracking runloop, the text under
@@ -901,7 +902,6 @@ static const int kDragThreshold = 3;
     int scrollbackOverflow = [_dataSource scrollbackOverflow];
     [_dataSource resetScrollbackOverflow];
     [_delegate textViewResizeFrameIfNeeded];
-
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (scrollbackOverflow > 0) {
@@ -929,6 +929,8 @@ static const int kDragThreshold = 3;
             [subview setNeedsDisplay:YES];
         }
     }
+
+    [_delegate textViewDidRefresh];
 
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.

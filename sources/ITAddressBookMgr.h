@@ -193,6 +193,7 @@
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"
+#define KEY_TOUCHBAR_MAP                      @"Touch Bar Map"
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
