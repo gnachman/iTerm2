@@ -14,7 +14,8 @@
     static BOOL testing = NO;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        testing = ([[[NSProcessInfo processInfo] environment] objectForKey:@"XCInjectBundle"] != nil);
+        testing = ([[[NSProcessInfo processInfo] environment] objectForKey:@"XCInjectBundle"] != nil ||
+                   [[[NSProcessInfo processInfo] environment] objectForKey:@"XCInjectBundleInto"] != nil);
     });
     return testing;
 }
