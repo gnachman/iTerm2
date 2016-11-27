@@ -518,6 +518,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewResizeFrameIfNeeded {
 }
 
+- (void)textViewDidRefresh {
+}
+
+- (NSInteger)textViewUnicodeVersion {
+    return 9;
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
     return NO;
 }
@@ -2026,7 +2033,6 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           size:VT100GridSizeMake(6, 2)];
 }
 
-// Almost invisibly dark text and a lightish green cursor.
 - (void)testDimmingTextAndCursorBoost {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -2261,7 +2267,6 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           size:VT100GridSizeMake(10, 2)];
 }
 
-// The x should have three stacked acute accents.
 - (void)testCombiningMark {
     [self doGoldenTestForInput:@"\r\nx\u0301\u0301\u0301"
                           name:NSStringFromSelector(_cmd)

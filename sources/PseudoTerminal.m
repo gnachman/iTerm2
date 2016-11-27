@@ -97,6 +97,7 @@ static NSString *const iTermTouchBarIdentifierPreviousMark = @"iTermTouchBarIden
 static NSString *const iTermTouchBarIdentifierManPage = @"iTermTouchBarIdentifierManPage";
 static NSString *const iTermTouchBarIdentifierColorPreset = @"iTermTouchBarIdentifierColorPreset";
 static NSString *const iTermTouchBarIdentifierColorPresetScrollview = @"iTermTouchBarIdentifierColorPresetScrollview";
+static NSString *const iTermTouchBarIdentifierAutocomplete = @"iTermTouchBarIdentifierAutocomplete";
 static NSString *const iTermTabBarTouchBarIdentifier = @"tab bar";
 static NSString *const iTermTabBarItemTouchBarIdentifier = @"tab bar item";
 
@@ -365,6 +366,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     NSInteger _previousNumberOfTabs;
 
     NSCustomTouchBarItem *_tabsTouchBarItem;
+    NSCandidateListTouchBarItem<NSString *> *_autocompleteCandidateListItem;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -4964,6 +4966,16 @@ ITERM_WEAKLY_REFERENCEABLE
         [commandHistoryPopup loadCommands:commands
                            partialCommand:prefix];
     }
+    if (_autocompleteCandidateListItem && session == self.currentSession) {
+        iTermShellHistoryController *history = [iTermShellHistoryController sharedInstance];
+        NSArray<NSString *> *commands = [[history commandHistoryEntriesWithPrefix:prefix onHost:[session currentHost]] mapWithBlock:^id(iTermCommandHistoryEntryMO *anObject) {
+            return anObject.command;
+        }];
+        [_autocompleteCandidateListItem setCandidates:commands ?: @[]
+                                     forSelectedRange:NSMakeRange(0, prefix.length)
+                                             inString:prefix];
+    }
+
 }
 
 - (void)showAutoCommandHistoryForSession:(PTYSession *)session {
@@ -7060,7 +7072,8 @@ ITERM_WEAKLY_REFERENCEABLE
                           NSTouchBarItemIdentifierFlexibleSpace,
                           iTermTouchBarIdentifierAddMark,
                           iTermTouchBarIdentifierNextMark,
-                          iTermTouchBarIdentifierPreviousMark ];
+                          iTermTouchBarIdentifierPreviousMark,
+                          iTermTouchBarIdentifierAutocomplete ];
         ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
         self.touchBar.customizationAllowedItemIdentifiers = ids;
     }
@@ -7790,6 +7803,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
         return _tabsTouchBarItem;
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierAutocomplete]) {
+        _autocompleteCandidateListItem = [[NSCandidateListTouchBarItem alloc] initWithIdentifier:identifier];
+        _autocompleteCandidateListItem.delegate = self;
+        _autocompleteCandidateListItem.customizationLabel = @"Autocomplete Suggestions";
+        NSAttributedString *(^commandUseToAttributedString)(NSString *commandUse,
+                                                            NSInteger index) = ^(NSString *command,
+                                                                                 NSInteger index) {
+            return [[[NSAttributedString alloc] initWithString:command ?: @""] autorelease];
+        };
+        _autocompleteCandidateListItem.attributedStringForCandidate = commandUseToAttributedString;
+        return _autocompleteCandidateListItem;
     }
 
     NSImage *image = nil;
@@ -7917,5 +7941,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)candidateListTouchBarItem:(NSCandidateListTouchBarItem *)anItem endSelectingCandidateAtIndex:(NSInteger)index {
+    if (index != NSNotFound) {
+        NSString *command = [anItem candidates][index];
+        NSString *prefix = self.currentSession.currentCommand;
+        if ([command hasPrefix:prefix] || prefix.length == 0) {
+            [self.currentSession insertText:[command substringFromIndex:prefix.length]];
+        }
+    }
+}
 
 @end

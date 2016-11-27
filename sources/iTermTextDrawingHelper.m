@@ -2121,15 +2121,19 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         }
         iTermCursor *cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
-        
-        NSColor *cursorTextColor = [_delegate drawingHelperColorForCode:ALTSEM_CURSOR
-                                                                  green:0
-                                                                   blue:0
-                                                              colorMode:ColorModeAlternate
-                                                                   bold:NO
-                                                                  faint:NO
-                                                           isBackground:NO];
 
+        NSColor *cursorTextColor;
+        if (_reverseVideo) {
+            cursorTextColor = [_colorMap colorForKey:kColorMapBackground];
+        } else {
+            cursorTextColor = [_delegate drawingHelperColorForCode:ALTSEM_CURSOR
+                                                             green:0
+                                                              blue:0
+                                                         colorMode:ColorModeAlternate
+                                                              bold:NO
+                                                             faint:NO
+                                                      isBackground:NO];
+        }
         [cursor drawWithRect:rect
                  doubleWidth:isDoubleWidth
                   screenChar:screenChar
