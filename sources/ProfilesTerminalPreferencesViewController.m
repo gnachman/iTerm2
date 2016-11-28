@@ -21,6 +21,7 @@
     IBOutlet NSComboBox *_terminalType;
     IBOutlet NSTextField *_answerBackString;
     IBOutlet NSButton *_xtermMouseReporting;
+    IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_disablePrinting;
@@ -90,8 +91,15 @@
                     key:KEY_ANSWERBACK_STRING
                    type:kPreferenceInfoTypeStringTextField];
     
-    [self defineControl:_xtermMouseReporting
-                    key:KEY_XTERM_MOUSE_REPORTING
+    info = [self defineControl:_xtermMouseReporting
+                           key:KEY_XTERM_MOUSE_REPORTING
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        [_xtermMouseReportingAllowMouseWheel setEnabled:[self boolForKey:KEY_XTERM_MOUSE_REPORTING]];
+    };
+    
+    [self defineControl:_xtermMouseReportingAllowMouseWheel
+                    key:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL
                    type:kPreferenceInfoTypeCheckbox];
     
     [self defineControl:_allowTitleReporting
