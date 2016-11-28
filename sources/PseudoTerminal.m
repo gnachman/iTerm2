@@ -6913,8 +6913,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 {
     for (PTYSession* session in [self allSessions]) {
         Profile *oldBookmark = [session profile];
-        NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
-        [oldName retain];
+        NSString* oldName = [[[oldBookmark objectForKey:KEY_NAME] copy] autorelease];
         NSString* guid = [oldBookmark objectForKey:KEY_GUID];
         if ([session reloadProfile]) {
             [[self tabForSession:session] recheckBlur];
@@ -6931,7 +6930,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                 [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
-        [oldName release];
     }
 }
 
