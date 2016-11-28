@@ -14,7 +14,7 @@
 
 - (double)distanceTo:(NSArray *)key {
     NSAssert(key.count == self.key.count, @"Keys differ in dimensionality");
-    double sumOfSquares;
+    double sumOfSquares = 0;
     for (NSInteger i = 0; i < key.count; i++) {
         double difference = [key[i] doubleValue] - [self.key[i] doubleValue];
         sumOfSquares += difference * difference;

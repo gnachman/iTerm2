@@ -74,6 +74,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
         [[NSBitmapImageRep alloc] initWithData:[[[NSImage alloc] initWithCGImage:image
                                                                             size:size]
                                                 TIFFRepresentation]];
+        CFRelease(image);
         [self.screenshots addObject:imageRep];
     }
 }
@@ -84,7 +85,8 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSModalSession session = [NSApp beginModalSessionForWindow:self];
     NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
     // This keeps the runloop blocking when nothing else is going on.
-    [myRunLoop addPort:[NSMachPort port]
+    NSPort *port = [NSMachPort port];
+    [myRunLoop addPort:port
                forMode:NSDefaultRunLoopMode];
     NSTimer *timer = [NSTimer timerWithTimeInterval:kUpdateInterval
                                              target:self
@@ -102,25 +104,20 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
                                                object:nil];
 
     [myRunLoop addTimer:timer forMode:NSDefaultRunLoopMode];
-    while (!self.selectedColor) {
-        [NSApp runModalSession:session];
+    while (1) {
+        if ([NSApp runModalSession:session] != NSModalResponseContinue) {
+            break;
+        }
         [myRunLoop runMode:NSDefaultRunLoopMode
                 beforeDate:[NSDate dateWithTimeIntervalSinceNow:kUpdateInterval]];
     }
     [timer invalidate];
-
-    [NSApp runModalSession:session];
-    [myRunLoop runMode:NSDefaultRunLoopMode
-            beforeDate:[NSDate dateWithTimeIntervalSinceNow:kUpdateInterval]];
-
     [NSApp endModalSession:session];
+}
 
-    // The framework seems to want a spin of the runloop after ending a modal session before we can
-    // close ourselves.
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf close];
-    });
+- (void)setSelectedColor:(NSColor *)selectedColor {
+    _selectedColor = selectedColor;
+    [NSApp stopModal];
 }
 
 - (void)stopPicking:(NSNotification *)notification {
