@@ -212,7 +212,7 @@ DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin\nHow much space to leave betw
 
 #pragma mark - Experimental Features
 DEFINE_BOOL(includePasteHistoryInAdvancedPaste, NO, @"Experimental Features: Include paste history in the advanced paste menu.");
-DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Experimental Features: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
+DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, @"Experimental Features: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
 DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, NO, @"Experimental Features: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 DEFINE_BOOL(useAdaptiveFrameRate, YES, @"Experimental Features: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will update at 30 frames per second.");
 DEFINE_FLOAT(slowFrameRate, 15.0, @"Experimental Features: When adaptive framerate is enabled, refresh at this rate during high throughput conditions (FPS).");
