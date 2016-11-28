@@ -1055,6 +1055,22 @@ typedef struct iTermTextColorContext {
           backgroundColor:(NSColor *)backgroundColor {
     CGGlyph glyphs[cheapString.length];
     NSFont *const font = cheapString.attributes[NSFontAttributeName];
+    BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
+                                           cheapString.characters,
+                                           glyphs,
+                                           cheapString.length);
+    if (!ok) {
+        NSString *string = [NSString stringWithCharacters:cheapString.characters
+                                                   length:cheapString.length];
+        [self drawTextOnlyAttributedStringWithoutUnderline:[NSAttributedString attributedStringWithString:string
+                                                                                               attributes:cheapString.attributes]
+                                                   atPoint:point
+                                                 positions:positions
+                                           backgroundColor:backgroundColor
+                                           graphicsContext:[NSGraphicsContext currentContext]
+                                                     smear:NO];
+        return cheapString.length;
+    }
     NSColor *const color = cheapString.attributes[NSForegroundColorAttributeName];
     const BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
     const BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
@@ -1072,11 +1088,6 @@ typedef struct iTermTextColorContext {
         CGContextSetFontSmoothingStyle(ctx, 16);
     }
 
-    BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
-                                           cheapString.characters,
-                                           glyphs,
-                                           cheapString.length);
-    assert(ok);
     size_t numCodes = cheapString.length;
     size_t length = numCodes;
     [self selectFont:font inContext:ctx];
@@ -1773,7 +1784,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
         NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c];
         BOOL justSegmented = NO;
-        BOOL combinedAttributesChanged;
+        BOOL combinedAttributesChanged = NO;
+
+        // I tried segmenting when fastpath eligibility changes so we can use the fast path as much
+        // as possible. In the vimdiff benchmark it was neutral, and in the spam.cc benchmark it was
+        // hugely negative (66->210 ms). The failed change was to segment when this is true:
+        // builder.canUseFastPath != (!c.complexChar && iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable))
         if ([self shouldSegmentWithAttributes:&characterAttributes
                               imageAttributes:imageAttributes
                            previousAttributes:&previousCharacterAttributes
