@@ -7043,6 +7043,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSTouchBar *)makeGenericTouchBar {
+    if (!IsTouchBarAvailable()) {
+        return nil;
+    }
     NSTouchBar *touchBar = [[[NSTouchBar alloc] init] autorelease];
     touchBar.delegate = self;
     touchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierManPage,
@@ -7080,6 +7083,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSTouchBar *)amendTouchBar:(NSTouchBar *)touchBar {
+    if (!IsTouchBarAvailable()) {
+        return nil;
+    }
     touchBar.customizationIdentifier = @"regular";
     if (self.anyFullScreen) {
         NSMutableArray *temp = [[touchBar.defaultItemIdentifiers mutableCopy] autorelease];
@@ -7095,10 +7101,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
-    NSTouchBarItem *item = [self.touchBar itemForIdentifier:iTermTouchBarIdentifierManPage];
-    if (item) {
-        iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
-        [self updateManPageButton:button word:word];
+    if (IsTouchBarAvailable() && [self respondsToSelector:@selector(touchBar)]) {
+        NSTouchBarItem *item = [self.touchBar itemForIdentifier:iTermTouchBarIdentifierManPage];
+        if (item) {
+            iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
+            [self updateManPageButton:button word:word];
+        }
     }
 }
 
@@ -7119,6 +7127,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
+    if (!IsTouchBarAvailable()) {
+        return nil;
+    }
     NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
     NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
     item.view = scrollView;
@@ -7746,7 +7757,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
     NSScrubberTextItemView *itemView = [scrubber makeItemWithIdentifier:iTermTabBarItemTouchBarIdentifier owner:nil];
     itemView.textField.stringValue = [self scrubberLabelAtIndex:index];
-//    [itemView.textField sizeToFit];
     return itemView;
 }
 
