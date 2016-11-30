@@ -43,6 +43,14 @@
     return temp;
 }
 
+- (NSArray *)multimapWithBlock:(NSArray *(^)(id))block {
+    NSMutableArray *temp = [NSMutableArray array];
+    for (id anObject in self) {
+        [temp addObjectsFromArray:block(anObject)];
+    }
+    return temp;
+}
+
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block {
     NSIndexSet *indexes = [self indexesOfObjectsPassingTest:^BOOL(id  _Nonnull obj,
                                                                   NSUInteger idx,

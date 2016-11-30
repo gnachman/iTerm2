@@ -28,6 +28,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermQuickLookController.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
@@ -1137,7 +1138,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     BOOL mustAsk = NO;
-    if (numClosing > 0 && [aTab promptOnClose]) {
+    if (numClosing > 0 && [aTab promptOnCloseReason].hasReason) {
         mustAsk = YES;
     }
     if (numClosing > 1 &&
@@ -1325,7 +1326,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     BOOL okToClose = NO;
     if ([aSession exited]) {
         okToClose = YES;
-    } else if (![aSession promptOnClose]) {
+    } else if (![aSession promptOnCloseReason].hasReason) {
         okToClose = YES;
     } else {
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
@@ -2118,14 +2119,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                                       userInfo:nil];
 }
 
-- (BOOL)promptOnClose
-{
+- (iTermPromptOnCloseReason *)promptOnCloseReason {
+    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PTYSession *aSession in [self allSessions]) {
-        if ([aSession promptOnClose]) {
-            return YES;
-        }
+        [reason addReason:[aSession promptOnCloseReason]];
     }
-    return NO;
+    return reason;
 }
 
 // TODO: Kill this
@@ -2157,7 +2156,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [appDelegate userDidInteractWithASession];
 
     BOOL needPrompt = NO;
-    if ([self promptOnClose]) {
+    if ([self promptOnCloseReason].hasReason) {
         needPrompt = YES;
     }
     if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] &&
