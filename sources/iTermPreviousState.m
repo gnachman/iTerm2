@@ -38,21 +38,7 @@
 
 - (void)restore {
     [self restorePreviouslyActiveApp];
-    if (!self.itermWasActiveWhenHotkeyOpened) {
-        // TODO: This is weird. What is its purpose? After I fix the bug where non-hotkey windows
-        // get ordered front is this still necessary?
-        [NSApp hide:nil];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(),
-                       ^{
-                           [NSApp unhideWithoutActivation];
-                           for (PseudoTerminal *terminal in [[iTermController sharedInstance] terminals]) {
-                               if (![terminal isHotKeyWindow]) {
-                                   [[[terminal window] animator] setAlphaValue:1];
-                               }
-                           }
-                       });
-    } else {
+    if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];
         if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
             [currentTerm hideMenuBar];
