@@ -1123,8 +1123,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                            message) == NSAlertDefaultReturn;
 }
 
-- (BOOL)confirmCloseTab:(PTYTab *)aTab
-{
+- (BOOL)confirmCloseTab:(PTYTab *)aTab suppressConfirmation:(BOOL)suppressConfirmation {
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
         return NO;
     }
@@ -1145,7 +1144,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         mustAsk = YES;
     }
 
-    if (mustAsk) {
+    if (mustAsk && !suppressConfirmation) {
         BOOL okToClose;
         if (numClosing == 1) {
             okToClose = [self confirmCloseForSessions:[aTab sessions]
@@ -1167,12 +1166,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self close];
 }
 
-- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft
-{
+- (BOOL)tabIsAttachedTmuxTabWithSessions:(PTYTab *)aTab {
+    return ([aTab isTmuxTab] &&
+            [[aTab sessions] count] > 0 &&
+            [[aTab tmuxController] isAttached]);
+}
+
+- (BOOL)willShowTmuxWarningWhenClosingTab:(PTYTab *)aTab {
+    return ([self tabIsAttachedTmuxTabWithSessions:aTab] &&
+            ![iTermWarning identifierIsSilenced:@"ClosingTmuxTabKillsTmuxWindows"]);
+}
+
+- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft {
     if (!soft &&
-        [aTab isTmuxTab] &&
-        [[aTab sessions] count] > 0 &&
-        [[aTab tmuxController] isAttached]) {
+        [self tabIsAttachedTmuxTabWithSessions:aTab]) {
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:@"Kill tmux window, terminating its jobs, or hide it? "
                                                @"Hidden windows may be restored from the tmux dashboard."
@@ -1192,8 +1199,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self removeTab:aTab];
 }
 
-- (void)closeTab:(PTYTab*)aTab
-{
+- (void)closeTab:(PTYTab *)aTab {
     [self closeTab:aTab soft:NO];
 }
 
@@ -1301,8 +1307,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (IBAction)closeCurrentTab:(id)sender {
-    if ([self tabView:_contentView.tabView shouldCloseTabViewItem:[_contentView.tabView selectedTabViewItem]]) {
-        [self closeTab:[self currentTab]];
+    NSTabViewItem *tabViewItem = [_contentView.tabView selectedTabViewItem];
+    PTYTab *tab = self.currentTab;
+    const BOOL shouldClose = [self tabView:_contentView.tabView
+                    shouldCloseTabViewItem:tabViewItem
+                      suppressConfirmation:[self willShowTmuxWarningWhenClosingTab:tab]];
+    if (shouldClose) {
+        [self closeTab:tab];
     }
 }
 
@@ -3922,14 +3933,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [itad updateBroadcastMenuState];
 }
 
-- (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem {
+    return [self tabView:tabView shouldCloseTabViewItem:tabViewItem suppressConfirmation:NO];
+}
+
+// This isn't a delegate method, but I need the functionality with the added suppressConfirmation
+// flag to avoid showing two warnings in tmux integration mode.
+- (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem suppressConfirmation:(BOOL)suppressConfirmation {
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
         return NO;
     }
 
-    return [self confirmCloseTab:aTab];
+    return [self confirmCloseTab:aTab suppressConfirmation:suppressConfirmation];
 }
 
 - (BOOL)tabView:(NSTabView*)aTabView
