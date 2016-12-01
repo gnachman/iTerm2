@@ -1037,6 +1037,10 @@ static int MyForkPty(int *amaster,
 }
 
 - (NSString*)getWorkingDirectory {
+    if (self.pid == -1) {
+        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+        return nil;
+    }
     DLog(@"Using OS magic to get the working directory");
     struct proc_vnodepathinfo vpi;
     int ret;

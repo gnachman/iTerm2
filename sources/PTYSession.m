@@ -4264,6 +4264,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell registerAsCoprocessOnlyTask];
 }
 
+- (PTYSession *)tmuxGatewaySession {
+    if (self.isTmuxGateway) {
+        return self;
+    }
+    if (!self.isTmuxClient) {
+        return nil;
+    }
+    return (PTYSession *)self.tmuxController.gateway.delegate;
+}
+
 - (void)toggleTmuxZoom {
     [_tmuxController toggleZoomForPane:self.tmuxPane];
 }

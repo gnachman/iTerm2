@@ -350,6 +350,9 @@ typedef enum {
 
 @property(nonatomic, retain) TmuxController *tmuxController;
 
+// Call this on tmux clients to get the session with the tmux gateway.
+@property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
+
 @property(nonatomic, readonly) VT100RemoteHost *currentHost;
 
 @property(nonatomic, readonly) int tmuxPane;

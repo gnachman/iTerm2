@@ -7109,6 +7109,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // Get active session's directory
     NSString *previousDirectory = nil;
     PTYSession* currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (currentSession.isTmuxClient) {
+        currentSession = currentSession.tmuxGatewaySession;
+    }
     if (currentSession) {
         previousDirectory = [currentSession currentLocalWorkingDirectory];
     }
