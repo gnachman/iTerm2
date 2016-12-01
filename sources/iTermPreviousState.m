@@ -16,9 +16,15 @@
         } else {
             self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
         }
+        DLog(@"Previously active pid for %p is %@", self, _previouslyActiveAppPID);
         _itermWasActiveWhenHotkeyOpened = [NSApp isActive];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_owner release];
+    [super dealloc];
 }
 
 - (void)restorePreviouslyActiveApp {
@@ -37,6 +43,7 @@
 }
 
 - (void)restore {
+    DLog(@"Restore %p with previously active app %@", self, _previouslyActiveAppPID);
     [self restorePreviouslyActiveApp];
     if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];

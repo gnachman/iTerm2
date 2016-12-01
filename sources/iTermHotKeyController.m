@@ -199,6 +199,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         // Going from hotkey window to non-hotkey window. Forget the previous state because
         // there's no need to ever return to it now. This happens when navigating explicitly from
         // a hotkey window to a non-hotkey terminal.
+        DLog(@"A non-hotkey window became key. Removing previous state %p", self.previousState);
         self.previousState = nil;
     }
     
@@ -414,7 +415,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 #pragma mark - Notifications
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    NSLog(@"Active space did change");
+    DLog(@"Active space did change");
     for (iTermProfileHotKey *profileHotKey in self.profileHotKeys) {
         PseudoTerminal *term = profileHotKey.windowController;
         NSWindow *window = [term window];
@@ -525,10 +526,20 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     [self.previousState suppressHideApp];
 }
 
-- (void)storePreviouslyActiveApp {
-    if (!self.previousState || ![NSApp isActive]) {
-        self.previousState = [[[iTermPreviousState alloc] init] autorelease];
+- (void)storePreviouslyActiveApp:(iTermProfileHotKey *)profileHotKey {
+    if (self.previousState && [NSApp isActive]) {
+        DLog(@"Not updating previous state because we are active and already have previous state");
+        return;
     }
+    if (self.previousState.owner.rollingIn) {
+        // Is the previous state for a hotkey window that's rolling in? If so, keep it, because it
+        // will know about the previously active app.
+        DLog(@"Not updating previous state because the existing previous state's owner is rolling in");
+        return;
+    }
+    self.previousState = [[[iTermPreviousState alloc] init] autorelease];
+    self.previousState.owner = profileHotKey;
+    DLog(@"Stored previous state");
 }
 
 - (BOOL)anyHotKeyWindowIsKey {
@@ -536,7 +547,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     if ([windowController isKindOfClass:[PseudoTerminal class]]) {
         PseudoTerminal *term = (PseudoTerminal *)windowController;
         if ([term isHotKeyWindow]) {
-            return YES;
+            return ![[self profileHotKeyForWindowController:term] rollingOut];
         }
     }
     return NO;
@@ -545,8 +556,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 - (void)didFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey {
     // Restore the previous state (key window or active app) unless we switched
     // to another hotkey window.
+    DLog(@"Finished rolling out %p. key window is %@.", profileHotKey.windowController, [[NSApp keyWindow] windowController]);
     if (![self anyHotKeyWindowIsKey]) {
-        DLog(@"Restoring the previous state");
+        DLog(@"Restoring the previous state %p", self.previousState);
         [self.previousState restore];
         self.previousState = nil;
     }

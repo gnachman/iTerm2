@@ -606,7 +606,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                                              !self.windowController.window.isKeyWindow);
     if (activateStickyHotkeyWindow && ![NSApp isActive]) {
         DLog(@"Storing previously active app");
-        [self.delegate storePreviouslyActiveApp];
+        [self.delegate storePreviouslyActiveApp:self];
     }
     const BOOL hotkeyWindowOnOtherSpace = ![self.windowController.window isOnActiveSpace];
     if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
@@ -649,7 +649,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         [self showAlreadyVisibleHotKeyWindow];
         return NO;
     }
-    [self.delegate storePreviouslyActiveApp];
+    [self.delegate storePreviouslyActiveApp:self];
 
     BOOL result = NO;
     if (!self.windowController.weaklyReferencedObject) {
