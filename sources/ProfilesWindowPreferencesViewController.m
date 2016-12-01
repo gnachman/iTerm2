@@ -10,6 +10,7 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermImageWell.h"
+#import "iTermSystemVersion.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -186,7 +187,7 @@
     panel.allowsMultipleSelection = NO;
     [panel setAllowedFileTypes:[NSImage imageTypes]];
 
-    [panel beginWithCompletionHandler:^(NSInteger result){
+    void (^completion)(NSInteger) = ^(NSInteger result) {
         if (result == NSFileHandlingPanelOKButton) {
             NSURL *url = [[panel URLs] objectAtIndex:0];
             [self loadBackgroundImageWithFilename:[url path]];
@@ -195,7 +196,13 @@
             NSString *previous = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
             [self loadBackgroundImageWithFilename:previous];
         }
-    }];
+    };
+
+    if (IsMavericksOrLater()) {
+        [panel beginSheetModalForWindow:self.view.window completionHandler:completion];
+    } else {
+        [panel beginWithCompletionHandler:completion];
+    }
 }
 
 #pragma mark - iTermImageWellDelegate

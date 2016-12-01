@@ -4009,16 +4009,15 @@ static void SwapInt(int *a, int *b) {
     return result;
 }
 
-- (void)trimSelectionFromStart:(VT100GridCoord)start
+- (BOOL)trimSelectionFromStart:(VT100GridCoord)start
                            end:(VT100GridCoord)end
                       toStartX:(VT100GridCoord *)startPtr
-                        toEndX:(VT100GridCoord *)endPtr
-{
+                        toEndX:(VT100GridCoord *)endPtr {
     if (start.x < 0 || end.x < 0 ||
         start.y < 0 || end.y < 0) {
         *startPtr = start;
         *endPtr = end;
-        return;
+        return YES;
     }
 
     if (!XYIsBeforeXY(start.x, start.y, end.x, end.y)) {
@@ -4044,13 +4043,22 @@ static void SwapInt(int *a, int *b) {
     VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startX, startY),
                                               VT100GridCoordMake(endX, endY),
                                               currentGrid_.size.width);
-    assert(run.length >= 0);
+    if (run.length == 0) {
+        DLog(@"Run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+             VT100GridCoordDescription(end));
+        return NO;
+    }
     run = [self runByTrimmingNullsFromRun:run];
-    assert(run.length >= 0);
+    if (run.length == 0) {
+        DLog(@"After trimming, run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+             VT100GridCoordDescription(end));
+        return NO;
+    }
     VT100GridCoord max = VT100GridRunMax(run, currentGrid_.size.width);
 
     *startPtr = run.origin;
     *endPtr = max;
+    return YES;
 }
 
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
@@ -4089,10 +4097,13 @@ static void SwapInt(int *a, int *b) {
 
     VT100GridCoord trimmedStart;
     VT100GridCoord trimmedEnd;
-    [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
-                             end:VT100GridCoordMake(range.end.x, range.end.y)
-                        toStartX:&trimmedStart
-                          toEndX:&trimmedEnd];
+    BOOL ok = [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
+                                       end:VT100GridCoordMake(range.end.x, range.end.y)
+                                  toStartX:&trimmedStart
+                                    toEndX:&trimmedEnd];
+    if (!ok) {
+        return nil;
+    }
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
         if (tolerateEmpty) {
             trimmedStart = trimmedEnd = range.start;

@@ -34,6 +34,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
+#import "iTermDisclosableView.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
@@ -44,6 +45,7 @@
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermProfilesWindowController.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
@@ -568,34 +570,34 @@ static BOOL hasBecomeActive = NO;
 
     terminals = [[iTermController sharedInstance] terminals];
     int numSessions = 0;
-    BOOL shouldShowAlert = NO;
+
+    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PseudoTerminal *term in terminals) {
         numSessions += [[term allSessions] count];
-        if ([term promptOnClose]) {
-            shouldShowAlert = YES;
-        }
+
+        [reason addReason:term.promptOnCloseReason];
     }
 
     // Display prompt if we need to
     if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
         [terminals count] > 0 &&  // there are terminal windows
         [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
-        shouldShowAlert = YES;
+        [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
     }
     quittingBecauseLastWindowClosed_ = NO;
     if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
         // closing multiple sessions
-        shouldShowAlert = YES;
+        [reason addReason:[iTermPromptOnCloseReason closingMultipleSessionsPreferenceEnabled]];
     }
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         self.sparkleRestarting &&
         [iTermAdvancedSettingsModel restoreWindowContents] &&
         [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
         // Nothing will be lost so just restart without asking.
-        shouldShowAlert = NO;
+        [reason addReason:[iTermPromptOnCloseReason noReason]];
     }
 
-    if (shouldShowAlert) {
+    if (reason.hasReason) {
         DLog(@"Showing quit alert");
         NSString *message;
         if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
@@ -603,13 +605,23 @@ static BOOL hasBecomeActive = NO;
         } else {
             message = @"All sessions will be closed.";
         }
-        BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
-                                       @"%@",
-                                       @"OK",
-                                       @"Cancel",
-                                       nil,
-                                       message) != NSAlertDefaultReturn;
-        if (stayput) {
+
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Quit iTerm2?"
+                                         defaultButton:@"OK"
+                                       alternateButton:@"Cancel"
+                                           otherButton:nil
+                             informativeTextWithFormat:@"%@", message];
+        iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                                               prompt:@"Details"
+                                                                              message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
+                                                                                       reason.message]];
+        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+        accessory.requestLayout = ^{
+            [alert layout];
+        };
+        alert.accessoryView = accessory;
+
+        if ([alert runModal] != NSAlertDefaultReturn) {
             DLog(@"User declined to quit");
             return NSTerminateCancel;
         }

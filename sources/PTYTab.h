@@ -163,7 +163,7 @@
 - (void)notifyWindowChanged;
 - (void)maximize;
 // Does any session in this tab require prompt on close?
-- (BOOL)promptOnClose;
+- (iTermPromptOnCloseReason *)promptOnCloseReason;
 
 // Anyone changing the number of sessions must call this after the sessions
 // are "well formed".

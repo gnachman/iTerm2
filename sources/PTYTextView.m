@@ -114,7 +114,8 @@ static const int kDragThreshold = 3;
     iTermSelectionDelegate,
     iTermSelectionScrollHelperDelegate,
     NSDraggingSource,
-    NSMenuDelegate>
+    NSMenuDelegate,
+    NSPopoverDelegate>
 
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
@@ -2718,23 +2719,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
-    FutureWKWebViewConfiguration *configuration = [[[FutureWKWebViewConfiguration alloc] init] autorelease];
-    if (configuration) {
-        // If you get here, it's OS 10.10 or newer.
-        configuration.applicationNameForUserAgent = @"iTerm2";
-        FutureWKPreferences *prefs = [[[FutureWKPreferences alloc] init] autorelease];
-        prefs.javaEnabled = NO;
-        prefs.javaScriptEnabled = YES;
-        prefs.javaScriptCanOpenWindowsAutomatically = NO;
-        configuration.preferences = prefs;
-        configuration.processPool = [[[FutureWKProcessPool alloc] init] autorelease];
-        FutureWKUserContentController *userContentController =
-            [[[FutureWKUserContentController alloc] init] autorelease];
-        configuration.userContentController = userContentController;
-        configuration.websiteDataStore = [FutureWKWebsiteDataStore defaultDataStore];
-        FutureWKWebView *webView = [[[FutureWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
-                                                             configuration:configuration] autorelease];
-
+    WKWebView *webView = [[iTermWebViewPool sharedInstance] webView];
+    if (webView) {
         NSURLRequest *request =
             [[[NSURLRequest alloc] initWithURL:url] autorelease];
         [webView loadRequest:request];
@@ -2749,6 +2735,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  _lineHeight);
         rect = [self convertRect:rect fromView:nil];
         popover.behavior = NSPopoverBehaviorSemitransient;
+        popover.delegate = self;
         [popover showRelativeToRect:rect
                              ofView:self
                       preferredEdge:NSRectEdgeMinY];
@@ -7260,6 +7247,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying {
     [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
+}
+
+#pragma mark - NSPopoverDelegate
+
+- (void)popoverDidClose:(NSNotification *)notification {
+    NSPopover *popover = notification.object;
+    iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
+    [viewController terminateWebView];
+
 }
 
 @end
