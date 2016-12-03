@@ -1086,15 +1086,21 @@ exit:
     return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
 }
 
-+ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent
-{
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent {
     // This function copied from cmd-key happy. See copyright notice at top.
-    CGEventFlags flags = CGEventGetFlags(cgEvent);
-    NSLog(@"Performing remapping. On input CGEventFlags=%@", @(flags));
-    const CGEventFlags origFlags = flags;
+    const CGEventFlags flags = CGEventGetFlags(cgEvent);
+    DLog(@"Performing remapping. On input CGEventFlags=%@", @(flags));
     CGEventFlags andMask = -1;
     CGEventFlags orMask = 0;
-    if (origFlags & kCGEventFlagMaskCommand) {
+
+    // flags contains both device-dependent flags and device-independent flags.
+    // The device-indepdendent flags are named kCGEventFlagMaskXXX or NX_xxxMASK
+    // The device-dependent flags are named NX_DEVICExxxKEYMASK
+    // Device-independent flags do not indicate leftness or rightness.
+    // Device-dependent flags do.
+    // Generally, you get both sets of flags. But this does not have to be the case if an event
+    // is synthesized, as seen in issue 5207 where Flycut does not set the device-dependent flags.
+    if ((flags & kCGEventFlagMaskCommand) && (flags & (NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK))) {
         andMask &= ~kCGEventFlagMaskCommand;
         if (flags & NX_DEVICELCMDKEYMASK) {
             andMask &= ~NX_DEVICELCMDKEYMASK;
@@ -1107,7 +1113,7 @@ exit:
             orMask |= [self _nxMaskForRightCommandKey];
         }
     }
-    if (origFlags & kCGEventFlagMaskAlternate) {
+    if ((flags & kCGEventFlagMaskAlternate) && (flags & (NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK))) {
         andMask &= ~kCGEventFlagMaskAlternate;
         if (flags & NX_DEVICELALTKEYMASK) {
             andMask &= ~NX_DEVICELALTKEYMASK;
@@ -1120,7 +1126,7 @@ exit:
             orMask |= [self _nxMaskForRightAlternateKey];
         }
     }
-    if (origFlags & kCGEventFlagMaskControl) {
+    if ((flags & kCGEventFlagMaskControl) && (flags & (NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK))) {
         andMask &= ~kCGEventFlagMaskControl;
         if (flags & NX_DEVICELCTLKEYMASK) {
             andMask &= ~NX_DEVICELCTLKEYMASK;
@@ -1133,7 +1139,7 @@ exit:
             orMask |= [self _nxMaskForRightControlKey];
         }
     }
-    NSLog(@"On output CGEventFlags=%@", @((flags & andMask) | orMask));
+    DLog(@"On output CGEventFlags=%@", @((flags & andMask) | orMask));
 
     CGEventSetFlags(cgEvent, (flags & andMask) | orMask);
     return cgEvent;
