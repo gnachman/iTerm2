@@ -375,6 +375,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)makeFirstResponder:(nullable NSResponder *)responder {
+    DLog(@"%p makeFirstResponder:%@", self, responder);
+    DLog(@"%@", [NSThread callStackSymbols]);
+    return [super makeFirstResponder:responder];
+}
+
 NS_ASSUME_NONNULL_END
 
 @end

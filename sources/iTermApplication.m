@@ -117,7 +117,7 @@
             return;
         }
     } else if ([event type] == NSKeyDown) {
-        DLog(@"Received KeyDown event: %@", event);
+        DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
         iTermController* cont = [iTermController sharedInstance];
 
         event = [self eventByRemappingForSecureInput:event];
@@ -241,7 +241,6 @@
         }
         DLog(@"NSKeyDown event taking the regular path");
     }
-
     [super sendEvent:event];
 }
 

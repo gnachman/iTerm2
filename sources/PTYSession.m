@@ -2672,8 +2672,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self sanityCheck];
 }
 
-- (BOOL)reloadProfile
-{
+- (BOOL)reloadProfile {
     [self sanityCheck];
     DLog(@"Reload profile for %@", self);
     BOOL didChange = NO;
@@ -7369,7 +7368,9 @@ ITERM_WEAKLY_REFERENCEABLE
         // Set to default value
         unicodeVersion = [[iTermProfilePreferences defaultObjectForKey:KEY_UNICODE_VERSION] integerValue];
     }
-    if (unicodeVersion >= kMinimumUnicodeVersion && unicodeVersion <= kMaximumUnicodeVersion) {
+    if (unicodeVersion >= kMinimumUnicodeVersion &&
+        unicodeVersion <= kMaximumUnicodeVersion &&
+        unicodeVersion != [iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION inProfile:self.profile]) {
         [self setSessionSpecificProfileValues:@{ KEY_UNICODE_VERSION: @(unicodeVersion) }];
     }
 }
