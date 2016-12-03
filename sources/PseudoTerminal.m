@@ -3852,7 +3852,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     PTYSession *activeSession = [self currentSession];
     for (PTYSession *s in [self allSessions]) {
-      [aSession setFocused:(s == activeSession)];
+      [s setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
     iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
