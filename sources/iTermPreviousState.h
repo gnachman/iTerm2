@@ -12,8 +12,11 @@
 
 @property(nonatomic, retain) iTermProfileHotKey *owner;
 
-- (void)restore;
-- (void)restorePreviouslyActiveApp;
+// Returns YES if another app was activated.
+- (BOOL)restoreAllowingAppSwitch:(BOOL)allowAppSwitch;
+
+// Returns YES if another app was activated.
+- (BOOL)restorePreviouslyActiveApp;
 - (void)suppressHideApp;
 
 @end

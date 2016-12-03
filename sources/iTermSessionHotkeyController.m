@@ -65,7 +65,7 @@
     return result;
 }
 
-- (void)hotkeyPressed:(NSDictionary *)userData siblings:(NSArray *)siblings {
+- (NSArray<iTermHotKey *> *)hotkeyPressed:(NSDictionary *)userData siblings:(NSArray *)siblings {
     NSUInteger index = [self.weakSessions indexOfObjectPassingTest:^BOOL(iTermWeakReference<id<iTermHotKeyNavigableSession>> * _Nonnull obj,
                                                                          NSUInteger idx,
                                                                          BOOL * _Nonnull stop) {
@@ -87,6 +87,7 @@
         }
     }
     [session sessionHotkeyDidNavigateToSession:self.shortcut];
+    return nil;
 }
 
 @end

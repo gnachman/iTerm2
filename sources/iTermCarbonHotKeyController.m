@@ -267,14 +267,18 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
         return YES;
     }
 
+    NSMutableSet<iTermHotKey *> *handled = [NSMutableSet set];
     for (iTermHotKey *hotkey in hotkeys) {
-        [hotkey.target performSelector:hotkey.selector
-                            withObject:hotkey.userData
-                            withObject:[hotkeys arrayByRemovingObject:hotkey]];
+        if ([handled containsObject:hotkey]) {
+            continue;
+        }
+        // The target returns an array of siblings that were handled at the same time.
+        [handled addObjectsFromArray:[hotkey.target performSelector:hotkey.selector
+                                                         withObject:hotkey.userData
+                                                         withObject:[hotkeys arrayByRemovingObject:hotkey]]];
     }
 
     return hotkeys.count > 0;
 }
-
 
 @end

@@ -10,7 +10,7 @@
 
 @implementation iTermAppHotKey
 
-- (void)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings {
+- (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings {
     DLog(@"hotkey pressed");
 
     if ([NSApp isActive]) {
@@ -29,6 +29,7 @@
             [controller newWindow:nil];
         }
     }
+    return nil;
 }
 
 @end

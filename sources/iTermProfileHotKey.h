@@ -40,6 +40,7 @@
 // You may only set the window controller if there is not a weakly referenced object.
 @property(nonatomic, retain) PseudoTerminal<iTermWeakReference> *windowController;
 @property(nonatomic) BOOL wasAutoHidden;
+@property(nonatomic) BOOL closedByOtherHotkeyWindowOpening;
 
 // This is computed based on the current settings of the profile we were created with.
 @property(nonatomic, readonly) iTermHotkeyWindowType hotkeyWindowType;
@@ -58,7 +59,8 @@
 // active app when the hotkey window was shown). The hide-unhide cycles moves all the iTerm2 windows
 // behind the next app.
 - (void)hideHotKeyWindowAnimated:(BOOL)animated
-                 suppressHideApp:(BOOL)suppressHideApp;
+                 suppressHideApp:(BOOL)suppressHideApp
+                otherIsRollingIn:(BOOL)otherIsRollingIn;
 
 // Erase the restorable state since it won't be needed after the last session is gone. We wouldn't
 // want to restore a defunct session.

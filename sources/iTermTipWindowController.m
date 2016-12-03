@@ -241,7 +241,7 @@ static const CGFloat kWindowWidth = 400;
 
 // I originally preferred to do this in windowDidLoad, but the window's frame
 // changes right after windowDidLoad returns.
-- (void)showTipWindow {
+- (NSArray<iTermHotKey *> *)showTipWindow {
     [self.window orderFront:nil];
 
     self.window.level = NSModalPanelWindowLevel;
@@ -275,6 +275,7 @@ static const CGFloat kWindowWidth = 400;
                                                                          selector:@selector(dismissByKeyboard:)
                                                                          userData:nil] retain];
     }
+    return nil;
 }
 
 - (void)dismissByKeyboard:(id)sender {

@@ -19,8 +19,10 @@
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;
 
-// Start calling [target selector:userData] when the hotkey is pressed. More than one hotkey may
-// use the same keycode and modifiers.
+// Start calling [target selector:userData:siblings:] when the hotkey is pressed. More than one hotkey may
+// use the same keycode and modifiers. The siblings argument gives an array of other iTermHotKey*s that
+// take the same keypress. The selector returns an array of iTermHotKey*s that were handled, and they
+// won't have their actions invoked.
 - (iTermHotKey *)registerShortcut:(iTermShortcut *)shortcut
                            target:(id)target
                          selector:(SEL)selector

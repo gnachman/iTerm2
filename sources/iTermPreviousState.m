@@ -27,24 +27,27 @@
     [super dealloc];
 }
 
-- (void)restorePreviouslyActiveApp {
+- (BOOL)restorePreviouslyActiveApp {
     if (!_previouslyActiveAppPID) {
-        return;
+        return NO;
     }
     
     NSRunningApplication *app =
         [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
-    
+
+    BOOL result = NO;
     if (app) {
         DLog(@"Restore app %@", app);
-        [app activateWithOptions:0];
+        DLog(@"** Restore previously active app from\n%@", [NSThread callStackSymbols]);
+        result = [app activateWithOptions:0];
     }
     self.previouslyActiveAppPID = nil;
+    return result;
 }
 
-- (void)restore {
+- (BOOL)restoreAllowingAppSwitch:(BOOL)allowAppSwitch {
     DLog(@"Restore %p with previously active app %@", self, _previouslyActiveAppPID);
-    [self restorePreviouslyActiveApp];
+    BOOL result = allowAppSwitch && [self restorePreviouslyActiveApp];
     if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];
         if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
@@ -53,6 +56,7 @@
             [currentTerm showMenuBar];
         }
     }
+    return result;
 }
 
 - (void)suppressHideApp {

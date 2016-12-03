@@ -16,14 +16,13 @@ static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskAlphaShi
 
 // Override this to do a thing that needs to be done. `siblings` are other hotkeys (besides the one
 // this call was made for) that have the same keypress.
-- (void)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings;
+- (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings;
 
 @end
 
 @implementation iTermBaseHotKey {
     // The registered carbon hotkey that listens for hotkey presses.
     NSMutableArray<iTermHotKey *> *_carbonHotKeys;
-    BOOL _observingEventTap;
     NSTimeInterval _lastModifierTapTime;
     BOOL _modifierWasPressed;
     BOOL _registered;
@@ -80,7 +79,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (iTermShortcut *shortcut in self.shortcuts) {
         [self registerShortcut:shortcut];
     }
-    if (_hasModifierActivation && !_observingEventTap) {
+    if (_hasModifierActivation && !_registered) {
         [[iTermEventTap sharedInstance] addObserver:self];
     }
     _registered = YES;
@@ -111,7 +110,7 @@ ITERM_WEAKLY_REFERENCEABLE
     while (_carbonHotKeys.count) {
         [self unregisterCarbonHotKey:_carbonHotKeys.firstObject];
     }
-    if (_observingEventTap) {
+    if (_registered) {
         [[iTermEventTap sharedInstance] removeObserver:self];
     }
     _registered = NO;
@@ -161,8 +160,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self carbonHotkeyPressed:nil siblings:@[]];
 }
 
-- (void)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings {
+- (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings {
     [NSException raise:NSInternalInconsistencyException format:@"Not implemented. Use a subclass."];
+    return nil;
 }
 
 - (BOOL)activationModiferPressIsDoubleTap {
@@ -219,20 +219,28 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Actions
 
-- (void)carbonHotkeyPressed:(NSDictionary *)userInfo siblings:(NSArray<iTermHotKey *> *)siblings {
+- (NSArray<iTermBaseHotKey *> *)carbonHotkeyPressed:(NSDictionary *)userInfo siblings:(NSArray<iTermHotKey *> *)siblings {
     if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
-        return;
+        return nil;
     }
-    
-    NSArray *siblingBaseHotKeys = [siblings mapWithBlock:^id(iTermHotKey *anObject) {
+
+    // Only elements of siblings whose targets are iTermBaseHotKey
+    NSArray<iTermHotKey *> *siblingHotkeys = [siblings filteredArrayUsingBlock:^BOOL(iTermHotKey *anObject) {
         id target = anObject.target;
-        if ([target isKindOfClass:[iTermBaseHotKey class]]) {
-            return target;
-        } else {
-            return nil;
-        }
+        return ([target isKindOfClass:[iTermBaseHotKey class]]);
     }];
-    [self hotKeyPressedWithSiblings:siblingBaseHotKeys];
+
+    // iTerMBaseHotKey's corresponding to iTermHotKey's in siblingHotkeys
+    NSArray<iTermBaseHotKey *> *siblingBaseHotKeys = [siblingHotkeys mapWithBlock:^id(iTermHotKey *anObject) {
+        return anObject.target;
+    }];
+
+    NSArray<iTermBaseHotKey *> *handledBaseHotkeys = [self hotKeyPressedWithSiblings:siblingBaseHotKeys];
+
+    // Return iTermHotkey's that correspond to the handledBaseHotkeys
+    return [siblingHotkeys filteredArrayUsingBlock:^BOOL(iTermHotKey *anObject) {
+        return [handledBaseHotkeys containsObject:anObject.target];
+    }];
 }
 
 #pragma mark - iTermEventTapObserver
