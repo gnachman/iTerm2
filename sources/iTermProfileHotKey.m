@@ -334,6 +334,10 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         DLog(@"Already rolling in");
         return;
     }
+    if (_rollingOut) {
+        DLog(@"Rolling out. Cancel roll in");
+        return;
+    }
     _rollingIn = YES;
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
         [NSApp activateIgnoringOtherApps:YES];
@@ -463,7 +467,27 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 #pragma mark - Protected
 
-- (void)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)siblings {
+- (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)genericSiblings {
+    genericSiblings = [genericSiblings arrayByAddingObject:self];
+
+    NSArray<iTermProfileHotKey *> *siblings = [genericSiblings mapWithBlock:^id(iTermBaseHotKey *anObject) {
+        if ([anObject isKindOfClass:[iTermProfileHotKey class]]) {
+            return anObject;
+        } else {
+            return nil;
+        }
+    }];
+    BOOL anyTransitioning = [siblings anyWithBlock:^BOOL(iTermBaseHotKey *sibling) {
+        if ([sibling isKindOfClass:[iTermProfileHotKey class]]) {
+            iTermProfileHotKey *other = (iTermProfileHotKey *)sibling;
+            return other.rollingIn || other.rollingOut;
+        } else {
+            return NO;
+        }
+    }];
+    if (anyTransitioning) {
+        return siblings;
+    }
     DLog(@"toggle window %@. siblings=%@", self, siblings);
     BOOL allSiblingsOpen = [siblings allWithBlock:^BOOL(iTermBaseHotKey *sibling) {
         if ([sibling isKindOfClass:[iTermProfileHotKey class]]) {
@@ -474,6 +498,20 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         }
     }];
 
+    BOOL anyIsKey = [siblings anyWithBlock:^BOOL(iTermProfileHotKey *anObject) {
+        return anObject.windowController.window.isKeyWindow;
+    }];
+
+    DLog(@"Hotkey pressed. All open=%@  any is key=%@  siblings=%@",
+         @(allSiblingsOpen), @(anyIsKey), siblings);
+    for (iTermProfileHotKey *sibling in [siblings arrayByAddingObject:self]) {
+        DLog(@"Invoking handleHotkeyPressWithAllOpen:%@ anyIsKey:%@ on %@", @(allSiblingsOpen), @(anyIsKey), sibling);
+        [sibling handleHotkeyPressWithAllOpen:allSiblingsOpen anyIsKey:anyIsKey];
+    }
+    return siblings;
+}
+
+- (void)handleHotkeyPressWithAllOpen:(BOOL)allSiblingsOpen anyIsKey:(BOOL)anyIsKey {
     if (self.windowController.weaklyReferencedObject) {
         DLog(@"already have a hotkey window created");
         if (self.windowController.window.alphaValue == 1) {
@@ -483,7 +521,10 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                 return;
             }
             self.wasAutoHidden = NO;
-            [self handleHotKeyForOpqueHotKeyWindow];
+            if (anyIsKey || ![self switchToVisibleHotKeyWindowIfPossible]) {
+                DLog(@"Hide hotkey window");
+                [self hideHotKeyWindowAnimated:YES suppressHideApp:NO otherIsRollingIn:NO];
+            }
         } else {
             DLog(@"hotkey window not opaque");
             [self showHotKeyWindow];
@@ -566,14 +607,21 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (void)didFinishRollingOut {
     DLog(@"didFinishRollingOut");
-    // NOTE: There used be an option called "closing hotkey switches spaces". I've removed the
-    // "off" behavior and made the "on" behavior the only option. Various things didn't work
-    // right, and the worst one was in this thread: "[iterm2-discuss] Possible bug when using Hotkey window?"
-    // where clicks would be swallowed up by the invisible hotkey window. The "off" mode would do
-    // this:
-    // [[term window] orderWindow:NSWindowBelow relativeTo:0];
-    // And the window was invisible only because its alphaValue was set to 0 elsewhere.
-    
+
+    DLog(@"Invoke willFinishRollingOutProfileHotKey:");
+    BOOL activatingOtherApp = [self.delegate willFinishRollingOutProfileHotKey:self];
+    if (activatingOtherApp) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (_rollingOut) {
+                [self orderOut];
+            }
+        });
+    } else {
+        [self orderOut];
+    }
+}
+
+- (void)orderOut {
     DLog(@"Call orderOut: on terminal %@", self.windowController);
     [self.windowController.window orderOut:self];
     DLog(@"Returned from orderOut:. Set _rollingOut=NO");
@@ -581,9 +629,6 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     // This must be done after orderOut: so autoHideHotKeyWindowsExcept: will know to throw out the
     // previous state.
     _rollingOut = NO;
-
-    DLog(@"Invoke didFinishRollingOutProfileHotKey:");
-    [self.delegate didFinishRollingOutProfileHotKey:self];
 }
 
 - (BOOL)autoHides {
@@ -606,7 +651,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
                                              !self.windowController.window.isKeyWindow);
     if (activateStickyHotkeyWindow && ![NSApp isActive]) {
         DLog(@"Storing previously active app");
-        [self.delegate storePreviouslyActiveApp];
+        [self.delegate storePreviouslyActiveApp:self];
     }
     const BOOL hotkeyWindowOnOtherSpace = ![self.windowController.window isOnActiveSpace];
     if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
@@ -630,13 +675,6 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     }
 }
 
-- (void)handleHotKeyForOpqueHotKeyWindow {
-    if (![self switchToVisibleHotKeyWindowIfPossible]) {
-        DLog(@"Hide hotkey window");
-        [self hideHotKeyWindowAnimated:YES suppressHideApp:NO];
-    }
-}
-
 - (void)showHotKeyWindow {
     [self showHotKeyWindowCreatingWithURLIfNeeded:nil];
 }
@@ -649,7 +687,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
         [self showAlreadyVisibleHotKeyWindow];
         return NO;
     }
-    [self.delegate storePreviouslyActiveApp];
+    [self.delegate storePreviouslyActiveApp:self];
 
     BOOL result = NO;
     if (!self.windowController.weaklyReferencedObject) {
@@ -662,7 +700,8 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 }
 
 - (void)hideHotKeyWindowAnimated:(BOOL)animated
-                 suppressHideApp:(BOOL)suppressHideApp {
+                 suppressHideApp:(BOOL)suppressHideApp
+                otherIsRollingIn:(BOOL)otherIsRollingIn {
     DLog(@"Hide hotkey window. animated=%@ suppressHideApp=%@", @(animated), @(suppressHideApp));
 
     if (suppressHideApp) {
@@ -678,6 +717,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     while (self.windowController.window.attachedSheet) {
         [NSApp endSheet:self.windowController.window.attachedSheet];
     }
+    self.closedByOtherHotkeyWindowOpening = otherIsRollingIn;
     [self rollOut];
 }
 

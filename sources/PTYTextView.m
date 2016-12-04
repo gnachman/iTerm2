@@ -527,12 +527,16 @@ static const int kDragThreshold = 3;
 - (BOOL)resignFirstResponder {
     [_altScreenMouseScrollInferer firstResponderDidChange];
     [self removeUnderline];
+    DLog(@"resignFirstResponder %@", self);
+    DLog(@"%@", [NSThread callStackSymbols]);
     return YES;
 }
 
 - (BOOL)becomeFirstResponder {
     [_altScreenMouseScrollInferer firstResponderDidChange];
     [_delegate textViewDidBecomeFirstResponder];
+    DLog(@"becomeFirstResponder %@", self);
+    DLog(@"%@", [NSThread callStackSymbols]);
     return YES;
 }
 

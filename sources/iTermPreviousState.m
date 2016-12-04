@@ -16,43 +16,39 @@
         } else {
             self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
         }
+        DLog(@"Previously active pid for %p is %@", self, _previouslyActiveAppPID);
         _itermWasActiveWhenHotkeyOpened = [NSApp isActive];
     }
     return self;
 }
 
-- (void)restorePreviouslyActiveApp {
+- (void)dealloc {
+    [_owner release];
+    [super dealloc];
+}
+
+- (BOOL)restorePreviouslyActiveApp {
     if (!_previouslyActiveAppPID) {
-        return;
+        return NO;
     }
     
     NSRunningApplication *app =
         [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
-    
+
+    BOOL result = NO;
     if (app) {
         DLog(@"Restore app %@", app);
-        [app activateWithOptions:0];
+        DLog(@"** Restore previously active app from\n%@", [NSThread callStackSymbols]);
+        result = [app activateWithOptions:0];
     }
     self.previouslyActiveAppPID = nil;
+    return result;
 }
 
-- (void)restore {
-    [self restorePreviouslyActiveApp];
-    if (!self.itermWasActiveWhenHotkeyOpened) {
-        // TODO: This is weird. What is its purpose? After I fix the bug where non-hotkey windows
-        // get ordered front is this still necessary?
-        [NSApp hide:nil];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(),
-                       ^{
-                           [NSApp unhideWithoutActivation];
-                           for (PseudoTerminal *terminal in [[iTermController sharedInstance] terminals]) {
-                               if (![terminal isHotKeyWindow]) {
-                                   [[[terminal window] animator] setAlphaValue:1];
-                               }
-                           }
-                       });
-    } else {
+- (BOOL)restoreAllowingAppSwitch:(BOOL)allowAppSwitch {
+    DLog(@"Restore %p with previously active app %@", self, _previouslyActiveAppPID);
+    BOOL result = allowAppSwitch && [self restorePreviouslyActiveApp];
+    if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];
         if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
             [currentTerm hideMenuBar];
@@ -60,6 +56,7 @@
             [currentTerm showMenuBar];
         }
     }
+    return result;
 }
 
 - (void)suppressHideApp {

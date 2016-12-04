@@ -15,9 +15,9 @@
 @class iTermBaseHotKey;
 
 @protocol iTermHotKeyDelegate<NSObject>
-- (void)didFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey;
+- (BOOL)willFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey;
 - (void)suppressHideApp;
-- (void)storePreviouslyActiveApp;
+- (void)storePreviouslyActiveApp:(iTermProfileHotKey *)profileHotKey;
 - (void)hotKeyWillCreateWindow:(iTermBaseHotKey *)hotKey;
 - (void)hotKeyDidCreateWindow:(iTermBaseHotKey *)hotKey;
 @end
