@@ -198,7 +198,7 @@
     NSRect frame = [[self window] frame];
     frame.size.height = [[tableView_ headerView] frame].size.height + MIN(20, [model_ count]) * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
 
-    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth],
+    NSPoint p = NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + cx * [tv charWidth],
                             ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
     p = [tv convertPoint:p toView:nil];
     p = [[tv window] pointToScreenCoords:p];

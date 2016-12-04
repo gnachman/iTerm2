@@ -134,6 +134,8 @@ DEFINE_BOOL(jiggleTTYSizeOnClearBuffer, NO, @"General: Redraw the screen after t
 DEFINE_BOOL(indicateBellsInDockBadgeLabel, YES, @"General: Indicate the number of bells rung while the app is inactive in the dock icon’s badge label");
 DEFINE_STRING(downloadsDirectory, @"", @"General: Downloads folder.\nIf set, downloaded files go to this location instead of the user’s $HOME/Downloads folder.");
 DEFINE_FLOAT(pointSizeOfTimeStamp, 10, @"General: Point size for timestamps");
+DEFINE_INT(terminalMargin, 5, @"General: Terminal Margin\nHow much space to leave between the left and right edges of the terminal.");
+DEFINE_INT(terminalVMargin, 2, @"General: Terminal Vertical Margin\nHow much space to leave between the top and bottom edges of the terminal.");
 
 #pragma mark - Semantic History
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlines for the purposes of locating URLs and file names for Semantic History.\nIf a hard newline occurs at the end of a line then cmd-click will not see it all unless this setting is turned on. This is useful for some interactive applications. Turning this on will remove newlines from the \\3 and \\4 substitutions.");

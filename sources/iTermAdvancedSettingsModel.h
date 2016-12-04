@@ -156,5 +156,7 @@
 + (void)setTimeBetweenTips:(double)time;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)useLayers;
++ (int)terminalMargin;
++ (int)terminalVMargin;
 
 @end
