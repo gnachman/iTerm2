@@ -1182,7 +1182,6 @@ typedef struct iTermTextColorContext {
                                      backgroundColor:(NSColor *)backgroundColor
                                      graphicsContext:(NSGraphicsContext *)ctx
                                                smear:(BOOL)smear {
-    DLog(@"Draw attributed string beginning at %d", (int)round(origin.x));
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     NSColor *color = attributes[NSForegroundColorAttributeName];
     
