@@ -664,6 +664,8 @@ typedef enum {
 
 - (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event;
 
+- (void)setColorsFromPresetNamed:(NSString *)presetName;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

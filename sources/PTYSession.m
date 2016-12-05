@@ -2573,6 +2573,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return tabColor;
 }
 
+- (void)setColorsFromPresetNamed:(NSString *)presetName {
+    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
+    if (!settings) {
+        return;
+    }
+    for (NSString *colorName in [ProfileModel colorKeys]) {
+        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
+        if (colorDict) {
+            [self setSessionSpecificProfileValues:@{ colorName: colorDict }];
+        }
+    }
+}
+
 - (void)sharedProfileDidChange
 {
     NSDictionary *updatedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
@@ -4844,6 +4857,14 @@ ITERM_WEAKLY_REFERENCEABLE
             [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
                                                                   ignoringCase:NO
                                                                          regex:YES];
+            break;
+
+        case KEY_FIND_AGAIN_DOWN:
+            [self searchNext];
+            break;
+
+         case KEY_FIND_AGAIN_UP:
+            [self searchPrevious];
             break;
 
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {

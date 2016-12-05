@@ -7958,20 +7958,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)colorPresetTouchBarItemSelected:(iTermTouchBarButton *)sender {
-    [self setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
-}
-
-- (void)setColorsFromPresetNamed:(NSString *)presetName {
-    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
-    if (!settings) {
-        return;
-    }
-    for (NSString *colorName in [ProfileModel colorKeys]) {
-        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
-        if (colorDict) {
-            [self.currentSession setSessionSpecificProfileValues:@{ colorName: colorDict }];
-        }
-    }
+    [self.currentSession setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
 }
 
 - (void)candidateListTouchBarItem:(NSCandidateListTouchBarItem *)anItem endSelectingCandidateAtIndex:(NSInteger)index {
