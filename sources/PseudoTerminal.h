@@ -17,6 +17,7 @@
 
 @class PTYSession;
 @class PSMTabBarControl;
+@class iTermPromptOnCloseReason;
 @class iTermToolbeltView;
 @class iTermController;
 @class TmuxController;
@@ -197,7 +198,7 @@ extern NSString *const kCurrentSessionDidChange;
 - (void)irAdvance:(int)dir;
 
 // Does any session want to be prompted for closing?
-- (BOOL)promptOnClose;
+- (iTermPromptOnCloseReason *)promptOnCloseReason;
 
 // Accessor for toolbelt view.
 - (iTermToolbeltView *)toolbelt;

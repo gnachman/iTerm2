@@ -35,6 +35,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
+#import "iTermDisclosableView.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
@@ -51,6 +52,7 @@
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermProfilesWindowController.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
@@ -161,6 +163,8 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
+
+    int _secureInputCount;
 }
 
 - (void)updateProcessType {
@@ -594,34 +598,34 @@ static BOOL hasBecomeActive = NO;
 
     terminals = [[iTermController sharedInstance] terminals];
     int numSessions = 0;
-    BOOL shouldShowAlert = NO;
+
+    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PseudoTerminal *term in terminals) {
         numSessions += [[term allSessions] count];
-        if ([term promptOnClose]) {
-            shouldShowAlert = YES;
-        }
+
+        [reason addReason:term.promptOnCloseReason];
     }
 
     // Display prompt if we need to
     if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
         [terminals count] > 0 &&  // there are terminal windows
         [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
-        shouldShowAlert = YES;
+        [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
     }
     quittingBecauseLastWindowClosed_ = NO;
     if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
         // closing multiple sessions
-        shouldShowAlert = YES;
+        [reason addReason:[iTermPromptOnCloseReason closingMultipleSessionsPreferenceEnabled]];
     }
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         self.sparkleRestarting &&
         [iTermAdvancedSettingsModel restoreWindowContents] &&
         [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
         // Nothing will be lost so just restart without asking.
-        shouldShowAlert = NO;
+        [reason addReason:[iTermPromptOnCloseReason noReason]];
     }
 
-    if (shouldShowAlert) {
+    if (reason.hasReason) {
         DLog(@"Showing quit alert");
         NSString *message;
         if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
@@ -630,13 +634,23 @@ static BOOL hasBecomeActive = NO;
             message = @"All sessions will be closed.";
         }
         [NSApp activateIgnoringOtherApps:YES];
-        BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
-                                       @"%@",
-                                       @"OK",
-                                       @"Cancel",
-                                       nil,
-                                       message) != NSAlertDefaultReturn;
-        if (stayput) {
+
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Quit iTerm2?"
+                                         defaultButton:@"OK"
+                                       alternateButton:@"Cancel"
+                                           otherButton:nil
+                             informativeTextWithFormat:@"%@", message];
+        iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                                               prompt:@"Details"
+                                                                              message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
+                                                                                       reason.message]];
+        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+        accessory.requestLayout = ^{
+            [alert layout];
+        };
+        alert.accessoryView = accessory;
+
+        if ([alert runModal] != NSAlertDefaultReturn) {
             DLog(@"User declined to quit");
             return NSTerminateCancel;
         }
@@ -1405,18 +1419,31 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)setSecureInput:(BOOL)secure {
+    if (secure && _secureInputCount > 0) {
+        ELog(@"Want to turn on secure input but it's already on");
+        return;
+    }
+
+    if (!secure && _secureInputCount == 0) {
+        ELog(@"Want to turn off secure input but it's already off");
+        return;
+    }
     DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
     if (secure) {
         OSErr err = EnableSecureEventInput();
         DLog(@"EnableSecureEventInput err=%d", (int)err);
         if (err) {
             NSLog(@"EnableSecureEventInput failed with error %d", (int)err);
+        } else {
+            ++_secureInputCount;
         }
     } else {
         OSErr err = DisableSecureEventInput();
         DLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
-            NSLog(@"DisableSecureEventInput failed with error %d", (int)err);
+            ELog(@"DisableSecureEventInput failed with error %d", (int)err);
+        } else {
+            --_secureInputCount;
         }
     }
     DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());

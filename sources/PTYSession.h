@@ -42,6 +42,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class iTermCommandHistoryCommandUseMO;
 @class iTermController;
 @class iTermGrowlDelegate;
+@class iTermPromptOnCloseReason;
 @class iTermQuickLookController;
 @class SessionView;
 
@@ -220,7 +221,7 @@ typedef enum {
 @property(nonatomic, assign) BOOL newOutput;
 
 // Do we need to prompt on close for this session?
-@property(nonatomic, readonly) BOOL promptOnClose;
+@property(nonatomic, readonly) iTermPromptOnCloseReason *promptOnCloseReason;
 
 // Array of subprocessess names.
 @property(nonatomic, readonly) NSArray *childJobNames;
@@ -355,6 +356,9 @@ typedef enum {
 @property(nonatomic, readonly) BOOL hasCoprocess;
 
 @property(nonatomic, retain) TmuxController *tmuxController;
+
+// Call this on tmux clients to get the session with the tmux gateway.
+@property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
 
 @property(nonatomic, readonly) VT100RemoteHost *currentHost;
 

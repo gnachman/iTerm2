@@ -24,6 +24,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
@@ -1281,32 +1282,37 @@ ITERM_WEAKLY_REFERENCEABLE
     return names;
 }
 
-- (BOOL)promptOnClose
-{
+- (iTermPromptOnCloseReason *)promptOnCloseReason {
     if (_exited) {
-        return NO;
+        return [iTermPromptOnCloseReason noReason];
     }
     switch ([[_profile objectForKey:KEY_PROMPT_CLOSE] intValue]) {
         case PROMPT_ALWAYS:
-            return YES;
+            return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 
         case PROMPT_NEVER:
-            return NO;
+            return [iTermPromptOnCloseReason noReason];
 
         case PROMPT_EX_JOBS: {
+            NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
             for (NSString *childName in [self childJobNames]) {
                 if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
                     // This job is not in the ignore list.
-                    return YES;
+                    [blockingJobs addObject:childName];
                 }
             }
-            // All jobs were in the ignore list.
-            return NO;
+            if (blockingJobs.count > 0) {
+                return [iTermPromptOnCloseReason profile:_profile blockedByJobs:blockingJobs];
+            } else {
+                // All jobs were in the ignore list.
+                return [iTermPromptOnCloseReason noReason];
+            }
         }
     }
 
-    return YES;
+    // This shouldn't happen
+    return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
 
 - (NSString *)_autoLogFilenameForTermId:(NSString *)termid {
@@ -4379,6 +4385,16 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxPane = windowPane;
     self.tmuxMode = TMUX_CLIENT;
     [_shell registerAsCoprocessOnlyTask];
+}
+
+- (PTYSession *)tmuxGatewaySession {
+    if (self.isTmuxGateway) {
+        return self;
+    }
+    if (!self.isTmuxClient) {
+        return nil;
+    }
+    return (PTYSession *)self.tmuxController.gateway.delegate;
 }
 
 - (void)toggleTmuxZoom {
