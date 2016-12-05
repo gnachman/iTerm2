@@ -2930,6 +2930,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.togglingLionFullScreen || self.lionFullScreen) {
         return proposedFrameSize;
     }
+    NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
     PTYSession* session = [tab activeSession];
@@ -3033,6 +3034,28 @@ ITERM_WEAKLY_REFERENCEABLE
       if (deltaY < floor(charHeight / 2)) {
         proposedFrameSize.height = senderSize.height;
       }
+    }
+
+    // If the original proposal was to fill the screen then allow it
+    NSRect screenFrame = self.window.screen.visibleFrame;
+    DLog(@"screenFrame=%@ accepted=%@ originalProposal=%@ charSize=%@",
+          NSStringFromSize(screenFrame.size),
+          NSStringFromSize(proposedFrameSize),
+          NSStringFromSize(originalProposal),
+          NSStringFromSize(NSMakeSize(charWidth, charHeight)));
+    if (snapWidth && proposedFrameSize.width + charWidth > screenFrame.size.width) {
+        CGFloat snappedMargin = screenFrame.size.width - proposedFrameSize.width;
+        CGFloat desiredMargin = screenFrame.size.width - originalProposal.width;
+        if (desiredMargin <= ceil(snappedMargin / 2.0)) {
+            proposedFrameSize.width = screenFrame.size.width;
+        }
+    }
+    if (snapHeight && proposedFrameSize.height + charHeight > screenFrame.size.height) {
+        CGFloat snappedMargin = screenFrame.size.height - proposedFrameSize.height;
+        CGFloat desiredMargin = screenFrame.size.height - originalProposal.height;
+        if (desiredMargin <= ceil(snappedMargin / 2.0)) {
+            proposedFrameSize.height = screenFrame.size.height;
+        }
     }
 
     PtyLog(@"Accepted size: %fx%f", proposedFrameSize.width, proposedFrameSize.height);
