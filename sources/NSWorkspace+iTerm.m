@@ -7,6 +7,7 @@
 //
 
 #import "NSWorkspace+iTerm.h"
+#import "DebugLogging.h"
 
 @implementation NSWorkspace (iTerm)
 
@@ -21,6 +22,7 @@
     int fileDescriptor = mkstemps(tempFileNameCString, suffix.length);
 
     if (fileDescriptor == -1) {
+        ELog(@"mkstemps failed with template %s: %s", tempFileNameCString, strerror(errno));
         free(tempFileNameCString);
         return nil;
     }

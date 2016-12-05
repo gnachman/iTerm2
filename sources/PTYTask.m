@@ -495,6 +495,15 @@ static int MyForkPty(int *amaster,
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
         NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
                                                                                  suffix:@""];
+        if (tempPath == nil) {
+            NSRunCriticalAlertPanel(@"Error",
+                                    @"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.",
+                                    @"OK",
+                                    nil,
+                                    nil,
+                                    NSTemporaryDirectory());
+            return;
+        }
 
         // Begin listening on that path as a unix domain socket.
         int serverSocketFd = iTermFileDescriptorServerSocketBindListen(tempPath.UTF8String);

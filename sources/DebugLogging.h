@@ -59,3 +59,5 @@ extern BOOL gDebugLogging;
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 void TurnOnDebugLoggingSilently(void);
+void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
+void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);

@@ -234,7 +234,7 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
     charPtr->backgroundColor = y;
 }
 
-void SetDecodedImage(unichar code, NSImage *image, NSData *data) {
+void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
     iTermImageInfo *imageInfo = gImages[@(code)];
     [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
@@ -540,6 +540,15 @@ void StringToScreenChars(NSString *s,
                                       ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
                                               unicodeVersion:unicodeVersion];
         } else {
+            // Ensure the string is not longer than what we support.
+            if (composedOrNonBmpChar.length > kMaxParts) {
+                composedOrNonBmpChar = [composedOrNonBmpChar substringToIndex:kMaxParts];
+
+                // Ensure a high surrogate isn't left dangling at the end.
+                if (CFStringIsSurrogateHighCharacter([composedOrNonBmpChar characterAtIndex:kMaxParts - 1])) {
+                    composedOrNonBmpChar = [composedOrNonBmpChar substringToIndex:kMaxParts - 1];
+                }
+            }
             SetComplexCharInScreenChar(buf + j, composedOrNonBmpChar, useHFSPlusMapping);
             UTF32Char baseChar = [composedOrNonBmpChar characterAtIndex:0];
             if (IsHighSurrogate(baseChar) && composedOrNonBmpChar.length > 1) {

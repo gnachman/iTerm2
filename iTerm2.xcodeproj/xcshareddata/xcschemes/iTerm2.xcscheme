@@ -80,7 +80,6 @@
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
-      enableAddressSanitizer = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
       <BuildableProductRunnable
@@ -93,12 +92,14 @@
             ReferencedContainer = "container:iTerm2.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <AdditionalOptions>
-         <AdditionalOption
-            key = "NSZombieEnabled"
-            value = "YES"
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "OS_ACTIVITY_MODE"
+            value = "disable"
             isEnabled = "YES">
-         </AdditionalOption>
+         </EnvironmentVariable>
+      </EnvironmentVariables>
+      <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>
    <ProfileAction

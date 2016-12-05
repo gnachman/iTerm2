@@ -70,6 +70,10 @@ extern NSString *const kCurrentSessionDidChange;
 // this the preferred screen.
 @property(nonatomic, readonly) NSScreen *screen;
 
+// Are we in the process of restoring a window with NSWindowRestoration? If so, do not order
+// the window as it may be minimized (issue 5258)
+@property(nonatomic) BOOL restoringWindow;
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.

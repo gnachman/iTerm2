@@ -64,6 +64,7 @@
 #import "NSStringITerm.h"
 #import "NSWindow+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "PFMoveApplication.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
@@ -170,10 +171,19 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
-    
+
+#if !DEBUG
+    PFMoveToApplicationsFolderIfNecessary();
+#endif
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
+    }
+
+    if ([iTermAdvancedSettingsModel hideFromDockAndAppSwitcher]) {
+        ProcessSerialNumber psn = { 0, kCurrentProcess };
+        TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
     [self buildScriptMenu:nil];
@@ -455,10 +465,37 @@ static BOOL hasBecomeActive = NO;
         [alert runModal];
     }
 }
+
+- (void)warnAboutChangeToDefaultPasteBehavior {
+    static NSString *const kHaveWarnedAboutPasteConfirmationChange = @"NoSyncHaveWarnedAboutPasteConfirmationChange";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kHaveWarnedAboutPasteConfirmationChange]) {
+        // Safety check that we definitely don't show this twice.
+        return;
+    }
+    NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
+    if ([iTermWarning identifierIsSilenced:identifier]) {
+        return;
+    }
+
+    NSArray *warningList = @[ @"3.0.0", @"3.0.1", @"3.0.2", @"3.0.3", @"3.0.4", @"3.0.5", @"3.0.6", @"3.0.7", @"3.0.8", @"3.0.9", @"3.0.10" ];
+    if ([warningList containsObject:[iTermPreferences appVersionBeforeThisLaunch]]) {
+        [iTermWarning showWarningWithTitle:@"iTerm2 no longer warns before a multi-line paste, unless you are at the shell prompt."
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Important Change"];
+    }
+
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }
+
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
@@ -1490,7 +1527,7 @@ static BOOL hasBecomeActive = NO;
                      forKey:kHotkeyWindowsRestorableStates];
     }
     DLog(@"Time to save app restorable state: %@",
-          @([NSDate timeIntervalSinceReferenceDate] - start));
+         @([NSDate timeIntervalSinceReferenceDate] - start));
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {

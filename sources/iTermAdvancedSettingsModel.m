@@ -111,6 +111,7 @@ DEFINE_INT(numberOfLinesForAccessibility, 1000, @"Terminal: Maximum number of li
 DEFINE_INT(triggerRadius, 3, @"Terminal: Number of screen lines to match against trigger regular expressions.\nTrigger regular expressions are matched against the last logical line of text when a newline is received. A search is performed to find the start of the line. Since very long lines would cause performance problems, the search (and consequently the regular expression match, highlighting, and so on) is limited to this many screen lines.");
 DEFINE_BOOL(requireCmdForDraggingText, NO, @"Terminal: To drag images or selected text, you must hold ⌘. This prevents accidental drags.");
 DEFINE_BOOL(focusReportingEnabled, YES, @"Terminal: Apps may turn on Focus Reporting.\nFocus reporting causes iTerm2 to send an escape sequence when a session gains or loses focus. It can cause problems when an ssh session dies unexpectedly because it gets left on, so some users prefer to disable it.");
+DEFINE_BOOL(useColorfgbgFallback, YES, @"Terminal: Use fallback for COLORFGBG if no exact match found?\nThe COLORFGBG variable indicates the ANSI colors that match the foreground and background colors. If no colors match and this setting is enabled, then the variable will be set to 15;0 to indicate a dark background or 0;15 to indicate a light background.");
 
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation.\nWarning: reducing this value may cause problems if you have multiple displays.");
@@ -141,6 +142,7 @@ DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlin
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'(（)）|[]", @"Semantic History: Non-alphanumeric characters considered part of a URL for Semantic History.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a URL begins and ends.");
 DEFINE_INT(maxSemanticHistoryPrefixOrSuffix, 2000, @"Semantic History: Maximum number of bytes of text before and after click location to take into account.\nThis also limits the size of the \\3 and \\4 substitutions.");
 DEFINE_STRING(pathsToIgnore, @"", @"Semantic History: Paths to ignore for Semantic History.\nSeparate paths with a comma. Any file under one of these paths will not be openable with Semantic History.");
+DEFINE_BOOL(performDNSLookups, YES, @"Semantic History: Perform DNS lookups to check if URLs are valid?\nWhen enabled, the name under the mouse will be resolved with DNS to determine if it is a clickable link.");
 
 #pragma mark - Debugging
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");
@@ -196,6 +198,7 @@ DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on sel
 DEFINE_INT(pasteHistoryMaxOptions, 20, @"Pasteboard: Number of entires to save in Paste History.\n.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, @"Pasteboard: Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, @"Pasteboard: Pressing a key will remove the selection.");
+DEFINE_BOOL(promptForPasteWhenNotAtPrompt, NO, @"Pasteboard: Warn before pasting when not at shell prompt?");
 
 #pragma mark - Tip of the day
 
