@@ -897,13 +897,30 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
 - (void)clearAndResetScreenPreservingCursorLine {
+    int numberOfLinesInPrompt;
+    if (_shellIntegrationInstalled) {
+        numberOfLinesInPrompt = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow] - _lastCommandOutputRange.end.y + 1;
+        DLog(@"numberOfLinesInPrompt calculated (based on shell integration): %d", numberOfLinesInPrompt);
+    } else {
+        numberOfLinesInPrompt = [iTermAdvancedSettingsModel numberOfLinesInPrompt];
+        DLog(@"numberOfLinesInPrompt taken from advanced settings: %d", numberOfLinesInPrompt);
+    }
+
+    if (numberOfLinesInPrompt <= 0) {
+        DLog(@"iTerm advanced settings variable 'numberOfLinesInPrompt' is equal or less than than zero: %d", numberOfLinesInPrompt);
+        numberOfLinesInPrompt = 1;
+    } else if (numberOfLinesInPrompt > 3) {
+        DLog(@"iTerm advanced settings variable 'numberOfLinesInPrompt' is greater than 3: %d", numberOfLinesInPrompt);
+    }
+
     [delegate_ screenTriggerableChangeDidOccur];
     // This clears the screen.
     int x = currentGrid_.cursorX;
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                             unlimitedScrollback:unlimitedScrollback_
-                                             preserveCursorLine:YES]];
+                                            preservePromptLines:numberOfLinesInPrompt]];
     currentGrid_.cursorX = x;
+    currentGrid_.cursorY = numberOfLinesInPrompt - 1;
 }
 
 - (void)clearScrollbackBuffer
@@ -2652,7 +2669,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     } else {
         [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
-                                                 preserveCursorLine:NO]];
+                                                preservePromptLines:0]];
     }
 
     [self setInitialTabStops];

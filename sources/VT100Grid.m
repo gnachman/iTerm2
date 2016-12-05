@@ -405,12 +405,12 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
         unlimitedScrollback:(BOOL)unlimitedScrollback
-        preserveCursorLine:(BOOL)preserveCursorLine {
+        preservePromptLines:(int)preservePromptLines {
     self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
     self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
     int numLinesToScroll;
-    if (preserveCursorLine) {
-        numLinesToScroll = cursor_.y;
+    if (preservePromptLines > 0 && preservePromptLines < size_.height) {
+        numLinesToScroll = MAX(0, cursor_.y - preservePromptLines + 1);
     } else {
         numLinesToScroll = [self lineNumberOfLastNonEmptyLine] + 1;
     }
@@ -423,7 +423,7 @@ static NSString *const kGridSizeKey = @"Size";
     }
     self.cursor = VT100GridCoordMake(0, 0);
 
-    [self setCharsFrom:VT100GridCoordMake(0, preserveCursorLine ? 1 : 0)
+    [self setCharsFrom:VT100GridCoordMake(0, preservePromptLines)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
                 toChar:[self defaultChar]];
 

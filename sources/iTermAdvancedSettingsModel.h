@@ -113,6 +113,7 @@
 + (BOOL)useOpenDirectory;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)profilesWindowJoinsActiveSpace;
++ (int)numberOfLinesInPrompt;
 
 + (NSString *)badgeFont;
 + (BOOL)badgeFontIsBold;
