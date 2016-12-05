@@ -53,7 +53,7 @@
     }];
 
     __block Class previousClass = [uniqueReasons.firstObject class];
-    NSArray *prettyReasons = [uniqueReasons flatmapWithBlock:^id(iTermPromptOnCloseReason *reason) {
+    NSArray *prettyReasons = [uniqueReasons flatMapWithBlock:^id(iTermPromptOnCloseReason *reason) {
         NSString *formattedMessage = [@"• " stringByAppendingString:reason.message];
         NSString *groupFooter = [previousClass groupFooter];
         NSArray *result;

@@ -157,6 +157,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
+    NSCandidateListTouchBarItemDelegate,
     NSScrubberDelegate,
     NSScrubberDataSource,
     NSTouchBarDelegate>
