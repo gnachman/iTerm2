@@ -180,12 +180,6 @@ static BOOL hasBecomeActive = NO;
         TurnOnDebugLoggingSilently();
     }
 
-    if ([iTermAdvancedSettingsModel hideFromDockAndAppSwitcher]) {
-        ProcessSerialNumber psn = { 0, kCurrentProcess };
-        TransformProcessType(&psn, kProcessTransformToUIElementApplication);
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    }
-
     [self buildScriptMenu:nil];
 
     // Fix up various user defaults settings.

@@ -49,7 +49,7 @@ static void WriteDebugLogHeader() {
                         (long long)[[NSDate date] timeIntervalSince1970],
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
-                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
+                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
                         pinnedMessages];
     [gDebugLogHeader release];
     gDebugLogHeader = [header copy];

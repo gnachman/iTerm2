@@ -71,7 +71,7 @@
 }
 
 - (NSDictionary *)linkTextViewAttributes {
-    return @{ NSUnderlineStyleAttributeName: @(NSSingleUnderlineStyle),
+    return @{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
               NSForegroundColorAttributeName: [NSColor blueColor],
               NSCursorAttributeName: [NSCursor pointingHandCursor] };
 }

@@ -265,9 +265,6 @@
 // Version of unicode. Determines character widths.
 @property(nonatomic, assign) NSInteger unicodeVersion;
 
-// Lazily loading images that could not be drawn. Contains unique identifiers of iTermImageInfo*s
-@property(nonatomic, readonly) NSSet<NSString *> *missingImages;
-
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

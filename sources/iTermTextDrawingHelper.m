@@ -137,6 +137,8 @@ typedef struct iTermTextColorContext {
     // Pattern for background stripes
     NSImage *_backgroundStripesImage;
     
+    NSMutableSet<NSString *> *_missingImages;
+
     iTermPreciseTimerStats _stats[TIMER_STAT_MAX];
     CGFloat _baselineOffset;
 
@@ -165,6 +167,7 @@ typedef struct iTermTextColorContext {
             iTermPreciseTimerStatsInit(&_stats[TIMER_ADVANCES], "Advances");
             iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
         }
+        _missingImages = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -179,6 +182,7 @@ typedef struct iTermTextColorContext {
 
     [_selectedFont release];
 
+    [_missingImages release];
     [_backgroundStripesImage release];
 
     [super dealloc];
@@ -1934,15 +1938,15 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     iTermImageInfo *imageInfo = GetImageInfo(code);
     NSImage *image = [imageInfo imageWithCellSize:_cellSize];
     if (!image) {
-	if (!imageInfo) {
-	    [[NSColor brownColor] set];
-	} else {
-	    [_missingImages addObject:imageInfo.uniqueIdentifier];
+        if (!imageInfo) {
+            [[NSColor brownColor] set];
+        } else {
+            [_missingImages addObject:imageInfo.uniqueIdentifier];
 
-	    [[NSColor grayColor] set];
-	}
-	NSRectFill(NSMakeRect(point.x, point.y, _cellSize.width * run->numImageCells, _cellSize.height));
-	return;
+            [[NSColor grayColor] set];
+        }
+        NSRectFill(NSMakeRect(point.x, point.y, _cellSize.width * length, _cellSize.height));
+        return;
     }
     [_missingImages removeObject:imageInfo.uniqueIdentifier];
 
