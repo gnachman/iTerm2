@@ -1933,6 +1933,19 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             originInImage:(VT100GridCoord)originInImage {
     iTermImageInfo *imageInfo = GetImageInfo(code);
     NSImage *image = [imageInfo imageWithCellSize:_cellSize];
+    if (!image) {
+	if (!imageInfo) {
+	    [[NSColor brownColor] set];
+	} else {
+	    [_missingImages addObject:imageInfo.uniqueIdentifier];
+
+	    [[NSColor grayColor] set];
+	}
+	NSRectFill(NSMakeRect(point.x, point.y, _cellSize.width * run->numImageCells, _cellSize.height));
+	return;
+    }
+    [_missingImages removeObject:imageInfo.uniqueIdentifier];
+
     NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
                                   image.size.height / imageInfo.size.height);
 
