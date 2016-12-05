@@ -490,9 +490,6 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self warnAboutChangeToDefaultPasteBehavior];
-    if (IsTouchBarAvailable()) {
-        NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
-    }
 
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
