@@ -620,13 +620,13 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setCursorNeedsDisplay {
-    [self setNeedsDisplayInRect:[self rectWithHalo:[self cursorFrame]]];
+//    [self setNeedsDisplayInRect:[self rectWithHalo:[self cursorFrame]]];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
     _drawingHelper.cursorType = value;
     [self setCursorNeedsDisplay];
-    [self refresh];
+//    [self refresh];
 }
 
 - (NSDictionary*)markedTextAttributes {
