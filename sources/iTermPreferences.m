@@ -102,7 +102,7 @@ NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
 NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClickSelectsFullWrappedLines";
 NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection = @"DoubleClickPerformsSmartSelection";
 
-NSString *const kPreferenceKeyAppVersion = @"iTerm Version";
+NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
 
 NSString *const kPreferenceKeyPasteSpecialChunkSize = @"PasteSpecialChunkSize";
@@ -126,8 +126,13 @@ NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigrated
 NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
 
 static NSMutableDictionary *gObservers;
+static NSString *sPreviousVersion;
 
 @implementation iTermPreferences
+
++ (NSString *)appVersionBeforeThisLaunch {
+    return sPreviousVersion;
+}
 
 + (void)initializeUserDefaults {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
@@ -146,6 +151,7 @@ static NSMutableDictionary *gObservers;
 
     // Store the current app version in prefs
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
+    sPreviousVersion = [[userDefaults objectForKey:kPreferenceKeyAppVersion] copy];
     [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];
 
     // Disable under-titlebar mirror view.

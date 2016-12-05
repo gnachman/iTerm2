@@ -31,6 +31,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermQuickLookController.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
@@ -156,6 +157,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
+    NSCandidateListTouchBarItemDelegate,
     NSScrubberDelegate,
     NSScrubberDataSource,
     NSTouchBarDelegate>
@@ -1231,8 +1233,7 @@ ITERM_WEAKLY_REFERENCEABLE
                            message) == NSAlertDefaultReturn;
 }
 
-- (BOOL)confirmCloseTab:(PTYTab *)aTab
-{
+- (BOOL)confirmCloseTab:(PTYTab *)aTab suppressConfirmation:(BOOL)suppressConfirmation {
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
         return NO;
     }
@@ -1245,7 +1246,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     BOOL mustAsk = NO;
-    if (numClosing > 0 && [aTab promptOnClose]) {
+    if (numClosing > 0 && [aTab promptOnCloseReason].hasReason) {
         mustAsk = YES;
     }
     if (numClosing > 1 &&
@@ -1253,7 +1254,7 @@ ITERM_WEAKLY_REFERENCEABLE
         mustAsk = YES;
     }
 
-    if (mustAsk) {
+    if (mustAsk && !suppressConfirmation) {
         BOOL okToClose;
         if (numClosing == 1) {
             okToClose = [self confirmCloseForSessions:[aTab sessions]
@@ -1275,12 +1276,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [self close];
 }
 
-- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft
-{
+- (BOOL)tabIsAttachedTmuxTabWithSessions:(PTYTab *)aTab {
+    return ([aTab isTmuxTab] &&
+            [[aTab sessions] count] > 0 &&
+            [[aTab tmuxController] isAttached]);
+}
+
+- (BOOL)willShowTmuxWarningWhenClosingTab:(PTYTab *)aTab {
+    return ([self tabIsAttachedTmuxTabWithSessions:aTab] &&
+            ![iTermWarning identifierIsSilenced:@"ClosingTmuxTabKillsTmuxWindows"]);
+}
+
+- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft {
     if (!soft &&
-        [aTab isTmuxTab] &&
-        [[aTab sessions] count] > 0 &&
-        [[aTab tmuxController] isAttached]) {
+        [self tabIsAttachedTmuxTabWithSessions:aTab]) {
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:@"Kill tmux window, terminating its jobs, or hide it? "
                                                @"Hidden windows may be restored from the tmux dashboard."
@@ -1300,8 +1309,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self removeTab:aTab];
 }
 
-- (void)closeTab:(PTYTab*)aTab
-{
+- (void)closeTab:(PTYTab *)aTab {
     [self closeTab:aTab soft:NO];
 }
 
@@ -1417,8 +1425,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)closeCurrentTab:(id)sender {
-    if ([self tabView:_contentView.tabView shouldCloseTabViewItem:[_contentView.tabView selectedTabViewItem]]) {
-        [self closeTab:[self currentTab]];
+    NSTabViewItem *tabViewItem = [_contentView.tabView selectedTabViewItem];
+    PTYTab *tab = self.currentTab;
+    const BOOL shouldClose = [self tabView:_contentView.tabView
+                    shouldCloseTabViewItem:tabViewItem
+                      suppressConfirmation:[self willShowTmuxWarningWhenClosingTab:tab]];
+    if (shouldClose) {
+        [self closeTab:tab];
     }
 }
 
@@ -1440,7 +1453,7 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL okToClose = NO;
     if ([aSession exited]) {
         okToClose = YES;
-    } else if (![aSession promptOnClose]) {
+    } else if (![aSession promptOnCloseReason].hasReason) {
         okToClose = YES;
     } else {
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
@@ -2299,14 +2312,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       userInfo:nil];
 }
 
-- (BOOL)promptOnClose
-{
+- (iTermPromptOnCloseReason *)promptOnCloseReason {
+    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PTYSession *aSession in [self allSessions]) {
-        if ([aSession promptOnClose]) {
-            return YES;
-        }
+        [reason addReason:[aSession promptOnCloseReason]];
     }
-    return NO;
+    return reason;
 }
 
 // TODO: Kill this
@@ -2338,7 +2349,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [appDelegate userDidInteractWithASession];
 
     BOOL needPrompt = NO;
-    if ([self promptOnClose]) {
+    if ([self promptOnCloseReason].hasReason) {
         needPrompt = YES;
     }
     if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] &&
@@ -2930,6 +2941,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.togglingLionFullScreen || self.lionFullScreen) {
         return proposedFrameSize;
     }
+    NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
     PTYSession* session = [tab activeSession];
@@ -3033,6 +3045,28 @@ ITERM_WEAKLY_REFERENCEABLE
       if (deltaY < floor(charHeight / 2)) {
         proposedFrameSize.height = senderSize.height;
       }
+    }
+
+    // If the original proposal was to fill the screen then allow it
+    NSRect screenFrame = self.window.screen.visibleFrame;
+    DLog(@"screenFrame=%@ accepted=%@ originalProposal=%@ charSize=%@",
+          NSStringFromSize(screenFrame.size),
+          NSStringFromSize(proposedFrameSize),
+          NSStringFromSize(originalProposal),
+          NSStringFromSize(NSMakeSize(charWidth, charHeight)));
+    if (snapWidth && proposedFrameSize.width + charWidth > screenFrame.size.width) {
+        CGFloat snappedMargin = screenFrame.size.width - proposedFrameSize.width;
+        CGFloat desiredMargin = screenFrame.size.width - originalProposal.width;
+        if (desiredMargin <= ceil(snappedMargin / 2.0)) {
+            proposedFrameSize.width = screenFrame.size.width;
+        }
+    }
+    if (snapHeight && proposedFrameSize.height + charHeight > screenFrame.size.height) {
+        CGFloat snappedMargin = screenFrame.size.height - proposedFrameSize.height;
+        CGFloat desiredMargin = screenFrame.size.height - originalProposal.height;
+        if (desiredMargin <= ceil(snappedMargin / 2.0)) {
+            proposedFrameSize.height = screenFrame.size.height;
+        }
     }
 
     PtyLog(@"Accepted size: %fx%f", proposedFrameSize.width, proposedFrameSize.height);
@@ -3160,6 +3194,7 @@ ITERM_WEAKLY_REFERENCEABLE
     static const NSTimeInterval kTimeToPreserveTemporaryTitle = 0.7;
     return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
 }
+
 - (void)updateUseTransparency {
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateUseTransparencyMenuItem];
@@ -4026,14 +4061,19 @@ ITERM_WEAKLY_REFERENCEABLE
     [itad updateBroadcastMenuState];
 }
 
-- (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem {
+    return [self tabView:tabView shouldCloseTabViewItem:tabViewItem suppressConfirmation:NO];
+}
+
+// This isn't a delegate method, but I need the functionality with the added suppressConfirmation
+// flag to avoid showing two warnings in tmux integration mode.
+- (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem suppressConfirmation:(BOOL)suppressConfirmation {
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
         return NO;
     }
 
-    return [self confirmCloseTab:aTab];
+    return [self confirmCloseTab:aTab suppressConfirmation:suppressConfirmation];
 }
 
 - (BOOL)tabView:(NSTabView*)aTabView
@@ -6536,8 +6576,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Add a tab to the tabview.
-- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex
-{
+- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
@@ -6552,10 +6591,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
         [aTabViewItem release];
         [_contentView.tabView selectTabViewItemAtIndex:anIndex];
-        if (self.windowInitialized && !_fullScreen) {
+        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
             [[self window] makeKeyAndOrderFront:self];
         } else {
-            PtyLog(@"window not initialized or is fullscreen %@", [NSThread callStackSymbols]);
+            PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
         [[iTermController sharedInstance] setCurrentTerminal:self];
     }
@@ -7019,8 +7058,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     for (PTYSession* session in [self allSessions]) {
         Profile *oldBookmark = [session profile];
-        NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
-        [oldName retain];
+        NSString* oldName = [[[oldBookmark objectForKey:KEY_NAME] copy] autorelease];
         NSString* guid = [oldBookmark objectForKey:KEY_GUID];
         if ([session reloadProfile]) {
             [[self tabForSession:session] recheckBlur];
@@ -7037,7 +7075,6 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
-        [oldName release];
     }
     [self updateTouchBarIfNeeded];
 }
@@ -7369,6 +7406,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // Get active session's directory
     NSString *previousDirectory = nil;
     PTYSession* currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (currentSession.isTmuxClient) {
+        currentSession = currentSession.tmuxGatewaySession;
+    }
     if (currentSession) {
         previousDirectory = [currentSession currentLocalWorkingDirectory];
     }
@@ -7935,20 +7975,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)colorPresetTouchBarItemSelected:(iTermTouchBarButton *)sender {
-    [self setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
-}
-
-- (void)setColorsFromPresetNamed:(NSString *)presetName {
-    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
-    if (!settings) {
-        return;
-    }
-    for (NSString *colorName in [ProfileModel colorKeys]) {
-        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
-        if (colorDict) {
-            [self.currentSession setSessionSpecificProfileValues:@{ colorName: colorDict }];
-        }
-    }
+    [self.currentSession setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
 }
 
 - (void)candidateListTouchBarItem:(NSCandidateListTouchBarItem *)anItem endSelectingCandidateAtIndex:(NSInteger)index {

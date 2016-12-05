@@ -489,6 +489,12 @@ exit:
         case KEY_ACTION_FIND_REGEX:
             actionString = [NSString stringWithFormat:@"Find Regex “%@”", auxText];
             break;
+        case KEY_FIND_AGAIN_DOWN:
+            actionString = @"Find Again Down";
+            break;
+        case KEY_FIND_AGAIN_UP:
+            actionString = @"Find Again Up";
+            break;
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
             NSString *pasteDetails =
                 [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];

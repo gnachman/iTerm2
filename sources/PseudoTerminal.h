@@ -17,6 +17,7 @@
 
 @class PTYSession;
 @class PSMTabBarControl;
+@class iTermPromptOnCloseReason;
 @class iTermToolbeltView;
 @class iTermController;
 @class TmuxController;
@@ -69,6 +70,10 @@ extern NSString *const kCurrentSessionDidChange;
 // preferred screen from the profile. If headless, this returns nil. Consider
 // this the preferred screen.
 @property(nonatomic, readonly) NSScreen *screen;
+
+// Are we in the process of restoring a window with NSWindowRestoration? If so, do not order
+// the window as it may be minimized (issue 5258)
+@property(nonatomic) BOOL restoringWindow;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -193,7 +198,7 @@ extern NSString *const kCurrentSessionDidChange;
 - (void)irAdvance:(int)dir;
 
 // Does any session want to be prompted for closing?
-- (BOOL)promptOnClose;
+- (iTermPromptOnCloseReason *)promptOnCloseReason;
 
 // Accessor for toolbelt view.
 - (iTermToolbeltView *)toolbelt;

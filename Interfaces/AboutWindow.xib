@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16A320" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermAboutWindowController">
@@ -24,29 +24,29 @@
                 <rect key="frame" x="0.0" y="0.0" width="354" height="255"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" fixedFrame="YES" preferredMaxLayoutWidth="86" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
+                    <textField verticalHuggingPriority="750" id="GaD-UM-uz4">
                         <rect key="frame" x="211" y="208" width="90" height="27"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="U4n-GV-8aZ">
                             <font key="font" metaFont="system" size="22"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="591-57-qeA">
+                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" id="591-57-qeA">
                         <rect key="frame" x="169" y="111" width="165" height="92"/>
-                        <clipView key="contentView" ambiguous="YES" id="aKk-Vf-QAt">
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <clipView key="contentView" id="aKk-Vf-QAt">
                             <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <textView ambiguous="YES" editable="NO" importsGraphics="NO" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="syc-QG-1mF">
+                                <textView editable="NO" importsGraphics="NO" usesFontPanel="YES" usesRuler="YES" spellingCorrection="YES" smartInsertDelete="YES" id="syc-QG-1mF">
                                     <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     <size key="minSize" width="165" height="92"/>
                                     <size key="maxSize" width="364" height="10000000"/>
                                     <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                                    <size key="minSize" width="165" height="92"/>
-                                    <size key="maxSize" width="364" height="10000000"/>
                                 </textView>
                             </subviews>
                         </clipView>
@@ -59,25 +59,25 @@
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
-                    <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gde-AT-nev">
+                    <imageView id="gde-AT-nev">
                         <rect key="frame" x="20" y="123" width="128" height="128"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="NSApplicationIcon" id="b3m-Nh-0FF"/>
                     </imageView>
-                    <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cIi-Dh-gHn">
+                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" id="cIi-Dh-gHn">
                         <rect key="frame" x="20" y="20" width="314" height="83"/>
-                        <clipView key="contentView" ambiguous="YES" id="eAf-wk-9pT">
+                        <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
+                        <clipView key="contentView" id="eAf-wk-9pT">
                             <rect key="frame" x="0.0" y="0.0" width="314" height="83"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <textView ambiguous="YES" editable="NO" importsGraphics="NO" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="cP7-fE-CE6">
+                                <textView editable="NO" importsGraphics="NO" usesFontPanel="YES" usesRuler="YES" spellingCorrection="YES" smartInsertDelete="YES" id="cP7-fE-CE6">
                                     <rect key="frame" x="0.0" y="0.0" width="314" height="83"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="314" height="83"/>
+                                    <size key="minSize" width="314" height="0.0"/>
                                     <size key="maxSize" width="364" height="10000000"/>
                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="314" height="83"/>
-                                    <size key="maxSize" width="364" height="10000000"/>
                                 </textView>
                             </subviews>
                         </clipView>

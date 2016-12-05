@@ -17,6 +17,8 @@ static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
 static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
 static NSRecursiveLock *gDebugLogLock = nil;
+
+static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
 
 static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) {
@@ -30,19 +32,25 @@ static void WriteDebugLogHeader() {
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
         AppendWindowDescription(window, windows);
     }
+    NSMutableString *pinnedMessages = [NSMutableString string];
+    for (NSString *key in [[gPinnedMessages allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        [pinnedMessages appendString:gPinnedMessages[key]];
+    }
     NSString *header = [NSString stringWithFormat:
                         @"iTerm2 version: %@\n"
                         @"Date: %@ (%lld)\n"
                         @"Key window: %@\n"
                         @"Windows: %@\n"
                         @"Ordered windows: %@\n"
+                        @"Pinned messages: %@\n"
                         @"------ END HEADER ------\n\n",
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
                         [NSDate date],
                         (long long)[[NSDate date] timeIntervalSince1970],
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
-                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
+                        [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
+                        pinnedMessages];
     [gDebugLogHeader release];
     gDebugLogHeader = [header copy];
 }
@@ -73,6 +81,49 @@ static void FlushDebugLog() {
     [gDebugLogStr setString:@""];
     [gDebugLogHeader release];
     gDebugLogHeader = nil;
+    [gDebugLogLock unlock];
+}
+
+void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    va_list args;
+    va_start(args, value);
+    NSString *s = [[[NSString alloc] initWithFormat:value arguments:args] autorelease];
+    va_end(args);
+    
+    NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
+
+    [gDebugLogLock lock];
+    if (!gPinnedMessages) {
+        gPinnedMessages = [[NSMutableDictionary alloc] init];
+    };
+    NSMutableString *prev = gPinnedMessages[key];
+    if (prev) {
+        [prev appendString:log];
+    } else {
+        gPinnedMessages[key] = [[log mutableCopy] autorelease];
+    }
+    [gDebugLogLock unlock];
+}
+
+void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    va_list args;
+    va_start(args, value);
+    NSString *s = [[[NSString alloc] initWithFormat:value arguments:args] autorelease];
+    va_end(args);
+
+    NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
+
+    [gDebugLogLock lock];
+    if (!gPinnedMessages) {
+        gPinnedMessages = [[NSMutableDictionary alloc] init];
+    };
+    gPinnedMessages[key] = log;
     [gDebugLogLock unlock];
 }
 

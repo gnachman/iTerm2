@@ -24,6 +24,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
@@ -179,7 +180,7 @@ static NSMutableDictionary *gRegisteredSessionContents;
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Grace period to avoid failing to write anti-idle code when timer runs just before when the code
-// should be sent.
+// shuold be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Timer period between updates when active (not idle, tab is visible or title bar is changing,
@@ -193,6 +194,12 @@ static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
 // so it must run often enough for that to be useful.
 // TODO(georgen): There's room for improvement here.
 static const NSTimeInterval kBackgroundUpdateCadence = 1;
+
+// Limit for number of entries in self.directories, self.commands, self.hosts.
+// Keeps saved state from exploding like in issue 5029.
+static const NSUInteger kMaxDirectories = 100;
+static const NSUInteger kMaxCommands = 100;
+static const NSUInteger kMaxHosts = 100;
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
@@ -355,7 +362,15 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     BOOL _cursorGuideSettingHasChanged;
 
     // Number of bytes received since an echo probe was sent.
-    int _bytesReceivedSinceSendingEchoProbe;
+    enum {
+        iTermEchoProbeOff = 0,
+        iTermEchoProbeWaiting = 1,
+        iTermEchoProbeOneAsterisk = 2,
+        iTermEchoProbeBackspaceOverAsterisk = 3,
+        iTermEchoProbeSpaceOverAsterisk = 4,
+        iTermEchoProbeBackspaceOverSpace = 5,
+        iTermEchoProbeFailed = 6,
+    } _echoProbeState;
 
     // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
     // checking long lines over and over.
@@ -800,17 +815,18 @@ ITERM_WEAKLY_REFERENCEABLE
             // have to check if the arrangement was saved with that setting on.
             if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
                 DLog(@"Have a server PID in the arrangement");
-                // The arrangement was save with a process ID so the server may still exist.
-                if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
-                    DLog(@"Was a tmux gateway. Start recovery mode in parser.");
-                    // Before attaching to the server we can put the parser into "tmux recovery mode".
-                    [aSession.terminal.parser startTmuxRecoveryMode];
-                }
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 DLog(@"Try to attach to pid %d", (int)serverPid);
                 // serverPid might be -1 if the user turned on session restoration and then quit.
                 if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid]) {
                     DLog(@"Success!");
+
+                    if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
+                        DLog(@"Was a tmux gateway. Start recovery mode in parser.");
+                        // Before attaching to the server we can put the parser into "tmux recovery mode".
+                        [aSession.terminal.parser startTmuxRecoveryMode];
+                    }
+
                     runCommand = NO;
                     attachedToServer = YES;
                     aSession.shell.tty = arrangement[SESSION_ARRANGEMENT_TTY];
@@ -896,7 +912,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession setWindowTitle:title];
         }
         if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
-            [aSession.shell startLoggingToFileWithPath:[aSession _autoLogFilenameForTermId:aSession.sessionId]
+            [aSession.shell startLoggingToFileWithPath:[aSession _autoLogFilenameForTermId:[aSession.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]]
                                           shouldAppend:NO];
         }
     }
@@ -946,15 +962,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
         [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
+        [aSession trimCommandsIfNeeded];
     }
     if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
         [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
+        [aSession trimDirectoriesIfNeeded];
     }
     if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
         for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
             VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
             if (remoteHost) {
                 [aSession.hosts addObject:remoteHost];
+                [aSession trimHostsIfNeeded];
             }
         }
     }
@@ -1263,36 +1282,40 @@ ITERM_WEAKLY_REFERENCEABLE
     return names;
 }
 
-- (BOOL)promptOnClose
-{
+- (iTermPromptOnCloseReason *)promptOnCloseReason {
     if (_exited) {
-        return NO;
+        return [iTermPromptOnCloseReason noReason];
     }
     switch ([[_profile objectForKey:KEY_PROMPT_CLOSE] intValue]) {
         case PROMPT_ALWAYS:
-            return YES;
+            return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 
         case PROMPT_NEVER:
-            return NO;
+            return [iTermPromptOnCloseReason noReason];
 
         case PROMPT_EX_JOBS: {
+            NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
             for (NSString *childName in [self childJobNames]) {
                 if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
                     // This job is not in the ignore list.
-                    return YES;
+                    [blockingJobs addObject:childName];
                 }
             }
-            // All jobs were in the ignore list.
-            return NO;
+            if (blockingJobs.count > 0) {
+                return [iTermPromptOnCloseReason profile:_profile blockedByJobs:blockingJobs];
+            } else {
+                // All jobs were in the ignore list.
+                return [iTermPromptOnCloseReason noReason];
+            }
         }
     }
 
-    return YES;
+    // This shouldn't happen
+    return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
 
-- (NSString *)_autoLogFilenameForTermId:(NSString *)termid
-{
+- (NSString *)_autoLogFilenameForTermId:(NSString *)termid {
     // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
     return [NSString stringWithFormat:@"%@/%@.%@.%@.%d.%0x.log",
             [_profile objectForKey:KEY_LOGDIR],
@@ -1313,7 +1336,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [NSString stringWithFormat:@"w%dt%dp%lu:%@",
             [[_delegate realParentWindow] number],
             _delegate.tabNumberForItermSessionId,
-            (unsigned long)_delegate.sessions.count,
+            [_delegate sessionPaneNumber:self],
             self.guid];
 }
 
@@ -1381,7 +1404,7 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:itermId]
+        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:[itermId stringByReplacingOccurrencesOfString:@":" withString:@"."]]
                               shouldAppend:NO];
     }
     @synchronized(self) {
@@ -1783,10 +1806,64 @@ ITERM_WEAKLY_REFERENCEABLE
     [self performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
 }
 
+- (void)updateEchoProbeStateWithBuffer:(char *)buffer length:(int)length {
+    for (int i = 0; i < length; i++) {
+        switch (_echoProbeState) {
+            case iTermEchoProbeOff:
+            case iTermEchoProbeFailed:
+                return;
+
+            case iTermEchoProbeWaiting:
+                if (buffer[i] == '*') {
+                    _echoProbeState = iTermEchoProbeOneAsterisk;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeOneAsterisk:
+                if (buffer[i] == '\b') {
+                    _echoProbeState = iTermEchoProbeBackspaceOverAsterisk;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeBackspaceOverAsterisk:
+                if (buffer[i] == ' ') {
+                    _echoProbeState = iTermEchoProbeSpaceOverAsterisk;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeSpaceOverAsterisk:
+                if (buffer[i] == '\b') {
+                    _echoProbeState = iTermEchoProbeBackspaceOverSpace;
+                } else {
+                    _echoProbeState = iTermEchoProbeFailed;
+                    return;
+                }
+                break;
+
+            case iTermEchoProbeBackspaceOverSpace:
+                _echoProbeState = iTermEchoProbeFailed;
+                return;
+        }
+    }
+}
+
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
-    OSAtomicAdd32(length, &_bytesReceivedSinceSendingEchoProbe);
+    @synchronized (self) {
+        if (_echoProbeState != iTermEchoProbeOff) {
+            [self updateEchoProbeStateWithBuffer:buffer length:length];
+        }
+    }
 
     // Pass the input stream to the parser.
     [_terminal.parser putStreamData:buffer length:length];
@@ -2547,6 +2624,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (bgNum < 0 || fgNum < 0) {
+        if ([iTermAdvancedSettingsModel useColorfgbgFallback]) {
+            if ([fgColor brightnessComponent] > [bgColor brightnessComponent]) {
+                return @"15;0";
+            } else {
+                return @"0;15";
+            }
+        }
         return nil;
     }
 
@@ -2571,6 +2655,19 @@ ITERM_WEAKLY_REFERENCEABLE
         tabColor = [ITAddressBookMgr decodeColor:profile[KEY_TAB_COLOR]];
     }
     return tabColor;
+}
+
+- (void)setColorsFromPresetNamed:(NSString *)presetName {
+    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
+    if (!settings) {
+        return;
+    }
+    for (NSString *colorName in [ProfileModel colorKeys]) {
+        iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
+        if (colorDict) {
+            [self setSessionSpecificProfileValues:@{ colorName: colorDict }];
+        }
+    }
 }
 
 - (void)sharedProfileDidChange
@@ -3642,9 +3739,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
 
-    if (now >= _lastInput + _antiIdlePeriod - kAntiIdleGracePeriod) {
+    if (![self isTmuxGateway] && now >= _lastInput + _antiIdlePeriod - kAntiIdleGracePeriod) {
+        // This feature is hopeless for tmux gateways. Issue 5231.
         [self writeLatin1EncodedData:[NSData dataWithBytes:&_antiIdleCode length:1]
-                 broadcastAllowed:NO];
+                    broadcastAllowed:NO];
         _lastInput = now;
     }
 }
@@ -4061,7 +4159,9 @@ ITERM_WEAKLY_REFERENCEABLE
         // send the password. Otherwise, ask for confirmation.
         [self writeTaskNoBroadcast:@" "];
         [self writeLatin1EncodedData:backspace broadcastAllowed:NO];
-        _bytesReceivedSinceSendingEchoProbe = 0;
+        @synchronized(self) {
+            _echoProbeState = iTermEchoProbeWaiting;
+        }
         [self performSelector:@selector(enterPasswordIfEchoProbeOk:)
                    withObject:password
                    afterDelay:[iTermAdvancedSettingsModel echoProbeDuration]];
@@ -4072,17 +4172,36 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)enterPasswordIfEchoProbeOk:(NSString *)password {
-    if (_bytesReceivedSinceSendingEchoProbe == 0) {
-        // It looks like we're at a password prompt. Send the password.
-        [self enterPasswordNoProbe:password];
-    } else {
-        if ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
-                                               @"like what you're typing is echoed to the screen."
-                                       actions:@[ @"Cancel", @"Enter Password" ]
-                                    identifier:nil
-                                   silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1) {
-            [self enterPasswordNoProbe:password];
+    BOOL ok = NO;
+    BOOL prompt = NO;
+    @synchronized (self) {
+        switch (_echoProbeState) {
+            case iTermEchoProbeWaiting:
+            case iTermEchoProbeBackspaceOverSpace:
+                // It looks like we're at a password prompt. Send the password.
+                ok = YES;
+                break;
+
+            case iTermEchoProbeFailed:
+            case iTermEchoProbeOff:
+            case iTermEchoProbeSpaceOverAsterisk:
+            case iTermEchoProbeBackspaceOverAsterisk:
+            case iTermEchoProbeOneAsterisk:
+                prompt = YES;
+                break;
         }
+        _echoProbeState = iTermEchoProbeOff;
+    }
+
+    if (prompt) {
+        ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
+                                                 @"like what you're typing is echoed to the screen."
+                                         actions:@[ @"Cancel", @"Enter Password" ]
+                                      identifier:nil
+                                     silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1);
+    }
+    if (ok) {
+        [self enterPasswordNoProbe:password];
     }
 }
 
@@ -4266,6 +4385,16 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxPane = windowPane;
     self.tmuxMode = TMUX_CLIENT;
     [_shell registerAsCoprocessOnlyTask];
+}
+
+- (PTYSession *)tmuxGatewaySession {
+    if (self.isTmuxGateway) {
+        return self;
+    }
+    if (!self.isTmuxClient) {
+        return nil;
+    }
+    return (PTYSession *)self.tmuxController.gateway.delegate;
 }
 
 - (void)toggleTmuxZoom {
@@ -4844,6 +4973,14 @@ ITERM_WEAKLY_REFERENCEABLE
             [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
                                                                   ignoringCase:NO
                                                                          regex:YES];
+            break;
+
+        case KEY_FIND_AGAIN_DOWN:
+            [self searchNext];
+            break;
+
+         case KEY_FIND_AGAIN_UP:
+            [self searchPrevious];
             break;
 
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
@@ -5938,6 +6075,10 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
     NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
     [[_delegate realParentWindow] currentSessionWordAtCursorDidBecome:word];
+}
+
+- (void)textViewBackgroundColorDidChange {
+    [_delegate sessionBackgroundColorDidChange:self];
 }
 
 - (void)sendEscapeSequence:(NSString *)text
@@ -7063,6 +7204,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
                                                withMark:mark];
             [_commands addObject:trimmedCommand];
+            [self trimCommandsIfNeeded];
         }
     }
     self.lastCommand = command;
@@ -7241,10 +7383,29 @@ ITERM_WEAKLY_REFERENCEABLE
     return _profile[KEY_NAME];
 }
 
+- (void)trimHostsIfNeeded {
+    if (_hosts.count > kMaxHosts) {
+        [_hosts removeObjectsInRange:NSMakeRange(0, _hosts.count - kMaxHosts)];
+    }
+}
+
+- (void)trimCommandsIfNeeded {
+    if (_commands.count > kMaxCommands) {
+        [_commands removeObjectsInRange:NSMakeRange(0, _commands.count - kMaxCommands)];
+    }
+}
+
+- (void)trimDirectoriesIfNeeded {
+    if (_directories.count > kMaxDirectories) {
+        [_directories removeObjectsInRange:NSMakeRange(0, _directories.count - kMaxDirectories)];
+    }
+}
+
 - (void)setLastDirectory:(NSString *)lastDirectory isRemote:(BOOL)isRemote {
     DLog(@"Set last directory to %@", lastDirectory);
     if (lastDirectory) {
         [_directories addObject:lastDirectory];
+        [self trimDirectoriesIfNeeded];
     }
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
@@ -7269,6 +7430,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
     if (lastRemoteHost) {
         [_hosts addObject:lastRemoteHost];
+        [self trimHostsIfNeeded];
     }
     [_lastRemoteHost autorelease];
     _lastRemoteHost = [lastRemoteHost retain];

@@ -7,6 +7,7 @@
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
+#import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "MovePaneController.h"
 #import "NSColor+iTerm.h"
@@ -733,7 +734,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([realParentWindow_ anyFullScreen]) {
         return [NSColor blackColor];
     } else {
-        return [NSColor windowBackgroundColor];
+        NSColor *backgroundColor = [self.activeSession.colorMap colorForKey:kColorMapBackground];
+        CGFloat components[4];
+        [backgroundColor getComponents:components];
+        CGFloat mix;
+        if (backgroundColor.brightnessComponent < 0.5) {
+            mix = 1;
+        } else {
+            mix = 0;
+        }
+        const CGFloat a = 0.1;
+        for (int i = 0; i < 3; i++) {
+            components[i] = a * mix + (1 - a) * components[i];
+        }
+        const CGFloat alpha = self.realParentWindow.useTransparency ? (1.0 - self.activeSession.transparency) : 1.0;
+        return [NSColor colorWithCalibratedRed:components[0] green:components[1] blue:components[2] alpha:alpha];
     }
 }
 
@@ -2114,6 +2129,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [parentWindow_ disableBlur];
         }
     }
+
+    // Handles a change to the parent window's useTransparency setting.
+    [self updateFlexibleViewColors];
 }
 
 - (NSDictionary<NSString *, id> *)_recursiveArrangement:(NSView *)view
@@ -2803,13 +2821,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                      inTerminal:(NSWindowController<iTermWindowController> *)term
-{
+                         zoomed:(BOOL)zoomed {
     Profile *bookmark = [PTYTab tmuxBookmark];
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     BOOL showTitles =
-        [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && haveMultipleSessions;
+        [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && (zoomed || haveMultipleSessions);
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
                                    showTitles:showTitles
@@ -2836,9 +2854,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)reloadTmuxLayout
-{
-    [PTYTab setSizesInTmuxParseTree:parseTree_ inTerminal:realParentWindow_];
+- (void)reloadTmuxLayout {
+    [PTYTab setSizesInTmuxParseTree:parseTree_ inTerminal:realParentWindow_ zoomed:isMaximized_];
     [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
 }
@@ -2847,7 +2864,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController {
-    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term];
+        [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term zoomed:NO];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
 
     // Grow the window to fit the tab before adding it
@@ -3277,7 +3294,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
-                         inTerminal:realParentWindow_];
+                         inTerminal:realParentWindow_
+                             zoomed:shouldZoom];
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
@@ -3301,6 +3319,29 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (shouldZoom) {
         DLog(@"Maximizing");
         [self maximize];
+
+        // TODO: For tmux 1.2, we can use window_visible_layout to fix up the parse tree earlier.
+        // The approach below is to construct a fake parse tree with a single session whose size
+        // equals that of the window. See issue 5233.
+        NSMutableDictionary *child = [[@{
+                                         kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
+                                         kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
+                                         kLayoutDictNodeType: @(kLeafLayoutNode),
+                                         kLayoutDictWindowPaneKey: @(self.activeSession.tmuxPane),
+                                         kLayoutDictXOffsetKey: @0,
+                                         kLayoutDictYOffsetKey: @0,
+                                         } mutableCopy] autorelease];
+        NSMutableDictionary *maximizedParseTree =
+            [[@{ kLayoutDictChildrenKey: @[ child ],
+                 kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
+                 kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
+                 kLayoutDictNodeType: @(kVSplitLayoutNode),
+                 kLayoutDictXOffsetKey: @0,
+                 kLayoutDictYOffsetKey: @0,
+             } mutableCopy] autorelease];
+        [PTYTab setSizesInTmuxParseTree:maximizedParseTree inTerminal:realParentWindow_ zoomed:YES];
+        [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
+        [self fitSubviewsToRoot];
     }
 }
 
@@ -3456,13 +3497,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (BOOL)promptOnClose {
+- (iTermPromptOnCloseReason *)promptOnCloseReason {
+    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PTYSession *aSession in [self sessions]) {
-        if ([aSession promptOnClose]) {
-            return YES;
-        }
+        [reason addReason:[aSession promptOnCloseReason]];
     }
-    return NO;
+    return reason;
 }
 
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally {
@@ -4601,6 +4641,22 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self unmaximize];
     } else {
         [self maximize];
+    }
+}
+
+- (NSUInteger)sessionPaneNumber:(PTYSession *)session {
+    NSUInteger index = [self.sessions indexOfObject:session];
+    if (index == NSNotFound) {
+        return self.sessions.count;
+    } else {
+        // It must have just been added.
+        return self.sessions.count - 1;
+    }
+}
+
+- (void)sessionBackgroundColorDidChange:(PTYSession *)session {
+    if (session.isTmuxClient) {
+        [self updateFlexibleViewColors];
     }
 }
 

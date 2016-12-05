@@ -157,7 +157,6 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
         syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
         return -1;
     }
-
     // Mask off all permissions for group and other. Only user can use this socket.
     mode_t oldMask = umask(S_IRWXG | S_IRWXO);
 
@@ -171,9 +170,10 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
         umask(oldMask);
         return -1;
     }
+    syslog(LOG_DEBUG, "bind() created %s", local.sun_path);
 
     if (listen(socketFd, kMaxConnections) == -1) {
-        syslog(LOG_NOTICE, "listen() failed: %s", strerror(errno));
+        syslog(LOG_DEBUG, "listen() failed: %s", strerror(errno));
         umask(oldMask);
         return -1;
     }
@@ -214,7 +214,7 @@ static void MainLoop(char *path) {
         syslog(LOG_DEBUG, "Calling iTermFileDescriptorServerSocketBindListen.");
         socketFd = iTermFileDescriptorServerSocketBindListen(path);
         if (socketFd < 0) {
-            syslog(LOG_NOTICE, "iTermFileDescriptorServerSocketBindListen failed");
+            syslog(LOG_DEBUG, "iTermFileDescriptorServerSocketBindListen failed");
             return;
         }
         syslog(LOG_DEBUG, "Calling PerformAcceptActivity");
@@ -222,6 +222,8 @@ static void MainLoop(char *path) {
 }
 
 int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
+    // syslog raises sigpipe when the parent job dies on 10.12.
+    signal(SIGPIPE, SIG_IGN);
     int rc = Initialize(path, childPid);
     if (rc) {
         syslog(LOG_DEBUG, "Initialize failed with code %d", rc);

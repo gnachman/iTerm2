@@ -137,6 +137,8 @@ typedef struct iTermTextColorContext {
     // Pattern for background stripes
     NSImage *_backgroundStripesImage;
     
+    NSMutableSet<NSString *> *_missingImages;
+
     iTermPreciseTimerStats _stats[TIMER_STAT_MAX];
     CGFloat _baselineOffset;
 
@@ -165,6 +167,7 @@ typedef struct iTermTextColorContext {
             iTermPreciseTimerStatsInit(&_stats[TIMER_ADVANCES], "Advances");
             iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
         }
+        _missingImages = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -179,6 +182,7 @@ typedef struct iTermTextColorContext {
 
     [_selectedFont release];
 
+    [_missingImages release];
     [_backgroundStripesImage release];
 
     [super dealloc];
@@ -1182,7 +1186,6 @@ typedef struct iTermTextColorContext {
                                      backgroundColor:(NSColor *)backgroundColor
                                      graphicsContext:(NSGraphicsContext *)ctx
                                                smear:(BOOL)smear {
-    DLog(@"Draw attributed string beginning at %d", (int)round(origin.x));
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     NSColor *color = attributes[NSForegroundColorAttributeName];
     
@@ -1934,6 +1937,19 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             originInImage:(VT100GridCoord)originInImage {
     iTermImageInfo *imageInfo = GetImageInfo(code);
     NSImage *image = [imageInfo imageWithCellSize:_cellSize];
+    if (!image) {
+        if (!imageInfo) {
+            [[NSColor brownColor] set];
+        } else {
+            [_missingImages addObject:imageInfo.uniqueIdentifier];
+
+            [[NSColor grayColor] set];
+        }
+        NSRectFill(NSMakeRect(point.x, point.y, _cellSize.width * length, _cellSize.height));
+        return;
+    }
+    [_missingImages removeObject:imageInfo.uniqueIdentifier];
+
     NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
                                   image.size.height / imageInfo.size.height);
 

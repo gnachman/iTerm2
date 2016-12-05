@@ -80,7 +80,7 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
             syslog(LOG_DEBUG, "Return %d\n", (int)n);
             return n;
         } else {
-            syslog(LOG_NOTICE, "No descriptor passed\n");
+            syslog(LOG_DEBUG, "No descriptor passed\n");
             *receivedFileDescriptorPtr = -1;       // descriptor was not passed, try again.
             // This is the only case where the loop repeats.
         }

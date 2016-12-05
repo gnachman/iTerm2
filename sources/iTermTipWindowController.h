@@ -1,5 +1,5 @@
 //
-//  iTermWelcomeWindowController.h
+//  iTermTipWindowController.h
 //  iTerm2
 //
 //  Created by George Nachman on 6/16/15.
@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermHotKey;
 @class iTermTip;
 
 @protocol iTermTipWindowDelegate<NSObject>
@@ -47,6 +48,6 @@
 - (instancetype)initWithTip:(iTermTip *)tip;
 
 // Use this to present the window.
-- (void)showTipWindow;
+- (NSArray<iTermHotKey *> *)showTipWindow;
 
 @end

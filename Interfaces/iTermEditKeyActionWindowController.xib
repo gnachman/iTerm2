@@ -169,6 +169,12 @@
                                             <menuItem title="Find Regular Expression…" tag="36" id="cm6-Qm-ZZ2">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
+                                            <menuItem title="Find Again Down" tag="57" id="HpW-sT-CrS">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem title="Find Again Up" tag="58" id="SbI-2u-CFv">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
                                             <menuItem isSeparatorItem="YES" id="33m-xl-Tut"/>
                                             <menuItem title="Undo" tag="44" id="jbm-dN-Ohe">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
