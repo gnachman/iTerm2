@@ -116,11 +116,9 @@ enum {
 }
 
 + (NSString *)bestEditor {
-    NSDictionary *overrides = @{ kTextmate2Identifier: kTextmateIdentifier };
-
     for (NSString *identifier in [self editorsInPreferenceOrder]) {
         if ([iTermSemanticHistoryPrefsController applicationExists:identifier]) {
-            return overrides[identifier] ?: identifier;
+            return identifier;
         }
     }
     return nil;
@@ -153,7 +151,7 @@ enum {
                              kSublimeText2Identifier: @"Sublime Text 2",
                                    kMacVimIdentifier: @"MacVim",
                                  kTextmateIdentifier: @"Textmate",
-                                kTextmate2Identifier: @"Textmate 2",
+                                kTextmate2Identifier: @"Textmate Preview",
                                    kBBEditIdentifier: @"BBEdit",
                                      kAtomIdentifier: @"Atom" };
 
