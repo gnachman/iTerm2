@@ -3980,7 +3980,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     PTYSession *activeSession = [self currentSession];
     for (PTYSession *s in [self allSessions]) {
-      [aSession setFocused:(s == activeSession)];
+      [s setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
