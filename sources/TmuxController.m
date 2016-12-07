@@ -307,8 +307,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)initialListWindowsResponse:(NSString *)response {
+    DLog(@"initialListWindowsResponse called");
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     if (!doc) {
+        DLog(@"Failed to parse %@", response);
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for initial list windows request: %@", response]];
         return;
     }
@@ -317,7 +319,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSNumber *newWindowAffinity = nil;
     BOOL newWindowsInTabs =
         [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInNewWindow;
+    DLog(@"Iterating records...");
     for (NSArray *record in doc.records) {
+        DLog(@"Consider record %@", record);
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
             ELog(@"Don't open window %d because it was saved hidden.", wid);
@@ -329,8 +333,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         if (![affinities_ valuesEqualTo:[n stringValue]] && newWindowsInTabs) {
             // Create an equivalence class of all unrecognied windows to each other.
             if (!newWindowAffinity) {
+                DLog(@"Create new affinity class for %@", n);
                 newWindowAffinity = n;
             } else {
+                DLog(@"Add window id %@ to existing affinity class %@", n, [newWindowAffinity stringValue]);
                 [affinities_ setValue:[n stringValue]
                          equalToValue:[newWindowAffinity stringValue]];
             }
@@ -338,14 +344,17 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [windowsToOpen addObject:record];
     }
     if (windowsToOpen.count > [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit]) {
+        DLog(@"There are too many windows to open so just show the dashboard");
         haveHidden = YES;
         [windowsToOpen removeAllObjects];
     }
     if (haveHidden) {
+        DLog(@"Hidden windows existing, showing dashboard");
         [[TmuxDashboardController sharedInstance] showWindow:nil];
         [[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
     }
     for (NSArray *record in windowsToOpen) {
+        DLog(@"Open window %@", record);
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         [self openWindowWithIndex:wid
                              name:[doc valueInRecord:record forField:@"window_name"]
@@ -356,6 +365,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                       windowFlags:[doc valueInRecord:record forField:@"window_flags"]];
     }
     if (windowsToOpen.count == 0) {
+        DLog(@"Did not open any windows so turn on accept notifications in tmux gateway");
         gateway_.acceptNotifications = YES;
     }
 }
