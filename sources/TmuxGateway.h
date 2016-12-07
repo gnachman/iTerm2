@@ -62,6 +62,8 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, readonly) NSWindowController<iTermWindowController> *window;
 @property(nonatomic, readonly) id<TmuxGatewayDelegate> delegate;
 @property(nonatomic, assign) BOOL acceptNotifications;
+@property(nonatomic, retain) NSNumber *minimumServerVersion;
+@property(nonatomic, retain) NSNumber *maximumServerVersion;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate;
 
