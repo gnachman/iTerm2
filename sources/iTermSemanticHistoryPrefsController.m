@@ -19,8 +19,7 @@ NSString *kSublimeText2Identifier = @"com.sublimetext.2";
 NSString *kSublimeText3Identifier = @"com.sublimetext.3";
 NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.textmate";
-NSString *kTextmate2PreviewIdentifier = @"com.macromates.TextMate.preview";
-NSString *kTextmate2Identifier = @"com.macromates.TextMate";
+NSString *kTextmate2Identifier = @"com.macromates.TextMate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
 NSString *kAtomIdentifier = @"com.github.atom";
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
@@ -46,7 +45,6 @@ enum {
     kSublimeText3Tag,
     kAtomTag,
     kTextmate2Tag,
-    kTextmate2PreviewTag,
     // Only append to the end of the list; never delete or change.
 };
 
@@ -101,7 +99,6 @@ enum {
                                kMacVimIdentifier: @"mvim",
                                kTextmateIdentifier: @"txmt",
                                kTextmate2Identifier: @"txmt",
-                               kTextmate2PreviewIdentifier: @"txmt",
                                kBBEditIdentifier: @"txmt",
                                kAtomIdentifier: @"atom" };
     return schemes[editor];
@@ -114,14 +111,12 @@ enum {
               kMacVimIdentifier,
               kTextmateIdentifier,
               kTextmate2Identifier,
-              kTextmate2PreviewIdentifier,
               kBBEditIdentifier,
               kAtomIdentifier ];
 }
 
 + (NSString *)bestEditor {
-    NSDictionary *overrides = @{ kTextmate2Identifier: kTextmateIdentifier,
-                                 kTextmate2PreviewIdentifier: kTextmateIdentifier };
+    NSDictionary *overrides = @{ kTextmate2Identifier: kTextmateIdentifier };
 
     for (NSString *identifier in [self editorsInPreferenceOrder]) {
         if ([iTermSemanticHistoryPrefsController applicationExists:identifier]) {
@@ -137,7 +132,6 @@ enum {
                                   kMacVimIdentifier,
                                   kTextmateIdentifier,
                                   kTextmate2Identifier,
-                                  kTextmate2PreviewIdentifier,
                                   kBBEditIdentifier,
                                   kAtomIdentifier ];
     return [editorBundleIds containsObject:bundleId];
@@ -149,7 +143,6 @@ enum {
                                   kMacVimIdentifier: @(kMacVimTag),
                                 kTextmateIdentifier: @(kTextmateTag),
                                kTextmate2Identifier: @(kTextmate2Tag),
-                        kTextmate2PreviewIdentifier: @(kTextmate2PreviewTag),
                                   kBBEditIdentifier: @(kBBEditTag),
                                     kAtomIdentifier: @(kAtomTag) };
     return tags;
@@ -159,9 +152,8 @@ enum {
     NSDictionary *names = @{ kSublimeText3Identifier: @"Sublime Text 3",
                              kSublimeText2Identifier: @"Sublime Text 2",
                                    kMacVimIdentifier: @"MacVim",
-                                 kTextmateIdentifier: @"Textmate 1",
-                                kTextmate2Identifier: @"Textmate",
-                         kTextmate2PreviewIdentifier: @"Textmate 2 Preview",
+                                 kTextmateIdentifier: @"Textmate",
+                                kTextmate2Identifier: @"Textmate 2",
                                    kBBEditIdentifier: @"BBEdit",
                                      kAtomIdentifier: @"Atom" };
 
@@ -217,7 +209,6 @@ enum {
                                  @(kMacVimTag): kMacVimIdentifier,
                                @(kTextmateTag): kTextmateIdentifier,
                               @(kTextmate2Tag): kTextmate2Identifier,
-                       @(kTextmate2PreviewTag): kTextmate2PreviewIdentifier,
                                  @(kBBEditTag): kBBEditIdentifier,
                                    @(kAtomTag): kAtomIdentifier };
     return map[@([[editors_ selectedItem] tag])];
