@@ -77,13 +77,14 @@ int main(int argc, const char * argv[]) {
         }
         serializableImage.size = imageSize;
         
+        BOOL isGIF = NO;
         if (count > 1) {
             syslog(LOG_DEBUG, "multiple frames found");
-            BOOL isGIF = YES;
             NSMutableArray *frameProperties = [NSMutableArray array];
+            isGIF = YES;
             for (size_t i = 0; i < count; ++i) {
                 NSDictionary *gifProperties = GIFProperties(source, i);
-                // TIFF files may have multiple pages, so make sure it's an animated GIF.
+                // TIFF and PDF files may have multiple pages, so make sure it's an animated GIF.
                 if (gifProperties) {
                     [frameProperties addObject:gifProperties];
                 } else {
@@ -117,7 +118,8 @@ int main(int argc, const char * argv[]) {
                     [serializableImage.delays addObject:@(totalDelay)];
                 }
             }
-        } else {
+        }
+        if (!isGIF) {
             syslog(LOG_DEBUG, "adding decoded image");
             [serializableImage.images addObject:image];
         }
