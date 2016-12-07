@@ -256,7 +256,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     for (NSArray *record in doc.records) {
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
-            NSLog(@"Don't open window %d because it was saved hidden.", wid);
+            ELog(@"Don't open window %d because it was saved hidden.", wid);
             haveHidden = YES;
             // Let the user know something is up.
             continue;
@@ -290,6 +290,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            layout:[doc valueInRecord:record forField:@"window_layout"]
                        affinities:[self savedAffinitiesForWindow:wid]
                       windowFlags:[doc valueInRecord:record forField:@"window_flags"]];
+    }
+    if (windowsToOpen.count == 0) {
+        gateway_.acceptNotifications = YES;
     }
 }
 
