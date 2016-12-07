@@ -64,6 +64,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, readonly) id<TmuxGatewayDelegate> delegate;
 @property(nonatomic, retain) NSDecimalNumber *minimumServerVersion;
 @property(nonatomic, retain) NSDecimalNumber *maximumServerVersion;
+@property(nonatomic, assign) BOOL acceptNotifications;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate;
 
