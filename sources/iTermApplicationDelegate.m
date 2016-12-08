@@ -80,6 +80,7 @@
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
 #import "iTermProfilePreferences.h"
+#import "ServiceProvider.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -538,6 +539,10 @@ static BOOL hasBecomeActive = NO;
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    // register for services provider
+    ServiceProvider* provider = [[ServiceProvider alloc] init];
+    [NSApp setServicesProvider:provider];
+    
     // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
     // a chance to run because a "special" filename cancels performStartupActivities.
     [self checkForQuietMode];
