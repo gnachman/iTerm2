@@ -622,8 +622,7 @@ static const int kDragThreshold = 3;
 
 - (void)setCursorType:(ITermCursorType)value {
     _drawingHelper.cursorType = value;
-    [self setCursorNeedsDisplay];
-    [self refresh];
+    [self markCursorDirty];
 }
 
 - (NSDictionary*)markedTextAttributes {
