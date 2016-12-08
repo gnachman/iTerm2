@@ -625,8 +625,7 @@ static const int kDragThreshold = 3;
 
 - (void)setCursorType:(ITermCursorType)value {
     _drawingHelper.cursorType = value;
-    [self setCursorNeedsDisplay];
-    [self refresh];
+    [self markCursorDirty];
 }
 
 - (NSDictionary*)markedTextAttributes {
@@ -1042,10 +1041,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)markCursorDirty {
-  int currentCursorX = [_dataSource cursorX] - 1;
-  int currentCursorY = [_dataSource cursorY] - 1;
+    int currentCursorX = [_dataSource cursorX] - 1;
+    int currentCursorY = [_dataSource cursorY] - 1;
     DLog(@"Mark cursor position %d, %d dirty.", currentCursorX, currentCursorY);
-  [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+    [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 }
 
 - (void)setCursorVisible:(BOOL)cursorVisible {
