@@ -14,6 +14,7 @@
 
 @property(nonatomic, readonly) PSMTabBarControl *tabBar;
 @property(nonatomic, readonly) BOOL isYosemiteOrLater;
+@property(nonatomic, readonly) NSColor *tabBarColor;
 
 #pragma mark - For subclasses
 
