@@ -114,6 +114,7 @@ NSInteger iTermProfileJoinsAllSpaces = -1;
             NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
             [ITAddressBookMgr setDefaultsInBookmark:aDict];
             [[ProfileModel sharedInstance] addBookmark:aDict];
+            [[ProfileModel sharedInstance] flush];
             [aDict release];
         }
 
