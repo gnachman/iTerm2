@@ -2429,7 +2429,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)canonicalizeWindowFrame {
-    PtyLog(@"canonicalizeWindowFrame");
+    PtyLog(@"canonicalizeWindowFrame %@\n%@", self, [NSThread callStackSymbols]);
     PTYSession* session = [self currentSession];
     NSDictionary* abDict = [session profile];
     NSScreen* screen = [[self window] screen];
