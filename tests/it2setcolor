@@ -36,22 +36,36 @@ function show_help() {
     if [ $open = 1 ]; then
       print_st
     fi
-    echo "Usage: it2setcolor name color [name color...]" 1>& 2
-    echo "  name is one of:"
-    echo "    fg bg bold link selbg selfg curbg curfg underline"
-    echo "    black red green yellow blue magenta cyan white"
-    echo "    br_black br_red br_green br_yellow br_blue br_magenta br_cyan br_white"
+    echo "Usage"
     echo ""
-    echo "  color is of the format:"
-    echo "    RGB        (three hex digits, like fff)"
-    echo "    RRGGBB     (six hex digits, like f0f0f0)"
-    echo "    cs:RGB     (cs is a color space name)"
-    echo "    cs:RRGGBB  (cs is a color space name)"
+    echo "1) To set a specific color to an RGB value:"
+    echo "  it2setcolor name color [name color...]" 1>& 2
+    echo "For example:"
+    echo "  it2setcolor fg fff"
+    echo ""
+    echo "name is one of:"
+    echo "  fg bg bold link selbg selfg curbg curfg underline tab"
+    echo "  black red green yellow blue magenta cyan white"
+    echo "  br_black br_red br_green br_yellow br_blue br_magenta br_cyan br_white"
+    echo ""
+    echo "color is of the format:"
+    echo "  RGB        (three hex digits, like fff)"
+    echo "  RRGGBB     (six hex digits, like f0f0f0)"
+    echo "  cs:RGB     (cs is a color space name)"
+    echo "  cs:RRGGBB  (cs is a color space name)"
     echo ""
     echo "  The color space names accepted in the color are:"
     echo "    srgb       (sRGB, the default if none is specified)"
     echo "    rgb        (Apple's old device-independent colorspace)"
     echo "    p3         (Apple's fancy large-gamut colorspace)"
+    echo ""
+    echo "2) To switch to a named color preset:"
+    echo "  it2setcolor preset name"
+    echo "For example:"
+    echo "  it2setcolor preset 'Light Background'"
+    echo ""
+    echo "3) To reset the current tab's color to the system default:"
+    echo "  it2setcolor tab default"
 }
 
 # Show help if no arguments and no stdin.
@@ -85,7 +99,7 @@ while [ $# -gt 0 ]; do
           printf ","
         fi
         # name is not checked for validity because we'd like this to work with future colors, too.
-        printf "%s=%s" $1 $2
+        printf "%s=%s" "$1" "$2"
         shift
         ;;
     esac

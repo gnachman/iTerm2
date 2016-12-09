@@ -3862,39 +3862,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 // fg=ff0080,bg=srgb:808080
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
-    NSDictionary *names = @{ @"fg": @(kColorMapForeground),
-                             @"bg": @(kColorMapBackground),
-                             @"bold": @(kColorMapBold),
-                             @"link": @(kColorMapLink),
-                             @"selbg": @(kColorMapSelection),
-                             @"selfg": @(kColorMapSelectedText),
-                             @"curbg": @(kColorMapCursor),
-                             @"curfg": @(kColorMapCursorText),
-                             @"underline": @(kColorMapUnderline),
-
-                             @"black": @(kColorMapAnsiBlack),
-                             @"red": @(kColorMapAnsiRed),
-                             @"green": @(kColorMapAnsiGreen),
-                             @"yellow": @(kColorMapAnsiYellow),
-                             @"blue": @(kColorMapAnsiBlue),
-                             @"magenta": @(kColorMapAnsiMagenta),
-                             @"cyan": @(kColorMapAnsiCyan),
-                             @"white": @(kColorMapAnsiWhite),
-
-                             @"br_black": @(kColorMapAnsiBlack + kColorMapAnsiBrightModifier),
-                             @"br_red": @(kColorMapAnsiRed + kColorMapAnsiBrightModifier),
-                             @"br_green": @(kColorMapAnsiGreen + kColorMapAnsiBrightModifier),
-                             @"br_yellow": @(kColorMapAnsiYellow + kColorMapAnsiBrightModifier),
-                             @"br_blue": @(kColorMapAnsiBlue + kColorMapAnsiBrightModifier),
-                             @"br_magenta": @(kColorMapAnsiMagenta + kColorMapAnsiBrightModifier),
-                             @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
-                             @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
-
-    NSNumber *keyNumber = names[name];
-    if (!keyNumber) {
+    if ([name isEqualToString:@"preset"]) {
+        [delegate_ screenSelectColorPresetNamed:colorString];
         return;
     }
-    NSInteger key = [keyNumber integerValue];
+    if ([colorString isEqualToString:@"default"] && [name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:nil];
+        return;
+    }
 
     NSInteger colon = [colorString rangeOfString:@":"].location;
     NSString *cs;
@@ -3952,6 +3927,46 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (!color) {
         return;
     }
+
+    if ([name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:color];
+        return;
+    }
+
+    NSDictionary *names = @{ @"fg": @(kColorMapForeground),
+                             @"bg": @(kColorMapBackground),
+                             @"bold": @(kColorMapBold),
+                             @"link": @(kColorMapLink),
+                             @"selbg": @(kColorMapSelection),
+                             @"selfg": @(kColorMapSelectedText),
+                             @"curbg": @(kColorMapCursor),
+                             @"curfg": @(kColorMapCursorText),
+                             @"underline": @(kColorMapUnderline),
+
+                             @"black": @(kColorMapAnsiBlack),
+                             @"red": @(kColorMapAnsiRed),
+                             @"green": @(kColorMapAnsiGreen),
+                             @"yellow": @(kColorMapAnsiYellow),
+                             @"blue": @(kColorMapAnsiBlue),
+                             @"magenta": @(kColorMapAnsiMagenta),
+                             @"cyan": @(kColorMapAnsiCyan),
+                             @"white": @(kColorMapAnsiWhite),
+
+                             @"br_black": @(kColorMapAnsiBlack + kColorMapAnsiBrightModifier),
+                             @"br_red": @(kColorMapAnsiRed + kColorMapAnsiBrightModifier),
+                             @"br_green": @(kColorMapAnsiGreen + kColorMapAnsiBrightModifier),
+                             @"br_yellow": @(kColorMapAnsiYellow + kColorMapAnsiBrightModifier),
+                             @"br_blue": @(kColorMapAnsiBlue + kColorMapAnsiBrightModifier),
+                             @"br_magenta": @(kColorMapAnsiMagenta + kColorMapAnsiBrightModifier),
+                             @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
+                             @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
+
+    NSNumber *keyNumber = names[name];
+    if (!keyNumber) {
+        return;
+    }
+    NSInteger key = [keyNumber integerValue];
+    
     [delegate_ screenSetColor:color forKey:key];
 }
 
