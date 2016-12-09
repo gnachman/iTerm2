@@ -11,4 +11,5 @@
 #import "PSMYosemiteTabStyle.h"
 
 @interface PSMDarkTabStyle : PSMYosemiteTabStyle<PSMTabStyle>
++ (NSColor *)tabBarColor;
 @end

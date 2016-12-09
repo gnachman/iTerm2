@@ -44,6 +44,7 @@
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
@@ -4518,6 +4519,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
+// This updates the window's background color and title text color as well as the tab bar's color.
 - (void)updateTabColors {
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
@@ -4529,26 +4531,40 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([_contentView.tabView numberOfTabViewItems] == 1 &&
                 [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
-                [[self window] setBackgroundColor:newTabColor];
+                [self setBackgroundColor:newTabColor];
 
-                if (IsYosemiteOrLater()) {
-                    if (newTabColor.brightnessComponent < 0.5) {
-                        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-                    } else {
-                        self.window.appearance = nil;
-                    }
-                }
                 [_contentView setColor:newTabColor];
             } else {
-                [[self window] setBackgroundColor:nil];
-                if (IsYosemiteOrLater()) {
-                    self.window.appearance = nil;
-                }
+                [self setBackgroundColor:nil];
                 [_contentView setColor:normalBackgroundColor];
             }
         }
     }
 }
+
+- (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
+    if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                break;
+
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
+                break;
+        }
+    }
+    [self.window setBackgroundColor:backgroundColor];
+    if (IsYosemiteOrLater()) {
+        if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        } else {
+            self.window.appearance = nil;
+        }
+    }
+}
+
 
 - (void)tabsDidReorder {
     TmuxController *controller = nil;
@@ -6102,6 +6118,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
     }
     [_contentView.tabBarControl setStyle:style];
+    [self updateTabColors];
 }
 
 - (void)hideMenuBar {

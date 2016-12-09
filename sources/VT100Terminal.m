@@ -2149,6 +2149,16 @@ static const int kMaxScreenRows = 4096;
         } else if ([value isNumeric]) {
             [delegate_ terminalSetUnicodeVersion:[value integerValue]];
         }
+    } else if ([key isEqualToString:@"SetColors"]) {
+        for (NSString *part in [value componentsSeparatedByString:@","]) {
+            NSInteger equal = [part rangeOfString:@"="].location;
+            if (equal == 0 || equal == NSNotFound || equal + 1 == part.length) {
+                continue;
+            }
+            NSString *name = [part substringToIndex:equal];
+            NSString *colorString = [part substringFromIndex:equal + 1];
+            [delegate_ terminalSetColorNamed:name to:colorString];
+        }
     }
 }
 
