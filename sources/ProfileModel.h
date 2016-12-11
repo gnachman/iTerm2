@@ -132,6 +132,8 @@ typedef struct {
               toMenu:(NSMenu*)menu
               params:(JournalParams*)params;
 
+- (void)performBlockWithCoalescedNotifications:(void (^)())block;
+
 @end
 
 typedef enum {
