@@ -53,7 +53,9 @@
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
+#import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermServiceProvider.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
@@ -79,7 +81,6 @@
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
-#import "iTermProfilePreferences.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -538,6 +539,12 @@ static BOOL hasBecomeActive = NO;
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    // Register our services provider. Registration must happen only when we're
+    // ready to accept requests, so I do it after a spin of the runloop.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [NSApp setServicesProvider:[[iTermServiceProvider alloc] init]];
+    });
+
     // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
     // a chance to run because a "special" filename cancels performStartupActivities.
     [self checkForQuietMode];
