@@ -16,8 +16,12 @@
     return @"Dark";
 }
 
-- (NSColor *)tabBarColor {
++ (NSColor *)tabBarColor {
     return [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
+}
+
+- (NSColor *)tabBarColor {
+    return [PSMDarkTabStyle tabBarColor];
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected {

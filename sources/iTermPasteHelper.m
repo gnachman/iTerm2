@@ -504,11 +504,13 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     [actions addObject:paste];
     [actions addObject:cancel];
     NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
+    BOOL prompt = YES;
     if (lines.count > 1) {
         if (atShellPrompt) {
             theTitle = [NSString stringWithFormat:@"OK to paste %d lines at shell prompt?",
                         (int)[lines count]];
         } else {
+            prompt = [iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt];
             theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
                         (int)[lines count]];
         }
@@ -518,9 +520,17 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
             identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey];
             theTitle = @"OK to paste one line ending in a newline at shell prompt?";
         } else {
+            prompt = [iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt];
             theTitle = @"OK to paste one line ending in a newline?";
         }
     }
+
+    if (!prompt) {
+        return YES;
+    }
+    // Issue 5115
+    [iTermWarning unsilenceIdentifier:identifier ifSelectionEquals:[actions indexOfObjectIdenticalTo:cancel]];
+    
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = theTitle;
     warning.warningActions = actions;

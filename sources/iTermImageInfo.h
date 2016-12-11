@@ -7,17 +7,24 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermImage.h"
+
+// Posted when a lazily loaded image is loaded.
+extern NSString *const iTermImageDidLoad;
 
 // Describes an image. A screen_char_t may be used to draw a part of an image.
 // The code in the screen_char_t can be used to look up this object which is
 // 1:1 with images.
 @interface iTermImageInfo : NSObject<NSPasteboardItemDataProvider>
 
+// A UUID, lazily allocated.
+@property(nonatomic, readonly) NSString *uniqueIdentifier;
+
 // Size in cells.
 @property(nonatomic, assign) NSSize size;
 
 // Full-size image.
-@property(nonatomic, retain) NSImage *image;
+@property(nonatomic, retain) iTermImage *image;
 
 // If set, the image won't be squished.
 @property(nonatomic, assign) BOOL preserveAspectRatio;
@@ -62,7 +69,7 @@
 
 // Binds an image. Data is optional and only used for animated GIFs. Not to be used after
 // -initWithDictionary.
-- (void)setImageFromImage:(NSImage *)image data:(NSData *)data;
+- (void)setImageFromImage:(iTermImage *)image data:(NSData *)data;
 
 // Coded representation
 - (NSDictionary *)dictionary;

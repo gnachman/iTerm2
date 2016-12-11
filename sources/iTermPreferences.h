@@ -161,6 +161,9 @@ extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 // settings and update the last-used version number.
 + (void)initializeUserDefaults;
 
+// Last app version launched, if any.
++ (NSString *)appVersionBeforeThisLaunch;
+
 + (void)setObject:(id)object forKey:(NSString *)key;
 + (NSObject *)objectForKey:(NSString *)key;
 

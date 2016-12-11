@@ -7,7 +7,10 @@
 //
 
 #import "iTermImageInfo.h"
+
+#import "DebugLogging.h"
 #import "iTermAnimatedImageInfo.h"
+#import "iTermImage.h"
 #import "FutureMethods.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -20,6 +23,8 @@ static NSString *const kImageInfoFilenameKey = @"Filename";
 static NSString *const kImageInfoInsetKey = @"Edge Insets";
 static NSString *const kImageInfoCodeKey = @"Code";
 
+NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
+
 @interface iTermImageInfo ()
 
 @property(nonatomic, retain) NSMutableDictionary *embeddedImages;  // frame number->downscaled image
@@ -29,6 +34,9 @@ static NSString *const kImageInfoCodeKey = @"Code";
 
 @implementation iTermImageInfo {
     NSData *_data;
+    NSString *_uniqueIdentifier;
+    NSDictionary *_dictionary;
+    void (^_queuedBlock)();
 }
 
 - (instancetype)initWithCode:(unichar)code {
@@ -45,21 +53,76 @@ static NSString *const kImageInfoCodeKey = @"Code";
         _size = [dictionary[kImageInfoSizeKey] sizeValue];
         _inset = [dictionary[kImageInfoInsetKey] futureEdgeInsetsValue];
         _data = [dictionary[kImageInfoImageKey] retain];
-        _animatedImage = [[iTermAnimatedImageInfo alloc] initWithData:_data];
-        if (!_animatedImage) {
-            _image = [[NSImage alloc] initWithData:dictionary[kImageInfoImageKey]];
-        }
+        _dictionary = [dictionary copy];
         _preserveAspectRatio = [dictionary[kImageInfoPreserveAspectRatioKey] boolValue];
         _filename = [dictionary[kImageInfoFilenameKey] copy];
         _code = [dictionary[kImageInfoCodeKey] shortValue];
-        if (!_size.width ||
-            !_size.height ||
-            (!_image && !_animatedImage)) {
-            [self release];
-            return nil;
-        }
     }
     return self;
+}
+
+- (NSString *)uniqueIdentifier {
+    if (!_uniqueIdentifier) {
+        _uniqueIdentifier = [[[NSUUID UUID] UUIDString] copy];
+    }
+    return _uniqueIdentifier;
+}
+
+- (void)loadFromDictionaryIfNeeded {
+    static dispatch_once_t onceToken;
+    static dispatch_queue_t queue;
+    static NSMutableArray *blocks;
+    dispatch_once(&onceToken, ^{
+        blocks = [[NSMutableArray alloc] init];
+        queue = dispatch_queue_create("com.iterm2.LazyImageDecoding", DISPATCH_QUEUE_SERIAL);
+    });
+
+    if (!_dictionary) {
+        @synchronized (self) {
+            if (_queuedBlock) {
+                // Move to the head of the queue.
+                NSUInteger index = [blocks indexOfObjectIdenticalTo:_queuedBlock];
+                if (index != NSNotFound) {
+                    [blocks removeObjectAtIndex:index];
+                    [blocks insertObject:_queuedBlock atIndex:0];
+                }
+            }
+        }
+        return;
+    }
+    
+    [_dictionary release];
+    _dictionary = nil;
+    
+    DLog(@"Queueing load of %@", self.uniqueIdentifier);
+    void (^block)() = ^{
+        // This is a slow operation that blocks for a long time.
+        iTermImage *image = [iTermImage imageWithCompressedData:_data];
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [_queuedBlock release];
+            _queuedBlock = nil;
+            _animatedImage = [[iTermAnimatedImageInfo alloc] initWithImage:image];
+            if (!_animatedImage) {
+                _image = [image retain];
+            }
+            DLog(@"Loaded %@", self.uniqueIdentifier);
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermImageDidLoad object:self];
+        });
+    };
+    _queuedBlock = [block copy];
+    @synchronized(self) {
+        [blocks insertObject:_queuedBlock atIndex:0];
+    }
+    dispatch_async(queue, ^{
+        void (^blockToRun)() = nil;
+        @synchronized(self) {
+            blockToRun = [blocks firstObject];
+            [blockToRun retain];
+            [blocks removeObjectAtIndex:0];
+        }
+        blockToRun();
+        [blockToRun release];
+    });
 }
 
 - (void)dealloc {
@@ -68,12 +131,17 @@ static NSString *const kImageInfoCodeKey = @"Code";
     [_embeddedImages release];
     [_animatedImage release];
     [_data release];
+    [_dictionary release];
+    [_uniqueIdentifier release];
     [super dealloc];
 }
 
-- (void)setImageFromImage:(NSImage *)image data:(NSData *)data {
+- (void)setImageFromImage:(iTermImage *)image data:(NSData *)data {
+    [_dictionary release];
+    _dictionary = nil;
+
     [_animatedImage autorelease];
-    _animatedImage = [[iTermAnimatedImageInfo alloc] initWithData:data];
+    _animatedImage = [[iTermAnimatedImageInfo alloc] initWithImage:image];
 
     [_data autorelease];
     _data = [data retain];
@@ -110,22 +178,24 @@ static NSString *const kImageInfoCodeKey = @"Code";
     _animatedImage.paused = paused;
 }
 
-- (NSImage *)image {
-    if (_animatedImage) {
-        return [_animatedImage currentImage];
-    } else {
-        return _image;
-    }
+- (iTermImage *)image {
+    [self loadFromDictionaryIfNeeded];
+    return _image;
+}
+
+- (iTermAnimatedImageInfo *)animatedImage {
+    [self loadFromDictionaryIfNeeded];
+    return _animatedImage;
 }
 
 - (NSImage *)imageWithCellSize:(CGSize)cellSize {
-    if (!_image && !_animatedImage) {
+    if (!self.image && !self.animatedImage) {
         return nil;
     }
     if (!_embeddedImages) {
         _embeddedImages = [[NSMutableDictionary alloc] init];
     }
-    int frame = _animatedImage.currentFrame;  // 0 if not animated
+    int frame = self.animatedImage.currentFrame;  // 0 if not animated
     NSImage *embeddedImage = _embeddedImages[@(frame)];
 
     NSSize region = NSMakeSize(cellSize.width * _size.width,
@@ -134,10 +204,10 @@ static NSString *const kImageInfoCodeKey = @"Code";
         NSImage *canvas = [[[NSImage alloc] init] autorelease];
         NSSize size;
         NSImage *theImage;
-        if (_animatedImage) {
-            theImage = [_animatedImage imageForFrame:frame];
+        if (self.animatedImage) {
+            theImage = [self.animatedImage imageForFrame:frame];
         } else {
-            theImage = _image;
+            theImage = [self.image.images firstObject];
         }
         if (!_preserveAspectRatio) {
             size = region;

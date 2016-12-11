@@ -154,6 +154,15 @@ static BOOL gShowingWarning;
     return selection;
 }
 
++ (void)unsilenceIdentifier:(NSString *)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection {
+    if ([self identifierIsSilenced:identifier] &&
+        [self savedSelectionForIdentifier:identifier] == problemSelection) {
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
+        [userDefaults removeObjectForKey:theKey];
+    }
+}
+
 // Does not invoke the warning action's block
 - (iTermWarningSelection)runModalImpl {
     if (!gWarningHandler &&

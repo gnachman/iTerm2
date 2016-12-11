@@ -32,6 +32,7 @@
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
 
+@class iTermImage;
 @class iTermImageInfo;
 
 // This is used in the rightmost column when a double-width character would
@@ -428,7 +429,7 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y);
 
 // Assigns an image to a code allocated by ImageCharForNewImage. data is optional and only used for
 // animated gifs.
-void SetDecodedImage(unichar code, NSImage *image, NSData *data);
+void SetDecodedImage(unichar code, iTermImage *image, NSData *data);
 
 // Releases all memory associated with an image. The code comes from ImageCharForNewImage.
 void ReleaseImage(unichar code);

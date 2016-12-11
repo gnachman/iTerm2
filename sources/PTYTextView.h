@@ -167,6 +167,10 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 
 - (NSInteger)textViewUnicodeVersion;
 - (void)textViewDidRefresh;
+
+// The background color in the color map changed.
+- (void)textViewBackgroundColorDidChange;
+
 @end
 
 @interface PTYTextView : NSView <

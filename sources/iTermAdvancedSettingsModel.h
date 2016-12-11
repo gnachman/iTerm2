@@ -1,4 +1,4 @@
-//
+ //
 //  iTermAdvancedSettingsModel.h
 //  iTerm
 //
@@ -158,5 +158,9 @@
 + (BOOL)useLayers;
 + (int)terminalMargin;
 + (int)terminalVMargin;
++ (BOOL)useColorfgbgFallback;
++ (BOOL)promptForPasteWhenNotAtPrompt;
++ (BOOL)performDNSLookups;
++ (BOOL)darkThemeHasBlackTitlebar;
 
 @end

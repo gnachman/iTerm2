@@ -8,6 +8,7 @@
 
 #import "AsyncHostLookupController.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #include <netdb.h>
 
 @implementation AsyncHostLookupController {
@@ -50,6 +51,11 @@
 
 - (void)getAddressForHost:(NSString *)hostname
                completion:(void (^)(BOOL, NSString *))completion {
+    if (![iTermAdvancedSettingsModel performDNSLookups]) {
+        completion(YES, hostname);
+        return;
+    }
+
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     @synchronized(self) {
         if ([_pending containsObject:hostname]) {

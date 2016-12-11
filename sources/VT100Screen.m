@@ -10,6 +10,7 @@
 #import "iTermColorMap.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermImage.h"
 #import "iTermImageMark.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
@@ -3367,10 +3368,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
                               inset:(NSEdgeInsets)inset
-                              image:(NSImage *)image
+                              image:(NSImage *)nativeImage
                                data:(NSData *)data {
+    iTermImage *image;
+    if (nativeImage) {
+        image = [iTermImage imageWithNativeImage:nativeImage];
+    } else {
+        image = [iTermImage imageWithCompressedData:data];
+    }
     if (!image) {
-        image = [NSImage imageNamed:@"broken_image"];
+        image = [iTermImage imageWithNativeImage:[NSImage imageNamed:@"broken_image"]];
+        assert(image);
     }
 
     BOOL needsWidth = NO;
@@ -3486,7 +3494,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (inlineFileInfo_) {
         // TODO: Handle objects other than images.
         NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-        NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
         [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
                                     width:[inlineFileInfo_[kInlineFileWidth] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
@@ -3494,7 +3501,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
                                     inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
-                                    image:image
+                                    image:nil
                                      data:data];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
@@ -3853,6 +3860,116 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [delegate_ screenUnicodeVersion];
 }
 
+// fg=ff0080,bg=srgb:808080
+- (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
+    if ([name isEqualToString:@"preset"]) {
+        [delegate_ screenSelectColorPresetNamed:colorString];
+        return;
+    }
+    if ([colorString isEqualToString:@"default"] && [name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:nil];
+        return;
+    }
+
+    NSInteger colon = [colorString rangeOfString:@":"].location;
+    NSString *cs;
+    NSString *hex;
+    if (colon != NSNotFound && colon + 1 != colorString.length && colon != 0) {
+        cs = [colorString substringToIndex:colon];
+        hex = [colorString substringFromIndex:colon + 1];
+    } else {
+        cs = @"srgb";
+        hex = colorString;
+    }
+    NSDictionary *colorSpaces = @{ @"srgb": @"sRGBColorSpace",
+                                   @"rgb": @"genericRGBColorSpace",
+                                   @"p3": @"displayP3ColorSpace" };
+    NSColorSpace *colorSpace = [NSColorSpace sRGBColorSpace];
+    if (colorSpaces[cs]) {
+        SEL selector = NSSelectorFromString(colorSpaces[cs]);
+        if ([NSColorSpace respondsToSelector:selector]) {
+            colorSpace = [[NSColorSpace class] performSelector:selector];
+            if (!colorSpace) {
+                colorSpace = [NSColorSpace sRGBColorSpace];
+            }
+        }
+    }
+    if (!colorSpace) {
+        return;
+    }
+
+    CGFloat r, g, b;
+    if (hex.length == 6) {
+        NSScanner *scanner = [NSScanner scannerWithString:hex];
+        unsigned int rgb = 0;
+        if (![scanner scanHexInt:&rgb]) {
+            return;
+        }
+        r = ((rgb >> 16) & 0xff);
+        g = ((rgb >> 8) & 0xff);
+        b = ((rgb >> 0) & 0xff);
+    } else if (hex.length == 3) {
+        NSScanner *scanner = [NSScanner scannerWithString:hex];
+        unsigned int rgb = 0;
+        if (![scanner scanHexInt:&rgb]) {
+            return;
+        }
+        r = ((rgb >> 8) & 0xf) | ((rgb >> 4) & 0xf0);
+        g = ((rgb >> 4) & 0xf) | ((rgb >> 0) & 0xf0);
+        b = ((rgb >> 0) & 0xf) | ((rgb << 4) & 0xf0);
+    } else {
+        return;
+    }
+    CGFloat components[4] = { r / 255.0, g / 255.0, b / 255.0, 1.0 };
+    NSColor *color = [NSColor colorWithColorSpace:colorSpace
+                                       components:components
+                                            count:sizeof(components) / sizeof(*components)];
+    if (!color) {
+        return;
+    }
+
+    if ([name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:color];
+        return;
+    }
+
+    NSDictionary *names = @{ @"fg": @(kColorMapForeground),
+                             @"bg": @(kColorMapBackground),
+                             @"bold": @(kColorMapBold),
+                             @"link": @(kColorMapLink),
+                             @"selbg": @(kColorMapSelection),
+                             @"selfg": @(kColorMapSelectedText),
+                             @"curbg": @(kColorMapCursor),
+                             @"curfg": @(kColorMapCursorText),
+                             @"underline": @(kColorMapUnderline),
+
+                             @"black": @(kColorMapAnsiBlack),
+                             @"red": @(kColorMapAnsiRed),
+                             @"green": @(kColorMapAnsiGreen),
+                             @"yellow": @(kColorMapAnsiYellow),
+                             @"blue": @(kColorMapAnsiBlue),
+                             @"magenta": @(kColorMapAnsiMagenta),
+                             @"cyan": @(kColorMapAnsiCyan),
+                             @"white": @(kColorMapAnsiWhite),
+
+                             @"br_black": @(kColorMapAnsiBlack + kColorMapAnsiBrightModifier),
+                             @"br_red": @(kColorMapAnsiRed + kColorMapAnsiBrightModifier),
+                             @"br_green": @(kColorMapAnsiGreen + kColorMapAnsiBrightModifier),
+                             @"br_yellow": @(kColorMapAnsiYellow + kColorMapAnsiBrightModifier),
+                             @"br_blue": @(kColorMapAnsiBlue + kColorMapAnsiBrightModifier),
+                             @"br_magenta": @(kColorMapAnsiMagenta + kColorMapAnsiBrightModifier),
+                             @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
+                             @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
+
+    NSNumber *keyNumber = names[name];
+    if (!keyNumber) {
+        return;
+    }
+    NSInteger key = [keyNumber integerValue];
+    
+    [delegate_ screenSetColor:color forKey:key];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
@@ -4016,16 +4133,15 @@ static void SwapInt(int *a, int *b) {
     return result;
 }
 
-- (void)trimSelectionFromStart:(VT100GridCoord)start
+- (BOOL)trimSelectionFromStart:(VT100GridCoord)start
                            end:(VT100GridCoord)end
                       toStartX:(VT100GridCoord *)startPtr
-                        toEndX:(VT100GridCoord *)endPtr
-{
+                        toEndX:(VT100GridCoord *)endPtr {
     if (start.x < 0 || end.x < 0 ||
         start.y < 0 || end.y < 0) {
         *startPtr = start;
         *endPtr = end;
-        return;
+        return YES;
     }
 
     if (!XYIsBeforeXY(start.x, start.y, end.x, end.y)) {
@@ -4051,13 +4167,22 @@ static void SwapInt(int *a, int *b) {
     VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startX, startY),
                                               VT100GridCoordMake(endX, endY),
                                               currentGrid_.size.width);
-    assert(run.length >= 0);
+    if (run.length == 0) {
+        DLog(@"Run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+             VT100GridCoordDescription(end));
+        return NO;
+    }
     run = [self runByTrimmingNullsFromRun:run];
-    assert(run.length >= 0);
+    if (run.length == 0) {
+        DLog(@"After trimming, run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+             VT100GridCoordDescription(end));
+        return NO;
+    }
     VT100GridCoord max = VT100GridRunMax(run, currentGrid_.size.width);
 
     *startPtr = run.origin;
     *endPtr = max;
+    return YES;
 }
 
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
@@ -4096,10 +4221,13 @@ static void SwapInt(int *a, int *b) {
 
     VT100GridCoord trimmedStart;
     VT100GridCoord trimmedEnd;
-    [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
-                             end:VT100GridCoordMake(range.end.x, range.end.y)
-                        toStartX:&trimmedStart
-                          toEndX:&trimmedEnd];
+    BOOL ok = [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
+                                       end:VT100GridCoordMake(range.end.x, range.end.y)
+                                  toStartX:&trimmedStart
+                                    toEndX:&trimmedEnd];
+    if (!ok) {
+        return nil;
+    }
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
         if (tolerateEmpty) {
             trimmedStart = trimmedEnd = range.start;

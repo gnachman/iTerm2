@@ -166,7 +166,9 @@ static BOOL gWaitingForFullScreen;
             DLog(@"Invoking completion handler");
             if (![self useElCapitanFullScreenLogic] || !term.togglingLionFullScreen) {
                 // In 10.10 or earlier, or 10.11 and a nonfullscreen window.
+                term.restoringWindow = YES;
                 completionHandler([term window], nil);
+                term.restoringWindow = NO;
                 DLog(@"Registering terminal window");
                 [[iTermController sharedInstance] addTerminalWindow:term];
             } else {
@@ -180,7 +182,9 @@ static BOOL gWaitingForFullScreen;
                     // Finished entering fullscreen. Run the completion handler
                     // and open more windows.
                     DLog(@"%@ finished entering fullscreen, running completion handler", theTerm);
+                    term.restoringWindow = YES;
                     completionHandler([theTerm window], nil);
+                    term.restoringWindow = NO;
                     [completionHandler release];
                     DLog(@"Registering terminal window");
                     [[iTermController sharedInstance] addTerminalWindow:term];

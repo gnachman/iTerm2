@@ -42,6 +42,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class iTermCommandHistoryCommandUseMO;
 @class iTermController;
 @class iTermGrowlDelegate;
+@class iTermPromptOnCloseReason;
 @class iTermQuickLookController;
 @class SessionView;
 
@@ -176,6 +177,12 @@ typedef enum {
 // User double clicked on title bar
 - (void)sessionDoubleClickOnTitleBar;
 
+// Returns the 0-based pane number to use in $ITERM_SESSION_ID.
+- (NSUInteger)sessionPaneNumber:(PTYSession *)session;
+
+// The background color changed.
+- (void)sessionBackgroundColorDidChange:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -214,7 +221,7 @@ typedef enum {
 @property(nonatomic, assign) BOOL newOutput;
 
 // Do we need to prompt on close for this session?
-@property(nonatomic, readonly) BOOL promptOnClose;
+@property(nonatomic, readonly) iTermPromptOnCloseReason *promptOnCloseReason;
 
 // Array of subprocessess names.
 @property(nonatomic, readonly) NSArray *childJobNames;
@@ -350,6 +357,9 @@ typedef enum {
 
 @property(nonatomic, retain) TmuxController *tmuxController;
 
+// Call this on tmux clients to get the session with the tmux gateway.
+@property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
+
 @property(nonatomic, readonly) VT100RemoteHost *currentHost;
 
 @property(nonatomic, readonly) int tmuxPane;
@@ -373,9 +383,9 @@ typedef enum {
 
 // Commands issued, directories entered, and hosts connected to during this session.
 // Requires shell integration.
-@property(nonatomic, readonly) NSMutableArray *commands;  // of NSString
-@property(nonatomic, readonly) NSMutableArray *directories;  // of NSString
-@property(nonatomic, readonly) NSMutableArray *hosts;  // of VT100RemoteHost
+@property(nonatomic, readonly) NSMutableArray<NSString *> *commands;  // of NSString
+@property(nonatomic, readonly) NSMutableArray<NSString *> *directories;  // of NSString
+@property(nonatomic, readonly) NSMutableArray<VT100RemoteHost *> *hosts;  // of VT100RemoteHost
 
 // Session-defined and user-defined variables. Session-defined vars start with "session." and
 // user-defined variables start with "user.".
@@ -663,6 +673,8 @@ typedef enum {
 - (void)useTransparencyDidChange;
 
 - (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event;
+
+- (void)setColorsFromPresetNamed:(NSString *)presetName;
 
 #pragma mark - Testing utilities
 

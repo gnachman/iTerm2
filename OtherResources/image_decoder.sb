@@ -1,0 +1,20 @@
+(version 1)
+(deny default)
+(allow file-read-data file-read-metadata
+  (regex "^/System/Library/ColorSync/Profiles")
+  (regex "^/System/Library/Frameworks")
+  (regex "^/System/Library/PrivateFrameworks")
+  (literal "/dev/null")
+  (literal "@PATH_TO_EXECUTABLE@")
+  (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@")
+  (regex "^/private/var")
+  (regex "^/usr/lib"))
+
+(allow file-read-metadata
+  (regex "^/var$"))
+
+(allow file-write-create file-write-data file-write-unlink
+  (regex "^/private/var"))
+
+(allow process-exec (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@"))
+(allow mach* sysctl-read)

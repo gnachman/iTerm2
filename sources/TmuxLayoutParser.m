@@ -29,6 +29,7 @@ NSString *kLayoutDictHistoryKey = @"history";
 NSString *kLayoutDictAltHistoryKey = @"alt-history";
 NSString *kLayoutDictStateKey = @"state";
 NSString *kLayoutDictHotkeyKey = @"hotkey";
+NSString *kLayoutDictTabOpenedManually = @"manual-open";
 
 @implementation TmuxLayoutParser
 
