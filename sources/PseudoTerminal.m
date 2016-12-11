@@ -5707,6 +5707,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [self insertTab:aTab atIndex:[_contentView.tabView numberOfTabViewItems]];
 }
 
+- (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab {
+    if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+        [self insertTab:tab atIndex:self.numberOfTabs];
+    } else {
+        [self insertTab:tab atIndex:[self indexOfTab:self.currentTab] + 1];
+        if (tab.isTmuxTab) {
+            [self tabsDidReorder];
+        }
+    }
+}
+
 - (NSString *)promptForParameter:(NSString *)name {
     if (self.disablePromptForSubstitutions) {
         return @"";

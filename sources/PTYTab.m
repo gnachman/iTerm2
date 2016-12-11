@@ -2896,7 +2896,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
 
-    [term appendTab:theTab];
+    if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
+        [term addTabAtAutomaticallyDeterminedLocation:theTab];
+    } else {
+        [term appendTab:theTab];
+    }
     [theTab didAddToTerminal:term withArrangement:arrangement];
 
     return theTab;
