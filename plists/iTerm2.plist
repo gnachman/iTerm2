@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSHumanReadableCopyright</key>
+	<string>GPL v2</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleDocumentTypes</key>
@@ -24,12 +26,12 @@
 			<string>Editor</string>
 		</dict>
 		<dict>
-			<key>CFBundleTypeName</key>
-			<string>Folders</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>fold</string>
 			</array>
+			<key>CFBundleTypeName</key>
+			<string>Folders</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 		</dict>
@@ -175,27 +177,13 @@
 			</array>
 		</dict>
 	</array>
-	<key>CFBundleVersion</key>
-	<string>unknown</string>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
-	<key>NSAppleScriptEnabled</key>
-	<string>YES</string>
-	<key>NSExtensions</key>
-	<dict/>
-	<key>NSHumanReadableCopyright</key>
-	<string>GPL v2</string>
-	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
-	<key>NSPrincipalClass</key>
-	<string>iTermApplication</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>New iTerm 2 Tab Here</string>
+				<string>New iTerm2 Tab Here</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>openTab</string>
@@ -214,7 +202,7 @@
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>New iTerm 2 Window Here</string>
+				<string>New iTerm2 Window Here</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>openWindow</string>
@@ -230,15 +218,27 @@
 			</array>
 		</dict>
 	</array>
-	<key>NSSupportsAutomaticGraphicsSwitching</key>
-	<true/>
+	<key>CFBundleVersion</key>
+	<string>unknown</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>NSAppleScriptEnabled</key>
+	<string>YES</string>
 	<key>OSAScriptingDefinition</key>
 	<string>iTerm2.sdef</string>
-	<key>SUFeedURLForFinal</key>
-	<string>https://iterm2.com/appcasts/final.xml</string>
-	<key>SUFeedURLForTesting</key>
-	<string>https://iterm2.com/appcasts/testing.xml</string>
+	<key>NSExtensions</key>
+	<dict/>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSPrincipalClass</key>
+	<string>iTermApplication</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+	<key>SUFeedURLForTesting</key>
+	<string>https://iterm2.com/appcasts/testing.xml</string>
+	<key>SUFeedURLForFinal</key>
+	<string>https://iterm2.com/appcasts/final.xml</string>
 </dict>
 </plist>
