@@ -198,6 +198,9 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Adds a tab to the end.
 - (void)appendTab:(PTYTab*)aTab;
 
+// Adds tab at end or next to current tab depending on settings.
+- (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab;
+
 // Fit the window to exactly fit a tab of the given size. Returns true if the
 // window was resized.
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize;

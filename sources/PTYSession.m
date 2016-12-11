@@ -1093,7 +1093,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize aSize = [_view.scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
 
-    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
+    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height)
                                           colorMap:_colorMap];
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
@@ -1108,7 +1108,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
     [_wrapper addSubview:_textview];
-    [_textview setFrame:NSMakeRect(0, VMARGIN, aSize.width, aSize.height - VMARGIN)];
+    [_textview setFrame:NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height - [iTermAdvancedSettingsModel terminalVMargin])];
     [_textview release];
 
     // assign terminal and task objects
@@ -1117,8 +1117,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
-    int width = (aSize.width - MARGIN*2) / [_textview charWidth];
-    int height = (aSize.height - VMARGIN*2) / [_textview lineHeight];
+    int width = (aSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
+    int height = (aSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
     // NB: In the bad old days, this returned whether setup succeeded because it would allocate an
     // enormous amount of memory. That's no longer an issue.
     [_screen destructivelySetScreenWidth:width height:height];
@@ -1240,7 +1240,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([_view showTitle]) {
             x -= [SessionView titleHeight];
         }
-        x -= VMARGIN * 2;
+        x -= [iTermAdvancedSettingsModel terminalVMargin] * 2;
         int iLineHeight = [_textview lineHeight];
         if (iLineHeight == 0) {
             return 0;
@@ -1251,7 +1251,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return x;
     } else {
-        x -= MARGIN * 2;
+        x -= [iTermAdvancedSettingsModel terminalMargin] * 2;
         int iCharWidth = [_textview charWidth];
         if (iCharWidth == 0) {
             return 0;
@@ -2205,8 +2205,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
-    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + MARGIN * 2,
-                                  [_screen height] * [_textview lineHeight] + VMARGIN * 2);
+    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermAdvancedSettingsModel terminalMargin] * 2,
+                                  [_screen height] * [_textview lineHeight] + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
     NSSize outerSize =
         [PTYScrollView frameSizeForContentSize:innerSize
@@ -6056,7 +6056,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const CGFloat desiredHeight = _textview.desiredHeight;
     if (fabs(desiredHeight - NSHeight(frame)) >= 0.5) {
         // Update the wrapper's size, which in turn updates textview's size.
-        frame.size.height = desiredHeight + VMARGIN;  // The wrapper is always larger by VMARGIN.
+        frame.size.height = desiredHeight + [iTermAdvancedSettingsModel terminalVMargin];  // The wrapper is always larger by VMARGIN.
         _wrapper.frame = frame;
 
         NSAccessibilityPostNotification(_textview,
@@ -7819,7 +7819,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (CGFloat)sessionViewDesiredHeightOfDocumentView {
-    return _textview.desiredHeight + VMARGIN;
+    return _textview.desiredHeight + [iTermAdvancedSettingsModel terminalVMargin];
 }
 
 - (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically {

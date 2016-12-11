@@ -29,6 +29,9 @@ extern NSString *kLayoutDictAltHistoryKey;    // Alternate screen history
 extern NSString *kLayoutDictStateKey;         // see TmuxStateParser
 extern NSString *kLayoutDictHotkeyKey;        // Session hotkey dictionary
 
+// Children of leaf:
+extern NSString *kLayoutDictTabOpenedManually;  // Was this tab opened by a user-initiated action?
+
 typedef NS_ENUM(NSInteger, LayoutNodeType) {
     kLeafLayoutNode,
     kHSplitLayoutNode,

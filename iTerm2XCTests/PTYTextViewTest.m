@@ -11,6 +11,7 @@
 #import "VT100LineInfo.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import <objc/runtime.h>
@@ -609,8 +610,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [session setSize:size];
     NSRect theFrame = NSMakeRect(0,
                                  0,
-                                 size.width * session.textview.charWidth + MARGIN * 2,
-                                 size.height * session.textview.lineHeight + VMARGIN * 2);
+                                 size.width * session.textview.charWidth + [iTermAdvancedSettingsModel terminalMargin] * 2,
+                                 size.height * session.textview.lineHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     session.view.frame = theFrame;
     [session loadInitialColorTable];
     [session setBookmarkName:profile[KEY_NAME]];

@@ -94,9 +94,12 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)selectPane:(int)windowPane;
 
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
+
 // nil: Open in a new window
 // A string of a non-negative integer (e.g., @"2") means to open alongside a tmux window with that ID
 // A string of a negative integer (e.g., @"-2") means to open in an iTerm2 window with abs(windowId)==window number.
+// If affinity is given then the newly created tab will be considered "manually opened" which is
+// used to determine the tab's eventual location in the tabbar.
 - (void)newWindowWithAffinity:(NSString *)windowId
              initialDirectory:(iTermInitialDirectory *)initialDirectory;
 

@@ -751,10 +751,10 @@ static const int kDragThreshold = 3;
 // This is 2 except for just after the frame has changed and things are resizing.
 - (double)excess {
     NSRect visible = [self scrollViewContentSize];
-    visible.size.height -= VMARGIN * 2;  // Height without top and bottom margins.
+    visible.size.height -= [iTermAdvancedSettingsModel terminalVMargin] * 2;  // Height without top and bottom margins.
     int rows = visible.size.height / _lineHeight;
     double usablePixels = rows * _lineHeight;
-    return MAX(visible.size.height - usablePixels + VMARGIN, VMARGIN);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
+    return MAX(visible.size.height - usablePixels + [iTermAdvancedSettingsModel terminalVMargin], [iTermAdvancedSettingsModel terminalVMargin]);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
 }
 
 - (CGFloat)desiredHeight {
@@ -806,7 +806,7 @@ static const int kDragThreshold = 3;
 - (BOOL)_isTextBlinking
 {
     int width = [_dataSource width];
-    int lineStart = ([self visibleRect].origin.y + VMARGIN) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
+    int lineStart = ([self visibleRect].origin.y + [iTermAdvancedSettingsModel terminalVMargin]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
     int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
     if (lineStart < 0) {
         lineStart = 0;
@@ -1011,7 +1011,7 @@ static const int kDragThreshold = 3;
 - (long long)absoluteScrollPosition
 {
     NSRect visibleRect = [self visibleRect];
-    long long localOffset = (visibleRect.origin.y + VMARGIN) / [self lineHeight];
+    long long localOffset = (visibleRect.origin.y + [iTermAdvancedSettingsModel terminalVMargin]) / [self lineHeight];
     return localOffset + [_dataSource totalScrollbackOverflow];
 }
 
@@ -1019,7 +1019,7 @@ static const int kDragThreshold = 3;
 {
     NSRect aFrame;
     aFrame.origin.x = 0;
-    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - VMARGIN;
+    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - [iTermAdvancedSettingsModel terminalVMargin];
     aFrame.size.width = [self frame].size.width;
     aFrame.size.height = _lineHeight * height;
     [self scrollRectToVisible: aFrame];
@@ -1032,7 +1032,7 @@ static const int kDragThreshold = 3;
         NSRect aFrame;
         VT100GridCoordRange range = [_selection spanningRange];
         aFrame.origin.x = 0;
-        aFrame.origin.y = range.start.y * _lineHeight - VMARGIN;  // allow for top margin
+        aFrame.origin.y = range.start.y * _lineHeight - [iTermAdvancedSettingsModel terminalVMargin];  // allow for top margin
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
         [self scrollRectToVisible: aFrame];
@@ -1885,7 +1885,7 @@ static const int kDragThreshold = 3;
 }
 
 - (NSPoint)pointForCoord:(VT100GridCoord)coord {
-    return NSMakePoint(MARGIN + coord.x * _charWidth,
+    return NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + coord.x * _charWidth,
                        coord.y * _lineHeight);
 }
 
@@ -1903,7 +1903,7 @@ static const int kDragThreshold = 3;
     int x, y;
     int width = [_dataSource width];
 
-    x = (locationInTextView.x - MARGIN + _charWidth * kCharWidthFractionOffset) / _charWidth;
+    x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] + _charWidth * kCharWidthFractionOffset) / _charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -2638,7 +2638,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (mark && mark.command.length) {
         markMenu = [self menuForMark:mark directory:[_dataSource workingDirectoryOnLine:y]];
         NSPoint locationInWindow = [event locationInWindow];
-        if (locationInWindow.x < MARGIN) {
+        if (locationInWindow.x < [iTermAdvancedSettingsModel terminalMargin]) {
             return markMenu;
         }
     }
@@ -3321,7 +3321,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [name drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [image unlockFocus];
 
-    NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * _charWidth + MARGIN,
+    NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
                                                      range.start.y * _lineHeight,
                                                      0,
                                                      0)
@@ -3352,7 +3352,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 (PTYNoteViewController *)noteView.delegate.noteViewController;
             VT100GridCoordRange coordRange = [_dataSource coordRangeOfNote:note];
             if (coordRange.end.y >= 0) {
-                [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + MARGIN,
+                [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
                                             (1 + coordRange.end.y) * _lineHeight)];
             }
         }
@@ -5096,7 +5096,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = [_dataSource cursorY] - 1;
     int x = [_dataSource cursorX] - 1;
 
-    NSRect rect=NSMakeRect(x * _charWidth + MARGIN,
+    NSRect rect=NSMakeRect(x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
                            (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
                            _charWidth * theRange.length,
                            _lineHeight);
@@ -5389,7 +5389,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lineStart = [_dataSource numberOfLines] - [_dataSource height];
     int cursorX = [_dataSource cursorX] - 1;
     int cursorY = [_dataSource cursorY] - 1;
-    return NSMakeRect(MARGIN + cursorX * _charWidth,
+    return NSMakeRect([iTermAdvancedSettingsModel terminalMargin] + cursorX * _charWidth,
                       (lineStart + cursorY) * _lineHeight,
                       _charWidth,
                       _lineHeight);
@@ -5660,7 +5660,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_scrollToCenterLine:(int)line {
     NSRect visible = [self visibleRect];
-    int visibleLines = (visible.size.height - VMARGIN * 2) / _lineHeight;
+    int visibleLines = (visible.size.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / _lineHeight;
     int lineMargin = (visibleLines - 1) / 2;
     double margin = lineMargin * _lineHeight;
 
@@ -5683,7 +5683,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     p.y += rect.size.height;
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     visibleRect.size.height -= [self excess];
-    visibleRect.size.height -= VMARGIN;
+    visibleRect.size.height -= [iTermAdvancedSettingsModel terminalVMargin];
     p.y -= visibleRect.size.height;
     p.y = MAX(0, p.y);
     [[[self enclosingScrollView] contentView] scrollToPoint:p];
@@ -6300,7 +6300,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // drag from center of the image
     NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
 
-    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - MARGIN) / _charWidth,
+    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermAdvancedSettingsModel terminalMargin]) / _charWidth,
                                               dragPoint.y / _lineHeight);
     screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
     if (theLine &&
@@ -6315,7 +6315,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                             coord.y - pos.y);
 
         // Compute the pixel coordinate of the image's top left point
-        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + MARGIN,
+        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
                                                 imageCellOrigin.y * _lineHeight);
 
         // Compute the distance from the click location to the image's origin
@@ -6432,7 +6432,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const int x = range.location;
     const int maxX = range.location + range.length;
 
-    dirtyRect.origin.x = MARGIN + x * _charWidth;
+    dirtyRect.origin.x = [iTermAdvancedSettingsModel terminalMargin] + x * _charWidth;
     dirtyRect.origin.y = y * _lineHeight;
     dirtyRect.size.width = (maxX - x) * _charWidth;
     dirtyRect.size.height = _lineHeight;
@@ -6579,7 +6579,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     int imeLines = ([_dataSource cursorX] - 1 + [self inputMethodEditorLength] + 1) / [_dataSource width] + 1;
 
-    NSRect imeRect = NSMakeRect(MARGIN,
+    NSRect imeRect = NSMakeRect([iTermAdvancedSettingsModel terminalMargin],
                                 ([_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height]) * _lineHeight,
                                 [_dataSource width] * _charWidth,
                                 imeLines * _lineHeight);
@@ -6605,7 +6605,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         int width = [_dataSource width];
         if (locationInTextView.y == 0) {
             x = y = 0;
-        } else if (locationInTextView.x < MARGIN && _selection.liveRange.coordRange.start.y < y) {
+        } else if (locationInTextView.x < [iTermAdvancedSettingsModel terminalMargin] && _selection.liveRange.coordRange.start.y < y) {
             // complete selection of previous line
             x = width;
             y--;
@@ -6636,7 +6636,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL anyBlinkers = NO;
     // Visible chars that have changed selection status are dirty
     // Also mark blinking text as dirty if needed
-    int lineStart = ([self visibleRect].origin.y + VMARGIN) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
+    int lineStart = ([self visibleRect].origin.y + [iTermAdvancedSettingsModel terminalVMargin]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
     int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
     if (lineStart < 0) {
         lineStart = 0;
@@ -6823,7 +6823,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int height = [_dataSource height];
     rect.origin.y = numLines - height;
     rect.origin.y *= _lineHeight;
-    rect.origin.x = MARGIN;
+    rect.origin.x = [iTermAdvancedSettingsModel terminalMargin];
     rect.size.width = _charWidth * [_dataSource width];
     rect.size.height = _lineHeight * [_dataSource height];
     return rect;
@@ -7159,7 +7159,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSRect windowRect = [self.window convertRectFromScreen:screenRect];
     NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / _charWidth;
+    int x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] - visibleRect.origin.x) / _charWidth;
     int y = locationInTextView.y / _lineHeight;
     return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
 }
@@ -7167,7 +7167,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
     coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + MARGIN)),
+    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
                                MAX(0, coordRange.start.y * _lineHeight),
                                MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
                                MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		06E0C88E1DF9695400AA061B /* iTermServiceProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */; };
+		06E0C88F1DF9695400AA061B /* iTermServiceProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */; };
 		11EF6CBD28560AAAFBFB84C1 /* Pods_iTerm2XCTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 744E24C37326A4D002E72B01 /* Pods_iTerm2XCTests.framework */; };
 		1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */; };
 		1D027C121CD1867100B0FBFF /* iTermColorPresets.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D027C101CD1867000B0FBFF /* iTermColorPresets.m */; };
@@ -2333,6 +2335,8 @@
 
 /* Begin PBXFileReference section */
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermServiceProvider.h; sourceTree = "<group>"; };
+		06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermServiceProvider.m; sourceTree = "<group>"; };
 		1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorPresets.h; sourceTree = "<group>"; };
 		1D027C101CD1867000B0FBFF /* iTermColorPresets.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorPresets.m; sourceTree = "<group>"; };
 		1D0318261A42563A00932107 /* iTermImageWell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageWell.h; sourceTree = "<group>"; };
@@ -3804,6 +3808,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				06E0C88B1DF9691200AA061B /* Services */,
 				A6FEA2651CF2C80700376F28 /* Hotkey */,
 				A62C3B371BD40D1400B5629D /* Marks */,
 				1D5655C619AD2AF1001C460B /* Applescript */,
@@ -4223,6 +4228,15 @@
 				A6755F491D729A0500F3726C /* image_decoder */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		06E0C88B1DF9691200AA061B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */,
+				06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */,
+			);
+			name = Services;
 			sourceTree = "<group>";
 		};
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
@@ -6061,6 +6075,7 @@
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
 				A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */,
 				1D468F041B06A79000226083 /* StopTrigger.h in Headers */,
+				06E0C88E1DF9695400AA061B /* iTermServiceProvider.h in Headers */,
 				A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				1DA76A1F1B308AD000CB272A /* iTermTipCardViewController.h in Headers */,
@@ -7729,6 +7744,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				06E0C88F1DF9695400AA061B /* iTermServiceProvider.m in Sources */,
 				A6C763CE1B45C53A00E3C992 /* main.m in Sources */,
 				A6E761651D39D216005C0E5C /* iTermMutableAttributedStringBuilder.m in Sources */,
 				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,

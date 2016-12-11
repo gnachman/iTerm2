@@ -576,8 +576,8 @@ static NSDate* lastResizeDate_;
          VT100GridSizeDescription(gridSize), NSStringFromSize(cellSize));
     
     NSSize dim = NSMakeSize(gridSize.width, gridSize.height);
-    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + MARGIN * 2,
-                                  cellSize.height * dim.height + VMARGIN * 2);
+    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermAdvancedSettingsModel terminalMargin] * 2,
+                                  cellSize.height * dim.height + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     const BOOL hasScrollbar = [[self scrollview] hasVerticalScroller];
     NSSize size =
         [PTYScrollView frameSizeForContentSize:innerSize

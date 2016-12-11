@@ -133,6 +133,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
+    BOOL _manualOpenRequested;
 }
 
 @synthesize gateway = gateway_;
@@ -213,6 +214,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.selector = @selector(windowDidOpen:);
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
+    windowOpener.manuallyOpened = _manualOpenRequested;
+    _manualOpenRequested = NO;
     if (![windowOpener openWindows:YES]) {
         [pendingWindowOpens_ removeObject:n];
     }
@@ -809,6 +812,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
              initialDirectory:(iTermInitialDirectory *)initialDirectory {
+    _manualOpenRequested = (windowIdString != nil);
     [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommand]
            responseTarget:self
          responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
