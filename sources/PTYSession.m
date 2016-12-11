@@ -3893,8 +3893,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)changeFontSizeDirection:(int)dir
-{
+- (void)changeFontSizeDirection:(int)dir {
     DLog(@"changeFontSizeDirection:%d", dir);
     NSFont* font;
     NSFont* nonAsciiFont;
