@@ -7,6 +7,7 @@
 //
 
 #import "iTermSelectionScrollHelper.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "DebugLogging.h"
 #import "PTYTextView.h"
 
@@ -65,7 +66,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
             visibleRect.origin.y -= lineHeight * numLines;
             // Allow the origin to go as far as y=-VMARGIN so the top border is shown when the first
             // line is on screen.
-            if (visibleRect.origin.y >= -VMARGIN) {
+            if (visibleRect.origin.y >= -[iTermAdvancedSettingsModel terminalVMargin]) {
                 [_delegate scrollRectToVisible:visibleRect];
             }
             y = visibleRect.origin.y / lineHeight;

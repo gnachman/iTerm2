@@ -28,6 +28,7 @@
 
 
 #import "TextViewWrapper.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "PTYTextView.h"
 
 @implementation TextViewWrapper {
@@ -73,8 +74,8 @@
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     NSRect rect = self.bounds;
-    rect.size.height -= VMARGIN;
-    rect.origin.y = VMARGIN;
+    rect.size.height -= [iTermAdvancedSettingsModel terminalVMargin];
+    rect.origin.y = [iTermAdvancedSettingsModel terminalVMargin];
     if (!NSEqualRects(child_.frame, rect)) {
         child_.frame = rect;
     }
