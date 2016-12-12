@@ -1377,10 +1377,10 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
         return !(c == 0 || c == ' ');
     }
     if (respectContinuations) {
-        return (theLine[width].code == EOL_SOFT ||
+        return (theLine[width].code != EOL_HARD ||
                 (theLine[width - 1].code == '\\' && !theLine[width - 1].complexChar));
     } else {
-        return theLine[width].code == EOL_SOFT;
+        return theLine[width].code != EOL_HARD;
     }
 }
 

@@ -72,7 +72,12 @@
                                                             @"FiraCode-Light",
                                                             @"FiraCode-Medium",
                                                             @"FiraCode-Regular",
-                                                            @"FiraCode-Retina" ]] retain];
+                                                            @"FiraCode-Retina",
+                                                            @"FuraCodeNerdFontCompleteMono---Bold",
+                                                            @"FuraCodeNerdFontCompleteMono---Light",
+                                                            @"FuraCodeNerdFontCompleteMono---Medium",
+                                                            @"FuraCodeNerdFontCompleteMono---Regular",
+                                                            @"FuraCodeNerdFontCompleteMono---Retina" ]] retain];
         [fontNameToLigatureLevel retain];
     });
     _ligatureLevel = [fontNameToLigatureLevel[font.fontName] integerValue];

@@ -162,5 +162,6 @@
 + (BOOL)promptForPasteWhenNotAtPrompt;
 + (BOOL)performDNSLookups;
 + (BOOL)darkThemeHasBlackTitlebar;
++ (BOOL)fontChangeAffectsBroadcastingSessions;
 
 @end

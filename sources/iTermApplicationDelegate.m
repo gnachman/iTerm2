@@ -1223,16 +1223,49 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-
-// font control
-- (IBAction)biggerFont: (id) sender
-{
-    [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:1];
+- (NSArray<PTYSession *> *)sessionsToAdjustFontSize {
+    PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (!session) {
+        return nil;
+    }
+    if ([iTermAdvancedSettingsModel fontChangeAffectsBroadcastingSessions]) {
+        NSArray<PTYSession *> *broadcastSessions = [[[iTermController sharedInstance] currentTerminal] broadcastSessions];
+        if ([broadcastSessions containsObject:session]) {
+            return broadcastSessions;
+        }
+    }
+    return @[ session ];
 }
 
-- (IBAction)smallerFont: (id) sender
-{
-    [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
+// font control
+- (IBAction)biggerFont:(id)sender {
+    for (PTYSession *session in [self sessionsToAdjustFontSize]) {
+        [session changeFontSizeDirection:1];
+    }
+}
+
+- (IBAction)smallerFont:(id)sender {
+    for (PTYSession *session in [self sessionsToAdjustFontSize]) {
+        [session changeFontSizeDirection:-1];
+    }
+}
+
+- (IBAction)returnToDefaultSize:(id)sender {
+    PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    PTYSession *session = [frontTerminal currentSession];
+    if (![sender isAlternate]) {
+        for (PTYSession *session in [self sessionsToAdjustFontSize]) {
+            [session changeFontSizeDirection:0];
+        }
+    } else {
+        [session changeFontSizeDirection:0];
+    }
+    if ([sender isAlternate]) {
+        NSDictionary *abEntry = [session originalProfile];
+        [frontTerminal sessionInitiatedResize:session
+                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+    }
 }
 
 - (NSString *)formatBytes:(double)bytes
@@ -1598,20 +1631,6 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showAbout:(id)sender {
     [[iTermAboutWindowController sharedInstance] showWindow:self];
-}
-
-// size
-- (IBAction)returnToDefaultSize:(id)sender
-{
-    PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    PTYSession *session = [frontTerminal currentSession];
-    [session changeFontSizeDirection:0];
-    if ([sender isAlternate]) {
-        NSDictionary *abEntry = [session originalProfile];
-        [frontTerminal sessionInitiatedResize:session
-                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
-    }
 }
 
 - (IBAction)exposeForTabs:(id)sender
