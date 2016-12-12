@@ -550,12 +550,28 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (void)checkForUTF8 {
+    // Issue 5359
+    [gateway_ sendCommand:@"list-sessions -F \"\t\""
+           responseTarget:self
+         responseSelector:@selector(checkForUTF8Response:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
 - (void)guessVersion {
     [gateway_ sendCommand:@"list-windows -F \"#{socket_path}\""
            responseTarget:self
          responseSelector:@selector(guessVersionResponse:)
            responseObject:nil
                     flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)checkForUTF8Response:(NSString *)response {
+    if ([response containsString:@"_"]) {
+        [gateway_ abortWithErrorMessage:@"tmux is not in UTF-8 mode. Please pass the -u command line argument to tmux or change your LANG environment variable to end with “.UTF-8”."
+                                  title:@"UTF-8 Mode Not Detected"];
+    }
 }
 
 - (void)guessVersionResponse:(NSString *)response {

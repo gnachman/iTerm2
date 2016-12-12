@@ -4468,6 +4468,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tmuxInitialCommandDidCompleteSuccessfully {
     // This kicks off a chain reaction that leads to windows being opened.
     [_tmuxController validateOptions];
+    [_tmuxController checkForUTF8];
     [_tmuxController guessVersion];
 }
 
