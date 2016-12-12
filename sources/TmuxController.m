@@ -633,6 +633,15 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (void)checkForUTF8 {
+    // Issue 5359
+    [gateway_ sendCommand:@"list-sessions -F \"\t\""
+           responseTarget:self
+         responseSelector:@selector(checkForUTF8Response:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
 - (void)guessVersion {
     // Run commands that will fail in successively older versions.
     // show-window-options pane-border-format will succeed in 2.3 and later (presumably. 2.3 isn't out yet)
@@ -674,6 +683,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [gateway_.minimumServerVersion compare:number] == NSOrderedAscending) {
         gateway_.minimumServerVersion = number;
         DLog(@"Increasing minimum server version to %@", number);
+    }
+}
+
+- (void)checkForUTF8Response:(NSString *)response {
+    if ([response containsString:@"_"]) {
+        [gateway_ abortWithErrorMessage:@"tmux is not in UTF-8 mode. Please pass the -u command line argument to tmux or change your LANG environment variable to end with “.UTF-8”."
+                                  title:@"UTF-8 Mode Not Detected"];
     }
 }
 
