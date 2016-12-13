@@ -633,7 +633,7 @@ int decode_utf8_char(const unsigned char *datap,
     if (range.location != NSNotFound) {
         // Search backward to find the start of the scheme.
         NSMutableCharacterSet *schemeCharacterSet = [NSMutableCharacterSet alphanumericCharacterSet];
-        [schemeCharacterSet addCharactersInString:@"-"];  // for chrome-devtools:, issue 5298
+        [schemeCharacterSet addCharactersInString:@"-"];  // for chrome-devtools: and x-man-page:, issue 5298
         for (NSInteger i = ((NSInteger)range.location) - 1; i >= 0; i--) {
             if (![schemeCharacterSet characterIsMember:[trimmedURLString characterAtIndex:i]]) {
                 trimmedURLString = [trimmedURLString substringFromIndex:i];

@@ -2532,7 +2532,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 break;
             }
             case kURLActionOpenURL:
-                [self findUrlInString:action.string andOpenInBackground:openInBackground];
+                [self openURL:[NSURL URLWithUserSuppliedString:action.string] inBackground:openInBackground];
                 break;
 
             case kURLActionSmartSelectionAction: {
@@ -6069,48 +6069,67 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             fromCharacterSet:[PTYTextView urlCharacterSet]
                                         charsTakenFromPrefix:&prefixChars];
     DLog(@"String of just permissible chars is %@", possibleUrl);
-    NSString *originalMatch = possibleUrl;
 
-    NSRange urlRange = [possibleUrl rangeOfURLInString];
-    if (urlRange.location == NSNotFound) {
+    // Remove punctuation, parens, brackets, etc.
+    NSRange rangeWithoutNearbyPunctuation = [possibleUrl rangeOfURLInString];
+    if (rangeWithoutNearbyPunctuation.location == NSNotFound) {
         DLog(@"No URL found");
         return nil;
     }
-    NSString *subUrl = [possibleUrl substringWithRange:urlRange];
-    if ([subUrl rangeOfString:@":"].location == NSNotFound) {
-        NSString *defaultScheme = @"http://";
-        subUrl = [defaultScheme stringByAppendingString:subUrl];
-    }
-    DLog(@"URL in string is %@", subUrl);
+    NSString *stringWithoutNearbyPunctuation = [possibleUrl substringWithRange:rangeWithoutNearbyPunctuation];
+    DLog(@"String without nearby punctuation: %@", stringWithoutNearbyPunctuation);
 
-    // If subUrl contains a :, make sure something can handle that scheme.
-    NSURL *url = [NSURL URLWithUserSuppliedString:subUrl];
-    BOOL openable = (url && [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil);
-    DLog(@"There seems to be a scheme. ruledOut=%d", (int)openable);
-
-    VT100GridWindowedRange range;
-    range.coordRange.start = [extractor coord:coord
-                                         plus:-(prefixChars - urlRange.location)
-                               skippingCoords:continuationCharsCoords
-                                      forward:NO];
-    range.coordRange.end = [extractor coord:range.coordRange.start
-                                       plus:urlRange.length
-                             skippingCoords:continuationCharsCoords
-                                    forward:YES];
-    range.columnWindow = extractor.logicalWindow;
-
-    if ([self stringLooksLikeURL:[originalMatch substringWithRange:urlRange]] &&
-         openable) {
-        DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
-             [originalMatch substringWithRange:urlRange]);
-        URLAction *action = [URLAction urlActionToOpenURL:subUrl];
-        action.range = range;
-        return action;
+    const BOOL hasColon = ([stringWithoutNearbyPunctuation rangeOfString:@":"].location != NSNotFound);
+    BOOL looksLikeURL;
+    if (hasColon) {
+        // The test later on for whether an app exists to open the URL is sufficient.
+        DLog(@"Contains a colon so it looks like a URL to me");
+        looksLikeURL = YES;
     } else {
-        DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
-             [originalMatch substringWithRange:urlRange]);
+        // Only try to use HTTP if the string has something especially HTTP URL-like about it, such as
+        // containing a slash. This helps reduce the number of random strings that are misinterpreted
+        // as URLs.
+        looksLikeURL = [self stringLooksLikeURL:[possibleUrl substringWithRange:rangeWithoutNearbyPunctuation]];
+
+        if (looksLikeURL) {
+            DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
+            NSString *defaultScheme = @"http://";
+            stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];
+        } else {
+            DLog(@"Doesn't look enough like a URL to guess that it's an HTTP URL");
+        }
     }
 
+    if (looksLikeURL) {
+        // If the string contains non-ascii characters, percent escape them. URLs are limited to ASCII.
+        NSURL *url = [NSURL URLWithUserSuppliedString:stringWithoutNearbyPunctuation];
+
+        // If something can handle the scheme then we're all set.
+        BOOL openable = (url && [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil);
+
+        if (openable) {
+            DLog(@"%@ is openable", url);
+            VT100GridWindowedRange range;
+            range.coordRange.start = [extractor coord:coord
+                                                 plus:-(prefixChars - rangeWithoutNearbyPunctuation.location)
+                                       skippingCoords:continuationCharsCoords
+                                              forward:NO];
+            range.coordRange.end = [extractor coord:range.coordRange.start
+                                               plus:rangeWithoutNearbyPunctuation.length
+                                     skippingCoords:continuationCharsCoords
+                                            forward:YES];
+            range.columnWindow = extractor.logicalWindow;
+            URLAction *action = [URLAction urlActionToOpenURL:stringWithoutNearbyPunctuation];
+            action.range = range;
+            return action;
+        } else {
+            DLog(@"%@ is not openable (couldn't convert it to a URL [%@] or no scheme handler",
+                 stringWithoutNearbyPunctuation, url);
+        }
+    }
+
+    // TODO: We usually don't get here because "foo.txt" looks enough like a URL that we do a DNS
+    // lookup and fail. It'd be nice to fallback to an SCP file path.
     // See if we can conjure up a secure copy path.
     smartMatch = [self smartSelectAtX:x
                                     y:y
@@ -6123,7 +6142,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                 onLine:y];
         if (scpPath) {
             URLAction *action = [URLAction urlActionToSecureCopyFile:scpPath];
-            action.range = range;
+            action.range = smartRange;
             return action;
         }
     }
@@ -6241,13 +6260,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-// Opens a URL in the default browser in background or foreground
-// Don't call this unless you know that iTerm2 is NOT the handler for this scheme!
-- (void)openURL:(NSURL *)url inBackground:(BOOL)background
-{
-    if (background) {
-        NSArray* urls = [NSArray arrayWithObject:url];
-        [[NSWorkspace sharedWorkspace] openURLs:urls
+// If iTerm2 is the handler for the scheme, then the profile is launched directly.
+// Otherwise it's passed to the OS to launch.
+- (void)openURL:(NSURL *)url inBackground:(BOOL)background {
+    DLog(@"openURL:%@ inBackground:%@", url, @(background));
+
+    Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
+    if (profile) {
+        [_delegate launchProfileInCurrentTerminal:profile withURL:url.absoluteString];
+    } else if (background) {
+        [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
                                            withAppBundleIdentifier:nil
                                            options:NSWorkspaceLaunchWithoutActivation
                                            additionalEventParamDescriptor:nil
@@ -6257,8 +6279,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-// If iTerm2 is the handler for the scheme, then the bookmark is launched directly.
-// Otherwise it's passed to the OS to launch.
 - (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
     DLog(@"findUrlInString:%@", aURLString);
     NSRange range = [aURLString rangeOfURLInString];
@@ -6274,15 +6294,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString* escapedString = [trimmedURLString stringByEscapingForURL];
 
     NSURL *url = [NSURL URLWithString:escapedString];
-    DLog(@"Escaped string is %@", url);
-    Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
-
-    if (profile) {
-        [_delegate launchProfileInCurrentTerminal:profile withURL:trimmedURLString];
-    } else {
-        [self openURL:url inBackground:background];
-    }
-
+    [self openURL:url inBackground:background];
 }
 
 - (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
