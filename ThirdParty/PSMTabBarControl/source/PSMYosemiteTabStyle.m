@@ -129,7 +129,7 @@
 #pragma mark - Control Specific
 
 - (float)leftMarginForTabBarControl {
-    return 0.0f;
+    return 90.0f;
 }
 
 - (float)rightMarginForTabBarControl {

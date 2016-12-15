@@ -405,7 +405,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                     NSClosableWindowMask |
                     NSMiniaturizableWindowMask |
                     NSResizableWindowMask |
-                    NSTexturedBackgroundWindowMask);
+                    NSTexturedBackgroundWindowMask |
+                    NSFullSizeContentViewWindowMask);
     }
 }
 
@@ -636,6 +637,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         self.window.alphaValue = 0;
     }
     self.window.opaque = NO;
+    self.window.titleVisibility = NSWindowTitleHidden;
+    self.window.titlebarAppearsTransparent = YES;
 
     normalBackgroundColor = [_contentView color];
 
