@@ -128,6 +128,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
 @property(nonatomic, assign) NSTimeInterval timeOfLastResize;
+
+// Are we in the process of restoring a window with NSWindowRestoration? If so, do not order
+// the window as it may be minimized (issue 5258)
+@property(nonatomic) BOOL restoringWindow;
+
 @end
 
 @implementation PseudoTerminal {
@@ -7164,10 +7169,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return aSession;
 }
 
-- (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
-{
+- (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {
+    self.restoringWindow = YES;
     [self loadArrangement:[state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey]
                  sessions:nil];
+    self.restoringWindow = NO;
 }
 
 - (BOOL)allTabsAreTmuxTabs
