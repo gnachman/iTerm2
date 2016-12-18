@@ -159,5 +159,6 @@
 + (BOOL)useColorfgbgFallback;
 + (BOOL)promptForPasteWhenNotAtPrompt;
 + (BOOL)performDNSLookups;
++ (BOOL)zeroWidthSpaceAdvancesCursor;
 
 @end
