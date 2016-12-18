@@ -62,6 +62,14 @@
 }
 
 - (void)reloadDynamicProfiles {
+    [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
+        [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
+            [self reallyReloadDynamicProfiles];
+        }];
+    }];
+}
+
+- (void)reallyReloadDynamicProfiles {
     NSString *path = [self dynamicProfilesPath];
     DLog(@"Reloading dynamic profiles from %@", path);
     NSFileManager *fileManager = [NSFileManager defaultManager];

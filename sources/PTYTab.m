@@ -1580,8 +1580,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSSize size;
     DLog(@"    calculating session size based on %dx%d cells", columns, rows);
     DLog(@"    cell size is %@", NSStringFromSize(NSMakeSize(charWidth, lineHeight)));
-    size.width = columns * charWidth + MARGIN * 2;
-    size.height = rows * lineHeight + VMARGIN * 2;
+    size.width = columns * charWidth + [iTermAdvancedSettingsModel terminalMargin] * 2;
+    size.height = rows * lineHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2;
     DLog(@"    size for content is %@", NSStringFromSize(size));
     BOOL hasScrollbar = [term scrollbarShouldBeVisible];
     NSSize outerSize =
@@ -1610,8 +1610,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (NSSize)_minSessionSize:(SessionView*)sessionView {
     NSSize size;
     PTYSession *session = [self sessionForSessionView:sessionView];
-    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + MARGIN * 2;
-    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + VMARGIN * 2;
+    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermAdvancedSettingsModel terminalMargin] * 2;
+    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + [iTermAdvancedSettingsModel terminalVMargin] * 2;
 
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     NSSize scrollViewSize =
@@ -2005,8 +2005,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                             style:[parentWindow_ scrollerStyle]];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
-    int width = (size.width - MARGIN * 2) / [[aSession textview] charWidth];
-    int height = (size.height - VMARGIN * 2) / [[aSession textview] lineHeight];
+    int width = (size.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / [[aSession textview] charWidth];
+    int height = (size.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / [[aSession textview] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
         ELog(@"WARNING: Session has %d width", width);
@@ -2896,7 +2896,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
 
-    [term appendTab:theTab];
+    if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
+        [term addTabAtAutomaticallyDeterminedLocation:theTab];
+    } else {
+        [term appendTab:theTab];
+    }
     [theTab didAddToTerminal:term withArrangement:arrangement];
 
     return theTab;
@@ -2987,8 +2991,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                            controlSize:NSRegularControlSize
                                                          scrollerStyle:session.view.scrollview.scrollerStyle];
             
-            int chars = forHeight ? (contentSize.height - VMARGIN * 2) / cellSize.height :
-                                    (contentSize.width - MARGIN * 2) / cellSize.width;
+            int chars = forHeight ? (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height :
+                                    (contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
                                     inRange:[IntRange rangeWithMin:minPos size:size]];
         }

@@ -53,7 +53,9 @@
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
+#import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermServiceProvider.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
@@ -79,7 +81,6 @@
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
-#import "iTermProfilePreferences.h"
 
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
@@ -538,6 +539,12 @@ static BOOL hasBecomeActive = NO;
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    // Register our services provider. Registration must happen only when we're
+    // ready to accept requests, so I do it after a spin of the runloop.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [NSApp setServicesProvider:[[iTermServiceProvider alloc] init]];
+    });
+
     // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
     // a chance to run because a "special" filename cancels performStartupActivities.
     [self checkForQuietMode];
@@ -1216,16 +1223,49 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-
-// font control
-- (IBAction)biggerFont: (id) sender
-{
-    [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:1];
+- (NSArray<PTYSession *> *)sessionsToAdjustFontSize {
+    PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (!session) {
+        return nil;
+    }
+    if ([iTermAdvancedSettingsModel fontChangeAffectsBroadcastingSessions]) {
+        NSArray<PTYSession *> *broadcastSessions = [[[iTermController sharedInstance] currentTerminal] broadcastSessions];
+        if ([broadcastSessions containsObject:session]) {
+            return broadcastSessions;
+        }
+    }
+    return @[ session ];
 }
 
-- (IBAction)smallerFont: (id) sender
-{
-    [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
+// font control
+- (IBAction)biggerFont:(id)sender {
+    for (PTYSession *session in [self sessionsToAdjustFontSize]) {
+        [session changeFontSizeDirection:1];
+    }
+}
+
+- (IBAction)smallerFont:(id)sender {
+    for (PTYSession *session in [self sessionsToAdjustFontSize]) {
+        [session changeFontSizeDirection:-1];
+    }
+}
+
+- (IBAction)returnToDefaultSize:(id)sender {
+    PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    PTYSession *session = [frontTerminal currentSession];
+    if (![sender isAlternate]) {
+        for (PTYSession *session in [self sessionsToAdjustFontSize]) {
+            [session changeFontSizeDirection:0];
+        }
+    } else {
+        [session changeFontSizeDirection:0];
+    }
+    if ([sender isAlternate]) {
+        NSDictionary *abEntry = [session originalProfile];
+        [frontTerminal sessionInitiatedResize:session
+                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+    }
 }
 
 - (NSString *)formatBytes:(double)bytes
@@ -1591,20 +1631,6 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showAbout:(id)sender {
     [[iTermAboutWindowController sharedInstance] showWindow:self];
-}
-
-// size
-- (IBAction)returnToDefaultSize:(id)sender
-{
-    PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    PTYSession *session = [frontTerminal currentSession];
-    [session changeFontSizeDirection:0];
-    if ([sender isAlternate]) {
-        NSDictionary *abEntry = [session originalProfile];
-        [frontTerminal sessionInitiatedResize:session
-                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
-    }
 }
 
 - (IBAction)exposeForTabs:(id)sender

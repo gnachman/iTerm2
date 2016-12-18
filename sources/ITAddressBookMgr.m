@@ -46,6 +46,7 @@ NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersion
 
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 NSInteger iTermProfileJoinsAllSpaces = -1;
+static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;
@@ -114,6 +115,7 @@ NSInteger iTermProfileJoinsAllSpaces = -1;
             NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
             [ITAddressBookMgr setDefaultsInBookmark:aDict];
             [[ProfileModel sharedInstance] addBookmark:aDict];
+            [[ProfileModel sharedInstance] flush];
             [aDict release];
         }
 
@@ -698,8 +700,7 @@ NSInteger iTermProfileJoinsAllSpaces = -1;
 
     // Ensure all profile list views reload their data to avoid issue 4033.
     DLog(@"Posting profile was deleted notification");
-    [[NSNotificationCenter defaultCenter] postNotificationName:kProfileWasDeletedNotification
-                                                        object:nil];
+    [self postNotificationName:kProfileWasDeletedNotification object:nil userInfo:nil];
     [model flush];
     return YES;
 }
@@ -720,9 +721,44 @@ NSInteger iTermProfileJoinsAllSpaces = -1;
         }
     }
     [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil
-                                                      userInfo:nil];
+    [self postNotificationName:kKeyBindingsChangedNotification object:nil userInfo:nil];
+}
+
++ (void)postNotificationName:(NSString *)name object:(id)object userInfo:(id)userInfo {
+    NSNotification *notification = [NSNotification notificationWithName:name object:object userInfo:userInfo];
+    [self postNotification:notification];
+}
+
++ (void)postNotification:(NSNotification *)notification {
+    if (sDelayedNotifications) {
+        for (NSNotification *existing in sDelayedNotifications) {
+            if ([existing.name isEqualToString:notification.name] &&
+                (existing.object == notification.object || [existing.object isEqual:notification.object]) &&
+                (existing.userInfo == notification.userInfo || [existing.userInfo isEqual:notification.userInfo])) {
+                // Already have a notification like this
+                return;
+            }
+        }
+        [sDelayedNotifications addObject:notification];
+    } else {
+        [[NSNotificationCenter defaultCenter] postNotification:notification];
+    }
+}
+
++ (void)performBlockWithCoalescedNotifications:(void (^)())block {
+    if (!sDelayedNotifications) {
+        sDelayedNotifications = [[NSMutableArray alloc] init];
+
+        block();
+
+        for (NSNotification *notification in sDelayedNotifications) {
+            [[NSNotificationCenter defaultCenter] postNotification:notification];
+        }
+        [sDelayedNotifications release];
+        sDelayedNotifications = nil;
+    } else {
+        block();
+    }
 }
 
 @end

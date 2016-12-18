@@ -409,6 +409,9 @@ static int OctalValue(const char *bytes) {
                                                  callingSelector:@selector(decorateWindowPane:)
                                                         onTarget:self
                                                       withObject:nil];
+    if (self.manuallyOpened) {
+        parseTree[kLayoutDictTabOpenedManually] = @YES;
+    }
 }
 
 // Callback for DFS of parse tree from decorateParseTree:

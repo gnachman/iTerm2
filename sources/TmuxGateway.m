@@ -61,6 +61,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
 }
 
 @synthesize delegate = delegate_;
+@synthesize acceptNotifications = acceptNotifications_;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate {
     self = [super init];

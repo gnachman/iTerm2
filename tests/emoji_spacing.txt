@@ -1,0 +1,25 @@
+]1337;UnicodeVersion=0These will overlap if your terminal is in unicode 8 mode after restting the unicode version to the default:
+⌚⌚
+]1337;UnicodeVersion=8These will overlap if your terminal is in unicode 8 mode after sending UnicodeVersion=8:
+⌚⌚
+]1337;UnicodeVersion=9These will not overlap if your terminal is in unicode 9 mode after sending UnicodeVersion=9:
+⌚⌚
+
+- Unicode version stack test -
+]1337;UnicodeVersion=9]1337;UnicodeVersion=push]1337;UnicodeVersion=8]1337;UnicodeVersion=push]1337;UnicodeVersion=push]1337;UnicodeVersion=9]1337;UnicodeVersion=push]1337;UnicodeVersion=8Version 8:
+⌚⌚
+]1337;UnicodeVersion=popVersion 9:
+⌚⌚
+]1337;UnicodeVersion=popVersion 8:
+⌚⌚
+]1337;UnicodeVersion=popVersion 8:
+⌚⌚
+]1337;UnicodeVersion=popVersion 9:
+⌚⌚
+
+-- Test saved cursor --
+]1337;UnicodeVersion=87]1337;UnicodeVersion=98Version 8:
+⌚⌚
+]1337;UnicodeVersion=97]1337;UnicodeVersion=88Version 9:
+⌚⌚
+]1337;UnicodeVersion=0

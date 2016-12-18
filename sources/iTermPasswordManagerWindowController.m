@@ -7,12 +7,17 @@
 //
 
 #import "iTermPasswordManagerWindowController.h"
+
+#import "DebugLogging.h"
 #import "iTermSearchField.h"
+#import "iTermSystemVersion.h"
+#import <LocalAuthentication/LocalAuthentication.h>
 #import <SSKeychain.h>
 #import <Security/Security.h>
 
 static NSString *const kServiceName = @"iTerm2";
 static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
+static BOOL sAuthenticated;
 
 @interface iTermPasswordManagerWindowController () <
     NSTableViewDataSource,
@@ -34,6 +39,10 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 }
 
 + (NSArray *)accountNamesWithFilter:(NSString *)filter {
+    if (!sAuthenticated) {
+        return @[ ];
+    }
+
     NSMutableArray *array = [NSMutableArray array];
     if (!filter.length) {
         filter = nil;
@@ -52,9 +61,78 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
     return [[array sortedArrayUsingSelector:@selector(compare:)] retain];
 }
 
++ (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reply:(void(^)(BOOL success, NSError * __nullable error))reply {
+    DLog(@"Requesting authentication with policy %@", @(policy));
+
+    NSString *myLocalizedReasonString = @"open the password manager";
+    // You're supposed to hold a reference to the context until it's done doing its thing.
+    [myContext retain];
+    [myContext evaluatePolicy:policy
+              localizedReason:myLocalizedReasonString
+                        reply:^(BOOL success, NSError *error) {
+                            if (success) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    sAuthenticated = YES;
+                                    reply(success, error);
+                                });
+                            } else {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    sAuthenticated = NO;
+                                    if (error.code != LAErrorSystemCancel &&
+                                        error.code != LAErrorAppCancel) {
+                                        BOOL isTouchID = (policy == LAPolicyDeviceOwnerAuthenticationWithBiometrics);
+                                        [[NSAlert alertWithMessageText:@"Authentication Failed"
+                                                        defaultButton:@"OK"
+                                                      alternateButton:nil
+                                                          otherButton:nil
+                                             informativeTextWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]] runModal];
+                                    }
+                                    reply(success, error);
+                                });
+                            }
+                            [myContext release];
+                        }];
+}
+
++ (NSString *)reasonForAuthenticationError:(NSError *)error touchID:(BOOL)touchID {
+    switch (error.code) {
+        case LAErrorAuthenticationFailed:
+            return @"valid credentials weren't supplied.";
+
+        case LAErrorUserCancel:
+            return touchID ? @"touch ID was cancelled." : @"password entry was cancelled.";
+
+        case LAErrorUserFallback:
+            return @"password authentication was requested.";
+
+        case LAErrorSystemCancel:
+            return touchID ? @"the system cancelled the Touch ID request." : @"the system cancelled the authentication request.";
+
+        case LAErrorPasscodeNotSet:
+            return @"no passcode is set.";
+
+        case kLAErrorTouchIDNotAvailable:
+            return @"touch ID is not available.";
+
+        case LAErrorTouchIDNotEnrolled:
+            return @"touch ID doesn't have any fingers enrolled.";
+
+        case LAErrorTouchIDLockout:
+            return @"there were too many failed Touch ID attempts.";
+
+        case LAErrorAppCancel:
+            return touchID ? @"touch ID was cancelled by iTerm2." : @"authentication was cancelled by iTerm2.";
+
+        case LAErrorInvalidContext:
+            return @"the context is invalid. This is a bug in iTerm2. Please report it.";
+    }
+    return [error localizedDescription];
+}
+
 - (instancetype)init {
     self = [self initWithWindowNibName:@"iTermPasswordManager"];
     if (self) {
+        [self requestAuthenticationIfPossible];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadAccounts)
                                                      name:kPasswordManagersShouldReloadData
@@ -77,7 +155,9 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    [[self window] makeFirstResponder:_searchField];
+    if (sAuthenticated) {
+        [[self window] makeFirstResponder:_searchField];
+    }
 }
 
 #pragma mark - APIs
@@ -124,23 +204,27 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 }
 
 - (IBAction)add:(id)sender {
-    NSString *name = [self nameForNewAccount];
-    if ([SSKeychain setPassword:@"" forService:kServiceName account:name]) {
-        [self reloadAccounts];
-        NSUInteger index = [self indexOfAccountName:name];
-        if (index != NSNotFound) {
-            [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+    if (sAuthenticated) {
+        NSString *name = [self nameForNewAccount];
+        if ([[self keychain] setPassword:@"" forService:kServiceName account:name]) {
+            [self reloadAccounts];
+            NSUInteger index = [self indexOfAccountName:name];
+            if (index != NSNotFound) {
+                [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+            }
         }
+        [self passwordsDidChange];
     }
-    [self passwordsDidChange];
 }
 
 - (IBAction)remove:(id)sender {
-    NSInteger selectedRow = [_tableView selectedRow];
-    NSString *selectedAccountName = [self accountNameForRow:selectedRow];
-    [SSKeychain deletePasswordForService:kServiceName account:selectedAccountName];
-    [self reloadAccounts];
-    [self passwordsDidChange];
+    if (sAuthenticated) {
+        NSInteger selectedRow = [_tableView selectedRow];
+        NSString *selectedAccountName = [self accountNameForRow:selectedRow];
+        [[self keychain] deletePasswordForService:kServiceName account:selectedAccountName];
+        [self reloadAccounts];
+        [self passwordsDidChange];
+    }
 }
 
 - (IBAction)edit:(id)sender {
@@ -170,6 +254,51 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 
 #pragma mark - Private
 
+- (Class)keychain {
+    if (sAuthenticated) {
+        return [SSKeychain class];
+    } else {
+        return nil;
+    }
+}
+
+- (void)requestAuthenticationIfPossible {
+    if (sAuthenticated) {
+        return;
+    }
+    if (!NSClassFromString(@"LAContext")) {
+        sAuthenticated = YES;
+        return;
+    }
+
+    LAContext *myContext = [[[LAContext alloc] init] autorelease];
+    if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
+        [self authenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext];
+    }
+}
+
+- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
+    NSError *authError = nil;
+    if ([myContext canEvaluatePolicy:policy error:&authError]) {
+        [self authenticateWithPolicy:policy context:myContext];
+        return YES;
+    } else {
+        DLog(@"Can't authenticate with policy %@: %@", @(policy), authError);
+        return NO;
+    }
+}
+
+- (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
+    [[self class] authenticateWithPolicy:policy context:myContext reply:^(BOOL success, NSError * _Nullable error) {
+        if (success) {
+            [self reloadAccounts];
+            [[self window] makeFirstResponder:_searchField];
+        } else {
+            [self closeOrEndSheet];
+        }
+    }];
+}
+
 - (void)setPasswordBeingShown:(NSString *)password onRow:(NSInteger)row {
     [_passwordBeingShown release];
     _passwordBeingShown = [password retain];
@@ -183,14 +312,17 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 }
 
 - (NSString *)selectedPassword {
+    if (!sAuthenticated) {
+        return nil;
+    }
     NSInteger index = [_tableView selectedRow];
     if (index < 0) {
         return nil;
     }
     NSError *error = nil;
-    NSString *password = [SSKeychain passwordForService:kServiceName
-                                                account:_accounts[index]
-                                                  error:&error];
+    NSString *password = [[self keychain] passwordForService:kServiceName
+                                                     account:_accounts[index]
+                                                       error:&error];
     if (error) {
         return nil;
     } else {
@@ -221,7 +353,11 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
     [self clearPasswordBeingShown];
     [_accounts release];
     NSString *filter = [_searchField stringValue];
-    _accounts = [[self class] accountNamesWithFilter:filter];
+    if (sAuthenticated) {
+        _accounts = [[self class] accountNamesWithFilter:filter];
+    } else {
+        _accounts = @[];
+    }
     [_tableView reloadData];
 }
 
@@ -260,24 +396,27 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
    setObjectValue:(id)anObject
    forTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
+    if (!sAuthenticated) {
+        return;
+    }
     NSString *accountName = [self accountNameForRow:rowIndex];
     if (aTableColumn == _accountNameColumn) {
         NSError *error = nil;
-        NSString *password = [SSKeychain passwordForService:kServiceName
-                                                    account:accountName
-                                                      error:&error];
+        NSString *password = [[self keychain] passwordForService:kServiceName
+                                                         account:accountName
+                                                           error:&error];
         if (!error) {
             if (!password) {
                 password = @"";
             }
-            if ([SSKeychain deletePasswordForService:kServiceName account:accountName]) {
-                [SSKeychain setPassword:password forService:kServiceName account:anObject];
+            if ([[self keychain] deletePasswordForService:kServiceName account:accountName]) {
+                [[self keychain] setPassword:password forService:kServiceName account:anObject];
                 [self reloadAccounts];
             }
         }
     } else {
         [self clearPasswordBeingShown];
-        [SSKeychain setPassword:anObject forService:kServiceName account:accountName];
+        [[self keychain] setPassword:anObject forService:kServiceName account:accountName];
     }
     [self passwordsDidChange];
 }

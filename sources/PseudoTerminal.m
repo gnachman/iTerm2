@@ -44,6 +44,7 @@
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
@@ -2705,7 +2706,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
                 if (desiredRows_ > 0) {
                     frame.size.height = MIN(screenVisibleFrame.size.height,
-                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermAdvancedSettingsModel terminalVMargin]);
                 } else {
                     frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
                 }
@@ -2731,7 +2732,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
                 if (desiredRows_ > 0) {
                     frame.size.height = MIN(screenVisibleFrame.size.height,
-                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermAdvancedSettingsModel terminalVMargin]);
                 } else {
                     frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
                 }
@@ -2761,7 +2762,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
                 if (desiredColumns_ > 0) {
                     frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermAdvancedSettingsModel terminalMargin]);
                 } else {
                     frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
                 }
@@ -2788,7 +2789,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
                 if (desiredColumns_ > 0) {
                     frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermAdvancedSettingsModel terminalMargin]);
                 } else {
                     frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
                 }
@@ -2996,14 +2997,14 @@ ITERM_WEAKLY_REFERENCEABLE
                               controlSize:NSRegularControlSize
                             scrollerStyle:[self scrollerStyle]];
 
-    int screenWidth = (contentSize.width - MARGIN * 2) / charWidth;
-    int screenHeight = (contentSize.height - VMARGIN * 2) / charHeight;
+    int screenWidth = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / charWidth;
+    int screenHeight = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / charHeight;
 
     if (snapWidth) {
-      contentSize.width = screenWidth * charWidth + MARGIN * 2;
+      contentSize.width = screenWidth * charWidth + [iTermAdvancedSettingsModel terminalMargin] * 2;
     }
     if (snapHeight) {
-      contentSize.height = screenHeight * charHeight + VMARGIN * 2;
+      contentSize.height = screenHeight * charHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2;
     }
     tabSize =
         [PTYScrollView frameSizeForContentSize:contentSize
@@ -3346,8 +3347,8 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize decorationSize = [self windowDecorationSize];
     VT100GridSize sessionSize = VT100GridSizeMake([session.profile[KEY_COLUMNS] intValue],
                                                   [session.profile[KEY_ROWS] intValue]);
-    return NSMakeSize(MARGIN * 2 + sessionSize.width * cellSize.width + decorationSize.width,
-                      VMARGIN * 2 + sessionSize.height * cellSize.height + decorationSize.height);
+    return NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
+                      [iTermAdvancedSettingsModel terminalVMargin] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
 - (void)toggleTraditionalFullScreenMode {
@@ -3687,9 +3688,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // panes then the margins probably won't turn out perfect. If other tabs have
     // a different char size, they will also have imperfect margins.
     float decorationHeight = [sender frame].size.height -
-        [[[[self currentSession] view] scrollview] documentVisibleRect].size.height + VMARGIN * 2;
+        [[[[self currentSession] view] scrollview] documentVisibleRect].size.height + [iTermAdvancedSettingsModel terminalVMargin] * 2;
     float decorationWidth = [sender frame].size.width -
-        [[[[self currentSession] view] scrollview] documentVisibleRect].size.width + MARGIN * 2;
+        [[[[self currentSession] view] scrollview] documentVisibleRect].size.width + [iTermAdvancedSettingsModel terminalMargin] * 2;
 
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
@@ -4518,6 +4519,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
+// This updates the window's background color and title text color as well as the tab bar's color.
 - (void)updateTabColors {
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
@@ -4529,26 +4531,40 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([_contentView.tabView numberOfTabViewItems] == 1 &&
                 [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
-                [[self window] setBackgroundColor:newTabColor];
+                [self setBackgroundColor:newTabColor];
 
-                if (IsYosemiteOrLater()) {
-                    if (newTabColor.brightnessComponent < 0.5) {
-                        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-                    } else {
-                        self.window.appearance = nil;
-                    }
-                }
                 [_contentView setColor:newTabColor];
             } else {
-                [[self window] setBackgroundColor:nil];
-                if (IsYosemiteOrLater()) {
-                    self.window.appearance = nil;
-                }
+                [self setBackgroundColor:nil];
                 [_contentView setColor:normalBackgroundColor];
             }
         }
     }
 }
+
+- (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
+    if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                break;
+
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
+                break;
+        }
+    }
+    [self.window setBackgroundColor:backgroundColor];
+    if (IsYosemiteOrLater()) {
+        if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        } else {
+            self.window.appearance = nil;
+        }
+    }
+}
+
 
 - (void)tabsDidReorder {
     TmuxController *controller = nil;
@@ -5072,8 +5088,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                            verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
                                  MAX(asciiCharSize.height, nonAsciiCharSize.height));
-    NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + MARGIN * 2,
-                                       charSize.height * kVT100ScreenMinRows + VMARGIN * 2);
+    NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + [iTermAdvancedSettingsModel terminalMargin] * 2,
+                                       charSize.height * kVT100ScreenMinRows + [iTermAdvancedSettingsModel terminalVMargin] * 2);
 
     return [[self currentTab] canSplitVertically:isVertical withSize:newSessionSize];
 }
@@ -5691,6 +5707,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [self insertTab:aTab atIndex:[_contentView.tabView numberOfTabViewItems]];
 }
 
+- (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab {
+    if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+        [self insertTab:tab atIndex:self.numberOfTabs];
+    } else {
+        [self insertTab:tab atIndex:[self indexOfTab:self.currentTab] + 1];
+        if (tab.isTmuxTab) {
+            [self tabsDidReorder];
+        }
+    }
+}
+
 - (NSString *)promptForParameter:(NSString *)name {
     if (self.disablePromptForSubstitutions) {
         return @"";
@@ -6102,6 +6129,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
     }
     [_contentView.tabBarControl setStyle:style];
+    [self updateTabColors];
 }
 
 - (void)hideMenuBar {
@@ -6455,8 +6483,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;
-        rows = (contentSize.height - VMARGIN*2) / charSize.height;
-        columns = (contentSize.width - MARGIN*2) / charSize.width;
+        rows = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / charSize.height;
+        columns = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / charSize.width;
     }
     NSRect sessionRect;
     if (size != nil) {
@@ -6468,12 +6496,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                    borderType:NSNoBorder
                                   controlSize:NSRegularControlSize
                                 scrollerStyle:[self scrollerStyle]];
-        rows = (contentSize.height - VMARGIN*2) / charSize.height;
-        columns = (contentSize.width - MARGIN*2) / charSize.width;
+        rows = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / charSize.height;
+        columns = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / charSize.width;
         sessionRect.origin = NSZeroPoint;
         sessionRect.size = *size;
     } else {
-        sessionRect = NSMakeRect(0, 0, columns * charSize.width + MARGIN * 2, rows * charSize.height + VMARGIN * 2);
+        sessionRect = NSMakeRect(0, 0, columns * charSize.width + [iTermAdvancedSettingsModel terminalMargin] * 2, rows * charSize.height + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     }
 
     if ([aSession setScreenSize:sessionRect parent:self]) {

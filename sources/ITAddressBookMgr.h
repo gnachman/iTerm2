@@ -312,5 +312,6 @@ typedef NS_ENUM(NSUInteger, iTermHotKeyModifierActivation) {
 // Removes the profile from the model, removes key mappings that reference this profile, and posts a
 // kProfileWasDeletedNotification notification, then flushes the model to backing store.
 + (BOOL)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
++ (void)performBlockWithCoalescedNotifications:(void (^)())block;
 
 @end

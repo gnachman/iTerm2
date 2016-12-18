@@ -3860,6 +3860,116 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [delegate_ screenUnicodeVersion];
 }
 
+// fg=ff0080,bg=srgb:808080
+- (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
+    if ([name isEqualToString:@"preset"]) {
+        [delegate_ screenSelectColorPresetNamed:colorString];
+        return;
+    }
+    if ([colorString isEqualToString:@"default"] && [name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:nil];
+        return;
+    }
+
+    NSInteger colon = [colorString rangeOfString:@":"].location;
+    NSString *cs;
+    NSString *hex;
+    if (colon != NSNotFound && colon + 1 != colorString.length && colon != 0) {
+        cs = [colorString substringToIndex:colon];
+        hex = [colorString substringFromIndex:colon + 1];
+    } else {
+        cs = @"srgb";
+        hex = colorString;
+    }
+    NSDictionary *colorSpaces = @{ @"srgb": @"sRGBColorSpace",
+                                   @"rgb": @"genericRGBColorSpace",
+                                   @"p3": @"displayP3ColorSpace" };
+    NSColorSpace *colorSpace = [NSColorSpace sRGBColorSpace];
+    if (colorSpaces[cs]) {
+        SEL selector = NSSelectorFromString(colorSpaces[cs]);
+        if ([NSColorSpace respondsToSelector:selector]) {
+            colorSpace = [[NSColorSpace class] performSelector:selector];
+            if (!colorSpace) {
+                colorSpace = [NSColorSpace sRGBColorSpace];
+            }
+        }
+    }
+    if (!colorSpace) {
+        return;
+    }
+
+    CGFloat r, g, b;
+    if (hex.length == 6) {
+        NSScanner *scanner = [NSScanner scannerWithString:hex];
+        unsigned int rgb = 0;
+        if (![scanner scanHexInt:&rgb]) {
+            return;
+        }
+        r = ((rgb >> 16) & 0xff);
+        g = ((rgb >> 8) & 0xff);
+        b = ((rgb >> 0) & 0xff);
+    } else if (hex.length == 3) {
+        NSScanner *scanner = [NSScanner scannerWithString:hex];
+        unsigned int rgb = 0;
+        if (![scanner scanHexInt:&rgb]) {
+            return;
+        }
+        r = ((rgb >> 8) & 0xf) | ((rgb >> 4) & 0xf0);
+        g = ((rgb >> 4) & 0xf) | ((rgb >> 0) & 0xf0);
+        b = ((rgb >> 0) & 0xf) | ((rgb << 4) & 0xf0);
+    } else {
+        return;
+    }
+    CGFloat components[4] = { r / 255.0, g / 255.0, b / 255.0, 1.0 };
+    NSColor *color = [NSColor colorWithColorSpace:colorSpace
+                                       components:components
+                                            count:sizeof(components) / sizeof(*components)];
+    if (!color) {
+        return;
+    }
+
+    if ([name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:color];
+        return;
+    }
+
+    NSDictionary *names = @{ @"fg": @(kColorMapForeground),
+                             @"bg": @(kColorMapBackground),
+                             @"bold": @(kColorMapBold),
+                             @"link": @(kColorMapLink),
+                             @"selbg": @(kColorMapSelection),
+                             @"selfg": @(kColorMapSelectedText),
+                             @"curbg": @(kColorMapCursor),
+                             @"curfg": @(kColorMapCursorText),
+                             @"underline": @(kColorMapUnderline),
+
+                             @"black": @(kColorMapAnsiBlack),
+                             @"red": @(kColorMapAnsiRed),
+                             @"green": @(kColorMapAnsiGreen),
+                             @"yellow": @(kColorMapAnsiYellow),
+                             @"blue": @(kColorMapAnsiBlue),
+                             @"magenta": @(kColorMapAnsiMagenta),
+                             @"cyan": @(kColorMapAnsiCyan),
+                             @"white": @(kColorMapAnsiWhite),
+
+                             @"br_black": @(kColorMapAnsiBlack + kColorMapAnsiBrightModifier),
+                             @"br_red": @(kColorMapAnsiRed + kColorMapAnsiBrightModifier),
+                             @"br_green": @(kColorMapAnsiGreen + kColorMapAnsiBrightModifier),
+                             @"br_yellow": @(kColorMapAnsiYellow + kColorMapAnsiBrightModifier),
+                             @"br_blue": @(kColorMapAnsiBlue + kColorMapAnsiBrightModifier),
+                             @"br_magenta": @(kColorMapAnsiMagenta + kColorMapAnsiBrightModifier),
+                             @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
+                             @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
+
+    NSNumber *keyNumber = names[name];
+    if (!keyNumber) {
+        return;
+    }
+    NSInteger key = [keyNumber integerValue];
+    
+    [delegate_ screenSetColor:color forKey:key];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
