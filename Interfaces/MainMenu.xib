@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -430,10 +430,22 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="htR-tW-t3s"/>
-                                        <menuItem title="Warn before Multi-Line Paste" tag="2" id="IH2-H8-9Ao">
+                                        <menuItem title="Warn Before Multi-Line Paste" id="IH2-H8-9Ao">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="toggleMultiLinePasteWarning:" target="201" id="BeA-rG-dNT"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Limit Multi-Line Paste Warning to Shell Prompt" tag="1" id="L16-T3-OVz">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleMultiLinePasteWarning:" target="201" id="hP8-62-8Sv"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Warn Before Pasting One Line Ending in a Newline at Shell Prompt" tag="2" id="YHP-Qx-eCZ">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleMultiLinePasteWarning:" target="201" id="FcI-Al-Hhz"/>
                                             </connections>
                                         </menuItem>
                                     </items>
@@ -1056,6 +1068,12 @@ DQ
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
         <menuItem title="Item" id="Zmu-o3-jVG">
             <modifierMask key="keyEquivalentModifierMask"/>
+        </menuItem>
+        <menuItem title="Warn before Multi-Line Paste" tag="2" id="CxN-B0-8Ih">
+            <modifierMask key="keyEquivalentModifierMask"/>
+            <connections>
+                <action selector="toggleMultiLinePasteWarning:" target="201" id="qHa-Cy-m8S"/>
+            </connections>
         </menuItem>
     </objects>
 </document>

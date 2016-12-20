@@ -155,6 +155,7 @@
 + (double)slowFrameRate;
 + (BOOL)useColorfgbgFallback;
 + (BOOL)promptForPasteWhenNotAtPrompt;
++ (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
 + (BOOL)performDNSLookups;
 
 @end
