@@ -1454,7 +1454,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #endif
         title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
     }
-
+    if ((self.numberOfTabs == 1) && (self.tabs.firstObject.state & kPTYTabBellState) && !self.tabBarShouldBeVisible) {
+        title = [title stringByAppendingString:@" 🔔"];
+    }
     if (liveResize_) {
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
@@ -5618,7 +5620,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return allSubstitutions;
 }
 
-- (NSArray*)tabs {
+- (NSArray<PTYTab *> *)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
@@ -7406,6 +7408,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
+}
+
+- (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
+    if (self.numberOfTabs == 1) {
+        [self setWindowTitle];
+    }
 }
 
 #pragma mark - Toolbelt
