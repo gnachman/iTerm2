@@ -10,6 +10,7 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
@@ -62,6 +63,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     // This view is added to the font panel.
     IBOutlet NSView *_displayFontAccessoryView;
+
+    CGFloat _heightWithNonAsciiControls;
+    CGFloat _heightWithoutNonAsciiControls;
 }
 
 - (void)dealloc {
@@ -72,6 +76,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 }
 
 - (void)awakeFromNib {
+    _heightWithNonAsciiControls = self.view.frame.size.height;
+    _heightWithoutNonAsciiControls = _heightWithNonAsciiControls - _nonAsciiFontView.frame.size.height - _nonAsciiFontView.frame.origin.y;
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles)
                                                  name:kReloadAllProfiles
@@ -207,6 +214,16 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 - (void)updateNonAsciiFontViewVisibility {
     _nonAsciiFontView.hidden = ![self boolForKey:KEY_USE_NONASCII_FONT];
+    ((iTermSizeRememberingView *)self.view).originalSize = self.preferredContentSize;
+    [self.delegate profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)self.view];
+}
+
+- (NSSize)preferredContentSize {
+    if ([self boolForKey:KEY_USE_NONASCII_FONT]) {
+        return NSMakeSize(NSWidth(self.view.frame), _heightWithNonAsciiControls);
+    } else {
+        return NSMakeSize(NSWidth(self.view.frame), _heightWithoutNonAsciiControls);
+    }
 }
 
 - (void)updateFontsDescriptions {
