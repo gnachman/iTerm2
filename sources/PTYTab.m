@@ -11,6 +11,7 @@
 #import "iTermProfilePreferences.h"
 #import "MovePaneController.h"
 #import "NSColor+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
@@ -2797,10 +2798,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
            vSpacing:(double)vs {
-    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
+    [[ProfileModel sharedInstance] setObject:[font stringValue]
                                        forKey:KEY_NORMAL_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nonAsciiFont]
+    [[ProfileModel sharedInstance] setObject:[nonAsciiFont stringValue]
                                        forKey:KEY_NON_ASCII_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
     [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]

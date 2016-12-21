@@ -1041,10 +1041,13 @@ typedef struct iTermTextColorContext {
         // This method is really slow so avoid doing it when it's not
         // necessary. It is also deprecated but CoreText is extremely slow so
         // we'll keep using until Apple fixes that.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         CGContextSelectFont(ctx,
                             [[font fontName] UTF8String],
                             [font pointSize],
                             kCGEncodingMacRoman);
+#pragma clang diagnostic pop
         [_selectedFont release];
         _selectedFont = [font retain];
     }

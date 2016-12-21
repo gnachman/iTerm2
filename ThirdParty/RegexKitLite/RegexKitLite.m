@@ -1008,7 +1008,7 @@ static RKLCachedRegex *rkl_getCachedRegexSetToString(NSString *regexString, RKLR
     RKLCDelayedAssert(cachedRegex->setToString != NULL, exception, exitNow);
     cachedRegex->setToUniChar         = CFStringGetCharactersPtr(cachedRegex->setToString);
     cachedRegex->setToNeedsConversion = (cachedRegex->setToUniChar == NULL) ? 1U : 0U;
-    cachedRegex->setToIsImmutable     = (rkl_CFStringIsMutable(cachedRegex->setToString) == YES) ? 0U : 1U; // If RKL_FAST_MUTABLE_CHECK is not defined then setToIsImmutable will always be set to '0', or in other words mutable..
+    cachedRegex->setToIsImmutable     = (rkl_CFStringIsMutable(cachedRegex->setToString) == /* DISABLES CODE */ (YES)) ? 0U : 1U; // If RKL_FAST_MUTABLE_CHECK is not defined then setToIsImmutable will always be set to '0', or in other words mutable..
     cachedRegex->setToHash            = CFHash((CFTypeRef)cachedRegex->setToString);
     cachedRegex->setToRange           = NSNotFoundRange;
     cachedRegex->setToLength          = matchLength;
@@ -1866,7 +1866,10 @@ exitNow:
   if((buffer.uniChar = (UniChar *)CFStringGetCharactersPtr(buffer.string)) == NULL) {
     rkl_dtrace_addLookupFlag(lookupResultFlags, RKLConversionRequiredLookupFlag);
     if(RKL_EXPECTED((buffer.uniChar = (RKL_STRONG_REF UniChar * RKL_GC_VOLATILE)rkl_realloc((RKL_STRONG_REF void ** RKL_GC_VOLATILE)&buffer.uniChar, ((size_t)buffer.length * sizeof(UniChar)), 0UL)) == NULL, 0L)) { goto errorExit; } // Resize the buffer.
-    needToFreeBufferUniChar = rkl_collectingEnabled() ? 0U : 1U;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code"
+      needToFreeBufferUniChar = rkl_collectingEnabled() ? 0U : 1U;
+#pragma clang diagnostic pop
     CFStringGetCharacters(buffer.string, CFMakeRange(0L, buffer.length), (UniChar *)buffer.uniChar); // Convert to a UTF16 string.
   }
 
