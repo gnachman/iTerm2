@@ -134,7 +134,7 @@
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
 // the FindContext prior to calling this.
-- (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
+- (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopAt;
 
 // Returns an array of XYRange values
 - (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;

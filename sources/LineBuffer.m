@@ -680,8 +680,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     context.results = [NSMutableArray array];
 }
 
-- (void)findSubstring:(FindContext*)context stopAt:(int)stopAt
-{
+- (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopPosition {
     if (context.dir > 0) {
         // Search forwards
         if (context.absBlockNum < num_dropped_blocks) {
@@ -734,6 +733,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
     int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
+    const int stopAt = stopPosition.absolutePosition - droppedChars;
     for (ResultRange* range in context.results) {
         range->position += blockPosition;
         if (context.dir * (range->position - stopAt) > 0 ||
@@ -896,7 +896,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
                                   width:(int)width
                                      ok:(BOOL *)ok {
-    if (position.absolutePosition == [self lastPos] + droppedChars) {
+    if (position.absolutePosition == self.lastPosition.absolutePosition) {
         VT100GridCoord result;
         // If the absolute position is equal to the last position, then
         // numLinesWithWidth: will give the wrapped line number after all
