@@ -719,7 +719,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (void)profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)view {
-    [self resizeWindowForView:view animated:YES];
+    if (_tabView.selectedTabViewItem.view == view ){
+        [self resizeWindowForView:view animated:YES];
+    }
 }
 
 
