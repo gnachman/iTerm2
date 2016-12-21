@@ -1,10 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@interface LineBufferPosition : NSObject {
-    long long absolutePosition_;
-    int yOffset_;
-    BOOL extendsToEndOfLine_;
-}
+@interface LineBufferPosition : NSObject
 
 // Absolute position - bytes from start of line buffer plus total number of bytes that ever have
 // been dropped.

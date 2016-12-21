@@ -895,8 +895,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
                                   width:(int)width
-                                     ok:(BOOL *)ok
-{
+                                     ok:(BOOL *)ok {
     if (position.absolutePosition == [self lastPos] + droppedChars) {
         VT100GridCoord result;
         // If the absolute position is equal to the last position, then
@@ -958,8 +957,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return VT100GridCoordMake(0, 0);
 }
 
-- (int) firstPos
-{
+- (int)firstPos {
     int i;
     int position = 0;
     for (i = 0; i < [blocks count]; ++i) {
@@ -974,8 +972,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return position;
 }
 
-- (int) lastPos
-{
+- (int)lastPos {
     int i;
     int position = 0;
     for (i = 0; i < [blocks count]; ++i) {
