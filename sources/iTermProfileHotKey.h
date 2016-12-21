@@ -66,6 +66,11 @@
 // want to restore a defunct session.
 - (void)windowWillClose;
 
+- (void)revealForScripting;
+- (void)hideForScripting;
+- (void)toggleForScripting;
+- (BOOL)isRevealed;
+
 @end
 
 @interface iTermProfileHotKey(Internal)

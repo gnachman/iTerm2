@@ -73,6 +73,21 @@
     return [_delegate tabForSession:session];
 }
 
+- (id)handleRevealHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] revealForScripting];
+    return nil;
+}
+
+- (id)handleHideHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] hideForScripting];
+    return nil;
+}
+
+- (id)handleToggleHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] toggleForScripting];
+    return nil;
+}
+
 #pragma mark - Accessors
 
 - (NSArray *)tabs {
@@ -119,5 +134,19 @@
 - (PTYSession *)currentSession {
     return [_delegate currentSession];
 }
+
+- (BOOL)isHotkeyWindow {
+    return [_delegate isHotKeyWindow];
+}
+
+- (NSString *)hotkeyWindowProfile {
+    if ([_delegate isHotKeyWindow]) {
+        return [[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] profile] objectForKey:KEY_NAME];
+    } else {
+        return nil;
+    }
+}
+
+
 
 @end

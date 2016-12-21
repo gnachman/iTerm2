@@ -12,3 +12,6 @@
 @interface iTermNewWindowCommand : NSScriptCommand
 
 @end
+
+@interface iTermNewHotkeyWindowCommand : NSScriptCommand
+@end
