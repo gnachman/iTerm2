@@ -142,14 +142,6 @@
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord width:(int)width offset:(int)offset;
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position width:(int)width ok:(BOOL *)ok;
 
-// Returns the position at the stat of the buffer
-// DEPRECATED
-- (int)firstPos DEPRECATED_ATTRIBUTE;
-
-// Returns the position at the end of the buffer
-// DEPRECATED
-- (int)lastPos DEPRECATED_ATTRIBUTE;
-
 - (LineBufferPosition *)firstPosition;
 - (LineBufferPosition *)lastPosition;
 

@@ -957,35 +957,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return VT100GridCoordMake(0, 0);
 }
 
-- (int)firstPos {
-    int i;
-    int position = 0;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-        if (![block isEmpty]) {
-            position += [block startOffset];
-            break;
-        } else {
-            position += [block rawSpaceUsed];
-        }
-    }
-    return position;
-}
-
-- (int)lastPos {
-    int i;
-    int position = 0;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-        if (![block isEmpty]) {
-            position += [block rawSpaceUsed];
-        } else {
-            position += [block rawSpaceUsed];
-        }
-    }
-    return position;
-}
-
 - (LineBufferPosition *)firstPosition {
     LineBufferPosition *position = [LineBufferPosition position];
     position.absolutePosition = droppedChars;
