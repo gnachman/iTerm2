@@ -14,6 +14,7 @@
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
+#import "PTYFontInfo.h"
 
 // Tag on button to open font picker for non-ascii font.
 static NSInteger kNonAsciiFontButtonTag = 1;
@@ -41,6 +42,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_nonasciiAntiAliased;
     IBOutlet NSPopUpButton *_thinStrokes;
     IBOutlet NSButton *_unicodeVersion9;
+    IBOutlet NSButton *_asciiLigatures;
+    IBOutlet NSButton *_nonAsciiLigatures;
 
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
@@ -101,6 +104,14 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_asciiLigatures
+                    key:KEY_ASCII_LIGATURES
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_nonAsciiLigatures
+                    key:KEY_NON_ASCII_LIGATURES
                    type:kPreferenceInfoTypeCheckbox];
 
     PreferenceInfo *info = [self defineControl:_ambiguousIsDoubleWidth
@@ -227,6 +238,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 - (void)updateWarnings {
     [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
     [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
+    _asciiLigatures.hidden = !self.normalFont.it_supportsLigatures;
+    _nonAsciiLigatures.hidden = !self.nonAsciiFont.it_supportsLigatures;
 }
 
 

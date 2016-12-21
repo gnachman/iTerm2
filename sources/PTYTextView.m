@@ -599,6 +599,16 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
+- (void)setAsciiLigatures:(BOOL)asciiLigatures {
+    _asciiLigatures = asciiLigatures;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setNonAsciiLigatures:(BOOL)nonAsciiLigatures {
+    _nonAsciiLigatures = nonAsciiLigatures;
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setUseItalicFont:(BOOL)italicFlag
 {
     _useItalicFont = italicFlag;
@@ -1106,6 +1116,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
     _drawingHelper.boldAllowed = _useBoldFont;
     _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
+    _drawingHelper.asciiLigatures = _asciiLigatures;
+    _drawingHelper.nonAsciiLigatures = _nonAsciiLigatures;
     
     const NSRect *rectArray;
     NSInteger rectCount;

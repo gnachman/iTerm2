@@ -36,3 +36,7 @@
 - (PTYFontInfo *)computedBoldItalicVersion;
 
 @end
+
+@interface NSFont(PTYFontInfo)
+- (BOOL)it_supportsLigatures;
+@end
