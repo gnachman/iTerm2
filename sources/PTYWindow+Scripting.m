@@ -2,6 +2,7 @@
 #import "DebugLogging.h"
 #import "iTermApplication.h"
 #import "iTermController.h"
+#import "iTermHotKeyController.h"
 #import "iTermScriptingWindow.h"
 #import "NSArray+iTerm.h"
 #import "PTYSession.h"

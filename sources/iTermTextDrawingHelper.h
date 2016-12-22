@@ -259,6 +259,10 @@
 // Version of unicode. Determines character widths.
 @property(nonatomic, assign) NSInteger unicodeVersion;
 
+// Are ligatures allowed?
+@property(nonatomic, assign) BOOL asciiLigatures;
+@property(nonatomic, assign) BOOL nonAsciiLigatures;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

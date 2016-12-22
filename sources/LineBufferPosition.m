@@ -1,6 +1,10 @@
 #import "LineBufferPosition.h"
 
-@implementation LineBufferPosition
+@implementation LineBufferPosition {
+    long long absolutePosition_;
+    int yOffset_;
+    BOOL extendsToEndOfLine_;
+}
 
 @synthesize absolutePosition = absolutePosition_;
 @synthesize yOffset = yOffset_;

@@ -774,8 +774,6 @@ exit:
     [km setDictionary:settings];
 
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
-
-#warning Update touch bar
 }
 
 + (NSArray *)presetKeyMappingsNames {

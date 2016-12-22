@@ -1390,9 +1390,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [currentGrid_ markAllCharsDirty:YES];
 }
 
-- (void)storeLastPositionInLineBufferAsFindContextSavedPosition
-{
-    savedFindContextAbsPos_ = [linebuffer_ absPositionForPosition:[linebuffer_ lastPos]];
+- (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
+    savedFindContextAbsPos_ = [[linebuffer_ lastPosition] absolutePosition];
 }
 
 - (void)restoreSavedPositionToFindContext:(FindContext *)context
@@ -4441,11 +4440,11 @@ static void SwapInt(int *a, int *b) {
                                toLineBuffer:linebuffer_];
 
     // Search one block.
-    int stopAt;
+    LineBufferPosition *stopAt;
     if (context.dir > 0) {
-        stopAt = [linebuffer_ lastPos];
+        stopAt = [linebuffer_ lastPosition];
     } else {
-        stopAt = [linebuffer_ firstPos];
+        stopAt = [linebuffer_ firstPosition];
     }
 
     struct timeval begintime;

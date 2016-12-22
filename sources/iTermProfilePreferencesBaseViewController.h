@@ -9,10 +9,13 @@
 #import "iTermPreferencesBaseViewController.h"
 #import "ProfileModel.h"
 
+@class iTermSizeRememberingView;
+
 @protocol iTermProfilePreferencesBaseViewControllerDelegate <NSObject>
 
 - (Profile *)profilePreferencesCurrentProfile;
 - (ProfileModel *)profilePreferencesCurrentModel;
+- (void)profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)view;
 
 @end
 

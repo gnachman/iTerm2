@@ -179,6 +179,28 @@
         <cocoa key="currentSession" />
       </property>
 
+      <property name="is hotkey window" code="ihkw" type="boolean"
+          description="Whether the window is a hotkey window.">
+          <cocoa key="isHotkeyWindow"/>
+      </property>
+
+      <property name="hotkey window profile" code="hkwp" type="text"
+          description="If the window is a hotkey window, this gives the name of the profile that created the window. ">
+          <cocoa key="hotkeyWindowProfile"/>
+      </property>
+
+      <responds-to command="reveal hotkey window">
+        <cocoa method="handleRevealHotkeyWindowCommand:"/>
+      </responds-to>
+
+      <responds-to command="hide hotkey window">
+        <cocoa method="handleHideHotkeyWindowCommand:"/>
+      </responds-to>
+
+      <responds-to command="toggle hotkey window">
+        <cocoa method="handleToggleHotkeyWindowCommand:"/>
+      </responds-to>
+
       <!-- compatibility -->
       <property name="position" description="The position of the window, relative to the upper left corner of the screen." code="ppos" type="point">
         <cocoa key="scriptPosition" />
@@ -272,6 +294,16 @@
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
+
+      <result type="window" description="The window that was created"/>
+    </command>
+
+    <command name="create hotkey window with profile" code="Itrmnhwp"
+      description="Create a hotkey window">
+      <cocoa class="iTermNewHotkeyWindowCommand" />
+      <direct-parameter description="The profile name">
+        <type type="text"/>
+      </direct-parameter>
 
       <result type="window" description="The window that was created"/>
     </command>
@@ -401,7 +433,25 @@
       </parameter>
       <result type="text" description="The variable's value"/>
     </command>
-    
+
+    <command name="reveal hotkey window" code="Itrmrhkw"
+        description="Reveals a hotkey window. Only to be called on windows that are hotkey windows.">
+        <direct-parameter type="specifier"
+        description="The window in which to create a new tab"/>
+    </command>
+
+    <command name="hide hotkey window" code="Itrmhhkw"
+        description="Hides a hotkey window. Only to be called on windows that are hotkey windows.">
+        <direct-parameter type="specifier"
+        description="The window in which to create a new tab"/>
+    </command>
+
+    <command name="toggle hotkey window" code="Itrmthkw"
+        description="Toggles the visibility of a hotkey window. Only to be called on windows that are hotkey windows.">
+        <direct-parameter type="specifier"
+        description="The window in which to create a new tab"/>
+    </command>
+
     <value-type name="RGB color" code="cRGB">
       <cocoa class="NSColor"/>
     </value-type>

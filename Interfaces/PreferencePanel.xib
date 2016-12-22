@@ -1459,6 +1459,7 @@ DQ
             <connections>
                 <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
                 <outlet property="_asciiAntiAliased" destination="4782" id="P5t-r0-fdU"/>
+                <outlet property="_asciiLigatures" destination="mlk-a6-xcL" id="FMp-la-RCY"/>
                 <outlet property="_blinkAllowed" destination="5148" id="4S0-LC-xMv"/>
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
@@ -1466,6 +1467,7 @@ DQ
                 <outlet property="_horizontalSpacing" destination="3081" id="wMo-9b-PcC"/>
                 <outlet property="_nonAsciiFontDescription" destination="4777" id="uzs-2L-0L5"/>
                 <outlet property="_nonAsciiFontView" destination="15P-ty-S1w" id="zin-qX-W0C"/>
+                <outlet property="_nonAsciiLigatures" destination="6Fq-pl-5nd" id="x1S-bR-tKg"/>
                 <outlet property="_nonasciiAntiAliased" destination="4783" id="0xN-uO-bEh"/>
                 <outlet property="_nonasciiFontWantsAntialiasing" destination="IpC-rY-rHI" id="6PY-Kl-YD9"/>
                 <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
@@ -2466,8 +2468,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button id="4782">
-                    <rect key="frame" x="18" y="123" width="106" height="18"/>
+                <button misplaced="YES" id="4782">
+                    <rect key="frame" x="18" y="123" width="95" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4825">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2567,8 +2569,8 @@ DQ
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button id="4783">
-                            <rect key="frame" x="-2" y="-1" width="106" height="18"/>
+                        <button misplaced="YES" id="4783">
+                            <rect key="frame" x="-2" y="-1" width="95" height="18"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <buttonCell key="cell" type="check" title="Anti-aliased" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4824">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2591,21 +2593,33 @@ DQ
                                 <outlet property="nextKeyView" destination="5126" id="5253"/>
                             </connections>
                         </button>
-                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="IpC-rY-rHI">
-                            <rect key="frame" x="132" y="0.0" width="262" height="17"/>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" id="IpC-rY-rHI">
+                            <rect key="frame" x="93" y="0.0" width="175" height="17"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Anti-aliasing is recommended for this font." id="75W-74-b8h">
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="(recommended for this font)" id="75W-74-b8h">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
+                        <button misplaced="YES" id="6Fq-pl-5nd">
+                            <rect key="frame" x="299" y="0.0" width="106" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="Use Ligatures" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="XXg-RS-7af">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="lhd-u6-xr5" id="hlZ-ug-kcp"/>
+                                <outlet property="nextKeyView" destination="4774" id="xkY-rc-dok"/>
+                            </connections>
+                        </button>
                     </subviews>
                 </customView>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="QMj-Rf-IwZ">
-                    <rect key="frame" x="152" y="124" width="262" height="17"/>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" id="QMj-Rf-IwZ">
+                    <rect key="frame" x="113" y="124" width="175" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Anti-aliasing is recommended for this font." id="fZK-Jv-MhF">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="(recommended for this font)" id="fZK-Jv-MhF">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -2649,6 +2663,18 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="lhd-u6-xr5" id="c3k-nj-VMp"/>
                         <outlet property="nextKeyView" destination="4765" id="uIt-qC-lLY"/>
+                    </connections>
+                </button>
+                <button misplaced="YES" id="mlk-a6-xcL">
+                    <rect key="frame" x="319" y="122" width="106" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Use Ligatures" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="EEt-Fl-Kf8">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="QCa-ZG-UZF"/>
+                        <outlet property="nextKeyView" destination="4774" id="1Qu-x3-jY5"/>
                     </connections>
                 </button>
             </subviews>

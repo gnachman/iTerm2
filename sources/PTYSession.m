@@ -44,6 +44,7 @@
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
@@ -2881,6 +2882,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    inProfile:aDict]];
     self.thinStrokes = [iTermProfilePreferences intForKey:KEY_THIN_STROKES inProfile:aDict];
 
+    self.asciiLigatures = [iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:aDict];
+    self.nonAsciiLigatures = [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:aDict];
+
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
 
@@ -3354,6 +3358,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _textview.thinStrokes = thinStrokes;
+}
+
+- (void)setAsciiLigatures:(BOOL)asciiLigatures {
+    _textview.asciiLigatures = asciiLigatures;
+}
+
+- (BOOL)asciiLigatures {
+    return _textview.asciiLigatures;
+}
+
+- (void)setNonAsciiLigatures:(BOOL)nonAsciiLigatures {
+    _textview.nonAsciiLigatures = nonAsciiLigatures;
+}
+
+- (BOOL)nonAsciiLigatures {
+    return _textview.nonAsciiLigatures;
 }
 
 - (BOOL)useItalicFont
@@ -3920,8 +3940,8 @@ ITERM_WEAKLY_REFERENCEABLE
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
-        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [ITAddressBookMgr descFromFont:font],
-                                                 KEY_NON_ASCII_FONT: [ITAddressBookMgr descFromFont:nonAsciiFont] }];
+        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [font stringValue],
+                                                 KEY_NON_ASCII_FONT: [nonAsciiFont stringValue] }];
         // Set the font in the bookmark dictionary
 
         // Update the model's copy of the bookmark.

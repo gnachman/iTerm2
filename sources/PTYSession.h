@@ -319,6 +319,8 @@ typedef enum {
 @property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
+@property(nonatomic, assign) BOOL asciiLigatures;
+@property(nonatomic, assign) BOOL nonAsciiLigatures;
 @property(nonatomic, assign) BOOL useItalicFont;
 
 @property(nonatomic, readonly) BOOL logging;
