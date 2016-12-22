@@ -1701,6 +1701,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return YES;
 }
 
+- (BOOL)zippy {
+    return (!(_asciiLigaturesAvailable && _asciiLigatures) &&
+            !(_nonAsciiLigatures) &&
+            [iTermAdvancedSettingsModel zippyTextDrawing]);
+}
+
 - (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(screen_char_t *)line
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
@@ -1728,6 +1734,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     };
     NSDictionary *previousImageAttributes = nil;
     iTermMutableAttributedStringBuilder *builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
+    builder.zippy = self.zippy;
     builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
     iTermCharacterAttributes characterAttributes = { 0 };
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
@@ -1821,6 +1828,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                 [attributedStrings addObject:builtString];
             }
             builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
+            builder.zippy = self.zippy;
             builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
         }
         ++segmentLength;

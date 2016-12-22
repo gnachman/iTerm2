@@ -164,5 +164,6 @@
 + (BOOL)zeroWidthSpaceAdvancesCursor;
 + (BOOL)darkThemeHasBlackTitlebar;
 + (BOOL)fontChangeAffectsBroadcastingSessions;
++ (BOOL)zippyTextDrawing;
 
 @end
