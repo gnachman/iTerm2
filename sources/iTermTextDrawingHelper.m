@@ -993,6 +993,7 @@ typedef struct iTermTextColorContext {
         start += singlePartAttributedString.length;
         int numCellsDrawn;
         if ([singlePartAttributedString isKindOfClass:[NSAttributedString class]]) {
+            NSLog(@"XXX Drawing NSAttributedString");
             numCellsDrawn = [self drawSinglePartAttributedString:(NSAttributedString *)singlePartAttributedString
                                                          atPoint:point
                                                           origin:origin
@@ -1000,6 +1001,7 @@ typedef struct iTermTextColorContext {
                                                        inContext:ctx
                                                  backgroundColor:backgroundColor];
         } else {
+            NSLog(@"XXX Drawing fast path string");
             NSPoint offsetPoint = point;
             offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
             numCellsDrawn = [self drawFastPathString:(iTermCheapAttributedString *)singlePartAttributedString
@@ -1067,6 +1069,7 @@ typedef struct iTermTextColorContext {
                                            glyphs,
                                            cheapString.length);
     if (!ok) {
+        NSLog(@"XXX drawFastPathString says it's not ok");  
         NSString *string = [NSString stringWithCharacters:cheapString.characters
                                                    length:cheapString.length];
         [self drawTextOnlyAttributedStringWithoutUnderline:[NSAttributedString attributedStringWithString:string
@@ -1077,22 +1080,32 @@ typedef struct iTermTextColorContext {
                                            graphicsContext:[NSGraphicsContext currentContext]
                                                      smear:NO];
         return cheapString.length;
+    } else {
+        NSLog(@"XXX drawFastPathString says it's ok");  
     }
     NSColor *const color = cheapString.attributes[NSForegroundColorAttributeName];
     const BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
     const BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
     const BOOL antiAlias = [cheapString.attributes[iTermAntiAliasAttribute] boolValue];
 
+    NSLog(@"XXX drawFastPathString fakeItalic=%@ fakeBold=%@ antiAlias=%@",
+        fakeItalic ? @"true" : @"false",
+        fakeBold ? @"true" : @"false",
+        antiAlias ? @"true" : @"false");
+
     CGContextSetShouldAntialias(ctx, antiAlias);
 
     int savedFontSmoothingStyle = 0;
     BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
     if (useThinStrokes) {
+        NSLog(@"XXX drawFastPathString uses thin strokes");
         CGContextSetShouldSmoothFonts(ctx, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
         savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
         CGContextSetFontSmoothingStyle(ctx, 16);
+    } else {
+        NSLog(@"XXX drawFastPathString does not use thin strokes");
     }
 
     size_t numCodes = cheapString.length;

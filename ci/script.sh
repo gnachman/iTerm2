@@ -2,10 +2,18 @@
 
 set -euo pipefail
 
-xcrun xcodebuild build test \
+xcrun xcodebuild build \
   NSUnbufferedIO=YES \
   -workspace iTerm2.xcworkspace \
   -scheme iTerm2 \
   -sdk macosx \
   CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= \
     | xcpretty -c -f `xcpretty-travis-formatter`
+
+xcrun xcodebuild test \
+  -only-testing:iTerm2XCTests/PTYTextViewTest/testBasicDraw \
+  NSUnbufferedIO=YES \
+  -workspace iTerm2.xcworkspace \
+  -scheme iTerm2 \
+  -sdk macosx \
+  CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=

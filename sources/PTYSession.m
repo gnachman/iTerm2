@@ -6094,7 +6094,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     iTermTextExtractor *textExtractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
     NSString *word = [textExtractor fastWordAt:VT100GridCoordMake(_screen.cursorX - 1, _screen.cursorY + _screen.numberOfScrollbackLines - 1)];
-    [[_delegate realParentWindow] currentSessionWordAtCursorDidBecome:word];
 }
 
 - (void)textViewBackgroundColorDidChange {
