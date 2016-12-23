@@ -27,4 +27,6 @@ int iTermFileDescriptorServerAccept(int socketFd);
 // true. Takes care of EINTR. Return value is number of readable FDs.
 int iTermSelect(int *fds, int count, int *results);
 
+void iTermFileDescriptorServerLog(char *format, ...);
+
 #endif  // __ITERM_FILE_DESCRIPTOR_SERVER_H
