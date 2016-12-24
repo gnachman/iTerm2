@@ -1559,6 +1559,8 @@
 		A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A310D186E2EDA007F550F /* PopupEntry.h */; };
 		A68A3114186E2F14007F550F /* PopupWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3112186E2F14007F550F /* PopupWindow.h */; };
 		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
+		A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */; };
+		A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E332C1DE6AFC6003F1D8E /* iTermTouchBarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
@@ -3343,6 +3345,8 @@
 		A68A3113186E2F14007F550F /* PopupWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupWindow.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3117186E2F54007F550F /* PopupModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PopupModel.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; tabWidth = 4; };
+		A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys.png"; path = "images/Touch Bar Function Keys.png"; sourceTree = "<group>"; };
+		A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys@2x.png"; path = "images/Touch Bar Function Keys@2x.png"; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
 		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
 		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
@@ -4303,6 +4307,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */,
+				A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */,
 				A68E333D1DE79284003F1D8E /* Color Preset Touch Bar Icon.png */,
 				A68E333E1DE79284003F1D8E /* Color Preset Touch Bar Icon@2x.png */,
 				A68E33391DE78D08003F1D8E /* Man Page Touch Bar Icon.png */,
@@ -7195,6 +7201,7 @@
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
+				A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */,
 				1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
 				A68E33361DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
@@ -7282,6 +7289,7 @@
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
+				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
 				1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */,
 				A6339DDC1D232DF2000BAD78 /* StatusItemAlt@2x.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,

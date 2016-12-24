@@ -2272,6 +2272,10 @@ static const int kMaxScreenRows = 4096;
     if (command.length != 1) {
         return;
     }
+    // <A>prompt<B>ls -l
+    // <C>output 1
+    // output 2<D>
+    // <A>prompt<B>
     switch ([command characterAtIndex:0]) {
         case 'A':
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
