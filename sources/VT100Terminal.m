@@ -2159,6 +2159,17 @@ static const int kMaxScreenRows = 4096;
             NSString *colorString = [part substringFromIndex:equal + 1];
             [delegate_ terminalSetColorNamed:name to:colorString];
         }
+    } else if ([key isEqualToString:@"SetKeyLabel"]) {
+        NSInteger i = [value rangeOfString:@"="].location;
+        if (i != NSNotFound && i > 0 && i + 1 < value.length) {
+            NSString *keyName = [value substringToIndex:i];
+            NSString *label = [value substringFromIndex:i + 1];
+            [delegate_ terminalSetLabel:label forKey:keyName];
+        }
+    } else if ([key isEqualToString:@"PushKeyLabels"]) {
+        [delegate_ terminalPushKeyLabels];
+    } else if ([key isEqualToString:@"PopKeyLabels"]) {
+        [delegate_ terminalPopKeyLabels];
     }
 }
 

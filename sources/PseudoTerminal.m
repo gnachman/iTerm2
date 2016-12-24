@@ -7150,6 +7150,7 @@ ITERM_WEAKLY_REFERENCEABLE
                           iTermTouchBarIdentifierAutocomplete ];
         ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
         self.touchBar.customizationAllowedItemIdentifiers = ids;
+        [self updateTouchBarFunctionKeyLabels];
     }
 }
 
@@ -7820,6 +7821,43 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
+}
+
+- (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
+    [self updateTouchBarFunctionKeyLabels];
+}
+
+- (void)updateTouchBarFunctionKeyLabels {
+    if (!IsTouchBarAvailable()) {
+        return;
+    }
+
+    NSTouchBarItem *item = [self.touchBar itemForIdentifier:iTermTouchBarFunctionKeysScrollView];
+    NSScrollView *scrollView = (NSScrollView *)item.view;
+    [self updateTouchBarFunctionKeyLabelsInScrollView:scrollView];
+
+    NSPopoverTouchBarItem *popoverItem = [self.touchBar itemForIdentifier:iTermTouchBarIdentifierFunctionKeys];
+    NSTouchBar *popoverTouchBar = popoverItem.popoverTouchBar;
+    item = [popoverTouchBar itemForIdentifier:iTermTouchBarFunctionKeysScrollView];
+    scrollView = (NSScrollView *)item.view;
+    [self updateTouchBarFunctionKeyLabelsInScrollView:scrollView];
+}
+
+- (void)updateTouchBarFunctionKeyLabelsInScrollView:(NSScrollView *)scrollView {
+    if (!scrollView) {
+        return;
+    }
+    NSView *documentView = scrollView.documentView;
+    NSInteger n = 1;
+    for (iTermTouchBarButton *button in [documentView subviews]) {
+        if (![button isKindOfClass:[iTermTouchBarButton class]]) {
+            continue;
+        }
+        NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
+        NSString *customLabel = self.currentSession.keyLabels[label];
+        button.title = customLabel ?: label;
+        n++;
+    }
 }
 
 #pragma mark - Toolbelt
