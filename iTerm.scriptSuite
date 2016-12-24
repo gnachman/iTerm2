@@ -322,6 +322,15 @@
 					<key>Type</key>
 					<string>NSString</string>
 				</dict>
+				<key>newline</key>
+				<dict>
+					<key>AppleEventCode</key>
+					<string>iTWn</string>
+					<key>Optional</key>
+					<string>YES</string>
+					<key>Type</key>
+					<string>NSNumber&lt;Bool&gt;</string>
+				</dict>
 			</dict>
 			<key>CommandClass</key>
 			<string>NSScriptCommand</string>

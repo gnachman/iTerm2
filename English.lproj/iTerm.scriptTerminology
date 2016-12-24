@@ -258,6 +258,13 @@
 					<key>Name</key>
 					<string>text</string>
 				</dict>
+				<key>newline</key>
+				<dict>
+					<key>Description</key>
+					<string>If newline should be appended to text</string>
+					<key>Name</key>
+					<string>newline</string>
+				</dict>
 			</dict>
 			<key>Description</key>
 			<string>Writes text or file contents into a session</string>

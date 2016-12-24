@@ -4167,15 +4167,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *contentsOfFile = [args objectForKey:@"contentsOfFile"];
     // optional argument follows (might be nil):
     NSString *text = [args objectForKey:@"text"];
+    BOOL newlineSpecified = ( [args objectForKey:@"newline"] ? YES : NO );
+    BOOL newline = ( newlineSpecified ? [[args objectForKey:@"newline"] boolValue] : YES );
     NSData *data = nil;
     NSString *aString = nil;
 
     if (text != nil) {
-        if ([text characterAtIndex:[text length]-1]==' ') {
-            data = [text dataUsingEncoding:[TERMINAL encoding]];
+        if (newlineSpecified) {
+            if (newline) {
+                aString = [NSString stringWithFormat:@"%@\n", text];
+                data = [aString dataUsingEncoding:[TERMINAL encoding]];
+            } else {
+                data = [text dataUsingEncoding:[TERMINAL encoding]];
+            }
         } else {
-            aString = [NSString stringWithFormat:@"%@\n", text];
-            data = [aString dataUsingEncoding:[TERMINAL encoding]];
+            // Use old trailing-space method
+            if ([text characterAtIndex:[text length]-1]==' ') {
+                data = [text dataUsingEncoding:[TERMINAL encoding]];
+            } else {
+                aString = [NSString stringWithFormat:@"%@\n", text];
+                data = [aString dataUsingEncoding:[TERMINAL encoding]];
+            }
         }
     }
 
