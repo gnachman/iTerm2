@@ -3997,6 +3997,22 @@ ITERM_WEAKLY_REFERENCEABLE
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded];
+
+    NSInteger darkCount = 0;
+    NSInteger lightCount = 0;
+    for (PTYSession *session in tab.sessions) {
+        if ([[session.colorMap colorForKey:kColorMapBackground] perceivedBrightness] < 0.5) {
+            darkCount++;
+        } else {
+            lightCount++;
+        }
+    }
+    if (lightCount > darkCount) {
+        // Matches bottom line color for tab bar
+        _contentView.color = [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
+    } else {
+        _contentView.color = [NSColor windowBackgroundColor];
+    }
 }
 
 - (void)notifyTmuxOfTabChange {
