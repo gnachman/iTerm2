@@ -396,7 +396,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
+            return (mask |
+                    NSTitledWindowMask |
+                    NSClosableWindowMask |
+                    NSMiniaturizableWindowMask |
+                    NSResizableWindowMask |
+                    NSTexturedBackgroundWindowMask |
+                    NSFullSizeContentViewWindowMask);
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return mask | NSBorderlessWindowMask;
@@ -611,7 +617,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [myWindow setFrame:initialFrame display:NO];
     }
 
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
+    [myWindow setHasShadow:((windowType == WINDOW_TYPE_NORMAL) || (windowType == WINDOW_TYPE_NO_TITLE_BAR))];
 
     DLog(@"Create window %@", myWindow);
 
@@ -659,6 +665,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             // TODO: Why is this here?
             self.window.bottomCornerRounded = NO;
         }
+    }
+    
+    if (windowType == WINDOW_TYPE_NO_TITLE_BAR) {
+        [[self window] setTitlebarAppearsTransparent:YES];
+        [[[self window] standardWindowButton:NSWindowCloseButton].superview.superview setHidden:YES];
     }
 
     [self updateTabBarStyle];
