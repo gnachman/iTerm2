@@ -3859,6 +3859,18 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [delegate_ screenUnicodeVersion];
 }
 
+- (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
+    [delegate_ screenSetLabel:label forKey:keyName];
+}
+
+- (void)terminalPushKeyLabels {
+    [delegate_ screenPushKeyLabels];
+}
+
+- (void)terminalPopKeyLabels {
+    [delegate_ screenPopKeyLabels];
+}
+
 // fg=ff0080,bg=srgb:808080
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
     if ([name isEqualToString:@"preset"]) {

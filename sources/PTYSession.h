@@ -183,6 +183,8 @@ typedef enum {
 // The background color changed.
 - (void)sessionBackgroundColorDidChange:(PTYSession *)session;
 
+- (void)sessionKeyLabelsDidChange:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -426,6 +428,8 @@ typedef enum {
 
 // If we want to show quicklook this will not be nil.
 @property(nonatomic, readonly) iTermQuickLookController *quickLookController;
+
+@property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
 
 #pragma mark - methods
 

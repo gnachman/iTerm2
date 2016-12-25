@@ -405,6 +405,10 @@ static const NSUInteger kMaxHosts = 100;
     
     // Current unicode version.
     NSInteger _unicodeVersion;
+
+    // Touch bar labels for function keys.
+    NSMutableDictionary<NSString *, NSString *> *_keyLabels;
+    NSMutableArray<NSMutableDictionary<NSString *, NSString *> *> *_keyLabelsStack;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -565,7 +569,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_jobName release];
     [_automaticProfileSwitcher release];
     [_throughputEstimator release];
-
+    [_keyLabels release];
+    [_keyLabelsStack release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -7559,6 +7564,31 @@ ITERM_WEAKLY_REFERENCEABLE
         unicodeVersion != [iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION inProfile:self.profile]) {
         [self setSessionSpecificProfileValues:@{ KEY_UNICODE_VERSION: @(unicodeVersion) }];
     }
+}
+
+- (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName {
+    if (!_keyLabels) {
+        _keyLabels = [[NSMutableDictionary alloc] init];
+    }
+    _keyLabels[keyName] = [[label copy] autorelease];
+    [_delegate sessionKeyLabelsDidChange:self];
+}
+
+- (void)screenPushKeyLabels {
+    if (!_keyLabels) {
+        return;
+    }
+    if (!_keyLabelsStack) {
+        _keyLabelsStack = [[NSMutableArray alloc] init];
+    }
+    [_keyLabelsStack addObject:[_keyLabels copy]];
+}
+
+- (void)screenPopKeyLabels {
+    [_keyLabels release];
+    _keyLabels = _keyLabelsStack.lastObject;
+    [_keyLabelsStack removeLastObject];
+    [_delegate sessionKeyLabelsDidChange:self];
 }
 
 #pragma mark - Announcements

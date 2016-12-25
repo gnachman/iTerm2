@@ -372,4 +372,8 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)value;
 - (NSInteger)terminalUnicodeVersion;
 
+// Touch bar
+- (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName;
+- (void)terminalPushKeyLabels;
+- (void)terminalPopKeyLabels;
 @end

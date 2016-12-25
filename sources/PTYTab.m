@@ -4665,4 +4665,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)sessionKeyLabelsDidChange:(PTYSession *)session {
+    [_delegate tabKeyLabelsDidChangeForSession:session];
+}
+
 @end
