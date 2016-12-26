@@ -88,20 +88,6 @@
 #include "iTermFileDescriptorClient.h"
 #include <sys/stat.h>
 #include <unistd.h>
-@interface MyView : NSView
-@end
-
-@implementation MyView
-
-- (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor redColor] set];
-    NSRectFill(NSMakeRect(0, 0, 100, 100));
-
-    [[NSColor clearColor] set];
-    NSRectFill(NSMakeRect(50, 50, 100, 100));
-}
-
-@end
 
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
@@ -503,34 +489,7 @@ static BOOL hasBecomeActive = NO;
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
 }
 
-- (void)wtf {
-        NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1000, 1000)
-                                                       styleMask:(NSResizableWindowMask | NSTitledWindowMask | NSFullSizeContentViewWindowMask)
-                                                         backing:NSBackingStoreBuffered
-                                                           defer:NO
-                                                          screen:[NSScreen mainScreen]];
-    window.titlebarAppearsTransparent = YES;
-    window.titleVisibility = NSWindowTitleHidden;
-    window.opaque = NO;
-    window.backgroundColor = [NSColor clearColor];
-    [window makeKeyAndOrderFront:nil];
-
-    CALayer *rootLayer = [CALayer layer];
-
-    //Set the root layer's background color to black
-    rootLayer.backgroundColor = CGColorGetConstantColor(kCGColorClear);
-
-    NSView *layerView = [[NSView alloc] initWithFrame:window.contentView.bounds];
-    layerView.layer = rootLayer;
-    layerView.wantsLayer = YES;
-    [window.contentView addSubview:layerView];
-
-    MyView *v = [[MyView alloc] initWithFrame:window.contentView.bounds];
-    [layerView addSubview:v];
-
-}
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    [self wtf];
     [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;

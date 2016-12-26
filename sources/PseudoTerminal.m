@@ -600,8 +600,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                               styleMask:(styleMask | NSFullSizeContentViewWindowMask)
                                                 backing:NSBackingStoreBuffered
                                                   defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
-    myWindow.titleVisibility = NSWindowTitleHidden;
-    myWindow.titlebarAppearsTransparent = YES;
+    if (windowType == WINDOW_TYPE_NO_TITLE_BAR) {
+        myWindow.titleVisibility = NSWindowTitleHidden;
+        myWindow.titlebarAppearsTransparent = YES;
+    }
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -4226,7 +4228,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         // Draw over where the tab bar would usually be.
         [viewImage lockFocus];
-        [[NSColor clearColor] set];
+        [[NSColor windowBackgroundColor] set];
         if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             tabFrame.origin.y += viewRect.size.height;
         }
@@ -4576,6 +4578,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
+#warning TODO: Draw border differently (see other todo)
     [self.window setBackgroundColor:[NSColor clearColor]];
     if (IsYosemiteOrLater()) {
         if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
@@ -4613,7 +4616,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)fillPath:(NSBezierPath*)path {
     if ([_contentView.tabBarControl isHidden] && ![self anyFullScreen]) {
-        [[NSColor clearColor] set];
+        [[NSColor windowBackgroundColor] set];
         [path fill];
         [[NSColor darkGrayColor] set];
         [path stroke];

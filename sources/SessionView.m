@@ -22,21 +22,6 @@ static const double kTitleHeight = 22;
 // Last time any window was resized TODO(georgen):it would be better to track per window.
 static NSDate* lastResizeDate_;
 
-@interface MyClipView  :NSClipView
-@end
-
-@implementation MyClipView
-
-- (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor clearColor] set];
-    NSRectFill(dirtyRect);
-}
-
-- (BOOL)isOpaque {
-    return NO;
-}
-
-@end
 @interface SessionView () <iTermAnnouncementDelegate>
 @property(nonatomic, retain) PTYScrollView *scrollview;
 @end
@@ -110,7 +95,7 @@ static NSDate* lastResizeDate_;
         dispatch_async(dispatch_get_main_queue(), ^{
             _scrollview.drawsBackground = NO;
         });
-        _scrollview.contentView = [[MyClipView alloc] initWithFrame:_scrollview.contentView.frame];
+#warning TODO: I noticed that cmd-U now requires setNeedsDisplay: on PTYTextView.
         _scrollview.contentView.backgroundColor = [NSColor clearColor];
 
         [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
