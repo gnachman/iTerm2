@@ -395,12 +395,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return mask | NSBorderlessWindowMask;
 
+        case WINDOW_TYPE_NO_TITLE_BAR:
         default:
             return (mask |
                     NSTitledWindowMask |
@@ -598,9 +597,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermTerminalWindow *myWindow;
     Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) ? [iTermPanel class] : [iTermWindow class];
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
-                                              styleMask:styleMask
+                                              styleMask:(styleMask | NSFullSizeContentViewWindowMask)
                                                 backing:NSBackingStoreBuffered
                                                   defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
+    if (windowType == WINDOW_TYPE_NO_TITLE_BAR) {
+        myWindow.titleVisibility = NSWindowTitleHidden;
+        myWindow.titlebarAppearsTransparent = YES;
+    }
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -611,7 +614,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [myWindow setFrame:initialFrame display:NO];
     }
 
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
+    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL || windowType == WINDOW_TYPE_NO_TITLE_BAR)];
 
     DLog(@"Create window %@", myWindow);
 
@@ -628,7 +631,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     _contentView =
         [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
-                                                color:[NSColor windowBackgroundColor]
+                                                color:[NSColor clearColor]
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
@@ -4009,9 +4012,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (lightCount > darkCount) {
         // Matches bottom line color for tab bar
-        _contentView.color = [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
+#warning TODO: Draw window border differently. It used to be the root terminal view's background color showing through. Maybe draw it in the root terminal view's drawRect:.
+        _contentView.color = [NSColor clearColor];
     } else {
-        _contentView.color = [NSColor windowBackgroundColor];
+        _contentView.color = [NSColor clearColor];
     }
 }
 
@@ -4574,7 +4578,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    [self.window setBackgroundColor:backgroundColor];
+#warning TODO: Draw border differently (see other todo)
+    [self.window setBackgroundColor:[NSColor clearColor]];
     if (IsYosemiteOrLater()) {
         if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
             self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
