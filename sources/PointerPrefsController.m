@@ -533,15 +533,6 @@ typedef enum {
     static NSDictionary *defaultDict;
     if (!defaultDict) {
         NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[PointerPrefsController defaultSettings]];
-        // Migrate old global prefs into the dict.
-        if (![[NSUserDefaults standardUserDefaults] boolForKey:@"PasteFromClipboard"]) {
-            NSDictionary *middleButtonPastesFromSelection =
-                [PointerPrefsController dictForAction:kPasteFromSelectionPointerAction];
-            [temp setObject:middleButtonPastesFromSelection
-                     forKey:[PointerPrefsController keyForButton:kMiddleButton
-                                                          clicks:1
-                                                       modifiers:0]];
-        }
         if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             // Find all actions that use middle button and add corresponding three-finger gesture.
             NSMutableDictionary *tempCopy = [[temp mutableCopy] autorelease];
