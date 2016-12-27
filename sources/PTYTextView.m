@@ -565,7 +565,7 @@ static const int kDragThreshold = 3;
 
 - (BOOL)isOpaque
 {
-    return NO;
+    return YES;
 }
 
 - (void)setHighlightCursorLine:(BOOL)highlightCursorLine {
