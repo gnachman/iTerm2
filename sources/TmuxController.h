@@ -140,5 +140,6 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)toggleZoomForPane:(int)pane;
 - (void)setPartialWindowIdOrder:(NSArray *)partialOrder;
 - (void)setCurrentWindow:(int)windowId;
+- (void)checkForUTF8;
 
 @end

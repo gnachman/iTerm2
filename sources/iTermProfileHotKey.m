@@ -465,6 +465,26 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     return self.windowController.window.alphaValue > 0;
 }
 
+- (void)revealForScripting {
+    [self showHotKeyWindow];
+}
+
+- (void)hideForScripting {
+    [self hideHotKeyWindowAnimated:YES suppressHideApp:NO otherIsRollingIn:NO];
+}
+
+- (void)toggleForScripting {
+    if (self.isRevealed) {
+        [self hideForScripting];
+    } else {
+        [self revealForScripting];
+    }
+}
+
+- (BOOL)isRevealed {
+    return self.windowController.window.alphaValue == 1 && self.windowController.window.isVisible;
+}
+
 #pragma mark - Protected
 
 - (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)genericSiblings {

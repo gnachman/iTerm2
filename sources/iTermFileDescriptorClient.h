@@ -28,4 +28,5 @@ int iTermFileDescriptorClientConnect(const char *path);
 // Blocks and reads a result from the socket.
 iTermFileDescriptorServerConnection iTermFileDescriptorClientRead(int socketFd, int deadMansPipeReadEnd);
 
+
 #endif  // __ITERM_FILE_DESCRIPTOR_CLIENT_H

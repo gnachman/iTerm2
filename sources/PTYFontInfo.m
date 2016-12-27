@@ -10,37 +10,12 @@
 
 #import "DebugLogging.h"
 
-@implementation PTYFontInfo {
-    NSFont *font_;
-    PTYFontInfo *boldVersion_;
-    PTYFontInfo *italicVersion_;
-}
+@implementation NSFont(PTYFontInfo)
 
-@synthesize font = font_;
-@synthesize boldVersion = boldVersion_;
-@synthesize italicVersion = italicVersion_;
-
-+ (PTYFontInfo *)fontInfoWithFont:(NSFont *)font {
-    PTYFontInfo *fontInfo = [[[PTYFontInfo alloc] init] autorelease];
-    fontInfo.font = font;
-    return fontInfo;
-}
-
-- (void)dealloc {
-    [font_ release];
-    [boldVersion_ release];
-    [italicVersion_ release];
-    [super dealloc];
-}
-
-- (void)setFont:(NSFont *)font {
-    [font_ autorelease];
-    font_ = [font retain];
-    
+- (NSInteger)it_ligatureLevel {
     // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
     // you ligatures whether you like it or not.
     static NSDictionary *fontNameToLigatureLevel;
-    static NSSet *fontsWithDefaultLigatures;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         fontNameToLigatureLevel = @{ @"PragmataPro": @1,
@@ -68,6 +43,17 @@
                                      @"OperatorMono-MediumItalic": @1,
                                      @"OperatorMono-Bold": @1,
                                      @"OperatorMono-BoldItalic": @1 };
+        [fontNameToLigatureLevel retain];
+    });
+    return [fontNameToLigatureLevel[self.fontName] integerValue];
+}
+
+- (BOOL)it_defaultLigatures {
+    // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
+    // you ligatures whether you like it or not.
+    static NSSet *fontsWithDefaultLigatures;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         fontsWithDefaultLigatures = [[NSSet setWithArray:@[ @"FiraCode-Bold",
                                                             @"FiraCode-Light",
                                                             @"FiraCode-Medium",
@@ -78,10 +64,45 @@
                                                             @"FuraCodeNerdFontCompleteMono---Medium",
                                                             @"FuraCodeNerdFontCompleteMono---Regular",
                                                             @"FuraCodeNerdFontCompleteMono---Retina" ]] retain];
-        [fontNameToLigatureLevel retain];
     });
-    _ligatureLevel = [fontNameToLigatureLevel[font.fontName] integerValue];
-    _hasDefaultLigatures = [fontsWithDefaultLigatures containsObject:font.fontName];
+    return [fontsWithDefaultLigatures containsObject:self.fontName];
+}
+
+- (BOOL)it_supportsLigatures {
+    return self.it_defaultLigatures || self.it_ligatureLevel > 0;
+}
+
+@end
+
+@implementation PTYFontInfo {
+    NSFont *font_;
+    PTYFontInfo *boldVersion_;
+    PTYFontInfo *italicVersion_;
+}
+
+@synthesize font = font_;
+@synthesize boldVersion = boldVersion_;
+@synthesize italicVersion = italicVersion_;
+
++ (PTYFontInfo *)fontInfoWithFont:(NSFont *)font {
+    PTYFontInfo *fontInfo = [[[PTYFontInfo alloc] init] autorelease];
+    fontInfo.font = font;
+    return fontInfo;
+}
+
+- (void)dealloc {
+    [font_ release];
+    [boldVersion_ release];
+    [italicVersion_ release];
+    [super dealloc];
+}
+
+- (void)setFont:(NSFont *)font {
+    [font_ autorelease];
+    font_ = [font retain];
+    
+    _ligatureLevel = font.it_ligatureLevel;
+    _hasDefaultLigatures = font.it_defaultLigatures;
 
     _baselineOffset = [self computedBaselineOffset];
     _underlineOffset = [self computedUnderlineOffset];

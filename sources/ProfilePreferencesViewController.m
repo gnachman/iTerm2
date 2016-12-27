@@ -403,7 +403,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 - (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem animated:(BOOL)animated {
     iTermSizeRememberingView *theView = (iTermSizeRememberingView *)[tabViewItem view];
+    [self resizeWindowForView:theView animated:animated];
+}
 
+- (void)resizeWindowForView:(iTermSizeRememberingView *)theView animated:(BOOL)animated {
     // The window's size includes all space around the tab view, plus the tab view.
     // These variables hold the space on each side of the tab view.
     CGFloat spaceAbove = 0;
@@ -713,6 +716,12 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 - (ProfileModel *)profilePreferencesCurrentModel {
     return [_delegate profilePreferencesModel];
+}
+
+- (void)profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)view {
+    if (_tabView.selectedTabViewItem.view == view ){
+        [self resizeWindowForView:view animated:YES];
+    }
 }
 
 

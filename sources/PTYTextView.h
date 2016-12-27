@@ -208,6 +208,10 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 // Draw text with light font smoothing?
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
 
+// Are ligatures allowed?
+@property(nonatomic, assign) BOOL asciiLigatures;
+@property(nonatomic, assign) BOOL nonAsciiLigatures;
+
 // Use a bright version of the text color for bold text?
 @property(nonatomic, assign) BOOL useBrightBold;
 

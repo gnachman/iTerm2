@@ -44,6 +44,7 @@
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
@@ -404,6 +405,10 @@ static const NSUInteger kMaxHosts = 100;
     
     // Current unicode version.
     NSInteger _unicodeVersion;
+
+    // Touch bar labels for function keys.
+    NSMutableDictionary<NSString *, NSString *> *_keyLabels;
+    NSMutableArray<NSMutableDictionary<NSString *, NSString *> *> *_keyLabelsStack;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -564,7 +569,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_jobName release];
     [_automaticProfileSwitcher release];
     [_throughputEstimator release];
-
+    [_keyLabels release];
+    [_keyLabelsStack release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -2881,6 +2887,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    inProfile:aDict]];
     self.thinStrokes = [iTermProfilePreferences intForKey:KEY_THIN_STROKES inProfile:aDict];
 
+    self.asciiLigatures = [iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:aDict];
+    self.nonAsciiLigatures = [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:aDict];
+
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
 
@@ -3354,6 +3363,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _textview.thinStrokes = thinStrokes;
+}
+
+- (void)setAsciiLigatures:(BOOL)asciiLigatures {
+    _textview.asciiLigatures = asciiLigatures;
+}
+
+- (BOOL)asciiLigatures {
+    return _textview.asciiLigatures;
+}
+
+- (void)setNonAsciiLigatures:(BOOL)nonAsciiLigatures {
+    _textview.nonAsciiLigatures = nonAsciiLigatures;
+}
+
+- (BOOL)nonAsciiLigatures {
+    return _textview.nonAsciiLigatures;
 }
 
 - (BOOL)useItalicFont
@@ -3920,8 +3945,8 @@ ITERM_WEAKLY_REFERENCEABLE
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
-        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [ITAddressBookMgr descFromFont:font],
-                                                 KEY_NON_ASCII_FONT: [ITAddressBookMgr descFromFont:nonAsciiFont] }];
+        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [font stringValue],
+                                                 KEY_NON_ASCII_FONT: [nonAsciiFont stringValue] }];
         // Set the font in the bookmark dictionary
 
         // Update the model's copy of the bookmark.
@@ -7539,6 +7564,31 @@ ITERM_WEAKLY_REFERENCEABLE
         unicodeVersion != [iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION inProfile:self.profile]) {
         [self setSessionSpecificProfileValues:@{ KEY_UNICODE_VERSION: @(unicodeVersion) }];
     }
+}
+
+- (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName {
+    if (!_keyLabels) {
+        _keyLabels = [[NSMutableDictionary alloc] init];
+    }
+    _keyLabels[keyName] = [[label copy] autorelease];
+    [_delegate sessionKeyLabelsDidChange:self];
+}
+
+- (void)screenPushKeyLabels {
+    if (!_keyLabels) {
+        return;
+    }
+    if (!_keyLabelsStack) {
+        _keyLabelsStack = [[NSMutableArray alloc] init];
+    }
+    [_keyLabelsStack addObject:[_keyLabels copy]];
+}
+
+- (void)screenPopKeyLabels {
+    [_keyLabels release];
+    _keyLabels = _keyLabelsStack.lastObject;
+    [_keyLabelsStack removeLastObject];
+    [_delegate sessionKeyLabelsDidChange:self];
 }
 
 #pragma mark - Announcements

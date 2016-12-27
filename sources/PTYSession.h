@@ -183,6 +183,8 @@ typedef enum {
 // The background color changed.
 - (void)sessionBackgroundColorDidChange:(PTYSession *)session;
 
+- (void)sessionKeyLabelsDidChange:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -319,6 +321,8 @@ typedef enum {
 @property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
+@property(nonatomic, assign) BOOL asciiLigatures;
+@property(nonatomic, assign) BOOL nonAsciiLigatures;
 @property(nonatomic, assign) BOOL useItalicFont;
 
 @property(nonatomic, readonly) BOOL logging;
@@ -424,6 +428,8 @@ typedef enum {
 
 // If we want to show quicklook this will not be nil.
 @property(nonatomic, readonly) iTermQuickLookController *quickLookController;
+
+@property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
 
 #pragma mark - methods
 

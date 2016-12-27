@@ -239,5 +239,8 @@
 - (BOOL)screenShouldReduceFlicker;
 - (NSInteger)screenUnicodeVersion;
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion;
+- (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName;
+- (void)screenPushKeyLabels;
+- (void)screenPopKeyLabels;
 
 @end

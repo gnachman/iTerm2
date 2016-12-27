@@ -194,6 +194,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLINKING_CURSOR: @NO,
                   KEY_USE_BOLD_FONT: @YES,
                   KEY_THIN_STROKES: @(iTermThinStrokesSettingRetinaOnly),
+                  KEY_ASCII_LIGATURES: @YES,
+                  KEY_NON_ASCII_LIGATURES: @YES,
                   KEY_USE_BRIGHT_BOLD: @YES,
                   KEY_BLINK_ALLOWED: @NO,
                   KEY_USE_ITALIC_FONT: @YES,

@@ -994,11 +994,11 @@ typedef struct iTermTextColorContext {
         int numCellsDrawn;
         if ([singlePartAttributedString isKindOfClass:[NSAttributedString class]]) {
             numCellsDrawn = [self drawSinglePartAttributedString:(NSAttributedString *)singlePartAttributedString
-                                                 atPoint:point
-                                                  origin:origin
-                                               positions:subpositions
-                                               inContext:ctx
-                                         backgroundColor:backgroundColor];
+                                                         atPoint:point
+                                                          origin:origin
+                                                       positions:subpositions
+                                                       inContext:ctx
+                                                 backgroundColor:backgroundColor];
         } else {
             NSPoint offsetPoint = point;
             offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
@@ -1041,10 +1041,13 @@ typedef struct iTermTextColorContext {
         // This method is really slow so avoid doing it when it's not
         // necessary. It is also deprecated but CoreText is extremely slow so
         // we'll keep using until Apple fixes that.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         CGContextSelectFont(ctx,
                             [[font fontName] UTF8String],
                             [font pointSize],
                             kCGEncodingMacRoman);
+#pragma clang diagnostic pop
         [_selectedFont release];
         _selectedFont = [font retain];
     }
@@ -1633,6 +1636,11 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     if (!c->complexChar && iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable)) {
         attributes->ligatureLevel = 0;
     }
+    if (c->complexChar || c->code > 128) {
+        if (!_nonAsciiLigatures) {
+            attributes->ligatureLevel = 0;
+        }
+    }
     attributes->underline = (c->underline || inUnderlinedRange);
     attributes->drawable = drawable;
 }
@@ -1693,6 +1701,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return YES;
 }
 
+- (BOOL)zippy {
+    return (!(_asciiLigaturesAvailable && _asciiLigatures) &&
+            !(_nonAsciiLigatures) &&
+            [iTermAdvancedSettingsModel zippyTextDrawing]);
+}
+
 - (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(screen_char_t *)line
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
@@ -1720,7 +1734,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     };
     NSDictionary *previousImageAttributes = nil;
     iTermMutableAttributedStringBuilder *builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
-    builder.asciiLigaturesAvailable = _asciiLigaturesAvailable;
+    builder.zippy = self.zippy;
+    builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
     iTermCharacterAttributes characterAttributes = { 0 };
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
     int segmentLength = 0;
@@ -1813,7 +1828,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                 [attributedStrings addObject:builtString];
             }
             builder = [[[iTermMutableAttributedStringBuilder alloc] init] autorelease];
-            builder.asciiLigaturesAvailable = _asciiLigaturesAvailable;
+            builder.zippy = self.zippy;
+            builder.asciiLigaturesAvailable = _asciiLigaturesAvailable && _asciiLigatures;
         }
         ++segmentLength;
         memcpy(&previousCharacterAttributes, &characterAttributes, sizeof(previousCharacterAttributes));
@@ -2452,7 +2468,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                       isComplex:NO
                                                      renderBold:&ignore1
                                                    renderItalic:&ignore2];
-    _asciiLigaturesAvailable = fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures;
+    _asciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
 }
 
 - (void)startTiming {

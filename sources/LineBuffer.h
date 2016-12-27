@@ -134,21 +134,13 @@
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
 // the FindContext prior to calling this.
-- (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
+- (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopAt;
 
 // Returns an array of XYRange values
 - (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;
 
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord width:(int)width offset:(int)offset;
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position width:(int)width ok:(BOOL *)ok;
-
-// Returns the position at the stat of the buffer
-// DEPRECATED
-- (int)firstPos DEPRECATED_ATTRIBUTE;
-
-// Returns the position at the end of the buffer
-// DEPRECATED
-- (int)lastPos DEPRECATED_ATTRIBUTE;
 
 - (LineBufferPosition *)firstPosition;
 - (LineBufferPosition *)lastPosition;

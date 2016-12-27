@@ -10,10 +10,12 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
+#import "PTYFontInfo.h"
 
 // Tag on button to open font picker for non-ascii font.
 static NSInteger kNonAsciiFontButtonTag = 1;
@@ -41,6 +43,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_nonasciiAntiAliased;
     IBOutlet NSPopUpButton *_thinStrokes;
     IBOutlet NSButton *_unicodeVersion9;
+    IBOutlet NSButton *_asciiLigatures;
+    IBOutlet NSButton *_nonAsciiLigatures;
 
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
@@ -59,6 +63,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     // This view is added to the font panel.
     IBOutlet NSView *_displayFontAccessoryView;
+
+    CGFloat _heightWithNonAsciiControls;
+    CGFloat _heightWithoutNonAsciiControls;
 }
 
 - (void)dealloc {
@@ -69,6 +76,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 }
 
 - (void)awakeFromNib {
+    _heightWithNonAsciiControls = self.view.frame.size.height;
+    _heightWithoutNonAsciiControls = _heightWithNonAsciiControls - _nonAsciiFontView.frame.size.height - _nonAsciiFontView.frame.origin.y;
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles)
                                                  name:kReloadAllProfiles
@@ -101,6 +111,14 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_asciiLigatures
+                    key:KEY_ASCII_LIGATURES
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_nonAsciiLigatures
+                    key:KEY_NON_ASCII_LIGATURES
                    type:kPreferenceInfoTypeCheckbox];
 
     PreferenceInfo *info = [self defineControl:_ambiguousIsDoubleWidth
@@ -196,6 +214,16 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 - (void)updateNonAsciiFontViewVisibility {
     _nonAsciiFontView.hidden = ![self boolForKey:KEY_USE_NONASCII_FONT];
+    ((iTermSizeRememberingView *)self.view).originalSize = self.preferredContentSize;
+    [self.delegate profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)self.view];
+}
+
+- (NSSize)preferredContentSize {
+    if ([self boolForKey:KEY_USE_NONASCII_FONT]) {
+        return NSMakeSize(NSWidth(self.view.frame), _heightWithNonAsciiControls);
+    } else {
+        return NSMakeSize(NSWidth(self.view.frame), _heightWithoutNonAsciiControls);
+    }
 }
 
 - (void)updateFontsDescriptions {
@@ -227,6 +255,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 - (void)updateWarnings {
     [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
     [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
+    _asciiLigatures.hidden = !self.normalFont.it_supportsLigatures;
+    _nonAsciiLigatures.hidden = !self.nonAsciiFont.it_supportsLigatures;
 }
 
 

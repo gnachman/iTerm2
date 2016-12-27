@@ -104,7 +104,7 @@ NS_INLINE int iTermParserNumberOfBytesUntilCharacter(iTermParserContext *context
     if (!pointer) {
         return -1;
     } else {
-        return pointer - context->datap;
+        return (int)(pointer - context->datap);
     }
 }
 

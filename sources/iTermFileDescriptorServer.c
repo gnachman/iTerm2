@@ -11,12 +11,24 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#define FDLog(level, format, ...) syslog(LOG_ERR, "%s(%d) " format, gRunningServer ? "Server" : "iTerm2", getpid(), ##__VA_ARGS__)
+
 static const int kMaxConnections = 1;
+static int gRunningServer;
 
 // These variables are global because signal handlers use them.
 static pid_t gChildPid;
 static char *gPath;
 static int gPipe[2];
+
+void iTermFileDescriptorServerLog(char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    char temp[1000];
+    snprintf(temp, sizeof(temp) - 1, "%s(%d) %s", gRunningServer ? "Server" : "ParentServer", getpid(), format);
+    vsyslog(LOG_ERR, temp, args);
+    va_end(args);
+}
 
 static ssize_t SendMessageAndFileDescriptor(int connectionFd,
                                             void *buffer,
@@ -88,10 +100,10 @@ int iTermSelect(int *fds, int count, int *results) {
             }
             FD_SET(fds[i], &readset);
         }
-        syslog(LOG_DEBUG, "Calling select...");
+        FDLog(LOG_DEBUG, "Calling select...");
         result = select(max + 1, &readset, NULL, NULL, NULL);
         theError = errno;
-        syslog(LOG_DEBUG, "select returned %d, error = %s", result, strerror(theError));
+        FDLog(LOG_DEBUG, "select returned %d, error = %s", result, strerror(theError));
     } while (result == -1 && theError == EINTR);
 
     int n = 0;
@@ -110,7 +122,9 @@ int iTermFileDescriptorServerAccept(int socketFd) {
     socklen_t sizeOfRemote = sizeof(remote);
     int connectionFd = -1;
     do {
+        FDLog(LOG_DEBUG, "accept()");
         connectionFd = accept(socketFd, (struct sockaddr *)&remote, &sizeOfRemote);
+        FDLog(LOG_DEBUG, "accept() returned %d error=%s", connectionFd, strerror(errno));
     } while (connectionFd == -1 && errno == EINTR);
     if (connectionFd != -1) {
         close(socketFd);
@@ -119,22 +133,22 @@ int iTermFileDescriptorServerAccept(int socketFd) {
 }
 
 static int SendFileDescriptorAndWait(int connectionFd) {
-    syslog(LOG_DEBUG, "send master fd and child pid %d", (int)gChildPid);
+    FDLog(LOG_DEBUG, "send master fd and child pid %d", (int)gChildPid);
     int rc = SendMessageAndFileDescriptor(connectionFd, &gChildPid, sizeof(gChildPid), 0);
     if (rc <= 0) {
-        syslog(LOG_NOTICE, "send failed %s", strerror(errno));
+        FDLog(LOG_NOTICE, "send failed %s", strerror(errno));
         close(connectionFd);
         return 0;
     }
 
-    syslog(LOG_DEBUG, "All done. Waiting for client to disconnect or child to die.");
+    FDLog(LOG_DEBUG, "All done. Waiting for client to disconnect or child to die.");
     int fds[2] = { gPipe[0], connectionFd };
     int results[2];
     iTermSelect(fds, sizeof(fds) / sizeof(*fds), results);
-    syslog(LOG_DEBUG, "select returned. child dead=%d, connection closed=%d", results[0], results[1]);
+    FDLog(LOG_DEBUG, "select returned. child dead=%d, connection closed=%d", results[0], results[1]);
     close(connectionFd);
 
-    syslog(LOG_DEBUG, "Connection closed.");
+    FDLog(LOG_DEBUG, "Connection closed.");
     // If the pipe has been written to then results[0] will be nonzero. That
     // means the child process has died and we can terminate. The server's
     // termination signals the client that the child is dead.
@@ -144,7 +158,7 @@ static int SendFileDescriptorAndWait(int connectionFd) {
 static int PerformAcceptActivity(int socketFd) {
     int connectionFd = iTermFileDescriptorServerAccept(socketFd);
     if (connectionFd == -1) {
-        syslog(LOG_DEBUG, "accept failed %s", strerror(errno));
+        FDLog(LOG_DEBUG, "accept failed %s", strerror(errno));
         return 0;
     }
 
@@ -154,7 +168,7 @@ static int PerformAcceptActivity(int socketFd) {
 int iTermFileDescriptorServerSocketBindListen(const char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
-        syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
+        FDLog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
         return -1;
     }
     // Mask off all permissions for group and other. Only user can use this socket.
@@ -166,14 +180,14 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
     unlink(local.sun_path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
     if (bind(socketFd, (struct sockaddr *)&local, len) == -1) {
-        syslog(LOG_NOTICE, "bind() failed: %s", strerror(errno));
+        FDLog(LOG_NOTICE, "bind() failed: %s", strerror(errno));
         umask(oldMask);
         return -1;
     }
-    syslog(LOG_DEBUG, "bind() created %s", local.sun_path);
+    FDLog(LOG_DEBUG, "bind() created %s", local.sun_path);
 
     if (listen(socketFd, kMaxConnections) == -1) {
-        syslog(LOG_DEBUG, "listen() failed: %s", strerror(errno));
+        FDLog(LOG_DEBUG, "listen() failed: %s", strerror(errno));
         umask(oldMask);
         return -1;
     }
@@ -184,14 +198,15 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
 static int Initialize(char *path, pid_t childPid) {
     openlog("iTerm2-Server", LOG_PID | LOG_NDELAY, LOG_USER);
     setlogmask(LOG_UPTO(LOG_DEBUG));
+    FDLog(LOG_DEBUG, "Server starting Initialize()");
     gPath = strdup(path);
     // We get this when iTerm2 crashes. Ignore it.
-    syslog(LOG_DEBUG, "Installing SIGHUP handler.");
+    FDLog(LOG_DEBUG, "Installing SIGHUP handler.");
     signal(SIGHUP, SIG_IGN);
 
     pipe(gPipe);
 
-    syslog(LOG_DEBUG, "Installing SIGCHLD handler.");
+    FDLog(LOG_DEBUG, "Installing SIGCHLD handler.");
     gChildPid = childPid;
     signal(SIGCHLD, SigChildHandler);
     signal(SIGUSR1, SigUsr1Handler);
@@ -200,7 +215,7 @@ static int Initialize(char *path, pid_t childPid) {
     sigset_t signal_set;
     sigemptyset(&signal_set);
     sigaddset(&signal_set, SIGCHLD);
-    syslog(LOG_DEBUG, "Unblocking SIGCHLD.");
+    FDLog(LOG_DEBUG, "Unblocking SIGCHLD.");
     sigprocmask(SIG_UNBLOCK, &signal_set, NULL);
 
     return 0;
@@ -208,33 +223,34 @@ static int Initialize(char *path, pid_t childPid) {
 
 static void MainLoop(char *path) {
     // Listen on a Unix Domain Socket.
-    syslog(LOG_DEBUG, "Entering main loop.");
+    FDLog(LOG_DEBUG, "Entering main loop.");
     int socketFd;
     do {
-        syslog(LOG_DEBUG, "Calling iTermFileDescriptorServerSocketBindListen.");
+        FDLog(LOG_DEBUG, "Calling iTermFileDescriptorServerSocketBindListen.");
         socketFd = iTermFileDescriptorServerSocketBindListen(path);
         if (socketFd < 0) {
-            syslog(LOG_DEBUG, "iTermFileDescriptorServerSocketBindListen failed");
+            FDLog(LOG_DEBUG, "iTermFileDescriptorServerSocketBindListen failed");
             return;
         }
-        syslog(LOG_DEBUG, "Calling PerformAcceptActivity");
+        FDLog(LOG_DEBUG, "Calling PerformAcceptActivity");
     } while (!PerformAcceptActivity(socketFd));
 }
 
 int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
+    gRunningServer = 1;
     // syslog raises sigpipe when the parent job dies on 10.12.
     signal(SIGPIPE, SIG_IGN);
     int rc = Initialize(path, childPid);
     if (rc) {
-        syslog(LOG_DEBUG, "Initialize failed with code %d", rc);
+        FDLog(LOG_DEBUG, "Initialize failed with code %d", rc);
     } else {
-        syslog(LOG_DEBUG, "Sending file descriptor and waiting on initial connection");
+        FDLog(LOG_DEBUG, "Sending file descriptor and waiting on initial connection");
         if (!SendFileDescriptorAndWait(connectionFd)) {
             MainLoop(path);
         }
         // MainLoop never returns, except by dying on a signal.
     }
-    syslog(LOG_DEBUG, "Unlink %s", path);
+    FDLog(LOG_DEBUG, "Unlink %s", path);
     unlink(path);
     return 1;
 }

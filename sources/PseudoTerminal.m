@@ -98,10 +98,12 @@ static NSString *const iTermTouchBarIdentifierNextMark = @"iTermTouchBarIdentifi
 static NSString *const iTermTouchBarIdentifierPreviousMark = @"iTermTouchBarIdentifierPreviousMark";
 static NSString *const iTermTouchBarIdentifierManPage = @"iTermTouchBarIdentifierManPage";
 static NSString *const iTermTouchBarIdentifierColorPreset = @"iTermTouchBarIdentifierColorPreset";
+static NSString *const iTermTouchBarIdentifierFunctionKeys = @"iTermTouchBarIdentifierFunctionKeys";
 static NSString *const iTermTouchBarIdentifierColorPresetScrollview = @"iTermTouchBarIdentifierColorPresetScrollview";
 static NSString *const iTermTouchBarIdentifierAutocomplete = @"iTermTouchBarIdentifierAutocomplete";
 static NSString *const iTermTabBarTouchBarIdentifier = @"tab bar";
 static NSString *const iTermTabBarItemTouchBarIdentifier = @"tab bar item";
+static NSString *const iTermTouchBarFunctionKeysScrollView  = @"iTermTouchBarFunctionKeysScrollView";
 
 #define PtyLog DLog
 
@@ -393,12 +395,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return mask | NSBorderlessWindowMask;
 
+        case WINDOW_TYPE_NO_TITLE_BAR:
         default:
             return (mask |
                     NSTitledWindowMask |
@@ -597,9 +598,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermTerminalWindow *myWindow;
     Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) ? [iTermPanel class] : [iTermWindow class];
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
-                                              styleMask:styleMask
+                                              styleMask:(styleMask | NSFullSizeContentViewWindowMask)
                                                 backing:NSBackingStoreBuffered
                                                   defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
+    if (windowType == WINDOW_TYPE_NO_TITLE_BAR) {
+        myWindow.titleVisibility = NSWindowTitleHidden;
+        myWindow.titlebarAppearsTransparent = YES;
+    }
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -610,7 +615,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [myWindow setFrame:initialFrame display:NO];
     }
 
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
+    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL || windowType == WINDOW_TYPE_NO_TITLE_BAR)];
 
     DLog(@"Create window %@", myWindow);
 
@@ -627,7 +632,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     _contentView =
         [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
-                                                color:[NSColor windowBackgroundColor]
+                                                color:[NSColor clearColor]
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
@@ -820,6 +825,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
+    [_tabsTouchBarItem release];
     [super dealloc];
 }
 
@@ -3997,6 +4003,23 @@ ITERM_WEAKLY_REFERENCEABLE
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded];
+
+    NSInteger darkCount = 0;
+    NSInteger lightCount = 0;
+    for (PTYSession *session in tab.sessions) {
+        if ([[session.colorMap colorForKey:kColorMapBackground] perceivedBrightness] < 0.5) {
+            darkCount++;
+        } else {
+            lightCount++;
+        }
+    }
+    if (lightCount > darkCount) {
+        // Matches bottom line color for tab bar
+#warning TODO: Draw window border differently. It used to be the root terminal view's background color showing through. Maybe draw it in the root terminal view's drawRect:.
+        _contentView.color = [NSColor clearColor];
+    } else {
+        _contentView.color = [NSColor clearColor];
+    }
 }
 
 - (void)notifyTmuxOfTabChange {
@@ -4558,7 +4581,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    [self.window setBackgroundColor:backgroundColor];
+#warning TODO: Draw border differently (see other todo)
+    [self.window setBackgroundColor:[NSColor clearColor]];
     if (IsYosemiteOrLater()) {
         if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
             self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
@@ -7118,6 +7142,7 @@ ITERM_WEAKLY_REFERENCEABLE
     touchBar.delegate = self;
     touchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierManPage,
                                          iTermTouchBarIdentifierColorPreset,
+                                         iTermTouchBarIdentifierFunctionKeys,
                                          NSTouchBarItemIdentifierFlexibleSpace,
                                          NSTouchBarItemIdentifierOtherItemsProxy,
                                          iTermTouchBarIdentifierAddMark,
@@ -7140,6 +7165,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         NSArray *ids = @[ iTermTouchBarIdentifierManPage,
                           iTermTouchBarIdentifierColorPreset,
+                          iTermTouchBarIdentifierFunctionKeys,
+                          iTermTouchBarFunctionKeysScrollView,
                           NSTouchBarItemIdentifierFlexibleSpace,
                           iTermTouchBarIdentifierAddMark,
                           iTermTouchBarIdentifierNextMark,
@@ -7147,6 +7174,7 @@ ITERM_WEAKLY_REFERENCEABLE
                           iTermTouchBarIdentifierAutocomplete ];
         ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
         self.touchBar.customizationAllowedItemIdentifiers = ids;
+        [self updateTouchBarFunctionKeyLabels];
     }
 }
 
@@ -7192,6 +7220,74 @@ ITERM_WEAKLY_REFERENCEABLE
         button.enabled = NO;
         button.keyBindingAction = nil;
     }
+}
+
+- (NSTouchBarItem *)functionKeysTouchBarItem {
+    if (!IsTouchBarAvailable()) {
+        return nil;
+    }
+    NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
+    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarFunctionKeysScrollView] autorelease];
+    item.view = scrollView;
+    NSView *documentView = [[NSView alloc] init];
+    documentView.translatesAutoresizingMaskIntoConstraints = NO;
+    scrollView.documentView = documentView;
+    NSButton *previous = nil;
+    for (NSInteger n = 1; n <= 20; n++) {
+        NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
+        iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:label target:self action:@selector(functionKeyTouchBarItemSelected:)];
+        button.tag = n;
+        [button sizeToFit];
+        [documentView addSubview:button];
+        button.translatesAutoresizingMaskIntoConstraints = NO;
+        if (previous == nil) {
+            // Constrain the first item's left to the document view's left
+            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                     attribute:NSLayoutAttributeLeft
+                                                                     relatedBy:NSLayoutRelationEqual
+                                                                        toItem:documentView
+                                                                     attribute:NSLayoutAttributeLeft
+                                                                    multiplier:1
+                                                                      constant:0]];
+        } else {
+            // Constrain non-first button's left to predecessor's right + 8pt
+            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                     attribute:NSLayoutAttributeLeft
+                                                                     relatedBy:NSLayoutRelationEqual
+                                                                        toItem:previous
+                                                                     attribute:NSLayoutAttributeRight
+                                                                    multiplier:1
+                                                                      constant:8]];
+        }
+        // Constrain top and bottom to document view's top and bottom
+        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                 attribute:NSLayoutAttributeTop
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:documentView
+                                                                 attribute:NSLayoutAttributeTop
+                                                                multiplier:1
+                                                                  constant:0]];
+        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                 attribute:NSLayoutAttributeBottom
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:documentView
+                                                                 attribute:NSLayoutAttributeBottom
+                                                                multiplier:1
+                                                                  constant:0]];
+        previous = button;
+    }
+    if (previous) {
+        // Constrain last button's right to document view's right
+        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:previous
+                                                                 attribute:NSLayoutAttributeRight
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:documentView
+                                                                 attribute:NSLayoutAttributeRight
+                                                                multiplier:1
+                                                                  constant:0]];
+    }
+    item.customizationLabel = @"Function Keys";
+    return item;
 }
 
 - (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
@@ -7751,6 +7847,43 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
 
+- (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
+    [self updateTouchBarFunctionKeyLabels];
+}
+
+- (void)updateTouchBarFunctionKeyLabels {
+    if (!IsTouchBarAvailable()) {
+        return;
+    }
+
+    NSTouchBarItem *item = [self.touchBar itemForIdentifier:iTermTouchBarFunctionKeysScrollView];
+    NSScrollView *scrollView = (NSScrollView *)item.view;
+    [self updateTouchBarFunctionKeyLabelsInScrollView:scrollView];
+
+    NSPopoverTouchBarItem *popoverItem = [self.touchBar itemForIdentifier:iTermTouchBarIdentifierFunctionKeys];
+    NSTouchBar *popoverTouchBar = popoverItem.popoverTouchBar;
+    item = [popoverTouchBar itemForIdentifier:iTermTouchBarFunctionKeysScrollView];
+    scrollView = (NSScrollView *)item.view;
+    [self updateTouchBarFunctionKeyLabelsInScrollView:scrollView];
+}
+
+- (void)updateTouchBarFunctionKeyLabelsInScrollView:(NSScrollView *)scrollView {
+    if (!scrollView) {
+        return;
+    }
+    NSView *documentView = scrollView.documentView;
+    NSInteger n = 1;
+    for (iTermTouchBarButton *button in [documentView subviews]) {
+        if (![button isKindOfClass:[iTermTouchBarButton class]]) {
+            continue;
+        }
+        NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
+        NSString *customLabel = self.currentSession.keyLabels[label];
+        button.title = customLabel ?: label;
+        n++;
+    }
+}
+
 #pragma mark - Toolbelt
 
 - (void)toolbeltUpdateMouseCursor {
@@ -7820,21 +7953,21 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_contentView.tabView numberOfTabViewItems];
 }
 
-- (NSString *)scrubberLabelAtIndex:(NSInteger)index {
+- (NSString *)scrubber:(NSScrubber *)scrubber labelAtIndex:(NSInteger)index {
     NSArray<PTYTab *> *tabs = self.tabs;
     return index < tabs.count ?  self.tabs[index].activeSession.name : @"";
 }
 
 - (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
     NSScrubberTextItemView *itemView = [scrubber makeItemWithIdentifier:iTermTabBarItemTouchBarIdentifier owner:nil];
-    itemView.textField.stringValue = [self scrubberLabelAtIndex:index];
+    itemView.textField.stringValue = [self scrubber:scrubber labelAtIndex:index];
     return itemView;
 }
 
 - (NSSize)scrubber:(NSScrubber *)scrubber layout:(NSScrubberFlowLayout *)layout sizeForItemAtIndex:(NSInteger)itemIndex {
     NSSize size = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX);
 
-    NSString *title = [self scrubberLabelAtIndex:itemIndex];
+    NSString *title = [self scrubber:scrubber labelAtIndex:itemIndex];
     NSRect textRect = [title boundingRectWithSize:size
                                           options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
                                        attributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:0]}];
@@ -7924,11 +8057,25 @@ ITERM_WEAKLY_REFERENCEABLE
         item.showsCloseButton = YES;
         item.collapsedRepresentationImage = image;
 
-        NSTouchBar *secondaryTouchBar = [[NSTouchBar alloc] init];
+        NSTouchBar *secondaryTouchBar = [[[NSTouchBar alloc] init] autorelease];
         secondaryTouchBar.delegate = self;
         secondaryTouchBar.defaultItemIdentifiers = @[ iTermTouchBarIdentifierColorPresetScrollview ];
         item.popoverTouchBar = secondaryTouchBar;
         return item;
+    } else if ([identifier isEqualToString:iTermTouchBarIdentifierFunctionKeys]) {
+        image = [NSImage imageNamed:@"Touch Bar Function Keys"];
+        NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
+        item.customizationLabel = @"Function Keys Popover";
+        item.showsCloseButton = YES;
+        item.collapsedRepresentationImage = image;
+
+        NSTouchBar *functionKeys = [[[NSTouchBar alloc] init] autorelease];
+        functionKeys.delegate = self;
+        functionKeys.defaultItemIdentifiers = @[ iTermTouchBarFunctionKeysScrollView ];
+        item.popoverTouchBar = functionKeys;
+        return item;
+    } else if ([identifier isEqualToString:iTermTouchBarFunctionKeysScrollView]) {
+        return [self functionKeysTouchBarItem];
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPresetScrollview]) {
         return [self colorPresetsScrollViewTouchBarItem];
     }
@@ -8007,6 +8154,53 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)colorPresetTouchBarItemSelected:(iTermTouchBarButton *)sender {
     [self.currentSession setColorsFromPresetNamed:sender.keyBindingAction[@"presetName"]];
+}
+
+- (void)functionKeyTouchBarItemSelected:(iTermTouchBarButton *)sender {
+    [self sendFunctionKeyToCurrentSession:sender.tag];
+}
+
+- (void)sendFunctionKeyToCurrentSession:(NSInteger)number {
+    if (number < 1 || number > 20) {
+        return;
+    }
+
+    NSEvent *currentEvent = [NSApp currentEvent];
+    unsigned short keyCodes[] = {
+        kVK_F1,
+        kVK_F2,
+        kVK_F3,
+        kVK_F4,
+        kVK_F5,
+        kVK_F6,
+        kVK_F7,
+        kVK_F8,
+        kVK_F9,
+        kVK_F10,
+        kVK_F11,
+        kVK_F12,
+        kVK_F13,
+        kVK_F14,
+        kVK_F15,
+        kVK_F16,
+        kVK_F17,
+        kVK_F18,
+        kVK_F19,
+        kVK_F20,
+    };
+    NSString *chars = [NSString stringWithFormat:@"%C", (unichar)(NSF1FunctionKey + number - 1)];
+    NSPoint screenPoint = [NSEvent mouseLocation];
+    NSEvent *event = [NSEvent keyEventWithType:NSKeyDown
+                                      location:[self.window convertRectFromScreen:NSMakeRect(screenPoint.x, screenPoint.y, 0, 0)].origin
+                                 modifierFlags:([NSEvent modifierFlags] | NSFunctionKeyMask)
+                                     timestamp:[currentEvent timestamp]
+                                  windowNumber:self.window.windowNumber
+                                       context:nil
+                                    characters:chars
+                   charactersIgnoringModifiers:chars
+                                     isARepeat:NO
+                                       keyCode:keyCodes[number - 1]];
+    [self.currentSession.textview keyDown:event];
 }
 
 - (void)candidateListTouchBarItem:(NSCandidateListTouchBarItem *)anItem endSelectingCandidateAtIndex:(NSInteger)index {

@@ -1390,9 +1390,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [currentGrid_ markAllCharsDirty:YES];
 }
 
-- (void)storeLastPositionInLineBufferAsFindContextSavedPosition
-{
-    savedFindContextAbsPos_ = [linebuffer_ absPositionForPosition:[linebuffer_ lastPos]];
+- (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
+    savedFindContextAbsPos_ = [[linebuffer_ lastPosition] absolutePosition];
 }
 
 - (void)restoreSavedPositionToFindContext:(FindContext *)context
@@ -3860,6 +3859,18 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [delegate_ screenUnicodeVersion];
 }
 
+- (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
+    [delegate_ screenSetLabel:label forKey:keyName];
+}
+
+- (void)terminalPushKeyLabels {
+    [delegate_ screenPushKeyLabels];
+}
+
+- (void)terminalPopKeyLabels {
+    [delegate_ screenPopKeyLabels];
+}
+
 // fg=ff0080,bg=srgb:808080
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
     if ([name isEqualToString:@"preset"]) {
@@ -4441,11 +4452,11 @@ static void SwapInt(int *a, int *b) {
                                toLineBuffer:linebuffer_];
 
     // Search one block.
-    int stopAt;
+    LineBufferPosition *stopAt;
     if (context.dir > 0) {
-        stopAt = [linebuffer_ lastPos];
+        stopAt = [linebuffer_ lastPosition];
     } else {
-        stopAt = [linebuffer_ firstPos];
+        stopAt = [linebuffer_ firstPosition];
     }
 
     struct timeval begintime;

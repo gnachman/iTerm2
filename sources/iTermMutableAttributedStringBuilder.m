@@ -7,6 +7,7 @@
 //
 
 #import "iTermMutableAttributedStringBuilder.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
@@ -116,6 +117,20 @@
 }
 
 - (void)appendString:(NSString *)string {
+    if (_zippy) {
+        NSInteger i;
+        for (i = 0; i < string.length; i++) {
+            unichar c = [string characterAtIndex:i];
+            if (CFStringIsSurrogateHighCharacter(c)) {
+                string = [string substringFromIndex:i];
+                break;
+            }
+            [self appendCharacter:c];
+        }
+        if (i == string.length) {
+            return;
+        }
+    }
     _canUseFastPath = NO;
     if (_characterData.length > 0) {
         [self flushCharacters];
@@ -137,7 +152,9 @@
 }
 
 - (void)appendCharacter:(unichar)code {
-    _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
+    if (!_zippy) {
+        _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
+    }
     if (!_characterData) {
         _characterData = [[NSMutableData alloc] init];
     }

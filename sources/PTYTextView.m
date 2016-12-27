@@ -565,7 +565,7 @@ static const int kDragThreshold = 3;
 
 - (BOOL)isOpaque
 {
-    return YES;
+    return NO;
 }
 
 - (void)setHighlightCursorLine:(BOOL)highlightCursorLine {
@@ -596,6 +596,16 @@ static const int kDragThreshold = 3;
 
 - (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _thinStrokes = thinStrokes;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setAsciiLigatures:(BOOL)asciiLigatures {
+    _asciiLigatures = asciiLigatures;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setNonAsciiLigatures:(BOOL)nonAsciiLigatures {
+    _nonAsciiLigatures = nonAsciiLigatures;
     [self setNeedsDisplay:YES];
 }
 
@@ -1106,6 +1116,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
     _drawingHelper.boldAllowed = _useBoldFont;
     _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
+    _drawingHelper.asciiLigatures = _asciiLigatures;
+    _drawingHelper.nonAsciiLigatures = _nonAsciiLigatures;
     
     const NSRect *rectArray;
     NSInteger rectCount;
@@ -5945,15 +5957,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                               convertNullsToSpace:NO
                                            coords:suffixCoords];
 
-    NSString *possibleFilePart1 =
-        [prefix substringIncludingOffset:[prefix length] - 1
-                        fromCharacterSet:[PTYTextView filenameCharacterSet]
-                    charsTakenFromPrefix:NULL];
-    NSString *possibleFilePart2 =
-        [suffix substringIncludingOffset:0
-                        fromCharacterSet:[PTYTextView filenameCharacterSet]
-                    charsTakenFromPrefix:NULL];
-
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:y];
     DLog(@"According to data source, the working directory on line %d is %@", y, workingDirectory);
@@ -5966,6 +5969,67 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!workingDirectory) {
         workingDirectory = @"";
     }
+
+    URLAction *action;
+    action = [self urlActionForExistingFileAt:VT100GridCoordMake(x, y)
+                                       prefix:prefix
+                                 prefixCoords:prefixCoords
+                                       suffix:suffix
+                                 suffixCoords:suffixCoords
+                             workingDirectory:workingDirectory
+                                    extractor:extractor];
+    if (action) {
+        return action;
+    }
+
+    action = [self urlActionForSmartSelectionAt:VT100GridCoordMake(x, y)
+                            respectHardNewlines:respectHardNewlines
+                               workingDirectory:workingDirectory
+                                     remoteHost:[_dataSource remoteHostOnLine:y]];
+    if (action) {
+        return action;
+    }
+
+    action = [self urlActionForAnyStringSemanticHistoryAt:VT100GridCoordMake(x, y)
+                                         workingDirectory:workingDirectory];
+    if (action) {
+        return action;
+    }
+
+    // No luck. Look for something vaguely URL-like.
+    action = [self urlActionForURLAt:VT100GridCoordMake(x, y)
+                              prefix:prefix
+                        prefixCoords:prefixCoords
+                              suffix:suffix
+                        suffixCoords:suffixCoords
+                           extractor:extractor
+             continuationCharsCoords:continuationCharsCoords];
+    if (action) {
+        return action;
+    }
+
+    // TODO: We usually don't get here because "foo.txt" looks enough like a URL that we do a DNS
+    // lookup and fail. It'd be nice to fallback to an SCP file path.
+    // See if we can conjure up a secure copy path.
+    return [self urlActionWithSecureCopyAt:VT100GridCoordMake(x, y)];
+}
+
+- (URLAction *)urlActionForExistingFileAt:(VT100GridCoord)coord
+                                   prefix:(NSString *)prefix
+                             prefixCoords:(NSArray *)prefixCoords
+                                   suffix:(NSString *)suffix
+                             suffixCoords:(NSArray *)suffixCoords
+                         workingDirectory:(NSString *)workingDirectory
+                                extractor:(iTermTextExtractor *)extractor {
+    NSString *possibleFilePart1 =
+        [prefix substringIncludingOffset:[prefix length] - 1
+                        fromCharacterSet:[PTYTextView filenameCharacterSet]
+                    charsTakenFromPrefix:NULL];
+    NSString *possibleFilePart2 =
+        [suffix substringIncludingOffset:0
+                        fromCharacterSet:[PTYTextView filenameCharacterSet]
+                    charsTakenFromPrefix:NULL];
+
     int prefixChars = 0;
     int suffixChars = 0;
     // First, try to locate an existing filename at this location.
@@ -6014,11 +6078,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return action;
     }
 
-    DLog(@"Brute force search failed, try smart selection.");
+    return nil;
+}
+
+- (URLAction *)urlActionForSmartSelectionAt:(VT100GridCoord)coord
+                        respectHardNewlines:(BOOL)respectHardNewlines
+                           workingDirectory:(NSString *)workingDirectory
+                                 remoteHost:(VT100RemoteHost *)remoteHost {
     // Next, see if smart selection matches anything with an action.
     VT100GridWindowedRange smartRange;
-    SmartMatch *smartMatch = [self smartSelectAtX:x
-                                                y:y
+    SmartMatch *smartMatch = [self smartSelectAtX:coord.x
+                                                y:coord.y
                                                to:&smartRange
                                  ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                    actionRequired:YES
@@ -6038,18 +6108,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         action.representedObject = [ContextMenuActionPrefsController parameterForActionDict:actions[0]
                                                                       withCaptureComponents:smartMatch.components
                                                                            workingDirectory:workingDirectory
-                                                                                 remoteHost:[_dataSource remoteHostOnLine:y]];
+                                                                                 remoteHost:remoteHost];
         return action;
     }
-
+    return nil;
+}
+- (URLAction *)urlActionForAnyStringSemanticHistoryAt:(VT100GridCoord)coord
+                                     workingDirectory:(NSString *)workingDirectory {
     if (_semanticHistoryController.activatesOnAnyString) {
         // Just do smart selection and let Semantic History take it.
-        smartMatch = [self smartSelectAtX:x
-                                        y:y
-                                       to:&smartRange
-                         ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-                           actionRequired:NO
-                          respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
+        VT100GridWindowedRange smartRange;
+        SmartMatch *smartMatch = [self smartSelectAtX:coord.x
+                                                    y:coord.y
+                                                   to:&smartRange
+                                     ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                       actionRequired:NO
+                                      respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
         if (!VT100GridCoordEquals(smartRange.coordRange.start,
                                   smartRange.coordRange.end)) {
             NSString *name = smartMatch.components[0];
@@ -6060,11 +6134,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return action;
         }
     }
+    return nil;
+}
 
-    // No luck. Look for something vaguely URL-like.
+- (URLAction *)urlActionForURLAt:(VT100GridCoord)coord
+                          prefix:(NSString *)prefix
+                    prefixCoords:(NSArray *)prefixCoords
+                          suffix:(NSString *)suffix
+                    suffixCoords:(NSArray *)suffixCoords
+                       extractor:(iTermTextExtractor *)extractor
+         continuationCharsCoords:(NSMutableIndexSet *)continuationCharsCoords {
     NSString *joined = [prefix stringByAppendingString:suffix];
     DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
          joined, (int)[prefix length]);
+    int prefixChars = 0;
     NSString *possibleUrl = [joined substringIncludingOffset:[prefix length]
                                             fromCharacterSet:[PTYTextView urlCharacterSet]
                                         charsTakenFromPrefix:&prefixChars];
@@ -6076,6 +6159,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"No URL found");
         return nil;
     }
+    prefixChars -= rangeWithoutNearbyPunctuation.location;
     NSString *stringWithoutNearbyPunctuation = [possibleUrl substringWithRange:rangeWithoutNearbyPunctuation];
     DLog(@"String without nearby punctuation: %@", stringWithoutNearbyPunctuation);
 
@@ -6105,19 +6189,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSURL *url = [NSURL URLWithUserSuppliedString:stringWithoutNearbyPunctuation];
 
         // If something can handle the scheme then we're all set.
-        BOOL openable = (url && [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil);
+        BOOL openable = (url &&
+                         [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil &&
+                         prefixChars >= 0 &&
+                         prefixChars <= prefix.length);
 
         if (openable) {
             DLog(@"%@ is openable", url);
             VT100GridWindowedRange range;
-            range.coordRange.start = [extractor coord:coord
-                                                 plus:-(prefixChars - rangeWithoutNearbyPunctuation.location)
-                                       skippingCoords:continuationCharsCoords
-                                              forward:NO];
-            range.coordRange.end = [extractor coord:range.coordRange.start
-                                               plus:rangeWithoutNearbyPunctuation.length
-                                     skippingCoords:continuationCharsCoords
-                                            forward:YES];
+            NSInteger j = prefix.length - prefixChars;
+            if (j < prefixCoords.count) {
+                range.coordRange.start = [prefixCoords[j] gridCoordValue];
+            } else if (j == prefixCoords.count && j > 0) {
+                range.coordRange.start = [extractor successorOfCoord:[prefixCoords[j - 1] gridCoordValue]];
+            } else {
+                DLog(@"prefixCoordscount=%@ j=%@", @(prefixCoords.count), @(j));
+                return nil;
+            }
+            NSInteger i = rangeWithoutNearbyPunctuation.length - prefixChars;
+            if (i < suffixCoords.count) {
+                range.coordRange.end = [suffixCoords[i] gridCoordValue];
+            } else if (i > 0 && i == suffixCoords.count) {
+                range.coordRange.end = [extractor successorOfCoord:[suffixCoords[i - 1] gridCoordValue]];
+            } else {
+                DLog(@"i=%@ suffixcoords.count=%@", @(i), @(suffixCoords.count));
+                return nil;
+            }
             range.columnWindow = extractor.logicalWindow;
             URLAction *action = [URLAction urlActionToOpenURL:stringWithoutNearbyPunctuation];
             action.range = range;
@@ -6128,18 +6225,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
-    // TODO: We usually don't get here because "foo.txt" looks enough like a URL that we do a DNS
-    // lookup and fail. It'd be nice to fallback to an SCP file path.
-    // See if we can conjure up a secure copy path.
-    smartMatch = [self smartSelectAtX:x
-                                    y:y
-                                   to:&smartRange
-                     ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-                       actionRequired:NO
-                      respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
+    return nil;
+}
+
+- (URLAction *)urlActionWithSecureCopyAt:(VT100GridCoord)coord {
+    VT100GridWindowedRange smartRange;
+    SmartMatch *smartMatch = [self smartSelectAtX:coord.x
+                                                y:coord.y
+                                               to:&smartRange
+                                 ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                   actionRequired:NO
+                                  respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
     if (smartMatch) {
         SCPPath *scpPath = [_dataSource scpPathForFile:[smartMatch.components firstObject]
-                                                onLine:y];
+                                                onLine:coord.y];
         if (scpPath) {
             URLAction *action = [URLAction urlActionToSecureCopyFile:scpPath];
             action.range = smartRange;

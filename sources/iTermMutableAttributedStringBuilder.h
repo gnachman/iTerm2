@@ -35,6 +35,7 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @property(nonatomic, copy) NSDictionary *attributes;
 @property(nonatomic, readonly) NSInteger length;
 @property(nonatomic, assign) BOOL asciiLigaturesAvailable;
+@property(nonatomic, assign) BOOL zippy;
 
 - (void)appendString:(NSString *)string;
 - (void)appendCharacter:(unichar)code;

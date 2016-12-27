@@ -11,6 +11,7 @@
 #import "iTermProfilePreferences.h"
 #import "MovePaneController.h"
 #import "NSColor+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
@@ -150,6 +151,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // If there is a flexible root view, this is set and is the tabview's view.
     // Otherwise it is nil.
+#warning TODO: I believe this prevents tmux windows from being transparent.
     SolidColorView *flexibleView_;
 
     // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
@@ -2797,10 +2799,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
            vSpacing:(double)vs {
-    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
+    [[ProfileModel sharedInstance] setObject:[font stringValue]
                                        forKey:KEY_NORMAL_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nonAsciiFont]
+    [[ProfileModel sharedInstance] setObject:[nonAsciiFont stringValue]
                                        forKey:KEY_NON_ASCII_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
     [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]
@@ -4662,6 +4664,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (session.isTmuxClient) {
         [self updateFlexibleViewColors];
     }
+}
+
+- (void)sessionKeyLabelsDidChange:(PTYSession *)session {
+    [_delegate tabKeyLabelsDidChangeForSession:session];
 }
 
 @end

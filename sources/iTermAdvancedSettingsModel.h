@@ -161,7 +161,9 @@
 + (BOOL)useColorfgbgFallback;
 + (BOOL)promptForPasteWhenNotAtPrompt;
 + (BOOL)performDNSLookups;
++ (BOOL)zeroWidthSpaceAdvancesCursor;
 + (BOOL)darkThemeHasBlackTitlebar;
 + (BOOL)fontChangeAffectsBroadcastingSessions;
++ (BOOL)zippyTextDrawing;
 
 @end

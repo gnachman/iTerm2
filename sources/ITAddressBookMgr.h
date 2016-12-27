@@ -137,6 +137,8 @@
 #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
 #define KEY_BACKGROUND_IMAGE_TILED @"Background Image Is Tiled"
+#define KEY_ASCII_LIGATURES        @"ASCII Ligatures"
+#define KEY_NON_ASCII_LIGATURES    @"Non-ASCII Ligatures"
 
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
