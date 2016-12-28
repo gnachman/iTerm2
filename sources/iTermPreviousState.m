@@ -10,7 +10,7 @@
     self = [super init];
     if (self) {
         NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-        DLog(@"Active app is %@", activeAppDict);
+        DLog(@"Saving state: active app is %@", activeAppDict);
         if ([[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:[[NSBundle mainBundle] bundleIdentifier]]) {
             self.previouslyActiveAppPID = nil;
         } else {
