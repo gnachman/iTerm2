@@ -91,13 +91,6 @@ static NSDate* lastResizeDate_;
                                                                       aRect.size.width,
                                                                       aRect.size.height)
                                        hasVerticalScroller:NO];
-        _scrollview.drawsBackground = NO;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _scrollview.drawsBackground = NO;
-        });
-#warning TODO: I noticed that cmd-U now requires setNeedsDisplay: on PTYTextView.
-        _scrollview.contentView.backgroundColor = [NSColor clearColor];
-
         [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
 
         // assign the main view

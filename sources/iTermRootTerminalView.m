@@ -50,8 +50,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _leftTabBarWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
-#warning TODO This has the undesired side-effect of making the selected tab transparent.
-        self.tabView.drawsBackground = NO;
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
