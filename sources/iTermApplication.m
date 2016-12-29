@@ -240,6 +240,8 @@
             }
         }
         DLog(@"NSKeyDown event taking the regular path");
+        [[NSApp menu] performKeyEquivalent:event];
+        return;
     }
     [super sendEvent:event];
 }

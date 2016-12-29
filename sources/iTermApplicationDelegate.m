@@ -1847,6 +1847,8 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    NSLog(@"Validate %@", NSStringFromSelector(menuItem.action));
+
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
