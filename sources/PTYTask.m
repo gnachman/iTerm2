@@ -567,6 +567,7 @@ static int MyForkPty(int *amaster,
     if (pid == (pid_t)0) {
         // Child
         // Do not start the new process with a signal handler.
+        iTermFileDescriptorServerLog("Setting up signal masks and such");
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
         sigset_t signals;
@@ -574,13 +575,16 @@ static int MyForkPty(int *amaster,
         sigaddset(&signals, SIGPIPE);
         sigprocmask(SIG_UNBLOCK, &signals, NULL);
 
+        iTermFileDescriptorServerLog("Closing file descriptors...");
         // Apple opens files without the close-on-exec flag (e.g., Extras2.rsrc).
         // See issue 2662.
         for (int j = numFileDescriptorsToPreserve; j < getdtablesize(); j++) {
             close(j);
         }
+        iTermFileDescriptorServerLog("Done closing file descriptors. About to chdir to %s", initialPwd);
 
         chdir(initialPwd);
+        iTermFileDescriptorServerLog("chdir finished. About to call execvp on %s", argpath);
 
         // Sub in our environ for the existing one. Since Mac OS doesn't have execvpe, this hack
         // does the job.
