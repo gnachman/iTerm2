@@ -10,7 +10,7 @@
     self = [super init];
     if (self) {
         NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-        DLog(@"Active app is %@", activeAppDict);
+        DLog(@"Saving state: active app is %@", activeAppDict);
         if ([[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:[[NSBundle mainBundle] bundleIdentifier]]) {
             self.previouslyActiveAppPID = nil;
         } else {
@@ -25,6 +25,10 @@
 - (void)dealloc {
     [_owner release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p itermWasActive=%@ other app pid=%@>", self.class, self, @(_itermWasActiveWhenHotkeyOpened), self.previouslyActiveAppPID];
 }
 
 - (BOOL)restorePreviouslyActiveApp {

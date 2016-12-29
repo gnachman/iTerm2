@@ -572,7 +572,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     if ([self keyHotkeyWindowController] != profileHotKey.windowController.weaklyReferencedObject) {
         DLog(@"Restoring the previous state %p", self.previousState);
         BOOL result = [self.previousState restoreAllowingAppSwitch:!profileHotKey.closedByOtherHotkeyWindowOpening];
-        self.previousState = nil;
+        if (!profileHotKey.closedByOtherHotkeyWindowOpening) {
+            self.previousState = nil;
+        }
         return result;
     }
     return NO;

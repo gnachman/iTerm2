@@ -27,6 +27,9 @@
 @property(nonatomic, readonly) BOOL rollingIn;
 @property(nonatomic, readonly) BOOL rollingOut;
 
+// A rollout is cancellable after the window has animated out but before previously active app becomes active.
+@property(nonatomic, readonly) BOOL rollOutCancelable;
+
 @property(nonatomic, assign) BOOL autoHides;
 
 // Is there a visible hotkey window right now?
@@ -70,6 +73,7 @@
 - (void)hideForScripting;
 - (void)toggleForScripting;
 - (BOOL)isRevealed;
+- (void)cancelRollOut;
 
 @end
 
