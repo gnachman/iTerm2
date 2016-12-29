@@ -39,6 +39,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 // Maps a window ID as a string to a dictionary of window flags (see WindowFlag constants above).
 @property (nonatomic, retain) NSDictionary *windowOptions;
 @property (nonatomic, assign) BOOL manuallyOpened;
+@property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *tabColors;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;

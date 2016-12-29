@@ -79,6 +79,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [tabToUpdate_ release];
     [_windowOptions release];
     [_zoomed release];
+    [_tabColors release];
+
     [super dealloc];
 }
 
@@ -439,6 +441,10 @@ static int OctalValue(const char *bytes) {
         parseTree[kLayoutDictHotkeyKey] = hotkey;
     }
 
+    if (self.tabColors[n]) {
+        parseTree[kLayoutDictTabColorKey] = self.tabColors[n];
+    }
+    
     return nil;
 }
 
