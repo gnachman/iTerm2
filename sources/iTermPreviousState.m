@@ -27,6 +27,10 @@
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p itermWasActive=%@ other app pid=%@>", self.class, self, @(_itermWasActiveWhenHotkeyOpened), self.previouslyActiveAppPID];
+}
+
 - (BOOL)restorePreviouslyActiveApp {
     if (!_previouslyActiveAppPID) {
         return NO;
