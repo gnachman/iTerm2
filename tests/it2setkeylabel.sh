@@ -31,6 +31,8 @@ function show_help() {
     echo 'Example:' 1>& 2
     echo '#!/bin/bash' 1>& 2
     echo '# Wrapper script for mc that sets function key labels' 1>& 2
+    echo 'NAME=mc_$RANDOM' 1>& 2
+    echo 'it2setkeylabel.sh push $NAME' 1>& 2
     echo 'it2setkeylabel.sh set F1 Help' 1>& 2
     echo 'it2setkeylabel.sh set F2 Menu' 1>& 2
     echo 'it2setkeylabel.sh set F3 View' 1>& 2
@@ -47,8 +49,6 @@ function show_help() {
     echo 'it2setkeylabel.sh set F15 Copy' 1>& 2
     echo 'it2setkeylabel.sh set F16 Move' 1>& 2
     echo 'it2setkeylabel.sh set F17 Find' 1>& 2
-    echo 'NAME=mc_$RANDOM' 1>& 2
-    echo 'it2setkeylabel.sh push $NAME' 1>& 2
     echo 'mc' 1>& 2
     echo 'it2setkeylabel.sh pop $NAME' 1>& 2
 }
