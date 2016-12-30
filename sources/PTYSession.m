@@ -20,6 +20,7 @@
 #import "iTermHotKeyController.h"
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermKeyLabels.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
@@ -409,7 +410,7 @@ static const NSUInteger kMaxHosts = 100;
 
     // Touch bar labels for function keys.
     NSMutableDictionary<NSString *, NSString *> *_keyLabels;
-    NSMutableArray<NSMutableDictionary<NSString *, NSString *> *> *_keyLabelsStack;
+    NSMutableArray<iTermKeyLabels *> *_keyLabelsStack;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -7601,20 +7602,34 @@ ITERM_WEAKLY_REFERENCEABLE
     [_delegate sessionKeyLabelsDidChange:self];
 }
 
-- (void)screenPushKeyLabels {
+- (void)screenPushKeyLabels:(NSString *)value {
     if (!_keyLabels) {
         return;
     }
     if (!_keyLabelsStack) {
         _keyLabelsStack = [[NSMutableArray alloc] init];
     }
-    [_keyLabelsStack addObject:[_keyLabels copy]];
+    iTermKeyLabels *labels = [[[iTermKeyLabels alloc] init] autorelease];
+    labels.name = value;
+    labels.map = _keyLabels;
+    [_keyLabelsStack addObject:labels];
 }
 
-- (void)screenPopKeyLabels {
-    [_keyLabels release];
-    _keyLabels = _keyLabelsStack.lastObject;
+- (iTermKeyLabels *)popKeyLabels {
+    iTermKeyLabels *labels = [[_keyLabelsStack.lastObject retain] autorelease];
     [_keyLabelsStack removeLastObject];
+    return labels;
+}
+
+- (void)screenPopKeyLabels:(NSString *)value {
+    [_keyLabels release];
+    _keyLabels = nil;
+    iTermKeyLabels *labels = [self popKeyLabels];
+    while (labels && value.length > 0 && ![labels.name isEqualToString:value]) {
+        labels = [self popKeyLabels];
+    }
+    labels = _keyLabelsStack.lastObject;
+    _keyLabels = [labels.map retain];
     [_delegate sessionKeyLabelsDidChange:self];
 }
 

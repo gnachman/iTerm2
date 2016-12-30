@@ -374,6 +374,6 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 
 // Touch bar
 - (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName;
-- (void)terminalPushKeyLabels;
-- (void)terminalPopKeyLabels;
+- (void)terminalPushKeyLabels:(NSString *)value;
+- (void)terminalPopKeyLabels:(NSString *)value;
 @end

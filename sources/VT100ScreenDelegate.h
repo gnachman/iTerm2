@@ -240,7 +240,7 @@
 - (NSInteger)screenUnicodeVersion;
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion;
 - (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName;
-- (void)screenPushKeyLabels;
-- (void)screenPopKeyLabels;
+- (void)screenPushKeyLabels:(NSString *)value;
+- (void)screenPopKeyLabels:(NSString *)value;
 
 @end

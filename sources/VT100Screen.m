@@ -3863,12 +3863,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenSetLabel:label forKey:keyName];
 }
 
-- (void)terminalPushKeyLabels {
-    [delegate_ screenPushKeyLabels];
+- (void)terminalPushKeyLabels:(NSString *)value {
+    [delegate_ screenPushKeyLabels:value];
 }
 
-- (void)terminalPopKeyLabels {
-    [delegate_ screenPopKeyLabels];
+- (void)terminalPopKeyLabels:(NSString *)value {
+    [delegate_ screenPopKeyLabels:value];
 }
 
 // fg=ff0080,bg=srgb:808080
