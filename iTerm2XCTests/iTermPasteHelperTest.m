@@ -10,11 +10,14 @@
 
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPasteHelper.h"
+#import "iTermSelectorSwizzler.h"
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "PasteEvent.h"
 #import "PasteboardHistory.h"
+#import <OCHamcrest/OCHamcrest.h>
+#import <OCMockito/OCMockito.h>
 #import <XCTest/XCTest.h>
 
 typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier);
@@ -266,7 +269,23 @@ static const double kFloatingPointTolerance = 0.00001;
     XCTAssert([_writeBuffer isEqualToString:expected]);
 }
 
-- (void)testMultilineWarning {
+- (void)testMultilineWarningWithOverride {
+    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
+    [MKTGiven([mockDefaults objectForKey:@"PromptForPasteWhenNotAtPrompt"]) willReturn:@YES];
+    [MKTGiven([mockDefaults boolForKey:@"PromptForPasteWhenNotAtPrompt"]) willReturnBool:YES];
+    [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
+                                 fromClass:[NSUserDefaults class]
+                                 withBlock:^ id { return mockDefaults; }
+                                  forBlock:^{
+                                      [self doMultilineWarningTestWithOverride:YES];
+                                  }];
+}
+
+- (void)testMultilineWarningNoOverride {
+    [self doMultilineWarningTestWithOverride:NO];
+}
+
+- (void)testSingleLinePasteGivesNoWarning {
     __block BOOL warned = NO;
     [_warningBlock release];
     _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
@@ -274,35 +293,6 @@ static const double kFloatingPointTolerance = 0.00001;
         warned = YES;
         return 1;  /* deprecated NSAlertDefaultReturn; */
     } copy];
-
-    // Check cr newline
-    [_helper pasteString:@"line 1\rline 2"
-                  slowly:NO
-        escapeShellChars:NO
-                commands:NO
-            tabTransform:kTabTransformNone
-            spacesPerTab:0];
-    XCTAssert(warned);
-
-    // Check lf newline
-    warned = NO;
-    [_helper pasteString:@"line 1\nline 2"
-                  slowly:NO
-        escapeShellChars:NO
-                commands:NO
-            tabTransform:kTabTransformNone
-            spacesPerTab:0];
-    XCTAssert(warned);
-
-    // Check crlf newline
-    warned = NO;
-    [_helper pasteString:@"line 1\r\nline 2"
-                  slowly:NO
-        escapeShellChars:NO
-                commands:NO
-            tabTransform:kTabTransformNone
-            spacesPerTab:0];
-    XCTAssert(warned);
 
     // Check no newline gives no warning.
     warned = NO;
@@ -313,6 +303,58 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     XCTAssert(!warned);
+
+}
+
+- (void)doMultilineWarningTestWithOverride:(BOOL)override {
+    __block BOOL warned = NO;
+    [_warningBlock release];
+    _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
+        XCTAssert([identifier isEqualToString:[iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey]]);
+        warned = YES;
+        return 1;  /* deprecated NSAlertDefaultReturn; */
+    } copy];
+
+    // Check cr newline. This used to warn by default but now it does not.
+    [_helper pasteString:@"line 1\rline 2"
+                  slowly:NO
+        escapeShellChars:NO
+                commands:NO
+            tabTransform:kTabTransformNone
+            spacesPerTab:0];
+    if (override) {
+        XCTAssert(warned);
+    } else {
+        XCTAssert(!warned);
+    }
+
+    // Check lf newline This used to warn by default but now it does not.
+    warned = NO;
+    [_helper pasteString:@"line 1\nline 2"
+                  slowly:NO
+        escapeShellChars:NO
+                commands:NO
+            tabTransform:kTabTransformNone
+            spacesPerTab:0];
+    if (override) {
+        XCTAssert(warned);
+    } else {
+        XCTAssert(!warned);
+    }
+
+    // Check crlf newline This used to warn by default but now it does not.
+    warned = NO;
+    [_helper pasteString:@"line 1\r\nline 2"
+                  slowly:NO
+        escapeShellChars:NO
+                commands:NO
+            tabTransform:kTabTransformNone
+            spacesPerTab:0];
+    if (override) {
+        XCTAssert(warned);
+    } else {
+        XCTAssert(!warned);
+    }
 }
 
 - (void)testBracketingOnPasteString {
