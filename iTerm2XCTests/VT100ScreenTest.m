@@ -1898,13 +1898,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([ScreenCharToStr(line + 4) isEqualToString:@"Ｅ"]);
     XCTAssert(line[5].code == DWC_RIGHT);
     XCTAssert([ScreenCharToStr(line + 6) isEqualToString:@"�"]);
-    XCTAssert([ScreenCharToStr(line + 7) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"ł"]);
+    XCTAssert([ScreenCharToStr(line + 7) isEqualToString:@"\u200b"]);  // zero-width space advances cursor by default.
+    XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 9) isEqualToString:@"ł"]);
 
-    XCTAssert([ScreenCharToStr(line + 9) isEqualToString:@"🖕🏾"]);
-    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
-    XCTAssert(line[12].code == 0);
+    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"🖕🏾"]);
+    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 12) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
+    XCTAssert(line[13].code == 0);
     // Toggle ambiguousIsDoubleWidth_ and see if it works.
     screen = [self screenWithWidth:20 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
@@ -1937,13 +1938,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(line[7].code == DWC_RIGHT);
     XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"�"]);
     XCTAssert(line[9].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"ł"]);
-    XCTAssert(line[12].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 13) isEqualToString:@"🖕🏾"]);
-    XCTAssert([ScreenCharToStr(line + 14) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 15) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
-    XCTAssert(line[16].code == 0);
+    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"\u200b"]);
+    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 12) isEqualToString:@"ł"]);
+    XCTAssert(line[13].code == DWC_RIGHT);
+    XCTAssert([ScreenCharToStr(line + 14) isEqualToString:@"🖕🏾"]);
+    XCTAssert([ScreenCharToStr(line + 15) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 16) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
+    XCTAssert(line[17].code == 0);
 
     // Test modifying character already at cursor with combining mark
     ambiguousIsDoubleWidth_ = NO;
