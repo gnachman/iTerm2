@@ -7613,6 +7613,11 @@ ITERM_WEAKLY_REFERENCEABLE
     labels.name = value;
     labels.map = _keyLabels;
     [_keyLabelsStack addObject:labels];
+
+    if (![value hasPrefix:@"."]) {
+        [_keyLabels removeAllObjects];
+    }
+    [_delegate sessionKeyLabelsDidChange:self];
 }
 
 - (iTermKeyLabels *)popKeyLabels {

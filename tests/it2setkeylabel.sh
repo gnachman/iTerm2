@@ -25,13 +25,15 @@ function show_help() {
     echo '   it2setkeylabel.sh set Fn Label' 1>& 2
     echo '     Where n is a value from 1 to 20' 1>& 2
     echo '   it2setkeylabel.sh push [name]' 1>& 2
+    echo '     Saves the current labels with an optional name. Resets labels to their default value, unless name begins with a "." character.'
     echo '   it2setkeylabel.sh pop [name]' 1>& 2
-    echo '     If name is given, all key labels up to one with the matching name are popped.' 1>& 2
+    echo '     If name is given, all key labels up to and including the one with the matching name are popped.' 1>& 2
     echo '' 1>& 2
     echo 'Example:' 1>& 2
     echo '#!/bin/bash' 1>& 2
     echo '# Wrapper script for mc that sets function key labels' 1>& 2
     echo 'NAME=mc_$RANDOM' 1>& 2
+    echo '# Save existing labels' 1>& 2
     echo 'it2setkeylabel.sh push $NAME' 1>& 2
     echo 'it2setkeylabel.sh set F1 Help' 1>& 2
     echo 'it2setkeylabel.sh set F2 Menu' 1>& 2
@@ -50,6 +52,7 @@ function show_help() {
     echo 'it2setkeylabel.sh set F16 Move' 1>& 2
     echo 'it2setkeylabel.sh set F17 Find' 1>& 2
     echo 'mc' 1>& 2
+    echo '# Restore labels to their previous state' 1>& 2
     echo 'it2setkeylabel.sh pop $NAME' 1>& 2
 }
 
