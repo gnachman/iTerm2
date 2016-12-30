@@ -122,6 +122,7 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString *const SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 static NSString *const SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
 static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
+static NSString *const SESSION_ARRANGEMENT_TMUX_TAB_COLOR = @"Tmux Tab Color";
 static NSString *const SESSION_ARRANGEMENT_IS_TMUX_GATEWAY = @"Is Tmux Gateway";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME = @"Tmux Gateway Session Name";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
@@ -720,10 +721,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
-+ (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
-                               inView:(SessionView *)sessionView
-                         withDelegate:(id<PTYSessionDelegate>)delegate
-                        forObjectType:(iTermObjectType)objectType {
++ (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
+                                inView:(SessionView *)sessionView
+                          withDelegate:(id<PTYSessionDelegate>)delegate
+                         forObjectType:(iTermObjectType)objectType {
     DLog(@"Restoring session from arrangement");
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession.view = sessionView;
@@ -734,12 +735,26 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             objectForKey:KEY_GUID]];
     BOOL needDivorce = NO;
     if (!theBookmark) {
-        NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]];
-        // Keep it from stepping on an existing sesion with the same guid.
-        temp[KEY_GUID] = [ProfileModel freshGuid];
-        theBookmark = temp;
+        theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
         needDivorce = YES;
     }
+    NSDictionary *tabColorDict = [ITAddressBookMgr encodeColor:[NSColor colorFromHexString:arrangement[SESSION_ARRANGEMENT_TMUX_TAB_COLOR]]];
+    if (tabColorDict) {
+        if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark] ||
+            ![[ITAddressBookMgr decodeColor:[iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:theBookmark]] isEqual:tabColorDict]) {
+            theBookmark = [theBookmark dictionaryBySettingObject:tabColorDict forKey:KEY_TAB_COLOR];
+            theBookmark = [theBookmark dictionaryBySettingObject:@YES forKey:KEY_USE_TAB_COLOR];
+            needDivorce = YES;
+        }
+    } else if ([iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark]) {
+        theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:KEY_USE_TAB_COLOR];
+        needDivorce = YES;
+    }
+    if (needDivorce) {
+        // Keep it from stepping on an existing sesion with the same guid.
+        theBookmark = [theBookmark dictionaryBySettingObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+    }
+
     [[aSession screen] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -2802,8 +2817,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return didChange;
 }
 
-- (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
-{
+- (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
     int i;
     NSDictionary *aDict = aePrefs;
 
@@ -2971,6 +2985,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermSessionHotkeyController sharedInstance] setShortcut:shortcut
                                                     forSession:self];
     [[_delegate realParentWindow] invalidateRestorableState];
+
+    if (self.isTmuxClient) {
+        NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
+        if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:aDict]) {
+            tabColorDict = nil;
+        }
+        NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
+        [self.tmuxController setTabColorString:[tabColor hexString] forWindowPane:_tmuxPane];
+    }
 }
 
 - (NSString *)badgeLabel {
@@ -3623,6 +3646,10 @@ ITERM_WEAKLY_REFERENCEABLE
     value = [parseNode objectForKey:kLayoutDictStateKey];
     if (value) {
         [result setObject:value forKey:SESSION_ARRANGEMENT_TMUX_STATE];
+    }
+    value = parseNode[kLayoutDictTabColorKey];
+    if (value) {
+        result[SESSION_ARRANGEMENT_TMUX_TAB_COLOR] = value;
     }
 
     return result;

@@ -118,6 +118,9 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)hotkey;
 - (NSDictionary *)hotkeyForWindowPane:(int)windowPane;
 
+- (void)setTabColorString:(NSString *)colorString forWindowPane:(int)windowPane;
+- (NSString *)tabColorStringForWindowPane:(int)windowPane;
+
 - (void)linkWindowId:(int)windowId
            inSession:(NSString *)sessionName
            toSession:(NSString *)targetSession;

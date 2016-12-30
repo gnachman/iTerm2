@@ -292,4 +292,28 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [NSColor colorWithColorSpace:self.colorSpace components:x count:4];
 }
 
+- (NSString *)hexString {
+    NSDictionary *dict = [self dictionaryValue];
+    int red = [dict[kEncodedColorDictionaryRedComponent] doubleValue] * 255;
+    int green = [dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 255;
+    int blue = [dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 255;
+    return [NSString stringWithFormat:@"#%02x%02x%02x", red, green, blue];
+}
+
++ (instancetype)colorFromHexString:(NSString *)hexString {
+    if (![hexString hasPrefix:@"#"] || hexString.length != 7) {
+        return nil;
+    }
+
+    NSScanner *scanner = [NSScanner scannerWithString:[hexString substringFromIndex:1]];
+    unsigned long long ll;
+    if (![scanner scanHexLongLong:&ll]) {
+        return nil;
+    }
+    CGFloat red = (ll >> 16) & 0xff;
+    CGFloat green = (ll >> 8) & 0xff;
+    CGFloat blue = (ll >> 0) & 0xff;
+    return [NSColor colorWithSRGBRed:red/255.0 green:green/255.0 blue:blue/255.0 alpha:1];
+}
+
 @end

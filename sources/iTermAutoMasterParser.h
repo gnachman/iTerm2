@@ -15,6 +15,6 @@
 + (instancetype)sharedInstance;
 
 // Returns mountpoints having a given map.
-- (NSArray<NSString *> *)mountpointsWithMap:(NSString *)map;
+- (NSArray<NSString *> *)mountpointsWithMaps:(NSSet<NSString *> *)maps;
 
 @end

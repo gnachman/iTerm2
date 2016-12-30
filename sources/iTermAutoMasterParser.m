@@ -99,11 +99,11 @@
     return self;
 }
 
-- (NSArray<NSString *> *)mountpointsWithMap:(NSString *)map {
+- (NSArray<NSString *> *)mountpointsWithMaps:(NSSet<NSString *> *)maps {
     NSMutableArray<NSString *> *result = [NSMutableArray array];
     for (iTermAutoMasterEntry *entry in _entries) {
-        if ([entry.map isEqualToString:map]) {
-            DLog(@"Found NFS automounter at %@", entry.mountpoint);
+        if (entry.map && [maps containsObject:entry.map]) {
+            DLog(@"Found NFS automounter at %@ mapped to %@", entry.mountpoint, entry.map);
             [result addObject:entry.mountpoint];
         }
     }
