@@ -636,6 +636,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
+    self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
     } else {
