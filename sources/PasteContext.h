@@ -14,6 +14,7 @@
 @property(nonatomic, assign) float delayBetweenCalls;
 @property(nonatomic, assign) BOOL blockAtNewline;
 @property(nonatomic, assign) BOOL isBlocked;
+@property(nonatomic, assign) BOOL isUpload;
 
 - (instancetype)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault

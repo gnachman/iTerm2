@@ -224,7 +224,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:kHelloWorld
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -237,7 +237,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:kTestString
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -249,7 +249,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:kTestString
                   slowly:NO
         escapeShellChars:YES
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
@@ -261,7 +261,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:kTestString
                   slowly:NO
         escapeShellChars:YES
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformEscapeWithCtrlV
             spacesPerTab:0];
     [self runTimer];
@@ -299,7 +299,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"line 1"
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     XCTAssert(!warned);
@@ -319,7 +319,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"line 1\rline 2"
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     if (override) {
@@ -333,7 +333,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"line 1\nline 2"
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     if (override) {
@@ -347,7 +347,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"line 1\r\nline 2"
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     if (override) {
@@ -362,7 +362,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:kHelloWorld
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -379,7 +379,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     _shouldBracket = NO;
@@ -395,7 +395,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test1
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     _shouldBracket = NO;
@@ -404,7 +404,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test2
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
 
@@ -418,7 +418,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -431,7 +431,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test
                   slowly:YES
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -444,14 +444,14 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test1
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     NSString *test2 = [@"2" stringRepeatedTimes:2000];
     [_helper pasteString:test2
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -467,7 +467,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test1
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [_helper enqueueEvent:[NSEvent keyEventWithType:NSKeyDown
@@ -484,7 +484,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:test2
                   slowly:NO
         escapeShellChars:NO
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];

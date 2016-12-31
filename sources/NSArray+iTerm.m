@@ -235,6 +235,48 @@
     return intersection;
 }
 
+- (id)reduceWithBlock:(id (^)(id first, id second))block {
+    id reduction = self.firstObject;
+    for (NSInteger i = 0; i < self.count; i++) {
+        reduction = block(reduction, i + 1 < self.count ? self[i + 1] : nil);
+    }
+    return reduction;
+}
+
+- (NSURL *)lowestCommonAncestorOfURLs {
+    if (self.count == 0) {
+        return nil;
+    }
+    if (self.count == 1) {
+        return self[0];
+    }
+    NSArray<NSArray<NSString *> *> *componentsArrays = [self mapWithBlock:^id(NSURL *url) {
+        return [url.path pathComponents];
+    }];
+    NSArray<NSNumber *> *counts = [componentsArrays mapWithBlock:^id(NSArray<NSString *> *anObject) {
+        return @(anObject.count);
+    }];
+    NSInteger shortestCount = [[counts reduceWithBlock:^NSNumber *(NSNumber *first, NSNumber *second) {
+        if (second) {
+            return @(MIN(first.integerValue, second.integerValue));
+        } else {
+            return first;
+        }
+    }] integerValue];
+    NSInteger i = 0;
+    for (i = 0; i < shortestCount; i++) {
+        NSString *value = componentsArrays.firstObject[i];
+        const BOOL allShareAncestor = [componentsArrays allWithBlock:^BOOL(NSArray<NSString *> *anObject) {
+            return [anObject[i] isEqualToString:value];
+        }];
+        if (!allShareAncestor) {
+            break;
+        }
+    }
+    NSString *path = [[componentsArrays.firstObject subarrayWithRange:NSMakeRange(0, i)] componentsJoinedByString:@"/"];
+    return [NSURL fileURLWithPath:path];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

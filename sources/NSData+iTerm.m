@@ -9,6 +9,8 @@
 #import "NSData+iTerm.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 
@@ -57,6 +59,41 @@
         }
     }
     return string;
+}
+
++ (NSData *)dataWithTGZContainingFiles:(NSArray<NSString *> *)files relativeToPath:(NSString *)basePath error:(NSError **)error {
+    NSArray<NSString *> *args = @[ @"-c",  // Create
+                                   @"-z",  // gzip
+                                   @"-b",
+                                   @"1",  // Block size
+                                   @"-f",
+                                   @"-",  // write to stdout
+                                   [NSString stringWithFormat:@"-C%@", [basePath stringWithEscapedShellCharacters]],  // Base path
+                                   [files componentsJoinedByString:@" "] ];  // Files to zip
+
+    NSTask *task = [[[NSTask alloc] init] autorelease];
+    [task setLaunchPath:@"/usr/bin/tar"];
+    [task setArguments:args];
+    [task setStandardInput:[NSPipe pipe]];
+    [task setStandardOutput:[NSPipe pipe]];
+    [task setStandardError:[NSPipe pipe]];
+    [task launch];
+    NSData *data = [[[task standardOutput] fileHandleForReading] readDataToEndOfFile];
+    NSData *errorMessage = [[[task standardError] fileHandleForReading] readDataToEndOfFile];
+    *error = nil;
+    if (errorMessage.length) {
+        NSString *errorString = [errorMessage stringWithEncoding:NSUTF8StringEncoding];
+        if (errorString) {
+            *error = [NSError errorWithDomain:@"com.googlecode.iterm2" code:1 userInfo:@{ @"errorMessage": errorString }];
+        } else {
+            ELog(@"Error %s", errorMessage.bytes);
+        }
+    }
+    [task waitUntilExit];
+    if (task.terminationStatus != 0) {
+        return nil;
+    }
+    return data;
 }
 
 - (BOOL)containsAsciiCharacterInSet:(NSCharacterSet *)asciiSet {

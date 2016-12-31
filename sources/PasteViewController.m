@@ -52,6 +52,12 @@ static float kAnimationDuration = 0.25;
     [super dealloc];
 }
 
+- (void)awakeFromNib {
+    if (pasteContext_.isUpload) {
+        _label.stringValue = @"Sending…";
+    }
+}
+
 - (void)viewDidAppear {
     [self updateLabelColor];
 }

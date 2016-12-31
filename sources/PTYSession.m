@@ -5566,7 +5566,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteHelper pasteString:theString
                        slowly:!!(flags & kPTYSessionPasteSlowly)
              escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
-                     commands:NO
+                     isUpload:NO
                  tabTransform:tabTransform
                  spacesPerTab:spacesPerTab];
 }
@@ -6888,6 +6888,72 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.download stop];
     [self.download endOfData];
     self.download = nil;
+}
+
+- (void)screenRequestUpload:(NSString *)args {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = YES;
+    panel.canChooseFiles = YES;
+    panel.allowsMultipleSelection = YES;
+
+    [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
+        if (result == NSFileHandlingPanelOKButton) {
+            [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            // Get the directories for all the URLs. If a URL was a file, convert it to the containing directory, otherwise leave it alone.
+            __block BOOL anyFiles = NO;
+            NSArray<NSURL *> *directories = [panel.URLs mapWithBlock:^id(NSURL *anObject) {
+                BOOL isDirectory = NO;
+                if ([fileManager fileExistsAtPath:anObject.path isDirectory:&isDirectory]) {
+                    if (isDirectory) {
+                        return anObject;
+                    } else {
+                        anyFiles = YES;
+                        return [NSURL fileURLWithPath:[anObject.path stringByDeletingLastPathComponent]];
+                    }
+                } else {
+                    ELog(@"Could not find %@", anObject.path);
+                    return nil;
+                }
+            }];
+            NSString *base = [directories lowestCommonAncestorOfURLs].path;
+            if (!anyFiles && directories.count == 1) {
+                base = [base stringByDeletingLastPathComponent];
+            }
+            NSArray *baseComponents = [base pathComponents];
+            NSArray<NSString *> *relativePaths = [panel.URLs mapWithBlock:^id(NSURL *anObject) {
+                NSString *path = anObject.path;
+                NSArray<NSString *> *pathComponents = [path pathComponents];
+                NSArray<NSString *> *relativePathComponents = [pathComponents subarrayWithRange:NSMakeRange(baseComponents.count, pathComponents.count - baseComponents.count)];
+                NSString *relativePath = [relativePathComponents componentsJoinedByString:@"/"];
+                return relativePath;
+            }];
+            NSError *error = nil;
+            NSData *data = [NSData dataWithTGZContainingFiles:relativePaths relativeToPath:base error:&error];
+            if (!data && error) {
+                NSString *message = error.userInfo[@"errorMessage"];
+                if (message) {
+                    NSAlert *alert = [NSAlert alertWithMessageText:@"Error Preparing Upload"
+                                                     defaultButton:@"OK"
+                                                   alternateButton:nil
+                                                       otherButton:nil
+                                         informativeTextWithFormat:@"tar failed with this message: %@", message];
+                    [alert runModal];
+                }
+            }
+            NSString *base64String = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength |
+                                                                           NSDataBase64EncodingEndLineWithCarriageReturn)];
+            base64String = [base64String stringByAppendingString:@"\n\n"];
+            [_pasteHelper pasteString:base64String
+                               slowly:NO
+                     escapeShellChars:NO
+                             isUpload:NO
+                         tabTransform:kTabTransformNone
+                         spacesPerTab:0];          
+        } else {
+            [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+        }
+    }];
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {

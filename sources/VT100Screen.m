@@ -3521,6 +3521,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenFileReceiptEndedUnexpectedly];
 }
 
+- (void)terminalRequestUpload:(NSString *)args {
+    [delegate_ screenRequestUpload:args];
+}
+
 - (void)terminalCopyBufferToPasteboard {
     [delegate_ screenCopyBufferToPasteboard];
 }

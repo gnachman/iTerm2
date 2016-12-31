@@ -2114,6 +2114,10 @@ static const int kMaxScreenRows = 4096;
             receivingFile_ = YES;
             [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
+    } else if ([key isEqualToString:@"RequestUpload"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalRequestUpload:value];
+        }
     } else if ([key isEqualToString:@"BeginFile"]) {
         ELog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndFile"]) {

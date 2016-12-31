@@ -17,6 +17,8 @@
   // Base-64 decodes string and returns data or nil.
 + (NSData *)dataWithBase64EncodedString:(NSString *)string;
 
++ (NSData *)dataWithTGZContainingFiles:(NSArray<NSString *> *)files relativeToPath:(NSString *)basePath error:(NSError **)error;
+
 // returns a string the the data base-64 encoded into 77-column lines divided by lineBreak.
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
 
