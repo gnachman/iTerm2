@@ -1406,6 +1406,10 @@
 		A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */; };
 		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
 		A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
+		A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
+		A673BFE31E176AA300FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
+		A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
+		A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
 		A6755F441D728FFA00F3726C /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
 		A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F4B1D729A0500F3726C /* image_decoder.m */; };
@@ -6844,6 +6848,7 @@
 				1D44CF9C1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png in Resources */,
 				1D44D0961CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
 				1D44CFF91CC7F5A600BE5630 /* PTYTextViewTest-golden-testBlinkingTextHidden.png in Resources */,
+				A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
 				1D44CFF31CC7F5A600BE5630 /* PTYTextViewTest-golden-testBadge.png in Resources */,
 				1D44D05E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorReverseVideo.png in Resources */,
 				1D44D0631CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testCharacterSelection.png in Resources */,
@@ -6979,6 +6984,7 @@
 				1D44D0A91CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testVerticalSpacing.png in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
+				A673BFE31E176AA300FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1D44D0A11CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSurrogatePair.png in Resources */,
 				1D44CFC41CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png in Resources */,
@@ -7475,6 +7481,7 @@
 				1D44CDB91CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testFindMatches.png in Resources */,
 				A6BDB09C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
 				1D44D0D11CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testFrameCursorWithNondefaultColors.png in Resources */,
+				A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
 				1D44CDB51CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png in Resources */,
 				A6BDB0991B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png in Resources */,
 				1D44CD911CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png in Resources */,
@@ -7592,6 +7599,7 @@
 				1D44CEB11CC7F00800BE5630 /* PTYTextViewTest-golden-travis-testBoxDrawing.png in Resources */,
 				1D44CDA61CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				A6BDB05E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */,
+				A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */,
 				A6BDB06C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				1D44CDCA1CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */,
 				1D44D0C91CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndCursorBoost.png in Resources */,
