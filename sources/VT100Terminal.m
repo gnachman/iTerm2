@@ -2167,9 +2167,9 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetLabel:label forKey:keyName];
         }
     } else if ([key isEqualToString:@"PushKeyLabels"]) {
-        [delegate_ terminalPushKeyLabels];
+        [delegate_ terminalPushKeyLabels:value];
     } else if ([key isEqualToString:@"PopKeyLabels"]) {
-        [delegate_ terminalPopKeyLabels];
+        [delegate_ terminalPopKeyLabels:value];
     }
 }
 

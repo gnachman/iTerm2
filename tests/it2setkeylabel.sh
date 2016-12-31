@@ -21,11 +21,39 @@ function print_st() {
 }
 
 function show_help() {
-    echo "Usage:" 1>& 2
-    echo "   it2setkeylabel.sh set Fn Label" 1>& 2
-    echo "     Where n is a value from 1 to 20" 1>& 2
-    echo "   it2setkeylabel.sh push" 1>& 2
-    echo "   it2setkeylabel.sh pop" 1>& 2
+    echo 'Usage:' 1>& 2
+    echo '   it2setkeylabel.sh set Fn Label' 1>& 2
+    echo '     Where n is a value from 1 to 20' 1>& 2
+    echo '   it2setkeylabel.sh push [name]' 1>& 2
+    echo '     Saves the current labels with an optional name. Resets labels to their default value, unless name begins with a "." character.'
+    echo '   it2setkeylabel.sh pop [name]' 1>& 2
+    echo '     If name is given, all key labels up to and including the one with the matching name are popped.' 1>& 2
+    echo '' 1>& 2
+    echo 'Example:' 1>& 2
+    echo '#!/bin/bash' 1>& 2
+    echo '# Wrapper script for mc that sets function key labels' 1>& 2
+    echo 'NAME=mc_$RANDOM' 1>& 2
+    echo '# Save existing labels' 1>& 2
+    echo 'it2setkeylabel.sh push $NAME' 1>& 2
+    echo 'it2setkeylabel.sh set F1 Help' 1>& 2
+    echo 'it2setkeylabel.sh set F2 Menu' 1>& 2
+    echo 'it2setkeylabel.sh set F3 View' 1>& 2
+    echo 'it2setkeylabel.sh set F4 Edit' 1>& 2
+    echo 'it2setkeylabel.sh set F5 Copy' 1>& 2
+    echo 'it2setkeylabel.sh set F6 Move' 1>& 2
+    echo 'it2setkeylabel.sh set F7 Mkdir' 1>& 2
+    echo 'it2setkeylabel.sh set F8 Del' 1>& 2
+    echo 'it2setkeylabel.sh set F9 Menu' 1>& 2
+    echo 'it2setkeylabel.sh set F10 Quit' 1>& 2
+    echo 'it2setkeylabel.sh set F11 Menu' 1>& 2
+    echo 'it2setkeylabel.sh set F13 View' 1>& 2
+    echo 'it2setkeylabel.sh set F14 Edit' 1>& 2
+    echo 'it2setkeylabel.sh set F15 Copy' 1>& 2
+    echo 'it2setkeylabel.sh set F16 Move' 1>& 2
+    echo 'it2setkeylabel.sh set F17 Find' 1>& 2
+    echo 'mc' 1>& 2
+    echo '# Restore labels to their previous state' 1>& 2
+    echo 'it2setkeylabel.sh pop $NAME' 1>& 2
 }
 
 ## Main
@@ -47,24 +75,46 @@ then
   print_st
 elif [[ $1 == push ]]
 then
-  if [[ $# != 1 ]]
+  if [[ $# == 1 ]]
   then
+    print_osc
+    printf "1337;PushKeyLabels"
+    print_st
+  elif [[ $# == 2 ]]
+  then
+    if [[ $2 == "" ]]
+    then
+      echo "Name must not be empty" 1>& 2
+      exit 1
+    fi
+    print_osc
+    printf "1337;PushKeyLabels=%s" "$2"
+    print_st
+  else
     show_help
     exit 1
   fi
-  print_osc
-  printf "1337;PushKeyLabels"
-  print_st
 elif [[ $1 == pop ]]
 then
-  if [[ $# != 1 ]]
+  if [[ $# == 1 ]]
   then
+    print_osc
+    printf "1337;PopKeyLabels"
+    print_st
+  elif [[ $# == 2 ]]
+  then
+    if [[ $2 == "" ]]
+    then
+      echo "Name must not be empty" 1>& 2
+      exit 1
+    fi
+    print_osc
+    printf "1337;PopKeyLabels=%s" "$2"
+    print_st
+  else
     show_help
     exit 1
   fi
-  print_osc
-  printf "1337;PopKeyLabels"
-  print_st
 else
   show_help
   exit 1

@@ -1404,6 +1404,12 @@
 		A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */; };
 		A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */; };
 		A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */; };
+		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
+		A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
+		A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
+		A673BFE31E176AA300FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
+		A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
+		A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
 		A6755F441D728FFA00F3726C /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
 		A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F4B1D729A0500F3726C /* image_decoder.m */; };
@@ -3014,22 +3020,22 @@
 		A62C3A8C1BCAE08300B5629D /* iTermDirectoryTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoryTree.m; sourceTree = "<group>"; };
 		A62C3A8F1BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermRecentDirectoryMO+Additions.h"; sourceTree = "<group>"; };
 		A62C3A901BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermRecentDirectoryMO+Additions.m"; sourceTree = "<group>"; };
-		A62C3B131BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermCommandHistoryEntryMO+CoreDataProperties.h"; sourceTree = "<group>"; };
-		A62C3B141BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermCommandHistoryEntryMO+CoreDataProperties.m"; sourceTree = "<group>"; };
-		A62C3B151BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCommandHistoryEntryMO.h; sourceTree = "<group>"; };
-		A62C3B161BCC24AB00B5629D /* iTermCommandHistoryEntryMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCommandHistoryEntryMO.m; sourceTree = "<group>"; };
-		A62C3B171BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermHostRecordMO+CoreDataProperties.h"; sourceTree = "<group>"; };
-		A62C3B181BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermHostRecordMO+CoreDataProperties.m"; sourceTree = "<group>"; };
-		A62C3B191BCC24AB00B5629D /* iTermHostRecordMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHostRecordMO.h; sourceTree = "<group>"; };
-		A62C3B1A1BCC24AB00B5629D /* iTermHostRecordMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHostRecordMO.m; sourceTree = "<group>"; };
-		A62C3B1B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermCommandHistoryCommandUseMO+CoreDataProperties.h"; sourceTree = "<group>"; };
-		A62C3B1C1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; sourceTree = "<group>"; };
-		A62C3B1D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCommandHistoryCommandUseMO.h; sourceTree = "<group>"; };
-		A62C3B1E1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCommandHistoryCommandUseMO.m; sourceTree = "<group>"; };
-		A62C3B1F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermRecentDirectoryMO+CoreDataProperties.h"; sourceTree = "<group>"; };
-		A62C3B201BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermRecentDirectoryMO+CoreDataProperties.m"; sourceTree = "<group>"; };
-		A62C3B211BCC24AB00B5629D /* iTermRecentDirectoryMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRecentDirectoryMO.h; sourceTree = "<group>"; };
-		A62C3B221BCC24AB00B5629D /* iTermRecentDirectoryMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRecentDirectoryMO.m; sourceTree = "<group>"; };
+		A62C3B131BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermCommandHistoryEntryMO+CoreDataProperties.h"; path = "sources/CoreDataGeneratedFiles/iTermCommandHistoryEntryMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A62C3B141BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermCommandHistoryEntryMO+CoreDataProperties.m"; path = "sources/CoreDataGeneratedFiles/iTermCommandHistoryEntryMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A62C3B151BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermCommandHistoryEntryMO.h; path = sources/CoreDataGeneratedFiles/iTermCommandHistoryEntryMO.h; sourceTree = "<group>"; };
+		A62C3B161BCC24AB00B5629D /* iTermCommandHistoryEntryMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermCommandHistoryEntryMO.m; path = sources/CoreDataGeneratedFiles/iTermCommandHistoryEntryMO.m; sourceTree = "<group>"; };
+		A62C3B171BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermHostRecordMO+CoreDataProperties.h"; path = "sources/CoreDataGeneratedFiles/iTermHostRecordMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A62C3B181BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermHostRecordMO+CoreDataProperties.m"; path = "sources/CoreDataGeneratedFiles/iTermHostRecordMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A62C3B191BCC24AB00B5629D /* iTermHostRecordMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermHostRecordMO.h; path = sources/CoreDataGeneratedFiles/iTermHostRecordMO.h; sourceTree = "<group>"; };
+		A62C3B1A1BCC24AB00B5629D /* iTermHostRecordMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermHostRecordMO.m; path = sources/CoreDataGeneratedFiles/iTermHostRecordMO.m; sourceTree = "<group>"; };
+		A62C3B1B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermCommandHistoryCommandUseMO+CoreDataProperties.h"; path = "sources/CoreDataGeneratedFiles/iTermCommandHistoryCommandUseMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A62C3B1C1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; path = "sources/CoreDataGeneratedFiles/iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A62C3B1D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermCommandHistoryCommandUseMO.h; path = sources/CoreDataGeneratedFiles/iTermCommandHistoryCommandUseMO.h; sourceTree = "<group>"; };
+		A62C3B1E1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermCommandHistoryCommandUseMO.m; path = sources/CoreDataGeneratedFiles/iTermCommandHistoryCommandUseMO.m; sourceTree = "<group>"; };
+		A62C3B1F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermRecentDirectoryMO+CoreDataProperties.h"; path = "sources/CoreDataGeneratedFiles/iTermRecentDirectoryMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A62C3B201BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermRecentDirectoryMO+CoreDataProperties.m"; path = "sources/CoreDataGeneratedFiles/iTermRecentDirectoryMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A62C3B211BCC24AB00B5629D /* iTermRecentDirectoryMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermRecentDirectoryMO.h; path = sources/CoreDataGeneratedFiles/iTermRecentDirectoryMO.h; sourceTree = "<group>"; };
+		A62C3B221BCC24AB00B5629D /* iTermRecentDirectoryMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermRecentDirectoryMO.m; path = sources/CoreDataGeneratedFiles/iTermRecentDirectoryMO.m; sourceTree = "<group>"; };
 		A62C3B331BCC265F00B5629D /* iTermHostRecordMO+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermHostRecordMO+Additions.h"; sourceTree = "<group>"; };
 		A62C3B341BCC265F00B5629D /* iTermHostRecordMO+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermHostRecordMO+Additions.m"; sourceTree = "<group>"; };
 		A62C3B381BD40D2400B5629D /* iTermMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMark.h; sourceTree = "<group>"; };
@@ -3142,6 +3148,10 @@
 		A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAltScreenMouseScrollInferer.m; sourceTree = "<group>"; };
 		A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAutoMasterParser.h; sourceTree = "<group>"; };
 		A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutoMasterParser.m; sourceTree = "<group>"; };
+		A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyLabels.h; sourceTree = "<group>"; };
+		A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyLabels.m; sourceTree = "<group>"; };
+		A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testCustomUnderline.png"; sourceTree = "<group>"; };
+		A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testUnderline.png"; sourceTree = "<group>"; };
 		A6755F411D728FFA00F3726C /* iTermImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImage.h; sourceTree = "<group>"; };
 		A6755F421D728FFA00F3726C /* iTermImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImage.m; sourceTree = "<group>"; };
 		A6755F491D729A0500F3726C /* image_decoder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = image_decoder; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -4938,6 +4948,8 @@
 		A686C0D21ADA38CA00906FAE /* Golden Images for Tests */ = {
 			isa = PBXGroup;
 			children = (
+				A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */,
+				A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */,
 				A6374A241DEA0929000A136F /* PTYTextViewTest-golden-testUnderline.png */,
 				A6374A1E1DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png */,
 				A6374A1F1DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png */,
@@ -5325,6 +5337,8 @@
 				A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */,
 				A6374A261DEE941F000A136F /* iTermPromptOnCloseReason.h */,
 				A6374A271DEE941F000A136F /* iTermPromptOnCloseReason.m */,
+				A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */,
+				A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6363,6 +6377,7 @@
 				A6EFF21C1D1CA9F800806EEF /* NSLocale+iTerm.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
 				A66DB8361C8E4CBB00233E88 /* iTermOpenQuicklyCommands.h in Headers */,
+				A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A6936B4D1D2E0ABF00521B04 /* iTermScriptingWindow.h in Headers */,
@@ -6833,6 +6848,7 @@
 				1D44CF9C1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png in Resources */,
 				1D44D0961CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
 				1D44CFF91CC7F5A600BE5630 /* PTYTextViewTest-golden-testBlinkingTextHidden.png in Resources */,
+				A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
 				1D44CFF31CC7F5A600BE5630 /* PTYTextViewTest-golden-testBadge.png in Resources */,
 				1D44D05E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorReverseVideo.png in Resources */,
 				1D44D0631CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testCharacterSelection.png in Resources */,
@@ -6968,6 +6984,7 @@
 				1D44D0A91CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testVerticalSpacing.png in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
+				A673BFE31E176AA300FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1D44D0A11CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSurrogatePair.png in Resources */,
 				1D44CFC41CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png in Resources */,
@@ -7464,6 +7481,7 @@
 				1D44CDB91CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testFindMatches.png in Resources */,
 				A6BDB09C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
 				1D44D0D11CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testFrameCursorWithNondefaultColors.png in Resources */,
+				A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
 				1D44CDB51CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testDoubleWidthCharacter.png in Resources */,
 				A6BDB0991B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png in Resources */,
 				1D44CD911CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png in Resources */,
@@ -7581,6 +7599,7 @@
 				1D44CEB11CC7F00800BE5630 /* PTYTextViewTest-golden-travis-testBoxDrawing.png in Resources */,
 				1D44CDA61CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				A6BDB05E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */,
+				A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */,
 				A6BDB06C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				1D44CDCA1CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */,
 				1D44D0C91CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndCursorBoost.png in Resources */,
@@ -7829,6 +7848,7 @@
 				A6C763971B45C52B00E3C992 /* TmuxController.m in Sources */,
 				A6C7633F1B45C52B00E3C992 /* iTermAnnouncementView.m in Sources */,
 				A6C763791B45C52B00E3C992 /* PreferencePanel.m in Sources */,
+				A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */,
 				A6C763031B45C52B00E3C992 /* VT100WorkingDirectory.m in Sources */,
 				A62C3B281BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m in Sources */,
 				A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */,

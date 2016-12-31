@@ -1,6 +1,6 @@
 before_install: ./ci/before_install.sh
 bundler_args: --without documentation --without development --deployment --jobs=3 --retry=3
-osx_image: xcode8
+osx_image: xcode8.2
 language: objective-c
 script: ./ci/script.sh
 after_success: ./ci/after_success.sh

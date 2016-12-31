@@ -3863,12 +3863,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenSetLabel:label forKey:keyName];
 }
 
-- (void)terminalPushKeyLabels {
-    [delegate_ screenPushKeyLabels];
+- (void)terminalPushKeyLabels:(NSString *)value {
+    [delegate_ screenPushKeyLabels:value];
 }
 
-- (void)terminalPopKeyLabels {
-    [delegate_ screenPopKeyLabels];
+- (void)terminalPopKeyLabels:(NSString *)value {
+    [delegate_ screenPopKeyLabels:value];
 }
 
 // fg=ff0080,bg=srgb:808080
@@ -4236,8 +4236,11 @@ static void SwapInt(int *a, int *b) {
                                        end:VT100GridCoordMake(range.end.x, range.end.y)
                                   toStartX:&trimmedStart
                                     toEndX:&trimmedEnd];
-    if (!ok) {
+    if (!ok && !tolerateEmpty) {
         return nil;
+    } else if (!ok && tolerateEmpty) {
+        trimmedStart = range.start;
+        trimmedEnd = range.start;
     }
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
         if (tolerateEmpty) {
