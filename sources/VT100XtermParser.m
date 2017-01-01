@@ -152,7 +152,8 @@ typedef enum {
 
                 case ':':
                     if ((mode == 50 || mode == 1337) &&
-                        [data hasPrefixOfBytes:"File=" length:5]) {
+                        ([data hasPrefixOfBytes:"File=" length:5] ||
+                         [data hasPrefixOfBytes:"Copy=" length:5])) {
                         // This is a wonky special case for file downloads. The OSC code can be
                         // really, really big. So we mark it as ended at the colon, and the client
                         // is responsible for handling this properly.

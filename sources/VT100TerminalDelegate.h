@@ -380,4 +380,11 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName;
 - (void)terminalPushKeyLabels:(NSString *)value;
 - (void)terminalPopKeyLabels:(NSString *)value;
+
+// Copy to pasteboard
+- (void)terminalBeginCopyToPasteboard;
+- (void)terminalDidReceiveBase64PasteboardString:(NSString *)string;
+- (void)terminalDidFinishReceivingPasteboard;
+- (void)terminalPasteboardReceiptEndedUnexpectedly;
+
 @end

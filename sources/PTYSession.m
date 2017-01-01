@@ -7823,6 +7823,29 @@ ITERM_WEAKLY_REFERENCEABLE
     [_delegate sessionKeyLabelsDidChange:self];
 }
 
+- (void)screenTerminalAttemptedPasteboardAccess {
+    if ([iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarning]) {
+        return;
+    }
+    NSString *identifier = @"ClipboardAccessDenied";
+    if ([self hasAnnouncementWithIdentifier:identifier]) {
+        return;
+    }
+    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Applications in terminal may access clipboard”.";
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:notice
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Open Prefs", @"Don't Show This Again" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        [[[iTermApplication sharedApplication] delegate] showPrefWindow:nil];
+                                                    } else if (selection == 1) {
+                                                        [iTermAdvancedSettingsModel setNoSyncSuppressClipboardAccessDeniedWarning:YES];
+                                                    }
+                                                }];
+    [self queueAnnouncement:announcement identifier:identifier];
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {

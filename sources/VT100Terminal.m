@@ -330,6 +330,7 @@ static const int kMaxScreenRows = 4096;
     self.strictAnsiMode = NO;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
+    _copyingToPasteboard = NO;
     _encoding = _canonicalEncoding;
     _parser.encoding = _canonicalEncoding;
     for (int i = 0; i < NUM_CHARSETS; i++) {
@@ -1201,10 +1202,25 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
+    } else if (_copyingToPasteboard) {
+        if (token->type == XTERMCC_MULTITOKEN_BODY) {
+            [delegate_ terminalDidReceiveBase64PasteboardString:token.string];
+            return;
+        } else if (token->type == VT100_ASCIISTRING) {
+            [delegate_ terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
+            return;
+        } else if (token->type == XTERMCC_MULTITOKEN_END) {
+            [delegate_ terminalDidFinishReceivingPasteboard];
+            _copyingToPasteboard = NO;
+            return;
+        } else {
+            [delegate_ terminalPasteboardReceiptEndedUnexpectedly];
+            _copyingToPasteboard = NO;
+        }
     }
     if (token->savingData &&
         token->type != VT100_SKIP &&
-        [delegate_ terminalIsAppendingToPasteboard]) {
+        [delegate_ terminalIsAppendingToPasteboard]) {  // This is the old code that echoes to the screen. Its use is discouraged.
         // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
         if (token->type != XTERMCC_SET_KVP ||
             ![token.string hasPrefix:@"CopyToClipboard"]) {
@@ -2108,6 +2124,11 @@ static const int kMaxScreenRows = 4096;
             // Enter multitoken mode to avoid showing the base64 gubbins of the image.
             receivingFile_ = YES;
             [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
+        }
+    } else if ([key isEqualToString:@"Copy"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalBeginCopyToPasteboard];
+            _copyingToPasteboard = YES;
         }
     } else if ([key isEqualToString:@"RequestUpload"]) {
         if ([delegate_ terminalIsTrusted]) {

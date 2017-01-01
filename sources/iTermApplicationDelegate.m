@@ -1123,8 +1123,7 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] arrangeHorizontally];
 }
 
-- (IBAction)showPrefWindow:(id)sender
-{
+- (IBAction)showPrefWindow:(id)sender {
     [[PreferencePanel sharedInstance] run];
     [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:self];
 }

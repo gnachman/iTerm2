@@ -60,6 +60,7 @@
 // True if receiving a file in multitoken mode, or if between BeginFile and
 // EndFile codes (which are deprecated).
 @property(nonatomic, readonly) BOOL receivingFile;
+@property(nonatomic, readonly) BOOL copyingToPasteboard;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

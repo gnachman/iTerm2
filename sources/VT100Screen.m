@@ -151,6 +151,9 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
+
+    // base64 value to copy to pasteboard, being built up bit by bit.
+    NSMutableString *_copyString;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -232,6 +235,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
     [_animatedLines release];
+    [_copyString release];
     [super dealloc];
 }
 
@@ -3524,6 +3528,47 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalRequestUpload:(NSString *)args {
     [delegate_ screenRequestUpload:args];
+}
+
+- (void)terminalBeginCopyToPasteboard {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        [_copyString release];
+        _copyString = [[NSMutableString alloc] init];
+    } else {
+        [delegate_ screenTerminalAttemptedPasteboardAccess];
+    }
+}
+
+- (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        [_copyString appendString:string];
+    }
+}
+
+- (void)terminalDidFinishReceivingPasteboard {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        NSData *data = [NSData dataWithBase64EncodedString:_copyString];
+        if (data) {
+            NSString *string = [[[NSString alloc] initWithData:data encoding:terminal_.encoding] autorelease];
+            if (!string) {
+                string = [[[NSString alloc] initWithData:data encoding:[NSString defaultCStringEncoding]] autorelease];
+            }
+
+            if (string) {
+                NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+                [pboard clearContents];
+                [pboard declareTypes:@[ NSStringPboardType ] owner:self];
+                [pboard setString:string forType:NSStringPboardType];
+            }
+        }
+    }
+    [_copyString release];
+    _copyString = nil;
+}
+
+- (void)terminalPasteboardReceiptEndedUnexpectedly {
+    [_copyString release];
+    _copyString = nil;
 }
 
 - (void)terminalCopyBufferToPasteboard {
