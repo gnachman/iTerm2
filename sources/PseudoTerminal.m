@@ -3620,7 +3620,7 @@ ITERM_WEAKLY_REFERENCEABLE
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
-    [_contentView.tabBarControl updateFlashing];
+    [_contentView.tabBarControl setFlashing:YES];
     [_contentView updateToolbelt];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
