@@ -102,7 +102,10 @@ static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyi
 static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBrokenPipe";
 
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
+static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
+
 static NSString *const kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
+static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier = @"TurnOffFocusReportingOnHostChange";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -7190,6 +7193,14 @@ ITERM_WEAKLY_REFERENCEABLE
             [self offerToTurnOffMouseReportingOnHostChange];
         }
     }
+    if (self.terminal.reportFocus) {
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+        if ([number boolValue]) {
+            self.terminal.reportFocus = NO;
+        } else if (!number) {
+            [self offerToTurnOffFocusReportingOnHostChange];
+        }
+    }
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
@@ -7231,6 +7242,39 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }];
     [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
+}
+
+- (void)offerToTurnOffFocusReportingOnHostChange {
+    NSString *title =
+        @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                    completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    self.terminal.reportFocus = NO;
+                    break;
+
+                case 1: // Always
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+                    self.terminal.reportFocus = NO;
+                    break;
+
+                case 2: // Never
+                    [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                            forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname

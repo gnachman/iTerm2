@@ -64,7 +64,6 @@ NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 
 @interface VT100Terminal ()
-@property(nonatomic, assign) BOOL reportFocus;
 @property(nonatomic, assign) BOOL reverseVideo;
 @property(nonatomic, assign) BOOL originMode;
 @property(nonatomic, assign) BOOL moreFix;

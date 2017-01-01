@@ -32,6 +32,19 @@ DEFINE_BOOL(name, theDefault, theDescription) \
                                                         object:nil]; \
 }
 
+#define DEFINE_OPTIONAL_BOOL(name, theDefault, theDescription) \
++ (BOOL *)name { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    return [iTermAdvancedSettingsViewController optionalBoolForIdentifier:theIdentifier \
+                                                             defaultValue:theDefault \
+                                                              description:theDescription]; \
+} \
++ (NSString *)name##UserDefaultsKey { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    return theIdentifier; \
+}
+
+
 #define DEFINE_INT(name, theDefault, theDescription) \
 + (int)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
@@ -193,6 +206,8 @@ DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforeMultilinePaste, NoSyncDoNotWarnBeforeM
 DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt, NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt, NO, @"Warnings: Suppress warning about pasting a single line ending in a newline when at the shell prompt.\nThis requires Shell Integration to be installed.");
 
 DEFINE_BOOL(noSyncReplaceProfileWarning, NO, @"Warnings: Suppress warning about copying a session's settings over a Profile");
+DEFINE_OPTIONAL_BOOL(noSyncTurnOffFocusReportingOnHostChange, NO, @"Warnings: Always turn off focus reporting when host changes?");
+DEFINE_OPTIONAL_BOOL(noSyncTurnOffMouseReportingOnHostChange, NO, @"Warnings: Always turn off mouse reporting when host changes?");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard.");

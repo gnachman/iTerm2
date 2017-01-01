@@ -25,7 +25,7 @@
 // The "canonical" encoding, which is changed by user preference and never
 // escape code. On reset, we restore to this.
 @property(nonatomic, assign) NSStringEncoding canonicalEncoding;
-@property(nonatomic, readonly) BOOL reportFocus;
+@property(nonatomic, assign) BOOL reportFocus;
 
 @property(nonatomic, readonly) BOOL reverseVideo;
 @property(nonatomic, readonly) BOOL originMode;
