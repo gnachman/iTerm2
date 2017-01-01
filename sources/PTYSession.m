@@ -3459,7 +3459,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)clearBuffer {
     [_screen clearBuffer];
-
+    if (self.isTmuxClient) {
+        [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
+    }
     if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
         VT100GridSize size = _screen.size;
         size.width++;
@@ -3468,9 +3470,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)clearScrollbackBuffer
-{
+- (void)clearScrollbackBuffer {
     [_screen clearScrollbackBuffer];
+    if (self.isTmuxClient) {
+        [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
+    }
 }
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask

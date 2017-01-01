@@ -653,6 +653,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                     flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
+- (void)clearHistoryForWindowPane:(int)windowPane {
+    [gateway_ sendCommand:[NSString stringWithFormat:@"clear-history -t %%%d", windowPane]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 - (void)guessVersion {
     // Run commands that will fail in successively older versions.
     // show-window-options pane-border-format will succeed in 2.3 and later (presumably. 2.3 isn't out yet)

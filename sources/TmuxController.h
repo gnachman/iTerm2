@@ -145,4 +145,6 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)setCurrentWindow:(int)windowId;
 - (void)checkForUTF8;
 
+- (void)clearHistoryForWindowPane:(int)windowPane;
+
 @end
