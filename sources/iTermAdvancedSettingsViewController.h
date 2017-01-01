@@ -18,6 +18,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
              defaultValue:(BOOL)defaultValue
               description:(NSString*)description;
 
++ (BOOL *)optionalBoolForIdentifier:(NSString *)identifier
+                       defaultValue:(BOOL *)defaultValue
+                        description:(NSString *)description;
+
 + (int)intForIdentifier:(NSString *)identifier
            defaultValue:(int)defaultValue
             description:(NSString *)description;

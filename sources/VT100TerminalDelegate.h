@@ -310,6 +310,10 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 // terminalDidReceiveBase64FileData: calls.
 - (void)terminalFileReceiptEndedUnexpectedly;
 
+// Begin sending a file upload (base64 filename + newline + base64 file + newline)
+// args are "multiple" (meaning multiple files are allowed) or "single".
+- (void)terminalRequestUpload:(NSString *)args;
+
 // Signal the user that the terminal wants attention.
 - (void)terminalRequestAttention:(BOOL)request;
 

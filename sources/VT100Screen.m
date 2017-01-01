@@ -3504,6 +3504,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                      data:data];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
+        [delegate_ screenDidFinishReceivingInlineFile];
     } else {
         [delegate_ screenDidFinishReceivingFile];
     }
@@ -3519,6 +3520,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalFileReceiptEndedUnexpectedly {
     [delegate_ screenFileReceiptEndedUnexpectedly];
+}
+
+- (void)terminalRequestUpload:(NSString *)args {
+    [delegate_ screenRequestUpload:args];
 }
 
 - (void)terminalCopyBufferToPasteboard {

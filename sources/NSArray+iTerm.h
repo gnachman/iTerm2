@@ -60,6 +60,15 @@
 
 - (NSArray *)intersectArray:(NSArray *)other;
 
+// Given a collection of file URLs return the file URL that is their deepest common ancestor.
+// For example, given an input of:
+// /a/b/c
+// /a/b/c/d
+// /a/b/x
+//
+// returns /a/b
+- (NSURL *)lowestCommonAncestorOfURLs;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)

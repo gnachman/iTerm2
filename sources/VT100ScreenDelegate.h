@@ -204,6 +204,7 @@
 
 - (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size;
 - (void)screenDidFinishReceivingFile;
+- (void)screenDidFinishReceivingInlineFile;
 - (void)screenDidReceiveBase64FileData:(NSString *)data;
 - (void)screenFileReceiptEndedUnexpectedly;
 

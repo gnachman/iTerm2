@@ -102,7 +102,12 @@ static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyi
 static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBrokenPipe";
 
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
+static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
+static NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
+
 static NSString *const kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
+static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier = @"TurnOffFocusReportingOnHostChange";
+static NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -3459,7 +3464,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)clearBuffer {
     [_screen clearBuffer];
-
+    if (self.isTmuxClient) {
+        [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
+    }
     if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
         VT100GridSize size = _screen.size;
         size.width++;
@@ -3468,9 +3475,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)clearScrollbackBuffer
-{
+- (void)clearScrollbackBuffer {
     [_screen clearScrollbackBuffer];
+    if (self.isTmuxClient) {
+        [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
+    }
 }
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask
@@ -4188,6 +4197,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_view snapshot];
 }
 
+- (void)askAboutAbortingDownload {
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"A file is being downloaded. Abort the download?"
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"OK", @"Cancel" ]
+                                                    completion:^(int selection) {
+                                                        if (selection == 0) {
+                                                            [self.terminal stopReceivingFile];
+                                                        }
+                                                    }];
+    [self queueAnnouncement:announcement identifier:@"AbortDownloadOnKeyPressAnnouncement"];
+}
+
 #pragma mark - Captured Output
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
@@ -4841,6 +4863,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"] && self.terminal.receivingFile) {
+        // Offer to abort download if you press ^c while downloading an inline file
+        [self askAboutAbortingDownload];
+    }
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     if (_view.currentAnnouncement.dismissOnKeyDown) {
         [_view.currentAnnouncement dismiss];
@@ -5566,7 +5592,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteHelper pasteString:theString
                        slowly:!!(flags & kPTYSessionPasteSlowly)
              escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
-                     commands:NO
+                     isUpload:NO
                  tabTransform:tabTransform
                  spacesPerTab:spacesPerTab];
 }
@@ -6880,6 +6906,10 @@ ITERM_WEAKLY_REFERENCEABLE
     self.download = nil;
 }
 
+- (void)screenDidFinishReceivingInlineFile {
+    [self dismissAnnouncementWithIdentifier:@"AbortDownloadOnKeyPressAnnouncement"];
+}
+
 - (void)screenDidReceiveBase64FileData:(NSString *)data {
     [self.download appendData:data];
 }
@@ -6888,6 +6918,72 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.download stop];
     [self.download endOfData];
     self.download = nil;
+}
+
+- (void)screenRequestUpload:(NSString *)args {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = YES;
+    panel.canChooseFiles = YES;
+    panel.allowsMultipleSelection = YES;
+
+    [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
+        if (result == NSFileHandlingPanelOKButton) {
+            [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            // Get the directories for all the URLs. If a URL was a file, convert it to the containing directory, otherwise leave it alone.
+            __block BOOL anyFiles = NO;
+            NSArray<NSURL *> *directories = [panel.URLs mapWithBlock:^id(NSURL *anObject) {
+                BOOL isDirectory = NO;
+                if ([fileManager fileExistsAtPath:anObject.path isDirectory:&isDirectory]) {
+                    if (isDirectory) {
+                        return anObject;
+                    } else {
+                        anyFiles = YES;
+                        return [NSURL fileURLWithPath:[anObject.path stringByDeletingLastPathComponent]];
+                    }
+                } else {
+                    ELog(@"Could not find %@", anObject.path);
+                    return nil;
+                }
+            }];
+            NSString *base = [directories lowestCommonAncestorOfURLs].path;
+            if (!anyFiles && directories.count == 1) {
+                base = [base stringByDeletingLastPathComponent];
+            }
+            NSArray *baseComponents = [base pathComponents];
+            NSArray<NSString *> *relativePaths = [panel.URLs mapWithBlock:^id(NSURL *anObject) {
+                NSString *path = anObject.path;
+                NSArray<NSString *> *pathComponents = [path pathComponents];
+                NSArray<NSString *> *relativePathComponents = [pathComponents subarrayWithRange:NSMakeRange(baseComponents.count, pathComponents.count - baseComponents.count)];
+                NSString *relativePath = [relativePathComponents componentsJoinedByString:@"/"];
+                return relativePath;
+            }];
+            NSError *error = nil;
+            NSData *data = [NSData dataWithTGZContainingFiles:relativePaths relativeToPath:base error:&error];
+            if (!data && error) {
+                NSString *message = error.userInfo[@"errorMessage"];
+                if (message) {
+                    NSAlert *alert = [NSAlert alertWithMessageText:@"Error Preparing Upload"
+                                                     defaultButton:@"OK"
+                                                   alternateButton:nil
+                                                       otherButton:nil
+                                         informativeTextWithFormat:@"tar failed with this message: %@", message];
+                    [alert runModal];
+                }
+            }
+            NSString *base64String = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength |
+                                                                           NSDataBase64EncodingEndLineWithCarriageReturn)];
+            base64String = [base64String stringByAppendingString:@"\n\n"];
+            [_pasteHelper pasteString:base64String
+                               slowly:NO
+                     escapeShellChars:NO
+                             isUpload:NO
+                         tabTransform:kTabTransformNone
+                         spacesPerTab:0];          
+        } else {
+            [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+        }
+    }];
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
@@ -7099,6 +7195,30 @@ ITERM_WEAKLY_REFERENCEABLE
             [self offerToTurnOffMouseReportingOnHostChange];
         }
     }
+    if (self.terminal.reportFocus) {
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+        if ([number boolValue]) {
+            self.terminal.reportFocus = NO;
+        } else if (!number) {
+            [self offerToTurnOffFocusReportingOnHostChange];
+        }
+    }
+    if (self.terminal.reportFocus) {
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+        if ([number boolValue]) {
+            self.terminal.reportFocus = NO;
+        } else if (!number) {
+            [self offerToTurnOffFocusReportingOnHostChange];
+        }
+    }
+    if (self.terminal.bracketedPasteMode) {
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+        if ([number boolValue]) {
+            self.terminal.bracketedPasteMode = NO;
+        } else if (!number) {
+            [self offerToTurnOffBracketedPasteOnHostChange];
+        }
+    }
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
@@ -7140,6 +7260,72 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }];
     [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
+}
+
+- (void)offerToTurnOffFocusReportingOnHostChange {
+    NSString *title =
+        @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                    completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    self.terminal.reportFocus = NO;
+                    break;
+
+                case 1: // Always
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+                    self.terminal.reportFocus = NO;
+                    break;
+
+                case 2: // Never
+                    [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                            forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
+}
+
+- (void)offerToTurnOffBracketedPasteOnHostChange {
+    NSString *title =
+        @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                    completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    self.terminal.reportFocus = NO;
+                    break;
+
+                case 1: // Always
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                    self.terminal.reportFocus = NO;
+                    break;
+
+                case 2: // Never
+                    [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                            forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname

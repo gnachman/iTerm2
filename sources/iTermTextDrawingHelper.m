@@ -1926,8 +1926,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     // Keep the underline a reasonable distance from the baseline.
     CGFloat underlineOffset = _underlineOffset;
     CGFloat distanceFromBaseline = underlineOffset - _baselineOffset;
-    if (distanceFromBaseline < 2) {
-        underlineOffset = _baselineOffset + 2;
+    const CGFloat minimumDistance = [self retinaRound:font.xHeight * 0.4];
+    if (distanceFromBaseline < minimumDistance) {
+        underlineOffset = _baselineOffset + minimumDistance;
     } else if (distanceFromBaseline > font.xHeight / 2) {
         underlineOffset = _baselineOffset + font.xHeight / 2;
     }

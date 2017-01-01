@@ -64,14 +64,12 @@ NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 
 @interface VT100Terminal ()
-@property(nonatomic, assign) BOOL reportFocus;
 @property(nonatomic, assign) BOOL reverseVideo;
 @property(nonatomic, assign) BOOL originMode;
 @property(nonatomic, assign) BOOL moreFix;
 @property(nonatomic, assign) BOOL isAnsi;
 @property(nonatomic, assign) BOOL autorepeatMode;
 @property(nonatomic, assign) int charset;
-@property(nonatomic, assign) BOOL bracketedPasteMode;
 @property(nonatomic, assign) BOOL allowColumnMode;
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
 @property(nonatomic, assign) BOOL disableSmcupRmcup;
@@ -114,10 +112,6 @@ typedef struct {
 } VT100SavedCursor;
 
 @implementation VT100Terminal {
-    // True if receiving a file in multitoken mode, or if between BeginFile and
-    // EndFile codes (which are deprecated).
-    BOOL receivingFile_;
-
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
 
@@ -137,6 +131,7 @@ typedef struct {
 }
 
 @synthesize delegate = delegate_;
+@synthesize receivingFile = receivingFile_;
 
 #define DEL  0x7f
 
@@ -2113,6 +2108,10 @@ static const int kMaxScreenRows = 4096;
             // Enter multitoken mode to avoid showing the base64 gubbins of the image.
             receivingFile_ = YES;
             [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
+        }
+    } else if ([key isEqualToString:@"RequestUpload"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalRequestUpload:value];
         }
     } else if ([key isEqualToString:@"BeginFile"]) {
         ELog(@"Deprecated and unsupported code BeginFile received. Use File instead.");

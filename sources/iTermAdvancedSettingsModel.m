@@ -32,6 +32,19 @@ DEFINE_BOOL(name, theDefault, theDescription) \
                                                         object:nil]; \
 }
 
+#define DEFINE_OPTIONAL_BOOL(name, theDefault, theDescription) \
++ (BOOL *)name { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    return [iTermAdvancedSettingsViewController optionalBoolForIdentifier:theIdentifier \
+                                                             defaultValue:theDefault \
+                                                              description:theDescription]; \
+} \
++ (NSString *)name##UserDefaultsKey { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    return theIdentifier; \
+}
+
+
 #define DEFINE_INT(name, theDefault, theDescription) \
 + (int)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
@@ -193,6 +206,9 @@ DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforeMultilinePaste, NoSyncDoNotWarnBeforeM
 DEFINE_SETTABLE_BOOL(noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt, NoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt, NO, @"Warnings: Suppress warning about pasting a single line ending in a newline when at the shell prompt.\nThis requires Shell Integration to be installed.");
 
 DEFINE_BOOL(noSyncReplaceProfileWarning, NO, @"Warnings: Suppress warning about copying a session's settings over a Profile");
+DEFINE_OPTIONAL_BOOL(noSyncTurnOffFocusReportingOnHostChange, nil, @"Warnings: Always turn off focus reporting when host changes?");
+DEFINE_OPTIONAL_BOOL(noSyncTurnOffMouseReportingOnHostChange, nil, @"Warnings: Always turn off mouse reporting when host changes?");
+DEFINE_OPTIONAL_BOOL(noSyncTurnOffBracketedPasteOnHostChange, nil, @"Warnings: Always turn off paste bracketing when host changes?");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard.");
@@ -220,17 +236,21 @@ DEFINE_INT(badgeRightMargin, 10, @"Badge: Right Margin\nHow much space to leave 
 DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
 
 #pragma mark - Experimental Features
-DEFINE_BOOL(includePasteHistoryInAdvancedPaste, NO, @"Experimental Features: Include paste history in the advanced paste menu.");
-DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, @"Experimental Features: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
-DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, NO, @"Experimental Features: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
+DEFINE_BOOL(includePasteHistoryInAdvancedPaste, YES, @"Experimental Features: Include paste history in the advanced paste menu.");
+
+// This used to be on by default. Experiment with setting to to NO: it'll make ssh nicer.
+DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, @"Experimental Features: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session. Turning this off helps detect dead ssh sessions.");
+DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, YES, @"Experimental Features: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 DEFINE_BOOL(useAdaptiveFrameRate, YES, @"Experimental Features: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will update at 30 frames per second.");
 DEFINE_FLOAT(slowFrameRate, 15.0, @"Experimental Features: When adaptive framerate is enabled, refresh at this rate during high throughput conditions (FPS).");
 DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, @"Experimental Features: Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
-DEFINE_BOOL(tabTitlesUseSmartTruncation, NO, @"Experimental Features: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
-DEFINE_BOOL(experimentalKeyHandling, NO, @"Experimental Features: Improved support for input method editors like AquaSKK.");
-DEFINE_BOOL(hideStuckTooltips, NO, @"Experimental Features: Hide stuck tooltips.\nWhen you hide iTerm2 using a hotkey while a tooltip is fading out it gets stuck because of an OS bug. Work around it with a nasty hack by enabling this feature.")
-DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, NO, @"Experimental Features: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
+DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, @"Experimental Features: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
+DEFINE_BOOL(experimentalKeyHandling, YES, @"Experimental Features: Improved support for input method editors like AquaSKK.");
+DEFINE_BOOL(hideStuckTooltips, YES, @"Experimental Features: Hide stuck tooltips.\nWhen you hide iTerm2 using a hotkey while a tooltip is fading out it gets stuck because of an OS bug. Work around it with a nasty hack by enabling this feature.")
+DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, YES, @"Experimental Features: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
 DEFINE_BOOL(openFileOverridesSendText, YES, @"Experimental Features: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed inl lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
+
+// This is half implemented and should not be turned on by default.
 DEFINE_BOOL(useLayers, NO, @"Experimental Features: Use Core Animation layers for opaque terminal views");
 
 @end
