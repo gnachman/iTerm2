@@ -1694,7 +1694,10 @@ ITERM_WEAKLY_REFERENCEABLE
              self, @(encoding), @(forceEncoding), @(canBroadcast), stack);
         DLog(@"writeTaskImpl string=%@", string);
     }
-
+    if (canBroadcast && _terminal.sendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
+        // Local echo. Only for broadcastable text to avoid printing passwords from the password manager.
+        [_screen appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
+    }
     // check if we want to send this input to all the sessions
     if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
         // Ask the parent window to write to the other tasks.

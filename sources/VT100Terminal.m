@@ -45,6 +45,7 @@ NSString *const kTerminalStateReverseWraparoundModeKey = @"Reverse Wraparound Mo
 NSString *const kTerminalStateIsAnsiKey = @"Is ANSI";
 NSString *const kTerminalStateAutorepeatModeKey = @"Autorepeat Mode";
 NSString *const kTerminalStateInsertModeKey = @"Insert Mode";
+NSString *const kTerminalStateSendReceiveModeKey = @"Send/Receive Mode";
 NSString *const kTerminalStateCharsetKey = @"Charset";
 NSString *const kTerminalStateMouseModeKey = @"Mouse Mode";
 NSString *const kTerminalStateMouseFormatKey = @"Mouse Format";
@@ -317,6 +318,7 @@ static const int kMaxScreenRows = 4096;
     self.autorepeatMode = YES;
     self.keypadMode = NO;
     self.insertMode = NO;
+    self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
     _charset = 0;
     [self resetGraphicRendition];
@@ -1143,6 +1145,9 @@ static const int kMaxScreenRows = 4096;
     // Reset INSERT
     self.insertMode = NO;
 
+    // Reset SRM
+    self.sendReceiveMode = NO;
+
     // Reset INVERSE
     graphicRendition_.reversed = NO;
 
@@ -1475,6 +1480,8 @@ static const int kMaxScreenRows = 4096;
                     case 4:
                         self.insertMode = mode;
                         break;
+                    case 12:
+                        self.sendReceiveMode = !mode;
                 }
             }
             break;
@@ -2488,6 +2495,7 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateIsAnsiKey: @(self.isAnsi),
            kTerminalStateAutorepeatModeKey: @(self.autorepeatMode),
            kTerminalStateInsertModeKey: @(self.insertMode),
+           kTerminalStateSendReceiveModeKey: @(self.sendReceiveMode),
            kTerminalStateCharsetKey: @(self.charset),
            kTerminalStateMouseModeKey: @(self.mouseMode),
            kTerminalStateMouseFormatKey: @(self.mouseFormat),
@@ -2530,6 +2538,7 @@ static const int kMaxScreenRows = 4096;
     self.isAnsi = [dict[kTerminalStateIsAnsiKey] boolValue];
     self.autorepeatMode = [dict[kTerminalStateAutorepeatModeKey] boolValue];
     self.insertMode = [dict[kTerminalStateInsertModeKey] boolValue];
+    self.sendReceiveMode = [dict[kTerminalStateSendReceiveModeKey] boolValue];
     self.charset = [dict[kTerminalStateCharsetKey] intValue];
     self.mouseMode = [dict[kTerminalStateMouseModeKey] intValue];
     self.mouseFormat = [dict[kTerminalStateMouseFormatKey] intValue];
