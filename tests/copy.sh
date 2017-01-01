@@ -1,5 +1,13 @@
 #!/bin/bash
 
+trap clean_up EXIT
+_STTY=$(stty -g)      ## Save current terminal setup
+stty -echo            ## Turn off echo
+
+function clean_up() {
+  stty "$_STTY"            ## Restore terminal settings
+}
+
 function show_help() {
   echo "Usage: $(basename $0)" 1>& 2
 }
