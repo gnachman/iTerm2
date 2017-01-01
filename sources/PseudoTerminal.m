@@ -1958,7 +1958,9 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:guid];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
     if (isHotkeyWindow) {
-        assert(profileHotKey);
+        if (!profileHotKey) {
+            return nil;
+        }
         hotkeyWindowType = profileHotKey.hotkeyWindowType;
     }
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
@@ -2027,11 +2029,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [term hideAfterOpening];
     }
     if (isHotkeyWindow) {
-        BOOL ok = YES;
-        if (force) {
-            ok = [[iTermHotKeyController sharedInstance] addRevivedHotkeyWindowController:term
-                                                                       forProfileWithGUID:guid];
-        }
+        BOOL ok = [[iTermHotKeyController sharedInstance] addRevivedHotkeyWindowController:term
+                                                                        forProfileWithGUID:guid];
         if (ok) {
             term.window.alphaValue = 0;
             [[term window] orderOut:nil];
