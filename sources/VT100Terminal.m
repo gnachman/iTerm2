@@ -70,7 +70,6 @@ NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 @property(nonatomic, assign) BOOL isAnsi;
 @property(nonatomic, assign) BOOL autorepeatMode;
 @property(nonatomic, assign) int charset;
-@property(nonatomic, assign) BOOL bracketedPasteMode;
 @property(nonatomic, assign) BOOL allowColumnMode;
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
 @property(nonatomic, assign) BOOL disableSmcupRmcup;

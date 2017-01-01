@@ -52,7 +52,7 @@
 @property(nonatomic, assign) BOOL allowKeypadMode;
 
 // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
-@property(nonatomic, readonly) BOOL bracketedPasteMode;
+@property(nonatomic, assign) BOOL bracketedPasteMode;
 @property(nonatomic, readonly) VT100Output *output;
 
 @property(nonatomic, readonly) NSDictionary *stateDictionary;
