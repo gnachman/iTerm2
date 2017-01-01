@@ -3504,6 +3504,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                      data:data];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
+        [delegate_ screenDidFinishReceivingInlineFile];
     } else {
         [delegate_ screenDidFinishReceivingFile];
     }

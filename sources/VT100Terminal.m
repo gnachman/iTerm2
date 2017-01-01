@@ -114,10 +114,6 @@ typedef struct {
 } VT100SavedCursor;
 
 @implementation VT100Terminal {
-    // True if receiving a file in multitoken mode, or if between BeginFile and
-    // EndFile codes (which are deprecated).
-    BOOL receivingFile_;
-
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
 
@@ -137,6 +133,7 @@ typedef struct {
 }
 
 @synthesize delegate = delegate_;
+@synthesize receivingFile = receivingFile_;
 
 #define DEL  0x7f
 

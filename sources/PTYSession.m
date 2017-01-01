@@ -4192,6 +4192,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_view snapshot];
 }
 
+- (void)askAboutAbortingDownload {
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"A file is being downloaded. Abort the download?"
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"OK", @"Cancel" ]
+                                                    completion:^(int selection) {
+                                                        if (selection == 0) {
+                                                            [self.terminal stopReceivingFile];
+                                                        }
+                                                    }];
+    [self queueAnnouncement:announcement identifier:@"AbortDownloadOnKeyPressAnnouncement"];
+}
+
 #pragma mark - Captured Output
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
@@ -4845,6 +4858,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"] && self.terminal.receivingFile) {
+        // Offer to abort download if you press ^c while downloading an inline file
+        [self askAboutAbortingDownload];
+    }
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     if (_view.currentAnnouncement.dismissOnKeyDown) {
         [_view.currentAnnouncement dismiss];
@@ -6882,6 +6899,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenDidFinishReceivingFile {
     [self.download endOfData];
     self.download = nil;
+}
+
+- (void)screenDidFinishReceivingInlineFile {
+    [self dismissAnnouncementWithIdentifier:@"AbortDownloadOnKeyPressAnnouncement"];
 }
 
 - (void)screenDidReceiveBase64FileData:(NSString *)data {

@@ -57,6 +57,10 @@
 
 @property(nonatomic, readonly) NSDictionary *stateDictionary;
 
+// True if receiving a file in multitoken mode, or if between BeginFile and
+// EndFile codes (which are deprecated).
+@property(nonatomic, readonly) BOOL receivingFile;
+
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
