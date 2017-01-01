@@ -1,11 +1,15 @@
 #!/bin/bash
 
 trap clean_up EXIT
-_STTY=$(stty -g)      ## Save current terminal setup
-stty -echo            ## Turn off echo
+trap clean_up INT
+
+inosc=0
 
 function clean_up() {
-  stty "$_STTY"            ## Restore terminal settings
+  if [[ $inosc == 1 ]]
+  then
+    print_st
+  fi
 }
 
 function show_help() {
@@ -32,7 +36,10 @@ function print_st() {
     fi
 }
 
+data=$(base64)
 print_osc
-printf '1337;Copy=:'
-base64
+inosc=1
+printf '1337;Copy=:%s' "$data"
 print_st
+inosc=0
+
