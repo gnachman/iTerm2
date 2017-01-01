@@ -9,7 +9,7 @@ function clean_up() {
 }
 
 function show_help() {
-  echo "Usage: it2ul [destination [tar flags]]" 1>& 2
+  echo "Usage: $(basename $0) [destination [tar flags]]" 1>& 2
   echo "  If given, the destination specifies the directory to place downloaded files."
   echo "  Further options are passed through to tar. See your system's manpage for tar for details."
 }

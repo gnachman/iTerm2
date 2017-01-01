@@ -3546,7 +3546,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)terminalDidFinishReceivingPasteboard {
-    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+    if (_copyString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         NSData *data = [NSData dataWithBase64EncodedString:_copyString];
         if (data) {
             NSString *string = [[[NSString alloc] initWithData:data encoding:terminal_.encoding] autorelease];
