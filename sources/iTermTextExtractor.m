@@ -16,6 +16,12 @@
 #import "SmartMatch.h"
 #import "SmartSelectionController.h"
 
+typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
+    iTermAlphaNumericDefinitionNarrow,
+    iTermAlphaNumericDefinitionUserDefined,
+    iTermAlphaNumericDefinitionUnixCommands,
+};
+
 // Must find at least this many divider chars in a row for it to count as a divider.
 static const int kNumCharsToSearchForDivider = 8;
 
@@ -118,7 +124,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                               if (++iterations == maxLength) {
                                   return YES;
                               }
-                              iTermTextExtractorClass newClass = [self classForCharacter:theChar broadDefinitionOfAlphanumeric:NO];
+                              iTermTextExtractorClass newClass = [self classForCharacter:theChar definitionOfAlphanumeric:iTermAlphaNumericDefinitionUnixCommands];
                               if (newClass == kTextExtractorClassWord) {
                                   foundWord = YES;
                                   if (theChar.complexChar ||
@@ -153,7 +159,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                                    if (++iterations == maxLength) {
                                        return YES;
                                    }
-                                   iTermTextExtractorClass newClass = [self classForCharacter:theChar broadDefinitionOfAlphanumeric:NO];
+                                   iTermTextExtractorClass newClass = [self classForCharacter:theChar definitionOfAlphanumeric:iTermAlphaNumericDefinitionUnixCommands];
                                    if (newClass == kTextExtractorClassWord) {
                                        foundWord = YES;
                                        if (theChar.complexChar ||
@@ -504,7 +510,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 
 - (BOOL)isWhitelistedAlphanumericAtCoord:(VT100GridCoord)coord {
     screen_char_t theChar = [self characterAt:coord];
-    return [self characterShouldBeTreatedAsAlphanumeric:ScreenCharToStr(&theChar) broadDefinitionOfAlphanumeric:YES];
+    return [self characterShouldBeTreatedAsAlphanumeric:ScreenCharToStr(&theChar) definitionOfAlphanumeric:iTermAlphaNumericDefinitionUserDefined];
 }
 
 - (NSString *)stringForCharacter:(screen_char_t)theChar {
@@ -645,11 +651,11 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 
 // Returns the class for a character.
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter {
-    return [self classForCharacter:theCharacter broadDefinitionOfAlphanumeric:YES];
+    return [self classForCharacter:theCharacter definitionOfAlphanumeric:iTermAlphaNumericDefinitionUserDefined];
 }
 
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
-               broadDefinitionOfAlphanumeric:(BOOL)broadDefinitionOfAlphanumeric {
+                    definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
     if (!theCharacter.complexChar) {
         if (theCharacter.code == TAB_FILLER) {
             return kTextExtractorClassWhitespace;
@@ -670,7 +676,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     }
 
     if ([self characterIsAlphanumeric:asString] ||
-        [self characterShouldBeTreatedAsAlphanumeric:asString broadDefinitionOfAlphanumeric:broadDefinitionOfAlphanumeric]) {
+        [self characterShouldBeTreatedAsAlphanumeric:asString definitionOfAlphanumeric:definition]) {
         return kTextExtractorClassWord;
     }
 
@@ -683,14 +689,20 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 }
 
 - (BOOL)characterShouldBeTreatedAsAlphanumeric:(NSString *)characterAsString
-                 broadDefinitionOfAlphanumeric:(BOOL)broadDefinitionOfAlphanumeric {
-    if (broadDefinitionOfAlphanumeric) {
-        NSRange range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
-                            rangeOfString:characterAsString];
-        return (range.length == characterAsString.length);
-    } else {
-        // The narrow definition only allows hyphen.
-        return [characterAsString isEqualToString:@"-"];
+                      definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
+    switch (definition) {
+        case iTermAlphaNumericDefinitionUserDefined: {
+            NSRange range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
+                             rangeOfString:characterAsString];
+            return (range.length == characterAsString.length);
+        }
+        case iTermAlphaNumericDefinitionUnixCommands: {
+            NSRange range = [@"_-" rangeOfString:characterAsString];
+            return (range.length == characterAsString.length);
+        }
+        case iTermAlphaNumericDefinitionNarrow:
+            // The narrow definition only allows hyphen.
+            return [characterAsString isEqualToString:@"-"];
     }
 }
 
