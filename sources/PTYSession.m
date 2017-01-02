@@ -737,10 +737,26 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[sessionView findViewController] setDelegate:aSession];
     Profile* theBookmark =
-        [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]
-                                                            objectForKey:KEY_GUID]];
+        [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     BOOL needDivorce = NO;
+    iTermAnnouncementViewController *announcement = nil;
     if (!theBookmark) {
+        NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
+        DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
+        if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
+            NSString *notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
+            announcement =
+                [iTermAnnouncementViewController announcementWithTitle:notice
+                                                                 style:kiTermAnnouncementViewStyleWarning
+                                                           withActions:@[ @"Don't Warn Again" ]
+                                                            completion:^(int selection) {
+                                                                if (selection == 0) {
+                                                                    [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
+                                                                }
+                                                            }];
+            announcement.dismissOnKeyDown = YES;
+        }
+
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
         needDivorce = YES;
     }
@@ -1073,6 +1089,9 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession startTmuxMode];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
+    }
+    if (announcement) {
+        [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
     }
     return aSession;
 }

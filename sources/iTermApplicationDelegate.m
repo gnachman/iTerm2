@@ -913,8 +913,7 @@ static BOOL hasBecomeActive = NO;
     [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 }
 
-- (void)restoreWindowArrangement:(id)sender
-{
+- (void)restoreWindowArrangement:(id)sender {
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
 }
 
