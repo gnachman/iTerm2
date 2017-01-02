@@ -2169,10 +2169,10 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {
-        if ([value isEqualToString:@"push"]) {
-            [self pushUnicodeVersion];
-        } else if ([value isEqualToString:@"pop"]) {
-            [self popUnicodeVersion];
+        if ([value hasPrefix:@"push"]) {
+            [self pushUnicodeVersion:value];
+        } else if ([value hasPrefix:@"pop"]) {
+            [self popUnicodeVersion:value];
         } else if ([value isNumeric]) {
             [delegate_ terminalSetUnicodeVersion:[value integerValue]];
         }
@@ -2398,19 +2398,41 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)pushUnicodeVersion {
-    [_unicodeVersionStack addObject:@([delegate_ terminalUnicodeVersion])];
-}
-
-- (void)popUnicodeVersion {
-    if (_unicodeVersionStack.count == 0) {
-        return;
+- (NSString *)substringAfterSpaceInString:(NSString *)string {
+    NSInteger i = [string rangeOfString:@" "].location;
+    if (i == NSNotFound) {
+        return nil;
+    } else {
+        return [string substringFromIndex:i + 1];
     }
-    NSNumber *value = [_unicodeVersionStack lastObject];
-    [_unicodeVersionStack removeLastObject];
-    [delegate_ terminalSetUnicodeVersion:value.integerValue];
 }
 
+- (void)pushUnicodeVersion:(NSString *)label {
+    label = [self substringAfterSpaceInString:label];
+    [_unicodeVersionStack addObject:@[ label ?: @"", @([delegate_ terminalUnicodeVersion]) ]];
+}
+
+- (void)popUnicodeVersion:(NSString *)label {
+    label = [self substringAfterSpaceInString:label];
+    while (_unicodeVersionStack.count > 0) {
+        id entry = [[[_unicodeVersionStack lastObject] retain] autorelease];
+        [_unicodeVersionStack removeLastObject];
+
+        NSNumber *value = nil;
+        NSString *entryLabel = nil;
+        if ([entry isKindOfClass:[NSNumber class]]) {
+            // A restored value might have just a number. New values are always an array.
+            value = entry;
+        } else {
+            entryLabel = [entry objectAtIndex:0];
+            value = [entry objectAtIndex:1];
+        }
+        if (label.length == 0 || [label isEqualToString:entryLabel]) {
+            [delegate_ terminalSetUnicodeVersion:value.integerValue];
+            return;
+        }
+    }
+}
 
 - (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
