@@ -3128,18 +3128,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [self useTransparencyDidChange];
 }
 
-- (NSString*)name
-{
+- (NSString *)name {
     return [self formattedName:_name];
 }
 
-- (NSString*)rawName
-{
+- (NSString *)rawName {
     return _name;
 }
 
-- (void)setName:(NSString*)theName
-{
+- (void)setName:(NSString *)theName {
     [_view setTitle:theName];
     if (!_bookmarkName) {
         self.bookmarkName = theName;
@@ -3182,8 +3179,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
-- (NSString*)windowTitle
-{
+- (NSString *)windowTitle {
     if (!_windowTitle) {
         return nil;
     }

@@ -1410,6 +1410,8 @@
 		A673BFE31E176AA300FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
 		A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
 		A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
+		A673BFEC1E1A13E600FA2386 /* iTermSetTitleTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */; };
+		A673BFED1E1A13E600FA2386 /* iTermSetTitleTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
 		A6755F441D728FFA00F3726C /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
 		A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F4B1D729A0500F3726C /* image_decoder.m */; };
@@ -3152,6 +3154,8 @@
 		A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyLabels.m; sourceTree = "<group>"; };
 		A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testCustomUnderline.png"; sourceTree = "<group>"; };
 		A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testUnderline.png"; sourceTree = "<group>"; };
+		A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSetTitleTrigger.h; sourceTree = "<group>"; };
+		A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSetTitleTrigger.m; sourceTree = "<group>"; };
 		A6755F411D728FFA00F3726C /* iTermImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImage.h; sourceTree = "<group>"; };
 		A6755F421D728FFA00F3726C /* iTermImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImage.m; sourceTree = "<group>"; };
 		A6755F491D729A0500F3726C /* image_decoder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = image_decoder; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -4618,6 +4622,8 @@
 				1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */,
 				1DE0C8471BF17E34008ACBA9 /* SetDirectoryTrigger.h */,
 				1DE0C8481BF17E34008ACBA9 /* SetDirectoryTrigger.m */,
+				A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */,
+				A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -6342,6 +6348,7 @@
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				A6FEA26C1CF2C86800376F28 /* iTermBaseHotKey.h in Headers */,
 				A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */,
+				A673BFEC1E1A13E600FA2386 /* iTermSetTitleTrigger.h in Headers */,
 				1DF121091C344DF100E39F1F /* iTermDynamicProfileManager.h in Headers */,
 				A6FEA2741CF2C9D400376F28 /* iTermAppHotKey.h in Headers */,
 				A6EFF2201D1DD89B00806EEF /* iTermHotKeyMigrationHelper.h in Headers */,
@@ -7852,6 +7859,7 @@
 				A6C763031B45C52B00E3C992 /* VT100WorkingDirectory.m in Sources */,
 				A62C3B281BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m in Sources */,
 				A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */,
+				A673BFED1E1A13E600FA2386 /* iTermSetTitleTrigger.m in Sources */,
 				A6C763471B45C52B00E3C992 /* iTermSearchField.m in Sources */,
 				A6C763661B45C52B00E3C992 /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				A6C763241B45C52B00E3C992 /* MovingAverage.m in Sources */,
