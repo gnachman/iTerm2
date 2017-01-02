@@ -106,7 +106,7 @@
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
 
     // Update the keycode and modifier and re-register.
-    NSLog(@"Update registration for %@", hotKey);
+    DLog(@"Update registration for %@", hotKey);
     [hotKey setShortcuts:[iTermShortcut shortcutsForProfile:profile]
         hasModifierActivation:hasModifierActivation
            modifierActivation:modifierActivation];
