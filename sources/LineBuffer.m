@@ -660,6 +660,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
                    options:(FindOptions)options
+                      mode:(iTermFindMode)mode
                withContext:(FindContext*)context {
     context.substring = substring;
     context.options = options;
@@ -668,6 +669,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     } else {
         context.dir = 1;
     }
+    context.mode = mode;
     int offset = context.offset;
     int absBlockNum = context.absBlockNum;
     if ([self _findPosition:start inBlock:&absBlockNum inOffset:&offset]) {
@@ -727,6 +729,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     [block findSubstring:context.substring
                  options:context.options
+                    mode:context.mode
                 atOffset:context.offset
                  results:context.results
          multipleResults:((context.options & FindMultipleResults) != 0)];

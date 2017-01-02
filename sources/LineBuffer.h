@@ -28,6 +28,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FindContext.h"
+#import "FindViewController.h"
 #import "ScreenChar.h"
 #import "LineBufferPosition.h"
 #import "LineBufferHelpers.h"
@@ -130,6 +131,7 @@
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
                    options:(FindOptions)options
+                      mode:(iTermFindMode)findMode
                withContext:(FindContext*)context;
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize

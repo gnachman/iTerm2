@@ -864,6 +864,24 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion {
 }
 
+- (void)screenDidFinishReceivingInlineFile {
+}
+
+- (void)screenSelectColorPresetNamed:(NSString *)name {
+}
+
+- (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName {
+}
+
+- (void)screenPushKeyLabels:(NSString *)value {
+}
+
+- (void)screenPopKeyLabels:(NSString *)value {
+}
+
+- (void)screenTerminalAttemptedPasteboardAccess {
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
@@ -2192,8 +2210,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     ctx.maxTime = 0;
     [screen setFindString:@"wxyz"
          forwardDirection:YES
-             ignoringCase:NO
-                    regex:NO
+                     mode:iTermFindModeCaseSensitiveSubstring
               startingAtX:0
               startingAtY:0
                withOffset:0
@@ -2221,8 +2238,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self appendLines:@[@"0123", @"wxyz"] toScreen:screen];
     [screen setFindString:@"wxyz"
          forwardDirection:YES
-             ignoringCase:NO
-                    regex:NO
+                     mode:iTermFindModeCaseSensitiveSubstring
               startingAtX:0
               startingAtY:7  // Past bottom of screen
                withOffset:0
@@ -2251,8 +2267,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     FindContext *myFindContext = [[[FindContext alloc] init] autorelease];
     [screen setFindString:@"mnop"
          forwardDirection:NO
-             ignoringCase:NO
-                    regex:NO
+                     mode:iTermFindModeCaseSensitiveSubstring
               startingAtX:0
               startingAtY:[screen numberOfLines] + 1 + [screen totalScrollbackOverflow]
                withOffset:0
@@ -2275,8 +2290,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     FindContext *tailFindContext = [[[FindContext alloc] init] autorelease];
     [screen setFindString:@"rst"
          forwardDirection:YES
-             ignoringCase:NO
-                    regex:NO
+                     mode:iTermFindModeCaseSensitiveSubstring
               startingAtX:0
               startingAtY:0
                withOffset:0
@@ -2297,8 +2311,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     tailFindContext = [[[FindContext alloc] init] autorelease];
     [screen setFindString:@"rst"
          forwardDirection:YES
-             ignoringCase:NO
-                    regex:NO
+                     mode:iTermFindModeCaseSensitiveSubstring
               startingAtX:0
               startingAtY:0
                withOffset:0
@@ -2410,8 +2423,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)assertSearchInScreen:(VT100Screen *)screen
                   forPattern:(NSString *)pattern
             forwardDirection:(BOOL)forward
-                ignoringCase:(BOOL)ignoreCase
-                       regex:(BOOL)regex
+                        mode:(iTermFindMode)mode
                  startingAtX:(int)startX
                  startingAtY:(int)startY
                   withOffset:(int)offset
@@ -2422,8 +2434,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [[screen findContext] setMaxTime:0];
     [screen setFindString:pattern
          forwardDirection:forward
-             ignoringCase:ignoreCase
-                    regex:regex
+                     mode:mode
               startingAtX:startX
               startingAtY:startY
                withOffset:offset
@@ -2444,8 +2455,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)assertSearchInScreenLines:(NSString *)compactLines
                        forPattern:(NSString *)pattern
                  forwardDirection:(BOOL)forward
-                     ignoringCase:(BOOL)ignoreCase
-                            regex:(BOOL)regex
+                     mode:(iTermFindMode)mode
                       startingAtX:(int)startX
                       startingAtY:(int)startY
                        withOffset:(int)offset
@@ -2454,8 +2464,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreen:screen
                     forPattern:pattern
               forwardDirection:forward
-                  ignoringCase:ignoreCase
-                         regex:regex
+                          mode:mode
                    startingAtX:startX
                    startingAtY:startY
                     withOffset:offset
@@ -2475,8 +2484,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"cde"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2486,8 +2494,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"cde"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:2
                         startingAtY:4
                          withOffset:0
@@ -2497,8 +2504,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"cde"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:2
                         startingAtY:4
                          withOffset:0
@@ -2508,8 +2514,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"cde"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:3
                         startingAtY:4
                          withOffset:0
@@ -2518,8 +2523,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"cde"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:3
                         startingAtY:2
                          withOffset:0
@@ -2528,8 +2532,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"cde"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:1
                         startingAtY:0
                          withOffset:0
@@ -2539,8 +2542,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"CDE"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2549,8 +2551,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"CDE"
                    forwardDirection:YES
-                       ignoringCase:YES
-                              regex:NO
+                       mode:iTermFindModeCaseInsensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2560,8 +2561,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"c.e"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:YES
+                       mode:iTermFindModeCaseSensitiveRegex
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2570,8 +2570,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"C.E"
                    forwardDirection:YES
-                       ignoringCase:YES
-                              regex:YES
+                       mode:iTermFindModeCaseInsensitiveRegex
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2581,8 +2580,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"de"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:3
                         startingAtY:0
                          withOffset:0
@@ -2592,8 +2590,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"de"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:3
                         startingAtY:0
                          withOffset:1
@@ -2603,8 +2600,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"de"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:2
                          withOffset:0
@@ -2614,8 +2610,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"de"
                    forwardDirection:NO
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:2
                          withOffset:1
@@ -2625,8 +2620,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"Yz"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2636,8 +2630,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreenLines:lines
                          forPattern:@"xYz"
                    forwardDirection:YES
-                       ignoringCase:NO
-                              regex:NO
+                               mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
@@ -2673,8 +2666,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreen:screen
                     forPattern:@"def"
               forwardDirection:NO
-                  ignoringCase:NO
-                         regex:NO
+                          mode:iTermFindModeCaseSensitiveSubstring
                    startingAtX:0
                    startingAtY:12
                     withOffset:0
@@ -2698,8 +2690,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self assertSearchInScreen:screen
                     forPattern:@"spam"
               forwardDirection:NO
-                  ignoringCase:NO
-                         regex:NO
+                          mode:iTermFindModeCaseSensitiveSubstring
                    startingAtX:0
                    startingAtY:12
                     withOffset:0

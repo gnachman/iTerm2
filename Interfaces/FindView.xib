@@ -1,15 +1,15 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="FindViewController">
             <connections>
                 <outlet property="findBarTextField_" destination="2" id="27"/>
-                <outlet property="ignoreCaseMenuItem_" destination="16" id="33"/>
-                <outlet property="regexMenuItem_" destination="17" id="34"/>
+                <outlet property="smartCaseMenuItem_" destination="6Px-6a-JTm" id="Q8P-T3-Pom"/>
                 <outlet property="view" destination="1" id="10"/>
             </connections>
         </customObject>
@@ -64,16 +64,36 @@ Gw
         </customView>
         <menu id="15">
             <items>
-                <menuItem title="Ignore case" state="on" id="16">
+                <menuItem title="Smart Case Substring" state="on" id="16">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
-                        <action selector="toggleIgnoreCase:" target="-2" id="31"/>
+                        <action selector="changeMode:" target="-2" id="OVp-ei-63a"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Regular expression" state="on" id="17">
+                <menuItem isSeparatorItem="YES" id="qHP-Qy-WFh"/>
+                <menuItem title="Case-Sensitive Substring" state="on" tag="1" id="IJN-DB-LJ2">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
-                        <action selector="toggleRegex:" target="-2" id="32"/>
+                        <action selector="changeMode:" target="-2" id="tWH-sW-7Ij"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Case-Insensitive Substring" state="on" tag="2" id="6Px-6a-JTm">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="aPy-bk-w39"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="F1b-pc-PFJ"/>
+                <menuItem title="Case-Sensitive Regex" state="on" tag="3" id="s1o-x7-jkk">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="cem-eD-Fft"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Case-Insensitive Regex" state="on" tag="4" id="C2V-dA-zRG">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="ZJX-A7-7La"/>
                     </connections>
                 </menuItem>
             </items>

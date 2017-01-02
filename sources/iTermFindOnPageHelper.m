@@ -50,11 +50,8 @@
     // highlight.
     BOOL _searchingForNextResult;
 
-    // True if the last search was case insensitive.
-    BOOL _findIgnoreCase;
-
-    // True if the last search was for a regex.
-    BOOL _findRegex;
+    // Mode for the last search.
+    iTermFindMode _mode;
 }
 
 - (instancetype)init {
@@ -78,8 +75,7 @@
 
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
+              mode:(iTermFindMode)mode
         withOffset:(int)offset
            context:(FindContext *)findContext
      numberOfLines:(int)numberOfLines
@@ -87,8 +83,7 @@
     _searchingForward = direction;
     _findOffset = offset;
     if ([_lastStringSearchedFor isEqualToString:aString] &&
-        _findRegex == regex &&
-        _findIgnoreCase == ignoreCase) {
+        _mode == mode) {
         _haveRevealedSearchResult = NO;  // select the next item before/after the current selection.
         _searchingForNextResult = YES;
         // I would like to call selectNextResultForward:withOffset: here, but
@@ -107,8 +102,7 @@
         // so it will get a result sooner.
         [_delegate findOnPageSetFindString:aString
                           forwardDirection:NO
-                              ignoringCase:ignoreCase
-                                     regex:regex
+                                      mode:mode
                                startingAtX:0
                                startingAtY:numberOfLines + 1 + totalScrollbackOverflow
                                 withOffset:0
@@ -124,8 +118,7 @@
         [self clearHighlights];
 
         // Initialize state with new values.
-        _findRegex = regex;
-        _findIgnoreCase = ignoreCase;
+        _mode = mode;
         _searchResults = [[NSMutableArray alloc] init];
         _searchingForNextResult = YES;
         _lastStringSearchedFor = [aString copy];

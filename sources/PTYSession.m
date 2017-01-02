@@ -4178,14 +4178,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
-        withOffset:(int)offset
-{
+      mode:(iTermFindMode)mode
+        withOffset:(int)offset {
     [_textview findString:aString
          forwardDirection:direction
-             ignoringCase:ignoreCase
-                    regex:regex
+                     mode:mode
                withOffset:offset];
 }
 
@@ -5069,8 +5066,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case KEY_ACTION_FIND_REGEX:
             [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
-                                                                  ignoringCase:NO
-                                                                         regex:YES];
+                                                                          mode:iTermFindModeCaseSensitiveRegex];
             break;
 
         case KEY_FIND_AGAIN_DOWN:
@@ -6340,16 +6336,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)beginTailFind
-{
+- (void)beginTailFind {
     FindContext *findContext = [_textview findContext];
     if (!findContext.substring) {
         return;
     }
     [_screen setFindString:findContext.substring
           forwardDirection:YES
-              ignoringCase:!!(findContext.options & FindOptCaseInsensitive)
-                     regex:!!(findContext.options & FindOptRegex)
+                      mode:findContext.mode
                startingAtX:0
                startingAtY:0
                 withOffset:0

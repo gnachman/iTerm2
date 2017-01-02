@@ -2063,8 +2063,7 @@ ITERM_WEAKLY_REFERENCEABLE
     FindViewController *findViewController = [[[self currentSession] view] findViewController];
     NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
     [findViewController closeViewAndDoTemporarySearchForString:regex
-                                                  ignoringCase:NO
-                                                         regex:YES];
+                                                          mode:iTermFindModeCaseSensitiveRegex];
 }
 
 - (IBAction)detachTmux:(id)sender

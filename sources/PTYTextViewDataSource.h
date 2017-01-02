@@ -1,5 +1,6 @@
 // DataSource for PTYTextView.
 #import "iTermCursor.h"
+#import "FindViewController.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
 #import "VT100GridTypes.h"
@@ -48,8 +49,7 @@
 // Initialize the find context.
 - (void)setFindString:(NSString*)aString
      forwardDirection:(BOOL)direction
-         ignoringCase:(BOOL)ignoreCase
-                regex:(BOOL)regex
+                 mode:(iTermFindMode)mode
           startingAtX:(int)x
           startingAtY:(int)y
            withOffset:(int)offsetof  // Offset in the direction of searching (offset=1 while searching backwards means start one char before x,y)

@@ -55,6 +55,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     self.absBlockNum = other.absBlockNum;
     self.substring = other.substring;
     self.options = other.options;
+    self.mode = other.mode;
     self.dir = other.dir;
     self.offset = other.offset;
     self.stopAt = other.stopAt;

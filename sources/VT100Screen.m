@@ -1548,8 +1548,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)setFindString:(NSString*)aString
      forwardDirection:(BOOL)direction
-         ignoringCase:(BOOL)ignoreCase
-                regex:(BOOL)regex
+                 mode:(iTermFindMode)mode
           startingAtX:(int)x
           startingAtY:(int)y
            withOffset:(int)offset
@@ -1605,16 +1604,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (!direction) {
         opts |= FindOptBackwards;
     }
-    if (ignoreCase) {
-        opts |= FindOptCaseInsensitive;
-    }
-    if (regex) {
-        opts |= FindOptRegex;
-    }
     if (multipleResults) {
         opts |= FindMultipleResults;
     }
-    [linebuffer_ prepareToSearchFor:aString startingAt:startPos options:opts withContext:context];
+    [linebuffer_ prepareToSearchFor:aString startingAt:startPos options:opts mode:mode withContext:context];
     context.hasWrapped = NO;
     [self popScrollbackLines:linesPushed];
 }
@@ -4573,6 +4566,7 @@ static void SwapInt(int *a, int *b) {
                     [linebuffer_ prepareToSearchFor:findContext_.substring
                                          startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPosition] : [[linebuffer_ lastPosition] predecessor])
                                             options:findContext_.options
+                                               mode:findContext_.mode
                                         withContext:tempFindContext];
                     [findContext_ reset];
                     // TODO test this!
