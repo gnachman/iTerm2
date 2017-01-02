@@ -3607,8 +3607,9 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_LIVE_SESSION] =
             [_liveSession arrangementWithContents:includeContents];
     }
-    if (!self.isTmuxClient) {
-        // These values are used for restoring sessions after a crash.
+    if (includeContents && !self.isTmuxClient) {
+        // These values are used for restoring sessions after a crash. It's only saved when contents
+        // are included since saved window arrangements have no business knowing the process id.
         if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
             result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
             if (self.tty) {
