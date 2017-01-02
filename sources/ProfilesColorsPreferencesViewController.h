@@ -10,4 +10,5 @@
 
 
 @interface ProfilesColorsPreferencesViewController : iTermProfilePreferencesBaseViewController
++ (NSString *)nameOfPresetUsedByProfile:(Profile *)profile;
 @end

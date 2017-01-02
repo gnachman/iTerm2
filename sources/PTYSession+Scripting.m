@@ -1,5 +1,6 @@
 #import "PTYSession+Scripting.h"
 #import "NSColor+iTerm.h"
+#import "ProfilesColorsPreferencesViewController.h"
 #import "PTYTab.h"
 #import "WindowControllerInterface.h"
 
@@ -466,6 +467,14 @@
 
 - (NSString *)profileName {
   return self.profile[KEY_NAME];
+}
+
+- (NSString *)colorPresetName {
+    return [ProfilesColorsPreferencesViewController nameOfPresetUsedByProfile:self.profile];
+}
+
+- (void)setColorPresetName:(NSString *)colorPresetName {
+    [self setColorsFromPresetNamed:colorPresetName];
 }
 
 @end
