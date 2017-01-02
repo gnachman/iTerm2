@@ -11,7 +11,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#define FDLog(level, format, ...) syslog(LOG_ERR, "%s(%d) " format, gRunningServer ? "Server" : "iTerm2", getpid(), ##__VA_ARGS__)
+#define FDLog(level, format, ...) syslog(level, "%s(%d) " format, gRunningServer ? "Server" : "iTerm2", getpid(), ##__VA_ARGS__)
 
 static const int kMaxConnections = 1;
 static int gRunningServer;
@@ -26,7 +26,7 @@ void iTermFileDescriptorServerLog(char *format, ...) {
     va_start(args, format);
     char temp[1000];
     snprintf(temp, sizeof(temp) - 1, "%s(%d) %s", gRunningServer ? "Server" : "ParentServer", getpid(), format);
-    vsyslog(LOG_ERR, temp, args);
+    vsyslog(LOG_DEBUG, temp, args);
     va_end(args);
 }
 
