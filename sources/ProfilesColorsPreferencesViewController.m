@@ -66,6 +66,40 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSPopUpButton *_presetsPopupButton;
 }
 
++ (NSArray<NSString *> *)presetNames {
+    NSArray<NSString *> *builtInNames = [[iTermColorPresets builtInColorPresets] allKeys];
+    NSArray<NSString *> *customNames = [[iTermColorPresets customColorPresets] allKeys];
+    return [builtInNames arrayByAddingObjectsFromArray:customNames];
+}
+
++ (iTermColorPreset *)presetWithName:(NSString *)name {
+    iTermColorPreset *dict = [[iTermColorPresets builtInColorPresets] objectForKey:name];
+    if (dict) {
+        return dict;
+    }
+    return [[iTermColorPresets customColorPresets] objectForKey:name];
+}
+
++ (NSString *)nameOfPresetUsedByProfile:(Profile *)profile {
+    for (NSString *presetName in [self presetNames]) {
+        iTermColorPreset *preset = [self presetWithName:presetName];
+        BOOL ok = YES;
+        for (NSString *colorName in [ProfileModel colorKeys]) {
+            iTermColorDictionary *presetColorDict = [preset iterm_presetColorWithName:colorName];
+            NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:colorName
+                                                                         inProfile:profile];
+            if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
+                ok = NO;
+                break;
+            }
+        }
+        if (ok) {
+            return presetName;
+        }
+    }
+    return nil;
+}
+
 - (void)awakeFromNib {
     // Updates fields when a preset is loaded.
     [[NSNotificationCenter defaultCenter] addObserver:self

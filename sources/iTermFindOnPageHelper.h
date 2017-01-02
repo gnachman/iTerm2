@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "FindViewController.h"
 #import "VT100GridTypes.h"
 
 @class FindContext;
@@ -18,8 +19,7 @@
 // Actually perform a search.
 - (void)findOnPageSetFindString:(NSString*)aString
                forwardDirection:(BOOL)direction
-                   ignoringCase:(BOOL)ignoreCase
-                          regex:(BOOL)regex
+                           mode:(iTermFindMode)mode
                     startingAtX:(int)x
                     startingAtY:(int)y
                      withOffset:(int)offset
@@ -61,8 +61,7 @@
 // aString: The string to search for.
 // direction: YES to search forwards, NO to search backwards. In practice the search always happens
 //   backwards but direction decides which result to highlight first.
-// ignoreCase: Do a case-insensitive search?
-// regex: Is aString a regular expression?
+// mode: search mode (case sensitivity, regex)
 // offset: Amount to add to findCursor for where to begin searching (used for "find next" to begin
 //   the search just after the current result)
 // findContext: The context to use to hold results.
@@ -71,12 +70,11 @@
 //   line numbers).
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
+              mode:(iTermFindMode)mode
         withOffset:(int)offset
            context:(FindContext *)findContext
      numberOfLines:(int)numberOfLines
-    totalScrollbackOverflow:(long long)totalScrollbackOverflow;
+totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 
 // Remove all highlight data.
 - (void)clearHighlights;

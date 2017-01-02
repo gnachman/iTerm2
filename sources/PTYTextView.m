@@ -5198,8 +5198,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)findOnPageSetFindString:(NSString*)aString
                forwardDirection:(BOOL)direction
-                   ignoringCase:(BOOL)ignoreCase
-                          regex:(BOOL)regex
+                           mode:(iTermFindMode)mode
                     startingAtX:(int)x
                     startingAtY:(int)y
                      withOffset:(int)offset
@@ -5207,8 +5206,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 multipleResults:(BOOL)multipleResults {
     [_dataSource setFindString:aString
               forwardDirection:direction
-                  ignoringCase:ignoreCase
-                         regex:regex
+                          mode:mode
                    startingAtX:x
                    startingAtY:y
                     withOffset:offset
@@ -5259,13 +5257,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
+              mode:(iTermFindMode)mode
         withOffset:(int)offset {
     [_findOnPageHelper findString:aString
                  forwardDirection:direction
-                     ignoringCase:ignoreCase
-                            regex:regex
+                             mode:mode
                        withOffset:offset
                           context:[_dataSource findContext]
                     numberOfLines:[_dataSource numberOfLines]

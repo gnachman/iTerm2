@@ -8,9 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "Trigger.h"
 
-@interface AlertTrigger : Trigger {
-    BOOL disabled_;
-}
+@interface AlertTrigger : Trigger 
 
 + (NSString *)title;
 - (BOOL)takesParameter;

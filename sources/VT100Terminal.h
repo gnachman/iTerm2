@@ -35,6 +35,7 @@
 @property(nonatomic, readonly) BOOL isAnsi;
 @property(nonatomic, readonly) BOOL autorepeatMode;
 @property(nonatomic, assign) BOOL insertMode;
+@property(nonatomic, assign) BOOL sendReceiveMode;
 @property(nonatomic, readonly) int charset;  // G0 through G3
 @property(nonatomic, assign) MouseMode mouseMode;
 @property(nonatomic, assign) MouseFormat mouseFormat;
@@ -60,6 +61,7 @@
 // True if receiving a file in multitoken mode, or if between BeginFile and
 // EndFile codes (which are deprecated).
 @property(nonatomic, readonly) BOOL receivingFile;
+@property(nonatomic, readonly) BOOL copyingToPasteboard;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

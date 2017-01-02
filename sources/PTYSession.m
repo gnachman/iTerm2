@@ -737,10 +737,26 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[sessionView findViewController] setDelegate:aSession];
     Profile* theBookmark =
-        [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]
-                                                            objectForKey:KEY_GUID]];
+        [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     BOOL needDivorce = NO;
+    iTermAnnouncementViewController *announcement = nil;
     if (!theBookmark) {
+        NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
+        DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
+        if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
+            NSString *notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
+            announcement =
+                [iTermAnnouncementViewController announcementWithTitle:notice
+                                                                 style:kiTermAnnouncementViewStyleWarning
+                                                           withActions:@[ @"Don't Warn Again" ]
+                                                            completion:^(int selection) {
+                                                                if (selection == 0) {
+                                                                    [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
+                                                                }
+                                                            }];
+            announcement.dismissOnKeyDown = YES;
+        }
+
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
         needDivorce = YES;
     }
@@ -1073,6 +1089,9 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession startTmuxMode];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
+    }
+    if (announcement) {
+        [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
     }
     return aSession;
 }
@@ -1694,7 +1713,10 @@ ITERM_WEAKLY_REFERENCEABLE
              self, @(encoding), @(forceEncoding), @(canBroadcast), stack);
         DLog(@"writeTaskImpl string=%@", string);
     }
-
+    if (canBroadcast && _terminal.sendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
+        // Local echo. Only for broadcastable text to avoid printing passwords from the password manager.
+        [_screen appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
+    }
     // check if we want to send this input to all the sessions
     if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
         // Ask the parent window to write to the other tasks.
@@ -3106,18 +3128,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [self useTransparencyDidChange];
 }
 
-- (NSString*)name
-{
+- (NSString *)name {
     return [self formattedName:_name];
 }
 
-- (NSString*)rawName
-{
+- (NSString *)rawName {
     return _name;
 }
 
-- (void)setName:(NSString*)theName
-{
+- (void)setName:(NSString *)theName {
     [_view setTitle:theName];
     if (!_bookmarkName) {
         self.bookmarkName = theName;
@@ -3160,8 +3179,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
-- (NSString*)windowTitle
-{
+- (NSString *)windowTitle {
     if (!_windowTitle) {
         return nil;
     }
@@ -3604,8 +3622,9 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_LIVE_SESSION] =
             [_liveSession arrangementWithContents:includeContents];
     }
-    if (!self.isTmuxClient) {
-        // These values are used for restoring sessions after a crash.
+    if (includeContents && !self.isTmuxClient) {
+        // These values are used for restoring sessions after a crash. It's only saved when contents
+        // are included since saved window arrangements have no business knowing the process id.
         if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
             result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
             if (self.tty) {
@@ -4159,14 +4178,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
-        withOffset:(int)offset
-{
+      mode:(iTermFindMode)mode
+        withOffset:(int)offset {
     [_textview findString:aString
          forwardDirection:direction
-             ignoringCase:ignoreCase
-                    regex:regex
+                     mode:mode
                withOffset:offset];
 }
 
@@ -5050,8 +5066,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case KEY_ACTION_FIND_REGEX:
             [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
-                                                                  ignoringCase:NO
-                                                                         regex:YES];
+                                                                          mode:iTermFindModeCaseSensitiveRegex];
             break;
 
         case KEY_FIND_AGAIN_DOWN:
@@ -6321,16 +6336,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)beginTailFind
-{
+- (void)beginTailFind {
     FindContext *findContext = [_textview findContext];
     if (!findContext.substring) {
         return;
     }
     [_screen setFindString:findContext.substring
           forwardDirection:YES
-              ignoringCase:!!(findContext.options & FindOptCaseInsensitive)
-                     regex:!!(findContext.options & FindOptRegex)
+                      mode:findContext.mode
                startingAtX:0
                startingAtY:0
                 withOffset:0
@@ -7821,6 +7834,29 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     _keyLabels = [labels.map retain];
     [_delegate sessionKeyLabelsDidChange:self];
+}
+
+- (void)screenTerminalAttemptedPasteboardAccess {
+    if ([iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarning]) {
+        return;
+    }
+    NSString *identifier = @"ClipboardAccessDenied";
+    if ([self hasAnnouncementWithIdentifier:identifier]) {
+        return;
+    }
+    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Applications in terminal may access clipboard”.";
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:notice
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Open Prefs", @"Don't Show This Again" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        [[[iTermApplication sharedApplication] delegate] showPrefWindow:nil];
+                                                    } else if (selection == 1) {
+                                                        [iTermAdvancedSettingsModel setNoSyncSuppressClipboardAccessDeniedWarning:YES];
+                                                    }
+                                                }];
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 #pragma mark - Announcements

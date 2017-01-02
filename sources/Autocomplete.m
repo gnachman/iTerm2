@@ -1,5 +1,6 @@
 #include <wctype.h>
 #import "Autocomplete.h"
+#import "FindViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
@@ -342,8 +343,7 @@ const int kMaxResultContextWords = 4;
     more_ = YES;
     [screen setFindString:prefix_
          forwardDirection:NO
-             ignoringCase:YES
-                    regex:NO
+                     mode:iTermFindModeCaseInsensitiveSubstring
               startingAtX:x_
               startingAtY:y_
                withOffset:1

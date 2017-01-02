@@ -165,5 +165,9 @@
 + (BOOL)darkThemeHasBlackTitlebar;
 + (BOOL)fontChangeAffectsBroadcastingSessions;
 + (BOOL)zippyTextDrawing;
++ (BOOL)noSyncSuppressClipboardAccessDeniedWarning;
++ (void)setNoSyncSuppressClipboardAccessDeniedWarning:(BOOL)value;
++ (BOOL)noSyncSuppressMissingProfileInArrangementWarning;
++ (void)setNoSyncSuppressMissingProfileInArrangementWarning:(BOOL)value;
 
 @end

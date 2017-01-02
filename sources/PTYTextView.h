@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermColorMap.h"
@@ -405,8 +406,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Begins a new search. You may need to call continueFind repeatedly after this.
 - (void)findString:(NSString*)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
+      mode:(iTermFindMode)mode
         withOffset:(int)offset;
 
 // Remove highlighted terms from previous search.

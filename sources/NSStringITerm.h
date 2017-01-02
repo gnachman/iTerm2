@@ -251,6 +251,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Modify the range's endpoint to not sever a surrogate pair.
 - (NSRange)makeRangeSafe:(NSRange)range;
 
+- (NSString *)stringByMakingControlCharactersToPrintable;
+
 @end
 
 @interface NSMutableString (iTerm)

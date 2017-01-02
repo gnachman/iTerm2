@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "FindViewController.h"
 #import "ScreenChar.h"
 
 typedef struct {
@@ -119,6 +120,7 @@ typedef struct {
 // Searches for a substring, populating results with ResultRange objects.
 - (void)findSubstring:(NSString*)substring
               options:(int)options
+                 mode:(iTermFindMode)mode
              atOffset:(int)offset
               results:(NSMutableArray*)results
       multipleResults:(BOOL)multipleResults;

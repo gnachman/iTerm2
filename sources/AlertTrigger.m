@@ -10,7 +10,9 @@
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 
-@implementation AlertTrigger
+@implementation AlertTrigger {
+    BOOL disabled_;
+}
 
 + (NSString *)title
 {

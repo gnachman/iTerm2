@@ -537,6 +537,9 @@
       <property name="text" description="The currently visible contents of the session." code="pcnt" type="text" access="r">
         <cocoa key="text" />
       </property>
+      <property name="color preset" code="Copr" type="text">
+          <cocoa key="colorPresetName" />
+      </property>
       <property name="background color" code="Co00" type="RGB color">
         <cocoa key="backgroundColor" />
       </property>

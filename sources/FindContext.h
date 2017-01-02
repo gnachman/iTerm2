@@ -7,12 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "FindViewController.h"
 
 typedef NS_OPTIONS(NSUInteger, FindOptions) {
-    FindOptCaseInsensitive  = (1 << 0),
-    FindOptBackwards        = (1 << 1),
-    FindOptRegex            = (1 << 2),
-    FindMultipleResults     = (1 << 3)
+    FindOptBackwards        = (1 << 0),
+    FindMultipleResults     = (1 << 1)
 };
 
 typedef NS_ENUM(NSInteger, FindContextStatus) {
@@ -31,6 +30,9 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 
 // A bitwise OR of the options defined above.
 @property(nonatomic, assign) FindOptions options;
+
+// How to perform the search.
+@property(nonatomic, assign) iTermFindMode mode;
 
 // 1: search forward. -1: search backward.
 @property(nonatomic, assign) int dir;

@@ -384,9 +384,7 @@ static iTermController *gSharedInstance;
     NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     if (allWindows) {
         for (PseudoTerminal *terminal in _terminalWindows) {
-            if (![terminal isHotKeyWindow]) {
-                [terminalArrangements addObject:[terminal arrangement]];
-            }
+            [terminalArrangements addObject:[terminal arrangement]];
         }
     } else {
         PseudoTerminal *currentTerminal = [self currentTerminal];

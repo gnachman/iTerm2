@@ -198,8 +198,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         findContext_ = [[FindContext alloc] init];
         [textViewDataSource_ setFindString:findString_
                           forwardDirection:NO
-                              ignoringCase:YES
-                                     regex:NO
+                              mode:iTermFindModeCaseInsensitiveSubstring
                                startingAtX:0
                                startingAtY:(long long)([textViewDataSource_ numberOfLines] + 1) + [textViewDataSource_ totalScrollbackOverflow]
                                 withOffset:0  // 1?

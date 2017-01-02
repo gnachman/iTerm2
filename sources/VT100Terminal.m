@@ -45,6 +45,7 @@ NSString *const kTerminalStateReverseWraparoundModeKey = @"Reverse Wraparound Mo
 NSString *const kTerminalStateIsAnsiKey = @"Is ANSI";
 NSString *const kTerminalStateAutorepeatModeKey = @"Autorepeat Mode";
 NSString *const kTerminalStateInsertModeKey = @"Insert Mode";
+NSString *const kTerminalStateSendReceiveModeKey = @"Send/Receive Mode";
 NSString *const kTerminalStateCharsetKey = @"Charset";
 NSString *const kTerminalStateMouseModeKey = @"Mouse Mode";
 NSString *const kTerminalStateMouseFormatKey = @"Mouse Format";
@@ -317,6 +318,7 @@ static const int kMaxScreenRows = 4096;
     self.autorepeatMode = YES;
     self.keypadMode = NO;
     self.insertMode = NO;
+    self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
     _charset = 0;
     [self resetGraphicRendition];
@@ -330,6 +332,7 @@ static const int kMaxScreenRows = 4096;
     self.strictAnsiMode = NO;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
+    _copyingToPasteboard = NO;
     _encoding = _canonicalEncoding;
     _parser.encoding = _canonicalEncoding;
     for (int i = 0; i < NUM_CHARSETS; i++) {
@@ -1142,6 +1145,9 @@ static const int kMaxScreenRows = 4096;
     // Reset INSERT
     self.insertMode = NO;
 
+    // Reset SRM
+    self.sendReceiveMode = NO;
+
     // Reset INVERSE
     graphicRendition_.reversed = NO;
 
@@ -1201,10 +1207,25 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
+    } else if (_copyingToPasteboard) {
+        if (token->type == XTERMCC_MULTITOKEN_BODY) {
+            [delegate_ terminalDidReceiveBase64PasteboardString:token.string];
+            return;
+        } else if (token->type == VT100_ASCIISTRING) {
+            [delegate_ terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
+            return;
+        } else if (token->type == XTERMCC_MULTITOKEN_END) {
+            [delegate_ terminalDidFinishReceivingPasteboard];
+            _copyingToPasteboard = NO;
+            return;
+        } else {
+            [delegate_ terminalPasteboardReceiptEndedUnexpectedly];
+            _copyingToPasteboard = NO;
+        }
     }
     if (token->savingData &&
         token->type != VT100_SKIP &&
-        [delegate_ terminalIsAppendingToPasteboard]) {
+        [delegate_ terminalIsAppendingToPasteboard]) {  // This is the old code that echoes to the screen. Its use is discouraged.
         // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
         if (token->type != XTERMCC_SET_KVP ||
             ![token.string hasPrefix:@"CopyToClipboard"]) {
@@ -1459,6 +1480,8 @@ static const int kMaxScreenRows = 4096;
                     case 4:
                         self.insertMode = mode;
                         break;
+                    case 12:
+                        self.sendReceiveMode = !mode;
                 }
             }
             break;
@@ -2109,6 +2132,11 @@ static const int kMaxScreenRows = 4096;
             receivingFile_ = YES;
             [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
+    } else if ([key isEqualToString:@"Copy"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalBeginCopyToPasteboard];
+            _copyingToPasteboard = YES;
+        }
     } else if ([key isEqualToString:@"RequestUpload"]) {
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalRequestUpload:value];
@@ -2141,10 +2169,10 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {
-        if ([value isEqualToString:@"push"]) {
-            [self pushUnicodeVersion];
-        } else if ([value isEqualToString:@"pop"]) {
-            [self popUnicodeVersion];
+        if ([value hasPrefix:@"push"]) {
+            [self pushUnicodeVersion:value];
+        } else if ([value hasPrefix:@"pop"]) {
+            [self popUnicodeVersion:value];
         } else if ([value isNumeric]) {
             [delegate_ terminalSetUnicodeVersion:[value integerValue]];
         }
@@ -2370,19 +2398,41 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)pushUnicodeVersion {
-    [_unicodeVersionStack addObject:@([delegate_ terminalUnicodeVersion])];
-}
-
-- (void)popUnicodeVersion {
-    if (_unicodeVersionStack.count == 0) {
-        return;
+- (NSString *)substringAfterSpaceInString:(NSString *)string {
+    NSInteger i = [string rangeOfString:@" "].location;
+    if (i == NSNotFound) {
+        return nil;
+    } else {
+        return [string substringFromIndex:i + 1];
     }
-    NSNumber *value = [_unicodeVersionStack lastObject];
-    [_unicodeVersionStack removeLastObject];
-    [delegate_ terminalSetUnicodeVersion:value.integerValue];
 }
 
+- (void)pushUnicodeVersion:(NSString *)label {
+    label = [self substringAfterSpaceInString:label];
+    [_unicodeVersionStack addObject:@[ label ?: @"", @([delegate_ terminalUnicodeVersion]) ]];
+}
+
+- (void)popUnicodeVersion:(NSString *)label {
+    label = [self substringAfterSpaceInString:label];
+    while (_unicodeVersionStack.count > 0) {
+        id entry = [[[_unicodeVersionStack lastObject] retain] autorelease];
+        [_unicodeVersionStack removeLastObject];
+
+        NSNumber *value = nil;
+        NSString *entryLabel = nil;
+        if ([entry isKindOfClass:[NSNumber class]]) {
+            // A restored value might have just a number. New values are always an array.
+            value = entry;
+        } else {
+            entryLabel = [entry objectAtIndex:0];
+            value = [entry objectAtIndex:1];
+        }
+        if (label.length == 0 || [label isEqualToString:entryLabel]) {
+            [delegate_ terminalSetUnicodeVersion:value.integerValue];
+            return;
+        }
+    }
+}
 
 - (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
@@ -2467,6 +2517,7 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateIsAnsiKey: @(self.isAnsi),
            kTerminalStateAutorepeatModeKey: @(self.autorepeatMode),
            kTerminalStateInsertModeKey: @(self.insertMode),
+           kTerminalStateSendReceiveModeKey: @(self.sendReceiveMode),
            kTerminalStateCharsetKey: @(self.charset),
            kTerminalStateMouseModeKey: @(self.mouseMode),
            kTerminalStateMouseFormatKey: @(self.mouseFormat),
@@ -2509,6 +2560,7 @@ static const int kMaxScreenRows = 4096;
     self.isAnsi = [dict[kTerminalStateIsAnsiKey] boolValue];
     self.autorepeatMode = [dict[kTerminalStateAutorepeatModeKey] boolValue];
     self.insertMode = [dict[kTerminalStateInsertModeKey] boolValue];
+    self.sendReceiveMode = [dict[kTerminalStateSendReceiveModeKey] boolValue];
     self.charset = [dict[kTerminalStateCharsetKey] intValue];
     self.mouseMode = [dict[kTerminalStateMouseModeKey] intValue];
     self.mouseFormat = [dict[kTerminalStateMouseFormatKey] intValue];

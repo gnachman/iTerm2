@@ -913,8 +913,7 @@ static BOOL hasBecomeActive = NO;
     [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 }
 
-- (void)restoreWindowArrangement:(id)sender
-{
+- (void)restoreWindowArrangement:(id)sender {
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
 }
 
@@ -1123,8 +1122,7 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] arrangeHorizontally];
 }
 
-- (IBAction)showPrefWindow:(id)sender
-{
+- (IBAction)showPrefWindow:(id)sender {
     [[PreferencePanel sharedInstance] run];
     [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:self];
 }

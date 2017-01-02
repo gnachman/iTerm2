@@ -1631,6 +1631,38 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return range;
 }
 
+- (NSString *)stringByMakingControlCharactersToPrintable {
+    if (self.length == 0) {
+        return self;
+    }
+    NSMutableString *temp = [[self mutableCopy] autorelease];
+    for (NSInteger i = temp.length - 1; i >= 0; i--) {
+        unichar c = [temp characterAtIndex:i];
+        NSString *replacement = nil;
+        if (c >= 1 && c <= 26) {
+            replacement = [NSString stringWithFormat:@"^%c", c - 1 + 'A'];
+        } else if (c == 0) {
+            replacement = @"^@";
+        } else if (c == 27) {
+            replacement = @"^[";
+        } else if (c == 28) {
+            replacement = @"^\\";
+        } else if (c == 29) {
+            replacement = @"^]";
+        } else if (c == 30) {
+            replacement = @"^^";
+        } else if (c == 31) {
+            replacement = @"^_";
+        } else if (c == 127) {
+            replacement = @"^?";
+        }
+        if (replacement) {
+            [temp replaceCharactersInRange:NSMakeRange(i, 1) withString:replacement];
+        }
+    }
+    return temp;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

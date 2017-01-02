@@ -244,4 +244,6 @@
 - (void)screenPushKeyLabels:(NSString *)value;
 - (void)screenPopKeyLabels:(NSString *)value;
 
+- (void)screenTerminalAttemptedPasteboardAccess;
+
 @end

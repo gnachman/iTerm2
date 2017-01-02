@@ -151,6 +151,9 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
+
+    // base64 value to copy to pasteboard, being built up bit by bit.
+    NSMutableString *_copyString;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -232,6 +235,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
     [_animatedLines release];
+    [_copyString release];
     [super dealloc];
 }
 
@@ -1544,8 +1548,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)setFindString:(NSString*)aString
      forwardDirection:(BOOL)direction
-         ignoringCase:(BOOL)ignoreCase
-                regex:(BOOL)regex
+                 mode:(iTermFindMode)mode
           startingAtX:(int)x
           startingAtY:(int)y
            withOffset:(int)offset
@@ -1601,16 +1604,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (!direction) {
         opts |= FindOptBackwards;
     }
-    if (ignoreCase) {
-        opts |= FindOptCaseInsensitive;
-    }
-    if (regex) {
-        opts |= FindOptRegex;
-    }
     if (multipleResults) {
         opts |= FindMultipleResults;
     }
-    [linebuffer_ prepareToSearchFor:aString startingAt:startPos options:opts withContext:context];
+    [linebuffer_ prepareToSearchFor:aString startingAt:startPos options:opts mode:mode withContext:context];
     context.hasWrapped = NO;
     [self popScrollbackLines:linesPushed];
 }
@@ -3526,6 +3523,47 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenRequestUpload:args];
 }
 
+- (void)terminalBeginCopyToPasteboard {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        [_copyString release];
+        _copyString = [[NSMutableString alloc] init];
+    } else {
+        [delegate_ screenTerminalAttemptedPasteboardAccess];
+    }
+}
+
+- (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        [_copyString appendString:string];
+    }
+}
+
+- (void)terminalDidFinishReceivingPasteboard {
+    if (_copyString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        NSData *data = [NSData dataWithBase64EncodedString:_copyString];
+        if (data) {
+            NSString *string = [[[NSString alloc] initWithData:data encoding:terminal_.encoding] autorelease];
+            if (!string) {
+                string = [[[NSString alloc] initWithData:data encoding:[NSString defaultCStringEncoding]] autorelease];
+            }
+
+            if (string) {
+                NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+                [pboard clearContents];
+                [pboard declareTypes:@[ NSStringPboardType ] owner:self];
+                [pboard setString:string forType:NSStringPboardType];
+            }
+        }
+    }
+    [_copyString release];
+    _copyString = nil;
+}
+
+- (void)terminalPasteboardReceiptEndedUnexpectedly {
+    [_copyString release];
+    _copyString = nil;
+}
+
 - (void)terminalCopyBufferToPasteboard {
     [delegate_ screenCopyBufferToPasteboard];
 }
@@ -4528,6 +4566,7 @@ static void SwapInt(int *a, int *b) {
                     [linebuffer_ prepareToSearchFor:findContext_.substring
                                          startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPosition] : [[linebuffer_ lastPosition] predecessor])
                                             options:findContext_.options
+                                               mode:findContext_.mode
                                         withContext:tempFindContext];
                     [findContext_ reset];
                     // TODO test this!

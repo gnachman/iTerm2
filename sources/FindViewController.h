@@ -29,6 +29,15 @@
 #import "FutureMethods.h"
 #import "iTermController.h"
 
+// Never change these values as they are saved to user defaults.
+typedef NS_ENUM(NSUInteger, iTermFindMode) {
+    iTermFindModeSmartCaseSensitivity = 0,
+    iTermFindModeCaseSensitiveSubstring = 1,
+    iTermFindModeCaseInsensitiveSubstring = 2,
+    iTermFindModeCaseSensitiveRegex = 3,
+    iTermFindModeCaseInsensitiveRegex = 4,
+};
+
 @protocol FindViewControllerDelegate <NSObject>
 
 // Returns true if there is a text area to search.
@@ -70,8 +79,7 @@
 // Preform a search
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      ignoringCase:(BOOL)ignoreCase
-             regex:(BOOL)regex
+              mode:(iTermFindMode)mode
         withOffset:(int)offset;
 
 @end
@@ -84,10 +92,6 @@
 - (void)makeVisible;
 - (void)setFrameOrigin:(NSPoint)p;
 
-- (IBAction)closeFindView:(id)sender;
-- (IBAction)searchNextPrev:(id)sender;
-- (IBAction)toggleIgnoreCase:(id)sender;
-- (IBAction)toggleRegex:(id)sender;
 - (void)searchNext;
 - (void)searchPrevious;
 - (void)setFindString:(NSString*)string;
@@ -100,6 +104,5 @@
 // navigate with with next-previous. When the find window is opened, the state
 // is restored.
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string
-                                  ignoringCase:(BOOL)ignoringCase
-                                         regex:(BOOL)regex;
+                                  mode:(iTermFindMode)mode;
 @end

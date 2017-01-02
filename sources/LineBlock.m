@@ -806,23 +806,28 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     return rewritten;
 }
 
-static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, int start, int end,
-                      FindOptions options, int* resultLength, NSString* haystack, unichar* charHaystack,
-                      int* deltas, int deltaOffset) {
+static int CoreSearch(NSString *needle,
+                      screen_char_t *rawline,
+                      int raw_line_length,
+                      int start,
+                      int end,
+                      FindOptions options,
+                      iTermFindMode mode,
+                      int *resultLength,
+                      NSString *haystack,
+                      unichar *charHaystack,
+                      int *deltas,
+                      int deltaOffset) {
     int apiOptions = 0;
     NSRange range;
-    BOOL regex;
-    if (options & FindOptRegex) {
-        regex = YES;
-    } else {
-        regex = NO;
-    }
+    const BOOL regex = (mode == iTermFindModeCaseInsensitiveRegex ||
+                        mode == iTermFindModeCaseSensitiveRegex);
     if (regex) {
         BOOL backwards = NO;
         if (options & FindOptBackwards) {
             backwards = YES;
         }
-        if (options & FindOptCaseInsensitive) {
+        if (mode == iTermFindModeCaseInsensitiveRegex) {
             apiOptions |= RKLCaseless;
         }
 
@@ -900,10 +905,16 @@ static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_len
             range.location = NSNotFound;
         }
     } else {
+        // Substring (not regex)
         if (options & FindOptBackwards) {
             apiOptions |= NSBackwardsSearch;
         }
-        if (options & FindOptCaseInsensitive) {
+        BOOL caseInsensitive = (mode == iTermFindModeCaseInsensitiveSubstring);
+        if (mode == iTermFindModeSmartCaseSensitivity &&
+            [needle rangeOfCharacterFromSet:[NSCharacterSet uppercaseLetterCharacterSet]].location == NSNotFound) {
+            caseInsensitive = YES;
+        }
+        if (caseInsensitive) {
             apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
         }
         range = [haystack rangeOfString:needle options:apiOptions];
@@ -927,6 +938,7 @@ static int Search(NSString* needle,
                   int start,
                   int end,
                   int options,
+                  iTermFindMode mode,
                   int* resultLength)
 {
     NSString* haystack;
@@ -938,7 +950,7 @@ static int Search(NSString* needle,
                                        &charHaystack,
                                        &deltas);
     // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
-    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, resultLength,
+    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, mode, resultLength,
                             haystack, charHaystack, deltas, deltas[0]);
 
     free(deltas);
@@ -946,14 +958,14 @@ static int Search(NSString* needle,
     return result;
 }
 
-- (void) _findInRawLine:(int) entry
-                 needle:(NSString*)needle
-                options:(int) options
-                   skip:(int) skip
-                 length:(int) raw_line_length
-        multipleResults:(BOOL)multipleResults
-                results:(NSMutableArray*)results
-{
+- (void)_findInRawLine:(int)entry
+                needle:(NSString*)needle
+               options:(int)options
+                  mode:(iTermFindMode)mode
+                  skip:(int)skip
+                length:(int)raw_line_length
+       multipleResults:(BOOL)multipleResults
+               results:(NSMutableArray *)results {
     screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
     if (skip > raw_line_length) {
         skip = raw_line_length;
@@ -1025,7 +1037,7 @@ static int Search(NSString* needle,
                 break;
             }
             tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
-                                      &tempResultLength, haystack, charHaystack, deltas, 0);
+                                      mode, &tempResultLength, haystack, charHaystack, deltas, 0);
 
             limit = tempPosition + tempResultLength - 1;
             // find i so that i-deltas[i] == limit
@@ -1048,7 +1060,7 @@ static int Search(NSString* needle,
         int tempPosition;
         while (skip < raw_line_length) {
             tempPosition = Search(needle, rawline, raw_line_length, skip, raw_line_length,
-                                  options, &tempResultLength);
+                                  options, mode, &tempResultLength);
             if (tempPosition != -1) {
                 ResultRange* r = [[[ResultRange alloc] init] autorelease];
                 r->position = tempPosition;
@@ -1093,10 +1105,10 @@ static int Search(NSString* needle,
 
 - (void)findSubstring:(NSString*)substring
               options:(int)options
+                 mode:(iTermFindMode)mode
              atOffset:(int)offset
-              results:(NSMutableArray*)results
-      multipleResults:(BOOL)multipleResults
-{
+              results:(NSMutableArray *)results
+      multipleResults:(BOOL)multipleResults {
     if (offset == -1) {
         offset = [self rawSpaceUsed] - 1;
     }
@@ -1126,6 +1138,7 @@ static int Search(NSString* needle,
         [self _findInRawLine:entry
                       needle:substring
                      options:options
+                        mode:mode
                         skip:skipped
                       length:[self _lineLength: entry]
              multipleResults:multipleResults

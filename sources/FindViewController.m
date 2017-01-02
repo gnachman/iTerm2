@@ -37,8 +37,7 @@
 // This used to be absurdly fast (.075) for reasons neither I nor revision
 // history can recall. This looks nicer to my eyes.
 static const float kAnimationDuration = 0.2;
-static BOOL gDefaultIgnoresCase;
-static BOOL gDefaultRegex;
+static iTermFindMode gFindMode;
 static NSString *gSearchString;
 static NSSize kFocusRingInset = { 2, 3 };
 
@@ -263,8 +262,7 @@ const CGFloat kEdgeWidth = 3;
 
 @interface FindState : NSObject
 
-@property(nonatomic, assign) BOOL ignoreCase;
-@property(nonatomic, assign) BOOL regex;
+@property(nonatomic, assign) iTermFindMode mode;
 @property(nonatomic, copy) NSString *string;
 
 @end
@@ -291,10 +289,6 @@ const CGFloat kEdgeWidth = 3;
 
 @implementation FindViewController {
     IBOutlet NSSearchField* findBarTextField_;
-    // These pointers are just "prototypes" and do not refer to any actual menu
-    // items.
-    IBOutlet NSMenuItem* ignoreCaseMenuItem_;
-    IBOutlet NSMenuItem* regexMenuItem_;
 
     FindState *savedState_;
     FindState *state_;
@@ -323,13 +317,27 @@ const CGFloat kEdgeWidth = 3;
 }
 
 
-+ (void)initialize
-{
-    gDefaultIgnoresCase =
-        [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"] ?
-            [[NSUserDefaults standardUserDefaults] boolForKey:@"findIgnoreCase_iTerm"] :
-            YES;
-    gDefaultRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
++ (void)initialize {
+    NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"findMode_iTerm"];
+    if (!mode) {
+        // Migrate legacy value.
+        NSNumber *ignoreCase = [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"];
+        BOOL caseSensitive = ignoreCase ? ![ignoreCase boolValue] : NO;
+        BOOL isRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
+
+        if (caseSensitive && isRegex) {
+            gFindMode = iTermFindModeCaseSensitiveRegex;
+        } else if (!caseSensitive && isRegex) {
+            gFindMode = iTermFindModeCaseInsensitiveRegex;
+        } else if (caseSensitive && !isRegex) {
+            gFindMode = iTermFindModeCaseSensitiveSubstring;
+        } else if (!caseSensitive && !isRegex) {
+            gFindMode = iTermFindModeSmartCaseSensitivity;  // Upgrade case-insensitive substring to smart case sensitivity.
+        }
+    } else {
+        // Modern value
+        gFindMode = [mode unsignedIntegerValue];
+    }
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -337,8 +345,7 @@ const CGFloat kEdgeWidth = 3;
     if (self) {
         [findBarTextField_ setDelegate:self];
         state_ = [[FindState alloc] init];
-        state_.ignoreCase = gDefaultIgnoresCase;
-        state_.regex = gDefaultRegex;
+        state_.mode = gFindMode;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_loadFindStringFromSharedPasteboard)
                                                      name:@"iTermLoadFindStringFromSharedPasteboard"
@@ -399,16 +406,14 @@ const CGFloat kEdgeWidth = 3;
     [self close];
 }
 
-- (NSRect)collapsedFrame
-{
+- (NSRect)collapsedFrame {
     return NSMakeRect([[self view] frame].origin.x,
                       fullFrame_.origin.y + [self superframe].size.height + fullFrame_.size.height,
                       [[self view] frame].size.width,
                       0);
 }
 
-- (NSRect)fullSizeFrame
-{
+- (NSRect)fullSizeFrame {
     return NSMakeRect([[self view] frame].origin.x,
                       fullFrame_.origin.y + [self superframe].size.height,
                       [[self view] frame].size.width,
@@ -447,16 +452,13 @@ const CGFloat kEdgeWidth = 3;
     [savedState_ release];
     savedState_ = state_;
     state_ = [[FindState alloc] init];
-    state_.ignoreCase = savedState_.ignoreCase;
-    state_.regex = savedState_.regex;
+    state_.mode = savedState_.mode;
     state_.string = savedState_.string;
 }
 
 - (void)open {
     if (savedState_) {
         [self restoreState];
-        ignoreCaseMenuItem_.state = state_.ignoreCase ? NSOnState : NSOffState;
-        regexMenuItem_.state = state_.regex ? NSOnState : NSOffState;
         findBarTextField_.stringValue = state_.string;
     }
     [[self view] setFrame:[self collapsedFrame]];
@@ -515,8 +517,7 @@ const CGFloat kEdgeWidth = 3;
     [findBarTextField_ setNeedsDisplay:YES];
 }
 
-- (void)_continueSearch
-{
+- (void)_continueSearch {
     BOOL more = NO;
     if ([delegate_ findInProgress]) {
         double progress;
@@ -530,8 +531,7 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (void)_setSearchString:(NSString *)s
-{
+- (void)_setSearchString:(NSString *)s {
     if (!savedState_) {
         [gSearchString autorelease];
         gSearchString = [s retain];
@@ -539,37 +539,24 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (void)_setIgnoreCase:(BOOL)set
-{
+- (void)setMode:(iTermFindMode)set {
     if (!savedState_) {
-        gDefaultIgnoresCase = set;
-        [[NSUserDefaults standardUserDefaults] setBool:set
-                                                forKey:@"findIgnoreCase_iTerm"];
+        gFindMode = set;
+        // The user defaults key got recycled to make it clear whether the legacy (number) or modern value (dict) is
+        // in use, but the key doesn't reflect its true meaning any more.
+        [[NSUserDefaults standardUserDefaults] setObject:@(set) forKey:@"findMode_iTerm"];
     }
 }
 
-- (void)_setRegex:(BOOL)set
-{
-    if (!savedState_) {
-        gDefaultRegex = set;
-        [[NSUserDefaults standardUserDefaults] setBool:set
-                                                forKey:@"findRegex_iTerm"];
-    }
-}
-
-- (void)_setSearchDefaults
-{
+- (void)_setSearchDefaults {
     [self _setSearchString:[findBarTextField_ stringValue]];
-    [self _setIgnoreCase:state_.ignoreCase];
-    [self _setRegex:state_.regex];
+    [self setMode:state_.mode];
 }
 
 - (void)findSubString:(NSString *)subString
      forwardDirection:(BOOL)direction
-         ignoringCase:(BOOL)ignoringCase
-                regex:(BOOL)regex
-           withOffset:(int)offset
-{
+                 mode:(iTermFindMode)mode
+           withOffset:(int)offset {
     BOOL ok = NO;
     if ([delegate_ canSearch]) {
         if ([subString length] <= 0) {
@@ -577,8 +564,7 @@ const CGFloat kEdgeWidth = 3;
         } else {
             [delegate_ findString:subString
                  forwardDirection:direction
-                     ignoringCase:ignoringCase
-                            regex:regex
+                             mode:mode
                        withOffset:offset];
             ok = YES;
         }
@@ -598,28 +584,23 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (void)searchNext
-{
+- (void)searchNext {
     [self _setSearchDefaults];
     [self findSubString:savedState_ ? state_.string : gSearchString
        forwardDirection:YES
-           ignoringCase:state_.ignoreCase
-                  regex:state_.regex
+                   mode:state_.mode
              withOffset:1];
 }
 
-- (void)searchPrevious
-{
+- (void)searchPrevious {
     [self _setSearchDefaults];
     [self findSubString:savedState_ ? state_.string : gSearchString
        forwardDirection:NO
-           ignoringCase:state_.ignoreCase
-                  regex:state_.regex
+                   mode:state_.mode
              withOffset:1];
 }
 
-- (IBAction)searchNextPrev:(id)sender
-{
+- (IBAction)searchNextPrev:(id)sender {
     if ([sender selectedSegment] == 0) {
         [self searchPrevious];
     } else {
@@ -629,30 +610,18 @@ const CGFloat kEdgeWidth = 3;
              forSegment:[sender selectedSegment]];
 }
 
-- (BOOL)validateUserInterfaceItem:(NSMenuItem*)item
-{
-    if ([item action] == @selector(toggleIgnoreCase:)) {
-        [item setState:(state_.ignoreCase ? NSOnState : NSOffState)];
-    } else if ([item action] == @selector(toggleRegex:)) {
-        [item setState:(state_.regex ? NSOnState : NSOffState)];
-    }
+- (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
+    item.state = (item.tag == state_.mode) ? NSOnState : NSOffState;
     return YES;
 }
 
-- (IBAction)toggleIgnoreCase:(id)sender
-{
-    state_.ignoreCase = !state_.ignoreCase;
-    [self _setIgnoreCase:state_.ignoreCase];
+- (IBAction)changeMode:(id)sender {
+    state_.mode = (iTermFindMode)[sender tag];
+    [self setMode:state_.mode];
 }
 
-- (IBAction)toggleRegex:(id)sender
-{
-    state_.regex = !state_.regex;
-    [self _setRegex:state_.regex];
-}
 
-- (void)_loadFindStringIntoSharedPasteboard
-{
+- (void)_loadFindStringIntoSharedPasteboard {
     if (savedState_) {
         return;
     }
@@ -664,28 +633,24 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (void)setFindString:(NSString*)string
-{
+- (void)setFindString:(NSString*)string {
     [findBarTextField_ setStringValue:string];
     [self _loadFindStringIntoSharedPasteboard];
 }
 
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string
-                                 ignoringCase:(BOOL)ignoringCase
-                                        regex:(BOOL)regex {
+                                          mode:(iTermFindMode)mode {
     [self close];
     if (!savedState_) {
         [self saveState];
     }
-    state_.ignoreCase = ignoringCase;
-    state_.regex = regex;
+    state_.mode = mode;
     state_.string = string;
     findBarTextField_.stringValue = string;
     [self doSearch];
 }
 
-- (void)controlTextDidChange:(NSNotification *)aNotification
-{
+- (void)controlTextDidChange:(NSNotification *)aNotification {
     NSTextField *field = [aNotification object];
     if (field != findBarTextField_) {
         return;
@@ -841,23 +806,20 @@ const CGFloat kEdgeWidth = 3;
     [self _setSearchDefaults];
     [self findSubString:theString
        forwardDirection:NO
-           ignoringCase:state_.ignoreCase
-                  regex:state_.regex
+                   mode:state_.mode
              withOffset:0];
 }
 
-- (void)deselectFindBarTextField
-{
+- (void)deselectFindBarTextField {
     NSText* fieldEditor = [[[self view] window] fieldEditor:YES
                                                   forObject:findBarTextField_];
     [fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
     [fieldEditor setNeedsDisplay:YES];
 }
 
-- (BOOL)control:(NSControl*)control
-       textView:(NSTextView*)textView
-    doCommandBySelector:(SEL)commandSelector
-{
+- (BOOL)control:(NSControl *)control
+       textView:(NSTextView *)textView
+    doCommandBySelector:(SEL)commandSelector {
     if (control != findBarTextField_) {
         return NO;
     }
@@ -924,13 +886,11 @@ const CGFloat kEdgeWidth = 3;
     return;
 }
 
-- (void)setDelegate:(id<FindViewControllerDelegate>)delegate
-{
+- (void)setDelegate:(id<FindViewControllerDelegate>)delegate {
     delegate_ = delegate;
 }
 
-- (id<FindViewControllerDelegate>)delegate
-{
+- (id<FindViewControllerDelegate>)delegate {
     return delegate_;
 }
 

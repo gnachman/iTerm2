@@ -106,14 +106,16 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     DLog(@"Create new window controller for profile hotkey");
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
     if (windowController) {
-        [[iTermController sharedInstance] launchBookmark:self.profile
-                                              inTerminal:windowController
-                                                 withURL:url.absoluteString
-                                        hotkeyWindowType:[self hotkeyWindowType]
-                                                 makeKey:YES
-                                             canActivate:YES
-                                                 command:nil
-                                                   block:nil];
+        if (url) {
+            [[iTermController sharedInstance] launchBookmark:self.profile
+                                                  inTerminal:windowController
+                                                     withURL:url.absoluteString
+                                            hotkeyWindowType:[self hotkeyWindowType]
+                                                     makeKey:YES
+                                                 canActivate:YES
+                                                     command:nil
+                                                       block:nil];
+        }
     } else {
         windowController = [self windowControllerFromProfile:[self profile] url:url];
     }

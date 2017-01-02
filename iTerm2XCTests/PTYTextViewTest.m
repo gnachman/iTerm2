@@ -407,7 +407,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewRestartWithConfirmation {
 }
 
-- (void)setFindString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase regex:(BOOL)regex startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof inContext:(FindContext *)context multipleResults:(BOOL)multipleResults {
+- (void)setFindString:(NSString *)aString forwardDirection:(BOOL)direction mode:(iTermFindMode)mode startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof inContext:(FindContext *)context multipleResults:(BOOL)multipleResults {
 }
 
 - (PTYTask *)shell {
@@ -2236,8 +2236,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                               [textView resetFindCursor];
                               [textView findString:@"xx"
                                   forwardDirection:NO
-                                      ignoringCase:NO
-                                             regex:NO
+                                              mode:iTermFindModeCaseSensitiveSubstring
                                         withOffset:0];
                               double progress;
                               while ([textView findInProgress]) {
