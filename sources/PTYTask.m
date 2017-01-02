@@ -35,7 +35,7 @@
 #include <util.h>
 
 #define CTRLKEY(c) ((c)-'A'+1)
-const int kNumFileDescriptorsToDup = 4;
+const int kNumFileDescriptorsToDup = NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER;
 
 NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
@@ -498,7 +498,9 @@ static int MyForkPty(int *amaster,
     pid_t pid;
     int connectionFd = -1;
     int numFileDescriptorsToPreserve;
+    BOOL closeFileDescriptors = YES;
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        closeFileDescriptors = NO;
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
         NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
                                                                                  suffix:@""];
@@ -576,8 +578,12 @@ static int MyForkPty(int *amaster,
 
         // Apple opens files without the close-on-exec flag (e.g., Extras2.rsrc).
         // See issue 2662.
-        for (int j = numFileDescriptorsToPreserve; j < getdtablesize(); j++) {
-            close(j);
+        if (closeFileDescriptors) {
+            // If running jobs in servers close file descriptors after exec when it's safe to
+            // enumerate files in /dev/fd. This is the potentially very slow path (issue 5391).
+            for (int j = numFileDescriptorsToPreserve; j < getdtablesize(); j++) {
+                close(j);
+            }
         }
 
         chdir(initialPwd);
