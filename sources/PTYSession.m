@@ -6790,11 +6790,21 @@ ITERM_WEAKLY_REFERENCEABLE
     return _lastMark;
 }
 
+- (void)promptDidStartAtLine:(int)line {
+    // This code path is shared by true shell integraiton and trigger fakery.
+    [[self screenAddMarkOnLine:line] setIsPrompt:YES];
+    [_pasteHelper unblock];
+}
+
 - (void)screenPromptDidStartAtLine:(int)line {
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
-    [[self screenAddMarkOnLine:line] setIsPrompt:YES];
-    [_pasteHelper unblock];
+    [self promptDidStartAtLine:line];
+}
+
+- (void)triggerDidDetectStartOfPromptAtAbsoluteLine:(long long)absLine {
+    int line = absLine - _screen.totalScrollbackOverflow;
+    [self promptDidStartAtLine:line];
 }
 
 - (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
