@@ -895,7 +895,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
         [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
-        [self commandDidStartAtCoord:newCommandStart];
+        [self commandDidStartAtScreenCoord:newCommandStart];
     }
 }
 
@@ -3680,15 +3680,18 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)terminalPromptDidStart {
+    [self promptDidStartAt:VT100GridAbsCoordMake(currentGrid_.cursor.x,
+                                                 currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
+}
+
+- (void)promptDidStartAt:(VT100GridAbsCoord)coord {
     DLog(@"FinalTerm: terminalPromptDidStart");
-    if (self.cursorX > 1 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
+    if (coord.x > 0 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
         [self crlf];
     }
     _shellIntegrationInstalled = YES;
 
-    _lastCommandOutputRange.end.x = currentGrid_.cursor.x;
-    _lastCommandOutputRange.end.y =
-        currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+    _lastCommandOutputRange.end = coord;
     _lastCommandOutputRange.start = nextCommandOutputStart_;
 
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
@@ -3698,25 +3701,33 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalCommandDidStart {
     DLog(@"FinalTerm: terminalCommandDidStart");
-    [self commandDidStartAtCoord:currentGrid_.cursor];
+    [self commandDidStartAtScreenCoord:currentGrid_.cursor];
 }
 
-- (void)commandDidStartAtCoord:(VT100GridCoord)coord {
+- (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
+    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x, coord.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+}
+
+- (void)commandDidStartAt:(VT100GridAbsCoord)coord {
     commandStartX_ = coord.x;
-    commandStartY_ = coord.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+    commandStartY_ = coord.y;
     [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
 }
 
 - (void)terminalCommandDidEnd {
     DLog(@"FinalTerm: terminalCommandDidEnd");
+    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(currentGrid_.cursor.x, currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+}
+
+- (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
-        nextCommandOutputStart_.x = currentGrid_.cursor.x;
-        nextCommandOutputStart_.y =
-            currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
+        nextCommandOutputStart_ = coord;
+        return YES;
     }
+    return NO;
 }
 
 - (void)terminalAbortCommand {

@@ -682,6 +682,9 @@ typedef enum {
 
 - (void)setColorsFromPresetNamed:(NSString *)presetName;
 
+- (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord;
+- (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

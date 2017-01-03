@@ -5,6 +5,7 @@
 //   /usr/bin/login -fpl $USER /full/path/to/iTerm.app --launch_shell
 
 #include "shell_launcher.h"
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <paths.h>
@@ -105,6 +106,40 @@ static void CreateProcessGroup() {
     }
 }
 
+static void
+closefrom_fallback(int lowfd) {
+    // Fall back on sysconf(_SC_OPEN_MAX).  We avoid checking
+    // resource limits since it is possible to open a file descriptor
+    // and then drop the rlimit such that it is below the open fd.
+    //
+    long maxfd = sysconf(_SC_OPEN_MAX);
+    if (maxfd < 0) {
+        maxfd = _POSIX_OPEN_MAX;
+    }
+
+    for (long fd = lowfd; fd < maxfd; fd++) {
+        close(fd);
+    }
+}
+
+static void
+sudo_closefrom(int lowfd) {
+    const char *path = "/dev/fd";
+    DIR *dirp;
+    if ((dirp = opendir(path)) != NULL) {
+        struct dirent *dent;
+        while ((dent = readdir(dirp)) != NULL) {
+            int fd = atoi(dent->d_name);
+            if (fd > lowfd && fd != dirfd(dirp)) {
+                close(fd);
+            }
+        }
+        closedir(dirp);
+    } else {
+        closefrom_fallback(lowfd);
+    }
+}
+
 // Precondition: PTY Master on fd 0, PTY Slave on fd 1, connected unix domain socket on fd 2
 int iterm2_server(int argc, char *const *argv) {
     // Block SIGCHLD so we can handle it when we're ready.
@@ -113,9 +148,16 @@ int iterm2_server(int argc, char *const *argv) {
     sigaddset(&signal_set, SIGCHLD);
     sigprocmask(SIG_BLOCK, &signal_set, NULL);
 
+    sudo_closefrom(NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER);
+
     // Start the child.
     pid_t pid = fork();
     if (pid == 0) {
+        // Keep only stdin, stdout, and stderr.
+        for (int i = 3; i < NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER; i++) {
+            close(i);
+        }
+
         // See discussion in issue 4288. For shells that don't have job control, this keeps SIGINT
         // from propagating up to the server. In other words, if the child process we exec below
         // installs a handler for SIGINT, this prevents SIGINT from percolating up and murdering
