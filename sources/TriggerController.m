@@ -19,7 +19,7 @@
 #import "iTermSetTitleTrigger.h"
 #import "ITAddressBookMgr.h"
 #import "iTermNoColorAccessoryButton.h"
-#import "iTermPromptStartTrigger.h"
+#import "iTermShellPromptTrigger.h"
 #import "MarkTrigger.h"
 #import "NSColor+iTerm.h"
 #import "PasswordTrigger.h"
@@ -107,7 +107,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                              [BounceTrigger class],
                              [CaptureTrigger class],
                              [GrowlTrigger class],
-                             [iTermPromptStartTrigger class],
+                             [iTermShellPromptTrigger class],
                              [iTermSetTitleTrigger class],
                              [SendTextTrigger class],
                              [ScriptTrigger class],

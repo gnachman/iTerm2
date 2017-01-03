@@ -682,7 +682,8 @@ typedef enum {
 
 - (void)setColorsFromPresetNamed:(NSString *)presetName;
 
-- (void)triggerDidDetectStartOfPromptAtAbsoluteLine:(long long)absLine;
+- (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord;
+- (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord;
 
 #pragma mark - Testing utilities
 
