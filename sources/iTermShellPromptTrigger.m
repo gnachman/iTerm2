@@ -6,13 +6,13 @@
 //
 //
 
-#import "iTermPromptStartTrigger.h"
+#import "iTermShellPromptTrigger.h"
 #import "PTYSession.h"
 
-@implementation iTermPromptStartTrigger
+@implementation iTermShellPromptTrigger
 
 + (NSString *)title {
-    return @"Mark as Shell Prompt";
+    return @"Prompt Detected";
 }
 
 - (BOOL)takesParameter {
@@ -26,7 +26,10 @@
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
-    [aSession triggerDidDetectStartOfPromptAtAbsoluteLine:lineNumber];
+    if (captureCount > 0) {
+        [aSession triggerDidDetectStartOfPromptAt:VT100GridAbsCoordMake(capturedRanges[0].location, lineNumber)];
+        [aSession triggerDidDetectEndOfPromptAt:VT100GridAbsCoordMake(NSMaxRange(capturedRanges[0]), lineNumber)];
+    }
     return NO;
 }
 

@@ -8,6 +8,6 @@
 
 #import "Trigger.h"
 
-@interface iTermPromptStartTrigger : Trigger
+@interface iTermShellPromptTrigger : Trigger
 
 @end
