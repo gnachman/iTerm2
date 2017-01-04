@@ -750,14 +750,34 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
         DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
         if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
-            NSString *notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
+            NSString *notice;
+            if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
+                notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists, although a profile with that name happens to exist.", missingProfileName];
+            } else {
+                notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
+            }
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:notice
                                                                  style:kiTermAnnouncementViewStyleWarning
-                                                           withActions:@[ @"Don't Warn Again" ]
+                                                           withActions:@[ @"Don't Warn Again", @"Debug Info",  ]
                                                             completion:^(int selection) {
                                                                 if (selection == 0) {
                                                                     [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
+                                                                } else if (selection == 1) {
+                                                                    Profile *thisProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
+                                                                    Profile *originalProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
+                                                                    Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
+                                                                    [[NSAlert alertWithMessageText:@"Missing Profile Debug Info"
+                                                                                     defaultButton:@"OK"
+                                                                                   alternateButton:nil
+                                                                                       otherButton:nil
+                                                                         informativeTextWithFormat:@"This profile:\n  GUID=%@\n  name=%@.\nIts original profile:\n  GUID=%@\n  name=%@\nSimilarly named profile\n  GUID=%@\n  name=%@",
+                                                                      thisProfile[KEY_GUID],
+                                                                      thisProfile[KEY_NAME],
+                                                                      originalProfile[KEY_GUID],
+                                                                      originalProfile[KEY_NAME],
+                                                                      similarlyNamedProfile[KEY_GUID],
+                                                                      similarlyNamedProfile[KEY_NAME]] runModal];
                                                                 }
                                                             }];
             announcement.dismissOnKeyDown = YES;
@@ -1129,8 +1149,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Session specific methods
-- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
-{
+- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
     _screen.delegate = self;
 
     // Allocate the root per-session view.
@@ -1169,10 +1188,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
-    int width = (aSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
-    int height = (aSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
-    // NB: In the bad old days, this returned whether setup succeeded because it would allocate an
-    // enormous amount of memory. That's no longer an issue.
+    NSSize contentSize = [PTYScrollView contentSizeForFrameSize:aSize
+                                        horizontalScrollerClass:nil
+                                          verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
+                                                     borderType:_view.scrollview.borderType
+                                                    controlSize:NSRegularControlSize
+                                                  scrollerStyle:_view.scrollview.scrollerStyle];
+
+    int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
+    int height = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
     [_screen destructivelySetScreenWidth:width height:height];
     [self setName:@"Shell"];
     [self setDefaultName:@"Shell"];
@@ -3802,25 +3826,25 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     DLog(@"Set cadence of %@ to %f", self, cadence);
-#if 0
-    // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
-    // I'm worried about the possible side effects it might have since there's no way to 
-    // know all the tracking event loops.
-    _updateTimer = [NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
-                                                      timeout - timeSinceLastUpdate)
-                                           target:self.weakSelf
-                                         selector:@selector(updateDisplay)
-                                         userInfo:nil
-                                          repeats:YES];
-    [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
-#else
+
     [_updateTimer invalidate];
-    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
-                                                    target:self.weakSelf
-                                                  selector:@selector(updateDisplay)
-                                                  userInfo:nil
-                                                   repeats:YES];
-#endif
+    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+        // This solves the bug where we don't redraw properly during live resize.
+        // I'm worried about the possible side effects it might have since there's no way to
+        // know all the tracking event loops.
+        _updateTimer = [NSTimer timerWithTimeInterval:kActiveUpdateCadence
+                                               target:self.weakSelf
+                                             selector:@selector(updateDisplay)
+                                             userInfo:nil
+                                              repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+    } else {
+        _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
+                                                        target:self.weakSelf
+                                                      selector:@selector(updateDisplay)
+                                                      userInfo:nil
+                                                       repeats:YES];
+    }
 }
 
 - (void)doAntiIdle {

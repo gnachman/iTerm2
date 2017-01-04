@@ -3196,7 +3196,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
     NSRange atRange = [remoteHost rangeOfString:@"@"];
-    VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
     NSString *user = nil;
     NSString *host = nil;
     if (atRange.length == 1) {
@@ -3209,6 +3208,11 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         host = remoteHost;
     }
 
+    [self setHost:host user:user];
+}
+
+- (void)setHost:(NSString *)host user:(NSString *)user {
+    VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
     if (!host || !user) {
         // A trigger can set the host and user alone. If remoteHost looks like example.com or
         // user@, then preserve the previous host/user. Also ensure neither value is nil; the
@@ -3228,6 +3232,23 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
         [delegate_ screenCurrentHostDidChange:remoteHostObj];
     }
+}
+
+- (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
+    if (![iTermAdvancedSettingsModel acceptOSC7]) {
+        return;
+    }
+    NSURL *URL = [NSURL URLWithString:URLString];
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO] autorelease];
+    NSString *host = components.host;
+    NSString *user = components.user;
+    NSString *path = components.path;
+
+    if (host || user) {
+        [self setHost:host user:user];
+    }
+    [self terminalCurrentDirectoryDidChangeTo:path];
+    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
 
 - (void)terminalClearScreen {
