@@ -188,6 +188,7 @@ static iTermObjectPool *gPool;
                           @(XTERMCC_POP_TITLE):               @"XTERMCC_POP_TITLE",
                           @(XTERMCC_SET_RGB):                 @"XTERMCC_SET_RGB",
                           @(XTERMCC_PROPRIETARY_ETERM_EXT):   @"XTERMCC_PROPRIETARY_ETERM_EXT",
+                          @(XTERMCC_PWD_URL):                 @"XTERMCC_PWD_URL",
                           @(XTERMCC_SET_PALETTE):             @"XTERMCC_SET_PALETTE",
                           @(XTERMCC_SET_KVP):                 @"XTERMCC_SET_KVP",
                           @(XTERMCC_MULTITOKEN_HEADER_SET_KVP): @"XTERMCC_MULTITOKEN_HEADER_SET_KVP",

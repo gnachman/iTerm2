@@ -255,4 +255,6 @@ DEFINE_BOOL(openFileOverridesSendText, YES, @"Experimental Features: Should open
 // This is half implemented and should not be turned on by default.
 DEFINE_BOOL(useLayers, NO, @"Experimental Features: Use Core Animation layers for opaque terminal views");
 
+DEFINE_BOOL(acceptOSC7, YES, @"Experimental Features: Accept OSC 7 to set username, hostname, and path.");
+
 @end

@@ -1875,6 +1875,10 @@ static const int kMaxScreenRows = 4096;
             [self executeXtermProprietaryExtermExtension:token];
             break;
 
+        case XTERMCC_PWD_URL:
+            [self executeWorkingDirectoryURL:token];
+            break;
+
         case XTERMCC_SET_PALETTE:
             [self executeXtermSetPalette:token];
             break;
@@ -2074,6 +2078,12 @@ static const int kMaxScreenRows = 4096;
     value = @"";
   }
   return @[ key, value ];
+}
+
+- (void)executeWorkingDirectoryURL:(VT100Token *)token {
+    if ([delegate_ terminalIsTrusted]) {
+        [delegate_ terminalSetWorkingDirectoryURL:token.string];
+    }
 }
 
 - (void)executeXtermSetKvp:(VT100Token *)token {
