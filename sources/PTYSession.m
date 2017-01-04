@@ -3826,25 +3826,25 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     DLog(@"Set cadence of %@ to %f", self, cadence);
-#if 0
-    // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
-    // I'm worried about the possible side effects it might have since there's no way to 
-    // know all the tracking event loops.
-    _updateTimer = [NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
-                                                      timeout - timeSinceLastUpdate)
-                                           target:self.weakSelf
-                                         selector:@selector(updateDisplay)
-                                         userInfo:nil
-                                          repeats:YES];
-    [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
-#else
+
     [_updateTimer invalidate];
-    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
-                                                    target:self.weakSelf
-                                                  selector:@selector(updateDisplay)
-                                                  userInfo:nil
-                                                   repeats:YES];
-#endif
+    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+        // This solves the bug where we don't redraw properly during live resize.
+        // I'm worried about the possible side effects it might have since there's no way to
+        // know all the tracking event loops.
+        _updateTimer = [NSTimer timerWithTimeInterval:kActiveUpdateCadence
+                                               target:self.weakSelf
+                                             selector:@selector(updateDisplay)
+                                             userInfo:nil
+                                              repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+    } else {
+        _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
+                                                        target:self.weakSelf
+                                                      selector:@selector(updateDisplay)
+                                                      userInfo:nil
+                                                       repeats:YES];
+    }
 }
 
 - (void)doAntiIdle {

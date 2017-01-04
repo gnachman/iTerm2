@@ -170,5 +170,6 @@
 + (BOOL)noSyncSuppressMissingProfileInArrangementWarning;
 + (void)setNoSyncSuppressMissingProfileInArrangementWarning:(BOOL)value;
 + (BOOL)acceptOSC7;
++ (BOOL)trackingRunloopForLiveResize;
 
 @end

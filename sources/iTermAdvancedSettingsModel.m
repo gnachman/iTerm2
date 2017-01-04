@@ -256,5 +256,6 @@ DEFINE_BOOL(openFileOverridesSendText, YES, @"Experimental Features: Should open
 DEFINE_BOOL(useLayers, NO, @"Experimental Features: Use Core Animation layers for opaque terminal views");
 
 DEFINE_BOOL(acceptOSC7, YES, @"Experimental Features: Accept OSC 7 to set username, hostname, and path.");
+DEFINE_BOOL(trackingRunloopForLiveResize, YES, @"Experimental Features: Use a tracking runloop for live resizing.");
 
 @end
