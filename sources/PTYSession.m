@@ -7902,7 +7902,7 @@ ITERM_WEAKLY_REFERENCEABLE
     while (labels && value.length > 0 && ![labels.name isEqualToString:value]) {
         labels = [self popKeyLabels];
     }
-    _keyLabels = [labels.map retain];
+    _keyLabels = [labels.map mutableCopy];
     [_delegate sessionKeyLabelsDidChange:self];
 }
 
