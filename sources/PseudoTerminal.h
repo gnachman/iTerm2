@@ -231,6 +231,10 @@ extern NSString *const kCurrentSessionDidChange;
 // Return the smallest allowable width for this terminal.
 - (float)minWidth;
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+             replacingProfileWithGUID:(NSString *)badGuid
+                          withProfile:(Profile *)goodProfile;
+
 // Load an arrangement into an empty window.
 - (BOOL)loadArrangement:(NSDictionary *)arrangement;
 

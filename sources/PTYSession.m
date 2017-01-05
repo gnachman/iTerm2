@@ -90,6 +90,7 @@
 static const NSInteger kMinimumUnicodeVersion = 8;
 static const NSInteger kMaximumUnicodeVersion = 9;
 
+static NSString *const PTYSessionDidRepairSavedArrangement = @"PTYSessionDidRepairSavedArrangement";
 
 // The format for a user defaults key that recalls if the user has already been pestered about
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
@@ -421,6 +422,12 @@ static const NSUInteger kMaxHosts = 100;
     // Touch bar labels for function keys.
     NSMutableDictionary<NSString *, NSString *> *_keyLabels;
     NSMutableArray<iTermKeyLabels *> *_keyLabelsStack;
+
+    // If the session was created from a saved arrangement with a missing profile then this records
+    // the GUID of the missing profile. If the saved arrangement gets repaired then a notification
+    // is posted and all sessions with that bogus GUID can hide their profile and reload their
+    // profile.
+    NSString *_missingSavedArrangementProfileGUID;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -519,6 +526,10 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(applicationWillTerminate:)
                                                      name:iTermApplicationWillTerminate
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(savedArrangementWasRepaired:)
+                                                     name:PTYSessionDidRepairSavedArrangement
+                                                   object:nil];
         [self updateVariables];
     }
     return self;
@@ -584,6 +595,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_throughputEstimator release];
     [_keyLabels release];
     [_keyLabelsStack release];
+    [_missingSavedArrangementProfileGUID release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -733,6 +745,19 @@ ITERM_WEAKLY_REFERENCEABLE
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+             replacingProfileWithGUID:(NSString *)badGuid
+                          withProfile:(Profile *)goodProfile {
+    if ([arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID] isEqualToString:badGuid]) {
+        NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+        result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = goodProfile[KEY_NAME];
+        result[SESSION_ARRANGEMENT_BOOKMARK] = goodProfile;
+        return result;
+    } else {
+        return arrangement;
+    }
+}
+
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
@@ -751,33 +776,34 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
         if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
             NSString *notice;
+            NSArray<NSString *> *actions = @[ @"Don't Warn Again" ];
+            NSString *savedArranagementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
             if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
                 notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists, although a profile with that name happens to exist.", missingProfileName];
+                if (savedArranagementName) {
+                    actions = [actions arrayByAddingObject:@"Repair Saved Arrangement"];
+                }
             } else {
                 notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
             }
+            Profile *thisProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
+            aSession->_missingSavedArrangementProfileGUID = [thisProfile[KEY_GUID] copy];
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:notice
                                                                  style:kiTermAnnouncementViewStyleWarning
-                                                           withActions:@[ @"Don't Warn Again", @"Debug Info",  ]
+                                                           withActions:actions
                                                             completion:^(int selection) {
                                                                 if (selection == 0) {
                                                                     [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
                                                                 } else if (selection == 1) {
-                                                                    Profile *thisProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
-                                                                    Profile *originalProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
+                                                                    // Repair
                                                                     Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
-                                                                    [[NSAlert alertWithMessageText:@"Missing Profile Debug Info"
-                                                                                     defaultButton:@"OK"
-                                                                                   alternateButton:nil
-                                                                                       otherButton:nil
-                                                                         informativeTextWithFormat:@"This profile:\n  GUID=%@\n  name=%@.\nIts original profile:\n  GUID=%@\n  name=%@\nSimilarly named profile\n  GUID=%@\n  name=%@",
-                                                                      thisProfile[KEY_GUID],
-                                                                      thisProfile[KEY_NAME],
-                                                                      originalProfile[KEY_GUID],
-                                                                      originalProfile[KEY_NAME],
-                                                                      similarlyNamedProfile[KEY_GUID],
-                                                                      similarlyNamedProfile[KEY_NAME]] runModal];
+                                                                    [[iTermController sharedInstance] repairSavedArrangementNamed:savedArranagementName
+                                                                                                             replacingMissingGUID:thisProfile[KEY_GUID]
+                                                                                                                         withGUID:similarlyNamedProfile[KEY_GUID]];
+                                                                    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
+                                                                                                                        object:thisProfile[KEY_GUID]
+                                                                                                                      userInfo:@{ @"new profile": similarlyNamedProfile }];
                                                                 }
                                                             }];
             announcement.dismissOnKeyDown = YES;
@@ -3967,6 +3993,19 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)applicationWillTerminate:(NSNotification *)notification {
     // See comment where we observe this notification for why this is done.
     [self tmuxDetach];
+}
+
+- (void)savedArrangementWasRepaired:(NSNotification *)notification {
+    if ([notification.object isEqual:_missingSavedArrangementProfileGUID]) {
+        Profile *newProfile = notification.userInfo[@"new profile"];
+        _isDivorced = NO;
+        [_overriddenFields removeAllObjects];
+        [_originalProfile release];
+        _originalProfile = nil;
+        self.profile = newProfile;
+        [self setPreferencesFromAddressBookEntry:newProfile];
+        [self dismissAnnouncementWithIdentifier:@"ThisProfileNoLongerExists"];
+    }
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
