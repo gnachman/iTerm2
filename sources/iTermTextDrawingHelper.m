@@ -920,6 +920,17 @@ typedef struct iTermTextColorContext {
         [self constructAndDrawRunsForLine:theLine
                                       row:line
                                   inRange:run->range
+                          startingAtPoint:CGPointMake(textOrigin.x + 1, textOrigin.y + 0.5)
+                               bgselected:run->selected
+                                  bgColor:box.unprocessedBackgroundColor
+                 processedBackgroundColor:box.backgroundColor
+                                  matches:matches
+                           forceTextColor:[NSColor colorWithRed:1 green:1 blue:1 alpha:1]
+                                  context:ctx];
+
+        [self constructAndDrawRunsForLine:theLine
+                                      row:line
+                                  inRange:run->range
                           startingAtPoint:textOrigin
                                bgselected:run->selected
                                   bgColor:box.unprocessedBackgroundColor
