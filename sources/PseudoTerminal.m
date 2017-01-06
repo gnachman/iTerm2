@@ -3537,8 +3537,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return _contentView.scrollbarShouldBeVisible;
 }
 
-- (void)windowWillStartLiveResize:(NSNotification *)notification
-{
+- (void)windowWillStartLiveResize:(NSNotification *)notification {
     liveResize_ = YES;
 }
 
