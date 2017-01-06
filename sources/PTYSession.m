@@ -428,6 +428,13 @@ static const NSUInteger kMaxHosts = 100;
     // is posted and all sessions with that bogus GUID can hide their profile and reload their
     // profile.
     NSString *_missingSavedArrangementProfileGUID;
+
+    // The containing window is in the midst of a live resize. The update timer
+    // runs in the common modes runlooup in this case. That's not acceptable
+    // for normal use for reasons that Apple leaves up to your imagination (it
+    // doesn't fire while you hold down a key, for example), but it does fire
+    // during live resize (unlike the default runloops).
+    BOOL _inLiveResize;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -529,6 +536,14 @@ static const NSUInteger kMaxHosts = 100;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(savedArrangementWasRepaired:)
                                                      name:PTYSessionDidRepairSavedArrangement
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowWillStartLiveResize:)
+                                                     name:NSWindowWillStartLiveResizeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidEndLiveResize:)
+                                                     name:NSWindowDidEndLiveResizeNotification
                                                    object:nil];
         [self updateVariables];
     }
@@ -3854,7 +3869,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Set cadence of %@ to %f", self, cadence);
 
     [_updateTimer invalidate];
-    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+    if (_inLiveResize) {
         // This solves the bug where we don't redraw properly during live resize.
         // I'm worried about the possible side effects it might have since there's no way to
         // know all the tracking event loops.
@@ -4005,6 +4020,31 @@ ITERM_WEAKLY_REFERENCEABLE
         self.profile = newProfile;
         [self setPreferencesFromAddressBookEntry:newProfile];
         [self dismissAnnouncementWithIdentifier:@"ThisProfileNoLongerExists"];
+    }
+}
+
+- (void)windowWillStartLiveResize:(NSNotification *)notification {
+    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+        if (notification.object == self.textview.window) {
+            _inLiveResize = YES;
+            if (_updateTimer) {
+                [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+            }
+        }
+    }
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification {
+    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+        if (notification.object == self.textview.window) {
+            _inLiveResize = NO;
+            if (_updateTimer) {
+                NSTimeInterval cadence = _updateTimer.timeInterval;
+                [_updateTimer invalidate];
+                _updateTimer = nil;
+                [self setUpdateCadence:cadence];
+            }
+        }
     }
 }
 
