@@ -1183,6 +1183,62 @@ typedef struct iTermTextColorContext {
     }
 }
 
+- (CGPoint *)positionsForGlyphsInRun:(CTRunRef)run ofLength:(size_t)length withOffsets:(CGFloat *)stringPositions {
+    NSMutableData *positionsBuffer =
+        [[[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length] autorelease];
+    CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
+    CGPoint *positions = positionsBuffer.mutableBytes;
+
+    const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
+    if (!glyphIndexToCharacterIndex) {
+        NSMutableData *tempBuffer =
+            [[[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length] autorelease];
+        CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
+        glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
+    }
+
+    CFRange range;
+    if (CTRunGetStatus(run) & kCTRunStatusRightToLeft) {
+        range = CTRunGetStringRange(run);
+        if (range.length == 0) {
+            return positions;
+        }
+        CFIndex firstCellIndex = round(stringPositions[range.location] / _cellSize.width);
+        CFIndex lastCellIndex = round(stringPositions[range.location + range.length - 1] / _cellSize.width);
+        CFIndex numberOfCellsSpanned = lastCellIndex - firstCellIndex + 1;
+
+        CGFloat positionOfFirstGlyphInCluster = positions[0].x;
+        CFIndex previousCharacterIndex = -1;
+        CGFloat cellOrigin = 0;
+        for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
+            CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
+            if (characterIndex != previousCharacterIndex) {
+                positionOfFirstGlyphInCluster = positions[glyphIndex].x;
+                const CFIndex cellIndex = round(stringPositions[characterIndex] / _cellSize.width);
+                cellOrigin = (firstCellIndex + numberOfCellsSpanned - (cellIndex - firstCellIndex) - 1) * _cellSize.width;
+                previousCharacterIndex = characterIndex;
+            }
+            positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
+        }
+    } else {
+        CGFloat positionOfFirstGlyphInCluster = positions[0].x;
+        CFIndex previousCharacterIndex = -1;
+        CGFloat cellOrigin = 0;
+        for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
+            CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
+            if (characterIndex != previousCharacterIndex) {
+                positionOfFirstGlyphInCluster = positions[glyphIndex].x;
+                cellOrigin = stringPositions[characterIndex];
+                previousCharacterIndex = characterIndex;
+            }
+            positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
+        }
+    }
+
+
+    return positions;
+}
+
 - (void)drawTextOnlyAttributedStringWithoutUnderline:(NSAttributedString *)attributedString
                                              atPoint:(NSPoint)origin
                                            positions:(CGFloat *)stringPositions
@@ -1233,8 +1289,6 @@ typedef struct iTermTextColorContext {
                                                          origin.x, ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
 
-    CGFloat cellOrigin = -1;
-    CFIndex previousCharacterIndex = -1;
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
         size_t length = CTRunGetGlyphCount(run);
@@ -1245,29 +1299,7 @@ typedef struct iTermTextColorContext {
             CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
             buffer = tempBuffer.mutableBytes;
         }
-
-        NSMutableData *positionsBuffer =
-            [[[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length] autorelease];
-        CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
-        CGPoint *positions = positionsBuffer.mutableBytes;
-
-        const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
-        if (!glyphIndexToCharacterIndex) {
-            NSMutableData *tempBuffer =
-                [[[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length] autorelease];
-            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
-            glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
-        }
-        
-        CGFloat positionOfFirstGlyphInCluster = positions[0].x;
-        for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
-            CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            if (characterIndex != previousCharacterIndex && stringPositions[characterIndex] != cellOrigin) {
-                positionOfFirstGlyphInCluster = positions[glyphIndex].x;
-                cellOrigin = stringPositions[characterIndex];
-            }
-            positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
-        }
+        CGPoint *positions = [self positionsForGlyphsInRun:run ofLength:length withOffsets:stringPositions];
 
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
         if (!smear) {
