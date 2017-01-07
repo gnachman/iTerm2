@@ -145,6 +145,10 @@ typedef struct iTermTextColorContext {
     // Does the current ascii font have ligatures? Used to determine if ASCII
     // symbols (non-alphanumerics) get to use the fastpath.
     BOOL _asciiLigaturesAvailable;
+
+    // Does the current non-ascii font have ligatures? Used to determine if
+    // the zippy algorithm can be used.
+    BOOL _nonAsciiLigaturesAvailable;
 }
 
 - (instancetype)init {
@@ -1183,7 +1187,7 @@ typedef struct iTermTextColorContext {
     }
 }
 
-- (CGPoint *)positionsForGlyphsInRun:(CTRunRef)run ofLength:(size_t)length withOffsets:(CGFloat *)stringPositions {
+- (CGPoint *)positionsForGlyphsInRun:(CTRunRef)run ofLength:(size_t)length withOffsets:(CGFloat *)cellOffsets {
     NSMutableData *positionsBuffer =
         [[[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length] autorelease];
     CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
@@ -1203,9 +1207,9 @@ typedef struct iTermTextColorContext {
         if (range.length == 0) {
             return positions;
         }
-        CFIndex firstCellIndex = round(stringPositions[range.location] / _cellSize.width);
-        CFIndex lastCellIndex = round(stringPositions[range.location + range.length - 1] / _cellSize.width);
-        CFIndex numberOfCellsSpanned = lastCellIndex - firstCellIndex + 1;
+        const CFIndex firstCellIndex = round(cellOffsets[range.location] / _cellSize.width);
+        const CFIndex lastCellIndex = round(cellOffsets[range.location + range.length - 1] / _cellSize.width);
+        const CFIndex numberOfCellsSpanned = lastCellIndex - firstCellIndex + 1;
 
         CGFloat positionOfFirstGlyphInCluster = positions[0].x;
         CFIndex previousCharacterIndex = -1;
@@ -1214,7 +1218,7 @@ typedef struct iTermTextColorContext {
             CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
             if (characterIndex != previousCharacterIndex) {
                 positionOfFirstGlyphInCluster = positions[glyphIndex].x;
-                const CFIndex cellIndex = round(stringPositions[characterIndex] / _cellSize.width);
+                const CFIndex cellIndex = round(cellOffsets[characterIndex] / _cellSize.width);
                 cellOrigin = (firstCellIndex + numberOfCellsSpanned - (cellIndex - firstCellIndex) - 1) * _cellSize.width;
                 previousCharacterIndex = characterIndex;
             }
@@ -1228,7 +1232,7 @@ typedef struct iTermTextColorContext {
             CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
             if (characterIndex != previousCharacterIndex) {
                 positionOfFirstGlyphInCluster = positions[glyphIndex].x;
-                cellOrigin = stringPositions[characterIndex];
+                cellOrigin = cellOffsets[characterIndex];
                 previousCharacterIndex = characterIndex;
             }
             positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
@@ -1735,7 +1739,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 - (BOOL)zippy {
     return (!(_asciiLigaturesAvailable && _asciiLigatures) &&
-            !(_nonAsciiLigatures) &&
+            !(_nonAsciiLigaturesAvailable && _nonAsciiLigatures) &&
             [iTermAdvancedSettingsModel zippyTextDrawing]);
 }
 
@@ -2502,6 +2506,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                      renderBold:&ignore1
                                                    renderItalic:&ignore2];
     _asciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
+
+    // 0x100 is definitely non-ascii.
+    fontInfo = [_delegate drawingHelperFontForChar:0x0100 isComplex:NO renderBold:&ignore1 renderItalic:&ignore2];
+    _nonAsciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
 }
 
 - (void)startTiming {
