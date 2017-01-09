@@ -81,12 +81,23 @@ NS_INLINE id CVectorLastObject(const CVector *vector) {
 
 #define CTVector(__type) CTVector_##__type
 
+#define CTVectorSliceDefine(__type) \
+static inline CTVector(__type) CTVectorSlice__##__type##__(CTVector(__type) *source, int start, int length) { \
+    CTVector(__type) result = { \
+        .capacity = -1, \
+        .elements = (source)->elements + start, \
+        .count = (source)->count - start, \
+    }; \
+    return result; \
+}
+
 #define CTVectorDefine(__type) \
 typedef struct { \
     int capacity; \
     __type *elements; \
     int count; \
-} CTVector(__type)
+} CTVector(__type); \
+CTVectorSliceDefine(__type)
 
 #define CTVectorCreate(__vector, __capacity) \
 do { \
@@ -112,6 +123,9 @@ do { \
 } while(0)
 #define CTVectorElementsFromIndex(__vector, __index) (__vector)->elements + __index
 
+#define CTVectorSlice(__type, __source, __start, __length) \
+  CTVectorSlice__##__type##__(__source, __start, __length)
+
 // Registry for typed vectors.
 CTVectorDefine(CGFloat);
 CTVectorDefine(float);
@@ -121,5 +135,4 @@ CTVectorDefine(short);
 CTVectorDefine(char);
 CTVectorDefine(NSInteger);
 CTVectorDefine(NSUInteger);
-
 

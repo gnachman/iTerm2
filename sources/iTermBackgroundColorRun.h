@@ -10,7 +10,6 @@
 #import "ScreenChar.h"
 
 @class iTermBoxedBackgroundColorRun;
-@class iTermTextExtractor;
 
 typedef struct {
     NSRange range;
@@ -54,7 +53,6 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                       textExtractor:(iTermTextExtractor *)extractor
                                    y:(CGFloat)y  // Value for self.y
                                 line:(int)line;  // Value for self.line
 

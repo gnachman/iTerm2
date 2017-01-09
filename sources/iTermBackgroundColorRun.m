@@ -11,7 +11,6 @@
 static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                         screen_char_t *theLine,
                                         VT100GridCoord coord,
-                                        iTermTextExtractor *extractor,
                                         NSIndexSet *selectedIndexes,
                                         NSData *matches,
                                         int width) {
@@ -59,7 +58,6 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                       textExtractor:(iTermTextExtractor *)extractor
                                    y:(CGFloat)y
                                 line:(int)line {
     NSMutableArray *runs = [NSMutableArray array];
@@ -79,7 +77,6 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
                                     VT100GridCoordMake(x, row),
-                                    extractor,
                                     selectedIndexes,
                                     matches,
                                     width);
