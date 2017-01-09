@@ -19,6 +19,10 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         fontNameToLigatureLevel = @{ @"PragmataPro": @1,
+                                     @"PragmataPro-Regular": @1,
+                                     @"PragmataPro-Italic": @1,
+                                     @"PragmataPro-Bold": @1,
+                                     @"PragmataPro-BoldItalic": @1,
                                      @"Hasklig-Black": @1,
                                      @"Hasklig-BlackIt": @1,
                                      @"Hasklig-Bold": @1,
