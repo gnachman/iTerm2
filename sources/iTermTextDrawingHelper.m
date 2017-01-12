@@ -2164,7 +2164,16 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                              attributes:&characterAttributes];
         NSMutableDictionary *attributes = [[[self dictionaryForCharacterAttributes:&characterAttributes] mutableCopy] autorelease];
         attributes[NSBackgroundColorAttributeName] = [_colorMap processedBackgroundColorForBackgroundColor:textColorContext.backgroundColor];
-        NSAttributedString *temp = [[[NSAttributedString alloc] initWithString:ScreenCharToStr(&c) attributes:attributes] autorelease];
+
+        NSString *charAsString = ScreenCharToStr(&c);
+        const BOOL drawable = iTermTextDrawingHelperIsCharacterDrawable(&c,
+                                                                        charAsString,
+                                                                        _blinkingItemsVisible,
+                                                                        _blinkAllowed);
+        if (!drawable) {
+            charAsString = [[[NSString alloc] initWithBytes:"" length:1 encoding:NSUTF8StringEncoding] autorelease];
+        }
+        NSAttributedString *temp = [[[NSAttributedString alloc] initWithString:charAsString attributes:attributes] autorelease];
         [attributedString appendAttributedString:temp];
         for (int j = 0; j < temp.length; j++) {
             CTVectorAppend(stringIndices, i);
