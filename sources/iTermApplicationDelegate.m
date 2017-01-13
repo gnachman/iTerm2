@@ -116,6 +116,8 @@ static BOOL hasBecomeActive = NO;
 @interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
+@property (strong) id activity;
+
 
 @end
 
@@ -506,6 +508,10 @@ static BOOL hasBecomeActive = NO;
                                                                 reason:@"User Preference"] retain];
     }
     [iTermFontPanel makeDefault];
+    
+    if ([[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
+        self.activity = [[NSProcessInfo processInfo] beginActivityWithOptions:0x00FFFFFF reason:@"no reason"];
+    }
 
     finishedLaunching_ = YES;
     // Create the app support directory
