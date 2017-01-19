@@ -5859,6 +5859,17 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_shell getWorkingDirectory];
 }
 
+- (NSURL *)textViewCurrentLocation {
+    VT100RemoteHost *host = [self currentHost];
+    NSString *path = _lastDirectory ?: [_shell getWorkingDirectory];
+    NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
+    components.host = host.hostname;
+    components.user = host.username;
+    components.path = path;
+    components.scheme = @"file";
+    return [components URL];
+}
+
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
     if (coord.y < _screen.numberOfLines - _screen.height ||
         coord.x < 0 ||

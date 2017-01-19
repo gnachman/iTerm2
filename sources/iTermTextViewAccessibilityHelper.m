@@ -334,6 +334,10 @@
     return [NSValue valueWithRange:NSMakeRange(0, [[self allText] length])];
 }
 
+- (NSURL *)currentDocumentURL {
+    return [_delegate accessibilityHelperCurrentDocumentURL];
+}
+
 #pragma mark - Setters
 
 - (void)setSelectedTextRange:(NSRange)range {
@@ -362,7 +366,8 @@
               NSAccessibilitySelectedTextRangeAttribute,
               NSAccessibilitySelectedTextRangesAttribute,
               NSAccessibilityInsertionPointLineNumberAttribute,
-              NSAccessibilityVisibleCharacterRangeAttribute ];
+              NSAccessibilityVisibleCharacterRangeAttribute,
+              NSAccessibilityDocumentAttribute ];
 }
 
 - (NSArray *)accessibilityParameterizedAttributeNames {
@@ -454,6 +459,8 @@
         return [self insertionPointLineNumber];
     } else if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
         return [self visibleCharacterRange];
+    } else if ([attribute isEqualToString:NSAccessibilityDocumentAttribute]) {
+        return [[self currentDocumentURL] absoluteString];
     } else {
         if (handled) {
             *handled = NO;
