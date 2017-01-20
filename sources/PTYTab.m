@@ -4701,4 +4701,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_delegate tabKeyLabelsDidChangeForSession:session];
 }
 
+- (void)sessionCurrentDirectoryDidChange:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [_delegate tab:self currentLocationDidChange:session.textViewCurrentLocation];
+    }
+}
+
+- (void)sessionCurrentHostDidChange:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [_delegate tab:self currentLocationDidChange:session.textViewCurrentLocation];
+    }
+}
+
 @end

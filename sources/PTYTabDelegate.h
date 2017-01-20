@@ -16,5 +16,6 @@
 - (void)tab:(PTYTab *)tab didChangeIcon:(NSImage *)icon;
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount;
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session;
+- (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location;
 
 @end

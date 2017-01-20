@@ -75,6 +75,7 @@ NSString *const kPreferenceKeyShowWindowBorder = @"UseBorder";
 NSString *const kPreferenceKeyHideScrollbar = @"HideScrollbar";
 NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"DisableFullscreenTransparency";
 NSString *const kPreferenceKeyEnableDivisionView = @"EnableDivisionView";
+NSString *const kPreferenceKeyEnableProxyIcon = @"EnableProxyIcon";
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 
 NSString *const kPreferenceKeyControlRemapping = @"Control";
@@ -242,6 +243,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHideScrollbar: @NO,
                   kPreferenceKeyDisableFullscreenTransparencyByDefault: @NO,
                   kPreferenceKeyEnableDivisionView: @YES,
+                  kPreferenceKeyEnableProxyIcon: @NO,
                   kPreferenceKeyDimBackgroundWindows: @NO,
 
                   kPreferenceKeyControlRemapping: @(kPreferencesModifierTagControl),

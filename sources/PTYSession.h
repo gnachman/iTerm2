@@ -185,6 +185,9 @@ typedef enum {
 
 - (void)sessionKeyLabelsDidChange:(PTYSession *)session;
 
+- (void)sessionCurrentDirectoryDidChange:(PTYSession *)session;
+- (void)sessionCurrentHostDidChange:(PTYSession *)session;
+
 @end
 
 @class SessionView;

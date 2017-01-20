@@ -4021,6 +4021,15 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         _contentView.color = [NSColor windowBackgroundColor];
     }
+    [self updateCurrentLocation];
+}
+
+- (void)updateCurrentLocation {
+    if ([iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
+        self.window.representedURL = self.currentSession.textViewCurrentLocation;
+    } else {
+        self.window.representedURL = nil;
+    }
 }
 
 - (void)notifyTmuxOfTabChange {
@@ -5442,8 +5451,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded];
+    [self updateCurrentLocation];
 }
-
 
 - (void)fitWindowToTabs {
     [self fitWindowToTabsExcludingTmuxTabs:NO];
@@ -6065,7 +6074,8 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
 
     [self updateTabBarStyle];
-
+    [self updateCurrentLocation];
+    
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
@@ -7845,6 +7855,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
+}
+
+- (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location {
+    if (tab == self.currentTab) {
+        [self updateCurrentLocation];
+    }
 }
 
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
