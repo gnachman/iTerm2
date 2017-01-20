@@ -244,6 +244,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
+@property(nonatomic, retain) VT100RemoteHost *currentHost;
 @end
 
 @implementation PTYSession {
@@ -435,6 +436,8 @@ static const NSUInteger kMaxHosts = 100;
     // doesn't fire while you hold down a key, for example), but it does fire
     // during live resize (unlike the default runloops).
     BOOL _inLiveResize;
+
+    VT100RemoteHost *_currentHost;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -611,6 +614,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keyLabels release];
     [_keyLabelsStack release];
     [_missingSavedArrangementProfileGUID release];
+    [_currentHost release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -4748,8 +4752,20 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setCurrentHost:(VT100RemoteHost *)remoteHost {
+    [_currentHost autorelease];
+    _currentHost = [remoteHost retain];
+    [_delegate sessionCurrentHostDidChange:self];
+}
+
 - (VT100RemoteHost *)currentHost {
-    return [_screen remoteHostOnLine:[_screen numberOfLines]];
+    if (!_currentHost) {
+        // This is used when a session gets restored since _currentHost doesn't get persisted (and
+        // perhaps other edge cases I haven't found--it used to be done every time before the
+        // _currentHost ivar existed).
+        _currentHost = [_screen remoteHostOnLine:[_screen numberOfLines]];
+    }
+    return _currentHost;
 }
 
 #pragma mark tmux gateway delegate methods
@@ -5857,6 +5873,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)textViewCurrentWorkingDirectory {
     return [_shell getWorkingDirectory];
+}
+
+- (NSURL *)textViewCurrentLocation {
+    VT100RemoteHost *host = [self currentHost];
+    NSString *path = _lastDirectory ?: [_shell getWorkingDirectory];
+    NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
+    components.host = host.hostname;
+    components.user = host.username;
+    components.path = path;
+    components.scheme = @"file";
+    return [components URL];
 }
 
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
@@ -7381,6 +7408,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self offerToTurnOffBracketedPasteOnHostChange];
         }
     }
+    self.currentHost = host;
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
@@ -7815,6 +7843,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
     _lastDirectoryIsRemote = isRemote;
+    [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
 - (NSString *)currentLocalWorkingDirectory {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
         <capability name="box content view" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -1298,6 +1298,7 @@ DQ
                 <outlet property="_dimmingAmount" destination="5337" id="Pwn-Ta-ZhW"/>
                 <outlet property="_disableFullscreenTransparency" destination="5753" id="Ibc-LY-vU4"/>
                 <outlet property="_enableDivisionView" destination="tyx-QN-l9J" id="xDl-eU-ywR"/>
+                <outlet property="_enableProxyIcon" destination="6Pr-69-fM1" id="0ul-fx-Xb8"/>
                 <outlet property="_flashTabBarInFullscreenWhenSwitchingTabs" destination="Esq-U7-Af7" id="PoL-qW-T0f"/>
                 <outlet property="_hideActivityIndicator" destination="5374" id="Q4E-FF-5Zc"/>
                 <outlet property="_hideMenuBarInFullscreen" destination="awA-hH-ziY" id="CDd-B7-fbl"/>
@@ -4980,6 +4981,18 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="wvi-ET-SJJ" id="kT2-YF-Gfu"/>
                         <outlet property="nextKeyView" destination="5330" id="JWT-Si-m0o"/>
+                    </connections>
+                </button>
+                <button toolTip="Enables an icon in the window title bar that represents the current working directory." misplaced="YES" id="6Pr-69-fM1">
+                    <rect key="frame" x="360" y="38" width="366" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Show proxy icon in window title bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="GIz-HY-hrx">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="yLA-0t-xoj"/>
+                        <outlet property="nextKeyView" destination="4560" id="Qg0-eu-MSI"/>
                     </connections>
                 </button>
             </subviews>

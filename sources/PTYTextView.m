@@ -7337,6 +7337,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                       minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
 }
 
+- (NSURL *)accessibilityHelperCurrentDocumentURL {
+    return [_delegate textViewCurrentLocation];
+}
+
 - (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
     return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
 }

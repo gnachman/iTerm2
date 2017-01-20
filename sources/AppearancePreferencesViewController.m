@@ -82,6 +82,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     
     // Draw line under title bar when the tab bar is not visible
     IBOutlet NSButton *_enableDivisionView;
+
+    IBOutlet NSButton *_enableProxyIcon;
 }
 
 - (void)awakeFromNib {
@@ -236,6 +238,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     
     info = [self defineControl:_enableDivisionView
                            key:kPreferenceKeyEnableDivisionView
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_enableProxyIcon
+                           key:kPreferenceKeyEnableProxyIcon
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 }

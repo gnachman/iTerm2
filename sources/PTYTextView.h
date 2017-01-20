@@ -172,6 +172,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 // The background color in the color map changed.
 - (void)textViewBackgroundColorDidChange;
 
+// Describes the current user, host, and path.
+- (NSURL *)textViewCurrentLocation;
+
 @end
 
 @interface PTYTextView : NSView <
