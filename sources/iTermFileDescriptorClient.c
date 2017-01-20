@@ -13,16 +13,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-// Because xcode is hot garbage, syslog(LOG_DEBUG) goes to its console so we turn that off for debug builds.
-#if DEBUG
-#define FDLog(level, format, ...) do { \
-    if (level < LOG_DEBUG) { \
-        syslog(level, "Client(%d) " format, getpid(), ##__VA_ARGS__); \
-    } \
-} while (0)
-#else
-#define FDLog(level, format, ...) syslog(level, "Client(%d) " format, getpid(), ##__VA_ARGS__)
-#endif
 
 // Reads a message on the socket, and fills in receivedFileDescriptorPtr with a
 // file descriptor if one was passed.
