@@ -91,6 +91,7 @@
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
+NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const iTermTouchBarIdentifierAddMark = @"iTermTouchBarIdentifierAddMark";
@@ -148,7 +149,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     frameToCenter.origin.y += diff;
     return frameToCenter;
 }
-
 
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
@@ -372,6 +372,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     NSCustomTouchBarItem *_tabsTouchBarItem;
     NSCandidateListTouchBarItem<NSString *> *_autocompleteCandidateListItem;
+
+    // The window restoration completion block was called but windowDidDecodeRestorableState:
+    // has not yet been called.
+    BOOL _expectingDecodeOfRestorableState;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -6665,6 +6669,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setRestoringWindow:(BOOL)restoringWindow {
+    if (_restoringWindow != restoringWindow) {
+        _restoringWindow = restoringWindow;
+        if (restoringWindow) {
+            self.restorableStateDecodePending = YES;
+        }
+    }
+}
 // Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
@@ -7614,10 +7626,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return aSession;
 }
 
-- (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
-{
+- (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {
     [self loadArrangement:[state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]
                  sessions:nil];
+    self.restorableStateDecodePending = NO;
+}
+
+- (void)setRestorableStateDecodePending:(BOOL)restorableStateDecodePending {
+    if (_restorableStateDecodePending != restorableStateDecodePending) {
+        _restorableStateDecodePending = restorableStateDecodePending;
+        if (!restorableStateDecodePending) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidDecodeWindowRestorableStateNotification object:self];
+        }
+    }
 }
 
 - (BOOL)allTabsAreTmuxTabs

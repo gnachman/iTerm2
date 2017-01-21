@@ -27,6 +27,8 @@ extern NSString *const kTerminalWindowControllerWasCreatedNotification;
 
 extern NSString *const kCurrentSessionDidChange;
 
+extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
+
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
 // status, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
@@ -74,6 +76,10 @@ extern NSString *const kCurrentSessionDidChange;
 // Are we in the process of restoring a window with NSWindowRestoration? If so, do not order
 // the window as it may be minimized (issue 5258)
 @property(nonatomic) BOOL restoringWindow;
+
+// Set to YES when the window has been created but window:didDecodeRestorableState: hasn't been
+// called yet.
+@property(nonatomic) BOOL restorableStateDecodePending;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
