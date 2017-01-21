@@ -4763,7 +4763,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // This is used when a session gets restored since _currentHost doesn't get persisted (and
         // perhaps other edge cases I haven't found--it used to be done every time before the
         // _currentHost ivar existed).
-        _currentHost = [_screen remoteHostOnLine:[_screen numberOfLines]];
+        _currentHost = [[_screen remoteHostOnLine:[_screen numberOfLines]] retain];
     }
     return _currentHost;
 }
