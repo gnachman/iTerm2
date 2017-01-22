@@ -2287,6 +2287,27 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
++ (NSDictionary *)recursiveRepairedArrangementNode:(NSDictionary *)arrangement
+                          replacingProfileWithGUID:(NSString *)badGuid
+                                       withProfile:(Profile *)goodProfile {
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSMutableArray *repairedSubviews = [NSMutableArray array];
+        for (NSDictionary<NSString *, id> *subArrangement in arrangement[SUBVIEWS]) {
+            [repairedSubviews addObject:[PTYTab recursiveRepairedArrangementNode:subArrangement
+                                                        replacingProfileWithGUID:badGuid
+                                                                     withProfile:goodProfile]];
+        }
+        NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+        result[SUBVIEWS] = repairedSubviews;
+        return result;
+    } else {
+        NSDictionary *repairedSession = [PTYSession repairedArrangement:arrangement[TAB_ARRANGEMENT_SESSION] replacingProfileWithGUID:badGuid withProfile:goodProfile];
+        NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+        result[TAB_ARRANGEMENT_SESSION] = repairedSession;
+        return result;
+    }
+}
+
 - (PTYSession *)_recursiveRestoreSessions:(NSDictionary<NSString *, id> *)arrangement
                                    atNode:(__kindof NSView *)view
                                     inTab:(PTYTab *)theTab
@@ -2460,6 +2481,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                          inTab:theTab
                                                  forObjectType:objectType]];
     return theTab;
+}
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+             replacingProfileWithGUID:(NSString *)badGuid
+                          withProfile:(Profile *)goodProfile {
+    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
+                                            replacingProfileWithGUID:badGuid
+                                                         withProfile:goodProfile];
+    NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+    result[TAB_ARRANGEMENT_ROOT] = newRoot;
+    return result;
 }
 
 // This can only be used in conjunction with
@@ -4667,6 +4699,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)sessionKeyLabelsDidChange:(PTYSession *)session {
     [_delegate tabKeyLabelsDidChangeForSession:session];
+}
+
+- (void)sessionCurrentDirectoryDidChange:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [_delegate tab:self currentLocationDidChange:session.textViewCurrentLocation];
+    }
+}
+
+- (void)sessionCurrentHostDidChange:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [_delegate tab:self currentLocationDidChange:session.textViewCurrentLocation];
+    }
 }
 
 @end

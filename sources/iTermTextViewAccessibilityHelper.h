@@ -42,6 +42,9 @@
 // Returns the contents of selected text in accessibility-space only.
 - (NSString *)accessibilityHelperSelectedText;
 
+// Returns the URL of the current document
+- (NSURL *)accessibilityHelperCurrentDocumentURL;
+
 @end
 
 // This outsources accessibilty methods for PTYTextView. It's useful to keep

@@ -166,6 +166,8 @@ static BOOL hasBecomeActive = NO;
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 
     int _secureInputCount;
+
+    BOOL _orphansAdopted;  // Have orphan servers been adopted?
 }
 
 - (void)updateProcessType {
@@ -576,8 +578,23 @@ static BOOL hasBecomeActive = NO;
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
-            [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
+            if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
+                _orphansAdopted = YES;
+                [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
+            } else {
+                [[NSNotificationCenter defaultCenter] addObserver:self
+                                                         selector:@selector(itermDidDecodeWindowRestorableState:)
+                                                             name:iTermDidDecodeWindowRestorableStateNotification
+                                                           object:nil];
+            }
         }];
+    }
+}
+
+- (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
+    if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
+        _orphansAdopted = YES;
+        [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
     }
 }
 

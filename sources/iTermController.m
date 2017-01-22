@@ -32,6 +32,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHotKeyController.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -366,6 +367,22 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (void)repairSavedArrangementNamed:(NSString *)savedArrangementName
+               replacingMissingGUID:(NSString *)guidToReplace
+                           withGUID:(NSString *)replacementGuid {
+    NSArray *terminalArrangements = [WindowArrangements arrangementWithName:savedArrangementName];
+    Profile *goodProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:replacementGuid];
+    if (goodProfile) {
+        NSMutableArray *repairedArrangements = [NSMutableArray array];
+        for (NSDictionary *terminalArrangement in terminalArrangements) {
+            [repairedArrangements addObject:[PseudoTerminal repairedArrangement:terminalArrangement
+                                                       replacingProfileWithGUID:guidToReplace
+                                                                    withProfile:goodProfile]];
+        }
+        [WindowArrangements setArrangement:repairedArrangements withName:savedArrangementName];
+    }
+}
+
 - (void)saveWindowArrangement:(BOOL)allWindows {
     NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
@@ -423,12 +440,14 @@ static iTermController *gSharedInstance;
 }
 
 - (void)loadWindowArrangementWithName:(NSString *)theName {
+    _savedArrangementNameBeingRestored = [[theName retain] autorelease];
     NSArray *terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary *terminalArrangement in terminalArrangements) {
             [self tryOpenArrangement:terminalArrangement];
         }
     }
+    _savedArrangementNameBeingRestored = nil;
 }
 
 // Return all the terminals in the given screen.
@@ -1435,6 +1454,12 @@ static iTermController *gSharedInstance;
 
 - (void)workspaceWillPowerOff:(NSNotification *)notification {
     _willPowerOff = YES;
+}
+
+- (NSInteger)numberOfDecodesPending {
+    return [[self.terminals filteredArrayUsingBlock:^BOOL(PseudoTerminal *anObject) {
+        return anObject.restorableStateDecodePending;
+    }] count];
 }
 
 @end

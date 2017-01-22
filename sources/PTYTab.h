@@ -93,6 +93,10 @@
            hSpacing:(double)hs
            vSpacing:(double)vs;
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+             replacingProfileWithGUID:(NSString *)badGuid
+                          withProfile:(Profile *)goodProfile;
+
 // init/dealloc
 - (instancetype)initWithSession:(PTYSession*)session;
 - (instancetype)initWithRoot:(NSSplitView *)root

@@ -63,6 +63,8 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 @property(nonatomic, readonly) BOOL keystrokesBeingStolen;
 @property(nonatomic, readonly) BOOL anyWindowIsMain;
 @property(nonatomic, readonly) NSArray<iTermTerminalWindow *> *keyTerminalWindows;
+@property(nonatomic, readonly) NSString *savedArrangementNameBeingRestored;
+@property(nonatomic, readonly) NSInteger numberOfDecodesPending;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;
@@ -93,6 +95,9 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
+- (void)repairSavedArrangementNamed:(NSString *)savedArrangementName
+               replacingMissingGUID:(NSString *)guidToReplace
+                           withGUID:(NSString *)replacementGuid;
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu

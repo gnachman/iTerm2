@@ -90,6 +90,7 @@
 static const NSInteger kMinimumUnicodeVersion = 8;
 static const NSInteger kMaximumUnicodeVersion = 9;
 
+static NSString *const PTYSessionDidRepairSavedArrangement = @"PTYSessionDidRepairSavedArrangement";
 
 // The format for a user defaults key that recalls if the user has already been pestered about
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
@@ -243,6 +244,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
+@property(nonatomic, retain) VT100RemoteHost *currentHost;
 @end
 
 @implementation PTYSession {
@@ -421,6 +423,21 @@ static const NSUInteger kMaxHosts = 100;
     // Touch bar labels for function keys.
     NSMutableDictionary<NSString *, NSString *> *_keyLabels;
     NSMutableArray<iTermKeyLabels *> *_keyLabelsStack;
+
+    // If the session was created from a saved arrangement with a missing profile then this records
+    // the GUID of the missing profile. If the saved arrangement gets repaired then a notification
+    // is posted and all sessions with that bogus GUID can hide their profile and reload their
+    // profile.
+    NSString *_missingSavedArrangementProfileGUID;
+
+    // The containing window is in the midst of a live resize. The update timer
+    // runs in the common modes runlooup in this case. That's not acceptable
+    // for normal use for reasons that Apple leaves up to your imagination (it
+    // doesn't fire while you hold down a key, for example), but it does fire
+    // during live resize (unlike the default runloops).
+    BOOL _inLiveResize;
+
+    VT100RemoteHost *_currentHost;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -519,6 +536,18 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(applicationWillTerminate:)
                                                      name:iTermApplicationWillTerminate
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(savedArrangementWasRepaired:)
+                                                     name:PTYSessionDidRepairSavedArrangement
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowWillStartLiveResize:)
+                                                     name:NSWindowWillStartLiveResizeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidEndLiveResize:)
+                                                     name:NSWindowDidEndLiveResizeNotification
+                                                   object:nil];
         [self updateVariables];
     }
     return self;
@@ -584,6 +613,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_throughputEstimator release];
     [_keyLabels release];
     [_keyLabelsStack release];
+    [_missingSavedArrangementProfileGUID release];
+    [_currentHost release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -733,6 +764,61 @@ ITERM_WEAKLY_REFERENCEABLE
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+             replacingProfileWithGUID:(NSString *)badGuid
+                          withProfile:(Profile *)goodProfile {
+    if ([arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID] isEqualToString:badGuid]) {
+        NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+        result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = goodProfile[KEY_NAME];
+        result[SESSION_ARRANGEMENT_BOOKMARK] = goodProfile;
+        return result;
+    } else {
+        return arrangement;
+    }
+}
+
+- (iTermAnnouncementViewController *)announcementForMissingProfileInArrangement:(NSDictionary *)arrangement {
+    iTermAnnouncementViewController *announcement = nil;
+    NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
+    DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
+    if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
+        NSString *notice;
+        NSArray<NSString *> *actions = @[ @"Don't Warn Again" ];
+        NSString *savedArranagementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
+        if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
+            notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists. A profile with that name happens to exist.", missingProfileName];
+            if (savedArranagementName) {
+                actions = [actions arrayByAddingObject:@"Repair Saved Arrangement"];
+            }
+        } else {
+            notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
+        }
+        Profile *thisProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
+        [_missingSavedArrangementProfileGUID autorelease];
+        _missingSavedArrangementProfileGUID = [thisProfile[KEY_GUID] copy];
+        announcement =
+            [iTermAnnouncementViewController announcementWithTitle:notice
+                                                             style:kiTermAnnouncementViewStyleWarning
+                                                       withActions:actions
+                                                        completion:^(int selection) {
+                                                            if (selection == 0) {
+                                                                [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
+                                                            } else if (selection == 1) {
+                                                                // Repair
+                                                                Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
+                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArranagementName
+                                                                                                         replacingMissingGUID:thisProfile[KEY_GUID]
+                                                                                                                     withGUID:similarlyNamedProfile[KEY_GUID]];
+                                                                [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
+                                                                                                                    object:thisProfile[KEY_GUID]
+                                                                                                                  userInfo:@{ @"new profile": similarlyNamedProfile }];
+                                                            }
+                                                        }];
+        announcement.dismissOnKeyDown = YES;
+    }
+    return announcement;
+}
+
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
@@ -747,20 +833,9 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL needDivorce = NO;
     iTermAnnouncementViewController *announcement = nil;
     if (!theBookmark) {
-        NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
-        DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
-        if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
-            NSString *notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
-            announcement =
-                [iTermAnnouncementViewController announcementWithTitle:notice
-                                                                 style:kiTermAnnouncementViewStyleWarning
-                                                           withActions:@[ @"Don't Warn Again" ]
-                                                            completion:^(int selection) {
-                                                                if (selection == 0) {
-                                                                    [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
-                                                                }
-                                                            }];
-            announcement.dismissOnKeyDown = YES;
+        NSString *originalGuid = arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_ORIGINAL_GUID];
+        if (![[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid]) {
+            announcement = [aSession announcementForMissingProfileInArrangement:arrangement];
         }
 
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
@@ -779,7 +854,19 @@ ITERM_WEAKLY_REFERENCEABLE
         needDivorce = YES;
     }
     if (needDivorce) {
-        // Keep it from stepping on an existing sesion with the same guid.
+        // Keep it from stepping on an existing sesion with the same guid. Assign a fresh GUID.
+        // Set the ORIGINAL_GUID to an existing guid from which this profile originated if possible.
+        NSString *originalGuid = nil;
+        NSString *recordedGuid = arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID];
+        NSString *recordedOriginalGuid = arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_ORIGINAL_GUID];
+        if ([[ProfileModel sharedInstance] bookmarkWithGuid:recordedGuid]) {
+            originalGuid = recordedGuid;
+        } else if ([[ProfileModel sharedInstance] bookmarkWithGuid:recordedOriginalGuid]) {
+            originalGuid = recordedOriginalGuid;
+        }
+        if (originalGuid) {
+            theBookmark = [theBookmark dictionaryBySettingObject:originalGuid forKey:KEY_ORIGINAL_GUID];
+        }
         theBookmark = [theBookmark dictionaryBySettingObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     }
 
@@ -1129,8 +1216,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Session specific methods
-- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
-{
+- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
     _screen.delegate = self;
 
     // Allocate the root per-session view.
@@ -1169,10 +1255,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
-    int width = (aSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
-    int height = (aSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
-    // NB: In the bad old days, this returned whether setup succeeded because it would allocate an
-    // enormous amount of memory. That's no longer an issue.
+    NSSize contentSize = [PTYScrollView contentSizeForFrameSize:aSize
+                                        horizontalScrollerClass:nil
+                                          verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
+                                                     borderType:_view.scrollview.borderType
+                                                    controlSize:NSRegularControlSize
+                                                  scrollerStyle:_view.scrollview.scrollerStyle];
+
+    int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
+    int height = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
     [_screen destructivelySetScreenWidth:width height:height];
     [self setName:@"Shell"];
     [self setDefaultName:@"Shell"];
@@ -3802,25 +3893,25 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     DLog(@"Set cadence of %@ to %f", self, cadence);
-#if 0
-    // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
-    // I'm worried about the possible side effects it might have since there's no way to 
-    // know all the tracking event loops.
-    _updateTimer = [NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
-                                                      timeout - timeSinceLastUpdate)
-                                           target:self.weakSelf
-                                         selector:@selector(updateDisplay)
-                                         userInfo:nil
-                                          repeats:YES];
-    [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
-#else
+
     [_updateTimer invalidate];
-    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
-                                                    target:self.weakSelf
-                                                  selector:@selector(updateDisplay)
-                                                  userInfo:nil
-                                                   repeats:YES];
-#endif
+    if (_inLiveResize) {
+        // This solves the bug where we don't redraw properly during live resize.
+        // I'm worried about the possible side effects it might have since there's no way to
+        // know all the tracking event loops.
+        _updateTimer = [NSTimer timerWithTimeInterval:kActiveUpdateCadence
+                                               target:self.weakSelf
+                                             selector:@selector(updateDisplay)
+                                             userInfo:nil
+                                              repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+    } else {
+        _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
+                                                        target:self.weakSelf
+                                                      selector:@selector(updateDisplay)
+                                                      userInfo:nil
+                                                       repeats:YES];
+    }
 }
 
 - (void)doAntiIdle {
@@ -3943,6 +4034,44 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)applicationWillTerminate:(NSNotification *)notification {
     // See comment where we observe this notification for why this is done.
     [self tmuxDetach];
+}
+
+- (void)savedArrangementWasRepaired:(NSNotification *)notification {
+    if ([notification.object isEqual:_missingSavedArrangementProfileGUID]) {
+        Profile *newProfile = notification.userInfo[@"new profile"];
+        _isDivorced = NO;
+        [_overriddenFields removeAllObjects];
+        [_originalProfile release];
+        _originalProfile = nil;
+        self.profile = newProfile;
+        [self setPreferencesFromAddressBookEntry:newProfile];
+        [self dismissAnnouncementWithIdentifier:@"ThisProfileNoLongerExists"];
+    }
+}
+
+- (void)windowWillStartLiveResize:(NSNotification *)notification {
+    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+        if (notification.object == self.textview.window) {
+            _inLiveResize = YES;
+            if (_updateTimer) {
+                [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+            }
+        }
+    }
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification {
+    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
+        if (notification.object == self.textview.window) {
+            _inLiveResize = NO;
+            if (_updateTimer) {
+                NSTimeInterval cadence = _updateTimer.timeInterval;
+                [_updateTimer invalidate];
+                _updateTimer = nil;
+                [self setUpdateCadence:cadence];
+            }
+        }
+    }
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
@@ -4645,8 +4774,20 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setCurrentHost:(VT100RemoteHost *)remoteHost {
+    [_currentHost autorelease];
+    _currentHost = [remoteHost retain];
+    [_delegate sessionCurrentHostDidChange:self];
+}
+
 - (VT100RemoteHost *)currentHost {
-    return [_screen remoteHostOnLine:[_screen numberOfLines]];
+    if (!_currentHost) {
+        // This is used when a session gets restored since _currentHost doesn't get persisted (and
+        // perhaps other edge cases I haven't found--it used to be done every time before the
+        // _currentHost ivar existed).
+        _currentHost = [[_screen remoteHostOnLine:[_screen numberOfLines]] retain];
+    }
+    return _currentHost;
 }
 
 #pragma mark tmux gateway delegate methods
@@ -5754,6 +5895,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)textViewCurrentWorkingDirectory {
     return [_shell getWorkingDirectory];
+}
+
+- (NSURL *)textViewCurrentLocation {
+    VT100RemoteHost *host = [self currentHost];
+    NSString *path = _lastDirectory ?: [_shell getWorkingDirectory];
+    NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
+    components.host = host.hostname;
+    components.user = host.username;
+    components.path = path;
+    components.scheme = @"file";
+    return [components URL];
 }
 
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
@@ -7278,6 +7430,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self offerToTurnOffBracketedPasteOnHostChange];
         }
     }
+    self.currentHost = host;
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
@@ -7712,6 +7865,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
     _lastDirectoryIsRemote = isRemote;
+    [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
 - (NSString *)currentLocalWorkingDirectory {
@@ -7878,7 +8032,7 @@ ITERM_WEAKLY_REFERENCEABLE
     while (labels && value.length > 0 && ![labels.name isEqualToString:value]) {
         labels = [self popKeyLabels];
     }
-    _keyLabels = [labels.map retain];
+    _keyLabels = [labels.map mutableCopy];
     [_delegate sessionKeyLabelsDidChange:self];
 }
 

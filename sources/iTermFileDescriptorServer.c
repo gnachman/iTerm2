@@ -11,8 +11,6 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#define FDLog(level, format, ...) syslog(level, "%s(%d) " format, gRunningServer ? "Server" : "iTerm2", getpid(), ##__VA_ARGS__)
-
 static const int kMaxConnections = 1;
 static int gRunningServer;
 

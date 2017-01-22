@@ -272,6 +272,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 
 // Sets the username@hostname or hostname of the current cursor location.
 - (void)terminalSetRemoteHost:(NSString *)remoteHost;
+- (void)terminalSetWorkingDirectoryURL:(NSString *)URL;
 
 // The profile should change to one with the name |value|.
 - (void)terminalProfileShouldChangeTo:(NSString *)value;

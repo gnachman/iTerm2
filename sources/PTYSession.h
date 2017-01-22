@@ -185,6 +185,9 @@ typedef enum {
 
 - (void)sessionKeyLabelsDidChange:(PTYSession *)session;
 
+- (void)sessionCurrentDirectoryDidChange:(PTYSession *)session;
+- (void)sessionCurrentHostDidChange:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -432,6 +435,10 @@ typedef enum {
 @property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
 
 #pragma mark - methods
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+             replacingProfileWithGUID:(NSString *)badGuid
+                          withProfile:(Profile *)goodProfile;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;

@@ -91,6 +91,7 @@
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
+NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const iTermTouchBarIdentifierAddMark = @"iTermTouchBarIdentifierAddMark";
@@ -148,7 +149,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     frameToCenter.origin.y += diff;
     return frameToCenter;
 }
-
 
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
@@ -372,6 +372,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     NSCustomTouchBarItem *_tabsTouchBarItem;
     NSCandidateListTouchBarItem<NSString *> *_autocompleteCandidateListItem;
+
+    // The window restoration completion block was called but windowDidDecodeRestorableState:
+    // has not yet been called.
+    BOOL _expectingDecodeOfRestorableState;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -2161,6 +2165,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                             afterDelay:0];
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement replacingProfileWithGUID:(NSString *)badGuid withProfile:(Profile *)goodProfile {
+    NSMutableDictionary *mutableArrangement = [[arrangement mutableCopy] autorelease];
+    NSMutableArray *mutableTabs = [NSMutableArray array];
+
+    for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
+        [mutableTabs addObject:[PTYTab repairedArrangement:tabArrangement replacingProfileWithGUID:badGuid withProfile:(Profile *)goodProfile]];
+    }
+    mutableArrangement[TERMINAL_ARRANGEMENT_TABS] = mutableTabs;
+    return mutableArrangement;
+}
+
 - (BOOL)loadArrangement:(NSDictionary *)arrangement {
     return [self loadArrangement:arrangement sessions:nil];
 }
@@ -3526,8 +3541,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return _contentView.scrollbarShouldBeVisible;
 }
 
-- (void)windowWillStartLiveResize:(NSNotification *)notification
-{
+- (void)windowWillStartLiveResize:(NSNotification *)notification {
     liveResize_ = YES;
 }
 
@@ -4010,6 +4024,15 @@ ITERM_WEAKLY_REFERENCEABLE
         _contentView.color = [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
     } else {
         _contentView.color = [NSColor windowBackgroundColor];
+    }
+    [self updateCurrentLocation];
+}
+
+- (void)updateCurrentLocation {
+    if ([iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
+        self.window.representedURL = self.currentSession.textViewCurrentLocation;
+    } else {
+        self.window.representedURL = nil;
     }
 }
 
@@ -5432,8 +5455,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded];
+    [self updateCurrentLocation];
 }
-
 
 - (void)fitWindowToTabs {
     [self fitWindowToTabsExcludingTmuxTabs:NO];
@@ -6055,7 +6078,8 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
 
     [self updateTabBarStyle];
-
+    [self updateCurrentLocation];
+    
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
@@ -6645,6 +6669,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setRestoringWindow:(BOOL)restoringWindow {
+    if (_restoringWindow != restoringWindow) {
+        _restoringWindow = restoringWindow;
+        if (restoringWindow) {
+            self.restorableStateDecodePending = YES;
+        }
+    }
+}
 // Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
@@ -7594,10 +7626,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return aSession;
 }
 
-- (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
-{
+- (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {
     [self loadArrangement:[state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]
                  sessions:nil];
+    self.restorableStateDecodePending = NO;
+}
+
+- (void)setRestorableStateDecodePending:(BOOL)restorableStateDecodePending {
+    if (_restorableStateDecodePending != restorableStateDecodePending) {
+        _restorableStateDecodePending = restorableStateDecodePending;
+        if (!restorableStateDecodePending) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidDecodeWindowRestorableStateNotification object:self];
+        }
+    }
 }
 
 - (BOOL)allTabsAreTmuxTabs
@@ -7835,6 +7876,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
+}
+
+- (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location {
+    if (tab == self.currentTab) {
+        [self updateCurrentLocation];
+    }
 }
 
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
