@@ -305,7 +305,7 @@ int AppendToComplexChar(int key, unichar codePoint)
     return GetOrSetComplexChar(temp);
 }
 
-void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL useHFSPlusMapping) {
+void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, iTermUnicodeNormalization normalization) {
     unichar initialCodePoint = screenChar->code;
     if (initialCodePoint == UNICODE_REPLACEMENT_CHAR) {
         return;
@@ -317,16 +317,35 @@ void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL use
 
     // See if it makes a single code in NFC.
     NSString *theString = [NSString stringWithCharacters:temp length:2];
-    SetComplexCharInScreenChar(screenChar, theString, useHFSPlusMapping);
+    SetComplexCharInScreenChar(screenChar, theString, normalization);
+}
+
+NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalization normalization) {
+    NSString *normalizedString;
+    switch (normalization) {
+        case iTermUnicodeNormalizationNFC:
+            normalizedString = [theString precomposedStringWithCanonicalMapping];
+            break;
+        case iTermUnicodeNormalizationNFD:
+            normalizedString = [theString decomposedStringWithCanonicalMapping];
+            break;
+        case iTermUnicodeNormalizationNone:
+            normalizedString = theString;
+            break;
+        case iTermUnicodeNormalizationHFSPlus:
+            normalizedString = [theString precomposedStringWithHFSPlusMapping];
+            break;
+    }
+    return normalizedString;
 }
 
 void SetComplexCharInScreenChar(screen_char_t *screenChar,
                                 NSString *theString,
-                                BOOL useHFSPlusMapping) {
-    NSString *nfc = useHFSPlusMapping ? [theString precomposedStringWithHFSPlusMapping] :
-                                        [theString precomposedStringWithCanonicalMapping];
-    if (nfc.length == 1) {
-        screenChar->code = [nfc characterAtIndex:0];
+                                iTermUnicodeNormalization normalization) {
+    NSString *normalizedString = StringByNormalizingString(theString, normalization);
+    [theString precomposedStringWithCanonicalMapping];
+    if (normalizedString.length == 1) {
+        screenChar->code = [normalizedString characterAtIndex:0];
     } else {
         screenChar->code = GetOrSetComplexChar(theString);
         screenChar->complexChar = YES;
@@ -499,7 +518,7 @@ void StringToScreenChars(NSString *s,
                          BOOL ambiguousIsDoubleWidth,
                          int* cursorIndex,
                          BOOL *foundDwc,
-                         BOOL useHFSPlusMapping,
+                         iTermUnicodeNormalization normalization,
                          NSInteger unicodeVersion) {
     __block NSInteger j = 0;
     __block BOOL foundCursor = NO;
@@ -549,7 +568,7 @@ void StringToScreenChars(NSString *s,
                     composedOrNonBmpChar = [composedOrNonBmpChar substringToIndex:kMaxParts - 1];
                 }
             }
-            SetComplexCharInScreenChar(buf + j, composedOrNonBmpChar, useHFSPlusMapping);
+            SetComplexCharInScreenChar(buf + j, composedOrNonBmpChar, normalization);
             UTF32Char baseChar = [composedOrNonBmpChar characterAtIndex:0];
             if (IsHighSurrogate(baseChar) && composedOrNonBmpChar.length > 1) {
                 baseChar = DecodeSurrogatePair(baseChar, [composedOrNonBmpChar characterAtIndex:1]);

@@ -29,6 +29,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
 
@@ -325,6 +326,9 @@ NSString* ComplexCharToStr(int key);
 NSString* ScreenCharToStr(screen_char_t* sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
 
+// Performs the appropriate normalization.
+NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalization normalization);
+
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.
 int ExpandScreenChar(screen_char_t* sct, unichar* dest);
@@ -339,10 +343,10 @@ int AppendToComplexChar(int key, unichar codePoint);
 // Takes a non-complex character and adds a combining mark to it. It may or may not
 // become complex as a result, depending on whether there is an NFC form for the
 // new composite.
-void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL useHFSPlusMapping);
+void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, iTermUnicodeNormalization normalization);
 
 // Place a complex char in a screen char.
-void SetComplexCharInScreenChar(screen_char_t *screenChar, NSString *theString, BOOL useHFSPlusMapping);
+void SetComplexCharInScreenChar(screen_char_t *screenChar, NSString *theString, iTermUnicodeNormalization normalization);
 
 // Create or lookup & return the code for a complex char.
 int GetOrSetComplexChar(NSString* str);
@@ -398,7 +402,7 @@ void StringToScreenChars(NSString *s,
                          BOOL ambiguousIsDoubleWidth,
                          int *cursorIndex,
                          BOOL *foundDwc,
-                         BOOL useHFSPlusMapping,
+                         iTermUnicodeNormalization normalization,
                          NSInteger unicodeVersion);
 
 // Copy attributes from fg and bg, and zero out other fields. Text attributes like bold, italic, etc.

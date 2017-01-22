@@ -119,10 +119,10 @@
 // Should ambiguous-width characters be treated as double-width?
 @property(nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 
-// Should the HFS+ unicode mapping be used? In practice, I can't find a way that this is used. We
+// Unicode normalization form to use. In practice, I can't find a way that this is used. We
 // don't normalize IME text on input unless there's a combining mark, but I don't know a case where
 // adding a combining mark would change a character from narrow to ambiguous width.
-@property(nonatomic, assign) BOOL useHFSPlusMapping;
+@property(nonatomic, assign) iTermUnicodeNormalization normalization;
 
 // Is a background image in use?
 @property(nonatomic, assign) BOOL hasBackgroundImage;

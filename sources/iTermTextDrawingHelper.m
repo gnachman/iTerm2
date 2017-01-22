@@ -2017,7 +2017,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                             _ambiguousIsDoubleWidth,
                             &cursorIndex,
                             NULL,
-                            _useHFSPlusMapping,
+                            _normalization,
                             self.unicodeVersion);
         int cursorX = 0;
         int baseX = floor(xStart * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]);

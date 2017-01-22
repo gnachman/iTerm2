@@ -1875,7 +1875,7 @@ static NSString *const kGridSizeKey = @"Size";
         theLine[cx].code = AppendToComplexChar(theLine[cx].code,
                                                combiningChar);
     } else {
-        BeginComplexChar(theLine + cx, combiningChar, [delegate_ gridUseHFSPlusMapping]);
+        BeginComplexChar(theLine + cx, combiningChar, [delegate_ gridUnicodeNormalizationForm]);
     }
     return YES;
 }
