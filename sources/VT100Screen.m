@@ -4102,7 +4102,11 @@ static void SwapInt(int *a, int *b) {
                                   toStartX:&trimmedStart
                                     toEndX:&trimmedEnd];
     if (!ok) {
-        return nil;
+        if (tolerateEmpty) {
+            trimmedStart = trimmedEnd = range.start;
+        } else {
+            return nil;
+        }
     }
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
         if (tolerateEmpty) {
