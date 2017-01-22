@@ -282,7 +282,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    XCTAssert(warned);
+    XCTAssert(!warned);
 
     // Check lf newline
     warned = NO;
@@ -292,7 +292,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    XCTAssert(warned);
+    XCTAssert(!warned);
 
     // Check crlf newline
     warned = NO;
@@ -302,7 +302,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    XCTAssert(warned);
+    XCTAssert(!warned);
 
     // Check no newline gives no warning.
     warned = NO;
