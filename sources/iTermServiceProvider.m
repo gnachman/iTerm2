@@ -23,24 +23,37 @@
 
 - (void)openFilesFromPasteboard:(NSPasteboard *)pasteboard inWindowController:(PseudoTerminal *)windowController allowTabs:(BOOL)allowTabs {
     NSArray *filePathArray = [pasteboard propertyListForType:NSFilenamesPboardType];
-    __block PseudoTerminal *pseudoTerminal = windowController;
     for (NSString *path in filePathArray) {
-        [[iTermController sharedInstance] launchBookmark:nil
-                                              inTerminal:pseudoTerminal
-                                                 withURL:nil
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:YES
-                                             canActivate:YES
-                                                 command:nil
-                                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
-            profile = [profile dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
-            profile = [profile dictionaryBySettingObject:path forKey:KEY_WORKING_DIRECTORY];
-            if (allowTabs && !pseudoTerminal) {
-                pseudoTerminal = [[term retain] autorelease];
+        BOOL isDirectory = NO;
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
+            if (!isDirectory) {
+                windowController = [self openTab:allowTabs inTerminal:windowController directory:[path stringByDeletingLastPathComponent]];
+                path = [path stringByDeletingLastPathComponent];
+            } else {
+                windowController = [self openTab:allowTabs inTerminal:windowController directory:path];
             }
-            return [term createTabWithProfile:profile withCommand:nil];
-        }];
+        }
     }
+}
+
+- (PseudoTerminal *)openTab:(BOOL)allowTabs inTerminal:(PseudoTerminal *)windowController directory:(NSString *)path {
+    __block PseudoTerminal *pseudoTerminal = windowController;
+    [[iTermController sharedInstance] launchBookmark:nil
+                                          inTerminal:pseudoTerminal
+                                             withURL:nil
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                             makeKey:YES
+                                         canActivate:YES
+                                             command:nil
+                                               block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+        profile = [profile dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
+        profile = [profile dictionaryBySettingObject:path forKey:KEY_WORKING_DIRECTORY];
+        if (allowTabs && !windowController) {
+            pseudoTerminal = [[term retain] autorelease];
+        }
+        return [term createTabWithProfile:profile withCommand:nil];
+    }];
+    return pseudoTerminal;
 }
 
 @end
