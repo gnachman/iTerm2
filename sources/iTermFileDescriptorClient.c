@@ -13,7 +13,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#define FDLog(level, format, ...) syslog(LOG_DEBUG, "Client(%d) " format, getpid(), ##__VA_ARGS__)
 
 // Reads a message on the socket, and fills in receivedFileDescriptorPtr with a
 // file descriptor if one was passed.

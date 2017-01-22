@@ -9,7 +9,6 @@
         <customObject id="-2" userLabel="File's Owner" customClass="FindViewController">
             <connections>
                 <outlet property="findBarTextField_" destination="2" id="27"/>
-                <outlet property="smartCaseMenuItem_" destination="6Px-6a-JTm" id="Q8P-T3-Pom"/>
                 <outlet property="view" destination="1" id="10"/>
             </connections>
         </customObject>

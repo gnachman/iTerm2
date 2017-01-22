@@ -64,6 +64,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 @property(nonatomic, readonly) BOOL anyWindowIsMain;
 @property(nonatomic, readonly) NSArray<iTermTerminalWindow *> *keyTerminalWindows;
 @property(nonatomic, readonly) NSString *savedArrangementNameBeingRestored;
+@property(nonatomic, readonly) NSInteger numberOfDecodesPending;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;

@@ -32,6 +32,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHotKeyController.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -1453,6 +1454,12 @@ static iTermController *gSharedInstance;
 
 - (void)workspaceWillPowerOff:(NSNotification *)notification {
     _willPowerOff = YES;
+}
+
+- (NSInteger)numberOfDecodesPending {
+    return [[self.terminals filteredArrayUsingBlock:^BOOL(PseudoTerminal *anObject) {
+        return anObject.restorableStateDecodePending;
+    }] count];
 }
 
 @end
