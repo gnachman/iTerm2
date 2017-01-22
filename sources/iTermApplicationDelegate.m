@@ -1136,9 +1136,8 @@ static BOOL hasBecomeActive = NO;
 }
 
 
-- (void)applicationWillBecomeActive:(NSNotification *)aNotification
-{
-    DLog(@"******** Become Active");
+- (void)applicationWillBecomeActive:(NSNotification *)aNotification {
+    DLog(@"******** Become Active\n%@", [NSThread callStackSymbols]);
 }
 
 - (void)hideToolTipsInView:(NSView *)aView {
@@ -1473,6 +1472,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
+    DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
     if (secureInputDesired_) {
         DLog(@"Application resigning active. Disabling secure input.");
         [self setSecureInput:NO];
