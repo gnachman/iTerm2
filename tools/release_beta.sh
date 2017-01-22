@@ -47,7 +47,7 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  /usr/bin/codesign --force --sign 3E1298F974EB540E3D1D905AA99612231919845E --requirements '=designated => anchor apple generic  and identifier "$self.identifier" and ((cert leaf[field.1.2.840.113635.100.6.1.9] exists) or ( certificate 1[field.1.2.840.113635.100.6.2.6] exists and certificate leaf[field.1.2.840.113635.100.6.1.13] exists  and certificate leaf[subject.OU] = "H7V7XYVQ7D" ))' --timestamp=none "build/$BUILDTYPE/iTerm2.app"
+  /usr/bin/codesign --force --sign 52DB52C08D1999EA7FB57E10967C03F31BEA12A4 --timestamp=none "build/$BUILDTYPE/iTerm2.app"
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
  
