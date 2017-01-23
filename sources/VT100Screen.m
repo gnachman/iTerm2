@@ -984,8 +984,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
-- (void)appendStringAtCursor:(NSString *)string
-{
+- (void)appendStringAtCursor:(NSString *)string {
     int len = [string length];
     if (len < 1 || !string) {
         return;
@@ -1005,8 +1004,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     screen_char_t staticBuffer[kStaticBufferElements];
     screen_char_t *dynamicBuffer = 0;
     screen_char_t *buffer;
-    string = _useHFSPlusMapping ? [string precomposedStringWithHFSPlusMapping]
-                                : [string precomposedStringWithCanonicalMapping];
+    string = StringByNormalizingString(string, _normalization);
     len = [string length];
     if (2 * len > kStaticBufferElements) {
         buffer = dynamicBuffer = (screen_char_t *) calloc(2 * len,
@@ -1046,7 +1044,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                         [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
                         NULL,
                         &dwc,
-                        _useHFSPlusMapping,
+                        _normalization,
                         [delegate_ screenUnicodeVersion]);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
@@ -4680,8 +4678,8 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
-- (BOOL)gridUseHFSPlusMapping {
-    return _useHFSPlusMapping;
+- (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
+    return _normalization;
 }
 
 - (void)gridCursorDidMove {

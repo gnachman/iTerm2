@@ -201,6 +201,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_USE_ITALIC_FONT: @YES,
                   KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO,
                   KEY_USE_HFS_PLUS_MAPPING: @NO,
+                  KEY_UNICODE_NORMALIZATION: @(iTermUnicodeNormalizationNone),
                   KEY_HORIZONTAL_SPACING: @1.0,
                   KEY_VERTICAL_SPACING: @1.0,
                   KEY_USE_NONASCII_FONT: @YES,
@@ -327,7 +328,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 + (NSDictionary *)computedObjectDictionary {
     static NSDictionary *dict;
     if (!dict) {
-        dict = @{ KEY_IDLE_PERIOD: PROFILE_BLOCK(antiIdlePeriodWithLegacyDefaultInProfile) };
+        dict = @{ KEY_IDLE_PERIOD: PROFILE_BLOCK(antiIdlePeriodWithLegacyDefaultInProfile),
+                  KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm) };
         [dict retain];
     }
     return dict;
@@ -363,6 +365,25 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     NSNumber *legacyDefault = [[NSUserDefaults standardUserDefaults] objectForKey:@"AntiIdleTimerPeriod"];
     if (legacyDefault) {
         return legacyDefault;
+    }
+
+    // Fall back to the default from the dictionary.
+    return [self defaultObjectForKey:key];
+}
+
++ (id)unicodeNormalizationForm:(Profile *)profile {
+    NSString *const key = KEY_UNICODE_NORMALIZATION;
+
+    // If the profile has a value.
+    NSNumber *value = profile[key];
+    if (value) {
+        return value;
+    }
+
+    // If the deprecated boolean was set, use it
+    value = profile[KEY_USE_HFS_PLUS_MAPPING];
+    if (value) {
+        return value.boolValue ? @(iTermUnicodeNormalizationHFSPlus) : @(iTermUnicodeNormalizationNone);
     }
 
     // Fall back to the default from the dictionary.

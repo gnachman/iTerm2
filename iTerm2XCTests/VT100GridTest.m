@@ -53,8 +53,8 @@ do { \
 - (void)gridCursorDidChangeLine {
 }
 
-- (BOOL)gridUseHFSPlusMapping {
-    return NO;
+- (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
+    return iTermUnicodeNormalizationNone;
 }
 
 - (void)testTypeFunctions {

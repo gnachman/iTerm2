@@ -35,7 +35,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
-    IBOutlet NSButton *_useHFSPlusMapping;
+    IBOutlet NSPopUpButton *_normalization;
     IBOutlet NSSlider *_horizontalSpacing;
     IBOutlet NSSlider *_verticalSpacing;
     IBOutlet NSButton *_useNonAsciiFont;
@@ -149,9 +149,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
         }
     };
 
-    [self defineControl:_useHFSPlusMapping
-                    key:KEY_USE_HFS_PLUS_MAPPING
-                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_normalization
+                    key:KEY_UNICODE_NORMALIZATION
+                   type:kPreferenceInfoTypePopup];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(unicodeVersionDidChange)

@@ -1091,7 +1091,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.excess = [self excess];
     _drawingHelper.selection = _selection;
     _drawingHelper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
-    _drawingHelper.useHFSPlusMapping = [_delegate textViewUseHFSPlusMapping];
+    _drawingHelper.normalization = [_delegate textViewUnicodeNormalizationForm];
     _drawingHelper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
     _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
     _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
@@ -5623,7 +5623,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
                         NULL,
                         NULL,
-                        [_delegate textViewUseHFSPlusMapping],
+                        [_delegate textViewUnicodeNormalizationForm],
                         [_delegate textViewUnicodeVersion]);
 
     // Count how many additional cells are needed due to double-width chars

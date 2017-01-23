@@ -18,7 +18,7 @@
 @protocol VT100GridDelegate <NSObject>
 - (screen_char_t)gridForegroundColorCode;
 - (screen_char_t)gridBackgroundColorCode;
-- (BOOL)gridUseHFSPlusMapping;
+- (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
 - (void)gridCursorDidMove;
 - (void)gridCursorDidChangeLine;
 @end
