@@ -121,8 +121,19 @@ static NSString *const kMarkSessionGuidKey = @"Session Guid";
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
     if (!_capturedOutput) {
         _capturedOutput = [[NSMutableArray alloc] init];
+    } else if ([self mergeCapturedOutputIfPossible:capturedOutput]) {
+        return;
     }
     [_capturedOutput addObject:capturedOutput];
+}
+
+- (BOOL)mergeCapturedOutputIfPossible:(CapturedOutput *)capturedOutput {
+    CapturedOutput *last = _capturedOutput.lastObject;
+    if (![last canMergeFrom:capturedOutput]) {
+        return NO;
+    }
+    [last mergeFrom:capturedOutput];
+    return YES;
 }
 
 - (void)setCommand:(NSString *)command {
