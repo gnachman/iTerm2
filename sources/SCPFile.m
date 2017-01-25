@@ -188,6 +188,7 @@ static NSError *SCPFileError(NSString *description) {
 
 // This runs in a thread
 - (NSArray *)configs {
+    ELog(@"Looking for ssh configs to use");
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *appSupport = [fileManager applicationSupportDirectory];
     NSArray *paths = @[ [appSupport stringByAppendingPathComponent:@"ssh_config"] ?: @"",
@@ -197,12 +198,23 @@ static NSError *SCPFileError(NSString *description) {
     NSMutableArray *configs = [NSMutableArray array];
     for (NSString *path in paths) {
         if (path.length == 0) {
-            DLog(@"Zero length path in configs paths %@", paths);
+            ELog(@"Zero length path in configs paths %@", paths);
             continue;
         }
+        ELog(@"Try host config file %@", path);
         if ([fileManager fileExistsAtPath:path]) {
+            ELog(@"File exists");
             NMSSHConfig *config = [NMSSHConfig configFromFile:path];
             if (config) {
+                ELog(@"Parsed successfully");
+                for (NMSSHHostConfig *host in config.hostConfigs) {
+                    ELog(@"patterns=%@ hostname=%@ user=%@ port=%@ identityFiles=%@",
+                         host.hostPatterns,
+                         host.hostname,
+                         host.user,
+                         host.port,
+                         host.identityFiles);
+                }
                 [configs addObject:config];
             } else {
                 ELog(@"Could not parse config file at %@", path);
@@ -293,10 +305,14 @@ static NSError *SCPFileError(NSString *description) {
 
     BOOL didConnectToAgent = NO;
     if (agentAllowed) {
+        ELog(@"Attempting to connect to ssh-agent");
         [self.session connectToAgent];
         // Check a private property to see if the connection to the agent was made.
         if ([self.session respondsToSelector:@selector(agent)]) {
+            ELog(@"Sucessfully connected to ssh-agent");
             didConnectToAgent = [self.session agent] != nil;
+        } else {
+            ELog(@"Failed to connect to ssh-agent");
         }
     }
 
@@ -306,6 +322,7 @@ static NSError *SCPFileError(NSString *description) {
             authTypes = @[ @"password" ];
         }
         for (NSString *authType in authTypes) {
+            ELog(@"Consider auth type: %@", authType);
             if (self.stopped) {
                 ELog(@"Break out of auth loop because stopped");
                 break;
@@ -315,6 +332,7 @@ static NSError *SCPFileError(NSString *description) {
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
+                ELog(@"Prompting for password");
                 __block NSString *password;
                 dispatch_sync(dispatch_get_main_queue(), ^() {
                     password = [[FileTransferManager sharedInstance] transferrableFile:self
@@ -323,6 +341,7 @@ static NSError *SCPFileError(NSString *description) {
                 if (self.stopped || !password) {
                     break;
                 }
+                ELog(@"Performing password auth");
                 [self.session authenticateByPassword:password];
                 if (self.session.isAuthorized) {
                     break;
@@ -331,9 +350,11 @@ static NSError *SCPFileError(NSString *description) {
                 [self.session authenticateByKeyboardInteractiveUsingBlock:^NSString *(NSString *request) {
                     __block NSString *response;
                     dispatch_sync(dispatch_get_main_queue(), ^() {
+                        ELog(@"Prompting for keyboard-interactive auth");
                         response = [[FileTransferManager sharedInstance] transferrableFile:self
                                                                  keyboardInteractivePrompt:request];
                     });
+                    ELog(@"Attempting keyboard interactive auth");
                     return response;
                 }];
                 if (self.stopped || self.session.isAuthorized) {
@@ -343,17 +364,20 @@ static NSError *SCPFileError(NSString *description) {
                 if (self.stopped) {
                     break;
                 }
-                
+                ELog(@"Looking for an identity file.");
                 NSMutableArray *keyPaths = [NSMutableArray array];
                 if (self.session.hostConfig.identityFiles.count) {
+                    ELog(@"Adding identity files for the current host config: %@", self.session.hostConfig.identityFiles);
                     [keyPaths addObjectsFromArray:self.session.hostConfig.identityFiles];
                 } else {
+                    ELog(@"Adding default identity files in ~/.ssh");
                     [keyPaths addObjectsFromArray:@[ @"~/.ssh/id_rsa",
                                                      @"~/.ssh/id_dsa",
                                                      @"~/.ssh/id_ecdsa" ]];
                 }
                 NSFileManager *fileManager = [NSFileManager defaultManager];
                 for (NSString *keyPath in keyPaths) {
+                    ELog(@"Looking for %@", keyPath);
                     keyPath = [self filenameByExpandingMetasyntaticVariables:keyPath];
                     if (![fileManager fileExistsAtPath:keyPath]) {
                         ELog(@"No key file at %@", keyPath);
@@ -361,6 +385,7 @@ static NSError *SCPFileError(NSString *description) {
                     }
                     __block NSString *password = nil;
                     if ([self privateKeyIsEncrypted:keyPath]) {
+                        ELog(@"Found the identity file but the private key is encrypted. Prompting for password");
                         dispatch_sync(dispatch_get_main_queue(), ^() {
                             NSString *prompt =
                                 [NSString stringWithFormat:@"passphrase for private key “%@”:",
