@@ -273,9 +273,14 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
             continue;
         }
         // The target returns an array of siblings that were handled at the same time.
-        [handled addObjectsFromArray:[hotkey.target performSelector:hotkey.selector
-                                                         withObject:hotkey.userData
-                                                         withObject:[hotkeys arrayByRemovingObject:hotkey]]];
+        NSArray *handledSiblings = [hotkey.target performSelector:hotkey.selector
+                                                       withObject:hotkey.userData
+                                                       withObject:[hotkeys arrayByRemovingObject:hotkey]];
+        if (handledSiblings) {
+            [handled addObjectsFromArray:handledSiblings];
+        } else {
+            [handled addObject:hotkey];
+        }
     }
 
     return hotkeys.count > 0;
