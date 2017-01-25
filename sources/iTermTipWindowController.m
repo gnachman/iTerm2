@@ -278,8 +278,9 @@ static const CGFloat kWindowWidth = 400;
     return nil;
 }
 
-- (void)dismissByKeyboard:(id)sender {
+- (NSArray *)dismissByKeyboard:(id)sender {
     [self dismiss];
+    return nil;
 }
 
 // Update the card's size.
