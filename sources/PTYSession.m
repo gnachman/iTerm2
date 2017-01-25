@@ -1606,7 +1606,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
-    if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
+    if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString *guid = _profile[KEY_GUID];
         if (_originalProfile && [_originalProfile[KEY_GUID] length]) {
