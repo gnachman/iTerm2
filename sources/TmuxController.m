@@ -1123,10 +1123,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)listWindowsInSession:(NSString *)sessionName
                       target:(id)target
                     selector:(SEL)selector
-                      object:(id)object
-{
-    if (detached_) {
-        // Shouldn't happen, but better safe than sorry.
+                      object:(id)object {
+    if (detached_ || !object) {
+        // This can happen if you're not attached to a session.
         return;
     }
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@ -t \"%@\"",

@@ -144,8 +144,7 @@ extern NSString *kWindowPasteboardType;
     [delegate_ selectedSessionChangedTo:[self selectedSessionName]];
 }
 
-- (NSString *)selectedSessionName
-{
+- (NSString *)selectedSessionName {
     int i = [tableView_ selectedRow];
     if (i >= 0 && i < model_.count) {
         return [model_ objectAtIndex:i];
