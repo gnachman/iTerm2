@@ -704,6 +704,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                              selector:@selector(keyBindingsDidChange:)
                                                  name:kKeyBindingsChangedNotification
                                                object:nil];
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(activeSpaceDidChange:)
+                                                               name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                             object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
     useTransparency_ = YES;
@@ -790,6 +794,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
@@ -1421,6 +1426,14 @@ ITERM_WEAKLY_REFERENCEABLE
         [_contentView.tabBarControl updateFlashing];
         [self repositionWidgets];
         [self fitTabsToWindow];
+    }
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    DLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
+    if (!NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
+        DLog(@"Activating app because lion full screen window is on active space. %@", self);
+        [NSApp activateIgnoringOtherApps:YES];
     }
 }
 
