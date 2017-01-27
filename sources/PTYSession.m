@@ -1623,7 +1623,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
-    if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
+    if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString *guid = _profile[KEY_GUID];
         if (_originalProfile && [_originalProfile[KEY_GUID] length]) {
@@ -3090,8 +3090,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
     [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
-    _screen.useHFSPlusMapping = [iTermProfilePreferences boolForKey:KEY_USE_HFS_PLUS_MAPPING
-                                                          inProfile:aDict];
+    _screen.normalization = [iTermProfilePreferences integerForKey:KEY_UNICODE_NORMALIZATION
+                                                         inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[iTermProfilePreferences boolForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH
                                                                         inProfile:aDict]];
     [self setXtermMouseReporting:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
@@ -6305,8 +6305,8 @@ ITERM_WEAKLY_REFERENCEABLE
             self.isAtShellPrompt);
 }
 
-- (BOOL)textViewUseHFSPlusMapping {
-    return _screen.useHFSPlusMapping;
+- (iTermUnicodeNormalization)textViewUnicodeNormalizationForm {
+    return _screen.normalization;
 }
 
 - (NSColor *)textViewCursorGuideColor {

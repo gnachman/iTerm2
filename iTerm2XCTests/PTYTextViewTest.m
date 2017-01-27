@@ -462,8 +462,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewSelectNextTab {
 }
 
-- (BOOL)textViewUseHFSPlusMapping {
-    return NO;
+- (iTermUnicodeNormalization)textViewUnicodeNormalizationForm {
+    return iTermUnicodeNormalizationNone;
 }
 
 - (BOOL)xtermMouseReporting {

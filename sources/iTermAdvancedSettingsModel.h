@@ -172,5 +172,6 @@
 + (BOOL)acceptOSC7;
 + (BOOL)trackingRunloopForLiveResize;
 + (BOOL)enableAPIServer;
++ (double)shortLivedSessionDuration;
 
 @end

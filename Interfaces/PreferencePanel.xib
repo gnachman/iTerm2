@@ -1473,11 +1473,11 @@ DQ
                 <outlet property="_nonasciiFontWantsAntialiasing" destination="IpC-rY-rHI" id="6PY-Kl-YD9"/>
                 <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
                 <outlet property="_normalFontWantsAntialiasing" destination="QMj-Rf-IwZ" id="uPi-s4-g9d"/>
+                <outlet property="_normalization" destination="XDS-1Z-hVv" id="QUB-dq-OEO"/>
                 <outlet property="_thinStrokes" destination="bp3-dc-JQV" id="RVt-pO-7Rz"/>
                 <outlet property="_unicodeVersion9" destination="jlZ-SF-XtE" id="Bab-Vl-8IB"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useBrightBold" destination="4766" id="d50-Oo-kAM"/>
-                <outlet property="_useHFSPlusMapping" destination="IwR-5a-srh" id="7OQ-G1-Lv5"/>
                 <outlet property="_useItalicFont" destination="6400" id="OEO-Lb-9mF"/>
                 <outlet property="_useNonAsciiFont" destination="vNf-D5-cU4" id="75w-83-vyN"/>
                 <outlet property="_verticalSpacing" destination="3082" id="hsx-RO-0pB"/>
@@ -2536,18 +2536,6 @@ DQ
                         <outlet property="nextKeyView" destination="4765" id="5254"/>
                     </connections>
                 </button>
-                <button toolTip="This can help with Korean text." id="IwR-5a-srh">
-                    <rect key="frame" x="18" y="226" width="396" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Use HFS+ Unicode normalization (better fidelity but slower)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6yC-Pg-xDK">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="lhd-u6-xr5" id="Kuj-iE-anj"/>
-                        <outlet property="nextKeyView" destination="4765" id="fpi-3h-1te"/>
-                    </connections>
-                </button>
                 <customView id="15P-ty-S1w">
                     <rect key="frame" x="20" y="20" width="519" height="71"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2653,8 +2641,8 @@ DQ
                         <action selector="settingChanged:" target="lhd-u6-xr5" id="aVZ-El-bBQ"/>
                     </connections>
                 </popUpButton>
-                <button id="jlZ-SF-XtE">
-                    <rect key="frame" x="18" y="206" width="457" height="18"/>
+                <button misplaced="YES" id="jlZ-SF-XtE">
+                    <rect key="frame" x="18" y="226" width="457" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Apps (such as your shell or your editor) expect each character to have a particular “width,” between 0 and 2 cells. If the app and the terminal emulator have different width tables, rendering problems ensue. Notably, Unicode 8 defines most Emoji to be 1 cell wide. Most fonts render them as two cells wide. Unicode 9 fixes this. If your apps have been updated for Unicode 9, you should enable this.</string>
                     <buttonCell key="cell" type="check" title="Use Unicode version 9 character widths (requires updated applications)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="usB-uD-pmw">
@@ -2678,6 +2666,34 @@ DQ
                         <outlet property="nextKeyView" destination="4774" id="1Qu-x3-jY5"/>
                     </connections>
                 </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="NO" id="MOD-dL-6SH">
+                    <rect key="frame" x="18" y="207" width="176" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Unicode normalization form:" id="lS7-WI-sn5">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" misplaced="YES" id="XDS-1Z-hVv">
+                    <rect key="frame" x="198" y="201" width="71" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="None" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="td0-LJ-Zf9" id="ttZ-UD-tsk">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="S1A-6E-uei">
+                            <items>
+                                <menuItem title="None" state="on" id="td0-LJ-Zf9"/>
+                                <menuItem title="NFC" tag="1" id="Axx-o2-F4m"/>
+                                <menuItem title="NFD" tag="2" id="Nf8-0C-Tba"/>
+                                <menuItem title="HFS+" tag="3" id="SPh-yP-BVG"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="QVs-Pg-tcd"/>
+                    </connections>
+                </popUpButton>
             </subviews>
             <point key="canvasLocation" x="-62.5" y="294.5"/>
         </customView>

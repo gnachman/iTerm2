@@ -149,7 +149,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (BOOL)textViewCanSelectOutputOfLastCommand;
 - (BOOL)textViewCanSelectCurrentCommand;
 - (NSColor *)textViewCursorGuideColor;
-- (BOOL)textViewUseHFSPlusMapping;
+- (iTermUnicodeNormalization)textViewUnicodeNormalizationForm;
 - (NSColor *)textViewBadgeColor;
 - (NSDictionary *)textViewVariables;
 - (BOOL)textViewSuppressingAllOutput;

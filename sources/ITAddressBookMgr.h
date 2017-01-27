@@ -150,7 +150,8 @@
 #define KEY_CLOSE_SESSIONS_ON_END             @"Close Sessions On End"
 #define KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH   @"Non Ascii Double Width"  // DEPRECATED
 #define KEY_AMBIGUOUS_DOUBLE_WIDTH            @"Ambiguous Double Width"
-#define KEY_USE_HFS_PLUS_MAPPING              @"Use HFS Plus Mapping"
+#define KEY_USE_HFS_PLUS_MAPPING              @"Use HFS Plus Mapping"  // DEPRECATED
+#define KEY_UNICODE_NORMALIZATION             @"Unicode Normalization"
 #define KEY_SILENCE_BELL                      @"Silence Bell"
 #define KEY_VISUAL_BELL                       @"Visual Bell"
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
@@ -288,6 +289,14 @@ typedef NS_ENUM(NSUInteger, iTermHotKeyModifierActivation) {
     iTermHotKeyModifierActivationShift = 1,
     iTermHotKeyModifierActivationOption = 2,
     iTermHotKeyModifierActivationCommand = 3,
+};
+
+// Do not renumber. These are tag numbers and also saved in prefs.
+typedef NS_ENUM(NSUInteger, iTermUnicodeNormalization) {
+    iTermUnicodeNormalizationNone = 0,
+    iTermUnicodeNormalizationNFC = 1,
+    iTermUnicodeNormalizationNFD = 2,
+    iTermUnicodeNormalizationHFSPlus = 3,
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
