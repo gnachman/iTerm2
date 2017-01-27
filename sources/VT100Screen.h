@@ -199,6 +199,8 @@ extern int kVT100ScreenMinRows;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
+
 @end
 
 @interface VT100Screen (Testing)

@@ -130,9 +130,9 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 }
 
 - (void)growlNotificationWasClicked:(id)clickContext {
-    int win = [[clickContext objectForKey:@"win"] intValue];
-    int tab = [[clickContext objectForKey:@"tab"] intValue];
-    int view = [[clickContext objectForKey:@"view"] intValue];
+    int win = [clickContext[@"win"] intValue];
+    int tab = [clickContext[@"tab"] intValue];
+    int view = [clickContext[@"view"] intValue];
 
     iTermController *controller = [iTermController sharedInstance];
     if (win >= [controller numberOfTerminals]) {

@@ -191,6 +191,7 @@
 - (void)screenSaveScrollPosition;
 - (VT100ScreenMark *)screenAddMarkOnLine:(int)line;
 - (void)screenPromptDidStartAtLine:(int)line;
+- (void)screenPromptDidEndAtLine:(int)line;
 
 - (void)screenActivateWindow;
 
@@ -207,6 +208,8 @@
 - (void)screenDidFinishReceivingInlineFile;
 - (void)screenDidReceiveBase64FileData:(NSString *)data;
 - (void)screenFileReceiptEndedUnexpectedly;
+
+- (void)screenRequestUpload:(NSString *)args;
 
 - (iTermColorMap *)screenColorMap;
 - (void)screenSetCurrentTabColor:(NSColor *)color;
