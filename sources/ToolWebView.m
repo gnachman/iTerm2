@@ -9,8 +9,6 @@
 #import "ToolWebView.h"
 #import "FutureMethods.h"
 
-static NSString *const kWebViewToolURL = @"NoSyncWebViewToolURL";
-
 @implementation ToolWebView {
     FutureWKWebView *_webView;
 }
