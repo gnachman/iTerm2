@@ -258,4 +258,6 @@ DEFINE_BOOL(useLayers, NO, @"Experimental Features: Use Core Animation layers fo
 DEFINE_BOOL(acceptOSC7, YES, @"Experimental Features: Accept OSC 7 to set username, hostname, and path.");
 DEFINE_BOOL(trackingRunloopForLiveResize, YES, @"Experimental Features: Use a tracking runloop for live resizing.");
 
+DEFINE_BOOL(enableAPIServer, NO, @"Experimental Features: Enable websocket API server.\nYou must restart iTerm2 for this change to take effect.");
+
 @end

@@ -510,8 +510,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }
 
-    _apiServer = [[iTermAPIServer alloc] init];
-    _apiServer.delegate = self;
+    if ([iTermAdvancedSettingsModel enableAPIServer]) {
+        _apiServer = [[iTermAPIServer alloc] init];
+        _apiServer.delegate = self;
+    }
 
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
