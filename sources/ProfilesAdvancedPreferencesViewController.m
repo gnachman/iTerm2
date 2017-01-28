@@ -47,12 +47,14 @@
 }
 
 - (void)dealloc {
+    [_boundHostsTableView release];
     _boundHostsTableView.delegate = nil;
     _boundHostsTableView.dataSource = nil;
     [super dealloc];
 }
 
 - (void)awakeFromNib {
+    [_boundHostsTableView retain];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles:)
                                                  name:kReloadAllProfiles

@@ -20,6 +20,38 @@ static const CGFloat kMaxDimension = 10000;
 @property(nonatomic, retain) NSMutableArray<NSImage *> *images;
 @end
 
+#if DEBUG
+static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
+    CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
+    if (properties) {
+        NSDictionary *gifProperties = (NSDictionary *)CFDictionaryGetValue(properties,
+                                                                           kCGImagePropertyGIFDictionary);
+        gifProperties = [[gifProperties copy] autorelease];
+        CFRelease(properties);
+        return gifProperties;
+    } else {
+        return nil;
+    }
+}
+
+static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
+    NSTimeInterval delay = 0.01;
+    if (gifProperties) {
+        NSNumber *number = (id)CFDictionaryGetValue((CFDictionaryRef)gifProperties,
+                                                    kCGImagePropertyGIFUnclampedDelayTime);
+        if (number == NULL || [number doubleValue] == 0) {
+            number = (id)CFDictionaryGetValue((CFDictionaryRef)gifProperties,
+                                              kCGImagePropertyGIFDelayTime);
+        }
+        if ([number doubleValue] > 0) {
+            delay = number.doubleValue;
+        }
+    }
+
+    return delay;
+}
+#endif
+
 @implementation iTermImage
 
 + (instancetype)imageWithNativeImage:(NSImage *)nativeImage {
@@ -30,6 +62,10 @@ static const CGFloat kMaxDimension = 10000;
 }
 
 + (instancetype)imageWithCompressedData:(NSData *)compressedData {
+#if DEBUG
+    NSLog(@"** WARNING: Decompressing image in-process **");
+    return [[iTermImage alloc] initWithData:compressedData];
+#else
     iTermImageDecoderDriver *driver = [[[iTermImageDecoderDriver alloc] init] autorelease];
     NSData *jsonData = [driver jsonForCompressedImageData:compressedData];
     if (jsonData) {
@@ -37,6 +73,7 @@ static const CGFloat kMaxDimension = 10000;
     } else {
         return nil;
     }
+#endif
 }
 
 - (instancetype)init {
@@ -47,6 +84,67 @@ static const CGFloat kMaxDimension = 10000;
     }
     return self;
 }
+
+#if DEBUG
+- (instancetype)initWithData:(NSData *)data {
+    self = [self init];
+    if (self) {
+        NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
+        CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)data,
+                                                              (CFDictionaryRef)@{});
+        size_t count = CGImageSourceGetCount(source);
+        NSImageRep *rep = [[image representations] firstObject];
+        NSSize imageSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
+
+        if (imageSize.width == 0 && imageSize.height == 0) {
+            // PDFs can hit this case.
+            if (image.size.width != 0 && image.size.height != 0) {
+                imageSize = image.size;
+            } else {
+                return nil;
+            }
+        }
+        _size = imageSize;
+
+        BOOL isGIF = NO;
+        if (count > 1) {
+            NSMutableArray *frameProperties = [NSMutableArray array];
+            isGIF = YES;
+            for (size_t i = 0; i < count; ++i) {
+                NSDictionary *gifProperties = GIFProperties(source, i);
+                // TIFF and PDF files may have multiple pages, so make sure it's an animated GIF.
+                if (gifProperties) {
+                    [frameProperties addObject:gifProperties];
+                } else {
+                    isGIF = NO;
+                    break;
+                }
+            }
+            if (isGIF) {
+                double totalDelay = 0;
+                for (size_t i = 0; i < count; ++i) {
+                    CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, i, NULL);
+                    NSImage *image = [[NSImage alloc] initWithCGImage:imageRef
+                                                                 size:NSMakeSize(CGImageGetWidth(imageRef),
+                                                                                 CGImageGetHeight(imageRef))];
+                    if (!image) {
+                        return nil;
+                    }
+                    [_images addObject:image];
+                    CFRelease(imageRef);
+                    NSTimeInterval delay = DelayInGifProperties(frameProperties[i]);
+                    totalDelay += delay;
+                    [_delays addObject:@(totalDelay)];
+                }
+            }
+        }
+        if (!isGIF) {
+            [_images addObject:image];
+        }
+    }
+    return self;
+}
+#endif
 
 - (instancetype)initWithJson:(NSData *)json {
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:nil];

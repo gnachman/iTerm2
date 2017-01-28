@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermMark.h"
+#import "VT100GridTypes.h"
 
 @class CapturedOutput;
 
@@ -40,6 +41,10 @@
 
 // The session this mark belongs to.
 @property(nonatomic, retain) NSString *sessionGuid;
+
+@property(nonatomic, assign) VT100GridAbsCoordRange promptRange;
+@property(nonatomic, assign) VT100GridAbsCoordRange commandRange;
+@property(nonatomic, assign) VT100GridAbsCoord outputStart;
 
 // Returns a reference to an existing mark with the given GUID.
 + (VT100ScreenMark *)markWithGuid:(NSString *)guid;

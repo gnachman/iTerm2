@@ -36,6 +36,7 @@
 }
 
 - (void)dealloc {
+    [_jobsTable release];
     _jobsTable.dataSource = nil;
     _jobsTable.delegate = nil;
     [super dealloc];
@@ -46,6 +47,7 @@
         return;
     }
     _awoken = YES;
+    [_jobsTable retain];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles)
                                                  name:kReloadAllProfiles
