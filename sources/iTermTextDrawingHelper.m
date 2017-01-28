@@ -1339,16 +1339,17 @@ typedef struct iTermTextColorContext {
                                                                                       effectiveRange:nil];
                                       const CGFloat width = [attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width;
                                       if (mask) {
+                                          const CGFloat maskHeight = _cellSize.height * 2;
                                           if (!maskGraphicsContext) {
                                               // Create a mask image.
-                                              maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(width, _cellSize.height)];
+                                              maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(width, maskHeight)];
                                               [NSGraphicsContext saveGraphicsState];
                                               [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:maskGraphicsContext
                                                                                                                               flipped:NO]];
 
                                               // Draw the background
                                               [[NSColor whiteColor] setFill];
-                                              CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, width, _cellSize.height));
+                                              CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, width, maskHeight));
                                               
                                               // Draw text into the mask
                                               NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
@@ -1376,7 +1377,7 @@ typedef struct iTermTextColorContext {
                                                               NSMakeRect(xOrigin,
                                                                          origin.y,
                                                                          width,
-                                                                         _cellSize.height),
+                                                                         maskHeight),
                                                               alphaMask);
                                       }
 
@@ -1386,6 +1387,7 @@ typedef struct iTermTextColorContext {
                                                     atCellOrigin:NSMakePoint(xOrigin, origin.y)
                                                             font:attributes[NSFontAttributeName]
                                                            width:width];
+
 
                                       if (mask) {
                                           // Remove mask
