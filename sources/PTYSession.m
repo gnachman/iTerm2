@@ -443,6 +443,7 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -512,6 +513,7 @@ static const NSUInteger kMaxHosts = 100;
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
+        _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -633,6 +635,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keystrokeSubscriptions release];
     [_updateSubscriptions release];
     [_promptSubscriptions release];
+    [_locationChangeSubscriptions release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -4058,6 +4061,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_promptSubscriptions removeObjectForKey:notification.object];
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
+    [_locationChangeSubscriptions removeObjectForKey:notification.object];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
@@ -7526,6 +7530,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     self.currentHost = host;
+
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.hostName = host.hostname;
+    notification.locationChangeNotification.userName = host.username;
+    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
@@ -7654,6 +7666,13 @@ ITERM_WEAKLY_REFERENCEABLE
                                   username:remoteHost.username
                                       path:newPath];
     [_textview setBadgeLabel:[self badgeLabel]];
+
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.directory = newPath;
+    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
 }
 
 - (BOOL)screenShouldSendReport {
@@ -8663,6 +8682,9 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case ITMNotificationType_NotifyOnScreenUpdate:
             subscriptions = _updateSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnLocationChange:
+            subscriptions = _locationChangeSubscriptions;
             break;
     }
     if (!subscriptions) {

@@ -50,11 +50,12 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
   if (!descriptor) {
     static const char *valueNames =
         "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
-        "otifyOnPrompt\000";
+        "otifyOnPrompt\000NotifyOnLocationChange\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
         ITMNotificationType_NotifyOnPrompt,
+        ITMNotificationType_NotifyOnLocationChange,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
@@ -74,6 +75,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnKeystroke:
     case ITMNotificationType_NotifyOnScreenUpdate:
     case ITMNotificationType_NotifyOnPrompt:
+    case ITMNotificationType_NotifyOnLocationChange:
       return YES;
     default:
       return NO;
@@ -674,12 +676,14 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasKeystrokeNotification, keystrokeNotification;
 @dynamic hasScreenUpdateNotification, screenUpdateNotification;
 @dynamic hasPromptNotification, promptNotification;
+@dynamic hasLocationChangeNotification, locationChangeNotification;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
   ITMKeystrokeNotification *keystrokeNotification;
   ITMScreenUpdateNotification *screenUpdateNotification;
   ITMPromptNotification *promptNotification;
+  ITMLocationChangeNotification *locationChangeNotification;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -712,6 +716,15 @@ typedef struct ITMNotification__storage_ {
         .number = ITMNotification_FieldNumber_PromptNotification,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, promptNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "locationChangeNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMLocationChangeNotification),
+        .number = ITMNotification_FieldNumber_LocationChangeNotification,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, locationChangeNotification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -907,6 +920,71 @@ typedef struct ITMPromptNotification__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMPromptNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMLocationChangeNotification
+
+@implementation ITMLocationChangeNotification
+
+@dynamic hasHostName, hostName;
+@dynamic hasUserName, userName;
+@dynamic hasDirectory, directory;
+
+typedef struct ITMLocationChangeNotification__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *hostName;
+  NSString *userName;
+  NSString *directory;
+} ITMLocationChangeNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "hostName",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMLocationChangeNotification_FieldNumber_HostName,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, hostName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "userName",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMLocationChangeNotification_FieldNumber_UserName,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, userName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "directory",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMLocationChangeNotification_FieldNumber_Directory,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, directory),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMLocationChangeNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMLocationChangeNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;

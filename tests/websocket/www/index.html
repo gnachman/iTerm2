@@ -77,6 +77,14 @@ Sample requests:
   }
 }
 
+{
+  "id": 1,
+  "set_profile_property_request": {
+    "key": "Badge Color",
+     "json_value": "{\"Red Component\": 1, \"Green Component\": 0, \"Blue Component\": 0, \"Alpha Component\": 1}"
+  }
+}
+
 // Keystroke
 {
   "id": 1,
@@ -95,13 +103,10 @@ Sample requests:
   "notification_request": { "subscribe": true, "notification_type": 3 }
 }
 
-// Set Profile Property
+// Location change
 {
   "id": 1,
-  "set_profile_property_request": {
-    "key": "Badge Color",
-     "json_value": "{\"Red Component\": 1, \"Green Component\": 0, \"Blue Component\": 0, \"Alpha Component\": 1}"
-  }
+  "notification_request": { "subscribe": true, "notification_type": 4 }
 }
 
 </pre>
