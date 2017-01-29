@@ -46,6 +46,7 @@
     PseudoTerminal *windowController = (PseudoTerminal *)sessionToBury.textview.window.windowController;
     [_array addObject:[windowController restorableSessionForSession:sessionToBury]];
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
+    [NSApp invalidateRestorableState];
 }
 
 - (void)restoreSession:(PTYSession *)session {
@@ -85,18 +86,34 @@
         if (term) {
             [[iTermController sharedInstance] addTerminalWindow:term];
             term.terminalGuid = restorableSession.terminalGuid;
-            [restorableSession.sessions[0] revive];
             [term addRevivedSession:restorableSession.sessions[0]];
             [term fitWindowToTabs];
         }
     }
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
+    [NSApp invalidateRestorableState];
 }
 
 - (NSArray<PTYSession *> *)buriedSessions {
     return [_array flatMapWithBlock:^NSArray *(iTermRestorableSession *anObject) {
         return anObject.sessions;
     }];
+}
+
+- (NSArray<NSDictionary *> *)restorableState {
+    return [_array mapWithBlock:^id(iTermRestorableSession *anObject) {
+        return [anObject restorableState];
+    }];
+}
+
+- (void)restoreFromState:(NSArray<NSDictionary *> *)state {
+    for (NSDictionary *dict in state) {
+        iTermRestorableSession *restorable = [[[iTermRestorableSession alloc] initWithRestorableState:dict] autorelease];
+        if (restorable) {
+            [_array addObject:restorable];
+        }
+    }
+    [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
 }
 
 @end

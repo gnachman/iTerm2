@@ -6344,6 +6344,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)textViewBurySession {
+    [self bury];
+}
+
+- (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [[iTermBuriedSessions sharedInstance] addBuriedSession:self];

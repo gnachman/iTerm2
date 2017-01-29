@@ -14,8 +14,11 @@
 
 + (instancetype)sharedInstance;
 
+- (void)restoreFromState:(NSArray<NSDictionary *> *)state;
+
 - (void)addBuriedSession:(PTYSession *)buriedSession;
 - (void)restoreSession:(PTYSession *)session;
 - (NSArray<PTYSession *> *)buriedSessions;
+- (NSArray<NSDictionary *> *)restorableState;
 
 @end

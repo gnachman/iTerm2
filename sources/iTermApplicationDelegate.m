@@ -65,6 +65,7 @@
 #import "iTermTipWindowController.h"
 #import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+iTerm.h"
@@ -102,6 +103,7 @@ NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSetti
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
 static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
+static NSString *const iTermBuriedSessionState = @"iTermBuriedSessionState";
 
 static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
@@ -1605,6 +1607,10 @@ static BOOL hasBecomeActive = NO;
         [coder encodeObject:hotkeyWindowsStates
                      forKey:kHotkeyWindowsRestorableStates];
     }
+
+    if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
+        [coder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] forKey:iTermBuriedSessionState];
+    }
     DLog(@"Time to save app restorable state: %@",
          @([NSDate timeIntervalSinceReferenceDate] - start));
 }
@@ -1633,6 +1639,10 @@ static BOOL hasBecomeActive = NO;
                 [[iTermHotKeyController sharedInstance] createHiddenWindowFromLegacyRestorableState:legacyState];
             }
         }
+    }
+    NSArray<NSDictionary *> *buried = [coder decodeObjectForKey:iTermBuriedSessionState];
+    if (buried) {
+        [[iTermBuriedSessions sharedInstance] restoreFromState:buried];
     }
 }
 
