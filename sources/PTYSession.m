@@ -6969,6 +6969,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)reveal {
     DLog(@"Reveal session %@", self);
+    if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
+    }
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     BOOL okToActivateApp = YES;
