@@ -705,7 +705,6 @@ typedef enum {
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection;
->>>>>>> d6854f8e16c9d0a302fc2786fb25beee5bd97e57
 
 #pragma mark - Testing utilities
 
