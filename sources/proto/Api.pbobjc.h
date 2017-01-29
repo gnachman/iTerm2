@@ -45,6 +45,8 @@ CF_EXTERN_C_BEGIN
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
 @class ITMScreenUpdateNotification;
+@class ITMSetProfilePropertyRequest;
+@class ITMSetProfilePropertyResponse;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
 
@@ -167,6 +169,22 @@ GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMSetProfilePropertyResponse_Status
+
+typedef GPB_ENUM(ITMSetProfilePropertyResponse_Status) {
+  ITMSetProfilePropertyResponse_Status_Ok = 0,
+  ITMSetProfilePropertyResponse_Status_SessionNotFound = 1,
+  ITMSetProfilePropertyResponse_Status_RequestMalformed = 2,
+};
+
+GPBEnumDescriptor *ITMSetProfilePropertyResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSetProfilePropertyResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMTransactionResponse_Status
 
 typedef GPB_ENUM(ITMTransactionResponse_Status) {
@@ -226,6 +244,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_TransactionRequest = 102,
   ITMRequest_FieldNumber_NotificationRequest = 103,
   ITMRequest_FieldNumber_RegisterToolRequest = 104,
+  ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
 };
 
 /**
@@ -258,6 +277,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c registerToolRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasRegisterToolRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyRequest *setProfilePropertyRequest;
+/** Test to see if @c setProfilePropertyRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasSetProfilePropertyRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -269,6 +292,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_TransactionResponse = 102,
   ITMResponse_FieldNumber_NotificationResponse = 103,
   ITMResponse_FieldNumber_RegisterToolResponse = 104,
+  ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -301,6 +325,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 /** Test to see if @c registerToolResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasRegisterToolResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyResponse *setProfilePropertyResponse;
+/** Test to see if @c setProfilePropertyResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasSetProfilePropertyResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
@@ -318,6 +346,9 @@ typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
   ITMRegisterToolRequest_FieldNumber_RevealIfAlreadyRegistered = 5,
 };
 
+/**
+ * Registers a toolbelt tool that displays a webvieww with a URL of your choice.
+ **/
 @interface ITMRegisterToolRequest : GPBMessage
 
 /** This name is displayed to the user. */
@@ -333,6 +364,11 @@ typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
 /** Test to see if @c identifier has been set. */
 @property(nonatomic, readwrite) BOOL hasIdentifier;
 
+/**
+ * The first time a tool is registered iTerm2 automatically adds it to the
+ * set of visible tools. To show it on subsequent re-registrations, set this
+ * to true. If the toolbelt itself is hidden, it will not be opened.
+ **/
 @property(nonatomic, readwrite) BOOL revealIfAlreadyRegistered;
 
 @property(nonatomic, readwrite) BOOL hasRevealIfAlreadyRegistered;
@@ -585,6 +621,47 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 /** Test to see if @c command has been set. */
 @property(nonatomic, readwrite) BOOL hasCommand;
 
+@end
+
+#pragma mark - ITMSetProfilePropertyRequest
+
+typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
+  ITMSetProfilePropertyRequest_FieldNumber_Session = 1,
+  ITMSetProfilePropertyRequest_FieldNumber_Key = 2,
+  ITMSetProfilePropertyRequest_FieldNumber_JsonValue = 3,
+};
+
+/**
+ * Sets a value in a session's copy of the profile without modifying the underlying profile.
+ **/
+@interface ITMSetProfilePropertyRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@end
+
+#pragma mark - ITMSetProfilePropertyResponse
+
+typedef GPB_ENUM(ITMSetProfilePropertyResponse_FieldNumber) {
+  ITMSetProfilePropertyResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSetProfilePropertyResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSetProfilePropertyResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMTransactionRequest

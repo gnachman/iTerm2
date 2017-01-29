@@ -366,7 +366,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }];
         return;
     }
-    if (request.registerToolRequest) {
+    if (request.hasRegisterToolRequest) {
         [_delegate apiServerRegisterTool:request.registerToolRequest
                             peerIdentity:webSocketConnection.peerIdentity
                                  handler:^(ITMRegisterToolResponse *registerToolResponse) {
@@ -375,6 +375,16 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.registerToolResponse = registerToolResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
+        return;
+    }
+    if (request.hasSetProfilePropertyRequest) {
+        [_delegate apiServerSetProfileProperty:request.setProfilePropertyRequest
+                                       handler:^(ITMSetProfilePropertyResponse *setProfilePropertyResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.setProfilePropertyResponse = setProfilePropertyResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+                                       }];
         return;
     }
 }

@@ -8687,4 +8687,17 @@ ITERM_WEAKLY_REFERENCEABLE
     return response;
 }
 
+- (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value {
+    ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+    if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
+        ELog(@"Value %@ is not legal for key %@", value, key);
+        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        return response;
+    }
+
+    [self setSessionSpecificProfileValues:@{ key: value }];
+    response.status = ITMSetProfilePropertyResponse_Status_Ok;
+    return response;
+}
+
 @end

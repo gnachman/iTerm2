@@ -2306,6 +2306,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                revealIfAlreadyRegistered:request.revealIfAlreadyRegistered];
 }
 
+- (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
+                            handler:(void (^)(ITMSetProfilePropertyResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session) {
+        ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
+        handler(response);
+    }
+
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                               options:NSJSONReadingAllowFragments
+                                                 error:&error];
+    if (!value || error) {
+        ELog(@"JSON parsing error %@ for value in request %@", error, request);
+        ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        handler(response);
+    }
+
+    handler([session handleSetProfilePropertyForKey:request.key value:value]);
+}
+
 @end
 
 @implementation iTermApplicationDelegate (MoreActions)
