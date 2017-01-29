@@ -2822,10 +2822,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [[ProfileModel sharedInstance] tmuxProfile];
 }
 
-- (Profile *)tmuxBookmark {
-    return [[ProfileModel sharedInstance] tmuxProfile];
-}
-
 + (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs

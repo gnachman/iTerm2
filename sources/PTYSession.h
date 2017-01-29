@@ -151,9 +151,6 @@ typedef enum {
            hSpacing:(double)horizontalSpacing
            vSpacing:(double)verticalSpacing;
 
-// Returns the profile to use for tmux sessions.
-- (Profile *)tmuxBookmark;
-
 // Notify the tab that this session, which is a tmux gateway, received a rename of a tmux window.
 - (void)sessionWithTmuxGateway:(PTYSession *)session
        wasNotifiedWindowWithId:(int)windowId
