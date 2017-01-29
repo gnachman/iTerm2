@@ -542,13 +542,17 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         // Give subclasses a chance to do something first.
         [self windowWillClose];
 
-        _preferencePanel = nil;
-        // Breaks reference cycles in settingChanged and update blocks.
-        for (NSControl *key in _keyMap) {
-            PreferenceInfo *info = [_keyMap objectForKey:key];
-            [info clearBlocks];
-        }
-        [_keyMap removeAllObjects];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _preferencePanel = nil;
+            // Breaks reference cycles in settingChanged and update blocks. Done in a delayed perform
+            // because windowWillClose may cause notifications to be posted (e.g., unicode version
+            // changed) that requires access to the keymap.
+            for (NSControl *key in _keyMap) {
+                PreferenceInfo *info = [_keyMap objectForKey:key];
+                [info clearBlocks];
+            }
+            [_keyMap removeAllObjects];
+        });
     }
 }
 

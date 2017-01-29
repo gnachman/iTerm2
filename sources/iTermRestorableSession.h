@@ -27,4 +27,7 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 // tab unique IDs of tabs that come before this one in the window.
 @property(nonatomic, copy) NSArray *predecessors;
 
+- (instancetype)initWithRestorableState:(NSDictionary *)restorableState;
+- (NSDictionary *)restorableState;
+
 @end

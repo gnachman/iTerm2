@@ -11,6 +11,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
+#import "iTermBuriedSessions.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
@@ -1780,6 +1781,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
+}
+
+- (void)disinter {
+    _textview.dataSource = _screen;
+    _textview.delegate = self;
 }
 
 - (BOOL)revive {
@@ -4568,7 +4574,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
     NSSize theSize;
-    Profile *tmuxBookmark = [_delegate tmuxBookmark];
+    Profile *tmuxBookmark = [[ProfileModel sharedInstance] tmuxProfile];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
     // We intentionally don't send anything to tmux yet. We wait to get a
@@ -4609,7 +4615,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self printTmuxMessage:@"  C    Run tmux command."];
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
-        [self hideSession];
+        [self bury];
     }
 }
 
@@ -4889,8 +4895,8 @@ ITERM_WEAKLY_REFERENCEABLE
     self.tmuxMode = TMUX_NONE;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
-        [[[_delegate realParentWindow] window] isMiniaturized]) {
-        [[[_delegate realParentWindow] window] deminiaturize:self];
+        [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
     }
 }
 
@@ -4983,13 +4989,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSSize)tmuxBookmarkSize
 {
-        NSDictionary *dict = [_delegate tmuxBookmark];
-        return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
-                                          [[dict objectForKey:KEY_ROWS] intValue]);
+    NSDictionary *dict = [[ProfileModel sharedInstance] tmuxProfile];
+    return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
+                      [[dict objectForKey:KEY_ROWS] intValue]);
 }
 
 - (NSInteger)tmuxNumHistoryLinesInBookmark {
-    NSDictionary *dict = [_delegate tmuxBookmark];
+    NSDictionary *dict = [[ProfileModel sharedInstance] tmuxProfile];
     if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
         // 10M is close enough to infinity to be indistinguishable.
         return 10 * 1000 * 1000;
@@ -6399,6 +6405,19 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewBackgroundColorDidChange {
     [_delegate sessionBackgroundColorDidChange:self];
+}
+
+- (void)textViewBurySession {
+    [self bury];
+}
+
+- (void)bury {
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [[iTermBuriedSessions sharedInstance] addBuriedSession:self];
+    [_delegate sessionRemoveSession:self];
+
+    _delegate = nil;
 }
 
 - (void)sendEscapeSequence:(NSString *)text

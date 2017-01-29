@@ -304,7 +304,9 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
                  predecessors:(NSArray *)predecessors;  // NSInteger of tab uniqueId's that come before this tab.
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
-           sessions:(NSArray *)sessions;
+           sessions:(NSArray *)sessions
+             revive:(BOOL)revive;
+
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 
 - (void)setupSession:(PTYSession *)aSession
@@ -326,6 +328,9 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 - (void)swapPaneRight;
 - (void)swapPaneUp;
 - (void)swapPaneDown;
+
+// Returns a restorable session that will restore the split pane, tab, or window, as needed.
+- (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 @end
 

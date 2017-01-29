@@ -72,4 +72,20 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
     return [dict dictionaryByRemovingNullValues];
 }
 
+- (BOOL)canMergeFrom:(CapturedOutput *)other {
+    return (other.absoluteLineNumber == self.absoluteLineNumber &&
+            [other.line hasPrefix:self.line] &&
+            (self.triggerDigest == other.triggerDigest || [self.triggerDigest isEqual:other.triggerDigest]) &&
+            self.state == other.state &&
+            (self.markGuid == other.markGuid || [self.markGuid isEqualToString:other.markGuid]));
+}
+
+- (void)mergeFrom:(CapturedOutput *)other {
+    self.line = other.line;
+    self.values = other.values;
+    self.triggerDigest = other.triggerDigest;
+    self.state = other.state;
+    self.markGuid = other.markGuid;
+}
+
 @end
