@@ -11,6 +11,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
+#import "iTermBuriedSessions.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
@@ -1763,6 +1764,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
+}
+
+- (void)disinter {
+    _textview.dataSource = _screen;
+    _textview.delegate = self;
 }
 
 - (BOOL)revive {
@@ -6335,6 +6341,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewBackgroundColorDidChange {
     [_delegate sessionBackgroundColorDidChange:self];
+}
+
+- (void)textViewBurySession {
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [[iTermBuriedSessions sharedInstance] addBuriedSession:self];
+    [_delegate sessionRemoveSession:self];
+
+    _delegate = nil;
 }
 
 - (void)sendEscapeSequence:(NSString *)text

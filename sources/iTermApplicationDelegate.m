@@ -33,6 +33,7 @@
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBuriedSessions.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
@@ -138,6 +139,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *sendInputNormally;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
+    IBOutlet NSMenu *_buriedSessions;
 
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
@@ -1389,7 +1391,8 @@ static BOOL hasBecomeActive = NO;
                             // Add to existing tab by destroying and recreating it.
                             [term recreateTab:tab
                               withArrangement:restorableSession.arrangement
-                                     sessions:restorableSession.sessions];
+                                     sessions:restorableSession.sessions
+                                       revive:YES];
                         } else {
                             // Create a new tab and add the session to it.
                             [restorableSession.sessions[0] revive];
@@ -2026,6 +2029,20 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showTipOfTheDay:(id)sender {
     [[iTermTipController sharedInstance] showTip];
+}
+
+- (void)updateBuriedSessionsMenu {
+    [_buriedSessions removeAllItems];
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
+        item.representedObject = session;
+        [_buriedSessions addItem:item];
+    }
+}
+
+- (void)disinter:(NSMenuItem *)menuItem {
+    PTYSession *session = menuItem.representedObject;
+    [[iTermBuriedSessions sharedInstance] restoreSession:session];
 }
 
 #pragma mark - iTermPasswordManagerDelegate

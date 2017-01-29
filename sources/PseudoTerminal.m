@@ -1329,6 +1329,45 @@ ITERM_WEAKLY_REFERENCEABLE
     [self closeTab:aTab soft:NO];
 }
 
+- (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session {
+    if (session.isTmuxClient) {
+        return nil;
+    }
+    if ([[[self tabForSession:session] sessions] count] > 1) {
+        return [session restorableSession];
+    }
+    if (self.numberOfTabs > 1) {
+        return [self restorableSessionForTab:[self tabForSession:session]];
+    }
+    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+    restorableSession.sessions = [self allSessions];
+    restorableSession.terminalGuid = self.terminalGuid;
+    restorableSession.arrangement = [self arrangement];
+    restorableSession.group = kiTermRestorableSessionGroupWindow;
+    return restorableSession;
+}
+
+- (iTermRestorableSession *)restorableSessionForTab:(PTYTab *)aTab {
+    if (!aTab) {
+        return nil;
+    }
+
+    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+    restorableSession.sessions = [aTab sessions];
+    restorableSession.terminalGuid = self.terminalGuid;
+    restorableSession.tabUniqueId = aTab.uniqueId;
+    NSArray *tabs = [self tabs];
+    NSUInteger index = [tabs indexOfObject:aTab];
+    NSMutableArray *predecessors = [NSMutableArray array];
+    for (NSUInteger i = 0; i < index; i++) {
+        [predecessors addObject:@([tabs[i] uniqueId])];
+    }
+    restorableSession.predecessors = predecessors;
+    restorableSession.arrangement = [aTab arrangement];
+    restorableSession.group = kiTermRestorableSessionGroupTab;
+    return restorableSession;
+}
+
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
@@ -5191,7 +5230,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
-           sessions:(NSArray *)sessions {
+           sessions:(NSArray *)sessions
+             revive:(BOOL)revive {
     NSInteger tabIndex = [_contentView.tabView indexOfTabViewItemWithIdentifier:tab];
     if (tabIndex == NSNotFound) {
         return;
@@ -5222,13 +5262,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!ok) {
         // Can't do it. Just add each session as its own tab.
         for (PTYSession *session in sessions) {
-            [session revive];
+            if (revive) {
+                [session revive];
+            }
             [self addRevivedSession:session];
         }
         return;
     }
-    for (PTYSession *session in sessions) {
-        assert([session revive]);
+    if (revive) {
+        for (PTYSession *session in sessions) {
+            assert([session revive]);
+        }
     }
 
     PTYSession *originalActiveSession = [tab activeSession];
@@ -7908,6 +7952,17 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location {
     if (tab == self.currentTab) {
         [self updateCurrentLocation];
+    }
+}
+
+- (void)tabRemoveTab:(PTYTab *)tab {
+    if ([_contentView.tabView numberOfTabViewItems] <= 1 && self.windowInitialized) {
+        [[self window] close];
+    } else {
+        NSTabViewItem *tabViewItem = [tab tabViewItem];
+        [_contentView.tabView removeTabViewItem:tabViewItem];
+        PtyLog(@"tabRemoveTab - calling fitWindowToTabs");
+        [self fitWindowToTabs];
     }
 }
 

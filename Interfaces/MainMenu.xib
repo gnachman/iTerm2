@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11201" systemVersion="16A320" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -778,7 +778,6 @@ DQ
                             <menuItem isSeparatorItem="YES" id="Sq7-yQ-kOu">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>
                             <menuItem title="Log" id="227">
                                 <menu key="submenu" title="Log" autoenablesItems="NO" id="228">
                                     <items>
@@ -794,6 +793,15 @@ DQ
                                         </menuItem>
                                     </items>
                                 </menu>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>
+                            <menuItem title="Bury Session" keyEquivalent="b" id="m8k-FC-JBb">
+                                <connections>
+                                    <action selector="bury:" target="-1" id="jki-EJ-MEs"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Buried Sessions" id="Weo-nd-iLL">
+                                <menu key="submenu" title="Buried Sessions" autoenablesItems="NO" id="PTu-aD-qbz"/>
                             </menuItem>
                         </items>
                     </menu>
@@ -1071,6 +1079,7 @@ DQ
         </menu>
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
+                <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="closeTab" destination="635" id="795"/>

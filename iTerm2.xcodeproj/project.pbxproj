@@ -1778,6 +1778,8 @@
 		A6BDB0B71B45FEF700F511E6 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */; };
 		A6BDB0BB1B470CBE00F511E6 /* iTermRootTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */; };
 		A6BDB0BC1B470CBE00F511E6 /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
+		A6C1207A1E39C3A4004021BB /* iTermBuriedSessions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */; };
+		A6C1207B1E39C3A4004021BB /* iTermBuriedSessions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -3488,6 +3490,8 @@
 		A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelperTest.m; sourceTree = "<group>"; };
 		A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRootTerminalView.h; sourceTree = "<group>"; };
 		A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRootTerminalView.m; sourceTree = "<group>"; };
+		A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBuriedSessions.h; sourceTree = "<group>"; };
+		A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBuriedSessions.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5351,6 +5355,8 @@
 				A6374A271DEE941F000A136F /* iTermPromptOnCloseReason.m */,
 				A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */,
 				A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */,
+				A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */,
+				A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6381,6 +6387,7 @@
 				A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
+				A6C1207A1E39C3A4004021BB /* iTermBuriedSessions.h in Headers */,
 				A62C3B291BCC24AB00B5629D /* iTermHostRecordMO.h in Headers */,
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
 				A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */,
@@ -7971,6 +7978,7 @@
 				A6C763691B45C52B00E3C992 /* GeneralPreferencesViewController.m in Sources */,
 				A6C763361B45C52B00E3C992 /* iTermPasteSpecialWindowController.m in Sources */,
 				A6C763491B45C52B00E3C992 /* iTermTabBarControlView.m in Sources */,
+				A6C1207B1E39C3A4004021BB /* iTermBuriedSessions.m in Sources */,
 				A6FCB6101C67161F0019184E /* iTermFullScreenWindowManager.m in Sources */,
 				A6C762F01B45C52B00E3C992 /* DVRBuffer.m in Sources */,
 				A6C763331B45C52B00E3C992 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */,

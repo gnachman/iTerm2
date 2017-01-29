@@ -136,4 +136,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
 
+- (void)updateBuriedSessionsMenu;
+
 @end

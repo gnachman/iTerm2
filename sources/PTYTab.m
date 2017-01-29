@@ -4713,4 +4713,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)sessionRemoveSession:(PTYSession *)session {
+    if (self.sessions.count == 1) {
+        [_delegate tabRemoveTab:self];
+    } else {
+        [self removeSession:session];
+    }
+}
 @end

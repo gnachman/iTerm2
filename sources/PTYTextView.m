@@ -3595,6 +3595,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([item action]==@selector(restartTextViewSession:)) {
         return [_delegate isRestartable];
+    } else if ([item action]==@selector(bury:)) {
+        return YES;
     }
 
     if ([item action]==@selector(mail:) ||
@@ -4565,7 +4567,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [[self delegate] menuForEvent:nil menu:theMenu];
     }
 
+    // Separator
+    [theMenu addItem:[NSMenuItem separatorItem]];
+    [theMenu addItemWithTitle:@"Bury"
+                       action:@selector(bury:)
+                keyEquivalent:@""];
+
     return theMenu;
+}
+
+- (IBAction)bury:(id)sender {
+    [_delegate textViewBurySession];
 }
 
 - (void)mail:(id)sender

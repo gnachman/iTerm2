@@ -188,6 +188,9 @@ typedef enum {
 - (void)sessionCurrentDirectoryDidChange:(PTYSession *)session;
 - (void)sessionCurrentHostDidChange:(PTYSession *)session;
 
+// Remove a session from the tab, even if it's the only one.
+- (void)sessionRemoveSession:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -433,6 +436,7 @@ typedef enum {
 @property(nonatomic, readonly) iTermQuickLookController *quickLookController;
 
 @property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
+@property(nonatomic, readonly) iTermRestorableSession *restorableSession;
 
 #pragma mark - methods
 
@@ -691,6 +695,9 @@ typedef enum {
 
 - (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord;
 - (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord;
+
+// Undoes burying of a session.
+- (void)disinter;
 
 #pragma mark - Testing utilities
 
