@@ -91,6 +91,7 @@ static NSString *const iTermFakeItalicAttribute = @"iTermFakeItalicAttribute";
 static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
 static NSString *const iTermImageColumnAttribute = @"iTermImageColumnAttribute";
 static NSString *const iTermImageLineAttribute = @"iTermImageLineAttribute";
+static NSString *const iTermImageDisplayColumnAttribute = @"iTermImageDisplayColumnAttribute";
 static NSString *const iTermIsBoxDrawingAttribute = @"iTermIsBoxDrawingAttribute";
 static NSString *const iTermUnderlineLengthAttribute = @"iTermUnderlineLengthAttribute";
 
@@ -943,7 +944,6 @@ typedef struct iTermTextColorContext {
     CTVector(CGFloat) positions;
     CTVectorCreate(&positions, _gridSize.width);
 
-
     if (indexRange.location > 0) {
         screen_char_t firstCharacter = theLine[indexRange.location];
         if (firstCharacter.code == DWC_RIGHT && !firstCharacter.complexChar) {
@@ -1156,10 +1156,11 @@ typedef struct iTermTextColorContext {
         // Handle cells that are part of an image.
         VT100GridCoord originInImage = VT100GridCoordMake([attributes[iTermImageColumnAttribute] intValue],
                                                           [attributes[iTermImageLineAttribute] intValue]);
+        int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
         [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
-                         origin:origin
+                         origin:VT100GridCoordMake(displayColumn, origin.y)
                          length:attributedString.length
-                        atPoint:point
+                        atPoint:NSMakePoint(positions[0] + point.x, point.y)
                   originInImage:originInImage];
         return attributedString.length;
     } else if ([attributes[iTermIsBoxDrawingAttribute] boolValue]) {
@@ -1338,16 +1339,17 @@ typedef struct iTermTextColorContext {
                                                                                       effectiveRange:nil];
                                       const CGFloat width = [attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width;
                                       if (mask) {
+                                          const CGFloat maskHeight = _cellSize.height * 2;
                                           if (!maskGraphicsContext) {
                                               // Create a mask image.
-                                              maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(width, _cellSize.height)];
+                                              maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(width, maskHeight)];
                                               [NSGraphicsContext saveGraphicsState];
                                               [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:maskGraphicsContext
                                                                                                                               flipped:NO]];
 
                                               // Draw the background
                                               [[NSColor whiteColor] setFill];
-                                              CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, width, _cellSize.height));
+                                              CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, width, maskHeight));
                                               
                                               // Draw text into the mask
                                               NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
@@ -1375,7 +1377,7 @@ typedef struct iTermTextColorContext {
                                                               NSMakeRect(xOrigin,
                                                                          origin.y,
                                                                          width,
-                                                                         _cellSize.height),
+                                                                         maskHeight),
                                                               alphaMask);
                                       }
 
@@ -1385,6 +1387,7 @@ typedef struct iTermTextColorContext {
                                                     atCellOrigin:NSMakePoint(xOrigin, origin.y)
                                                             font:attributes[NSFontAttributeName]
                                                            width:width];
+
 
                                       if (mask) {
                                           // Remove mask
@@ -1657,11 +1660,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
               NSUnderlineStyleAttributeName: attributes->underline ? @(NSUnderlineStyleSingle) : @(NSUnderlineStyleNone) };
 }
 
-- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c {
+- (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c displayColumn:(int)displayColumn {
     if (c->image) {
         return @{ iTermImageCodeAttribute: @(c->code),
                   iTermImageColumnAttribute: @(c->foregroundColor),
-                  iTermImageLineAttribute: @(c->backgroundColor) };
+                  iTermImageLineAttribute: @(c->backgroundColor),
+                  iTermImageDisplayColumnAttribute: @(displayColumn) };
     } else {
         return nil;
     }
@@ -1800,7 +1804,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
 
-        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c];
+        NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c displayColumn:i];
         BOOL justSegmented = NO;
         BOOL combinedAttributesChanged = NO;
 

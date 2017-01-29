@@ -4,8 +4,10 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermDragHandleView.h"
+#import "iTermSystemVersion.h"
 #import "iTermToolWrapper.h"
 #import "iTermToolbeltSplitView.h"
+#import "NSArray+iTerm.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
@@ -13,6 +15,7 @@
 #import "ToolNotes.h"
 #import "ToolPasteHistory.h"
 #import "ToolProfiles.h"
+#import "ToolWebView.h"
 
 NSString *const kCapturedOutputToolName = @"Captured Output";
 NSString *const kCommandHistoryToolName = @"Command History";
@@ -23,6 +26,8 @@ NSString *const kPasteHistoryToolName = @"Paste History";
 NSString *const kProfilesToolName = @"Profiles";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
+
+NSString *const kDynamicToolsDidChange = @"kDynamicToolsDidChange";
 
 @interface iTermToolbeltView () <iTermDragHandleViewDelegate>
 @end
@@ -35,6 +40,9 @@ NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
 static NSMutableDictionary *gRegisteredTools;
 static NSString *kToolbeltPrefKey = @"ToolbeltTools";
+static NSString *const kDynamicToolsKey = @"NoSyncDynamicTools";
+static NSString *const kDynamicToolName = @"name";
+static NSString *const kDynamicToolURL = @"URL";
 
 #pragma mark - Public class methods
 
@@ -47,6 +55,66 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [iTermToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
     [iTermToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];
     [iTermToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
+
+    if (IsYosemiteOrLater()) {
+        NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+        [dynamicTools enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull identifier, NSDictionary * _Nonnull dict, BOOL * _Nonnull stop) {
+            [iTermToolbeltView registerToolWithName:dict[kDynamicToolName] withClass:[ToolWebView class]];
+        }];
+    }
+}
+
++ (NSArray<NSString *> *)builtInToolNames {
+    return [gRegisteredTools.allKeys filteredArrayUsingBlock:^BOOL(NSString *key) {
+        Class c = gRegisteredTools[key];
+        return c != [ToolWebView class];
+    }];
+}
+
++ (NSArray<NSString *> *)dynamicToolNames {
+    if (!IsYosemiteOrLater()) {
+        return @[];
+    }
+    NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+    return [dynamicTools.allValues mapWithBlock:^id(NSDictionary *dict) {
+        return dict[kDynamicToolName];
+    }];
+
+}
++ (void)registerDynamicToolWithIdentifier:(NSString *)identifier name:(NSString *)name URL:(NSString *)url revealIfAlreadyRegistered:(BOOL)revealIfAlreadyRegistered {
+    if (!IsYosemiteOrLater()) {
+        return;
+    }
+    if (!url) {
+        return;
+    }
+    NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+    NSString *oldName = [[registry[identifier][kDynamicToolName] retain] autorelease];
+    if ([registry[identifier][kDynamicToolURL] isEqualToString:url] &&
+        [registry[identifier][kDynamicToolName] isEqualToString:name]) {
+        if (revealIfAlreadyRegistered) {
+            if (![[iTermToolbeltView configuredTools] containsObject:name]) {
+                [self toggleShouldShowTool:name];
+            }
+        }
+        return;
+    }
+    NSMutableDictionary *mutableRegistry = [[registry mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
+    mutableRegistry[identifier] = @{ kDynamicToolName: name,
+                                     kDynamicToolURL: url };
+    [[NSUserDefaults standardUserDefaults] setObject:mutableRegistry forKey:kDynamicToolsKey];
+
+    if (oldName && [[iTermToolbeltView configuredTools] containsObject:oldName]) {
+        [self toggleShouldShowTool:oldName];
+    }
+    if (oldName) {
+        [gRegisteredTools removeObjectForKey:oldName];
+    }
+    [self registerToolWithName:name withClass:[ToolWebView class]];
+    if (![[iTermToolbeltView configuredTools] containsObject:name]) {
+        [self toggleShouldShowTool:name];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kDynamicToolsDidChange object:nil];
 }
 
 + (NSArray *)allTools {
@@ -68,6 +136,16 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 }
 
 + (void)populateMenu:(NSMenu *)menu {
+    if (menu.itemArray.count > 0) {
+        for (NSInteger i = menu.itemArray.count - 1; i >= 0; i--) {
+            NSMenuItem *item = menu.itemArray[i];
+            if ([item action] == @selector(toggleToolbeltTool:)) {
+                [menu removeItem:item];
+            } else {
+                break;
+            }
+        }
+    }
     NSArray *names = [[iTermToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
     for (NSString *theName in names) {
         NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
@@ -205,7 +283,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 - (void)toggleToolWithName:(NSString *)theName {
     iTermToolWrapper *wrapper = [_tools objectForKey:theName];
     if (wrapper) {
-        [[wrapper tool] shutdown];
+        if ([wrapper.tool respondsToSelector:@selector(shutdown)]) {
+            [[wrapper tool] shutdown];
+        }
         [_tools removeObjectForKey:theName];
         [wrapper removeFromSuperview];
         [wrapper setDelegate:nil];
@@ -301,11 +381,31 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     wrapper.delegate = self;
     Class c = [gRegisteredTools objectForKey:toolName];
     if (c) {
-        [self addTool:[[[c alloc] initWithFrame:NSMakeRect(0,
-                                                           0,
-                                                           wrapper.container.frame.size.width,
-                                                           wrapper.container.frame.size.height)] autorelease]
-            toWrapper:wrapper];
+        NSView<ToolbeltTool> *theTool = nil;
+        NSRect frame = NSMakeRect(0,
+                                  0,
+                                  wrapper.container.frame.size.width,
+                                  wrapper.container.frame.size.height);
+        if (IsYosemiteOrLater() && [c instancesRespondToSelector:@selector(initWithFrame:URL:)]) {
+            NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+            NSDictionary *attrs = [registry.allKeys mapWithBlock:^id(NSString *key) {
+                NSDictionary *dict = registry[key];
+                if ([dict[kDynamicToolName] isEqualToString:toolName]) {
+                    return dict;
+                } else {
+                    return nil;
+                }
+            }].firstObject;
+            NSURL *url = [NSURL URLWithString:(attrs[kDynamicToolURL] ?: @"")];
+            if (url) {
+                theTool = [[[c alloc] initWithFrame:frame URL:url] autorelease];
+            }
+        } else {
+            theTool = [[[c alloc] initWithFrame:frame] autorelease];
+        }
+        if (theTool) {
+            [self addTool:theTool toWrapper:wrapper];
+        }
     }
 }
 

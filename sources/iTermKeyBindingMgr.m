@@ -1166,13 +1166,13 @@ exit:
 
     // Search for a keymapping with an action that references a profile.
     [keyboardMap enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull keyMap, BOOL * _Nonnull stop) {
-        int action = [[keyMap objectForKey:@"Action"] intValue];
+        int action = [keyMap[@"Action"] intValue];
         if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
             action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
             action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
             action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
             action == KEY_ACTION_SET_PROFILE) {
-            NSString *referencedGuid = [keyMap objectForKey:@"Text"];
+            NSString *referencedGuid = keyMap[@"Text"];
             if ([referencedGuid isEqualToString:guid]) {
                 theKey = [[key copy] autorelease];
                 *stop = YES;

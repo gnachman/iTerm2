@@ -75,6 +75,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
+    output.absoluteLineNumber = lineNumber;
     output.line = stringLine.stringValue;
     output.trigger = self;
     output.values = [NSArray arrayWithObjects:capturedStrings count:captureCount];

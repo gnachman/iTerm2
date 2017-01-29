@@ -61,18 +61,22 @@ typedef struct {
 @interface NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord;
++ (NSValue *)valueWithGridAbsCoord:(VT100GridAbsCoord)coord;
 + (NSValue *)valueWithGridSize:(VT100GridSize)size;
 + (NSValue *)valueWithGridRange:(VT100GridRange)range;
 + (NSValue *)valueWithGridRect:(VT100GridRect)rect;
 + (NSValue *)valueWithGridRun:(VT100GridRun)run;
 + (NSValue *)valueWithGridCoordRange:(VT100GridCoordRange)coordRange;
++ (NSValue *)valueWithGridAbsCoordRange:(VT100GridAbsCoordRange)absCoordRange;
 
 - (VT100GridCoord)gridCoordValue;
+- (VT100GridAbsCoord)gridAbsCoordValue;
 - (VT100GridSize)gridSizeValue;
 - (VT100GridRange)gridRangeValue;
 - (VT100GridRect)gridRectValue;
 - (VT100GridRun)gridRunValue;
 - (VT100GridCoordRange)gridCoordRangeValue;
+- (VT100GridAbsCoordRange)gridAbsCoordRangeValue;
 
 // Use for sorting array of VT100GridCoorRange's in NSValue*s by the start coord.
 - (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other;
@@ -243,6 +247,11 @@ NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeMake(int startX,
     coordRange.end.x = endX;
     coordRange.end.y = endY;
     return coordRange;
+}
+
+NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeFromCoordRange(VT100GridCoordRange range,
+                                                                      long long offset) {
+    return VT100GridAbsCoordRangeMake(range.start.x, range.start.y + offset, range.end.x, range.end.y + offset);
 }
 
 NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeFromRelative(VT100GridWindowedRange range,

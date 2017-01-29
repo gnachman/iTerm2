@@ -27,6 +27,8 @@ static const NSInteger kInitialDirectoryTypeHomeTag = 1;
 static const NSInteger kInitialDirectoryTypeRecycleTag = 2;
 static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
+static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfilePreferencesUpdateSessionName";
+
 @interface ProfilesGeneralPreferencesViewController () <iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
 @end
 
@@ -64,10 +66,15 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     IBOutlet NSView *_editCurrentSessionView;
     IBOutlet NSButton *_copySettingsToProfile;
     IBOutlet NSButton *_copyProfleToSession;
+
+    BOOL _profileNameChangePending;
+    NSTimer *_timer;
 }
 
 - (void)dealloc {
     _profileNameFieldForEditCurrentSession.delegate = nil;
+    [_profileNameFieldForEditCurrentSession release];
+    [_timer invalidate];
     [super dealloc];
 }
 
@@ -84,6 +91,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     };
     info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
 
+    [_profileNameFieldForEditCurrentSession retain];
     info = [self defineControl:_profileNameFieldForEditCurrentSession
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
@@ -139,10 +147,19 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateProfileName)
+                                                 name:iTermProfilePreferencesUpdateSessionName
+                                               object:nil];
     [self updateEditAdvancedConfigButton];
 }
 
 - (void)windowWillClose {
+    if (_profileNameChangePending) {
+        [self updateProfileName];
+    }
+    [_timer invalidate];
+    _timer = nil;
     if ([_tagsTokenField textFieldIsFirstResponder]) {
         // The token field's editor is the first responder. Force the token field to end editing
         // so the last token entered will be tokenized and prefs saved with it.
@@ -462,6 +479,31 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
     [self setObject:view.shortcut.dictionaryValue forKey:KEY_SESSION_HOTKEY];
     [_profileDelegate profilesGeneralPreferencesSessionHotkeyDidChange];
+}
+
+#pragma mark - NSControlSubclassNotifications
+
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    id control = [aNotification object];
+    if (control != _profileNameFieldForEditCurrentSession) {
+        [super controlTextDidChange:aNotification];
+    } else {
+        _profileNameChangePending = YES;
+        if (!_timer) {
+            _timer = [NSTimer scheduledTimerWithTimeInterval:0.75 repeats:YES block:^(NSTimer * _Nonnull timer) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
+            }];
+        }
+    }
+}
+
+#pragma mark - Notifications
+
+- (void)updateProfileName {
+    if (_profileNameChangePending) {
+        [self settingChanged:_profileNameFieldForEditCurrentSession];
+        _profileNameChangePending = NO;
+    }
 }
 
 @end

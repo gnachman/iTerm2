@@ -8,6 +8,7 @@
 
 #import "VT100ScreenMark.h"
 #import "CapturedOutput.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringiTerm.h"
 
@@ -19,6 +20,9 @@ static NSString *const kMarkCodeKey = @"Code";
 static NSString *const kMarkStartDateKey = @"Start Date";
 static NSString *const kMarkEndDateKey = @"End Date";
 static NSString *const kMarkSessionGuidKey = @"Session Guid";
+static NSString *const kMarkPromptRange = @"Prompt Range";
+static NSString *const kMarkCommandRange = @"Command Range";
+static NSString *const kMarkOutputStart = @"Output Start";
 
 @implementation VT100ScreenMark {
     NSMutableArray *_capturedOutput;
@@ -43,6 +47,9 @@ static NSString *const kMarkSessionGuidKey = @"Session Guid";
     self = [super init];
     if (self) {
         [[self.class registry] setObject:self forKey:self.guid];
+        _promptRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        _commandRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        _outputStart = VT100GridAbsCoordMake(-1, -1);
     }
     return self;
 }
@@ -73,6 +80,21 @@ static NSString *const kMarkSessionGuidKey = @"Session Guid";
         }
         if ([dict[kMarkCommandKey] isKindOfClass:[NSString class]]) {
             _command = [dict[kMarkCommandKey] copy];
+        }
+        if (dict[kMarkPromptRange]) {
+            _promptRange = [dict[kMarkPromptRange] gridAbsCoordRange];
+        } else {
+            _promptRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        }
+        if (dict[kMarkCommandRange]) {
+            _commandRange = [dict[kMarkCommandRange] gridAbsCoordRange];
+        } else {
+            _commandRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        }
+        if (dict[kMarkOutputStart]) {
+            _outputStart = [dict[kMarkOutputStart] gridAbsCoord];
+        } else {
+            _outputStart = VT100GridAbsCoordMake(-1, -1);
         }
         [[self.class registry] setObject:self forKey:self.guid];
     }
@@ -115,14 +137,29 @@ static NSString *const kMarkSessionGuidKey = @"Session Guid";
     dict[kMarkStartDateKey] = @([self.startDate timeIntervalSinceReferenceDate]);
     dict[kMarkEndDateKey] = @([self.endDate timeIntervalSinceReferenceDate]);
     dict[kMarkSessionGuidKey] = self.sessionGuid ?: [NSNull null];
+    dict[kMarkPromptRange] = [NSDictionary dictionaryWithGridAbsCoordRange:_promptRange];
+    dict[kMarkCommandRange] = [NSDictionary dictionaryWithGridAbsCoordRange:_commandRange];
+    dict[kMarkOutputStart] = [NSDictionary dictionaryWithGridAbsCoord:_outputStart];
+
     return dict;
 }
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
     if (!_capturedOutput) {
         _capturedOutput = [[NSMutableArray alloc] init];
+    } else if ([self mergeCapturedOutputIfPossible:capturedOutput]) {
+        return;
     }
     [_capturedOutput addObject:capturedOutput];
+}
+
+- (BOOL)mergeCapturedOutputIfPossible:(CapturedOutput *)capturedOutput {
+    CapturedOutput *last = _capturedOutput.lastObject;
+    if (![last canMergeFrom:capturedOutput]) {
+        return NO;
+    }
+    [last mergeFrom:capturedOutput];
+    return YES;
 }
 
 - (void)setCommand:(NSString *)command {

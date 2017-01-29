@@ -30,12 +30,14 @@
 #import "DebugLogging.h"
 #import "iTermApplication.h"
 
+@class ITMNotification;
 @class PseudoTerminal;
 @class PTYSession;
 
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kSavedArrangementDidChangeNotification;
 extern NSString *const kNonTerminalWindowBecameKeyNotification;
+extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 
 extern NSString *const kMarkAlertActionModalAlert;
 extern NSString *const kMarkAlertActionPostNotification;
@@ -137,5 +139,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (NSArray*)terminals;
 
 - (void)updateBuriedSessionsMenu;
+
+- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
 
 @end

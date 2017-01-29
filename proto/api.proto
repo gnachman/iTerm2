@@ -1,0 +1,306 @@
+syntax = "proto2";
+option objc_class_prefix = "ITM";
+package iterm2;
+
+// All requests are wrapped in this message. This encoded message is the entirety of the payload
+// of messages sent over WebSocket from client to iTerm2.
+message Request {
+  optional int64 id = 1;
+
+  // Set exactly one of these fields.
+  optional GetBufferRequest get_buffer_request = 100;
+  optional GetPromptRequest get_prompt_request = 101;
+  optional TransactionRequest transaction_request = 102;
+  optional NotificationRequest notification_request = 103;
+  optional RegisterToolRequest register_tool_request = 104;
+}
+
+// All responses are wrapped in this message. This encoded message is the entirety of the payload
+// of messages sent over WebSocket from iTerm2 to client.
+message Response {
+  optional int64 id = 1;
+
+  optional GetBufferResponse get_buffer_response = 100;
+  optional GetPromptResponse get_prompt_response = 101;
+  optional TransactionResponse transaction_response = 102;
+  optional NotificationResponse notification_response = 103;
+  optional RegisterToolResponse register_tool_response = 104;
+
+  // This is the only response that is sent spontaneously. The 'id' field will not be set.
+  optional Notification notification = 1000;
+}
+
+// Registers a toolbelt tool that displays a webvieww with a URL of your choice.
+message RegisterToolRequest {
+  // This name is displayed to the user.
+  optional string name = 1;
+
+  // The tool's identifier should be unique. Prefix it with your app bundle. For example:
+  // com.example.mytool
+  optional string identifier = 2;
+
+  enum ToolType {
+    WEB_VIEW_TOOL = 1;
+  }
+
+  // The first time a tool is registered iTerm2 automatically adds it to the
+  // set of visible tools. To show it on subsequent re-registrations, set this
+  // to true. If the toolbelt itself is hidden, it will not be opened.
+  optional bool reveal_if_already_registered = 5 [default = false];
+
+  optional ToolType tool_type = 3 [default = WEB_VIEW_TOOL];
+
+  // For web view tools: The URL loaded at startup
+  optional string URL = 4;
+}
+
+message RegisterToolResponse {
+  enum Status {
+    OK = 0;
+    REQUEST_MALFORMED = 1;
+    PERMISSION_DENIED = 2;
+  }
+
+  optional Status status = 1;
+}
+
+enum NotificationType {
+  NOTIFY_ON_KEYSTROKE = 1;
+  NOTIFY_ON_SCREEN_UPDATE = 2;
+  NOTIFY_ON_PROMPT = 3;
+}
+
+message NotificationRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  // Set to true to subscribe, false to unsubscribe.
+  optional bool subscribe = 2;
+
+  // When to be notified (or notification to unsubscribe from)
+  optional NotificationType notification_type = 3;
+}
+
+message NotificationResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    NOT_SUBSCRIBED = 3;
+    ALREADY_SUBSCRIBED = 4;
+  }
+  optional Status status = 1;
+}
+
+message Notification {
+  optional KeystrokeNotification keystroke_notification = 1;
+  optional ScreenUpdateNotification screen_update_notification = 2;
+  optional PromptNotification prompt_notification = 3;
+}
+
+message KeystrokeNotification {
+  optional string characters = 1;
+  optional string charactersIgnoringModifiers = 2;
+  enum Modifiers {
+    CONTROL = 1;
+    OPTION = 2;
+    COMMAND = 3;
+    SHIFT = 4;
+    FUNCTION = 5;
+    NUMPAD = 6;
+  }
+  repeated Modifiers modifiers = 3;
+  optional int32 keyCode = 4;
+}
+
+message ScreenUpdateNotification {
+}
+
+message PromptNotification {
+}
+
+// Requests the contents of a range of lines.
+message GetBufferRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  // Which lines to return?
+  optional LineRange line_range = 2;
+}
+
+// Contains the contents of a range of lines.
+message GetBufferResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    INVALID_LINE_RANGE = 2;
+    REQUEST_MALFORMED = 3;
+  }
+
+  optional Status status = 1 [default = OK];
+
+  // Which lines were returned
+  optional Range range = 2;
+
+  // Those lines' contents.
+  repeated LineContents contents = 3;
+
+  optional Coord cursor = 4;
+
+  // The number of lines (including lines lost from the head of scrollback history) that precede
+  // the screen. Subtract this from cursor.y to get the cursor's position on the screen when it
+  // is scrolled to the bottom.
+  optional int64 num_lines_above_screen = 5;
+}
+
+// Requests metadata about the current shell prompt.
+message GetPromptRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+}
+
+// Reponds with metadata about the current shell prompt, if possible.
+message GetPromptResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    PROMPT_UNAVAILABLE = 3;
+  }
+
+  optional Status status = 1 [default = OK];
+
+  optional CoordRange prompt_range = 2;
+  optional CoordRange command_range = 3;
+  optional CoordRange output_range = 4;
+
+  optional string working_directory = 5;
+  optional string command = 6;
+}
+
+message TransactionRequest {
+  // Set to true to begin a new transaction or false to end the current
+  // transaction. The app's main loop will not advance while in a
+  // transaction. This effectively freezes time. Keep transactions short.
+  optional bool begin = 1;
+}
+
+message TransactionResponse {
+  enum Status {
+    OK = 0;
+    NO_TRANSACTION = 1;
+    ALREADY_IN_TRANSACTION = 2;
+  }
+  optional Status status = 1 [default = OK];
+}
+
+// Describes a range of lines.
+message LineRange {
+  // Only one of these fields should be set:
+  // ---------------------------------------
+  // Return just the current contents of the screen.
+  optional bool screen_contents_only = 1;
+
+  // Return the last `trailing lines` of the buffer, which could go back into
+  // scrollback history.
+  optional int32 trailing_lines = 2;
+}
+
+// Describes a range of values.
+message Range {
+  optional int64 location = 1;
+  optional int64 length = 2;
+}
+
+// Describes a range of cells.
+// |..xxxxx|
+// |xxxx...|
+// In the example above, the range of x's is: {start: {x:2, y:0}, end: {x:4, y:1}}
+// The end coordinate is the first cell *after* the end of the range described (so an empty range
+// has start == end)
+message CoordRange {
+  optional Coord start = 1;
+  optional Coord end = 2;
+}
+
+// Describes a cell's location.
+message Coord {
+  optional int32 x = 1;
+  // y=0 describes the first line. When the scrollback buffer is full and history is lost, the first
+  // lines become unavailable, but the numbering is stable (so the Nth line is always the Nth line,
+  // even if it's not the Nth *visible* line).
+  optional int64 y = 2;
+}
+
+// Describes the content of a line.
+message LineContents {
+  optional string text = 1;
+
+  // Some cells do not contain one code point. Use this to map code points in
+  // `text` to a screen position. If the line has no uninitialized cells at its end, then the
+  // sum of `repeats` equals the width of the display.
+  //
+  // For example, consider a line of text that appears on your display like:
+  //   xyz compañía
+  //
+  // The corresponding value of `text` would be:
+  //   xyzcompan~i'a
+  // Note: ~ and ' are combining marks, but are shown uncombined for illustrative purposes.
+  //
+  // Each code point in "xyz" as well as each of the non-accented letters in compañía takes one
+  // cell.
+  //
+  // The blank following 'z' is an uninitialized cell that has no code points,
+  // so the z and the c in `text` are adjacent. It's unusual for these to occur in the middle
+  // of a line, but it is possible.
+  //
+  // The ñ is composed of the letter n and a combining tilde (U+0303) (indicated in our example
+  // as ~), while í is composed of the leter i and a combining acute accent (U+0301) (indicated in
+  // our example as ').
+  //
+  // To map code points in `text` to screen positions, `code_points_per_cell`
+  // provides the number of code points in each cell. In our example you would
+  // get:
+  //
+  //   num_code_points=1, repeats=3     // x, y, z
+  //   num_code_points=0, repeats=1     // uninitialized cell
+  //   num_code_points=1, repeats=5     // c, o, m, p, a
+  //   num_code_points=2, repeats=2     // n + combining tilde, i + combining acute accent
+  //   num_code_points=1, repeats=1     // a
+  //
+  // Lines usually end with a series of uninitialized cells. These are not included.
+  //
+  // Here is psuedocode to interpret code_points_per_cell:
+  //
+  //   text_index_to_screen_coord = {}
+  //   screen_coord_to_text_index = {}
+  //   text_index = 0
+  //   screen_coord = 0
+  //   for cpps in code_points_per_cell:
+  //     repeat cpps.repeats times:
+  //       text_index_to_screen_coord[text_index] = screen_coord
+  //       screen_coord_to_text_index[screen_coord] = text_index
+  //       text_index += cpps.num_code_points
+  //       screen_coord += 1
+  //
+  // Cells with images are omitted.
+  repeated CodePointsPerCell code_points_per_cell = 2;
+
+  // How does this line end?
+  enum Continuation {
+    // This line is not wrapped.
+    CONTINUATION_HARD_EOL = 1;
+
+    // The next line is a continuation of this line.
+    CONTINUATION_SOFT_EOL = 2;
+  }
+  optional Continuation continuation = 3 [default = CONTINUATION_HARD_EOL];
+}
+
+message CodePointsPerCell {
+  // Number of code points per cell
+  optional int32 num_code_points = 1 [default = 1];
+
+  // Number of adjacent cells with this number of code points (always one or more).
+  optional int32 repeats = 2;
+}
