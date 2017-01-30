@@ -152,6 +152,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     IBOutlet NSMenuItem *sendInputNormally;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
+    IBOutlet NSMenuItem *windowArrangementsAsTabs_;
     IBOutlet NSMenu *_buriedSessions;
 
     IBOutlet NSMenuItem *showFullScreenTabs;
@@ -344,9 +345,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                          error:nil];
 }
 
-- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem {
+- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem asTabs:(BOOL)asTabs {
     [WindowArrangements refreshRestoreArrangementsMenu:menuItem
-                                          withSelector:@selector(restoreWindowArrangement:)
+                                          withSelector:asTabs ? @selector(restoreWindowArrangementAsTabs:) : @selector(restoreWindowArrangement:)
                                        defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
 }
 
@@ -558,7 +559,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             }
         });
     }
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -957,11 +959,16 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)windowArrangementsDidChange:(id)sender {
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 }
 
 - (void)restoreWindowArrangement:(id)sender {
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
+}
+
+- (void)restoreWindowArrangementAsTabs:(id)sender {
+    [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title] asTabs:YES];
 }
 
 - (NSMenu *)topLevelViewNamed:(NSString *)menuName {
@@ -1220,7 +1227,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     [container setSubmenu:subMenu];
-    [self updateRestoreWindowArrangementsMenu:container];
+    [self updateRestoreWindowArrangementsMenu:container asTabs:NO];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
@@ -2304,6 +2311,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                     name:request.name
                                                      URL:request.URL
                                revealIfAlreadyRegistered:request.revealIfAlreadyRegistered];
+}
+
+- (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
+                            handler:(void (^)(ITMSetProfilePropertyResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session) {
+        ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
+        handler(response);
+    }
+
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                               options:NSJSONReadingAllowFragments
+                                                 error:&error];
+    if (!value || error) {
+        ELog(@"JSON parsing error %@ for value in request %@", error, request);
+        ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        handler(response);
+    }
+
+    handler([session handleSetProfilePropertyForKey:request.key value:value]);
 }
 
 @end

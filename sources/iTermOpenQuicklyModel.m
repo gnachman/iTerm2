@@ -173,20 +173,37 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     }
 }
 
+- (iTermOpenQuicklyArrangementItem *)arrangementItemWithName:(NSString *)arrangementName
+                                                     matcher:(iTermMinimumSubsequenceMatcher *)matcher
+                                                      inTabs:(BOOL)inTabs {
+    iTermOpenQuicklyArrangementItem *item = [[[iTermOpenQuicklyArrangementItem alloc] init] autorelease];
+    NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+    item.score = [self scoreForArrangementWithName:arrangementName
+                                           matcher:matcher
+                                    attributedName:attributedName];
+    if (item.score > 0) {
+        item.inTabs = inTabs;
+        item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                        value:inTabs ? @"Restore window arrangement in tabs" : @"Restore window arrangement"
+                                                           highlightedIndexes:nil];
+        item.title = attributedName;
+        item.identifier = arrangementName;
+        return item;
+    } else {
+        return nil;
+    }
+}
+
 - (void)addOpenArrangementToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                       withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (NSString *arrangementName in [WindowArrangements allNames]) {
-        iTermOpenQuicklyArrangementItem *item = [[[iTermOpenQuicklyArrangementItem alloc] init] autorelease];
-        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
-        item.score = [self scoreForArrangementWithName:arrangementName
-                                               matcher:matcher
-                                        attributedName:attributedName];
-        if (item.score > 0) {
-            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                            value:@"Restore window arrangement"
-                                                               highlightedIndexes:nil];
-            item.title = attributedName;
-            item.identifier = arrangementName;
+        iTermOpenQuicklyArrangementItem *item;
+        item = [self arrangementItemWithName:arrangementName matcher:matcher inTabs:NO];
+        if (item) {
+            [items addObject:item];
+        }
+        item = [self arrangementItemWithName:arrangementName matcher:matcher inTabs:YES];
+        if (item) {
             [items addObject:item];
         }
     }
@@ -250,7 +267,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                [item isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
-        return item.identifier;
+        return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
         NSString *guid = item.identifier;
         for (PTYSession *session in [self sessions]) {

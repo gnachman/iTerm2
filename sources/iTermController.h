@@ -95,6 +95,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
+- (void)loadWindowArrangementWithName:(NSString *)theName asTabs:(BOOL)asTabs;
 - (void)repairSavedArrangementNamed:(NSString *)savedArrangementName
                replacingMissingGUID:(NSString *)guidToReplace
                            withGUID:(NSString *)replacementGuid;

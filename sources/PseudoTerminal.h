@@ -244,6 +244,9 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 // Load an arrangement into an empty window.
 - (BOOL)loadArrangement:(NSDictionary *)arrangement;
 
+// Load just the tabs into this window.
+- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions;
+
 // Returns the arrangement for this window.
 - (NSDictionary*)arrangement;
 

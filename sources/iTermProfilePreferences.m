@@ -10,6 +10,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
 #import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "PreferencePanel.h"
 
 #define PROFILE_BLOCK(x) [[^id(Profile *profile) { return [self x:profile]; } copy] autorelease]
@@ -142,6 +143,55 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 #pragma mark - Private
+
++ (BOOL)valueIsLegal:(id)value forKey:(NSString *)key {
+    NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING ];
+
+    NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
+                        KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
+                        KEY_CURSOR_COLOR, KEY_CURSOR_TEXT_COLOR, KEY_ANSI_0_COLOR,
+                        KEY_ANSI_1_COLOR, KEY_ANSI_2_COLOR, KEY_ANSI_3_COLOR, KEY_ANSI_4_COLOR,
+                        KEY_ANSI_5_COLOR, KEY_ANSI_6_COLOR, KEY_ANSI_7_COLOR, KEY_ANSI_8_COLOR,
+                        KEY_ANSI_9_COLOR, KEY_ANSI_10_COLOR, KEY_ANSI_11_COLOR, KEY_ANSI_12_COLOR,
+                        KEY_ANSI_13_COLOR, KEY_ANSI_14_COLOR, KEY_ANSI_15_COLOR,
+                        KEY_CURSOR_GUIDE_COLOR, KEY_BADGE_COLOR, KEY_TAB_COLOR,
+                        KEY_UNDERLINE_COLOR ];
+
+    NSArray *number = @[ KEY_USE_CURSOR_GUIDE, KEY_USE_TAB_COLOR, KEY_USE_UNDERLINE_COLOR,
+                         KEY_SMART_CURSOR_COLOR, KEY_MINIMUM_CONTRAST, KEY_CURSOR_BOOST,
+                         KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
+                         KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_USE_BRIGHT_BOLD,
+                         KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
+                         KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
+                         KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_BLUR, KEY_BLUR_RADIUS,
+                         KEY_BACKGROUND_IMAGE_TILED, KEY_BLEND, KEY_SYNC_TITLE,
+                         KEY_DISABLE_WINDOW_RESIZING,
+                         KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR,
+                         KEY_ASCII_ANTI_ALIASED, KEY_NONASCII_ANTI_ALIASED, KEY_SCROLLBACK_LINES,
+                         KEY_UNLIMITED_SCROLLBACK, KEY_SCROLLBACK_WITH_STATUS_BAR,
+                         KEY_SCROLLBACK_IN_ALTERNATE_SCREEN, KEY_CHARACTER_ENCODING,
+                         KEY_XTERM_MOUSE_REPORTING, KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL,
+                         KEY_UNICODE_VERSION, KEY_ALLOW_TITLE_REPORTING, KEY_ALLOW_TITLE_SETTING,
+                         KEY_DISABLE_PRINTING, KEY_DISABLE_SMCUP_RMCUP, KEY_SILENCE_BELL,
+                         KEY_BOOKMARK_GROWL_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
+                         KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
+                         KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
+                         KEY_CLOSE_SESSIONS_ON_END, KEY_PROMPT_CLOSE,
+                         KEY_UNDO_TIMEOUT, KEY_REDUCE_FLICKER, KEY_SEND_CODE_WHEN_IDLE,
+                         KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
+                         KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED,
+                         KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS,
+                       ];
+    if ([string containsObject:key]) {
+        return [value isKindOfClass:[NSString class]];
+    } else if ([color containsObject:key]) {
+        return [value isKindOfClass:[NSDictionary class]] && [(NSDictionary *)value isColorValue];
+    } else if ([number containsObject:key]) {
+        return [value isKindOfClass:[NSNumber class]];
+    } else {
+        return NO;
+    }
+}
 
 + (NSDictionary *)defaultValueMap {
     static NSDictionary *dict;
@@ -276,6 +326,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,
                   KEY_HOTKEY_ALTERNATE_SHORTCUTS: @[],
                   KEY_SESSION_HOTKEY: @{},
+                  // Remember to update valueIsLegal:forKey: and the websocket
+                  // README.md when adding a new value that should be
+                  // API-settable.
                 };
         [dict retain];
     }

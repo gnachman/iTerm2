@@ -2257,18 +2257,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self window] setFrame:rect display:YES];
     }
 
-    for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
-        NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
-        if (sessions) {
-            sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
-        }
-        if (![PTYTab openTabWithArrangement:tabArrangement
-                                 inTerminal:self
-                            hasFlexibleView:NO
-                                    viewMap:nil
-                                 sessionMap:sessionMap]) {
-            return NO;
-        }
+    if (![self restoreTabsFromArrangement:arrangement sessions:sessions]) {
+        return NO;
     }
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
@@ -2301,7 +2291,39 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions {
+    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
+        NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
+        if (sessions) {
+            sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
+        }
+        if (![PTYTab openTabWithArrangement:tabArrangement
+                                 inTerminal:self
+                            hasFlexibleView:NO
+                                    viewMap:nil
+                                 sessionMap:sessionMap]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
+                             includingContents:(BOOL)includeContents {
+    NSArray<PTYTab *> *tabs = [self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *theTab) {
+        if (theTab.sessions.count == 0) {
+            return NO;
+        }
+        if (excludeTmux && theTab.isTmuxTab) {
+            return NO;
+        }
+        return YES;
+    }];
+
+    return [self arrangementWithTabs:tabs includingContents:includeContents];
+}
+
+- (NSDictionary *)arrangementWithTabs:(NSArray<PTYTab *> *)tabs
                              includingContents:(BOOL)includeContents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
     NSRect rect = [[self window] frame];
@@ -2339,19 +2361,12 @@ ITERM_WEAKLY_REFERENCEABLE
     result[TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] = @(desiredColumns_);
 
     // Save tabs.
-    NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
-    for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
-        PTYTab *theTab = [tabViewItem identifier];
-        if ([[theTab sessions] count]) {
-            if (!excludeTmux || ![theTab isTmuxTab]) {
-                [tabs addObject:[theTab arrangementWithContents:includeContents]];
-            }
-        }
-    }
     if ([tabs count] == 0) {
         return nil;
     }
-    result[TERMINAL_ARRANGEMENT_TABS] = tabs;
+    result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(PTYTab *theTab) {
+        return [theTab arrangementWithContents:includeContents];
+    }];
 
     // Save index of selected tab.
     result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]);
@@ -4468,6 +4483,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
     }
+
+    item = [[[NSMenuItem alloc] initWithTitle:@"Save Tab as Window Arrangement"
+                                       action:@selector(saveTabAsWindowArrangement:)
+                                keyEquivalent:@""] autorelease];
+    [item setRepresentedObject:tabViewItem];
+    [rootMenu addItem:item];
 
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
@@ -6980,6 +7001,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
         return ![[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(saveTabAsWindowArrangement:)) {
+        return YES;
     } else if ([item action] == @selector(zoomOnSelection:)) {
         return ![self inInstantReplay] && [[self currentSession] hasSelection];
     } else if ([item action] == @selector(showFindPanel:) ||
@@ -7110,6 +7133,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    }];
     } else {
         [self appendTab:copyOfTab];
+    }
+}
+
+- (void)saveTabAsWindowArrangement:(id)sender {
+    PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
+    if (!theTab) {
+        theTab = [self currentTab];
+    }
+    NSDictionary *arrangement = [self arrangementWithTabs:@[ theTab ] includingContents:NO];
+    NSString *name = [WindowArrangements nameForNewArrangement];
+    if (name) {
+        [WindowArrangements setArrangement:@[ arrangement ] withName:name];
     }
 }
 

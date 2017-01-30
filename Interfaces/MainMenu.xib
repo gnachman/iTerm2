@@ -896,6 +896,10 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Restore Window Arrangement" id="1281"/>
                             </menuItem>
+                            <menuItem title="Restore Window Arrangement as Tabs" id="z6V-EJ-Ntf" userLabel="Restore Window Arrangement as Tabs">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Restore Window Arrangement as Tabs" id="fEX-7N-c8a"/>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1204">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -1095,6 +1099,7 @@ DQ
                 <outlet property="showFullScreenTabs" destination="1257" id="1260"/>
                 <outlet property="toolbeltMenu" destination="1296" id="1299"/>
                 <outlet property="useTransparency" destination="1228" id="1230"/>
+                <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
                 <outlet property="windowArrangements_" destination="1280" id="1285"/>
             </connections>
         </customObject>

@@ -15,12 +15,6 @@
 
 #import <CommonCrypto/CommonDigest.h>
 
-#if DEBUG
-#define ENABLE_WEBSOCKET_TESTING 1
-#else
-#define ENABLE_WEBSOCKET_TESTING 0
-#endif
-
 #define ILog ELog
 
 static NSString *const kProtocolName = @"api.iterm2.com";
@@ -56,9 +50,6 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         @{ @"upgrade": @"websocket",
            @"connection": @"Upgrade",
            @"sec-websocket-protocol": kProtocolName,
-#if !ENABLE_WEBSOCKET_TESTING
-           @"host": @"localhost",
-#endif
          };
     for (NSString *key in requiredValues) {
         if (![headers[key] isEqualToString:requiredValues[key]]) {
@@ -70,6 +61,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     NSArray<NSString *> *requiredKeys =
         @[ @"sec-websocket-key",
            @"sec-websocket-version",
+           @"host",
            @"origin" ];
     for (NSString *key in requiredKeys) {
         if ([headers[key] length] == 0) {
@@ -83,6 +75,22 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         ILog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
         return NO;
     }
+
+    NSString *host = headers[@"host"];
+    NSInteger colon = [host rangeOfString:@":" options:NSBackwardsSearch].location;
+    NSInteger port;
+    if (colon == NSNotFound) {
+        port = 80;
+    } else {
+        port = [[host substringFromIndex:colon + 1] integerValue];
+        host = [host substringToIndex:colon];
+    }
+    NSArray<NSString *> *loopbackNames = @[ @"localhost", @"127.0.0.1", @"[::1]" ];
+    if (![loopbackNames containsObject:host]) {
+        ILog(@"Host header does not specify a loopback host: %@", host);
+        return NO;
+    }
+
     NSString *version = headers[@"sec-websocket-version"];
     if ([version integerValue] < kWebSocketVersion) {
         ILog(@"websocket version too old");
