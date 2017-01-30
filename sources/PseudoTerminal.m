@@ -5415,12 +5415,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self fitTabsToWindow];
 
-    if (targetSession == [[self currentTab] activeSession]) {
+    if (targetSession == [[self currentTab] activeSession] && ![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         [[self currentTab] setActiveSession:newSession];
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
-    [self setDimmingForSession:targetSession];
+    [self setDimmingForSessions];
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
@@ -5949,7 +5949,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[self currentTab] setBroadcasting:NO];
     }
     broadcastMode_ = mode;
-        [self setDimmingForSessions];
+    [self setDimmingForSessions];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
 }
