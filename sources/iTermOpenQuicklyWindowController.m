@@ -198,9 +198,10 @@
                 // Create the hotkey window for this profile
                 [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
             }
-        } else if ([object isKindOfClass:[NSString class]]) {
+        } else if ([object isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
             // Load window arrangement
-            [[iTermController sharedInstance] loadWindowArrangementWithName:object];
+            iTermOpenQuicklyArrangementItem *item = (iTermOpenQuicklyArrangementItem *)object;
+            [[iTermController sharedInstance] loadWindowArrangementWithName:item.identifier asTabs:item.inTabs];
         } else if ([object isKindOfClass:[iTermOpenQuicklyChangeProfileItem class]]) {
             // Change profile
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
