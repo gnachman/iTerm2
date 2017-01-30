@@ -7,6 +7,7 @@
 
 #import "Coprocess.h"
 #import "DebugLogging.h"
+#import "iTermGrowlDelegate.h"
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
@@ -603,11 +604,8 @@ static int MyForkPty(int *amaster,
     } else if (pid < (pid_t)0) {
         // Error
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
-        NSRunCriticalAlertPanel(@"Unable to Fork!",
-                                @"iTerm2 cannot launch the program for this session.",
-                                @"OK",
-                                nil,
-                                nil);
+        [[iTermGrowlDelegate sharedInstance] growlNotify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
+        
         for (int j = 0; newEnviron[j]; j++) {
             free(newEnviron[j]);
         }
