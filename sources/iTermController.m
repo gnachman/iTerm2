@@ -414,6 +414,17 @@ static iTermController *gSharedInstance;
 }
 
 - (void)tryOpenArrangement:(NSDictionary *)terminalArrangement {
+    [self tryOpenArrangement:terminalArrangement asTabs:NO];
+}
+
+- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement asTabs:(BOOL)asTabs {
+    if (asTabs) {
+        PseudoTerminal *term = [self currentTerminal];
+        if (term) {
+            [term restoreTabsFromArrangement:terminalArrangement sessions:nil];
+            return;
+        }
+    }
     BOOL shouldDelay = NO;
     DLog(@"Try to open arrangement %p...", terminalArrangement);
     if ([PseudoTerminal willAutoFullScreenNewWindow] &&
@@ -439,15 +450,19 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)loadWindowArrangementWithName:(NSString *)theName {
+- (void)loadWindowArrangementWithName:(NSString *)theName asTabs:(BOOL)asTabs {
     _savedArrangementNameBeingRestored = [[theName retain] autorelease];
     NSArray *terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary *terminalArrangement in terminalArrangements) {
-            [self tryOpenArrangement:terminalArrangement];
+            [self tryOpenArrangement:terminalArrangement asTabs:asTabs];
         }
     }
     _savedArrangementNameBeingRestored = nil;
+}
+
+- (void)loadWindowArrangementWithName:(NSString *)theName {
+    [self loadWindowArrangementWithName:theName asTabs:NO];
 }
 
 // Return all the terminals in the given screen.

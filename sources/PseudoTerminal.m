@@ -2257,18 +2257,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self window] setFrame:rect display:YES];
     }
 
-    for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
-        NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
-        if (sessions) {
-            sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
-        }
-        if (![PTYTab openTabWithArrangement:tabArrangement
-                                 inTerminal:self
-                            hasFlexibleView:NO
-                                    viewMap:nil
-                                 sessionMap:sessionMap]) {
-            return NO;
-        }
+    if (![self restoreTabsFromArrangement:arrangement sessions:sessions]) {
+        return NO;
     }
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
@@ -2298,6 +2288,23 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self fitTabsToWindow];
     [_contentView updateToolbelt];
+    return YES;
+}
+
+- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions {
+    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
+        NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
+        if (sessions) {
+            sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
+        }
+        if (![PTYTab openTabWithArrangement:tabArrangement
+                                 inTerminal:self
+                            hasFlexibleView:NO
+                                    viewMap:nil
+                                 sessionMap:sessionMap]) {
+            return NO;
+        }
+    }
     return YES;
 }
 
