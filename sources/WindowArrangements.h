@@ -39,6 +39,8 @@
                           withSelector:(SEL)selector
                        defaultShortcut:(NSString *)defaultShortcut;
 
++ (NSString *)nameForNewArrangement;
+
 - (IBAction)setDefault:(id)sender;
 - (IBAction)deleteSelectedArrangement:(id)sender;
 

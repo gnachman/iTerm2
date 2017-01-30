@@ -343,30 +343,6 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
-    NSAlert *alert = [NSAlert alertWithMessageText:prompt
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@""];
-
-    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
-    [input setStringValue:defaultValue];
-    [alert setAccessoryView:input];
-    [alert layout];
-    [[alert window] makeFirstResponder:input];
-    NSInteger button = [alert runModal];
-    if (button == NSAlertDefaultReturn) {
-        [input validateEditing];
-        return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    } else if (button == NSAlertAlternateReturn) {
-        return nil;
-    } else {
-        NSAssert1(NO, @"Invalid input dialog button %d", (int) button);
-        return nil;
-    }
-}
-
 - (void)repairSavedArrangementNamed:(NSString *)savedArrangementName
                replacingMissingGUID:(NSString *)guidToReplace
                            withGUID:(NSString *)replacementGuid {
@@ -384,19 +360,9 @@ static iTermController *gSharedInstance;
 }
 
 - (void)saveWindowArrangement:(BOOL)allWindows {
-    NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
-                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
+    NSString *name = [WindowArrangements nameForNewArrangement];
     if (!name) {
         return;
-    }
-    if ([WindowArrangements hasWindowArrangement:name]) {
-        if (NSRunAlertPanel(@"Replace Existing Saved Window Arrangement?",
-                            @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?",
-                            @"Yes",
-                            @"No",
-                            nil) != NSAlertDefaultReturn) {
-            return;
-        }
     }
     NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     if (allWindows) {

@@ -160,6 +160,48 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     }
 }
 
++ (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
+    NSAlert *alert = [NSAlert alertWithMessageText:prompt
+                                     defaultButton:@"OK"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@""];
+
+    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
+    [input setStringValue:defaultValue];
+    [alert setAccessoryView:input];
+    [alert layout];
+    [[alert window] makeFirstResponder:input];
+    NSInteger button = [alert runModal];
+    if (button == NSAlertDefaultReturn) {
+        [input validateEditing];
+        return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    } else if (button == NSAlertAlternateReturn) {
+        return nil;
+    } else {
+        NSAssert1(NO, @"Invalid input dialog button %d", (int) button);
+        return nil;
+    }
+}
+
++ (NSString *)nameForNewArrangement {
+    NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
+                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
+    if (!name) {
+        return nil;
+    }
+    if ([WindowArrangements hasWindowArrangement:name]) {
+        if (NSRunAlertPanel(@"Replace Existing Saved Window Arrangement?",
+                            @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?",
+                            @"Yes",
+                            @"No",
+                            nil) != NSAlertDefaultReturn) {
+            return nil;
+        }
+    }
+    return name;
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
     NSString *key = [self nameAtIndex:rowIndex];
