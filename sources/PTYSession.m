@@ -11,6 +11,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
+#import "iTermBuriedSessions.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
@@ -442,6 +443,7 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -511,6 +513,7 @@ static const NSUInteger kMaxHosts = 100;
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
+        _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -632,6 +635,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keystrokeSubscriptions release];
     [_updateSubscriptions release];
     [_promptSubscriptions release];
+    [_locationChangeSubscriptions release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -1780,6 +1784,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
+}
+
+- (void)disinter {
+    _textview.dataSource = _screen;
+    _textview.delegate = self;
 }
 
 - (BOOL)revive {
@@ -4052,6 +4061,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_promptSubscriptions removeObjectForKey:notification.object];
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
+    [_locationChangeSubscriptions removeObjectForKey:notification.object];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
@@ -4568,7 +4578,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
     NSSize theSize;
-    Profile *tmuxBookmark = [_delegate tmuxBookmark];
+    Profile *tmuxBookmark = [[ProfileModel sharedInstance] tmuxProfile];
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
     // We intentionally don't send anything to tmux yet. We wait to get a
@@ -4609,7 +4619,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self printTmuxMessage:@"  C    Run tmux command."];
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
-        [self hideSession];
+        [self bury];
     }
 }
 
@@ -4889,8 +4899,8 @@ ITERM_WEAKLY_REFERENCEABLE
     self.tmuxMode = TMUX_NONE;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
-        [[[_delegate realParentWindow] window] isMiniaturized]) {
-        [[[_delegate realParentWindow] window] deminiaturize:self];
+        [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
     }
 }
 
@@ -4983,13 +4993,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSSize)tmuxBookmarkSize
 {
-        NSDictionary *dict = [_delegate tmuxBookmark];
-        return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
-                                          [[dict objectForKey:KEY_ROWS] intValue]);
+    NSDictionary *dict = [[ProfileModel sharedInstance] tmuxProfile];
+    return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
+                      [[dict objectForKey:KEY_ROWS] intValue]);
 }
 
 - (NSInteger)tmuxNumHistoryLinesInBookmark {
-    NSDictionary *dict = [_delegate tmuxBookmark];
+    NSDictionary *dict = [[ProfileModel sharedInstance] tmuxProfile];
     if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
         // 10M is close enough to infinity to be indistinguishable.
         return 10 * 1000 * 1000;
@@ -6401,6 +6411,19 @@ ITERM_WEAKLY_REFERENCEABLE
     [_delegate sessionBackgroundColorDidChange:self];
 }
 
+- (void)textViewBurySession {
+    [self bury];
+}
+
+- (void)bury {
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [[iTermBuriedSessions sharedInstance] addBuriedSession:self];
+    [_delegate sessionRemoveSession:self];
+
+    _delegate = nil;
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {
@@ -6950,6 +6973,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)reveal {
     DLog(@"Reveal session %@", self);
+    if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
+    }
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     BOOL okToActivateApp = YES;
@@ -7504,6 +7530,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     self.currentHost = host;
+
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.hostName = host.hostname;
+    notification.locationChangeNotification.userName = host.username;
+    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
@@ -7632,6 +7666,13 @@ ITERM_WEAKLY_REFERENCEABLE
                                   username:remoteHost.username
                                       path:newPath];
     [_textview setBadgeLabel:[self badgeLabel]];
+
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.directory = newPath;
+    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
 }
 
 - (BOOL)screenShouldSendReport {
@@ -8642,6 +8683,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case ITMNotificationType_NotifyOnScreenUpdate:
             subscriptions = _updateSubscriptions;
             break;
+        case ITMNotificationType_NotifyOnLocationChange:
+            subscriptions = _locationChangeSubscriptions;
+            break;
     }
     if (!subscriptions) {
         response.status = ITMNotificationResponse_Status_RequestMalformed;
@@ -8662,6 +8706,19 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     response.status = ITMNotificationResponse_Status_Ok;
+    return response;
+}
+
+- (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value {
+    ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+    if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
+        ELog(@"Value %@ is not legal for key %@", value, key);
+        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        return response;
+    }
+
+    [self setSessionSpecificProfileValues:@{ key: value }];
+    response.status = ITMSetProfilePropertyResponse_Status_Ok;
     return response;
 }
 

@@ -43,6 +43,7 @@
 @end
 
 @interface iTermOpenQuicklyArrangementItem : iTermOpenQuicklyItem
+@property (nonatomic) BOOL inTabs;
 @end
 
 @interface iTermOpenQuicklyHelpItem : iTermOpenQuicklyItem

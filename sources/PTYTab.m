@@ -2822,10 +2822,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [[ProfileModel sharedInstance] tmuxProfile];
 }
 
-- (Profile *)tmuxBookmark {
-    return [[ProfileModel sharedInstance] tmuxProfile];
-}
-
 + (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
@@ -4713,4 +4709,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)sessionRemoveSession:(PTYSession *)session {
+    BOOL removeTab = (self.sessions.count == 1);
+    [self removeSession:session];
+    if (removeTab) {
+        [_delegate tabRemoveTab:self];
+    }
+}
 @end

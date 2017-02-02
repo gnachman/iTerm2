@@ -37,6 +37,7 @@ CF_EXTERN_C_BEGIN
 @class ITMKeystrokeNotification;
 @class ITMLineContents;
 @class ITMLineRange;
+@class ITMLocationChangeNotification;
 @class ITMNotification;
 @class ITMNotificationRequest;
 @class ITMNotificationResponse;
@@ -45,6 +46,8 @@ CF_EXTERN_C_BEGIN
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
 @class ITMScreenUpdateNotification;
+@class ITMSetProfilePropertyRequest;
+@class ITMSetProfilePropertyResponse;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
 
@@ -56,6 +59,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnKeystroke = 1,
   ITMNotificationType_NotifyOnScreenUpdate = 2,
   ITMNotificationType_NotifyOnPrompt = 3,
+  ITMNotificationType_NotifyOnLocationChange = 4,
 };
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
@@ -167,6 +171,22 @@ GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMSetProfilePropertyResponse_Status
+
+typedef GPB_ENUM(ITMSetProfilePropertyResponse_Status) {
+  ITMSetProfilePropertyResponse_Status_Ok = 0,
+  ITMSetProfilePropertyResponse_Status_SessionNotFound = 1,
+  ITMSetProfilePropertyResponse_Status_RequestMalformed = 2,
+};
+
+GPBEnumDescriptor *ITMSetProfilePropertyResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSetProfilePropertyResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMTransactionResponse_Status
 
 typedef GPB_ENUM(ITMTransactionResponse_Status) {
@@ -226,6 +246,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_TransactionRequest = 102,
   ITMRequest_FieldNumber_NotificationRequest = 103,
   ITMRequest_FieldNumber_RegisterToolRequest = 104,
+  ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
 };
 
 /**
@@ -258,6 +279,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c registerToolRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasRegisterToolRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyRequest *setProfilePropertyRequest;
+/** Test to see if @c setProfilePropertyRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasSetProfilePropertyRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -269,6 +294,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_TransactionResponse = 102,
   ITMResponse_FieldNumber_NotificationResponse = 103,
   ITMResponse_FieldNumber_RegisterToolResponse = 104,
+  ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -301,6 +327,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 /** Test to see if @c registerToolResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasRegisterToolResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyResponse *setProfilePropertyResponse;
+/** Test to see if @c setProfilePropertyResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasSetProfilePropertyResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
@@ -318,6 +348,9 @@ typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
   ITMRegisterToolRequest_FieldNumber_RevealIfAlreadyRegistered = 5,
 };
 
+/**
+ * Registers a toolbelt tool that displays a webvieww with a URL of your choice.
+ **/
 @interface ITMRegisterToolRequest : GPBMessage
 
 /** This name is displayed to the user. */
@@ -333,6 +366,11 @@ typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
 /** Test to see if @c identifier has been set. */
 @property(nonatomic, readwrite) BOOL hasIdentifier;
 
+/**
+ * The first time a tool is registered iTerm2 automatically adds it to the
+ * set of visible tools. To show it on subsequent re-registrations, set this
+ * to true. If the toolbelt itself is hidden, it will not be opened.
+ **/
 @property(nonatomic, readwrite) BOOL revealIfAlreadyRegistered;
 
 @property(nonatomic, readwrite) BOOL hasRevealIfAlreadyRegistered;
@@ -403,6 +441,7 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_KeystrokeNotification = 1,
   ITMNotification_FieldNumber_ScreenUpdateNotification = 2,
   ITMNotification_FieldNumber_PromptNotification = 3,
+  ITMNotification_FieldNumber_LocationChangeNotification = 4,
 };
 
 @interface ITMNotification : GPBMessage
@@ -418,6 +457,10 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotification *promptNotification;
 /** Test to see if @c promptNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasPromptNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMLocationChangeNotification *locationChangeNotification;
+/** Test to see if @c locationChangeNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasLocationChangeNotification;
 
 @end
 
@@ -459,6 +502,30 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
 #pragma mark - ITMPromptNotification
 
 @interface ITMPromptNotification : GPBMessage
+
+@end
+
+#pragma mark - ITMLocationChangeNotification
+
+typedef GPB_ENUM(ITMLocationChangeNotification_FieldNumber) {
+  ITMLocationChangeNotification_FieldNumber_HostName = 1,
+  ITMLocationChangeNotification_FieldNumber_UserName = 2,
+  ITMLocationChangeNotification_FieldNumber_Directory = 3,
+};
+
+@interface ITMLocationChangeNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *hostName;
+/** Test to see if @c hostName has been set. */
+@property(nonatomic, readwrite) BOOL hasHostName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *userName;
+/** Test to see if @c userName has been set. */
+@property(nonatomic, readwrite) BOOL hasUserName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *directory;
+/** Test to see if @c directory has been set. */
+@property(nonatomic, readwrite) BOOL hasDirectory;
 
 @end
 
@@ -585,6 +652,159 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 /** Test to see if @c command has been set. */
 @property(nonatomic, readwrite) BOOL hasCommand;
 
+@end
+
+#pragma mark - ITMSetProfilePropertyRequest
+
+typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
+  ITMSetProfilePropertyRequest_FieldNumber_Session = 1,
+  ITMSetProfilePropertyRequest_FieldNumber_Key = 2,
+  ITMSetProfilePropertyRequest_FieldNumber_JsonValue = 3,
+};
+
+/**
+ * Sets a value in a session's copy of the profile without modifying the underlying profile.
+ **/
+@interface ITMSetProfilePropertyRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+/**
+ * The following keys are allowed. This table also gives the type that's expected in json_value:
+ * Name                                            String
+ * Badge Text                                      String
+ * Answerback String                               String
+ * Foreground Color                                Color Dictionary
+ * Background Color                                Color Dictionary
+ * Bold Color                                      Color Dictionary
+ * Link Color                                      Color Dictionary
+ * Selection Color                                 Color Dictionary
+ * Selected Text Color                             Color Dictionary
+ * Cursor Color                                    Color Dictionary
+ * Cursor Text Color                               Color Dictionary
+ * Ansi 0 Color                                    Color Dictionary
+ * Ansi 1 Color                                    Color Dictionary
+ * Ansi 2 Color                                    Color Dictionary
+ * Ansi 3 Color                                    Color Dictionary
+ * Ansi 4 Color                                    Color Dictionary
+ * Ansi 5 Color                                    Color Dictionary
+ * Ansi 6 Color                                    Color Dictionary
+ * Ansi 7 Color                                    Color Dictionary
+ * Ansi 8 Color                                    Color Dictionary
+ * Ansi 9 Color                                    Color Dictionary
+ * Ansi 10 Color                                   Color Dictionary
+ * Ansi 11 Color                                   Color Dictionary
+ * Ansi 12 Color                                   Color Dictionary
+ * Ansi 13 Color                                   Color Dictionary
+ * Ansi 14 Color                                   Color Dictionary
+ * Ansi 15 Color                                   Color Dictionary
+ * Smart Cursor Color                              Color Dictionary
+ * Tab Color                                       Color Dictionary
+ * Underline Color                                 Color Dictionary
+ * Cursor Guide Color                              Color Dictionary
+ * Badge Color                                     Color Dictionary
+ * Use Cursor Guide                                Number (boolean)
+ * Use Tab Color                                   Number (boolean)
+ * Use Underline Color                             Number (boolean)
+ * Smart Cursor Color                              Number (boolean)
+ * Minimum Contrast                                Number (0-1)
+ * Cursor Boost                                    Number (0-1)
+ * Cursor Type                                     Number (0=underline, 1=vertical, 2=box)
+ * Blinking Cursor                                 Number (boolean)
+ * Use Bold Font                                   Number (boolean)
+ * Thin Strokes                                    Number (0=no, 1=retina only, 2=always)
+ * ASCII Ligatures                                 Number (boolean)
+ * Non-ASCII Ligatures                             Number (boolean)
+ * Use Bright Bold                                 Number (boolean)
+ * Blink Allowed                                   Number (boolean)
+ * Use Italic Font                                 Number (boolean)
+ * Ambiguous Double Width                          Number (boolean)
+ * Unicode Normalization                           Number (0=none, 1=nfc, 2=nfd, 3=hfs+)
+ * Horizontal Spacing                              Number (floating point)
+ * Vertical Spacing                                Number (floating point)
+ * Use Non-ASCII Font                              Number (boolean)
+ * Transparency                                    Number (0-1)
+ * Blur                                            Number (boolean)
+ * Blur Radius                                     Number (0.1-30)
+ * Background Image Is Tiled                       Number (boolean)
+ * Blend                                           Number (0-1)
+ * Sync Title                                      Number (boolean)
+ * Disable Window Resizing                         Number (boolean)
+ * Only The Default BG Color Uses Transparency     Number (boolean)
+ * ASCII Anti Aliased                              Number (boolean)
+ * Non-ASCII Anti Aliased                          Number (boolean)
+ * Scrollback Lines                                Number (integer)
+ * Unlimited Scrollback                            Number (boolean)
+ * Scrollback With Status Bar                      Number (boolean)
+ * Scrollback in Alternate Screen                  Number (boolean)
+ * Character Encoding                              Number (integer, 4=UTF-8)
+ * Mouse Reporting                                 Number (boolean)
+ * Mouse Reporting allow mouse wheel               Number (boolean)
+ * Unicode Version                                 Number (integer, 8 or 9)
+ * Allow Title Reporting                           Number (boolean)
+ * Allow Title Setting                             Number (boolean)
+ * Disable Printing                                Number (boolean)
+ * Disable Smcup Rmcup                             Number (boolean)
+ * Silence Bell                                    Number (boolean)
+ * BM Growl                                        Number (boolean)
+ * Send Bell Alert                                 Number (boolean)
+ * Send Idle Alert                                 Number (boolean)
+ * Send New Output Alert                           Number (boolean)
+ * Send Session Ended Alert                        Number (boolean)
+ * Send Terminal Generated Alerts                  Number (boolean)
+ * Flashing Bell                                   Number (boolean)
+ * Visual Bell                                     Number (boolean)
+ * Close Sessions On End                           Number (boolean)
+ * Prompt Before Closing 2                         Number (boolean)
+ * Session Close Undo Timeout                      Number (floating point, number of seconds)
+ * Reduce Flicker                                  Number (boolean)
+ * Send Code When Idle                             Number (boolean)
+ * Idle Code                                       Number (integer, 0-255)
+ * Idle Period                                     Number (floating point, number of seconds)
+ * Option Key Sends                                Number (0=normal, 1=meta, 2=+esc)
+ * Right Option Key Sends                          Number (0=normal, 1=meta, 2=+esc)
+ * Application Keypad Allowed                      Number (boolean)
+ * Place Prompt at First Column                    Number (boolean)
+ * Show Mark Indicators                            Number (boolean)
+ *
+ * Color dictionaries have these mandatory keys taking numeric values between 0 and 1:
+ *   Red Component, Green Component, Blue Component
+ * And an optional key with a value in 0 to 1:
+ *   Alpha Component
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
+
+/**
+ * Does not need to be a dictionary. Here are examples of JSON protos having JSON values:
+ * Numeric example:
+ *   "json_value": "0.5"
+ * String example:
+ *   "json_value": "\\"Hello world\\""
+ * Color example:
+ *   "json_value": "{\\"Red Component\\": 1, \\"Green Component\\": 0, \\"Blue Component\\": 0, \\"Alpha Component\\": 1}"
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@end
+
+#pragma mark - ITMSetProfilePropertyResponse
+
+typedef GPB_ENUM(ITMSetProfilePropertyResponse_FieldNumber) {
+  ITMSetProfilePropertyResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSetProfilePropertyResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSetProfilePropertyResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMTransactionRequest

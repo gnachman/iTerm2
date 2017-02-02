@@ -22,6 +22,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
 @interface iTermProfilePreferences : NSObject
 
++ (BOOL)valueIsLegal:(id)value forKey:(NSString *)key;
 + (id)defaultObjectForKey:(NSString *)key;
 
 // Sets a bunch of values at once (just one notification posted).

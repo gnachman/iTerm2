@@ -112,6 +112,12 @@ static NSString *const kHotKeyModifierActivation = @"modifier activation";
     }
 }
 
+- (BOOL)isColorValue {
+    return (self[kEncodedColorDictionaryRedComponent] != nil &&
+            self[kEncodedColorDictionaryGreenComponent] != nil &&
+            self[kEncodedColorDictionaryBlueComponent] != nil);
+}
+
 - (NSColor *)colorValue {
     return [self colorValueWithDefaultAlpha:1.0];
 }

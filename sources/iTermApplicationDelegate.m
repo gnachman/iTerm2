@@ -34,6 +34,7 @@
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBuriedSessions.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
@@ -66,6 +67,7 @@
 #import "iTermToolbeltView.h"
 #import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+iTerm.h"
@@ -104,6 +106,7 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
 static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
+static NSString *const iTermBuriedSessionState = @"iTermBuriedSessionState";
 
 static NSString *const kHaveWarnedAboutIncompatibleSoftware = @"NoSyncHaveWarnedAboutIncompatibleSoftware";
 
@@ -149,6 +152,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     IBOutlet NSMenuItem *sendInputNormally;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
+    IBOutlet NSMenuItem *windowArrangementsAsTabs_;
+    IBOutlet NSMenu *_buriedSessions;
 
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
@@ -340,9 +345,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                          error:nil];
 }
 
-- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem {
+- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem asTabs:(BOOL)asTabs {
     [WindowArrangements refreshRestoreArrangementsMenu:menuItem
-                                          withSelector:@selector(restoreWindowArrangement:)
+                                          withSelector:asTabs ? @selector(restoreWindowArrangementAsTabs:) : @selector(restoreWindowArrangement:)
                                        defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
 }
 
@@ -554,7 +559,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             }
         });
     }
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -953,11 +959,16 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)windowArrangementsDidChange:(id)sender {
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 }
 
 - (void)restoreWindowArrangement:(id)sender {
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
+}
+
+- (void)restoreWindowArrangementAsTabs:(id)sender {
+    [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title] asTabs:YES];
 }
 
 - (NSMenu *)topLevelViewNamed:(NSString *)menuName {
@@ -1216,7 +1227,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     [container setSubmenu:subMenu];
-    [self updateRestoreWindowArrangementsMenu:container];
+    [self updateRestoreWindowArrangementsMenu:container asTabs:NO];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
@@ -1415,7 +1426,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                             // Add to existing tab by destroying and recreating it.
                             [term recreateTab:tab
                               withArrangement:restorableSession.arrangement
-                                     sessions:restorableSession.sessions];
+                                     sessions:restorableSession.sessions
+                                       revive:YES];
                         } else {
                             // Create a new tab and add the session to it.
                             [restorableSession.sessions[0] revive];
@@ -1628,6 +1640,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [coder encodeObject:hotkeyWindowsStates
                      forKey:kHotkeyWindowsRestorableStates];
     }
+
+    if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
+        [coder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] forKey:iTermBuriedSessionState];
+    }
     DLog(@"Time to save app restorable state: %@",
          @([NSDate timeIntervalSinceReferenceDate] - start));
 }
@@ -1656,6 +1672,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                 [[iTermHotKeyController sharedInstance] createHiddenWindowFromLegacyRestorableState:legacyState];
             }
         }
+    }
+    NSArray<NSDictionary *> *buried = [coder decodeObjectForKey:iTermBuriedSessionState];
+    if (buried) {
+        [[iTermBuriedSessions sharedInstance] restoreFromState:buried];
     }
 }
 
@@ -2054,6 +2074,20 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [[iTermTipController sharedInstance] showTip];
 }
 
+- (void)updateBuriedSessionsMenu {
+    [_buriedSessions removeAllItems];
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
+        item.representedObject = session;
+        [_buriedSessions addItem:item];
+    }
+}
+
+- (void)disinter:(NSMenuItem *)menuItem {
+    PTYSession *session = menuItem.representedObject;
+    [[iTermBuriedSessions sharedInstance] restoreSession:session];
+}
+
 #pragma mark - iTermPasswordManagerDelegate
 
 - (void)iTermPasswordManagerEnterPassword:(NSString *)password {
@@ -2277,6 +2311,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                     name:request.name
                                                      URL:request.URL
                                revealIfAlreadyRegistered:request.revealIfAlreadyRegistered];
+}
+
+- (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
+                            handler:(void (^)(ITMSetProfilePropertyResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session) {
+        ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
+        handler(response);
+    }
+
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                               options:NSJSONReadingAllowFragments
+                                                 error:&error];
+    if (!value || error) {
+        ELog(@"JSON parsing error %@ for value in request %@", error, request);
+        ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        handler(response);
+    }
+
+    handler([session handleSetProfilePropertyForKey:request.key value:value]);
 }
 
 @end

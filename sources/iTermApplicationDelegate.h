@@ -138,6 +138,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
 
+- (void)updateBuriedSessionsMenu;
+
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
 
 @end

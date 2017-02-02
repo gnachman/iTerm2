@@ -152,9 +152,6 @@ typedef enum {
            hSpacing:(double)horizontalSpacing
            vSpacing:(double)verticalSpacing;
 
-// Returns the profile to use for tmux sessions.
-- (Profile *)tmuxBookmark;
-
 // Notify the tab that this session, which is a tmux gateway, received a rename of a tmux window.
 - (void)sessionWithTmuxGateway:(PTYSession *)session
        wasNotifiedWindowWithId:(int)windowId
@@ -188,6 +185,9 @@ typedef enum {
 
 - (void)sessionCurrentDirectoryDidChange:(PTYSession *)session;
 - (void)sessionCurrentHostDidChange:(PTYSession *)session;
+
+// Remove a session from the tab, even if it's the only one.
+- (void)sessionRemoveSession:(PTYSession *)session;
 
 @end
 
@@ -434,6 +434,7 @@ typedef enum {
 @property(nonatomic, readonly) iTermQuickLookController *quickLookController;
 
 @property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
+@property(nonatomic, readonly) iTermRestorableSession *restorableSession;
 
 #pragma mark - methods
 
@@ -693,11 +694,18 @@ typedef enum {
 - (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord;
 - (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord;
 
+// Burys a session
+- (void)bury;
+
+// Undoes burying of a session.
+- (void)disinter;
+
 #pragma mark - API
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection;
+- (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value;
 
 #pragma mark - Testing utilities
 

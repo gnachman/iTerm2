@@ -17,5 +17,6 @@
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount;
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session;
 - (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location;
+- (void)tabRemoveTab:(PTYTab *)tab;
 
 @end
