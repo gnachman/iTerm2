@@ -994,6 +994,30 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
 
+        // GUID will be set for new saved arrangements since late 2014.
+        // Older versions won't be able to associate saved state with windows from a saved arrangement.
+        if (arrangement[SESSION_ARRANGEMENT_GUID]) {
+            DLog(@"The session arrangement has a GUID");
+            NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
+            if (guid && gRegisteredSessionContents[guid]) {
+                DLog(@"The GUID is registered");
+                // There was a registered session with this guid. This session was created by
+                // restoring a saved arrangement and there is saved content registered.
+                contents = gRegisteredSessionContents[guid];
+                aSession.guid = guid;
+                DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
+                     guid, aSession);
+            } else if ([[iTermController sharedInstance] startingUp] ||
+                       arrangement[SESSION_ARRANGEMENT_CONTENTS]) {
+                // If startingUp is set, then the session is being restored from the default
+                // arrangement, per user preference.
+                // If contents are present, then system window restoration is bringing back a
+                // session.
+                aSession.guid = guid;
+                DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
+            }
+        }
+
         if (runCommand) {
             // This path is NOT taken when attaching to a running server.
             //
@@ -1029,29 +1053,6 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
 
-        // GUID will be set for new saved arrangements since late 2014.
-        // Older versions won't be able to associate saved state with windows from a saved arrangement.
-        if (arrangement[SESSION_ARRANGEMENT_GUID]) {
-            DLog(@"The session arrangement has a GUID");
-            NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
-            if (guid && gRegisteredSessionContents[guid]) {
-                DLog(@"The GUID is registered");
-                // There was a registered session with this guid. This session was created by
-                // restoring a saved arrangement and there is saved content registered.
-                contents = gRegisteredSessionContents[guid];
-                aSession.guid = guid;
-                DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
-                     guid, aSession);
-            } else if ([[iTermController sharedInstance] startingUp] ||
-                       arrangement[SESSION_ARRANGEMENT_CONTENTS]) {
-                // If startingUp is set, then the session is being restored from the default
-                // arrangement, per user preference.
-                // If contents are present, then system window restoration is bringing back a
-                // session.
-                aSession.guid = guid;
-                DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
-            }
-        }
         DLog(@"Have contents=%@", @(contents != nil));
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
         if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
