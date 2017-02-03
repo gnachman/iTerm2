@@ -35,7 +35,7 @@
 
 - (void)safeMakeFirstResponder:(NSView *)view {
     if (view.window == self) {
-        [self makeFirstResponder:self];
+        [self makeFirstResponder:view];
     }
 }
 
