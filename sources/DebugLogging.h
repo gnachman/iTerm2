@@ -73,7 +73,9 @@ extern BOOL gDebugLogging;
       DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
       DLog(args); \
       if (TurnOffDebugLoggingSilently()) { \
-        NSRunAlertPanel(@"Critical Error", @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers.", @"OK", nil, nil); \
+        dispatch_async(dispatch_get_main_queue(), ^{ \
+          NSRunAlertPanel(@"Critical Error", @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers.", @"OK", nil, nil); \
+        }); \
       } \
     } \
   } while (0)
