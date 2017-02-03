@@ -160,23 +160,28 @@ static void StartDebugLogging() {
         gDebugLogLock = [[NSRecursiveLock alloc] init];
     });
     [gDebugLogLock lock];
-    [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
-                                              error:nil];
-    gDebugLogStr = [[NSMutableString alloc] init];
-    gDebugLogging = !gDebugLogging;
-    WriteDebugLogHeader();
+    if (!gDebugLogging) {
+        [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
+                                                  error:nil];
+        gDebugLogStr = [[NSMutableString alloc] init];
+        gDebugLogging = !gDebugLogging;
+        WriteDebugLogHeader();
+    }
     [gDebugLogLock unlock];
 }
 
-static void StopDebugLogging() {
+static BOOL StopDebugLogging() {
+    BOOL result = NO;
     [gDebugLogLock lock];
     if (gDebugLogging) {
         gDebugLogging = NO;
         FlushDebugLog();
 
         [gDebugLogStr release];
+        result = YES;
     }
     [gDebugLogLock unlock];
+    return result;
 }
 
 void TurnOnDebugLoggingSilently(void) {
@@ -185,8 +190,8 @@ void TurnOnDebugLoggingSilently(void) {
     }
 }
 
-void TurnOffDebugLoggingSilently(void) {
-    StopDebugLogging();
+BOOL TurnOffDebugLoggingSilently(void) {
+    return StopDebugLogging();
 }
 
 void ToggleDebugLogging(void) {
