@@ -2782,25 +2782,19 @@ ITERM_WEAKLY_REFERENCEABLE
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.
     NSSize decorationSize = [self windowDecorationSize];
+
+    // Note: During window state restoration, this may be called before the tabs are created from
+    // the arrangement, in which case the line height and char width will be 0.
+    if (self.tabs.count == 0) {
+        DLog(@"Window has no tabs. Returning early.");
+        return self.window.frame;
+    }
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
-    ITCriticalError([[session textview] lineHeight] > 0,
-                    @"Zero-size line height in session=%@ textview=%@ lineheight=%@ window controller=%@ tabs=%@ sessions=%@",
-                    session,
-                    session.textview,
-                    @(session.textview.lineHeight),
-                    self,
-                    self.tabs,
-                    self.allSessions);
-    ITCriticalError([[session textview] charWidth] > 0,
-                    @"Zero-size char width in session=%@ textview=%@ charWidth=%@ window controller=%@ tabs=%@ sessions=%@",
-                    session,
-                    session.textview,
-                    @(session.textview.charWidth),
-                    self,
-                    self.tabs,
-                    self.allSessions);
-
+    if (session.textview.lineHeight == 0 || session.textview.charWidth == 0) {
+        DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
+        return self.window.frame;
+    }
     BOOL edgeSpanning = YES;
     switch (windowType_) {
         case WINDOW_TYPE_TOP_PARTIAL:
