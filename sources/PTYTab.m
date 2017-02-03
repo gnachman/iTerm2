@@ -4092,6 +4092,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  sizes:(NSMutableArray *)sizes
                               minSizes:(NSArray *)minSizes
                               maxSizes:(NSArray *)maxSizes {
+    ITCriticalError(sizes.count == minSizes.count || sizes.count != maxSizes.count,
+                    @"Mismatch in sizes array. sizes=%@ minSizes=%@ maxSizes=%@ self=%@",
+                    sizes, minSizes, maxSizes, self);
     // In case quantization caused some rounding error, randomly adjust subviews by plus or minus
     // one pixel.
     int error = currentSumOfSizes - targetSize;
