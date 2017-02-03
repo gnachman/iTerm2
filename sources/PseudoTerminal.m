@@ -2781,6 +2781,23 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize decorationSize = [self windowDecorationSize];
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
+    ITCriticalError([[session textview] lineHeight] > 0,
+                    @"Zero-size line height in session=%@ textview=%@ lineheight=%@ window controller=%@ tabs=%@ sessions=%@",
+                    session,
+                    session.textview,
+                    @(session.textview.lineHeight),
+                    self,
+                    self.tabs,
+                    self.allSessions);
+    ITCriticalError([[session textview] charWidth] > 0,
+                    @"Zero-size char width in session=%@ textview=%@ charWidth=%@ window controller=%@ tabs=%@ sessions=%@",
+                    session,
+                    session.textview,
+                    @(session.textview.charWidth),
+                    self,
+                    self.tabs,
+                    self.allSessions);
+
     BOOL edgeSpanning = YES;
     switch (windowType_) {
         case WINDOW_TYPE_TOP_PARTIAL:
@@ -3682,7 +3699,7 @@ ITERM_WEAKLY_REFERENCEABLE
         default:
             break;
     }
-    if (!NSEqualRects(frame, self.window.frame)) {
+    if (!NSEqualRects(frame, self.window.frame) && frame.size.width > 0 && frame.size.height > 0) {
         [[self window] setFrame:frame display:NO];
     }
 

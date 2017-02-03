@@ -73,7 +73,7 @@
     [[iTermEventTap sharedInstance] setRemappingDelegate:self];
     
     if (![[iTermEventTap sharedInstance] isEnabled]) {
-        ELog(@"The event tap is NOT enabled");
+        DLog(@"The event tap is NOT enabled");
         if (IsMavericksOrLater()) {
             [self requestAccessibilityPermissionMavericks];
             return;
@@ -101,7 +101,7 @@
 }
 
 - (void)requestAccessibilityPermissionMavericks {
-    ELog(@"Requesting mavericks accessibility permission");
+    DLog(@"Requesting mavericks accessibility permission");
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSDictionary *options = @{ (NSString *)kAXTrustedCheckOptionPrompt: @YES };

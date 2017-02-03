@@ -1937,8 +1937,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         underlineOffset = _baselineOffset + font.xHeight / 2;
     }
 
+    CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
     NSPoint origin = NSMakePoint(startPoint.x,
-                                 [self retinaRound:startPoint.y + _cellSize.height + underlineOffset]);
+                                 [self retinaRound:startPoint.y + _cellSize.height + underlineOffset] - 1.0 / (2 * scaleFactor));
     [path moveToPoint:origin];
     [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
     [path setLineWidth:MAX(0.75, [self retinaRound:font.underlineThickness])];
