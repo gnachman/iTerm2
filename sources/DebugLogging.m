@@ -168,10 +168,25 @@ static void StartDebugLogging() {
     [gDebugLogLock unlock];
 }
 
+static void StopDebugLogging() {
+    [gDebugLogLock lock];
+    if (gDebugLogging) {
+        gDebugLogging = NO;
+        FlushDebugLog();
+
+        [gDebugLogStr release];
+    }
+    [gDebugLogLock unlock];
+}
+
 void TurnOnDebugLoggingSilently(void) {
     if (!gDebugLogging) {
         StartDebugLogging();
     }
+}
+
+void TurnOffDebugLoggingSilently(void) {
+    StopDebugLogging();
 }
 
 void ToggleDebugLogging(void) {
@@ -181,14 +196,9 @@ void ToggleDebugLogging(void) {
                         @"OK", nil, nil);
         StartDebugLogging();
     } else {
-        [gDebugLogLock lock];
-        gDebugLogging = !gDebugLogging;
-        FlushDebugLog();
-
+        StopDebugLogging();
         NSRunAlertPanel(@"Debug Logging Stopped",
                         @"Please send /tmp/debuglog.txt to the developers.",
                         @"OK", nil, nil);
-        [gDebugLogStr release];
-        [gDebugLogLock unlock];
     }
 }
