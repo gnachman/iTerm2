@@ -609,7 +609,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     DLog(@"%@", [NSThread callStackSymbols]);
     assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
-    NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\""];
     NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
                                 sessionId_, (int)size.width, (int)size.height];
     NSArray *commands = [NSArray arrayWithObjects:
@@ -802,7 +802,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
     NSString *resizeStr = [NSString stringWithFormat:@"resize-pane -%@ -t %%%d %d",
                            dir, wp, abs(amount)];
-    NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\""];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:resizeStr
                                          responseTarget:nil

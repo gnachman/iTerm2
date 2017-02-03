@@ -1256,9 +1256,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 
-- (void)applicationWillBecomeActive:(NSNotification *)aNotification
-{
-    DLog(@"******** Become Active");
+- (void)applicationWillBecomeActive:(NSNotification *)aNotification {
+    DLog(@"******** Become Active\n%@", [NSThread callStackSymbols]);
 }
 
 - (void)hideToolTipsInView:(NSView *)aView {
@@ -1486,8 +1485,14 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 }
 
-- (IBAction)toggleMultiLinePasteWarning:(id)sender {
-    [iTermAdvancedSettingsModel setNoSyncDoNotWarnBeforeMultilinePaste:![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste]];
+- (IBAction)toggleMultiLinePasteWarning:(NSButton *)sender {
+    if (sender.tag == 0) {
+        [iTermAdvancedSettingsModel setNoSyncDoNotWarnBeforeMultilinePaste:![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste]];
+    } else if (sender.tag == 1) {
+        [iTermAdvancedSettingsModel setPromptForPasteWhenNotAtPrompt:![iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt]];
+    } else if (sender.tag == 2) {
+        [iTermAdvancedSettingsModel setNoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt:![iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt]];
+    }
 }
 
 - (int)promptForNumberOfSpacesToConverTabsToWithDefault:(int)defaultValue {
@@ -1622,6 +1627,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
+    DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
     if (secureInputDesired_) {
         DLog(@"Application resigning active. Disabling secure input.");
         [self setSecureInput:NO];
@@ -1947,7 +1953,18 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [menuItem setState:[iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState];
         return YES;
     } else if ([menuItem action] == @selector(toggleMultiLinePasteWarning:)) {
-        menuItem.state = [self warnBeforeMultiLinePaste] ? NSOnState : NSOffState;
+        if ([iTermWarning warningHandler]) {
+            // In a test.
+            return YES;
+        }
+        if (menuItem.tag == 0) {
+            menuItem.state = ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste] ? NSOnState : NSOffState;
+        } else if (menuItem.tag == 1) {
+            menuItem.state = ![iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt] ? NSOnState : NSOffState;
+            return ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste];
+        } else if (menuItem.tag == 2) {
+            menuItem.state = ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt] ? NSOnState : NSOffState;
+        }
         return YES;
     } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
         return ![[iTermTipController sharedInstance] showingTip];

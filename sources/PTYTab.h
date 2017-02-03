@@ -52,6 +52,7 @@
 @property(nonatomic, readonly) NSSize tmuxSize;
 @property(nonatomic, copy) NSString *tmuxWindowName;
 @property (readonly, getter=isTmuxTab) BOOL tmuxTab;
+@property (nonatomic, readonly) PTYTabState state;
 
 // If non-nil, this session may not change size. This is useful when you want
 // to change a session's size. You can resize it, lock it, and then

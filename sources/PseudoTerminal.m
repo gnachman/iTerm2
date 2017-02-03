@@ -1634,7 +1634,9 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
         title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
     }
-
+    if ((self.numberOfTabs == 1) && (self.tabs.firstObject.state & kPTYTabBellState) && !self.tabBarShouldBeVisible) {
+        title = [title stringByAppendingString:@" 🔔"];
+    }
     if (liveResize_) {
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
@@ -2697,9 +2699,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)canonicalizeWindowFrame {
-    PtyLog(@"canonicalizeWindowFrame");
+    PtyLog(@"canonicalizeWindowFrame %@\n%@", self, [NSThread callStackSymbols]);
     // It's important that this method respect the current screen if possible because
     // -windowDidChangeScreen calls it.
+
     NSScreen* screen = [[self window] screen];
     if (!screen) {
         screen = self.screen;
@@ -5922,7 +5925,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return allSubstitutions;
 }
 
-- (NSArray<PTYTab *>*)tabs {
+- (NSArray<PTYTab *> *)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
@@ -8020,6 +8023,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
     [self updateTouchBarFunctionKeyLabels];
+}
+
+- (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
+    if (self.numberOfTabs == 1) {
+        [self setWindowTitle];
+    }
 }
 
 - (void)updateTouchBarFunctionKeyLabels {
