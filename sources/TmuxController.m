@@ -179,7 +179,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     self.sessionGuid = nil;
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
+    _detaching = YES;
     [self closeAllPanes];
+    _detaching = NO;
     [self openWindowsInitial];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerAttachedSessionDidChange
                                                         object:nil];
