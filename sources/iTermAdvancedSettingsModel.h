@@ -160,6 +160,7 @@
 + (int)terminalVMargin;
 + (BOOL)useColorfgbgFallback;
 + (BOOL)promptForPasteWhenNotAtPrompt;
++ (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
 + (BOOL)performDNSLookups;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
 + (BOOL)darkThemeHasBlackTitlebar;

@@ -28,7 +28,7 @@
 
 - (void)dealloc {
     [_savedRemotePrefs release];
-    [super dealloc];
+    [super dealloc]; 
 }
 
 - (BOOL)shouldLoadRemotePrefs {
@@ -75,6 +75,8 @@
 {
     NSArray *exemptKeys = @[ kPreferenceKeyLoadPrefsFromCustomFolder,
                              kPreferenceKeyCustomFolder,
+                             @"Secure Input",
+                             @"moveToApplicationsFolderAlertSuppress",
                              @"iTerm Version" ];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
