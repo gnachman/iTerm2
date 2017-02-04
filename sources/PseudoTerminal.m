@@ -3892,8 +3892,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)saveAffinitiesLater:(PTYTab *)theTab {
     // Avoid saving affinities during detach because the windows will be gone by the time it saves them.
-//    if ([theTab isTmuxTab] && !theTab.tmuxController.detaching) {
-    if ([theTab isTmuxTab]) {
+    if ([theTab isTmuxTab] && !theTab.tmuxController.detaching) {
         PtyLog(@"Queueing call to saveAffinitiesLater from %@", [NSThread callStackSymbols]);
         [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
                    withObject:[theTab tmuxController]
