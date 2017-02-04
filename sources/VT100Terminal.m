@@ -912,8 +912,8 @@ static const int kMaxScreenRows = 4096;
     }
 
     // Convert the coordRange to a 0-based rect (all coords are 1-based so far) and return it.
-    return VT100GridRectMake(coordRange.start.x - 1,
-                             coordRange.start.y - 1,
+    return VT100GridRectMake(MAX(0, coordRange.start.x - 1),
+                             MAX(0, coordRange.start.y - 1),
                              coordRange.end.x - coordRange.start.x + 1,
                              coordRange.end.y - coordRange.start.y + 1);
 }
