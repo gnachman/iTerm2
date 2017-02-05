@@ -125,4 +125,8 @@
     return [_delegate currentSession];
 }
 
+- (BOOL)scriptFrontmost {
+    return [[[iTermController sharedInstance] currentTerminal] window] == self;
+}
+
 @end
