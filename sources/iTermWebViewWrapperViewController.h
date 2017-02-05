@@ -11,7 +11,7 @@
 
 @interface iTermWebViewWrapperViewController : NSViewController
 
-- (instancetype)initWithWebView:(WKWebView *)webView;
+- (instancetype)initWithWebView:(WKWebView *)webView backupURL:(NSURL *)backupURL;
 
 - (void)terminateWebView;
 

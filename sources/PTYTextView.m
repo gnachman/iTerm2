@@ -2752,12 +2752,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
     WKWebView *webView = [[iTermWebViewPool sharedInstance] webView];
     if (webView) {
-        NSURLRequest *request =
-            [[[NSURLRequest alloc] initWithURL:url] autorelease];
-        [webView loadRequest:request];
-
+        if ([[url.scheme lowercaseString] isEqualToString:@"http"]) {
+            [webView loadHTMLString:@"This site cannot be displayed in QuickLook because of Application Transport Security. Only HTTPS URLs can be previewed." baseURL:nil];
+        } else {
+            NSURLRequest *request =
+                [[[NSURLRequest alloc] initWithURL:url] autorelease];
+            [webView loadRequest:request];
+        }
         NSPopover *popover = [[[NSPopover alloc] init] autorelease];
-        NSViewController *viewController = [[[iTermWebViewWrapperViewController alloc] initWithWebView:webView] autorelease];
+        NSViewController *viewController = [[[iTermWebViewWrapperViewController alloc] initWithWebView:webView
+                                                                                             backupURL:url] autorelease];
         popover.contentViewController = viewController;
         popover.contentSize = viewController.view.frame.size;
         NSRect rect = NSMakeRect(pointInWindow.x - _charWidth / 2,

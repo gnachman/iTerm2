@@ -12,17 +12,25 @@
 
 @interface iTermWebViewWrapperViewController ()
 @property(nonatomic, retain) WKWebView *webView;
+@property(nonatomic, copy) NSURL *backupURL;
 @end
 
 
 @implementation iTermWebViewWrapperViewController
 
-- (instancetype)initWithWebView:(WKWebView *)webView {
-  self = [super initWithNibName:nil bundle:nil];
-  if (self) {
-    self.webView = webView;
-  }
-  return self;
+- (instancetype)initWithWebView:(WKWebView *)webView backupURL:(NSURL *)backupURL {
+    self = [super initWithNibName:nil bundle:nil];
+    if (self) {
+        self.webView = webView;
+        self.backupURL = backupURL;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_webView release];
+    [_backupURL release];
+    [super dealloc];
 }
 
 - (void)loadView {
@@ -51,7 +59,11 @@
 }
 
 - (void)openInBrowserButtonPressed:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:self.webView.URL];
+    NSURL *URL = self.webView.URL ?: self.backupURL;
+    if ([URL isEqual:[NSURL URLWithString:@"about:blank"]]) {
+        URL = self.backupURL;
+    }
+    [[NSWorkspace sharedWorkspace] openURL:URL];
 }
 
 - (NSString *)browserName {
