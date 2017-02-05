@@ -153,7 +153,9 @@
                                                             @"FuraCodeNerdFontCompleteMono---Regular",
                                                             @"FuraCodeNerdFontCompleteMono---Retina" ]] retain];
     });
-    return [fontsWithDefaultLigatures containsObject:self.fontName];
+    BOOL result = [fontsWithDefaultLigatures containsObject:self.fontName];
+    DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
+    return result;
 }
 
 - (BOOL)it_supportsLigatures {
