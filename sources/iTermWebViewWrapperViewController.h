@@ -19,8 +19,7 @@
 
 // Because every WKWebView you create and place in a popover is immortal, I keep a pool of them
 // around and reuse them so you generally never have more than one allocated at a time.
-@interface iTermWebViewPool : NSObject
+@interface iTermWebViewFactory : NSObject
 + (instancetype)sharedInstance;
 - (WKWebView *)webView;
-- (void)returnWebViewToPool:(WKWebView *)webView;
 @end

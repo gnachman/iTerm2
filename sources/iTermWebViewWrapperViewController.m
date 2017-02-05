@@ -84,14 +84,13 @@
 }
 
 - (void)terminateWebView {
-    [[iTermWebViewPool sharedInstance] returnWebViewToPool:self.webView];
+    [_webView stopLoading];
+    [_webView loadHTMLString:@"<html/>" baseURL:nil];
 }
 
 @end
 
-@implementation iTermWebViewPool {
-    NSMutableArray<WKWebView *> *_pool;
-}
+@implementation iTermWebViewFactory
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -105,51 +104,26 @@
     return instance;
 }
 
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _pool = [[NSMutableArray alloc] init];
-    }
-    return self;
-}
-
-- (void)dealloc {
-    [_pool release];
-    [super dealloc];
-}
-
 - (WKWebView *)webView {
-    WKWebView *webView = [[_pool.firstObject retain] autorelease];
-    if (webView) {
-        [_pool removeObjectAtIndex:0];
-         return webView;
-    } else {
-        Class WKWebViewClass = NSClassFromString(@"WKWebView");
-        Class WKWebViewConfigurationClass = NSClassFromString(@"WKWebViewConfiguration");
-        WKWebViewConfiguration *configuration = [[[WKWebViewConfigurationClass alloc] init] autorelease];
+    Class WKWebViewClass = NSClassFromString(@"WKWebView");
+    Class WKWebViewConfigurationClass = NSClassFromString(@"WKWebViewConfiguration");
+    WKWebViewConfiguration *configuration = [[[WKWebViewConfigurationClass alloc] init] autorelease];
 
-        configuration.applicationNameForUserAgent = @"iTerm2";
-        WKPreferences *prefs = [[[NSClassFromString(@"WKPreferences") alloc] init] autorelease];
-        prefs.javaEnabled = NO;
-        prefs.javaScriptEnabled = YES;
-        prefs.javaScriptCanOpenWindowsAutomatically = NO;
-        configuration.preferences = prefs;
-        configuration.processPool = [[[NSClassFromString(@"WKProcessPool") alloc] init] autorelease];
-        WKUserContentController *userContentController =
-            [[[NSClassFromString(@"WKUserContentController") alloc] init] autorelease];
-        configuration.userContentController = userContentController;
-        configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];
-        WKWebView *webView = [[[WKWebViewClass alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
-                                                       configuration:configuration] autorelease];
+    configuration.applicationNameForUserAgent = @"iTerm2";
+    WKPreferences *prefs = [[[NSClassFromString(@"WKPreferences") alloc] init] autorelease];
+    prefs.javaEnabled = NO;
+    prefs.javaScriptEnabled = YES;
+    prefs.javaScriptCanOpenWindowsAutomatically = NO;
+    configuration.preferences = prefs;
+    configuration.processPool = [[[NSClassFromString(@"WKProcessPool") alloc] init] autorelease];
+    WKUserContentController *userContentController =
+        [[[NSClassFromString(@"WKUserContentController") alloc] init] autorelease];
+    configuration.userContentController = userContentController;
+    configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];
+    WKWebView *webView = [[[WKWebViewClass alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
+                                                   configuration:configuration] autorelease];
 
-        return webView;
-    }
-}
-
-- (void)returnWebViewToPool:(WKWebView *)webView {
-    [webView stopLoading];
-    [webView loadHTMLString:@"<html/>" baseURL:nil];
-    [_pool addObject:webView];
+    return webView;
 }
 
 @end

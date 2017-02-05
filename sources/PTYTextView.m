@@ -2750,7 +2750,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
-    WKWebView *webView = [[iTermWebViewPool sharedInstance] webView];
+    WKWebView *webView = [[iTermWebViewFactory sharedInstance] webView];
     if (webView) {
         if ([[url.scheme lowercaseString] isEqualToString:@"http"]) {
             [webView loadHTMLString:@"This site cannot be displayed in QuickLook because of Application Transport Security. Only HTTPS URLs can be previewed." baseURL:nil];
