@@ -55,9 +55,35 @@ extern BOOL gDebugLogging;
     } while (0)
 #endif
 
+#define ITAssert(condition) \
+  do { \
+    if (!(condition)) { \
+      DLog(@"Crashing because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      if (TurnOffDebugLoggingSilently()) { \
+        NSRunAlertPanel(@"Critical Error", @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers.", @"OK", nil, nil); \
+      } \
+      assert(NO, "ITAssert: " #condition); \
+    } \
+  } while (0)
+
+#define ITCriticalError(condition, args...) \
+  do { \
+    if (!(condition)) { \
+      TurnOnDebugLoggingSilently(); \
+      DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      DLog(args); \
+      if (TurnOffDebugLoggingSilently()) { \
+        dispatch_async(dispatch_get_main_queue(), ^{ \
+          NSRunAlertPanel(@"Critical Error", @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers.", @"OK", nil, nil); \
+        }); \
+      } \
+    } \
+  } while (0)
 
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 void TurnOnDebugLoggingSilently(void);
+BOOL TurnOffDebugLoggingSilently(void);
+
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);

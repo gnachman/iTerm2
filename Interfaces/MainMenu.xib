@@ -393,10 +393,22 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="htR-tW-t3s"/>
-                                        <menuItem title="Warn before Multi-Line Paste" tag="2" id="IH2-H8-9Ao">
+                                        <menuItem title="Warn Before Multi-Line Paste" id="IH2-H8-9Ao">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="toggleMultiLinePasteWarning:" target="201" id="BeA-rG-dNT"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Limit Multi-Line Paste Warning to Shell Prompt" tag="1" id="L16-T3-OVz">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleMultiLinePasteWarning:" target="201" id="hP8-62-8Sv"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Warn Before Pasting One Line Ending in a Newline at Shell Prompt" tag="2" id="YHP-Qx-eCZ">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleMultiLinePasteWarning:" target="201" id="FcI-Al-Hhz"/>
                                             </connections>
                                         </menuItem>
                                     </items>
@@ -1105,13 +1117,5 @@ DQ
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
-        <menuItem title="Item" id="Zmu-o3-jVG">
-            <modifierMask key="keyEquivalentModifierMask"/>
-        </menuItem>
-        <menuItem title="Show Toolbelt" keyEquivalent="B" id="Ocw-a0-xZu">
-            <connections>
-                <action selector="toggleToolbeltVisibility:" target="-1" id="p4r-A4-cZD"/>
-            </connections>
-        </menuItem>
     </objects>
 </document>

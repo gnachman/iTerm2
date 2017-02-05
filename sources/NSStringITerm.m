@@ -811,6 +811,29 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)timestampConversionHelp {
+    NSDate *date;
+    date = [self dateValueFromUnix];
+    if (!date) {
+        date = [self dateValueFromUTC];
+    }
+    if (date) {
+        NSString *template;
+        if (fmod(date.timeIntervalSince1970, 1) > 0.001) {
+            template = @"yyyyMMMd hh:mm:ss.SSS z";
+        } else {
+            template = @"yyyyMMMd hh:mm:ss z";
+        }
+        NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
+                                                           options:0
+                                                            locale:[NSLocale currentLocale]]];
+        return [fmt stringFromDate:date];
+    } else {
+        return nil;
+    }
+}
+
+- (NSDate *)dateValueFromUnix {
     static const NSUInteger kTimestampLength = 10;
     static const NSUInteger kJavaTimestampLength = 13;
     if ((self.length == kTimestampLength ||
@@ -821,25 +844,36 @@ int decode_utf8_char(const unsigned char *datap,
                 return nil;
             }
         }
-        NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
         // doubles run out of precision at 2^53. The largest Java timestamp we will convert is less
         // than 2^41, so this is fine.
         NSTimeInterval timestamp = [self doubleValue];
-        NSString *template;
         if (self.length == kJavaTimestampLength) {
             // Convert milliseconds to seconds
             timestamp /= 1000.0;
-            template = @"yyyyMMMd hh:mm:ss.SSS z";
-        } else {
-            template = @"yyyyMMMd hh:mm:ss z";
         }
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-        return [fmt stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+        return [NSDate dateWithTimeIntervalSince1970:timestamp];
     } else {
         return nil;
     }
+}
+
+- (NSDate *)dateValueFromUTC {
+    NSArray<NSString *> *formats = @[ @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                      @"yyyy-MM-dd't'HH:mm:ss.SSS'z'",
+                                      @"yyyy-MM-dd'T'HH:mm:ss'Z'",
+                                      @"yyyy-MM-dd't'HH:mm:ss'z'",
+                                      @"yyyy-MM-dd'T'HH:mm'Z'",
+                                      @"yyyy-MM-dd't'HH:mm'z'" ];
+    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    for (NSString *format in formats) {
+        dateFormatter.dateFormat = format;
+        dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+        NSDate *date = [dateFormatter dateFromString:self];
+        if (date) {
+            return date;
+        }
+    }
+    return nil;
 }
 
 - (NSString *)hexOrDecimalConversionHelp {

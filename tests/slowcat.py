@@ -11,6 +11,7 @@ def usage():
 
 delay = .02
 repeat = 1
+skip = 0
 i = 1
 try:
   while i < len(sys.argv):
@@ -23,6 +24,10 @@ try:
     elif flag == '-r':
       value = sys.argv[i + 1]
       repeat = int(value)
+      n = 2
+    elif flag == '-s':
+      value = sys.argv[i + 1]
+      skip = int(value)
       n = 2
     elif flag == '--':
       i += 1
@@ -40,10 +45,13 @@ def slowcat(filename):
     sys.stdout.write(contents)
     sys.stdout.flush()
   else:
+    o = 0
     for c in contents:
       sys.stdout.write(c)
-      sys.stdout.flush()
-      time.sleep(delay)
+      if o >= skip:
+        sys.stdout.flush()
+        time.sleep(delay)
+      o += 1
   f.close()
 
 while repeat != 0:

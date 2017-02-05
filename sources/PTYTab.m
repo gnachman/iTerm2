@@ -60,21 +60,6 @@ static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTY
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
-// States
-typedef NS_OPTIONS(NSUInteger, PTYTabState) {
-    // Bell has rung.
-    kPTYTabBellState = (1 << 0),
-    
-    // Background tab is idle; it's been a while since new output arrived.
-    kPTYTabIdleState = (1 << 1),
-    
-    // Background tab just got new output.
-    kPTYTabNewOutputState = (1 << 2),
-    
-    // A session has ended.
-    kPTYTabDeadState = (1 << 3)
-};
-
 static void SwapSize(NSSize* size) {
     NSSize temp = *size;
     size->height = temp.width;
@@ -124,7 +109,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     int _activityCounter;
     int _uniqueId;
     // See kPTYTab*State constants above.
-    NSUInteger _state;
     int _tabNumberForItermSessionId;
 
     // Owning tab view item
@@ -506,6 +490,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _state &= ~flagsToReset;
     if (_state != before) {
         [self updateIcon];
+        [_delegate tab:self didChangeToState:_state];
     }
 }
 
@@ -4092,6 +4077,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  sizes:(NSMutableArray *)sizes
                               minSizes:(NSArray *)minSizes
                               maxSizes:(NSArray *)maxSizes {
+    ITCriticalError(sizes.count == minSizes.count && sizes.count == maxSizes.count,
+                    @"Mismatch in sizes array. sizes=%@ minSizes=%@ maxSizes=%@ self=%@",
+                    sizes, minSizes, maxSizes, self);
     // In case quantization caused some rounding error, randomly adjust subviews by plus or minus
     // one pixel.
     int error = currentSumOfSizes - targetSize;

@@ -1634,7 +1634,9 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
         title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
     }
-
+    if ((self.numberOfTabs == 1) && (self.tabs.firstObject.state & kPTYTabBellState) && !self.tabBarShouldBeVisible) {
+        title = [title stringByAppendingString:@" 🔔"];
+    }
     if (liveResize_) {
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
@@ -2697,9 +2699,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)canonicalizeWindowFrame {
-    PtyLog(@"canonicalizeWindowFrame");
+    PtyLog(@"canonicalizeWindowFrame %@\n%@", self, [NSThread callStackSymbols]);
     // It's important that this method respect the current screen if possible because
     // -windowDidChangeScreen calls it.
+
     NSScreen* screen = [[self window] screen];
     if (!screen) {
         screen = self.screen;
@@ -2779,8 +2782,19 @@ ITERM_WEAKLY_REFERENCEABLE
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.
     NSSize decorationSize = [self windowDecorationSize];
+
+    // Note: During window state restoration, this may be called before the tabs are created from
+    // the arrangement, in which case the line height and char width will be 0.
+    if (self.tabs.count == 0) {
+        DLog(@"Window has no tabs. Returning early.");
+        return self.window.frame;
+    }
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
+    if (session.textview.lineHeight == 0 || session.textview.charWidth == 0) {
+        DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
+        return self.window.frame;
+    }
     BOOL edgeSpanning = YES;
     switch (windowType_) {
         case WINDOW_TYPE_TOP_PARTIAL:
@@ -3682,7 +3696,7 @@ ITERM_WEAKLY_REFERENCEABLE
         default:
             break;
     }
-    if (!NSEqualRects(frame, self.window.frame)) {
+    if (!NSEqualRects(frame, self.window.frame) && frame.size.width > 0 && frame.size.height > 0) {
         [[self window] setFrame:frame display:NO];
     }
 
@@ -5905,7 +5919,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return allSubstitutions;
 }
 
-- (NSArray<PTYTab *>*)tabs {
+- (NSArray<PTYTab *> *)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
@@ -8003,6 +8017,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
     [self updateTouchBarFunctionKeyLabels];
+}
+
+- (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
+    if (self.numberOfTabs == 1) {
+        [self setWindowTitle];
+    }
 }
 
 - (void)updateTouchBarFunctionKeyLabels {

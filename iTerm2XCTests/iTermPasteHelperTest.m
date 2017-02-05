@@ -322,11 +322,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    if (override) {
-        XCTAssert(warned);
-    } else {
-        XCTAssert(!warned);
-    }
+    XCTAssert(!warned);
 
     // Check lf newline This used to warn by default but now it does not.
     warned = NO;
@@ -336,11 +332,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    if (override) {
-        XCTAssert(warned);
-    } else {
-        XCTAssert(!warned);
-    }
+    XCTAssert(!warned);
 
     // Check crlf newline This used to warn by default but now it does not.
     warned = NO;
