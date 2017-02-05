@@ -121,6 +121,10 @@
                                      @"IosevkaCC-Slab-Thin": @1,
                                      @"IosevkaCC-Slab-Thin-Italic": @1,
                                      @"IosevkaCC-Slab-Thin-Oblique": @1,
+                                     @"Monoisome-Bold": @1,
+                                     @"Monoisome-Italic": @1,
+                                     @"Monoisome-Regular": @1,
+                                     @"Monoisome-Retina": @1,
                                      @"OperatorMono-XLight": @1,
                                      @"OperatorMono-XLightItalic": @1,
                                      @"OperatorMono-Light": @1,
@@ -153,7 +157,9 @@
                                                             @"FuraCodeNerdFontCompleteMono---Regular",
                                                             @"FuraCodeNerdFontCompleteMono---Retina" ]] retain];
     });
-    return [fontsWithDefaultLigatures containsObject:self.fontName];
+    BOOL result = [fontsWithDefaultLigatures containsObject:self.fontName];
+    DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
+    return result;
 }
 
 - (BOOL)it_supportsLigatures {

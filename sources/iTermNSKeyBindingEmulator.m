@@ -41,7 +41,9 @@ static struct {
     { '@', NSCommandKeyMask }
 };
 
-@implementation iTermNSKeyBindingEmulator
+@implementation iTermNSKeyBindingEmulator {
+    NSMutableArray *_savedEvents;
+}
 
 + (void)initialize {
     if (self == [iTermNSKeyBindingEmulator self]) {
@@ -266,19 +268,22 @@ static struct {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _savedEvents = [[NSMutableArray alloc] init];
         _currentDict = [gRootKeyBindingsDictionary retain];
     }
     return self;
 }
 
 - (void)dealloc {
+    [_savedEvents release];
     [_currentDict release];
     [super dealloc];
 }
 
-- (BOOL)handlesEvent:(NSEvent *)event {
+- (BOOL)handlesEvent:(NSEvent *)event extraEvents:(NSMutableArray *)extraEvents {
     if (!gRootKeyBindingsDictionary) {
         DLog(@"Short-circuit DefaultKeyBindings handling because no bindings are defined");
+        [_savedEvents removeAllObjects];
         return NO;
     }
     DLog(@"Checking if default key bindings should handle %@", event);
@@ -288,6 +293,7 @@ static struct {
         DLog(@"Couldn't normalize event to key!");
         NSLog(@"WARNING: Unexpected charactersIgnoringModifiers=%@ in event %@",
               event.charactersIgnoringModifiers, event);
+        [_savedEvents removeAllObjects];
         return NO;
     }
     NSObject *obj = nil;
@@ -305,6 +311,7 @@ static struct {
         // This is part of a multi-keystroke binding. Move down the tree.
         self.currentDict = (NSDictionary *)obj;
         DLog(@"Entered multi-keystroke binding with key: %@", selectedKey);
+        [_savedEvents addObject:event];
         return YES;
     }
 
@@ -313,11 +320,18 @@ static struct {
     DLog(@"Default key binding is %@", obj);
     
     if (![obj isKindOfClass:[NSArray class]]) {
+        [extraEvents addObjectsFromArray:_savedEvents];
+        [_savedEvents removeAllObjects];
         return NO;
     }
     
     NSArray *theArray = (NSArray *)obj;
-    return ([theArray[0] isEqualToString:@"insertText:"]);
+    BOOL result = ([theArray[0] isEqualToString:@"insertText:"]);
+    if (!result) {
+        [extraEvents addObjectsFromArray:_savedEvents];
+    }
+    [_savedEvents removeAllObjects];
+    return result;
 }
 
 #pragma mark - Private
