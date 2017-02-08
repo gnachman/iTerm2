@@ -4620,7 +4620,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self printTmuxMessage:@"  C    Run tmux command."];
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
-        [self bury];
+        // System window restoration causes this to get called before the tab has been added to the window
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self bury];
+        });
     }
 }
 
