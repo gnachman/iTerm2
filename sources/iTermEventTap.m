@@ -192,9 +192,10 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy,
     _eventTapMachPort = CGEventTapCreate(kCGHIDEventTap,
                                          kCGTailAppendEventTap,
                                          kCGEventTapOptionDefault,
-                                         (CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventFlagsChanged)),
+                                         CGEventMaskBit(kCGEventKeyDown),
                                          (CGEventTapCallBack)OnTappedEvent,
                                          self);
+
     if (!_eventTapMachPort) {
         ELog(@"CGEventTapCreate failed");
         return NO;
