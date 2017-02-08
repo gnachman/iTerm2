@@ -8004,6 +8004,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)tabDidChangeTmuxLayout:(PTYTab *)tab {
+    [self setWindowTitle];
+}
+
 - (void)tabRemoveTab:(PTYTab *)tab {
     if ([_contentView.tabView numberOfTabViewItems] <= 1 && self.windowInitialized) {
         [[self window] close];
