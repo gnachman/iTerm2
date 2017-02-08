@@ -221,7 +221,7 @@ DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on sel
 DEFINE_INT(pasteHistoryMaxOptions, 20, @"Pasteboard: Number of entires to save in Paste History.\n.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, @"Pasteboard: Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, @"Pasteboard: Pressing a key will remove the selection.");
-DEFINE_BOOL(promptForPasteWhenNotAtPrompt, NO, @"Pasteboard: Warn before pasting when not at shell prompt?");
+DEFINE_SETTABLE_BOOL(promptForPasteWhenNotAtPrompt, PromptForPasteWhenNotAtPrompt, NO, @"Pasteboard: Warn before pasting when not at shell prompt?");
 DEFINE_SETTABLE_BOOL(noSyncSuppressClipboardAccessDeniedWarning, NoSyncSuppressClipboardAccessDeniedWarning, NO, @"Session: Suppress the notification that the terminal attempted to access the clipboard but it was denied?");
 DEFINE_SETTABLE_BOOL(noSyncSuppressMissingProfileInArrangementWarning, NoSyncSuppressMissingProfileInArrangementWarning, NO, @"Session: Suppress the notification that a restored session’s profile no longer exists?");
 
