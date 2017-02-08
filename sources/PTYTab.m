@@ -3361,6 +3361,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
         [self fitSubviewsToRoot];
     }
+    [realParentWindow_ tabDidChangeTmuxLayout:self];
 }
 
 // Find a session that is not "senior" to a tmux pane getting split by the user and make it

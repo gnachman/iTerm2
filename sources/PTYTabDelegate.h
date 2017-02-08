@@ -34,5 +34,6 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location;
 - (void)tabRemoveTab:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState;
+- (void)tabDidChangeTmuxLayout:(PTYTab *)tab;
 
 @end
