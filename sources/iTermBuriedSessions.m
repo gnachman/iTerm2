@@ -44,7 +44,11 @@
 
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
     PseudoTerminal *windowController = (PseudoTerminal *)sessionToBury.textview.window.windowController;
-    [_array addObject:[windowController restorableSessionForSession:sessionToBury]];
+    iTermRestorableSession *restorableSession = [windowController restorableSessionForSession:sessionToBury];
+    if (!restorableSession) {
+        return;
+    }
+    [_array addObject:restorableSession];
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
     [NSApp invalidateRestorableState];
 }
