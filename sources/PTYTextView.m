@@ -1400,18 +1400,23 @@ static const int kDragThreshold = 3;
     [NSCursor setHiddenUntilMouseMoves:YES];
 
     NSMutableArray *eventsToHandle = [NSMutableArray array];
-    if ([_keyBindingEmulator handlesEvent:event extraEvents:eventsToHandle]) {
-        DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
-        [self interpretKeyEvents:@[ event ]];
+    BOOL pointlessly;
+    if ([_keyBindingEmulator handlesEvent:event pointlessly:&pointlessly extraEvents:eventsToHandle]) {
+        if (!pointlessly) {
+            DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
+            [self interpretKeyEvents:@[ event ]];
+        } else {
+            [self handleKeyDownEvent:event eschewCocoaTextHandling:YES];
+        }
         return;
     }
     [eventsToHandle addObject:event];
     for (NSEvent *event in eventsToHandle) {
-        [self handleKeyDownEvent:event];
+        [self handleKeyDownEvent:event eschewCocoaTextHandling:NO];
     }
 }
 
-- (void)handleKeyDownEvent:(NSEvent *)event {
+- (void)handleKeyDownEvent:(NSEvent *)event eschewCocoaTextHandling:(BOOL)eschewCocoaTextHandling {
     id delegate = [self delegate];
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
@@ -1486,15 +1491,17 @@ static const int kDragThreshold = 3;
         // calls as needed in -insertText and -doCommandBySelector.
         gCurrentKeyEventTextView = [[self retain] autorelease];
 
-        if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
-          // This may cause -insertText:replacementRange: or -doCommandBySelector: to be called.
-          // These methods have a side-effect of setting _keyPressHandled if they dispatched the event
-          // to the delegate. They might not get called: for example, if you hold down certain keys
-          // then repeats might be ignored, or the IME might handle it internally (such as when you press
-          // "L" in AquaSKK's Hiragana mode to enter ASCII mode. See pull request 279 for more on this.
-          [self.inputContext handleEvent:event];
-        } else {
-          [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        if (!eschewCocoaTextHandling) {
+            if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
+              // This may cause -insertText:replacementRange: or -doCommandBySelector: to be called.
+              // These methods have a side-effect of setting _keyPressHandled if they dispatched the event
+              // to the delegate. They might not get called: for example, if you hold down certain keys
+              // then repeats might be ignored, or the IME might handle it internally (such as when you press
+              // "L" in AquaSKK's Hiragana mode to enter ASCII mode. See pull request 279 for more on this.
+              [self.inputContext handleEvent:event];
+            } else {
+              [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+            }
         }
         gCurrentKeyEventTextView = nil;
 
@@ -1502,6 +1509,10 @@ static const int kDragThreshold = 3;
         BOOL shouldPassToDelegate = (!_hadMarkedTextBeforeHandlingKeypressEvent && !_keyPressHandled && ![self hasMarkedText]);
         if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
             shouldPassToDelegate &= event.isARepeat;
+        }
+        if (eschewCocoaTextHandling) {
+            // It was never sent tp cocoa so the delegate must take it
+            shouldPassToDelegate = YES;
         }
         if (shouldPassToDelegate) {
             DLog(@"PTYTextView keyDown unhandled (likely repeated) keypress with no IME, send to delegate");
