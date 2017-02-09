@@ -117,7 +117,8 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
         return nil;
     }
     NSDictionary *subs = @{ @"@PATH_TO_EXECUTABLE@": [[executable stringByDeletingLastPathComponent] stringByEscapingForSandboxLiteral],
-                            @"@EXECUTABLE@": [[executable lastPathComponent] stringByEscapingForSandboxLiteral] };
+                            @"@EXECUTABLE@": [[executable lastPathComponent] stringByEscapingForSandboxLiteral],
+                            @"@HOME_DIRECTORY@": NSHomeDirectory() ?: @"//bogus//" };
     for (NSString *key in subs) {
         sandboxContents = [sandboxContents stringByReplacingOccurrencesOfString:key withString:subs[key]];
     }
