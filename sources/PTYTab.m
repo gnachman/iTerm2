@@ -2878,7 +2878,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController {
-        [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term zoomed:NO];
+    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term zoomed:NO];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
 
     // Grow the window to fit the tab before adding it
