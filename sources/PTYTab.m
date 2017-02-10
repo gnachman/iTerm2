@@ -4083,6 +4083,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                     sizes, minSizes, maxSizes, self);
     ITCriticalError(sizes.count > 0,
                     @"Empty sizes array passed to redistributeQuantizationError");
+    assert(sizes.count > 0);
+    assert(minSizes.count > 0);
+    assert(maxSizes.count > 0);
 
     // In case quantization caused some rounding error, randomly adjust subviews by plus or minus
     // one pixel.
@@ -4098,6 +4101,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     while (error != 0) {
         BOOL anyChange = NO;
         for (int i = 0; i < [sizes count] && error != 0; ++i) {
+            ITCriticalError(sizes.count > 0, @"Size of sizes array changed, is now %@", @(sizes.count));
+            ITCriticalError(sizes.count == minSizes.count && sizes.count == maxSizes.count,
+                            @"Mismatch in sizes array materialized from thin air. i=%@ sizes=%@ minSizes=%@ maxSizes=%@ self=%@",
+                            @(i), sizes, minSizes, maxSizes, self);
             const double size = [[sizes objectAtIndex:i] doubleValue];
             const double theMin = [[minSizes objectAtIndex:i] doubleValue];
             const double theMax = [[maxSizes objectAtIndex:i] doubleValue];
