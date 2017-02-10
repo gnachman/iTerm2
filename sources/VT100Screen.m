@@ -2492,6 +2492,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 }
 
+- (NSString *)terminalValueOfVariableNamed:(NSString *)name {
+    return [delegate_ screenValueOfVariableNamed:name];
+}
+
 - (void)terminalShowTestPattern
 {
     screen_char_t ch = [currentGrid_ defaultChar];

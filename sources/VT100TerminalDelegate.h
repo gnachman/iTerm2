@@ -388,4 +388,6 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)terminalDidFinishReceivingPasteboard;
 - (void)terminalPasteboardReceiptEndedUnexpectedly;
 
+- (NSString *)terminalValueOfVariableNamed:(NSString *)name;
+
 @end

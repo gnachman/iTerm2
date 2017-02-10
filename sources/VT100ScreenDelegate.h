@@ -248,5 +248,6 @@
 - (void)screenPopKeyLabels:(NSString *)value;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
+- (NSString *)screenValueOfVariableNamed:(NSString *)name;
 
 @end

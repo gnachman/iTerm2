@@ -1,6 +1,7 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -2207,6 +2208,19 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalPushKeyLabels:value];
     } else if ([key isEqualToString:@"PopKeyLabels"]) {
         [delegate_ terminalPopKeyLabels:value];
+    } else if ([key isEqualToString:@"ReportVariable"]) {
+        if ([delegate_ terminalShouldSendReport] && [delegate_ terminalIsTrusted]) {
+            NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
+            NSData *decodedData = [[[NSData alloc] initWithBase64EncodedData:valueAsData options:0] autorelease];
+            NSString *name = [decodedData stringWithEncoding:self.encoding];
+            NSString *encodedValue = @"";
+            if (name) {
+                NSString *variableValue = [delegate_ terminalValueOfVariableNamed:name];
+                encodedValue = [[variableValue dataUsingEncoding:self.encoding] base64EncodedStringWithOptions:0];
+            }
+            NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue, VT100CC_BEL];
+            [delegate_ terminalSendReport:[report dataUsingEncoding:self.encoding]];
+        }
     }
 }
 
