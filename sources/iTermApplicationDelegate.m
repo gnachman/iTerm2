@@ -186,6 +186,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
 
     iTermAPIServer *_apiServer;
+
+    NSArray<NSDictionary *> *_buriedSessionsState;
 }
 
 - (void)updateProcessType {
@@ -606,6 +608,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isApplescriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
+            [self restoreBuriedSessionsState];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
                 _orphansAdopted = YES;
                 [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
@@ -616,6 +619,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                            object:nil];
             }
         }];
+    } else {
+        [self restoreBuriedSessionsState];
     }
 }
 
@@ -1679,9 +1684,17 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             }
         }
     }
-    NSArray<NSDictionary *> *buried = [coder decodeObjectForKey:iTermBuriedSessionState];
-    if (buried) {
-        [[iTermBuriedSessions sharedInstance] restoreFromState:buried];
+    _buriedSessionsState = [[coder decodeObjectForKey:iTermBuriedSessionState] retain];
+    if (finishedLaunching_) {
+        [self restoreBuriedSessionsState];
+    }
+}
+
+- (void)restoreBuriedSessionsState {
+    if (_buriedSessionsState) {
+        [[iTermBuriedSessions sharedInstance] restoreFromState:_buriedSessionsState];
+        [_buriedSessionsState release];
+        _buriedSessionsState = nil;
     }
 }
 

@@ -8188,6 +8188,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [self queueAnnouncement:announcement identifier:identifier];
 }
 
+- (NSString *)screenValueOfVariableNamed:(NSString *)name {
+    if (!name) {
+        return nil;
+    }
+    return self.variables[name];
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {

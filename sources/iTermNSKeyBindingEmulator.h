@@ -14,6 +14,9 @@
 // a key binding. If this returns NO, then |extraEvents| may be filled in with additional events
 // to process first. That happens when a series of keys is entered which make up a multi-key binding
 // ending in an unhandleable binding.
-- (BOOL)handlesEvent:(NSEvent *)event extraEvents:(NSMutableArray *)extraEvents;
+// If this returns YES then *pointlessly will also be set. If pointlessly is set to YES then
+// the caller should not pass the event to cocoa, or it will hold on to the event since it's the
+// prefix of a longer series of keystrokes, none of which can possibly lead to insertText:.
+- (BOOL)handlesEvent:(NSEvent *)event pointlessly:(BOOL *)pointlessly extraEvents:(NSMutableArray *)extraEvents;
 
 @end
