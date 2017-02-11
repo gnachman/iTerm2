@@ -54,6 +54,7 @@
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
+#import "NSWorkspace+iTerm.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
@@ -213,6 +214,7 @@ static const NSUInteger kMaxHosts = 100;
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
+    iTermCoprocessDelegate,
     iTermHotKeyNavigableSession,
     iTermPasteHelperDelegate,
     iTermSessionViewDelegate>
@@ -4520,6 +4522,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute
 {
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];
     [_textview setNeedsDisplay:YES];
@@ -8526,6 +8529,28 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewBecomeFirstResponder {
     [self.textview.window makeFirstResponder:self.textview];
+}
+
+#pragma mark - iTermCoprocessDelegate
+
+- (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {
+    if ([Coprocess shouldIgnoreErrorsFromCommand:coprocess.command]) {
+        return;
+    }
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"Coprocess “%@” terminated with output on stderr.", coprocess.command]
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"View Errors", @"Ignore Errors from This Command" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"coprocess-stderr." suffix:@".txt"];
+                                                        [errors writeToFile:filename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                                                        [[NSWorkspace sharedWorkspace] openFile:filename];
+                                                    } else if (selection == 1) {
+                                                        [Coprocess setSilentlyIgnoreErrors:YES fromCommand:coprocess.command];
+                                                    }
+                                                }];
+    [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
 }
 
 #pragma mark - API

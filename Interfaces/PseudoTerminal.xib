@@ -1,13 +1,15 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9059"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PseudoTerminal">
             <connections>
                 <outlet property="coprocessCommand_" destination="556" id="558"/>
+                <outlet property="coprocessIgnoreErrors_" destination="tWT-0j-ceU" id="P42-dc-cEp"/>
                 <outlet property="coprocessOkButton_" destination="540" id="554"/>
                 <outlet property="coprocesssPanel_" destination="535" id="547"/>
                 <outlet property="parameterName" destination="353" id="361"/>
@@ -32,7 +34,6 @@
                     <textField verticalHuggingPriority="750" id="354">
                         <rect key="frame" x="107" y="49" width="220" height="22"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="372">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -42,7 +43,6 @@
                     <textField verticalHuggingPriority="750" id="355">
                         <rect key="frame" x="104" y="79" width="119" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Enter the value for " id="373">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -52,13 +52,11 @@
                     <imageView id="357">
                         <rect key="frame" x="20" y="32" width="79" height="77"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="AppIcon" id="375"/>
                     </imageView>
                     <textField verticalHuggingPriority="750" id="353">
                         <rect key="frame" x="220" y="79" width="109" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <animations/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Name" id="371">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -68,7 +66,6 @@
                     <button verticalHuggingPriority="750" id="EmK-eB-jqr">
                         <rect key="frame" x="167" y="13" width="83" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
                         <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Psw-4i-Kfp">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -83,7 +80,6 @@ Gw
                     <button verticalHuggingPriority="750" tag="1" id="gZv-eU-Fkp">
                         <rect key="frame" x="250" y="13" width="83" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
                         <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="i9z-HT-tqx">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -96,7 +92,6 @@ DQ
                         </connections>
                     </button>
                 </subviews>
-                <animations/>
             </view>
             <connections>
                 <outlet property="initialFirstResponder" destination="354" id="531"/>
@@ -111,32 +106,29 @@ DQ
             <view key="contentView" id="515">
                 <rect key="frame" x="0.0" y="0.0" width="400" height="400"/>
                 <autoresizingMask key="autoresizingMask"/>
-                <animations/>
             </view>
         </window>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" visibleAtLaunch="NO" animationBehavior="default" id="535" userLabel="Panel (Coprocess)" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="162" y="432" width="503" height="130"/>
+            <rect key="contentRect" x="162" y="432" width="503" height="136"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
-            <view key="contentView" id="536">
-                <rect key="frame" x="0.0" y="0.0" width="503" height="130"/>
+            <view key="contentView" misplaced="YES" id="536">
+                <rect key="frame" x="0.0" y="0.0" width="503" height="136"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" id="541">
-                        <rect key="frame" x="17" y="93" width="183" height="17"/>
+                        <rect key="frame" x="17" y="99" width="183" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Coprocess command to run:" id="542">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <button verticalHuggingPriority="750" id="540">
-                        <rect key="frame" x="393" y="12" width="96" height="32"/>
+                    <button verticalHuggingPriority="750" misplaced="YES" id="540">
+                        <rect key="frame" x="393" y="13" width="96" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
                         <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="543">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -148,10 +140,9 @@ DQ
                             <action selector="coprocessPanelEnd:" target="-2" id="549"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" id="539">
-                        <rect key="frame" x="297" y="12" width="96" height="32"/>
+                    <button verticalHuggingPriority="750" misplaced="YES" id="539">
+                        <rect key="frame" x="297" y="13" width="96" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
                         <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="544">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -163,10 +154,9 @@ Gw
                             <action selector="coprocessPanelEnd:" target="-2" id="550"/>
                         </connections>
                     </button>
-                    <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="538">
-                        <rect key="frame" x="17" y="16" width="25" height="25"/>
+                    <button horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" id="538">
+                        <rect key="frame" x="17" y="17" width="25" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
                         <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="545">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -176,21 +166,31 @@ Gw
                         </connections>
                     </button>
                     <comboBox verticalHuggingPriority="750" id="556">
-                        <rect key="frame" x="20" y="61" width="466" height="26"/>
+                        <rect key="frame" x="20" y="67" width="466" height="26"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <animations/>
-                        <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Enter Command" drawsBackground="YES" numberOfVisibleItems="10" id="557">
+                        <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Enter Command" drawsBackground="YES" numberOfVisibleItems="10" id="557">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </comboBoxCell>
+                        <connections>
+                            <outlet property="delegate" destination="-2" id="D8F-1n-13X"/>
+                        </connections>
                     </comboBox>
+                    <button misplaced="YES" id="tWT-0j-ceU">
+                        <rect key="frame" x="18" y="47" width="269" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Silently ignore errors from this command" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="7KR-E5-Cup">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                    </button>
                 </subviews>
-                <animations/>
             </view>
             <connections>
                 <outlet property="initialFirstResponder" destination="556" id="559"/>
             </connections>
+            <point key="canvasLocation" x="131.5" y="167"/>
         </window>
         <customObject id="iSI-wC-oGO" customClass="iTermInstantReplayWindowController"/>
     </objects>
