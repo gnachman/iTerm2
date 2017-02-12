@@ -54,6 +54,7 @@
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
+#import "NSWorkspace+iTerm.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
@@ -213,6 +214,7 @@ static const NSUInteger kMaxHosts = 100;
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
+    iTermCoprocessDelegate,
     iTermHotKeyNavigableSession,
     iTermPasteHelperDelegate,
     iTermSessionViewDelegate>
@@ -4520,6 +4522,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute
 {
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];
     [_textview setNeedsDisplay:YES];
@@ -5099,6 +5102,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Function];
             }
             keystrokeNotification.keyCode = event.keyCode;
+            keystrokeNotification.session = self.guid;
             ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
             notification.keystrokeNotification = keystrokeNotification;
 
@@ -5946,7 +5950,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_updateSubscriptions.count) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
-
+        notification.screenUpdateNotification.session = self.guid;
         [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
             [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
         }];
@@ -7094,6 +7098,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+        notification.promptNotification.session = self.guid;
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
 }
@@ -7539,6 +7544,7 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
     notification.locationChangeNotification.hostName = host.hostname;
     notification.locationChangeNotification.userName = host.username;
+    notification.locationChangeNotification.session = self.guid;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
@@ -7673,6 +7679,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.session = self.guid;
     notification.locationChangeNotification.directory = newPath;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
@@ -8526,6 +8533,28 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewBecomeFirstResponder {
     [self.textview.window makeFirstResponder:self.textview];
+}
+
+#pragma mark - iTermCoprocessDelegate
+
+- (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {
+    if ([Coprocess shouldIgnoreErrorsFromCommand:coprocess.command]) {
+        return;
+    }
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"Coprocess “%@” terminated with output on stderr.", coprocess.command]
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"View Errors", @"Ignore Errors from This Command" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"coprocess-stderr." suffix:@".txt"];
+                                                        [errors writeToFile:filename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                                                        [[NSWorkspace sharedWorkspace] openFile:filename];
+                                                    } else if (selection == 1) {
+                                                        [Coprocess setSilentlyIgnoreErrors:YES fromCommand:coprocess.command];
+                                                    }
+                                                }];
+    [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
 }
 
 #pragma mark - API

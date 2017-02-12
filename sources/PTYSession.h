@@ -422,6 +422,7 @@ typedef enum {
 // arrangement provided to us by the OS during system window restoration with a
 // session in a saved arrangement when we're opening a saved arrangement at
 // startup instead of respecting the wishes of system window restoration.
+// Also used by the websocket API to reference a session.
 @property(nonatomic, readonly) NSString *guid;
 
 // Indicates if this session predates a tmux split pane. Used to figure out which pane is new when

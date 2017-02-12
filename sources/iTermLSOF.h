@@ -13,5 +13,6 @@
 @interface iTermLSOF : NSObject
 
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress;
++ (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
 
 @end

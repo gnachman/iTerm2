@@ -37,6 +37,11 @@ CF_EXTERN_C_BEGIN
 @class ITMKeystrokeNotification;
 @class ITMLineContents;
 @class ITMLineRange;
+@class ITMListSessionsRequest;
+@class ITMListSessionsResponse;
+@class ITMListSessionsResponse_Session;
+@class ITMListSessionsResponse_Tab;
+@class ITMListSessionsResponse_Window;
 @class ITMLocationChangeNotification;
 @class ITMNotification;
 @class ITMNotificationRequest;
@@ -247,6 +252,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_NotificationRequest = 103,
   ITMRequest_FieldNumber_RegisterToolRequest = 104,
   ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
+  ITMRequest_FieldNumber_ListSessionsRequest = 106,
 };
 
 /**
@@ -283,6 +289,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c setProfilePropertyRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasSetProfilePropertyRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsRequest *listSessionsRequest;
+/** Test to see if @c listSessionsRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasListSessionsRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -295,6 +305,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_NotificationResponse = 103,
   ITMResponse_FieldNumber_RegisterToolResponse = 104,
   ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
+  ITMResponse_FieldNumber_ListSessionsResponse = 106,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -330,6 +341,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyResponse *setProfilePropertyResponse;
 /** Test to see if @c setProfilePropertyResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasSetProfilePropertyResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse *listSessionsResponse;
+/** Test to see if @c listSessionsResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasListSessionsResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -471,6 +486,7 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
   ITMKeystrokeNotification_FieldNumber_CharactersIgnoringModifiers = 2,
   ITMKeystrokeNotification_FieldNumber_ModifiersArray = 3,
   ITMKeystrokeNotification_FieldNumber_KeyCode = 4,
+  ITMKeystrokeNotification_FieldNumber_Session = 5,
 };
 
 @interface ITMKeystrokeNotification : GPBMessage
@@ -491,17 +507,37 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
 @property(nonatomic, readwrite) int32_t keyCode;
 
 @property(nonatomic, readwrite) BOOL hasKeyCode;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
 @end
 
 #pragma mark - ITMScreenUpdateNotification
 
+typedef GPB_ENUM(ITMScreenUpdateNotification_FieldNumber) {
+  ITMScreenUpdateNotification_FieldNumber_Session = 1,
+};
+
 @interface ITMScreenUpdateNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 @end
 
 #pragma mark - ITMPromptNotification
 
+typedef GPB_ENUM(ITMPromptNotification_FieldNumber) {
+  ITMPromptNotification_FieldNumber_Session = 1,
+};
+
 @interface ITMPromptNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 @end
 
@@ -511,6 +547,7 @@ typedef GPB_ENUM(ITMLocationChangeNotification_FieldNumber) {
   ITMLocationChangeNotification_FieldNumber_HostName = 1,
   ITMLocationChangeNotification_FieldNumber_UserName = 2,
   ITMLocationChangeNotification_FieldNumber_Directory = 3,
+  ITMLocationChangeNotification_FieldNumber_Session = 4,
 };
 
 @interface ITMLocationChangeNotification : GPBMessage
@@ -526,6 +563,10 @@ typedef GPB_ENUM(ITMLocationChangeNotification_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *directory;
 /** Test to see if @c directory has been set. */
 @property(nonatomic, readwrite) BOOL hasDirectory;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 @end
 
@@ -1032,6 +1073,68 @@ typedef GPB_ENUM(ITMCodePointsPerCell_FieldNumber) {
 @property(nonatomic, readwrite) int32_t repeats;
 
 @property(nonatomic, readwrite) BOOL hasRepeats;
+@end
+
+#pragma mark - ITMListSessionsRequest
+
+@interface ITMListSessionsRequest : GPBMessage
+
+@end
+
+#pragma mark - ITMListSessionsResponse
+
+typedef GPB_ENUM(ITMListSessionsResponse_FieldNumber) {
+  ITMListSessionsResponse_FieldNumber_WindowsArray = 1,
+};
+
+@interface ITMListSessionsResponse : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListSessionsResponse_Window*> *windowsArray;
+/** The number of items in @c windowsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger windowsArray_Count;
+
+@end
+
+#pragma mark - ITMListSessionsResponse_Window
+
+typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
+  ITMListSessionsResponse_Window_FieldNumber_TabsArray = 1,
+};
+
+@interface ITMListSessionsResponse_Window : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListSessionsResponse_Tab*> *tabsArray;
+/** The number of items in @c tabsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger tabsArray_Count;
+
+@end
+
+#pragma mark - ITMListSessionsResponse_Tab
+
+typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
+  ITMListSessionsResponse_Tab_FieldNumber_SessionsArray = 1,
+};
+
+@interface ITMListSessionsResponse_Tab : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListSessionsResponse_Session*> *sessionsArray;
+/** The number of items in @c sessionsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger sessionsArray_Count;
+
+@end
+
+#pragma mark - ITMListSessionsResponse_Session
+
+typedef GPB_ENUM(ITMListSessionsResponse_Session_FieldNumber) {
+  ITMListSessionsResponse_Session_FieldNumber_UniqueIdentifier = 1,
+};
+
+@interface ITMListSessionsResponse_Session : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
+/** Test to see if @c uniqueIdentifier has been set. */
+@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -7,6 +7,13 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermWeakReference.h"
+
+@class Coprocess;
+
+@protocol iTermCoprocessDelegate<NSObject>
+- (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors;
+@end
 
 @interface Coprocess : NSObject
 
@@ -19,15 +26,14 @@
 @property(nonatomic, assign) BOOL mute;
 @property(nonatomic, readonly) int readFileDescriptor;  // for reading
 @property(nonatomic, readonly) int writeFileDescriptor;  // for writing
+@property(nonatomic, retain) id<iTermCoprocessDelegate, iTermWeakReference> delegate;
+@property(nonatomic, readonly) NSString *command;
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command;
 
-// This has the side-effect of making the file descriptors non-blocking so
-// it should only be called after exec.
-+ (Coprocess *)coprocessWithPid:(pid_t)pid
-                        outputFd:(int)outputFd
-						 inputFd:(int)inputFd;
 + (NSArray *)mostRecentlyUsedCommands;
++ (void)setSilentlyIgnoreErrors:(BOOL)shouldIgnore fromCommand:(NSString *)command;
++ (BOOL)shouldIgnoreErrorsFromCommand:(NSString *)command;
 
 // Write from outputBuffer
 - (int)write;

@@ -8,16 +8,25 @@
 
 #import "Coprocess.h"
 
+#import "NSArray+iTerm.h"
+
 const int kMaxInputBufferSize = 1024;
 const int kMaxOutputBufferSize = 1024;
 
 static NSString *kCoprocessMruKey = @"Coprocess MRU";
+static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoSyncCoprocessCommandsToIgnoreErrorOutput";
+
+@interface Coprocess()
+@property (nonatomic, copy) NSString *command;
+@end
 
 @implementation Coprocess {
     // When this is set, writing is no longer an option (probably because the
     // coprocess terminated).  This is different than eof_, which indicates that
     // reading is no longer an option and the coprocess is well and truly dead.
     BOOL writePipeClosed_;
+
+    NSMutableString *_errors;
 }
 
 @synthesize pid = pid_;
@@ -59,8 +68,10 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     [Coprocess addCommandToMostRecentlyUsed:command];
     int inputPipe[2];
     int outputPipe[2];
+    int errorPipe[2];
     pipe(inputPipe);
     pipe(outputPipe);
+    pipe(errorPipe);
     signal(SIGPIPE, SIG_IGN);
     pid_t pid = fork();
     if (pid == 0) {
@@ -74,6 +85,11 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
         dup2(outputPipe[1], 1);
         close(outputPipe[0]);
         close(outputPipe[1]);
+
+        dup2(errorPipe[1], 2);
+        close(errorPipe[0]);
+        close(errorPipe[1]);
+
         for (int i = 3; i < 256; i++) {
             if (i != outputPipe[1] && i != inputPipe[0]) {
                 close(i);
@@ -97,16 +113,20 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
     close(inputPipe[0]);
     close(outputPipe[1]);
+    close(errorPipe[1]);
 
     return [Coprocess coprocessWithPid:pid
+                               command:command
                               outputFd:inputPipe[1]
-                               inputFd:outputPipe[0]];
+                               inputFd:outputPipe[0]
+                               errorFd:errorPipe[0]];
 }
 
 + (Coprocess *)coprocessWithPid:(pid_t)pid
+                        command:(NSString *)command
                        outputFd:(int)outputFd
                         inputFd:(int)inputFd
-{
+                        errorFd:(int)errorFd {
     Coprocess *result = [[[Coprocess alloc] init] autorelease];
     result.pid = pid;
     result.outputFd = outputFd;
@@ -118,7 +138,24 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     flags = fcntl(inputFd, F_GETFL);
     fcntl(inputFd, F_SETFL, flags | O_NONBLOCK);
 
+    [result monitorErrorsOnFileDescriptor:errorFd];
+    result.command = command;
     return result;
+}
+
++ (void)setSilentlyIgnoreErrors:(BOOL)shouldIgnore fromCommand:(NSString *)command {
+    NSArray *array = [[NSUserDefaults standardUserDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] ?: @[];
+    if (shouldIgnore) {
+        array = [array arrayByAddingObject:command];
+        array = [[NSSet setWithArray:array] allObjects];
+    } else {
+        array = [array arrayByRemovingObject:command];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:array forKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey];
+}
+
++ (BOOL)shouldIgnoreErrorsFromCommand:(NSString *)command {
+    return ([[[NSUserDefaults standardUserDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] containsObject:command]);
 }
 
 - (instancetype)init {
@@ -134,7 +171,41 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 {
     [inputBuffer_ release];
     [outputBuffer_ release];
+    [_errors release];
+    [_delegate release];
     [super dealloc];
+}
+
+- (void)monitorErrorsOnFileDescriptor:(int)errorFd {
+    dispatch_queue_t queue = dispatch_queue_create("com.iterm2.coprocess-errors", 0);
+    _errors = [[NSMutableString alloc] init];
+
+    dispatch_async(queue, ^{
+        FILE *f = fdopen(errorFd, "r");
+        while (1) {
+            size_t size = 0;
+            char *line = fgetln(f, &size);
+            if (line == NULL) {
+                break;
+            }
+            if (size > 0) {
+                NSData *data = [NSData dataWithBytes:line length:size];
+                NSString *string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+                NSLog(@"Error from coprocess: %@", string);
+                @synchronized (self) {
+                    if (_errors.length < 100000) {
+                        [_errors appendFormat:@"%@\n", string];
+                        if (_errors.length >= 100000) {
+                            [_errors appendString:@"\n-- output truncated --\n"];
+                        }
+                    }
+                }
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_release(queue);
+        });
+    });
 }
 
 - (int)write
@@ -203,8 +274,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     [self terminate];
 }
 
-- (void)terminate
-{
+- (void)terminate {
     if (self.pid > 0) {
         kill(self.pid, 15);
         close(self.outputFd);
@@ -212,6 +282,13 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
         self.outputFd = -1;
         self.inputFd = -1;
         self.pid = -1;
+        @synchronized (self) {
+            if (_errors.length > 0) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.delegate coprocess:self didTerminateWithErrorOutput:_errors];
+                });
+            }
+        }
     }
 }
 

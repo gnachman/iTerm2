@@ -14,6 +14,7 @@ message Request {
   optional NotificationRequest notification_request = 103;
   optional RegisterToolRequest register_tool_request = 104;
   optional SetProfilePropertyRequest set_profile_property_request = 105;
+  optional ListSessionsRequest list_sessions_request = 106;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -27,6 +28,7 @@ message Response {
   optional NotificationResponse notification_response = 103;
   optional RegisterToolResponse register_tool_response = 104;
   optional SetProfilePropertyResponse set_profile_property_response = 105;
+  optional ListSessionsResponse list_sessions_response = 106;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
@@ -115,18 +117,22 @@ message KeystrokeNotification {
   }
   repeated Modifiers modifiers = 3;
   optional int32 keyCode = 4;
+  optional string session = 5;
 }
 
 message ScreenUpdateNotification {
+  optional string session = 1;
 }
 
 message PromptNotification {
+  optional string session = 1;
 }
 
 message LocationChangeNotification {
   optional string host_name = 1;
   optional string user_name = 2;
   optional string directory = 3;
+  optional string session = 4;
 }
 
 // Requests the contents of a range of lines.
@@ -442,4 +448,20 @@ message CodePointsPerCell {
 
   // Number of adjacent cells with this number of code points (always one or more).
   optional int32 repeats = 2;
+}
+
+message ListSessionsRequest {
+}
+
+message ListSessionsResponse {
+  message Window {
+    repeated Tab tabs = 1;
+  }
+  message Tab {
+    repeated Session sessions = 1;
+  }
+  message Session {
+    optional string uniqueIdentifier = 1;
+  }
+  repeated Window windows = 1;
 }

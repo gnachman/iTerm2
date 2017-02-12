@@ -161,6 +161,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
     NSCandidateListTouchBarItemDelegate,
+    NSComboBoxDelegate,
     NSScrubberDelegate,
     NSScrubberDataSource,
     NSTouchBarDelegate>
@@ -300,6 +301,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     IBOutlet NSPanel *coprocesssPanel_;
     IBOutlet NSButton *coprocessOkButton_;
     IBOutlet NSComboBox *coprocessCommand_;
+    IBOutlet NSButton *coprocessIgnoreErrors_;
 
     NSDictionary *lastArrangement_;
     BOOL wellFormed_;
@@ -5054,6 +5056,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (mru.count) {
         [coprocessCommand_ addItemsWithObjectValues:mru];
     }
+    [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSOnState : NSOffState];
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [NSApp endSheet:coprocesssPanel_];
@@ -5068,6 +5071,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
         [[self currentSession] launchCoprocessWithCommand:[coprocessCommand_ stringValue]];
+        [Coprocess setSilentlyIgnoreErrors:[coprocessIgnoreErrors_ state] == NSOnState fromCommand:[coprocessCommand_ stringValue]];
     }
     [NSApp stopModal];
 }
@@ -8388,6 +8392,17 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([command hasPrefix:prefix] || prefix.length == 0) {
             [self.currentSession insertText:[command substringFromIndex:prefix.length]];
         }
+    }
+}
+
+#pragma mark - NSCombobBoxDelegate
+
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    if ([aNotification object] == coprocessCommand_) {
+        [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSOnState : NSOffState];
+    }
+    if ([[self superclass] instancesRespondToSelector:_cmd]) {
+        [super controlTextDidChange:aNotification];
     }
 }
 
