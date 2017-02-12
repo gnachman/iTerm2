@@ -12,6 +12,52 @@
 #import "PSMProgressIndicator.h"
 #import "PSMTabDragAssistant.h"
 
+@interface PSMTabBarCell()<PSMProgressIndicatorDelegate>
+- (NSView<PSMTabBarControlProtocol> *)psmTabControlView;
+@end
+
+@interface PSMTabBarControlAccessibilityElement : NSAccessibilityElement<NSAccessibilityRadioButton>
+@property(nonatomic, assign) PSMTabBarCell *cell;
+- (instancetype)initWithCell:(PSMTabBarCell *)cell;
+@end
+
+@implementation PSMTabBarControlAccessibilityElement
+
+- (instancetype)initWithCell:(PSMTabBarCell *)cell {
+    self = [super init];
+    if (self) {
+        self.accessibilityRole = NSAccessibilityRadioButtonRole;
+        self.accessibilityLabel = @"Tab";
+        self.accessibilityParent = cell;
+        self.accessibilityEnabled = YES;
+        self.cell = cell;
+    }
+    return self;
+}
+
+- (id)accessibilityValue {
+    return @(self.cell.isSelected);
+}
+
+- (NSString *)accessibilityLabel {
+    return @"Tab";
+}
+
+- (BOOL)accessibilityPerformPress {
+    return NO;
+}
+
+- (NSRect)accessibilityFrame {
+    return self.cell.frame;
+}
+
+- (id)accessibilityParent {
+    return self.cell.psmTabControlView;
+}
+
+@end
+
+
 // A timer that does not keep a strong reference to its target. The target
 // should invoke -invalidate from its -dealloc method and release the timer to
 // avoid getting called posthumously.
@@ -64,9 +110,6 @@
 
 @end
 
-@interface PSMTabBarCell()<PSMProgressIndicatorDelegate>
-@end
-
 @implementation PSMTabBarCell  {
     NSSize _stringSize;
     PSMProgressIndicator *_indicator;
@@ -74,6 +117,7 @@
     PSMWeakTimer *_delayedStringValueTimer;  // For bug 3957
     BOOL _hasIcon;
     BOOL _highlighted;
+    PSMTabBarControlAccessibilityElement *_element;
 }
 
 #pragma mark - Creation/Destruction
@@ -91,6 +135,7 @@
         _hasCloseButton = YES;
         _modifierString = [@"" copy];
         _truncationStyle = NSLineBreakByTruncatingTail;
+        _element = [[PSMTabBarControlAccessibilityElement alloc] initWithCell:self];
     }
     return self;
 }
@@ -125,6 +170,8 @@
         } else {
             [self setCurrentStep:0];
         }
+        _element = [[PSMTabBarControlAccessibilityElement alloc] initWithCell:self];
+        _element.cell = self;
     }
     return self;
 }
@@ -139,6 +186,8 @@
     if (_tabColor) {
         [_tabColor release];
     }
+    _element.cell = nil;
+    [_element release];
     [super dealloc];
 }
 
@@ -387,6 +436,10 @@
     return self;
 }
 
+- (BOOL)isSelected {
+    return ([self tabState] == PSMTab_SelectedMask);
+}
+
 #pragma mark - Accessibility
 
 - (BOOL)accessibilityIsIgnored {
@@ -433,7 +486,7 @@
     } else if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) {
         attributeValue = [self stringValue];
     } else if ([attribute isEqualToString: NSAccessibilityValueAttribute]) {
-        attributeValue = [NSNumber numberWithBool:([self tabState] == 2)];
+        attributeValue = @(self.isSelected);
     } else {
         attributeValue = [super accessibilityAttributeValue:attribute];
     }

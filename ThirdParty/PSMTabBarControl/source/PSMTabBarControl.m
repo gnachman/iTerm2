@@ -1739,6 +1739,13 @@ const NSInteger kPSMStartResizeAnimation = 0;
     if ([[self delegate] respondsToSelector:@selector(tabViewDidChangeNumberOfTabViewItems:)]) {
         [[self delegate] tabViewDidChangeNumberOfTabViewItems:aTabView];
     }
+
+    NSMutableArray *elements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in [_cells subarrayWithRange:NSMakeRange(0, self.numberOfVisibleTabs)]) {
+        [elements addObject:cell.element];
+        cell.element.accessibilityFrameInParentSpace = cell.frame;
+    }
+    [self setAccessibilityChildren:elements];
 }
 
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tagViewItem {
@@ -1992,7 +1999,11 @@ const NSInteger kPSMStartResizeAnimation = 0;
         if (![_addTabButton isHidden]) {
             [children addObject:_addTabButton];
         }
-        attributeValue = NSAccessibilityUnignoredChildren(children);
+        NSMutableArray *elements = [NSMutableArray array];
+        for (PSMTabBarCell *cell in children) {
+            [elements addObject:cell.element];
+        }
+        attributeValue = elements;
     } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
         attributeValue = NSAccessibilityUnignoredChildren(_cells);
     } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {

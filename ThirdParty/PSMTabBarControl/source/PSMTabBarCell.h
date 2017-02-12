@@ -50,6 +50,8 @@
 @property(nonatomic, readonly) float desiredWidthOfCell;
 @property(nonatomic, readonly) id<PSMTabStyle> style;
 @property(nonatomic, assign) NSLineBreakMode truncationStyle;  // How to truncate title.
+@property(nonatomic, readonly) BOOL isSelected;
+@property(nonatomic, readonly) NSAccessibilityElement<NSAccessibilityRadioButton> *element;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;
