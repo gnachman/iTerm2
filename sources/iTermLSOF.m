@@ -21,6 +21,80 @@
     iTermSocketAddress *_socketAddress;
 }
 
++ (int)maximumLengthOfProcargs {
+    int mib[3];
+    int argmax;
+    size_t syssize;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_ARGMAX;
+
+    syssize = sizeof(argmax);
+    if (sysctl(mib, 2, &argmax, &syssize, NULL, 0) == -1) {
+        return -1;
+    } else {
+        return argmax;
+    }
+}
+
++ (char *)procargsForProcess:(pid_t)pid {
+    int argmax = [self maximumLengthOfProcargs];
+    if (argmax < 0) {
+        return nil;
+    }
+
+    NSMutableData *procargsData = [NSMutableData dataWithLength:argmax];
+    char *procargs = procargsData.mutableBytes;
+    int mib[3] = { CTL_KERN, KERN_PROCARGS2, pid };
+    size_t syssize = argmax;
+    if (sysctl(mib, 3, procargs, &syssize, NULL, 0) == -1) {
+        return nil;
+    }
+    return procargs;
+}
+
++ (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName {
+    int argmax = [self maximumLengthOfProcargs];
+    char *procargs = [self procargsForProcess:pid];
+
+    // Consume argc
+    size_t offset = 0;
+    int nargs;
+    memmove(&nargs, procargs + offset, sizeof(int));
+    offset += sizeof(int);
+
+    // Skip exec_path
+    char *exec_path = procargs + offset;
+    while (offset < argmax && procargs[offset] != 0) {
+        ++offset;
+    }
+
+    // Skip trailing nulls
+    while (offset < argmax && procargs[offset] == 0) {
+        ++offset;
+    }
+    if (offset == argmax) {
+        return nil;
+    }
+    if (execName) {
+        *execName = [NSString stringWithUTF8String:exec_path];
+    }
+
+    // Pull out null terminated argv components
+    NSMutableArray<NSString *> *argv = [NSMutableArray array];
+    char *start = procargs + offset;
+    while (offset < argmax && argv.count < nargs) {
+        if (procargs[offset] == 0) {
+            NSString *string = [NSString stringWithUTF8String:start];
+            [argv addObject:string];
+            start = procargs + offset + 1;
+        }
+        offset++;
+    }
+
+    return [argv componentsJoinedByString:@" "];
+}
+
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
     __block pid_t result = -1;
     [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
