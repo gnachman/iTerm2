@@ -93,6 +93,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         _timer = nil;
         [_eventQueue removeAllObjects];
     }
+    [_buffer release];
+    _buffer = [[NSMutableString alloc] init];
     [self hidePasteIndicator];
 }
 
@@ -188,6 +190,16 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
            isUpload:(BOOL)isUpload
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab {
+    [self pasteString:theString slowly:slowly escapeShellChars:escapeShellChars isUpload:isUpload tabTransform:tabTransform spacesPerTab:spacesPerTab progress:nil];
+}
+
+- (void)pasteString:(NSString *)theString
+             slowly:(BOOL)slowly
+   escapeShellChars:(BOOL)escapeShellChars
+           isUpload:(BOOL)isUpload
+       tabTransform:(iTermTabTransformTags)tabTransform
+       spacesPerTab:(int)spacesPerTab
+           progress:(void (^)(NSInteger))progress {
     NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
     NSUInteger flags = (kPasteFlagsSanitizingNewlines |
                         kPasteFlagsRemovingUnsafeControlCodes |
@@ -220,6 +232,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                             spacesPerTab:spacesPerTab
                                                    regex:nil
                                             substitution:nil];
+    event.progress = progress;
     event.isUpload = isUpload;
     [self tryToPasteEvent:event];
 }
@@ -285,7 +298,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
              delayBetweenCallsPrefKey:pasteEvent.delayKey
                          defaultValue:pasteEvent.defaultDelay
                        blockAtNewline:!!(pasteEvent.flags & kPasteFlagsCommands)
-                             isUpload:pasteEvent.isUpload];
+                             isUpload:pasteEvent.isUpload
+                             progress:pasteEvent.progress];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
@@ -298,7 +312,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
              delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
                          defaultValue:0.125
                        blockAtNewline:NO
-                             isUpload:NO];
+                             isUpload:NO
+                             progress:nil];
 }
 
 - (void)pasteNormally:(NSString *)aString {
@@ -312,7 +327,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
                          defaultValue:0.01
                        blockAtNewline:NO
-                             isUpload:NO];
+                             isUpload:NO
+                             progress:nil];
 }
 
 - (NSInteger)normalChunkSize {
@@ -400,6 +416,10 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         }
         range = [_buffer makeRangeSafe:range];
         [_delegate pasteHelperWriteString:[_buffer substringWithRange:range]];
+        _pasteContext.bytesWritten = _pasteContext.bytesWritten + range.length;
+        if (_pasteContext.progress) {
+            _pasteContext.progress(_pasteContext.bytesWritten);
+        }
     }
     [_buffer replaceCharactersInRange:range withString:@""];
 
@@ -430,6 +450,10 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                          selector:@selector(pasteNextChunkAndScheduleTimer)
                                          userInfo:nil
                                           repeats:NO];
+    if (_pasteContext.isUpload) {
+        // Ensure the timer runs while the uploads menu is open.
+        [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+    }
 }
 
 - (void)unblock {
@@ -444,7 +468,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                        defaultValue:(float)delayBetweenCallsDefault
                      blockAtNewline:(BOOL)blockAtNewline
-                           isUpload:(BOOL)isUpload {
+                           isUpload:(BOOL)isUpload
+                           progress:(void (^)(NSInteger))progress {
     [_pasteContext release];
     _pasteContext = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
                                                          defaultValue:bytesPerCallDefault
@@ -452,14 +477,17 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                                          defaultValue:delayBetweenCallsDefault];
     _pasteContext.blockAtNewline = blockAtNewline;
     _pasteContext.isUpload = isUpload;
+    _pasteContext.progress = progress;
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     const NSTimeInterval sumOfDelays =
         _pasteContext.delayBetweenCalls * _buffer.length / _pasteContext.bytesPerCall;
     const NSTimeInterval timeSpentWriting = _buffer.length / kPasteBytesPerSecond;
     const NSTimeInterval kMinEstimatedPasteTimeToShowIndicator = 3;
-    if ((sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) ||
-        blockAtNewline) {
-        [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
+    if (!isUpload) {
+        if ((sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) ||
+            blockAtNewline) {
+            [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
+        }
     }
 
     if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {

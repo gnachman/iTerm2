@@ -32,6 +32,11 @@
     return self;
 }
 
+- (void)dealloc {
+    [_progress release];
+    [super dealloc];
+}
+
 - (void)updateValues {
     if (_bytesPerCallKey && [[NSUserDefaults standardUserDefaults] objectForKey:_bytesPerCallKey]) {
         _bytesPerCall = [[NSUserDefaults standardUserDefaults] integerForKey:_bytesPerCallKey];
