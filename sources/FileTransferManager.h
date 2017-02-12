@@ -49,4 +49,7 @@
                     title:(NSString *)title
            confirmMessage:(NSString *)message;
 
+- (void)removeAllDownloads;
+- (void)removeAllUploads;
+
 @end

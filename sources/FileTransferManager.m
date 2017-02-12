@@ -8,6 +8,7 @@
 
 #import "FileTransferManager.h"
 #import "iTermApplicationDelegate.h"
+#import "NSArray+iTerm.h"
 #import "TransferrableFileMenuItemViewController.h"
 
 // Finished downloads will be automatically removed from the downloads menu after this number of
@@ -208,6 +209,31 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     if (menuElement) {
         AXUIElementPerformAction(menuElement, kAXPressAction);
         CFRelease(menuElement);
+    }
+}
+
+- (void)removeAllDownloads {
+    NSArray *removableStatuses = @[ @(kTransferrableFileStatusFinishedSuccessfully),
+                                    @(kTransferrableFileStatusFinishedWithError),
+                                    @(kTransferrableFileStatusCancelled) ];
+
+    NSArray *downloads = [_viewControllers filteredArrayUsingBlock:^BOOL(TransferrableFileMenuItemViewController *anObject) {
+        return anObject.transferrableFile.isDownloading && [removableStatuses containsObject:@(anObject.transferrableFile.status)];
+    }];
+    for (TransferrableFileMenuItemViewController *controller in downloads) {
+        [self removeItem:controller];
+    }
+}
+
+- (void)removeAllUploads {
+    NSArray *removableStatuses = @[ @(kTransferrableFileStatusFinishedSuccessfully),
+                                    @(kTransferrableFileStatusFinishedWithError),
+                                    @(kTransferrableFileStatusCancelled) ];
+    NSArray *downloads = [_viewControllers filteredArrayUsingBlock:^BOOL(TransferrableFileMenuItemViewController *anObject) {
+        return !anObject.transferrableFile.isDownloading && [removableStatuses containsObject:@(anObject.transferrableFile.status)];
+    }];
+    for (TransferrableFileMenuItemViewController *controller in downloads) {
+        [self removeItem:controller];
     }
 }
 
