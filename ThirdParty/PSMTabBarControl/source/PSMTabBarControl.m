@@ -1962,66 +1962,39 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Accessibility
 
--(BOOL)accessibilityIsIgnored {
-    return NO;
+- (NSString*)accessibilityRole {
+    return NSAccessibilityTabGroupRole;
 }
 
-- (NSArray*)accessibilityAttributeNames
-{
-    static NSArray *attributes = nil;
-    if (!attributes) {
-        NSSet *set = [NSSet setWithArray:[super accessibilityAttributeNames]];
-        set = [set setByAddingObjectsFromArray:[NSArray arrayWithObjects:
-                                                NSAccessibilityTabsAttribute,
-                                                NSAccessibilityValueAttribute,
-                                                nil]];
-        attributes = [[set allObjects] retain];
+- (NSArray*)accessibilityChildren {
+    NSMutableArray *childElements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
+        [childElements addObject:cell.element];
     }
-    return attributes;
+    if (![_overflowPopUpButton isHidden]) {
+        [childElements addObject:_overflowPopUpButton];
+    }
+    if (![_addTabButton isHidden]) {
+        [childElements addObject:_addTabButton];
+    }
+    return childElements;
 }
 
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-    id attributeValue = nil;
-    if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
-        attributeValue = NSAccessibilityTabGroupRole;
-    } else if ([attribute isEqualToString: NSAccessibilityChildrenAttribute]) {
-        NSMutableArray *children = [NSMutableArray arrayWithArray:[_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]];
-        if (![_overflowPopUpButton isHidden]) {
-            [children addObject:_overflowPopUpButton];
-        }
-        if (![_addTabButton isHidden]) {
-            [children addObject:_addTabButton];
-        }
-        attributeValue = NSAccessibilityUnignoredChildren(children);
-    } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
-        attributeValue = NSAccessibilityUnignoredChildren(_cells);
-    } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
-        NSTabViewItem *tabViewItem = [_tabView selectedTabViewItem];
-        for (NSActionCell *cell in _cells) {
-            if ([cell representedObject] == tabViewItem)
-                attributeValue = cell;
-        }
-        if (!attributeValue)
-        {
-            NSLog(@"WARNING: seems no tab cell is currently selected");
-        }
-    } else {
-        attributeValue = [super accessibilityAttributeValue:attribute];
+- (NSArray*)accessibilityTabs {
+    NSMutableArray *tabElements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in _cells) {
+        [tabElements addObject:cell.element];
     }
-    return attributeValue;
+    return tabElements;
 }
 
 - (id)accessibilityHitTest:(NSPoint)point {
-    id hitTestResult = self;
-
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell isHighlighted]) {
-            hitTestResult = [cell accessibilityHitTest:point];
-            break;
+    for (id child in self.accessibilityChildren) {
+        if (NSPointInRect(point, [child accessibilityFrame])) {
+            return [child accessibilityHitTest:point];
         }
     }
-
-    return hitTestResult;
+    return self;
 }
 
 #pragma mark - iTerm Add On

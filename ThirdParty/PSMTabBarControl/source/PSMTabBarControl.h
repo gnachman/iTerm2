@@ -148,6 +148,7 @@ enum {
 // the tabbed browsing interface of many popular browsers.
 @interface PSMTabBarControl : NSControl<
   NSDraggingSource,
+  NSAccessibilityGroup,
   PSMProgressIndicatorDelegate,
   PSMTabViewDelegate>
 
