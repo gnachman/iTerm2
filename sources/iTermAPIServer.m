@@ -384,8 +384,17 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.id_p = request.id_p;
             response.setProfilePropertyResponse = setProfilePropertyResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
-                                       }];
+        }];
         return;
+    }
+    if (request.hasListSessionsRequest) {
+        [_delegate apiServerListSessions:request.listSessionsRequest
+                                 handler:^(ITMListSessionsResponse *listSessionsResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.listSessionsResponse = listSessionsResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
     }
 }
 

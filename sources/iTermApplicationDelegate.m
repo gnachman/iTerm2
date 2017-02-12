@@ -2375,6 +2375,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     handler([session handleSetProfilePropertyForKey:request.key value:value]);
 }
 
+- (void)apiServerListSessions:(ITMListSessionsRequest *)request
+                      handler:(void (^)(ITMListSessionsResponse *))handler {
+    ITMListSessionsResponse *response = [[[ITMListSessionsResponse alloc] init] autorelease];
+    for (PseudoTerminal *window in [[iTermController sharedInstance] terminals]) {
+        ITMListSessionsResponse_Window *windowMessage = [[[ITMListSessionsResponse_Window alloc] init] autorelease];
+
+        for (PTYTab *tab in window.tabs) {
+            ITMListSessionsResponse_Tab *tabMessage = [[[ITMListSessionsResponse_Tab alloc] init] autorelease];
+
+            for (PTYSession *session in tab.sessions) {
+                ITMListSessionsResponse_Session *sessionMessage = [[[ITMListSessionsResponse_Session alloc] init] autorelease];
+                sessionMessage.uniqueIdentifier = session.guid;
+                [tabMessage.sessionsArray addObject:sessionMessage];
+            }
+
+            [windowMessage.tabsArray addObject:tabMessage];
+        }
+
+        [response.windowsArray addObject:windowMessage];
+    }
+    handler(response);
+}
+
 @end
 
 @implementation iTermApplicationDelegate (MoreActions)
