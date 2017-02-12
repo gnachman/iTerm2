@@ -2612,4 +2612,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self registerCall:_cmd];
 }
 
+- (void)textViewDidFindDirtyRects {
+}
+
 @end

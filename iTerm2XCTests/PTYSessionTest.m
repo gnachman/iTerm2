@@ -19,7 +19,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
 - (void)pasteString:(NSString *)theString
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
-           commands:(BOOL)commands
+           isUpload:(BOOL)isUpload
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab {
     self.string = theString;

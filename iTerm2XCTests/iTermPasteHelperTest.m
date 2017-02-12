@@ -315,16 +315,20 @@ static const double kFloatingPointTolerance = 0.00001;
         return 1;  /* deprecated NSAlertDefaultReturn; */
     } copy];
 
-    // Check cr newline. This used to warn by default but now it does not.
+    // Check cr newline.
     [_helper pasteString:@"line 1\rline 2"
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    XCTAssert(!warned);
+    if (override) {
+        XCTAssert(warned);
+    } else {
+        XCTAssert(!warned);
+    }
 
-    // Check lf newline This used to warn by default but now it does not.
+    // Check lf newline.
     warned = NO;
     [_helper pasteString:@"line 1\nline 2"
                   slowly:NO
@@ -332,9 +336,13 @@ static const double kFloatingPointTolerance = 0.00001;
                 isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    XCTAssert(!warned);
+    if (override) {
+        XCTAssert(warned);
+    } else {
+        XCTAssert(!warned);
+    }
 
-    // Check crlf newline This used to warn by default but now it does not.
+    // Check crlf newline.
     warned = NO;
     [_helper pasteString:@"line 1\r\nline 2"
                   slowly:NO
