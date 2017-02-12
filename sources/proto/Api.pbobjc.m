@@ -775,6 +775,7 @@ typedef struct ITMNotification__storage_ {
 @dynamic hasCharactersIgnoringModifiers, charactersIgnoringModifiers;
 @dynamic modifiersArray, modifiersArray_Count;
 @dynamic hasKeyCode, keyCode;
+@dynamic hasSession, session;
 
 typedef struct ITMKeystrokeNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -782,6 +783,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
   NSString *characters;
   NSString *charactersIgnoringModifiers;
   GPBEnumArray *modifiersArray;
+  NSString *session;
 } ITMKeystrokeNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -825,6 +827,15 @@ typedef struct ITMKeystrokeNotification__storage_ {
         .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, keyCode),
         .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
         .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokeNotification_FieldNumber_Session,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -895,9 +906,11 @@ BOOL ITMKeystrokeNotification_Modifiers_IsValidValue(int32_t value__) {
 
 @implementation ITMScreenUpdateNotification
 
+@dynamic hasSession, session;
 
 typedef struct ITMScreenUpdateNotification__storage_ {
   uint32_t _has_storage_[1];
+  NSString *session;
 } ITMScreenUpdateNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -905,12 +918,23 @@ typedef struct ITMScreenUpdateNotification__storage_ {
 + (GPBDescriptor *)descriptor {
   static GPBDescriptor *descriptor = nil;
   if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMScreenUpdateNotification_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMScreenUpdateNotification__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMScreenUpdateNotification class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
-                                        fields:NULL
-                                    fieldCount:0
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMScreenUpdateNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
@@ -925,9 +949,11 @@ typedef struct ITMScreenUpdateNotification__storage_ {
 
 @implementation ITMPromptNotification
 
+@dynamic hasSession, session;
 
 typedef struct ITMPromptNotification__storage_ {
   uint32_t _has_storage_[1];
+  NSString *session;
 } ITMPromptNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -935,12 +961,23 @@ typedef struct ITMPromptNotification__storage_ {
 + (GPBDescriptor *)descriptor {
   static GPBDescriptor *descriptor = nil;
   if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMPromptNotification_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMPromptNotification class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
-                                        fields:NULL
-                                    fieldCount:0
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPromptNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
@@ -958,12 +995,14 @@ typedef struct ITMPromptNotification__storage_ {
 @dynamic hasHostName, hostName;
 @dynamic hasUserName, userName;
 @dynamic hasDirectory, directory;
+@dynamic hasSession, session;
 
 typedef struct ITMLocationChangeNotification__storage_ {
   uint32_t _has_storage_[1];
   NSString *hostName;
   NSString *userName;
   NSString *directory;
+  NSString *session;
 } ITMLocationChangeNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -996,6 +1035,15 @@ typedef struct ITMLocationChangeNotification__storage_ {
         .number = ITMLocationChangeNotification_FieldNumber_Directory,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, directory),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMLocationChangeNotification_FieldNumber_Session,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, session),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },

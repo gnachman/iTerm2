@@ -486,6 +486,7 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
   ITMKeystrokeNotification_FieldNumber_CharactersIgnoringModifiers = 2,
   ITMKeystrokeNotification_FieldNumber_ModifiersArray = 3,
   ITMKeystrokeNotification_FieldNumber_KeyCode = 4,
+  ITMKeystrokeNotification_FieldNumber_Session = 5,
 };
 
 @interface ITMKeystrokeNotification : GPBMessage
@@ -506,17 +507,37 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
 @property(nonatomic, readwrite) int32_t keyCode;
 
 @property(nonatomic, readwrite) BOOL hasKeyCode;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
 @end
 
 #pragma mark - ITMScreenUpdateNotification
 
+typedef GPB_ENUM(ITMScreenUpdateNotification_FieldNumber) {
+  ITMScreenUpdateNotification_FieldNumber_Session = 1,
+};
+
 @interface ITMScreenUpdateNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 @end
 
 #pragma mark - ITMPromptNotification
 
+typedef GPB_ENUM(ITMPromptNotification_FieldNumber) {
+  ITMPromptNotification_FieldNumber_Session = 1,
+};
+
 @interface ITMPromptNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 @end
 
@@ -526,6 +547,7 @@ typedef GPB_ENUM(ITMLocationChangeNotification_FieldNumber) {
   ITMLocationChangeNotification_FieldNumber_HostName = 1,
   ITMLocationChangeNotification_FieldNumber_UserName = 2,
   ITMLocationChangeNotification_FieldNumber_Directory = 3,
+  ITMLocationChangeNotification_FieldNumber_Session = 4,
 };
 
 @interface ITMLocationChangeNotification : GPBMessage
@@ -541,6 +563,10 @@ typedef GPB_ENUM(ITMLocationChangeNotification_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *directory;
 /** Test to see if @c directory has been set. */
 @property(nonatomic, readwrite) BOOL hasDirectory;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
 
 @end
 

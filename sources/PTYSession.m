@@ -5102,6 +5102,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Function];
             }
             keystrokeNotification.keyCode = event.keyCode;
+            keystrokeNotification.session = self.guid;
             ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
             notification.keystrokeNotification = keystrokeNotification;
 
@@ -5949,7 +5950,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_updateSubscriptions.count) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
-
+        notification.screenUpdateNotification.session = self.guid;
         [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
             [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
         }];
@@ -7097,6 +7098,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+        notification.promptNotification.session = self.guid;
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
 }
@@ -7542,6 +7544,7 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
     notification.locationChangeNotification.hostName = host.hostname;
     notification.locationChangeNotification.userName = host.username;
+    notification.locationChangeNotification.session = self.guid;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
@@ -7676,6 +7679,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.session = self.guid;
     notification.locationChangeNotification.directory = newPath;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
