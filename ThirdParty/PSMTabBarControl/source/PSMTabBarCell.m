@@ -48,7 +48,9 @@
 }
 
 - (BOOL)accessibilityPerformPress {
-    return NO;
+	PSMTabBarCell *cell = self.cell;
+    [cell.psmTabControlView performSelector:@selector(tabClick:) withObject:cell];
+    return YES;	// We don't actually know if -tabClick: succeeded, but for now, let's pretend it did.
 }
 
 - (NSRect)accessibilityFrame {
