@@ -2005,7 +2005,11 @@ const NSInteger kPSMStartResizeAnimation = 0;
         }
         attributeValue = elements;
     } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
-        attributeValue = NSAccessibilityUnignoredChildren(_cells);
+        NSMutableArray *elements = [NSMutableArray array];
+        for (PSMTabBarCell *cell in _cells) {
+            [elements addObject:cell.element];
+        }
+        attributeValue = elements;
     } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
         NSTabViewItem *tabViewItem = [_tabView selectedTabViewItem];
         for (NSActionCell *cell in _cells) {
