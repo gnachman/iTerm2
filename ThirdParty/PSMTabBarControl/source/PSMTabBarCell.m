@@ -40,7 +40,11 @@
 }
 
 - (NSString *)accessibilityLabel {
-    return @"Tab";
+	NSString *label = [self.cell stringValue];
+    if ([label length]>0) {
+    	return label;
+    }
+    return @"(untitled tab)";
 }
 
 - (BOOL)accessibilityPerformPress {
