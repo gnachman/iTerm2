@@ -48,7 +48,14 @@
 }
 
 - (NSRect)accessibilityFrame {
-    return self.cell.frame;
+	PSMTabBarCell *cell = self.cell;
+    NSView *controlView = cell.psmTabControlView;
+    NSWindow *window = [controlView window];
+    NSRect frame = cell.frame;
+    if ((!window) || (NSIsEmptyRect(frame))) {
+    	return NSZeroRect;
+    }
+    return [window convertRectToScreen:[controlView convertRect:frame toView:nil]];
 }
 
 - (id)accessibilityParent {
