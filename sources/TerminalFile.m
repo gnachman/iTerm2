@@ -146,7 +146,6 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
     [[FileTransferManager sharedInstance] transferrableFile:self didFinishTransmissionWithError:nil];
     return;
-
 }
 
 #pragma mark - Private
@@ -157,5 +156,37 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
                            userInfo:@{ NSLocalizedDescriptionKey:description }];
 }
 
+
+@end
+
+@implementation TerminalFileUpload
+
+- (void)dealloc {
+    [super dealloc];
+}
+
+- (BOOL)isDownloading {
+    return NO;
+}
+
+- (void)upload {
+    self.status = kTransferrableFileStatusTransferring;
+    [[[FileTransferManager sharedInstance] files] addObject:self];
+    [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
+}
+
+- (void)endOfData {
+    self.status = kTransferrableFileStatusCancelled;
+    [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
+}
+
+- (void)didUploadBytes:(NSInteger)count {
+    self.bytesTransferred = count;
+    if (count == self.fileSize) {
+        [[FileTransferManager sharedInstance] transferrableFile:self didFinishTransmissionWithError:nil];
+    } else {
+        [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
+    }
+}
 
 @end

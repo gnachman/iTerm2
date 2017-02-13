@@ -29,6 +29,7 @@
 
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
+#import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIServer.h"
 #import "iTermAboutWindowController.h"
@@ -1849,6 +1850,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [mainMenu insertItem:downloadsMenu_
                      atIndex:mainMenu.itemArray.count - 1];
         [downloadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Downloads"] autorelease]];
+
+        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllDownloads:) keyEquivalent:@""] autorelease];
+        [downloadsMenu_.submenu addItem:clearAll];
+        [downloadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
     }
     return [downloadsMenu_ submenu];
 }
@@ -1862,8 +1867,20 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [mainMenu insertItem:uploadsMenu_
                      atIndex:mainMenu.itemArray.count - 1];
         [uploadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Uploads"] autorelease]];
+
+        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllUploads:) keyEquivalent:@""] autorelease];
+        [uploadsMenu_.submenu addItem:clearAll];
+        [uploadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
     }
     return [uploadsMenu_ submenu];
+}
+
+- (void)clearAllDownloads:(id)sender {
+    [[FileTransferManager sharedInstance] removeAllDownloads];
+}
+
+- (void)clearAllUploads:(id)sender{
+    [[FileTransferManager sharedInstance] removeAllUploads];
 }
 
 // This is called whenever a tab becomes key or logging starts/stops.
@@ -1990,6 +2007,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
         menuItem.state = profileHotkey.autoHides ? NSOffState : NSOnState;
         return profileHotkey != nil;
+    } else if ([menuItem action] == @selector(clearAllDownloads:)) {
+        return downloadsMenu_.submenu.itemArray.count > 2;
+    } else if ([menuItem action] == @selector(clearAllUploads:)) {
+        return uploadsMenu_.submenu.itemArray.count > 2;
     } else {
         return YES;
     }

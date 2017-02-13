@@ -220,6 +220,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermSessionViewDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
+@property(nonatomic, retain) TerminalFileUpload *upload;
 
 // Time since reference date when last output was received. New output in a brief period after the
 // session is resized is ignored to avoid making the spinner spin due to resizing.
@@ -605,6 +606,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_download stop];
     [_download endOfData];
     [_download release];
+    [_upload stop];
+    [_upload endOfData];
+    [_upload release];
     [_shell release];
     [_screen release];
     [_terminal release];
@@ -4026,12 +4030,18 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Window frame: %@", window);
 }
 
-- (void)terminalFileShouldStop:(NSNotification *)notification
-{
-  if ([notification object] == _download) {
+- (void)terminalFileShouldStop:(NSNotification *)notification {
+    if ([notification object] == _download) {
         [_screen.terminal stopReceivingFile];
         [_download endOfData];
         self.download = nil;
+    } else if ([notification object] == _upload) {
+        [_pasteHelper abort];
+        [_upload endOfData];
+        self.upload = nil;
+        char controlC[1] = { VT100CC_ETX };
+        NSData *data = [NSData dataWithBytes:controlC length:sizeof(controlC)];
+        [self writeLatin1EncodedData:data broadcastAllowed:NO];
     }
 }
 
@@ -4395,6 +4405,23 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         }
                                                     }];
     [self queueAnnouncement:announcement identifier:@"AbortDownloadOnKeyPressAnnouncement"];
+}
+
+- (void)askAboutAbortingUpload {
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"A file is being uploaded. Abort the uploaded?"
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"OK", @"Cancel" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        if (self.upload) {
+                                                            [_pasteHelper abort];
+                                                            [self.upload endOfData];
+                                                            self.upload = nil;
+                                                        }
+                                                    }
+                                                }];
+    [self queueAnnouncement:announcement identifier:@"AbortUploadOnKeyPressAnnouncement"];
 }
 
 #pragma mark - Captured Output
@@ -5070,9 +5097,13 @@ ITERM_WEAKLY_REFERENCEABLE
         [self didInferEndOfCommand];
     }
 
-    if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"] && self.terminal.receivingFile) {
-        // Offer to abort download if you press ^c while downloading an inline file
-        [self askAboutAbortingDownload];
+    if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
+        if (self.terminal.receivingFile) {
+            // Offer to abort download if you press ^c while downloading an inline file
+            [self askAboutAbortingDownload];
+        } else if (self.upload) {
+            [self askAboutAbortingUpload];
+        }
     }
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     if (_view.currentAnnouncement.dismissOnKeyDown) {
@@ -7296,9 +7327,20 @@ ITERM_WEAKLY_REFERENCEABLE
             [_pasteHelper pasteString:base64String
                                slowly:NO
                      escapeShellChars:NO
-                             isUpload:NO
+                             isUpload:YES
                          tabTransform:kTabTransformNone
-                         spacesPerTab:0];          
+                         spacesPerTab:0
+                             progress:^(NSInteger progress) {
+                                 [self.upload didUploadBytes:progress];
+                             }];
+            NSString *label;
+            if (relativePaths.count == 1) {
+                label = relativePaths.firstObject.lastPathComponent;
+            } else {
+                label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
+            }
+            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
+            [self.upload upload];
         } else {
             [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
         }

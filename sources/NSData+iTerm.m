@@ -68,8 +68,8 @@
                                    @"1",  // Block size
                                    @"-f",
                                    @"-",  // write to stdout
-                                   [NSString stringWithFormat:@"-C%@", [basePath stringWithEscapedShellCharacters]],  // Base path
-                                   [files componentsJoinedByString:@" "] ];  // Files to zip
+                                   [NSString stringWithFormat:@"-C%@", [basePath stringWithEscapedShellCharacters]] ];  // Base path
+    args = [args arrayByAddingObjectsFromArray:files];  // Files to zip
 
     NSTask *task = [[[NSTask alloc] init] autorelease];
     [task setLaunchPath:@"/usr/bin/tar"];

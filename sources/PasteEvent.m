@@ -40,6 +40,7 @@
     [_delayKey release];
     [_regex release];
     [_substitution release];
+    [_progress release];
     [super dealloc];
 }
 
