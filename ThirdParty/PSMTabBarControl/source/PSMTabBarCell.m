@@ -450,7 +450,7 @@
 }
 
 - (BOOL)isSelected {
-    return ([self tabState] == PSMTab_SelectedMask);
+    return (([self tabState] & PSMTab_SelectedMask) == PSMTab_SelectedMask);
 }
 
 #pragma mark - Accessibility
