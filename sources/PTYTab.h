@@ -206,4 +206,6 @@
 // Update icons in tab.
 - (void)updateIcon;
 
+- (void)checkInvariants:(NSString *)when;
+
 @end

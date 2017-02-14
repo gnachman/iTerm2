@@ -188,6 +188,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
 
     PTYTab *destinationTab = [dest.delegate.realParentWindow tabForSession:dest];
     if (isMove_) {
+        [destinationTab checkInvariants:@"Before move"];
         PTYSession *movingSession = session_;
         BOOL isVertical = (half == kWestHalf || half == kEastHalf);
         if (![[destinationTab realParentWindow] canSplitPaneVertically:isVertical
@@ -210,8 +211,11 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
                                              targetSession:dest
                                               performSetup:NO];
         [destinationTab fitSessionToCurrentViewSize:movingSession];
+        [destinationTab checkInvariants:@"After move"];
     } else {
+        [destinationTab checkInvariants:@"Before swap"];
         [destinationTab swapSession:dest withSession:session_];
+        [destinationTab checkInvariants:@"After swap"];
     }
     return YES;
 }

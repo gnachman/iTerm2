@@ -1204,19 +1204,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // else if splitView has no children:
 //   Remove splitView from its parent
 
-- (void)_checkInvariants:(NSSplitView *)node {
+- (void)checkInvariants:(NSSplitView *)node when:(NSString *)when {
     if (node != root_) {
         if ([node isKindOfClass:[NSSplitView class]]) {
             // 1. A non-root splitview must have at least two children.
-            assert([[node subviews] count] > 1);
+            ITCriticalError([[node subviews] count] > 1, @"A non-root splitview must have at least two children. %@", when);
             NSSplitView* parentSplit = (NSSplitView*)[node superview];
             // 3. A non-root splitview's orientation must be the opposite of its parent's.
+            ITCriticalError([node isVertical] != [parentSplit isVertical], @"A non-root splitview's orientation must be the opposite of its parent's. %@", when);
             assert([node isVertical] != [parentSplit isVertical]);
         } else {
             if ([[node subviews] count] == 1) {
                 NSView* onlyChild = [[node subviews] objectAtIndex:0];
                 // The root splitview may have exactly one child iff that child is a SessionView.
-                assert([onlyChild isKindOfClass:[SessionView class]]);
+                ITCriticalError([onlyChild isKindOfClass:[SessionView class]], @"The root splitview may have exactly one child iff that child is a SessionView. %@", when);
             }
         }
     }
@@ -1224,7 +1225,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([node isKindOfClass:[NSSplitView class]]) {
         for (NSView* subView in [node subviews]) {
             if ([subView isKindOfClass:[NSSplitView class]]) {
-                [self _checkInvariants:(NSSplitView*)subView];
+                [self checkInvariants:(NSSplitView*)subView when:when];
             } else {
                 //NSLog(@"CHECK INVARIANTS: retain count of %p is %d", subView, [subView retainCount]);
             }
@@ -1234,7 +1235,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)_cleanupAfterRemove:(NSSplitView *)splitView {
+- (void)cleanupAfterRemove:(NSSplitView *)splitView {
     const int initialNumberOfSubviews = [[splitView subviews] count];
     if (initialNumberOfSubviews == 1) {
         NSView *onlyChild = [[splitView subviews] objectAtIndex:0];
@@ -1296,6 +1297,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)checkInvariants:(NSString *)when {
+    [self checkInvariants:root_ when:when];
+}
+
 - (void)_recursiveRemoveView:(NSView *)theView {
     NSSplitView *parentSplit = (NSSplitView *)[theView superview];
     if (parentSplit) {
@@ -1303,10 +1308,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // and the fakey DVR session are called here. If parentSplit is null the it's the live
         // session and there's nothing to do here. Otherwise, it's the one that is visible and
         // we take this path.
-        [self _checkInvariants:root_];
+        [self checkInvariants:root_ when:@"Before removal"];
         [theView removeFromSuperview];
-        [self _cleanupAfterRemove:parentSplit];
-        [self _checkInvariants:root_];
+        [self cleanupAfterRemove:parentSplit];
+        [self checkInvariants:root_ when:@"After removal"];
     }
 }
 
@@ -1499,6 +1504,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     assert([[parentSplit subviews] count] != 0);
     PtyLog(@"Before:");
     [self dump];
+    [self checkInvariants:@"Before splitting"];
     if ([[parentSplit subviews] count] == 1) {
         PtyLog(@"PTYTab splitVertically: one child");
         // If the parent split has only one child then it must also be the root.
@@ -1553,6 +1559,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     newSession.delegate = self;
     newSession.view = newView;
     [self.viewToSessionMap setObject:newSession forKey:newView];
+    [self checkInvariants:@"After splitting"];
 }
 
 + (NSSize)_sessionSizeWithCellSize:(NSSize)cellSize
