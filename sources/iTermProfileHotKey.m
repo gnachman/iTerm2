@@ -35,7 +35,6 @@ static iTermAnimationDirection iTermAnimationDirectionOpposite(iTermAnimationDir
 }
 static NSString *const kGUID = @"GUID";
 static NSString *const kArrangement = @"Arrangement";
-static const NSTimeInterval kAnimationDuration = 0.25;
 
 @interface iTermProfileHotKey()
 @property(nonatomic, copy) NSString *profileGuid;
@@ -244,7 +243,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     NSRect destination = [self preferredFrameForWindowController:self.windowController];
     self.windowController.window.alphaValue = 0;
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-        [context setDuration:kAnimationDuration];
+        [context setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
         [context setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]];
         [self.windowController.window.animator setFrame:destination display:NO];
         [self.windowController.window.animator setAlphaValue:1];
@@ -261,7 +260,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
     destination.origin = [self hiddenOriginForScreen:self.windowController.window.screen];
 
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-        [context setDuration:kAnimationDuration];
+        [context setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
         [context setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]];
         [self.windowController.window.animator setFrame:destination display:NO];
         [self.windowController.window.animator setAlphaValue:0];
@@ -285,7 +284,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (void)fadeIn {
     [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         [self rollInFinished];
     }];
@@ -295,7 +294,7 @@ static const NSTimeInterval kAnimationDuration = 0.25;
 
 - (void)fadeOut {
     [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
+    [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         [self didFinishRollingOut];
     }];
