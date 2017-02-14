@@ -20,6 +20,9 @@
 #import <OCMockito/OCMockito.h>
 
 #define NUM_DIFF_BUCKETS 10
+#define STRINGIFY(s) #s
+#define STRINGIFY_MACRO(m) STRINGIFY(m)
+
 typedef struct {
     CGFloat variance;
     CGFloat maxDiff;
@@ -758,6 +761,15 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         if (ok) {
             NSLog(@"Tests “%@” ok with variance: %f. Max diff: %f", name, stats.variance, stats.maxDiff);
         } else {
+            char *projectDir = STRINGIFY_MACRO(PROJECT_DIR);
+            NSString *sourceFolder = [NSString stringWithUTF8String:projectDir];
+            if (sourceFolder && ![[[iTermApplication sharedApplication] delegate] isRunningOnTravis]) {
+                NSData *pngData = [actual dataForFileOfType:NSPNGFileType];
+                NSString *sourceName = [[[[sourceFolder stringByAppendingPathComponent:@"tests/Goldens"] stringByAppendingPathComponent:@"PTYTextViewTest-golden-"] stringByAppendingString:name] stringByAppendingString:@".png"];
+                [pngData writeToFile:sourceName atomically:NO];
+                NSLog(@"Wrote to golden file at %@", sourceName);
+            }
+
             NSString *failPath = [NSString stringWithFormat:@"/tmp/failed-%@.png", name];
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
             NSLog(@"nTest “%@” about to fail.\nActual output in %@.\nExpected output in %@",
@@ -2610,6 +2622,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
 - (void)refresh {
     [self registerCall:_cmd];
+}
+
+- (void)textViewDidFindDirtyRects {
 }
 
 @end

@@ -1796,6 +1796,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 - (void)testAppendComposedCharactersPiecewise {
+    unichar aaccent[2] = { 'a', 0x301 };
     struct {
         NSArray<NSNumber *> *codePoints;
         NSString *expected;
@@ -1803,7 +1804,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     } tests[] = {
         {
             @[ @'a', @0x301 ],  // a + accent
-            @"á",
+            [NSString stringWithCharacters:aaccent length:2],
             NO
         },
         {
@@ -1924,107 +1925,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"g"]);
     XCTAssert([ScreenCharToStr(line + 12) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
     XCTAssert(line[13].code == 0);
-    // Toggle ambiguousIsDoubleWidth_ and see if it works.
-    screen = [self screenWithWidth:20 height:2];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    ambiguousIsDoubleWidth_ = YES;
-    s = [NSMutableString stringWithCharacters:chars
-                                       length:sizeof(chars) / sizeof(unichar)];
-    [screen appendStringAtCursor:s];
-
-    line = [screen getLineAtScreenIndex:0];
-
-    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
-    e = [@"´" decomposedStringWithCompatibilityMapping];
-    XCTAssert([a isEqualToString:e]);
-
-    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
-    e = [@"á" decomposedStringWithCompatibilityMapping];
-    XCTAssert([a isEqualToString:e]);
-    XCTAssert(line[2].code == DWC_RIGHT);
-
-    a = [ScreenCharToStr(line + 3) decomposedStringWithCompatibilityMapping];
-    e = [@"á̧" decomposedStringWithCompatibilityMapping];
-    XCTAssert([a isEqualToString:e]);
-    XCTAssert(line[4].code == DWC_RIGHT);
-
-    a = ScreenCharToStr(line + 5);
-    e = @"𐅐";
-    XCTAssert([a isEqualToString:e]);
-
-    XCTAssert([ScreenCharToStr(line + 6) isEqualToString:@"Ｅ"]);
-    XCTAssert(line[7].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"�"]);
-    XCTAssert(line[9].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"\u200b"]);
-    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 12) isEqualToString:@"ł"]);
-    XCTAssert(line[13].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 14) isEqualToString:@"🖕🏾"]);
-    XCTAssert([ScreenCharToStr(line + 15) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 16) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
-    XCTAssert(line[17].code == 0);
-
-    // Test modifying character already at cursor with combining mark
-    ambiguousIsDoubleWidth_ = NO;
-    screen = [self screenWithWidth:20 height:2];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"e"];
-    unichar combiningAcuteAccent = 0x301;
-    s = [NSMutableString stringWithCharacters:&combiningAcuteAccent length:1];
-    [screen appendStringAtCursor:s];
-    line = [screen getLineAtScreenIndex:0];
-    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
-    e = [@"é" decomposedStringWithCompatibilityMapping];
-    XCTAssert([a isEqualToString:e]);
-
-    // Test modifying character already at cursor with low surrogate
-    ambiguousIsDoubleWidth_ = NO;
-    screen = [self screenWithWidth:20 height:2];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    const unichar highSurrogate = 0xD800;
-    const unichar lowSurrogate = 0xDD50;
-    s = [NSMutableString stringWithCharacters:&highSurrogate length:1];
-    [screen appendStringAtCursor:s];
-    s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
-    [screen appendStringAtCursor:s];
-    line = [screen getLineAtScreenIndex:0];
-    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
-    e = @"𐅐";
-    XCTAssert([a isEqualToString:e]);
-
-    // Test modifying character already at cursor with low surrogate, but it's not a high surrogate.
-    ambiguousIsDoubleWidth_ = NO;
-    screen = [self screenWithWidth:20 height:2];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    [screen appendStringAtCursor:@"g"];
-    s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
-    [screen appendStringAtCursor:s];
-    line = [screen getLineAtScreenIndex:0];
-
-    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
-    e = @"g";
-    XCTAssert([a isEqualToString:e]);
-
-    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
-    e = @"�";
-    XCTAssert([a isEqualToString:e]);
-
-    // Test two high surrogates in a row.
-    screen = [self screenWithWidth:20 height:2];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    s = [NSMutableString stringWithCharacters:&highSurrogate length:1];
-    [screen appendStringAtCursor:s];
-    [screen appendStringAtCursor:s];
-    line = [screen getLineAtScreenIndex:0];
-
-    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
-    e = @"�";
-    XCTAssert([a isEqualToString:e]);
-
-    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
-    e = [NSString stringWithCharacters:&highSurrogate length:1];
-    XCTAssert([a isEqualToString:e]);
 }
 
 - (void)testLinefeed {
