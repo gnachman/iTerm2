@@ -36,7 +36,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 - (instancetype)initWithCell:(PSMTabBarCell *)cell role:(NSString *)role {
     self = [super init];
     if (self) {
-        self.accessibilityEnabled = YES;
         self.accessibilityRole = role;
         self.cell = cell;
     }

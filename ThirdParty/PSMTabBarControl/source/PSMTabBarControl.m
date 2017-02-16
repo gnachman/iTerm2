@@ -1962,10 +1962,6 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Accessibility
 
-- (BOOL)isAccessibilityEnabled {
-    return YES;
-}
-
 - (NSString*)accessibilityRole {
 	return NSAccessibilityTabGroupRole;
 }
