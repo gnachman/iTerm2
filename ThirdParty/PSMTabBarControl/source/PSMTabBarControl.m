@@ -1739,13 +1739,6 @@ const NSInteger kPSMStartResizeAnimation = 0;
     if ([[self delegate] respondsToSelector:@selector(tabViewDidChangeNumberOfTabViewItems:)]) {
         [[self delegate] tabViewDidChangeNumberOfTabViewItems:aTabView];
     }
-
-    NSMutableArray *elements = [NSMutableArray array];
-    for (PSMTabBarCell *cell in [_cells subarrayWithRange:NSMakeRange(0, self.numberOfVisibleTabs)]) {
-        [elements addObject:cell.element];
-        cell.element.accessibilityFrameInParentSpace = cell.frame;
-    }
-    [self setAccessibilityChildren:elements];
 }
 
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tagViewItem {
@@ -1992,29 +1985,30 @@ const NSInteger kPSMStartResizeAnimation = 0;
     if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
         attributeValue = NSAccessibilityTabGroupRole;
     } else if ([attribute isEqualToString: NSAccessibilityChildrenAttribute]) {
-        NSMutableArray *children = [NSMutableArray arrayWithArray:[_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]];
+        NSMutableArray *children = [NSMutableArray array];
+        for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
+        	[children addObject:cell.element];
+        }
         if (![_overflowPopUpButton isHidden]) {
             [children addObject:_overflowPopUpButton];
         }
         if (![_addTabButton isHidden]) {
             [children addObject:_addTabButton];
         }
-        NSMutableArray *elements = [NSMutableArray array];
-        for (PSMTabBarCell *cell in children) {
-            [elements addObject:cell.element];
-        }
-        attributeValue = elements;
+        attributeValue = children;
     } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
-        NSMutableArray *elements = [NSMutableArray array];
+        NSMutableArray *tabs = [NSMutableArray array];
         for (PSMTabBarCell *cell in _cells) {
-            [elements addObject:cell.element];
+        	[tabs addObject:cell.element];
         }
-        attributeValue = elements;
+        attributeValue = tabs;
     } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
         NSTabViewItem *tabViewItem = [_tabView selectedTabViewItem];
-        for (NSActionCell *cell in _cells) {
-            if ([cell representedObject] == tabViewItem)
-                attributeValue = cell;
+        for (PSMTabBarCell *cell in _cells) {
+            if ([cell representedObject] == tabViewItem) {
+                attributeValue = cell.element;
+                break;
+            }
         }
         if (!attributeValue)
         {

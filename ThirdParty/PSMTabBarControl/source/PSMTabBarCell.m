@@ -16,27 +16,46 @@
 - (NSView<PSMTabBarControlProtocol> *)psmTabControlView;
 @end
 
-@interface PSMTabBarControlAccessibilityElement : NSAccessibilityElement<NSAccessibilityRadioButton>
+static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
+	if (!NSIsEmptyRect(frame)) {
+        NSWindow *window = view.window;
+        if (window) {
+		    return [window convertRectToScreen:[view convertRect:frame toView:nil]];
+        }
+    }
+    return NSZeroRect;
+}
+
+@interface PSMTabAccessibilityElementPrototype : NSAccessibilityElement
 @property(nonatomic, assign) PSMTabBarCell *cell;
-- (instancetype)initWithCell:(PSMTabBarCell *)cell;
+- (instancetype)initWithCell:(PSMTabBarCell *)cell role:(NSString *)role;
 @end
 
-@implementation PSMTabBarControlAccessibilityElement
+@implementation PSMTabAccessibilityElementPrototype
 
-- (instancetype)initWithCell:(PSMTabBarCell *)cell {
+- (instancetype)initWithCell:(PSMTabBarCell *)cell role:(NSString *)role {
     self = [super init];
     if (self) {
-        self.accessibilityRole = NSAccessibilityRadioButtonRole;
-        self.accessibilityLabel = @"Tab";
-        self.accessibilityParent = cell;
         self.accessibilityEnabled = YES;
+        self.accessibilityRole = role;
         self.cell = cell;
     }
     return self;
 }
 
+@end
+
+@interface PSMTabAccessibilityElement : PSMTabAccessibilityElementPrototype<NSAccessibilityRadioButton>
+@end
+
+@implementation PSMTabAccessibilityElement
+
+- (id)accessibilityParent {
+    return self.cell.psmTabControlView;
+}
+
 - (id)accessibilityValue {
-    return @(self.cell.isSelected);
+    return @(([self.cell tabState] & PSMTab_SelectedMask) == PSMTab_SelectedMask);
 }
 
 - (NSString *)accessibilityLabel {
@@ -44,28 +63,45 @@
     if ([label length]>0) {
     	return label;
     }
-    return @"(untitled tab)";
-}
-
-- (BOOL)accessibilityPerformPress {
-	PSMTabBarCell *cell = self.cell;
-    [cell.psmTabControlView performSelector:@selector(tabClick:) withObject:cell];
-    return YES;	// We don't actually know if -tabClick: succeeded, but for now, let's pretend it did.
+    return @"(Untitled Tab)";	// not localized as of now
 }
 
 - (NSRect)accessibilityFrame {
 	PSMTabBarCell *cell = self.cell;
-    NSView *controlView = cell.psmTabControlView;
-    NSWindow *window = [controlView window];
-    NSRect frame = cell.frame;
-    if ((!window) || (NSIsEmptyRect(frame))) {
-    	return NSZeroRect;
-    }
-    return [window convertRectToScreen:[controlView convertRect:frame toView:nil]];
+    return PSMConvertAccessibilityFrameToScreen(cell.psmTabControlView, cell.frame);
 }
 
+- (BOOL)accessibilityPerformPress {
+	PSMTabBarCell *cell = self.cell;
+    [cell.psmTabControlView tabClick:cell];
+    return YES;	// we don't actually know if -tabClick: succeeded, but for now, let's pretend it did
+}
+
+@end
+
+@interface PSMTabCloseButtonAccessibilityElement : PSMTabAccessibilityElementPrototype<NSAccessibilityButton>
+@end
+
+@implementation PSMTabCloseButtonAccessibilityElement
+
 - (id)accessibilityParent {
-    return self.cell.psmTabControlView;
+    return self.cell.element;
+}
+
+- (NSString *)accessibilityLabel {
+    return @"Close Tab";	// not localized as of now
+}
+
+- (NSRect)accessibilityFrame {
+	PSMTabBarCell *cell = self.cell;
+    NSView<PSMTabBarControlProtocol> *controlView = cell.psmTabControlView;
+    return PSMConvertAccessibilityFrameToScreen(controlView, [[controlView style] closeButtonRectForTabCell:cell]);
+}
+
+- (BOOL)accessibilityPerformPress {
+	PSMTabBarCell *cell = self.cell;
+    [cell.psmTabControlView closeTabClick:cell];
+    return YES;	// we don't actually know if -closeTabClick: succeeded, but for now, let's pretend it did
 }
 
 @end
@@ -130,13 +166,14 @@
     PSMWeakTimer *_delayedStringValueTimer;  // For bug 3957
     BOOL _hasIcon;
     BOOL _highlighted;
-    PSMTabBarControlAccessibilityElement *_element;
+    NSAccessibilityElement *_element;
 }
 
 #pragma mark - Creation/Destruction
 
 - (id)initWithControlView:(PSMTabBarControl *)controlView {
-    if ((self = [super init])) {
+	self = [super init];
+    if (self) {
         [self setControlView:controlView];
         _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0,
                                                                             0,
@@ -148,7 +185,7 @@
         _hasCloseButton = YES;
         _modifierString = [@"" copy];
         _truncationStyle = NSLineBreakByTruncatingTail;
-        _element = [[PSMTabBarControlAccessibilityElement alloc] initWithCell:self];
+        [self setUpAccessibilityElement];
     }
     return self;
 }
@@ -183,8 +220,7 @@
         } else {
             [self setCurrentStep:0];
         }
-        _element = [[PSMTabBarControlAccessibilityElement alloc] initWithCell:self];
-        _element.cell = self;
+        [self setUpAccessibilityElement];
     }
     return self;
 }
@@ -196,10 +232,7 @@
     [_modifierString release];
     _indicator.delegate = nil;
     [_indicator release];
-    if (_tabColor) {
-        [_tabColor release];
-    }
-    _element.cell = nil;
+    [_tabColor release];
     [_element release];
     [super dealloc];
 }
@@ -449,86 +482,19 @@
     return self;
 }
 
-- (BOOL)isSelected {
-    return (([self tabState] & PSMTab_SelectedMask) == PSMTab_SelectedMask);
-}
-
 #pragma mark - Accessibility
 
-- (BOOL)accessibilityIsIgnored {
-    return NO;
-}
-
-- (NSArray*)accessibilityAttributeNames {
-    static NSArray *attributes;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSSet *set = [NSSet setWithArray:[super accessibilityAttributeNames]];
-        set = [set setByAddingObjectsFromArray:@[ NSAccessibilityTitleAttribute,
-                                                  NSAccessibilityValueAttribute ]];
-        attributes = [[set allObjects] retain];
-    });
-    return attributes;
-}
-
-
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-    id attributeValue = nil;
-
-    if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
-        attributeValue = NSAccessibilityRadioButtonRole;
-    } else if ([attribute isEqualToString: NSAccessibilityHelpAttribute]) {
-        id<PSMTabBarControlDelegate> controlViewDelegate = [[self psmTabControlView] delegate];
-        if ([controlViewDelegate respondsToSelector:@selector(accessibilityStringForTabView:objectCount:)]) {
-            attributeValue = [NSString stringWithFormat:@"%@, %i %@",
-                              [self stringValue], [self count],
-                              [controlViewDelegate accessibilityStringForTabView:[[self psmTabControlView] tabView] objectCount:[self count]]];
-        } else {
-            attributeValue = [self stringValue];
+- (void)setUpAccessibilityElement {
+	if (!_element) {
+    	_element = [[PSMTabAccessibilityElement alloc] initWithCell:self role:NSAccessibilityRadioButtonRole];
+        if (_element) {
+            PSMTabCloseButtonAccessibilityElement *closeButtonElement = [[PSMTabCloseButtonAccessibilityElement alloc] initWithCell:self role:NSAccessibilityButtonRole];
+            if (closeButtonElement) {
+                _element.accessibilityChildren = @[ closeButtonElement ];
+                [closeButtonElement release];
+            }
         }
-    } else if ([attribute isEqualToString:NSAccessibilityPositionAttribute] ||
-               [attribute isEqualToString:NSAccessibilitySizeAttribute]) {
-        NSRect rect = [self frame];
-        rect = [[self controlView] convertRect:rect toView:nil];
-        rect = [[[self controlView] window] convertRectToScreen:rect];
-        if ([attribute isEqualToString:NSAccessibilityPositionAttribute]) {
-            attributeValue = [NSValue valueWithPoint:rect.origin];
-        } else {
-            attributeValue = [NSValue valueWithSize:rect.size];
-        }
-    } else if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) {
-        attributeValue = [self stringValue];
-    } else if ([attribute isEqualToString: NSAccessibilityValueAttribute]) {
-        attributeValue = @(self.isSelected);
-    } else {
-        attributeValue = [super accessibilityAttributeValue:attribute];
     }
-
-    return attributeValue;
-}
-
-- (NSArray *)accessibilityActionNames {
-    return @[ NSAccessibilityPressAction ];
-}
-
-- (NSString *)accessibilityActionDescription:(NSString *)action {
-    return NSAccessibilityActionDescription(action);
-}
-
-- (void)accessibilityPerformAction:(NSString *)action {
-    if ([action isEqualToString:NSAccessibilityPressAction]) {
-        // this tab was selected
-        [[self psmTabControlView] performSelector:@selector(tabClick:)
-                                       withObject:self];
-    }
-}
-
-- (id)accessibilityHitTest:(NSPoint)point {
-    return NSAccessibilityUnignoredAncestor(self);
-}
-
-- (id)accessibilityFocusedUIElement:(NSPoint)point {
-    return NSAccessibilityUnignoredAncestor(self);
 }
 
 #pragma mark - iTerm2 Additions
