@@ -1962,62 +1962,34 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Accessibility
 
--(BOOL)accessibilityIsIgnored {
-    return NO;
+- (BOOL)isAccessibilityEnabled {
+    return YES;
 }
 
-- (NSArray*)accessibilityAttributeNames
-{
-    static NSArray *attributes = nil;
-    if (!attributes) {
-        NSSet *set = [NSSet setWithArray:[super accessibilityAttributeNames]];
-        set = [set setByAddingObjectsFromArray:[NSArray arrayWithObjects:
-                                                NSAccessibilityTabsAttribute,
-                                                NSAccessibilityValueAttribute,
-                                                nil]];
-        attributes = [[set allObjects] retain];
-    }
-    return attributes;
+- (NSString*)accessibilityRole {
+	return NSAccessibilityTabGroupRole;
 }
 
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-    id attributeValue = nil;
-    if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
-        attributeValue = NSAccessibilityTabGroupRole;
-    } else if ([attribute isEqualToString: NSAccessibilityChildrenAttribute]) {
-        NSMutableArray *children = [NSMutableArray array];
-        for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
-        	[children addObject:cell.element];
-        }
-        if (![_overflowPopUpButton isHidden]) {
-            [children addObject:_overflowPopUpButton];
-        }
-        if (![_addTabButton isHidden]) {
-            [children addObject:_addTabButton];
-        }
-        attributeValue = children;
-    } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
-        NSMutableArray *tabs = [NSMutableArray array];
-        for (PSMTabBarCell *cell in _cells) {
-        	[tabs addObject:cell.element];
-        }
-        attributeValue = tabs;
-    } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
-        NSTabViewItem *tabViewItem = [_tabView selectedTabViewItem];
-        for (PSMTabBarCell *cell in _cells) {
-            if ([cell representedObject] == tabViewItem) {
-                attributeValue = cell.element;
-                break;
-            }
-        }
-        if (!attributeValue)
-        {
-            NSLog(@"WARNING: seems no tab cell is currently selected");
-        }
-    } else {
-        attributeValue = [super accessibilityAttributeValue:attribute];
+- (NSArray*)accessibilityChildren {
+    NSMutableArray *childElements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
+        [childElements addObject:cell.element];
     }
-    return attributeValue;
+    if (![_overflowPopUpButton isHidden]) {
+        [childElements addObject:_overflowPopUpButton];
+    }
+    if (![_addTabButton isHidden]) {
+        [childElements addObject:_addTabButton];
+    }
+    return childElements;
+}
+
+- (NSArray*)accessibilityTabs {
+    NSMutableArray *tabElements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in _cells) {
+        [tabElements addObject:cell.element];
+    }
+    return tabElements;
 }
 
 - (id)accessibilityHitTest:(NSPoint)point {
