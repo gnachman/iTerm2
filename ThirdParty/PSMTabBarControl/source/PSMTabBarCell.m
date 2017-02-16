@@ -77,6 +77,15 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     return YES;	// we don't actually know if -tabClick: succeeded, but for now, let's pretend it did
 }
 
+- (id)accessibilityHitTest:(NSPoint)point {
+	for (id child in self.accessibilityChildren) {
+    	if (NSPointInRect(point, [child accessibilityFrame])) {
+        	return [child accessibilityHitTest:point];
+        }
+    }
+    return self;
+}
+
 @end
 
 @interface PSMTabCloseButtonAccessibilityElement : PSMTabAccessibilityElementPrototype<NSAccessibilityButton>
@@ -102,6 +111,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 	PSMTabBarCell *cell = self.cell;
     [cell.psmTabControlView closeTabClick:cell];
     return YES;	// we don't actually know if -closeTabClick: succeeded, but for now, let's pretend it did
+}
+
+- (id)accessibilityHitTest:(NSPoint)point {
+    return self;
 }
 
 @end

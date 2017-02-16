@@ -2021,16 +2021,12 @@ const NSInteger kPSMStartResizeAnimation = 0;
 }
 
 - (id)accessibilityHitTest:(NSPoint)point {
-    id hitTestResult = self;
-
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell isHighlighted]) {
-            hitTestResult = [cell accessibilityHitTest:point];
-            break;
+	for (id child in self.accessibilityChildren) {
+    	if (NSPointInRect(point, [child accessibilityFrame])) {
+        	return [child accessibilityHitTest:point];
         }
     }
-
-    return hitTestResult;
+    return self;
 }
 
 #pragma mark - iTerm Add On
