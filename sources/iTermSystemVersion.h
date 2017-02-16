@@ -10,5 +10,8 @@
 
 BOOL IsYosemiteOrLater(void);
 BOOL IsMavericksOrLater(void);
+BOOL IsElCapitanOrLater(void);
+BOOL IsSierraOrLater(void);
+
 BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix);
 BOOL IsTouchBarAvailable(void);

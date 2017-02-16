@@ -266,19 +266,35 @@ static BOOL sAuthenticated;
     if (sAuthenticated) {
         return;
     }
-    if (!NSClassFromString(@"LAContext")) {
+    if (!NSClassFromString(@"LAContext") || !IsElCapitanOrLater()) {
         sAuthenticated = YES;
         return;
     }
 
     LAContext *myContext = [[[LAContext alloc] init] autorelease];
     if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
-        [self authenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext];
+        [self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext];
+    }
+}
+
+- (BOOL)policyAvailableOnThisOSVersion:(LAPolicy)policy {
+    switch (policy) {
+        case LAPolicyDeviceOwnerAuthenticationWithBiometrics:
+            return IsTouchBarAvailable();
+
+        case LAPolicyDeviceOwnerAuthentication:
+            return IsElCapitanOrLater();
+
+        default:
+            return NO;
     }
 }
 
 - (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
     NSError *authError = nil;
+    if (![self policyAvailableOnThisOSVersion:policy]) {
+        return NO;
+    }
     if ([myContext canEvaluatePolicy:policy error:&authError]) {
         [self authenticateWithPolicy:policy context:myContext];
         return YES;
