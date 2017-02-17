@@ -4086,8 +4086,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                               minSizes:(NSArray *)minSizes
                               maxSizes:(NSArray *)maxSizes {
     ITCriticalError(sizes.count == minSizes.count && sizes.count == maxSizes.count,
-                    @"Mismatch in sizes array. sizes=%@ minSizes=%@ maxSizes=%@ self=%@",
-                    sizes, minSizes, maxSizes, self);
+                    @"Mismatch in sizes array. sizes=%@ minSizes=%@ maxSizes=%@ self=%@ root=%@",
+                    sizes, minSizes, maxSizes, self, [root_ iterm_recursiveDescription]);
     ITCriticalError(sizes.count > 0,
                     @"Empty sizes array passed to redistributeQuantizationError");
     assert(sizes.count > 0);
@@ -4290,11 +4290,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                     ignoreConstraints = YES;
                 } else {
                     PtyLog(@"splitView:resizeSubviewsWithOldSize - redistribute quantization error");
+                    SetPinnedDebugLogMessage(@"Current split view for redistribution", @"oldTotalSize=%@ ignoreConstraints=%@ splitView.recursiveDescription=%@", @(oldTotalSize), @(ignoreConstraints), [splitView iterm_recursiveDescription]);
                     [self _redistributeQuantizationError:targetSize
                                        currentSumOfSizes:currentSumOfSizes
                                                    sizes:sizes
                                                 minSizes:minSizes
                                                 maxSizes:maxSizes];
+                    SetPinnedDebugLogMessage(@"Current split view for redistribution", nil);
                 }
                 break;
             }
@@ -4313,6 +4315,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 const double size = lround(targetSize / n);
                 currentSumOfSizes += size;
                 [sizes addObject:[NSNumber numberWithDouble:size]];
+                [minSizes addObject:@(MAX(0, size - 1))];
+                [maxSizes addObject:@(MIN(targetSize, size + 1))];
             }
         } else {
             // Resize everything proportionately.
@@ -4324,11 +4328,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             }
         }
 
+        SetPinnedDebugLogMessage(@"Current split view for redistribution", @"oldTotalSize=%@ ignoreConstraints=%@ splitView.recursiveDescription=%@", @(oldTotalSize), @(ignoreConstraints), [splitView iterm_recursiveDescription]);
         [self _redistributeQuantizationError:targetSize
                            currentSumOfSizes:currentSumOfSizes
                                        sizes:sizes
                                     minSizes:minSizes
                                     maxSizes:maxSizes];
+        SetPinnedDebugLogMessage(@"Current split view for redistribution", nil);
     }
 
     // If all subviews are leaf nodes, redistribute extra pixels among the subviews

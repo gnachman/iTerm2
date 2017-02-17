@@ -109,6 +109,10 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
 }
 
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
+    if (value == nil) {
+        [gPinnedMessages removeObjectForKey:key];
+        return;
+    }
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
