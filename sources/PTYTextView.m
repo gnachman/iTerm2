@@ -4232,7 +4232,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     panel.canCreateDirectories = YES;
     [panel setExtensionHidden:NO];
 
-    if ([panel runModal] == NSOKButton) {
+    if ([panel runModal] == NSModalResponseOK) {
         NSBitmapImageFileType fileType = NSPNGFileType;
         NSString *filename = [panel legacyFilename];
         if ([filename hasSuffix:@".bmp"]) {

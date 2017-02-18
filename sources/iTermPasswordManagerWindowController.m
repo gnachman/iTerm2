@@ -81,11 +81,11 @@ static BOOL sAuthenticated;
                                     if (error.code != LAErrorSystemCancel &&
                                         error.code != LAErrorAppCancel) {
                                         BOOL isTouchID = (policy == LAPolicyDeviceOwnerAuthenticationWithBiometrics);
-                                        [[NSAlert alertWithMessageText:@"Authentication Failed"
-                                                        defaultButton:@"OK"
-                                                      alternateButton:nil
-                                                          otherButton:nil
-                                             informativeTextWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]] runModal];
+                                        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                                        alert.messageText = @"Authentication Failed";
+                                        alert.informativeText = [NSString stringWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]];
+                                        [alert addButtonWithTitle:@"OK"];
+                                        [alert runModal];
                                     }
                                     reply(success, error);
                                 });

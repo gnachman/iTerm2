@@ -268,7 +268,7 @@
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
 
-    if ([panel runModal] == NSOKButton) {
+    if ([panel runModal] == NSModalResponseOK) {
         NSString *path = [[panel directoryURL] path];
         _logDir.stringValue = path;
         [self setString:path forKey:KEY_LOGDIR];

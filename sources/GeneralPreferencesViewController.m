@@ -353,7 +353,7 @@ enum {
                                          defaultButton:@"Copy"
                                        alternateButton:@"Don't Copy"
                                            otherButton:nil
-                             informativeTextWithFormat:@""] runModal] == NSOKButton) {
+                             informativeTextWithFormat:@""] runModal] == NSModalResponseOK) {
                         [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
                     }
                 }
@@ -369,7 +369,7 @@ enum {
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
 
-    if ([panel runModal] == NSOKButton) {
+    if ([panel runModal] == NSModalResponseOK) {
         [_prefsCustomFolder setStringValue:[panel legacyDirectory]];
         [self settingChanged:_prefsCustomFolder];
         return YES;

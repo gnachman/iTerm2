@@ -133,7 +133,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     NSOpenPanel* panel = [NSOpenPanel openPanel];
     panel.delegate = self;
     panel.allowsMultipleSelection = NO;
-    if ([panel runModal] == NSOKButton) {
+    if ([panel runModal] == NSModalResponseOK) {
         picked = YES;
         DLog(@"Selected app has url %@", panel.URL);
         NSBundle *appBundle = [NSBundle bundleWithURL:panel.URL];
