@@ -941,23 +941,15 @@ typedef enum {
     }
 }
 
-- (void)editKey:(NSString *)key
-{
+- (void)editKey:(NSString *)key {
     [self loadKeyIntoEditPane:key];
-    [NSApp beginSheet:panel_
-       modalForWindow:[[PreferencePanel sharedInstance] window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:key];
+    [[[PreferencePanel sharedInstance] window] beginSheet:panel_
+                                        completionHandler:^(NSModalResponse returnCode) {
+                                            [panel_ close];
+                                        }];
 }
 
-- (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
-{
-    [sheet close];
-}
-
-- (IBAction)ok:(id)sender
-{
+- (IBAction)ok:(id)sender {
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[PointerPrefsController settings]];
     if (origKey_) {
         [temp removeObjectForKey:origKey_];
@@ -1009,12 +1001,11 @@ typedef enum {
     [temp setObject:newValue forKey:newKey];
     [PointerPrefsController setSettings:temp];
     [tableView_ reloadData];
-    [NSApp endSheet:panel_];
+    [[[PreferencePanel sharedInstance] window] endSheet:panel_];
 }
 
-- (IBAction)cancel:(id)sender
-{
-    [NSApp endSheet:panel_];
+- (IBAction)cancel:(id)sender {
+    [[[PreferencePanel sharedInstance] window] endSheet:panel_];
 }
 
 - (IBAction)add:(id)sender

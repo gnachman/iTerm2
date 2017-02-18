@@ -100,8 +100,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Constructor/destructor
 
-- (id)initWithFrame:(NSRect)frame
-{
+- (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization
@@ -124,10 +123,10 @@ const NSInteger kPSMStartResizeAnimation = 0;
         // the overflow button/menu
         NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControl] + 1, 0, [_style rightMarginForTabBarControl] - 1, [self frame].size.height);
         _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
-        if (_overflowPopUpButton){
+        if (_overflowPopUpButton) {
             // configure
             [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
-            [[_overflowPopUpButton cell] accessibilitySetOverrideValue:NSLocalizedStringFromTableInBundle(@"More tabs", @"iTerm", [NSBundle bundleForClass:[self class]], @"VoiceOver label for the button displaying menu of additional overflown tabs on click") forAttribute:NSAccessibilityDescriptionAttribute];
+            _overflowPopUpButton.accessibilityLabel = @"More tabs";
         }
 
         // new tab button

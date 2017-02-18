@@ -60,36 +60,27 @@ enum {
     [super dealloc];
 }
 
-+ (BOOL)applicationExists:(NSString *)bundle_id
-{
-    CFURLRef appURL = nil;
-    OSStatus result = LSFindApplicationForInfo(kLSUnknownCreator,
-                                               (CFStringRef)bundle_id,
-                                               NULL,
-                                               NULL,
-                                               &appURL);
-    
-    if (appURL) {
-        CFRelease(appURL);
++ (BOOL)applicationExists:(NSString *)bundleId {
+    CFArrayRef appURLs = LSCopyApplicationURLsForBundleIdentifier((CFStringRef)bundleId, nil);
+    NSInteger count = appURLs ? CFArrayGetCount(appURLs) : 0;
+    if (appURLs) {
+        CFRelease(appURLs);
     }
     
-    switch (result) {
-        case noErr:
-            if ([bundle_id isEqualToString:kSublimeText2Identifier] ||
-                [bundle_id isEqualToString:kSublimeText3Identifier]) {
-                // Extra check for sublime text.
-                if (![[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundle_id]) {
-                    return NO;
-                } else {
-                    return YES;
-                }
+    if (count > 0) {
+        if ([bundleId isEqualToString:kSublimeText2Identifier] ||
+            [bundleId isEqualToString:kSublimeText3Identifier]) {
+            // Extra check for sublime text.
+            if (![[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId]) {
+                return NO;
             } else {
                 return YES;
             }
-        case kLSApplicationNotFoundErr:
-            return NO;
-        default:
-            return NO;
+        } else {
+            return YES;
+        }
+    } else {
+        return NO;
     }
 }
 

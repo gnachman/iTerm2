@@ -209,14 +209,13 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                                 object:nil
                                                               userInfo:nil];
-
-            NSRunAlertPanel(@"Hotkey Window Successfully Configured",
-                            @"A new profile called “%@” was created for you. It is tuned to work well "
-                            @"for the Hotkey Window feature and it can be customized in the Profiles tab.",
-                            @"OK",
-                            nil,
-                            nil,
-                            newProfileName);
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Hotkey Window Successfully Configured";
+            alert.informativeText = [NSString stringWithFormat:@"A new profile called “%@” was created for you. It is tuned to work well "
+                                     @"for the Hotkey Window feature and it can be customized in the Profiles tab.",
+                                     newProfileName];
+            [alert addButtonWithTitle:@"OK"];
+            [alert runModal];
         }
     }];
 }
