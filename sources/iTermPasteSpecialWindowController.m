@@ -411,8 +411,13 @@
                                                              encoding:encoding] autorelease];
     NSWindow *window = [controller window];
     [presentingWindow beginSheet:window completionHandler:^(NSModalResponse returnCode) {
-        [controller.window close];
+        [NSApp stopModal];
     }];
+
+    [NSApp runModalForWindow:window];
+    [presentingWindow endSheet:window];
+    [window orderOut:nil];
+    [controller.window close];
 
     if (controller.shouldPaste) {
         completion(controller.pasteEvent);
@@ -499,12 +504,12 @@
 
 - (IBAction)ok:(id)sender {
     _shouldPaste = YES;
-    [self.window.sheetParent endSheet:self.window];
+    [NSApp stopModal];
 }
 
 - (IBAction)cancel:(id)sender {
     _shouldPaste = NO;
-    [self.window.sheetParent endSheet:self.window];
+    [NSApp stopModal];
 }
 
 - (IBAction)selectItem:(id)sender {
