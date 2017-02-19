@@ -113,16 +113,14 @@
 
 - (IBAction)editTriggers:(id)sender {
     [_triggerWindowController windowWillOpen];
-    [NSApp beginSheet:[_triggerWindowController window]
-       modalForWindow:[self.view window]
-        modalDelegate:self
-       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
+    [self.view.window beginSheet:_triggerWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        [_triggerWindowController.window close];
+    }];
 }
 
 - (IBAction)closeTriggersSheet:(id)sender {
     [[_triggerWindowController.window undoManager] removeAllActionsWithTarget:self];
-    [NSApp endSheet:[_triggerWindowController window]];
+    [self.view.window endSheet:_triggerWindowController.window];
 }
 
 #pragma mark - TriggerDelegate
@@ -147,28 +145,18 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
 }
 
-#pragma mark - Modal sheets
-
-- (void)advancedTabCloseSheet:(NSWindow *)sheet
-                   returnCode:(int)returnCode
-                  contextInfo:(void *)contextInfo {
-    [sheet close];
-}
-
 #pragma mark - Smart selection
 
 - (IBAction)editSmartSelection:(id)sender {
     [_smartSelectionWindowController window];
     [_smartSelectionWindowController windowWillOpen];
-    [NSApp beginSheet:[_smartSelectionWindowController window]
-       modalForWindow:[self.view window]
-        modalDelegate:self
-       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
+    [self.view.window beginSheet:_smartSelectionWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        [_smartSelectionWindowController.window close];
+    }];
 }
 
 - (IBAction)closeSmartSelectionSheet:(id)sender {
-    [NSApp endSheet:[_smartSelectionWindowController window]];
+    [self.view.window endSheet:_smartSelectionWindowController.window];
 }
 
 #pragma mark - Semantic History

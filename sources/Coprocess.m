@@ -103,11 +103,10 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         fprintf(stderr, "## exec failed %s for command /bin/sh -c %s##\n", strerror(errno), [command UTF8String]);
         _exit(-1);
     } else if (pid < (pid_t)0) {
-        [[NSAlert alertWithMessageText:@"Failed to launch coprocess."
-                         defaultButton:@"OK"
-                       alternateButton:nil
-                           otherButton:nil
-             informativeTextWithFormat:@""] runModal];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Failed to launch coprocess.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
         return nil;
     }
 

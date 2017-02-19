@@ -161,11 +161,10 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 }
 
 + (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
-    NSAlert *alert = [NSAlert alertWithMessageText:prompt
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@""];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = prompt;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
 
     NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
     [input setStringValue:defaultValue];
@@ -173,10 +172,10 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     [alert layout];
     [[alert window] makeFirstResponder:input];
     NSInteger button = [alert runModal];
-    if (button == NSAlertDefaultReturn) {
+    if (button == NSAlertFirstButtonReturn) {
         [input validateEditing];
         return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    } else if (button == NSAlertAlternateReturn) {
+    } else if (button == NSAlertSecondButtonReturn) {
         return nil;
     } else {
         NSAssert1(NO, @"Invalid input dialog button %d", (int) button);
@@ -191,11 +190,12 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
         return nil;
     }
     if ([WindowArrangements hasWindowArrangement:name]) {
-        if (NSRunAlertPanel(@"Replace Existing Saved Window Arrangement?",
-                            @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?",
-                            @"Yes",
-                            @"No",
-                            nil) != NSAlertDefaultReturn) {
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Replace Existing Saved Window Arrangement?";
+        alert.informativeText = @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?";
+        [alert addButtonWithTitle:@"Yes"];
+        [alert addButtonWithTitle:@"No"];
+        if ([alert runModal] == NSAlertSecondButtonReturn) {
             return nil;
         }
     }

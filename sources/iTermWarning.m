@@ -271,20 +271,6 @@ static BOOL gShowingWarning;
 
 #pragma mark - Private
 
-+ (NSInteger)alertValueForParameterIndex:(int)index {
-    switch (index) {
-        case 0:
-            return NSAlertDefaultReturn;
-            
-        case 1:
-            return NSAlertAlternateReturn;
-            
-        case 2:
-            return NSAlertOtherReturn;
-    }
-    return NSAlertErrorReturn;
-}
-
 + (NSString *)temporarySilenceKeyForIdentifier:(NSString *)identifier {
     return [NSString stringWithFormat:@"%@_SilenceUntil", identifier];
 }
