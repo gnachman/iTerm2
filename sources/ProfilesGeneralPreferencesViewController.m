@@ -258,24 +258,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [_editAdvancedConfigButton setEnabled:isAdvanced];
 }
 
-- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender
-{
+- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender {
     [_advancedWorkingDirWindowController window];  // force the window to load
     _advancedWorkingDirWindowController.profile = [self.delegate profilePreferencesCurrentProfile];
-    [NSApp beginSheet:_advancedWorkingDirWindowController.window
-       modalForWindow:self.view.window
-        modalDelegate:self
-       didEndSelector:@selector(advancedWorkingDirSheetClosed:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (void)advancedWorkingDirSheetClosed:(NSWindow *)sheet
-                           returnCode:(int)returnCode
-                          contextInfo:(void *)contextInfo {
-    for (NSString *key in [_advancedWorkingDirWindowController allKeys]) {
-        [self setString:_advancedWorkingDirWindowController.profile[key] forKey:key];
-    }
-    [sheet close];
+    [self.view.window beginSheet:_advancedWorkingDirWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        for (NSString *key in [_advancedWorkingDirWindowController allKeys]) {
+            [self setString:_advancedWorkingDirWindowController.profile[key] forKey:key];
+        }
+        [_advancedWorkingDirWindowController.window close];
+    }];
 }
 
 #pragma mark - Directory type

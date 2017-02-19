@@ -284,7 +284,6 @@ static const int kDragThreshold = 3;
         _drawingHelper.underlinedRange =
             VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
         _timeOfLastBlink = [NSDate timeIntervalSinceReferenceDate];
-        [[self window] useOptimizedDrawing:YES];
 
         // register for drag and drop
         [self registerForDraggedTypes: [NSArray arrayWithObjects:
@@ -4299,12 +4298,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           (int)imageInfo.image.size.width,
                           (int)imageInfo.image.size.height];
 
-        NSAlert *alert = [NSAlert alertWithMessageText:text
-                                         defaultButton:@"OK"
-                                       alternateButton:nil
-                                           otherButton:nil
-                             informativeTextWithFormat:@""];
-
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = text;
+        [alert addButtonWithTitle:@"OK"];
         [alert layout];
         [alert runModal];
     }

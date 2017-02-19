@@ -111,7 +111,7 @@ typedef enum {
             [self copyAttributes:BulkCopyAdvanced fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
     }
-    [NSApp endSheet:self.window];
+    [self.window.sheetParent endSheet:self.window];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                         object:nil
@@ -119,7 +119,7 @@ typedef enum {
 }
 
 - (IBAction)cancelBulkCopy:(id)sender {
-    [NSApp endSheet:self.window];
+    [self.window.sheetParent endSheet:self.window];
 }
 
 #pragma mark - Private

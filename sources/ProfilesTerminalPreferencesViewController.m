@@ -209,23 +209,13 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 }
 
 - (IBAction)showFilterAlertsPanel:(id)sender {
-    [NSApp beginSheet:_filterAlertsPanel
-       modalForWindow:self.view.window
-        modalDelegate:self
-       didEndSelector:@selector(filterAlertsCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
+    [self.view.window beginSheet:_filterAlertsPanel completionHandler:^(NSModalResponse returnCode) {
+        [_filterAlertsPanel close];
+    }];
 }
 
 - (IBAction)closeFilterAlertsPanel:(id)sender {
-    [NSApp endSheet:_filterAlertsPanel];
-}
-
-#pragma mark - Sheet
-
-- (void)filterAlertsCloseSheet:(NSWindow *)sheet
-                    returnCode:(int)returnCode
-                   contextInfo:(id)contextInfo {
-    [sheet close];
+    [_filterAlertsPanel.sheetParent endSheet:_filterAlertsPanel];
 }
 
 @end

@@ -56,7 +56,7 @@ static const NSInteger kRecycleDirectoryTag = 2;
     dict[KEY_AWDS_PANE_DIRECTORY] = [_paneDirectory stringValue];
     
     self.profile = dict;
-    [NSApp endSheet:self.window];
+    [self.window.sheetParent endSheet:self.window];
 }
 
 #pragma mark - Private

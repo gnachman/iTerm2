@@ -573,11 +573,11 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     bulkCopyController.keysForKeyboard = [_keysViewController keysForBulkCopy];
     bulkCopyController.keysForAdvanced = [_advancedViewController keysForBulkCopy];
 
-    [NSApp beginSheet:bulkCopyController.window
-       modalForWindow:self.view.window
-        modalDelegate:self
-       didEndSelector:@selector(bulkCopyControllerCloseSheet:returnCode:contextInfo:)
-          contextInfo:bulkCopyController];
+    [self.view.window beginSheet:bulkCopyController.window completionHandler:^(NSModalResponse returnCode) {
+        [bulkCopyController.window close];
+        [bulkCopyController autorelease];
+        [[_delegate profilePreferencesModel] flush];
+    }];
 }
 
 - (IBAction)duplicateProfile:(id)sender
@@ -696,16 +696,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     if ([[notification object] isEqual:[self selectedProfile][KEY_GUID]]) {
         [self reloadProfileInProfileViewControllers];
     }
-}
-
-#pragma mark - Sheet
-
-- (void)bulkCopyControllerCloseSheet:(NSWindow *)sheet
-                          returnCode:(int)returnCode
-                         contextInfo:(BulkCopyProfilePreferencesWindowController *)bulkCopyController {
-    [sheet close];
-    [bulkCopyController autorelease];
-    [[_delegate profilePreferencesModel] flush];
 }
 
 #pragma mark - iTermProfilesPreferencesBaseViewControllerDelegate
