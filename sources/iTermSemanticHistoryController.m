@@ -126,6 +126,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     [self launchAppWithBundleIdentifier:kAtomIdentifier path:path];
 }
 
+- (void)launchVisualStudioCodeWithPath:(NSString *)path {
+    [self launchAppWithBundleIdentifier:kVisualStudioCodeIdentifier path:path];
+}
+
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path {
     NSString *bundlePath =
         [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier];
@@ -172,7 +176,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
               kMacVimIdentifier,
               kTextmateIdentifier,
               kTextmate2Identifier,
-              kBBEditIdentifier ];
+              kBBEditIdentifier,
+              kVisualStudioCodeIdentifier ];
 }
 
 - (void)openFile:(NSString *)path
@@ -185,6 +190,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             [self launchAtomWithPath:path];
+        } else if ([identifier isEqualToString:kVisualStudioCodeIdentifier]) {
+            [self launchVisualStudioCodeWithPath:path];
         } else if ([identifier isEqualToString:kSublimeText2Identifier] ||
                    [identifier isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
