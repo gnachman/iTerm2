@@ -159,13 +159,14 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 }
 
 - (BOOL)offerToPickApplicationToOpenFile:(NSString *)fullPath {
-     NSAlert *alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"There is no application set to open the document “%@”", [fullPath lastPathComponent]]
-                                     defaultButton:@"Choose Application…"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@"Choose an application on your computer to open this file."];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = [NSString stringWithFormat:@"There is no application set to open the document “%@”", [fullPath lastPathComponent]];
+    alert.informativeText = @"Choose an application on your computer to open this file.";
+    [alert addButtonWithTitle:@"Choose Application…"];
+    [alert addButtonWithTitle:@"Cancel"];
+
     DLog(@"Offer to pick an app to open %@", fullPath);
-    if ([alert runModal] == NSAlertDefaultReturn) {
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
         return [self pickApplicationToOpenFile:fullPath];
     } else {
         DLog(@"Offer declined");
