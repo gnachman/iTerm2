@@ -245,11 +245,11 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)clear:(id)sender {
-    if (NSRunAlertPanel(@"Erase Saved Directories",
-                        @"Saved directories for all hosts will be erased. Continue?",
-                        @"OK",
-                        @"Cancel",
-                        nil) == NSAlertDefaultReturn) {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Erase Saved Directories?";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:NO directories:YES];
     }
 }

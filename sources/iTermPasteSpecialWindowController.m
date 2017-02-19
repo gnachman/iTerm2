@@ -410,29 +410,14 @@
                                                       isAtShellPrompt:isAtShellPrompt
                                                              encoding:encoding] autorelease];
     NSWindow *window = [controller window];
-    [NSApp beginSheet:window
-       modalForWindow:presentingWindow
-        modalDelegate:self
-       didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-          contextInfo:nil];
-
-    [NSApp runModalForWindow:window];
-    [NSApp endSheet:window];
-    [window orderOut:nil];
-    [window close];
+    [presentingWindow beginSheet:window completionHandler:^(NSModalResponse returnCode) {
+        [controller.window close];
+    }];
 
     if (controller.shouldPaste) {
         completion(controller.pasteEvent);
         [controller saveUserDefaults];
     }
-}
-
-#pragma mark - Sheet Delegate
-
-+ (void)sheetDidEnd:(NSWindow *)sheet
-         returnCode:(NSInteger)returnCode
-        contextInfo:(void *)contextInfo {
-    [NSApp stopModal];
 }
 
 #pragma mark - Private
@@ -514,12 +499,12 @@
 
 - (IBAction)ok:(id)sender {
     _shouldPaste = YES;
-    [NSApp stopModal];
+    [self.window.sheetParent endSheet:self.window];
 }
 
 - (IBAction)cancel:(id)sender {
     _shouldPaste = NO;
-    [NSApp stopModal];
+    [self.window.sheetParent endSheet:self.window];
 }
 
 - (IBAction)selectItem:(id)sender {

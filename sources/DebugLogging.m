@@ -200,14 +200,18 @@ BOOL TurnOffDebugLoggingSilently(void) {
 
 void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
-        NSRunAlertPanel(@"Debug Logging Enabled",
-                        @"Please reproduce the bug. Then toggle debug logging again to save the log.",
-                        @"OK", nil, nil);
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Debug Logging Enabled";
+        alert.informativeText = @"Please reproduce the bug. Then toggle debug logging again to save the log.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
         StartDebugLogging();
     } else {
         StopDebugLogging();
-        NSRunAlertPanel(@"Debug Logging Stopped",
-                        @"Please send /tmp/debuglog.txt to the developers.",
-                        @"OK", nil, nil);
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Debug Logging Stopped";
+        alert.informativeText = @"Please send /tmp/debuglog.txt to the developers.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
     }
 }

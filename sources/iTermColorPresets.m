@@ -24,23 +24,23 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     NSDictionary *aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
         DLog(@"Failed to parse dictionary");
-        NSRunAlertPanel(@"Import Failed.",
-                        @"The selected file could not be read or did not contain a valid color scheme.",
-                        @"OK",
-                        nil,
-                        nil);
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Import Failed.";
+        alert.informativeText = @"The selected file could not be read or did not contain a valid color scheme.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
         return NO;
     } else {
         DLog(@"Parsed dictionary ok");
         NSString *dup = [self nameOfPresetsEqualTo:aDict];
         if (dup) {
             DLog(@"Is a duplicate preset");
-            NSAlert *alert = [NSAlert alertWithMessageText:@"Add duplicate color preset?"
-                                             defaultButton:@"Cancel"
-                                           alternateButton:@"Add it anyway"
-                                               otherButton:nil
-                                 informativeTextWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
-            if ([alert runModal] == NSAlertDefaultReturn) {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Add duplicate color preset?";
+            alert.informativeText = [NSString stringWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
+            [alert addButtonWithTitle:@"Cancel"];
+            [alert addButtonWithTitle:@"Add it anyway"];
+            if ([alert runModal] == NSAlertFirstButtonReturn) {
                 DLog(@"User declined to install dup");
                 return NO;
             }
