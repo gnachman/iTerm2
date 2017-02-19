@@ -67,28 +67,32 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme {
     NSURL *appURL = nil;
-    OSStatus err;
     BOOL set = YES;
-    
-    err = LSGetApplicationForURL((CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
-                                 kLSRolesAll, NULL, (CFURLRef *)&appURL);
-    if (err != noErr) {
-        set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. "
-                                                         @"Would you like to set iTerm as the default handler?",
-                                                         scheme],
-                              @"There is currently no handler.",
-                              @"OK",
-                              @"Cancel",
-                              nil) == NSAlertDefaultReturn;
+
+    appURL = (NSURL *)LSCopyDefaultApplicationURLForURL((CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
+                                                        kLSRolesAll,
+                                                        NULL);
+    [appURL autorelease];
+
+    if (appURL == nil) {
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = [NSString stringWithFormat:@"iTerm is not the default handler for %@. "
+                             @"Would you like to set iTerm as the default handler?",
+                             scheme];
+        alert.informativeText = @"There is currently no handler.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Cancel"];
+        set = ([alert runModal] == NSAlertFirstButtonReturn);
     } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm 2"]) {
         NSString *theTitle = [NSString stringWithFormat:@"iTerm is not the default handler for %@. "
                                                         @"Would you like to set iTerm as the default handler?", scheme];
-        set = NSRunAlertPanel(theTitle,
-                              @"The current handler is: %@",
-                              @"OK",
-                              @"Cancel",
-                              nil,
-                              [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]) == NSAlertDefaultReturn;
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = theTitle;
+        alert.informativeText = [NSString stringWithFormat:@"The current handler is: %@",
+                                 [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]];
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Cancel"];
+        set = ([alert runModal] == NSAlertFirstButtonReturn);
     }
     
     if (set) {

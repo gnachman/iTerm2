@@ -297,9 +297,12 @@ NSString*    gCrashLogString = nil;
             errTitle = NSLocalizedStringFromTable( @"COULDNT_SEND_FEEDBACK_ERROR",@"UKCrashReporter",@"");
         else
             errTitle = NSLocalizedStringFromTable( @"COULDNT_SEND_CRASH_REPORT_ERROR",@"UKCrashReporter",@"");
-        
-        NSRunAlertPanel( errTitle, @"%@", NSLocalizedStringFromTable( @"COULDNT_SEND_CRASH_REPORT_ERROR_OK",@"UKCrashReporter",@""), @"", @"",
-                         [errMsg localizedDescription] );
+
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = errTitle;
+        alert.informativeText = [errMsg localizedDescription];
+        [alert addButtonWithTitle:NSLocalizedStringFromTable( @"COULDNT_SEND_CRASH_REPORT_ERROR_OK",@"UKCrashReporter",@"")];
+        [alert runModal];
     }
     
     [reportWindow orderOut: self];
