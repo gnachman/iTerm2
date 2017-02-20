@@ -8019,7 +8019,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)screenProfileName {
-    return _profile[KEY_NAME];
+    NSString *guid = _profile[KEY_ORIGINAL_GUID] ?: _profile[KEY_GUID];
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (profile) {
+        return profile[KEY_NAME];
+    }
+    return _profile
+
+
+    [KEY_NAME];
 }
 
 - (void)trimHostsIfNeeded {
