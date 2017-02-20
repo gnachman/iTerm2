@@ -3341,13 +3341,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
         // Menu bar can show in fullscreen...
-        if (IsMavericksOrLater()) {
-            // There is a menu bar on all screens.
-            menuBarIsVisible = YES;
-        } else if ([[NSScreen screens] objectAtIndex:0] == screen) {
-            // There is a menu bar on the first screen and this window is on the first screen.
-            menuBarIsVisible = YES;
-        }
+        // There is a menu bar on all screens.
+        menuBarIsVisible = YES;
     }
 
     return menuBarIsVisible ? frameMinusMenuBar : screenFrame;
@@ -6272,8 +6267,8 @@ ITERM_WEAKLY_REFERENCEABLE
         currentScreen = [NSScreen mainScreen];
     }
 
-    // If screens have separate spaces (only applicable in Mavericks and later) then all screens have a menu bar.
-    if (currentScreen == menubarScreen || (IsMavericksOrLater() && [NSScreen futureScreensHaveSeparateSpaces])) {
+    // If screens have separate spaces then all screens have a menu bar.
+    if (currentScreen == menubarScreen || [NSScreen screensHaveSeparateSpaces]) {
         DLog(@"set flags to auto-hide dock");
         int flags = NSApplicationPresentationAutoHideDock;
         if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {

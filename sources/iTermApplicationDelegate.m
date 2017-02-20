@@ -530,7 +530,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
-    if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
+    if ([iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
         _appNapStoppingActivity =
