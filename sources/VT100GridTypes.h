@@ -142,6 +142,10 @@ NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {
     return a.x == b.x && a.y == b.y;
 }
 
+NS_INLINE BOOL VT100GridAbsCoordEquals(VT100GridAbsCoord a, VT100GridAbsCoord b) {
+    return a.x == b.x && a.y == b.y;
+}
+
 NS_INLINE BOOL VT100GridSizeEquals(VT100GridSize a, VT100GridSize b) {
     return a.width == b.width && a.height == b.height;
 }

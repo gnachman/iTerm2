@@ -122,7 +122,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
             }
         }
         XCTAssert(found);
-        return -1;  /* deprecated NSAlertOtherReturn; */
+        return NSAlertThirdButtonReturn;
     };
     [_session pasteString:theString flags:0];
     XCTAssert([_warningIdentifiers containsObject:@"AboutToPasteTabsWithCancel"]);

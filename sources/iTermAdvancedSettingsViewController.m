@@ -9,6 +9,7 @@
 #import "iTermAdvancedSettingsViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import <objc/runtime.h>
 
 NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
@@ -299,12 +300,10 @@ static NSDictionary *gIntrospection;
     if ([obj isKindOfClass:[NSString class]]) {
         return [[self attributedStringForGroupNamed:obj] size].height;
     } else {
-        NSCell *cell = [tableView preparedCellAtColumn:0 row:row];
-        [cell setWraps:YES];
-        NSTableColumn *column = [[tableView tableColumns] firstObject];
-        NSRect constrainedBounds = NSMakeRect(0, 0, column.width, CGFLOAT_MAX);
-        NSSize naturalSize = [cell cellSizeForBounds:constrainedBounds];
-        return naturalSize.height + 4;
+        NSTableColumn *tableColumn = tableView.tableColumns.firstObject;
+        NSAttributedString *attributedString = [self tableView:tableView objectValueForTableColumn:tableColumn row:row];
+        CGFloat height = [attributedString heightForWidth:tableColumn.width] + 4;
+        return height;
     }
 }
 

@@ -74,20 +74,7 @@
     
     if (![[iTermEventTap sharedInstance] isEnabled]) {
         DLog(@"The event tap is NOT enabled");
-        if (IsMavericksOrLater()) {
-            [self requestAccessibilityPermissionMavericks];
-            return;
-        }
-        switch (NSRunAlertPanel(@"Could not remap modifiers",
-                                @"%@",
-                                @"OK",
-                                [self accessibilityActionMessage],
-                                nil,
-                                [self accessibilityMessageForModifier])) {
-            case NSAlertAlternateReturn:
-                [self navigateToAccessibilityPreferencesPanePreMavericks];
-                break;
-        }
+        [self requestAccessibilityPermission];
     }
 }
 
@@ -95,13 +82,8 @@
     [[iTermEventTap sharedInstance] setRemappingDelegate:nil];
 }
 
-- (void)navigateToAccessibilityPreferencesPanePreMavericks {
-  // NOTE: Pre-Mavericks only.
-  [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
-}
-
-- (void)requestAccessibilityPermissionMavericks {
-    DLog(@"Requesting mavericks accessibility permission");
+- (void)requestAccessibilityPermission {
+    DLog(@"Requesting accessibility permission");
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSDictionary *options = @{ (NSString *)kAXTrustedCheckOptionPrompt: @YES };

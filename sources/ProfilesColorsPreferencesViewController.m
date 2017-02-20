@@ -263,7 +263,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     // Display the dialog.  If the OK button was pressed,
     // process the files.
-    if ([openPanel legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
+    if ([openPanel legacyRunModalForDirectory:nil file:nil] == NSModalResponseOK) {
         // Get an array containing the full filenames of all
         // files and directories selected.
         for (NSString* filename in [openPanel legacyFilenames]) {
@@ -279,7 +279,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     // Set options.
     [savePanel setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
 
-    if ([savePanel legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
+    if ([savePanel legacyRunModalForDirectory:nil file:nil] == NSModalResponseOK) {
         [self exportColorPresetToFile:[savePanel legacyFilename]];
     }
 }
@@ -287,20 +287,18 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)deleteColorPreset:(id)sender {
     iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (!customPresets || [customPresets count] == 0) {
-        NSRunAlertPanel(@"No deletable color presets.",
-                        @"You cannot erase the built-in presets and no custom presets have been imported.",
-                        @"OK",
-                        nil,
-                        nil);
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"No deletable color presets.";
+        alert.informativeText = @"You cannot erase the built-in presets and no custom presets have been imported.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
         return;
     }
 
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Select a preset to delete:"
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@""];
-
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Select a preset to delete:";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
     NSPopUpButton *popUpButton = [[[NSPopUpButton alloc] init] autorelease];
     for (NSString *key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [popUpButton addItemWithTitle:key];
@@ -308,7 +306,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [popUpButton sizeToFit];
     [alert setAccessoryView:popUpButton];
     NSInteger button = [alert runModal];
-    if (button == NSAlertDefaultReturn) {
+    if (button == NSAlertFirstButtonReturn) {
         [iTermColorPresets deletePresetWithName:[[popUpButton selectedItem] title]];
     }
 }
@@ -320,12 +318,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         theDict[key] = [[colorWellDictionary[key] color] dictionaryValue];
     }
     if (![theDict iterm_writePresetToFileWithName:filename]) {
-        NSRunAlertPanel(@"Save Failed.",
-                        @"Could not save to %@",
-                        @"OK",
-                        nil,
-                        nil,
-                        filename);
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Save Failed.";
+        alert.informativeText = [NSString stringWithFormat:@"Could not save to %@", filename];
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
     }
 }
 

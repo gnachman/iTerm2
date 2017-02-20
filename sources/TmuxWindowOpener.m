@@ -251,11 +251,10 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
             [histories_ setObject:history forKey:wp];
         }
     } else {
-        [[NSAlert alertWithMessageText:@"Error: malformed history line from tmux."
-                         defaultButton:@"OK"
-                       alternateButton:@""
-                           otherButton:@""
-             informativeTextWithFormat:@"See Console.app for details"] runModal];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Error: malformed history line from tmux.";
+        alert.informativeText = @"See Console.app for details";
+        [alert runModal];
     }
     [self requestDidComplete];
 }

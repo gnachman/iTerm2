@@ -100,8 +100,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Constructor/destructor
 
-- (id)initWithFrame:(NSRect)frame
-{
+- (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization
@@ -117,6 +116,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
         _cellMinWidth = 100;
         _cellMaxWidth = 280;
         _cellOptimumWidth = 130;
+        _minimumTabDragDistance = 10;
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
         _style = [[PSMYosemiteTabStyle alloc] init];
@@ -124,10 +124,10 @@ const NSInteger kPSMStartResizeAnimation = 0;
         // the overflow button/menu
         NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControl] + 1, 0, [_style rightMarginForTabBarControl] - 1, [self frame].size.height);
         _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
-        if (_overflowPopUpButton){
+        if (_overflowPopUpButton) {
             // configure
             [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
-            [[_overflowPopUpButton cell] accessibilitySetOverrideValue:NSLocalizedStringFromTableInBundle(@"More tabs", @"iTerm", [NSBundle bundleForClass:[self class]], @"VoiceOver label for the button displaying menu of additional overflown tabs on click") forAttribute:NSAccessibilityDescriptionAttribute];
+            _overflowPopUpButton.accessibilityLabel = @"More tabs";
         }
 
         // new tab button
@@ -1272,7 +1272,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
         float dy = fabs(currentPoint.y - trackingStartPoint.y);
         float distance = sqrt(dx * dx + dy * dy);
 
-        if (distance >= 10 && !_didDrag && ![[PSMTabDragAssistant sharedDragAssistant] isDragging] &&
+        if (distance >= self.minimumTabDragDistance && !_didDrag && ![[PSMTabDragAssistant sharedDragAssistant] isDragging] &&
                 [[self delegate] respondsToSelector:@selector(tabView:shouldDragTabViewItem:fromTabBar:)] &&
                 [[self delegate] tabView:_tabView shouldDragTabViewItem:[cell representedObject] fromTabBar:self]) {
             _didDrag = YES;
@@ -1962,66 +1962,39 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Accessibility
 
--(BOOL)accessibilityIsIgnored {
-    return NO;
+- (NSString*)accessibilityRole {
+    return NSAccessibilityTabGroupRole;
 }
 
-- (NSArray*)accessibilityAttributeNames
-{
-    static NSArray *attributes = nil;
-    if (!attributes) {
-        NSSet *set = [NSSet setWithArray:[super accessibilityAttributeNames]];
-        set = [set setByAddingObjectsFromArray:[NSArray arrayWithObjects:
-                                                NSAccessibilityTabsAttribute,
-                                                NSAccessibilityValueAttribute,
-                                                nil]];
-        attributes = [[set allObjects] retain];
+- (NSArray*)accessibilityChildren {
+    NSMutableArray *childElements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
+        [childElements addObject:cell.element];
     }
-    return attributes;
+    if (![_overflowPopUpButton isHidden]) {
+        [childElements addObject:_overflowPopUpButton];
+    }
+    if (![_addTabButton isHidden]) {
+        [childElements addObject:_addTabButton];
+    }
+    return childElements;
 }
 
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-    id attributeValue = nil;
-    if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
-        attributeValue = NSAccessibilityTabGroupRole;
-    } else if ([attribute isEqualToString: NSAccessibilityChildrenAttribute]) {
-        NSMutableArray *children = [NSMutableArray arrayWithArray:[_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]];
-        if (![_overflowPopUpButton isHidden]) {
-            [children addObject:_overflowPopUpButton];
-        }
-        if (![_addTabButton isHidden]) {
-            [children addObject:_addTabButton];
-        }
-        attributeValue = NSAccessibilityUnignoredChildren(children);
-    } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
-        attributeValue = NSAccessibilityUnignoredChildren(_cells);
-    } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
-        NSTabViewItem *tabViewItem = [_tabView selectedTabViewItem];
-        for (NSActionCell *cell in _cells) {
-            if ([cell representedObject] == tabViewItem)
-                attributeValue = cell;
-        }
-        if (!attributeValue)
-        {
-            NSLog(@"WARNING: seems no tab cell is currently selected");
-        }
-    } else {
-        attributeValue = [super accessibilityAttributeValue:attribute];
+- (NSArray*)accessibilityTabs {
+    NSMutableArray *tabElements = [NSMutableArray array];
+    for (PSMTabBarCell *cell in _cells) {
+        [tabElements addObject:cell.element];
     }
-    return attributeValue;
+    return tabElements;
 }
 
 - (id)accessibilityHitTest:(NSPoint)point {
-    id hitTestResult = self;
-
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell isHighlighted]) {
-            hitTestResult = [cell accessibilityHitTest:point];
-            break;
+    for (id child in self.accessibilityChildren) {
+        if (NSPointInRect(point, [child accessibilityFrame])) {
+            return [child accessibilityHitTest:point];
         }
     }
-
-    return hitTestResult;
+    return self;
 }
 
 #pragma mark - iTerm Add On

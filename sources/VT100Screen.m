@@ -154,12 +154,16 @@ static const double kInterBellQuietPeriod = 0.1;
 
     // base64 value to copy to pasteboard, being built up bit by bit.
     NSMutableString *_copyString;
+
+    // Valid while at the command prompt only. GIves the range of the current prompt. Meaningful
+    // only if the end is not equal to the start.
+    VT100GridAbsCoordRange _currentPromptRange;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
 static NSString *const kInlineFileWidth = @"width";  // NSNumber
 static NSString *const kInlineFileWidthUnits = @"width units";  // NSNumber of VT100TerminalUnits
-static NSString *const kInlineFileHeight = @"height";  // NSNumb    er
+static NSString *const kInlineFileHeight = @"height";  // NSNumber
 static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
 static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
 static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
@@ -905,10 +909,16 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenTriggerableChangeDidOccur];
     // This clears the screen.
     int x = currentGrid_.cursorX;
+    int numberOfPromptLines = 1;
+    if (!VT100GridAbsCoordEquals(_currentPromptRange.start, _currentPromptRange.end)) {
+        numberOfPromptLines = MAX(1, _currentPromptRange.end.y - _currentPromptRange.start.y + 1);
+    }
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                             unlimitedScrollback:unlimitedScrollback_
-                                             preserveCursorLine:YES]];
+                                             preserveCursorLine:YES
+                                          additionalLinesToSave:MAX(0, numberOfPromptLines - 1)]];
     currentGrid_.cursorX = x;
+    currentGrid_.cursorY = numberOfPromptLines - 1;
 }
 
 - (void)clearScrollbackBuffer
@@ -2651,7 +2661,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     } else {
         [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
-                                                 preserveCursorLine:NO]];
+                                                 preserveCursorLine:NO
+                                              additionalLinesToSave:0]];
     }
 
     [self setInitialTabStops];
@@ -3717,6 +3728,9 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     _lastCommandOutputRange.end = coord;
     _lastCommandOutputRange.start = nextCommandOutputStart_;
 
+    _currentPromptRange.start = coord;
+    _currentPromptRange.end = coord;
+
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
@@ -3724,6 +3738,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalCommandDidStart {
     DLog(@"FinalTerm: terminalCommandDidStart");
+    _currentPromptRange.end = VT100GridAbsCoordMake(currentGrid_.cursor.x,
+                                                    currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow);
     [self commandDidStartAtScreenCoord:currentGrid_.cursor];
     [delegate_ screenPromptDidEndAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
@@ -3740,6 +3756,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalCommandDidEnd {
     DLog(@"FinalTerm: terminalCommandDidEnd");
+    _currentPromptRange.start = _currentPromptRange.end = VT100GridAbsCoordMake(0, 0);
+
     [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(currentGrid_.cursor.x, currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
 }
 

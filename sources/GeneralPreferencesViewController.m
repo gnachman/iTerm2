@@ -349,11 +349,11 @@ enum {
             if ([self choosePrefsCustomFolder]) {
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
                 if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
-                    if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
-                                         defaultButton:@"Copy"
-                                       alternateButton:@"Don't Copy"
-                                           otherButton:nil
-                             informativeTextWithFormat:@""] runModal] == NSOKButton) {
+                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                    alert.messageText = @"Copy local preferences to custom folder now?";
+                    [alert addButtonWithTitle:@"Copy"];
+                    [alert addButtonWithTitle:@"Don’t Copy"];
+                    if ([alert runModal] == NSAlertFirstButtonReturn) {
                         [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
                     }
                 }
@@ -369,7 +369,7 @@ enum {
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
 
-    if ([panel runModal] == NSOKButton) {
+    if ([panel runModal] == NSModalResponseOK) {
         [_prefsCustomFolder setStringValue:[panel legacyDirectory]];
         [self settingChanged:_prefsCustomFolder];
         return YES;

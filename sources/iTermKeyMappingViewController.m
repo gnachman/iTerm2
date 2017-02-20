@@ -114,16 +114,12 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (void)presentEditActionSheet:(iTermEditKeyActionWindowController *)editActionWindowController {
     [editActionWindowController retain];
-    [NSApp beginSheet:editActionWindowController.window
-       modalForWindow:self.view.window
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:editActionWindowController];
+    [self.view.window beginSheet:editActionWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        [self editActionWindowCompletionHandler:editActionWindowController];
+    }];
 }
 
-- (void)genericCloseSheet:(NSWindow *)sheet
-               returnCode:(int)returnCode
-              contextInfo:(iTermEditKeyActionWindowController *)editActionWindowController {
+- (void)editActionWindowCompletionHandler:(iTermEditKeyActionWindowController *)editActionWindowController {
     if (editActionWindowController.ok) {
         [_delegate keyMapping:self
                  didChangeKey:editActionWindowController.isTouchBarItem ? editActionWindowController.touchBarItemID : editActionWindowController.currentKeyCombination
@@ -137,7 +133,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     [editActionWindowController close];
     [editActionWindowController release];
     [_tableView reloadData];
-    [sheet close];
+    [editActionWindowController.window close];
 }
 
 #pragma mark - NSTableViewDelegate

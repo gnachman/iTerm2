@@ -50,7 +50,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
     do {
         NSInteger response = [savePanel runModal];
 
-        if (response != NSOKButton) {
+        if (response != NSModalResponseOK) {
             // User canceled.
             return nil;
         }

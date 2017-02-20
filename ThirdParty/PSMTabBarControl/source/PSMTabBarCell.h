@@ -15,6 +15,7 @@
 
 @protocol PSMTabBarControlProtocol <NSObject>
 - (void)tabClick:(id)sender;
+- (void)closeTabClick:(id)sender;
 - (id<PSMTabStyle>)style;
 - (void)update:(BOOL)animate;
 - (BOOL)automaticallyAnimates;
@@ -50,6 +51,7 @@
 @property(nonatomic, readonly) float desiredWidthOfCell;
 @property(nonatomic, readonly) id<PSMTabStyle> style;
 @property(nonatomic, assign) NSLineBreakMode truncationStyle;  // How to truncate title.
+@property(nonatomic, readonly) NSAccessibilityElement *element;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

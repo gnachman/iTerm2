@@ -1243,12 +1243,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // The PseudoTerminal might close while the dialog is open so keep it around for now.
     [[self retain] autorelease];
-    return NSRunAlertPanel([NSString stringWithFormat:@"Close %@?", genericName],
-                           @"%@",
-                           @"OK",
-                           @"Cancel",
-                           nil,
-                           message) == NSAlertDefaultReturn;
+
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = [NSString stringWithFormat:@"Close %@?", genericName];
+    alert.informativeText = message;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    return ([alert runModal] == NSAlertFirstButtonReturn);
 }
 
 - (BOOL)confirmCloseTab:(PTYTab *)aTab suppressConfirmation:(BOOL)suppressConfirmation {
@@ -1540,12 +1541,12 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession {
     assert(aSession.isRestartable);
     [[self retain] autorelease];
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Restart session?"
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@"Running jobs will be killed."];
-    if (aSession.exited || [alert runModal] == NSAlertDefaultReturn) {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Restart session?";
+    alert.informativeText = @"Running jobs will be killed.";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    if (aSession.exited || [alert runModal] == NSAlertFirstButtonReturn) {
         [aSession restartSession];
     }
 }

@@ -148,6 +148,7 @@ enum {
 // the tabbed browsing interface of many popular browsers.
 @interface PSMTabBarControl : NSControl<
   NSDraggingSource,
+  NSAccessibilityGroup,
   PSMProgressIndicatorDelegate,
   PSMTabViewDelegate>
 
@@ -168,6 +169,7 @@ enum {
 @property(nonatomic, assign) BOOL selectsTabsOnMouseDown;
 @property(nonatomic, assign) BOOL automaticallyAnimates;
 @property(nonatomic, assign) int tabLocation;
+@property(nonatomic, assign) int minimumTabDragDistance;
 
 // If off (the default) always ellipsize the ends of tab titles that don't fit.
 // Of on, ellipsize the start if more tabs share a prefix than a suffix.

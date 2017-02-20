@@ -353,14 +353,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (NSString *)transferrableFile:(TransferrableFile *)transferrableFile
       keyboardInteractivePrompt:(NSString *)prompt {
     NSString *text = [NSString stringWithFormat:@"Authenticate %@", transferrableFile.authRequestor];
-    NSAlert *alert = [NSAlert alertWithMessageText:text
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@"Please enter the %@ for %@ to begin %@.",
-                                                       prompt, transferrableFile.authRequestor,
-                                                       transferrableFile.protocolName];
-    
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = text;
+    alert.informativeText = [NSString stringWithFormat:@"Please enter the %@ for %@ to begin %@.",
+                             prompt, transferrableFile.authRequestor,
+                             transferrableFile.protocolName];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
     NSSecureTextField *input =
         [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
     [input setStringValue:@""];
@@ -368,7 +368,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [alert layout];
     [[alert window] makeFirstResponder:input];
     NSInteger button = [alert runModal];
-    if (button == NSAlertDefaultReturn) {
+    if (button == NSAlertFirstButtonReturn) {
         [input validateEditing];
         return [input stringValue];
     } else {
@@ -380,15 +380,15 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (BOOL)transferrableFile:(TransferrableFile *)transferrableFile
                     title:(NSString *)title
            confirmMessage:(NSString *)message {
-    NSAlert *alert = [NSAlert alertWithMessageText:title
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@"%@", message];
-    
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = title;
+    alert.informativeText = message;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
     [alert layout];
     NSInteger button = [alert runModal];
-    return (button == NSAlertDefaultReturn);
+    return (button == NSAlertFirstButtonReturn);
 }
 
 - (void)removeItem:(TransferrableFileMenuItemViewController *)viewController {

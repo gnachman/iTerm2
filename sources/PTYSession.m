@@ -1488,11 +1488,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)_autoLogFilenameForTermId:(NSString *)termid {
     // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
+    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
     return [NSString stringWithFormat:@"%@/%@.%@.%@.%d.%0x.log",
             [_profile objectForKey:KEY_LOGDIR],
-            [[NSDate date] descriptionWithCalendarFormat:@"%Y%m%d_%H%M%S"
-                                                timeZone:nil
-                                                  locale:nil],
+            [dateFormatter stringFromDate:[NSDate date]],
             [_profile objectForKey:KEY_NAME],
             termid,
             (int)getpid(),
@@ -1898,16 +1898,15 @@ ITERM_WEAKLY_REFERENCEABLE
         _tmuxGateway.tmuxLogging = !_tmuxGateway.tmuxLogging;
         [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (_tmuxGateway.tmuxLogging ? @"on" : @"off")]];
     } else if (unicode == 'C') {
-        NSAlert *alert = [NSAlert alertWithMessageText:@"Enter command to send tmux:"
-                                         defaultButton:@"OK"
-                                       alternateButton:@"Cancel"
-                                           otherButton:nil
-                             informativeTextWithFormat:@""];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Enter command to send tmux:";
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Cancel"];
         NSTextField *tmuxCommand = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
         [tmuxCommand setEditable:YES];
         [tmuxCommand setSelectable:YES];
         [alert setAccessoryView:tmuxCommand];
-        if ([alert runModal] == NSAlertDefaultReturn && [[tmuxCommand stringValue] length]) {
+        if ([alert runModal] == NSAlertFirstButtonReturn && [[tmuxCommand stringValue] length]) {
             [self printTmuxMessage:[NSString stringWithFormat:@"Run command \"%@\"", [tmuxCommand stringValue]]];
             [_tmuxGateway sendCommand:[tmuxCommand stringValue]
                        responseTarget:self

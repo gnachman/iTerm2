@@ -85,8 +85,7 @@
             ![key hasPrefix:@"UK"];
 }
 
-- (NSDictionary *)freshCopyOfRemotePreferences
-{
+- (NSDictionary *)freshCopyOfRemotePreferences {
     if (!self.shouldLoadRemotePrefs) {
         return nil;
     }
@@ -107,14 +106,11 @@
                                              returningResponse:&response
                                                          error:&error];
         if (!data || error) {
-            [[NSAlert alertWithMessageText:@"Failed to load preferences from URL. "
-                                           @"Falling back to local copy."
-                             defaultButton:@"OK"
-                           alternateButton:nil
-                               otherButton:nil
-                 informativeTextWithFormat:@"HTTP request failed: %@",
-                                           [error description] ? [error description]
-                                                               : @"unknown error"] runModal];
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Failed to load preferences from URL. Falling back to local copy.";
+            alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
+                                     [error localizedDescription] ?: @"unknown error"];
+            [alert runModal];
             return NO;
         }
 
@@ -124,13 +120,11 @@
         NSString *tempFile = [tempDir stringByAppendingPathComponent:@"temp.plist"];
         error = nil;
         if (![data writeToFile:tempFile options:0 error:&error]) {
-            [[NSAlert alertWithMessageText:@"Failed to write to temp file while getting remote "
-                                           @"prefs. Falling back to local copy."
-                             defaultButton:@"OK"
-                           alternateButton:nil
-                               otherButton:nil
-                 informativeTextWithFormat:@"Error on file %@: %@", tempFile,
-                                           [error localizedFailureReason]] runModal];
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Failed to write to temp file while getting remote prefs. Falling back to local copy.";
+            alert.informativeText = [NSString stringWithFormat:@"Error on file %@: %@", tempFile,
+                                     [error localizedDescription]];
+            [alert runModal];
             return NO;
         }
 

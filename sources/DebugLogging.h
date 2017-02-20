@@ -74,7 +74,11 @@ extern BOOL gDebugLogging;
       DLog(args); \
       if (TurnOffDebugLoggingSilently()) { \
         dispatch_async(dispatch_get_main_queue(), ^{ \
-          NSRunAlertPanel(@"Critical Error", @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers.", @"OK", nil, nil); \
+          NSAlert *alert = [[[NSAlert alloc] init] autorelease]; \
+          alert.messageText = @"Critical Error"; \
+          alert.informativeText =  @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers."; \
+          [alert addButtonWithTitle:@"OK"]; \
+          [alert runModal]; \
         }); \
       } \
     } \

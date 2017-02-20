@@ -174,5 +174,6 @@
 + (BOOL)trackingRunloopForLiveResize;
 + (BOOL)enableAPIServer;
 + (double)shortLivedSessionDuration;
++ (int)minimumTabDragDistance;
 
 @end

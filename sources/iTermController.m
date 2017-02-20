@@ -1199,12 +1199,10 @@ static iTermController *gSharedInstance;
         location = [NSString stringWithFormat:@"The error starts at byte %d of the script.",
                     (int)[range rangeValue].location];
     }
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Error running script"
-                                     defaultButton:@"OK"
-                                   alternateButton:nil
-                                       otherButton:nil
-                         informativeTextWithFormat:@"Script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
-                      fullPath, errorInfo[NSAppleScriptErrorMessage], location];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Error running script";
+    alert.informativeText = [NSString stringWithFormat:@"Script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
+                             fullPath, errorInfo[NSAppleScriptErrorMessage], location];
     [alert runModal];
 }
 

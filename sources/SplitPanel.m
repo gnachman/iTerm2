@@ -27,15 +27,13 @@
         } else {
             [splitPanel.label setStringValue:@"Split current pane horizontally with profile:"];
         }
-        [NSApp beginSheet:[splitPanel window]
-            modalForWindow:[parent window]
-            modalDelegate:splitPanel
-            didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-            contextInfo:nil];
-        
+        [parent.window beginSheet:splitPanel.window completionHandler:^(NSModalResponse returnCode) {
+            [NSApp stopModal];
+        }];
+
         NSWindow *panel = [splitPanel window];
         [NSApp runModalForWindow:panel];
-        [NSApp endSheet:panel];
+        [parent.window endSheet:splitPanel.window];
         [panel orderOut:nil];
         [splitPanel close];
         

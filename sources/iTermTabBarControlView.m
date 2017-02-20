@@ -31,6 +31,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     self = [super initWithFrame:frameRect];
     if (self) {
         [self setTabsHaveCloseButtons:![iTermAdvancedSettingsModel eliminateCloseButtons]];
+        self.minimumTabDragDistance = [iTermAdvancedSettingsModel minimumTabDragDistance];
     }
     return self;
 }

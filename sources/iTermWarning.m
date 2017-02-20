@@ -171,11 +171,12 @@ static BOOL gShowingWarning;
         return [self.class savedSelectionForIdentifier:_identifier];
     }
 
-    NSAlert *alert = [NSAlert alertWithMessageText:_heading ?: @"Warning"
-                                     defaultButton:_warningActions.count > 0 ? _warningActions[0].label : nil
-                                   alternateButton:_warningActions.count > 1 ? _warningActions[1].label : nil
-                                       otherButton:_warningActions.count > 2 ? _warningActions[2].label : nil
-                         informativeTextWithFormat:@"%@", _title];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = _heading ?: @"Warning";
+    alert.informativeText = _title;
+    for (int i = 0; i < _warningActions.count; i++) {
+        [alert addButtonWithTitle:_warningActions[i].label];
+    }
     int numNonCancelActions = [_warningActions count];
     for (iTermWarningAction *warningAction in _warningActions) {
         if ([warningAction.label isEqualToString:_cancelLabel]) {
@@ -222,15 +223,15 @@ static BOOL gShowingWarning;
     BOOL remember = NO;
     iTermWarningSelection selection;
     switch (result) {
-        case NSAlertDefaultReturn:
+        case NSAlertFirstButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection0 withMapping:_actionToSelectionMap];
             remember = ![_warningActions[0].label isEqualToString:_cancelLabel];
             break;
-        case NSAlertAlternateReturn:
+        case NSAlertSecondButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection1 withMapping:_actionToSelectionMap];
             remember = ![_warningActions[1].label isEqualToString:_cancelLabel];
             break;
-        case NSAlertOtherReturn:
+        case NSAlertThirdButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection2 withMapping:_actionToSelectionMap];
             remember = ![_warningActions[2].label isEqualToString:_cancelLabel];
             break;
@@ -269,20 +270,6 @@ static BOOL gShowingWarning;
 }
 
 #pragma mark - Private
-
-+ (NSInteger)alertValueForParameterIndex:(int)index {
-    switch (index) {
-        case 0:
-            return NSAlertDefaultReturn;
-            
-        case 1:
-            return NSAlertAlternateReturn;
-            
-        case 2:
-            return NSAlertOtherReturn;
-    }
-    return NSAlertErrorReturn;
-}
 
 + (NSString *)temporarySilenceKeyForIdentifier:(NSString *)identifier {
     return [NSString stringWithFormat:@"%@_SilenceUntil", identifier];

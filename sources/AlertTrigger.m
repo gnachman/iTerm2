@@ -41,24 +41,23 @@
     }
     NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                                                   count:captureCount];
-
-    NSAlert *alert = [NSAlert alertWithMessageText:message
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Show Session"
-                                       otherButton:@"Disable This Alert"
-                         informativeTextWithFormat:@""];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = message;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Show Session"];
+    [alert addButtonWithTitle:@"Disable This Alert"];
     switch ([alert runModal]) {
-        case NSAlertDefaultReturn:
+        case NSAlertFirstButtonReturn:
             break;
             
-        case NSAlertAlternateReturn: {
+        case NSAlertSecondButtonReturn: {
             NSWindowController<iTermWindowController> * term = [[aSession delegate] realParentWindow];
             [[term window] makeKeyAndOrderFront:nil];
             [aSession.delegate sessionSelectContainingTab];
             [aSession.delegate setActiveSession:aSession];
             break;
             
-        case NSAlertOtherReturn:
+        case NSAlertThirdButtonReturn:
             disabled_ = YES;
             break;
         }

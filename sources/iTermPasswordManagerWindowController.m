@@ -81,11 +81,11 @@ static BOOL sAuthenticated;
                                     if (error.code != LAErrorSystemCancel &&
                                         error.code != LAErrorAppCancel) {
                                         BOOL isTouchID = (policy == LAPolicyDeviceOwnerAuthenticationWithBiometrics);
-                                        [[NSAlert alertWithMessageText:@"Authentication Failed"
-                                                        defaultButton:@"OK"
-                                                      alternateButton:nil
-                                                          otherButton:nil
-                                             informativeTextWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]] runModal];
+                                        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                                        alert.messageText = @"Authentication Failed";
+                                        alert.informativeText = [NSString stringWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]];
+                                        [alert addButtonWithTitle:@"OK"];
+                                        [alert runModal];
                                     }
                                     reply(success, error);
                                 });
@@ -263,17 +263,23 @@ static BOOL sAuthenticated;
 }
 
 - (void)requestAuthenticationIfPossible {
+    DLog(@"Request auth if possible");
     if (sAuthenticated) {
+        DLog(@"Already authenticated");
         return;
     }
     if (!NSClassFromString(@"LAContext") || !IsElCapitanOrLater()) {
+        DLog(@"OS is too old to check auth. Setting auth flag to YES");
         sAuthenticated = YES;
         return;
     }
 
     LAContext *myContext = [[[LAContext alloc] init] autorelease];
     if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
-        [self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext];
+        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext]) {
+            DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
+            sAuthenticated = YES;
+        }
     }
 }
 
@@ -291,11 +297,14 @@ static BOOL sAuthenticated;
 }
 
 - (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
+    DLog(@"Try to auth with %@", @(policy));
     NSError *authError = nil;
     if (![self policyAvailableOnThisOSVersion:policy]) {
+        DLog(@"Policy not available on this OS version");
         return NO;
     }
     if ([myContext canEvaluatePolicy:policy error:&authError]) {
+        DLog(@"It says we can evaluate this policy");
         [self authenticateWithPolicy:policy context:myContext];
         return YES;
     } else {
