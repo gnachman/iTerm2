@@ -4419,6 +4419,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self updateTabColors];
     [self _updateTabObjectCounts];
+    [self updateTouchBarIfNeeded];
 
     if (_contentView.tabView.numberOfTabViewItems == 1 &&
         _previousNumberOfTabs == 0 &&
