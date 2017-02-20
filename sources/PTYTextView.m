@@ -254,6 +254,8 @@ static const int kDragThreshold = 3;
     
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
     iTermAltScreenMouseScrollInferer *_altScreenMouseScrollInferer;
+
+    NSEvent *_eventBeingHandled;
 }
 
 
@@ -1491,6 +1493,7 @@ static const int kDragThreshold = 3;
         gCurrentKeyEventTextView = [[self retain] autorelease];
 
         if (!eschewCocoaTextHandling) {
+            _eventBeingHandled = event;
             if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
               // This may cause -insertText:replacementRange: or -doCommandBySelector: to be called.
               // These methods have a side-effect of setting _keyPressHandled if they dispatched the event
@@ -1500,6 +1503,9 @@ static const int kDragThreshold = 3;
               [self.inputContext handleEvent:event];
             } else {
               [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+            }
+            if (_eventBeingHandled == event) {
+                _eventBeingHandled = nil;
             }
         }
         gCurrentKeyEventTextView = nil;
@@ -4973,9 +4979,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // insertText:replacementRange:, unless an IME is in use. An example of when this gets called
         // but we should not pass the event to the delegate is when there is marked text and you press
         // Enter.
-        if (![self hasMarkedText] && !_hadMarkedTextBeforeHandlingKeypressEvent) {
+        if (![self hasMarkedText] && !_hadMarkedTextBeforeHandlingKeypressEvent && _eventBeingHandled) {
             _keyPressHandled = YES;
-            [self.delegate keyDown:[NSApp currentEvent]];
+            [self.delegate keyDown:_eventBeingHandled];
         }
     }
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
