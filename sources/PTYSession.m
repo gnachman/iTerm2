@@ -5509,21 +5509,22 @@ ITERM_WEAKLY_REFERENCEABLE
                 (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
                 [[_delegate sessions] count] > 1) {
                 if ([self _askAboutOutdatedKeyMappings]) {
-                    int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
-                                                 @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
-                                                 @"Remove it",
-                                                 @"Remind me later",
-                                                 @"Keep it");
-                    switch (result) {
-                        case NSAlertDefaultReturn:
+                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                    alert.messageText = @"Outdated Key Mapping Found";
+                    alert.informativeText = @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?";
+                    [alert addButtonWithTitle:@"Remove it"];
+                    [alert addButtonWithTitle:@"Remind me later"];
+                    [alert addButtonWithTitle:@"Keep it"];
+                    switch ([alert runModal]) {
+                        case NSAlertFirstButtonReturn:
                             // Remove it
                             [self _removeOutdatedKeyMapping];
                             return;
                             break;
-                        case NSAlertAlternateReturn:
+                        case NSAlertSecondButtonReturn:
                             // Remind me later
                             break;
-                        case NSAlertOtherReturn:
+                        case NSAlertThirdButtonReturn:
                             // Keep it
                             [self _setKeepOutdatedKeyMapping];
                             break;
@@ -7066,12 +7067,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    viewIndex:[self screenViewIndex]
                                                       sticky:YES];
         } else {
-            if (NSRunAlertPanel(@"Alert",
-                                @"Mark set in session “%@.”",
-                                @"Reveal",
-                                @"OK",
-                                nil,
-                                [self name]) == NSAlertDefaultReturn) {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Alert";
+            alert.informativeText = [NSString stringWithFormat:@"Mark set in session “%@.”", [self name]];
+            [alert addButtonWithTitle:@"Reveal"];
+            [alert addButtonWithTitle:@"OK"];
+            if ([alert runModal] == NSAlertFirstButtonReturn) {
                 [self reveal];
             }
         }

@@ -4711,15 +4711,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     }
-    NSAlert *alert = [NSAlert alertWithMessageText:text
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@""];
-
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = text;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
     [alert layout];
     NSInteger button = [alert runModal];
-    return (button == NSAlertDefaultReturn);
+    return (button == NSAlertFirstButtonReturn);
 }
 
 - (void)maybeUpload:(NSArray *)tuple {

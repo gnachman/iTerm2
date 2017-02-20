@@ -651,11 +651,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [pasteboard writeObjects:@[ profiles ]];
 
     if (errors) {
-        [NSAlert alertWithMessageText:@"Error"
-                        defaultButton:@"Ok"
-                      alternateButton:nil
-                          otherButton:nil
-            informativeTextWithFormat:@"An error occurred. Check Console.app for details."];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Error";
+        alert.informativeText = @"An error occurred. Check Console.app for details.";
+        [alert runModal];
     }
 }
 
@@ -673,12 +672,11 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         [pasteboard clearContents];
         [pasteboard writeObjects:@[ string ]];
     } else {
-        [NSAlert alertWithMessageText:@"Error"
-                        defaultButton:@"Ok"
-                      alternateButton:nil
-                          otherButton:nil
-            informativeTextWithFormat:@"Couldn't convert profile to JSON: %@",
-                                      [error localizedDescription]];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Error";
+        alert.informativeText = [NSString stringWithFormat:@"Couldn't convert profile to JSON: %@",
+                                 [error localizedDescription]];
+        [alert runModal];
     }
 }
 

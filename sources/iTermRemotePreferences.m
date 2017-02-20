@@ -184,11 +184,10 @@
             @"To make it available, first quit iTerm2 and then manually "
             @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
             @"your hosting provider.";
-        [[NSAlert alertWithMessageText:@"Sorry, preferences cannot be copied to a URL by iTerm2."
-                         defaultButton:@"OK"
-                       alternateButton:nil
-                           otherButton:nil
-             informativeTextWithFormat:@"%@", informativeText] runModal];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Preferences cannot be copied to a URL.";
+        alert.informativeText = informativeText;
+        [alert runModal];
         return;
     }
     
@@ -204,12 +203,11 @@
     BOOL isOk;
     isOk = [myDict writeToFile:filename atomically:YES];
     if (!isOk) {
-        [[NSAlert alertWithMessageText:@"Failed to copy preferences to custom directory."
-                         defaultButton:@"OK"
-                       alternateButton:nil
-                           otherButton:nil
-             informativeTextWithFormat:@"Tried to copy %@ to %@",
-          [self remotePrefsLocation], filename] runModal];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Failed to copy preferences to custom directory.";
+        alert.informativeText = [NSString stringWithFormat:@"Tried to copy %@ to %@",
+                                 [self remotePrefsLocation], filename];
+        [alert runModal];
     } else {
         self.savedRemotePrefs = myDict;
     }
@@ -245,13 +243,11 @@
         }
         return;
     } else {
-        [[NSAlert alertWithMessageText:@"Failed to load preferences from custom directory. "
-                                       @"Falling back to local copy."
-                         defaultButton:@"OK"
-                       alternateButton:nil
-                           otherButton:nil
-             informativeTextWithFormat:@"Missing or malformed file at \"%@\"",
-                                       [self customFolderOrURL]] runModal];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
+        alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
+                                 [self customFolderOrURL]];
+        [alert runModal];
     }
     return;
 }
