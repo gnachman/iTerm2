@@ -35,7 +35,7 @@ static BOOL gWaitingForFullScreen;
     if ([self useElCapitanFullScreenLogic]) {
         [self runQueuedBlocks_10_11_andLater];
     } else {
-      [self runQueuedBlocks_10_10_andEarlier];
+        [self runQueuedBlocks_10_10_andEarlier];
     }
 }
 
