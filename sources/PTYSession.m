@@ -7313,12 +7313,11 @@ ITERM_WEAKLY_REFERENCEABLE
             if (!data && error) {
                 NSString *message = error.userInfo[@"errorMessage"];
                 if (message) {
-                    NSAlert *alert = [NSAlert alertWithMessageText:@"Error Preparing Upload"
-                                                     defaultButton:@"OK"
-                                                   alternateButton:nil
-                                                       otherButton:nil
-                                         informativeTextWithFormat:@"tar failed with this message: %@", message];
+                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                    alert.messageText = @"Error Preparing Upload";
+                    alert.informativeText = [NSString stringWithFormat:@"tar failed with this message: %@", message];
                     [alert runModal];
+                    return;
                 }
             }
             NSString *base64String = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength |

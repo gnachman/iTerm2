@@ -4748,11 +4748,12 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermPasswordManagerWindowController *passwordManagerWindowController =
         [[iTermPasswordManagerWindowController alloc] init];
     passwordManagerWindowController.delegate = self;
-    [[NSApplication sharedApplication] beginSheet:[passwordManagerWindowController window]
-                                   modalForWindow:self.window
-                                    modalDelegate:self
-                                   didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-                                      contextInfo:passwordManagerWindowController];
+
+    [self.window beginSheet:[passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
+        [[passwordManagerWindowController window] close];
+        [[passwordManagerWindowController window] release];
+    }];
+
     [passwordManagerWindowController selectAccountName:name];
 }
 
@@ -5026,13 +5027,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] stopCoprocess];
 }
 
-- (IBAction)runCoprocess:(id)sender
-{
-    [NSApp beginSheet:coprocesssPanel_
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:nil
-          contextInfo:nil];
+- (IBAction)runCoprocess:(id)sender {
+    [self.window beginSheet:coprocesssPanel_ completionHandler:nil];
 
     NSArray *mru = [Coprocess mostRecentlyUsedCommands];
     [coprocessCommand_ removeAllItems];
@@ -5042,7 +5038,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSOnState : NSOffState];
     [NSApp runModalForWindow:coprocesssPanel_];
 
-    [NSApp endSheet:coprocesssPanel_];
+    [self.window endSheet:coprocesssPanel_];
     [coprocesssPanel_ orderOut:self];
 }
 
@@ -5867,15 +5863,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [parameterName setStringValue:[NSString stringWithFormat:@"“%@”:", name]];
     [parameterValue setStringValue:@""];
 
-    [NSApp beginSheet:parameterPanel
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:nil
-          contextInfo:nil];
+    [self.window beginSheet:parameterPanel completionHandler:nil];
 
     [NSApp runModalForWindow:parameterPanel];
 
-    [NSApp endSheet:parameterPanel];
+    [self.window endSheet:parameterPanel];
+
     [parameterPanel orderOut:self];
 
     if (_parameterPanelCanceled) {
