@@ -481,14 +481,20 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     } else {
         _profileNameChangePending = YES;
         if (!_timer) {
-            _timer = [NSTimer scheduledTimerWithTimeInterval:0.75 repeats:YES block:^(NSTimer * _Nonnull timer) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
-            }];
+            _timer = [NSTimer scheduledTimerWithTimeInterval:0.75
+                                                      target:self
+                                                    selector:@selector(postUpdateSessionNameNotification:)
+                                                    userInfo:nil
+                                                     repeats:YES];
         }
     }
 }
 
 #pragma mark - Notifications
+
+- (void)postUpdateSessionNameNotification:(NSNotification *)notification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
+}
 
 - (void)updateProfileName {
     if (_profileNameChangePending) {

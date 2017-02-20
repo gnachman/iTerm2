@@ -343,7 +343,9 @@ const CGFloat kEdgeWidth = 3;
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
+        ITERM_IGNORE_PARTIAL_BEGIN
         [findBarTextField_ setDelegate:self];
+        ITERM_IGNORE_PARTIAL_END
         state_ = [[FindState alloc] init];
         state_.mode = gFindMode;
         [[NSNotificationCenter defaultCenter] addObserver:self

@@ -88,12 +88,14 @@
 }
 
 - (void)pressureChangeWithEvent:(NSEvent *)event {
+    ITERM_IGNORE_PARTIAL_BEGIN
     if ([event respondsToSelector:@selector(stage)]) {
         _maximumStage = MAX(_maximumStage, event.stage);
         if (event.stage == 2) {
             [pointerPrefs_ setGesture:kForceTouchSingleClick modifiers:[event modifierFlags]];
         }
     }
+    ITERM_IGNORE_PARTIAL_END
 }
 
 - (void)rightMouseDown:(NSEvent*)event {

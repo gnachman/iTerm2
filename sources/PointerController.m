@@ -188,6 +188,7 @@
 }
 
 - (BOOL)pressureChangeWithEvent:(NSEvent *)event {
+    ITERM_IGNORE_PARTIAL_BEGIN
     if ([event respondsToSelector:@selector(stage)]) {
         NSInteger previousStage = _previousStage;
         _previousStage = event.stage;
@@ -204,6 +205,7 @@
             }
         }
     }
+    ITERM_IGNORE_PARTIAL_END
     return NO;
 }
 

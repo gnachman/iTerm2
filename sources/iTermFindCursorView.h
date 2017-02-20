@@ -26,8 +26,6 @@ extern const double kFindCursorHoldTime;
 
 + (instancetype)newFireworksViewWithFrame:(NSRect)frameRect;
 
-- (instancetype)initWithFrame:(NSRect)frameRect;
-
 - (void)startTearDownTimer;
 - (void)stopTearDownTimer;
 

@@ -517,7 +517,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
+        ITERM_IGNORE_PARTIAL_BEGIN
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
+        ITERM_IGNORE_PARTIAL_END
     }
 
     if ([iTermAdvancedSettingsModel enableAPIServer]) {

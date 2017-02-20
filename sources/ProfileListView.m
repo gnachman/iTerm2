@@ -89,7 +89,9 @@ const CGFloat kDefaultTagsWidth = 80;
         searchFieldFrame.size.width = frame.size.width;
         searchField_ = [[iTermSearchField alloc] initWithFrame:searchFieldFrame];
         [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
+        ITERM_IGNORE_PARTIAL_BEGIN
         [searchField_ setDelegate:self];
+        ITERM_IGNORE_PARTIAL_END
         [self addSubview:searchField_];
         self.delegate = nil;
 

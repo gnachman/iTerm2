@@ -1629,6 +1629,9 @@
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
 		A685D9DA1E5A24AA0091C3A7 /* PTYSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2D14BABE8700BD5035 /* PTYSession.h */; };
+		A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */; };
+		A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */; };
+		A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */; };
 		A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
 		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
@@ -3415,6 +3418,9 @@
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE991915DB1F00BE8758 /* iTermFlippedView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFlippedView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFlippedView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+TouchBar.h"; sourceTree = "<group>"; };
+		A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+TouchBar.m"; sourceTree = "<group>"; };
+		A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Private.h"; sourceTree = "<group>"; };
 		A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NewOutputForDarkTheme.png; path = images/NewOutputForDarkTheme.png; sourceTree = "<group>"; };
 		A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutputForDarkTheme@2x.png"; path = "images/NewOutputForDarkTheme@2x.png"; sourceTree = "<group>"; };
 		A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DeadForDarkTheme.png; path = images/DeadForDarkTheme.png; sourceTree = "<group>"; };
@@ -5188,6 +5194,9 @@
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */,
 				A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */,
+				A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */,
+				A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */,
+				A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -6846,6 +6855,7 @@
 				A6FEA2781CF2CBCC00376F28 /* iTermAppHotKeyProvider.h in Headers */,
 				A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
+				A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */,
 				A6FEA26C1CF2C86800376F28 /* iTermBaseHotKey.h in Headers */,
 				A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */,
 				A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */,
@@ -6883,6 +6893,7 @@
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
 				A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
+				A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */,
 				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
 				A6CEC1171DCE8146009F4FD2 /* GPBBootstrap.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
@@ -8769,6 +8780,7 @@
 				A62C3A8E1BCAE08300B5629D /* iTermDirectoryTree.m in Sources */,
 				A6C763AB1B45C52B00E3C992 /* AlertTrigger.m in Sources */,
 				A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */,
+				A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */,
 				A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */,
 				A6C763C61B45C52B00E3C992 /* VT100State.m in Sources */,
 				A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */,
@@ -10070,6 +10082,11 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wpartial-availability",
+				);
+				WARNING_LDFLAGS = "";
 			};
 			name = Development;
 		};
@@ -10116,6 +10133,11 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wpartial-availability",
+				);
+				WARNING_LDFLAGS = "";
 			};
 			name = Deployment;
 		};
@@ -10161,6 +10183,11 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wpartial-availability",
+				);
+				WARNING_LDFLAGS = "";
 			};
 			name = Nightly;
 		};
@@ -10206,6 +10233,11 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wpartial-availability",
+				);
+				WARNING_LDFLAGS = "";
 			};
 			name = Default;
 		};

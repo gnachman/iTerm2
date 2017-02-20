@@ -63,7 +63,9 @@ static const CGFloat kMargin = 4;
         [searchField_ sizeToFit];
         searchField_.autoresizingMask = NSViewWidthSizable;
         searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
+        ITERM_IGNORE_PARTIAL_BEGIN
         [searchField_ setDelegate:self];
+        ITERM_IGNORE_PARTIAL_END
         [self addSubview:searchField_];
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:CGRectZero];
