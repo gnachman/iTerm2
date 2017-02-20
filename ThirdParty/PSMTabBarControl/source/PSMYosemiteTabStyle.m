@@ -344,10 +344,8 @@
 - (NSColor *)textColorDefaultSelected:(BOOL)selected {
     if (selected) {
         return [NSColor blackColor];
-    } else if ([self isYosemiteOrLater]) {
-        return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
     } else {
-        return [NSColor colorWithSRGBRed:80/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+        return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
     }
 }
 
@@ -428,25 +426,15 @@
             return [NSColor windowBackgroundColor];
         }
     } else {
-        if ([self isYosemiteOrLater]) {
-            CGFloat value;
-            if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
-                value = 190/255.0 - highlightAmount * 0.048;
-            } else {
-                // Make inactive windows' background color lighter
-                value = 236/255.0 - highlightAmount * 0.048;
-            }
-            return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+        CGFloat value;
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            value = 190/255.0 - highlightAmount * 0.048;
         } else {
-            // 10.9 and earlier needs a darker color to look good
-            CGFloat value = 0.6 - highlightAmount * 0.048;
-            return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+            // Make inactive windows' background color lighter
+            value = 236/255.0 - highlightAmount * 0.048;
         }
+        return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }
-}
-
-- (BOOL)isYosemiteOrLater {
-    return NSClassFromString(@"NSVisualEffectView") != nil;
 }
 
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {

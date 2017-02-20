@@ -8,7 +8,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-BOOL IsYosemiteOrLater(void);
 BOOL IsMavericksOrLater(void);
 BOOL IsElCapitanOrLater(void);
 BOOL IsSierraOrLater(void);

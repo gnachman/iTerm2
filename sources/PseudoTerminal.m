@@ -4682,12 +4682,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     [self.window setBackgroundColor:backgroundColor];
-    if (IsYosemiteOrLater()) {
-        if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
-            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-        } else {
-            self.window.appearance = nil;
-        }
+    if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
+        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    } else {
+        self.window.appearance = nil;
     }
 }
 

@@ -25,22 +25,16 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-  if (selected) {
-    if (self.tabBar.window.backgroundColor) {
-      return self.tabBar.window.backgroundColor;
+    if (selected) {
+        if (self.tabBar.window.backgroundColor) {
+            return self.tabBar.window.backgroundColor;
+        } else {
+            return [NSColor windowBackgroundColor];
+        }
     } else {
-      return [NSColor windowBackgroundColor];
+        CGFloat value = 180 / 255.0 - highlightAmount * 0.1;
+        return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }
-  } else {
-    if ([self isYosemiteOrLater]) {
-      CGFloat value = 180 / 255.0 - highlightAmount * 0.1;
-      return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-    } else {
-      // 10.9 and earlier needs a darker color to look good
-      CGFloat value = 0.6 - highlightAmount * 0.1;
-      return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-    }
-  }
 }
 
 - (NSColor *)verticalLineColor {

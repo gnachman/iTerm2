@@ -2336,11 +2336,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                  peerIdentity:(NSDictionary *)peerIdentity
                       handler:(void (^)(ITMRegisterToolResponse *))handler {
     ITMRegisterToolResponse *response = [[[ITMRegisterToolResponse alloc] init] autorelease];
-    if (!IsYosemiteOrLater()) {
-        response.status = ITMRegisterToolResponse_Status_PermissionDenied;
-        handler(response);
-        return;
-    }
     if (!request.hasName || !request.hasIdentifier || !request.hasURL) {
         response.status = ITMRegisterToolResponse_Status_RequestMalformed;
         handler(response);
