@@ -4850,9 +4850,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         path = [searchPaths objectAtIndex:0];
     }
 
-    NSString* nowStr = [[NSDate date] descriptionWithCalendarFormat:@"Log at %Y-%m-%d %H.%M.%S.txt"
-                                                           timeZone:nil
-                                                             locale:[[NSUserDefaults standardUserDefaults] dictionaryRepresentation]];
+    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd hh-mm-ss" options:0 locale:nil];
+    NSString *formattedDate = [dateFormatter stringFromDate:[NSDate date]];
+    // Stupid mac os can't have colons in filenames
+    formattedDate = [formattedDate stringByReplacingOccurrencesOfString:@":" withString:@"-"];
+    NSString *nowStr = [NSString stringWithFormat:@"Log at %@.txt", formattedDate];
 
     if ([aSavePanel legacyRunModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
         if (![aData writeToFile:[aSavePanel legacyFilename] atomically:YES]) {
