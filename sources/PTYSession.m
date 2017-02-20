@@ -7306,7 +7306,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 NSArray<NSString *> *pathComponents = [path pathComponents];
                 NSArray<NSString *> *relativePathComponents = [pathComponents subarrayWithRange:NSMakeRange(baseComponents.count, pathComponents.count - baseComponents.count)];
                 NSString *relativePath = [relativePathComponents componentsJoinedByString:@"/"];
-                return relativePath;
+                // Start every path with "./" to deal with filenames beginning with -.
+                return [@"." stringByAppendingPathComponent:relativePath];
             }];
             NSError *error = nil;
             NSData *data = [NSData dataWithTGZContainingFiles:relativePaths relativeToPath:base error:&error];
@@ -7323,6 +7324,14 @@ ITERM_WEAKLY_REFERENCEABLE
             NSString *base64String = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength |
                                                                            NSDataBase64EncodingEndLineWithCarriageReturn)];
             base64String = [base64String stringByAppendingString:@"\n\n"];
+            NSString *label;
+            if (relativePaths.count == 1) {
+                label = relativePaths.firstObject.lastPathComponent;
+            } else {
+                label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
+            }
+            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
+            [self.upload upload];
             [_pasteHelper pasteString:base64String
                                slowly:NO
                      escapeShellChars:NO
@@ -7332,14 +7341,6 @@ ITERM_WEAKLY_REFERENCEABLE
                              progress:^(NSInteger progress) {
                                  [self.upload didUploadBytes:progress];
                              }];
-            NSString *label;
-            if (relativePaths.count == 1) {
-                label = relativePaths.firstObject.lastPathComponent;
-            } else {
-                label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
-            }
-            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
-            [self.upload upload];
         } else {
             [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
         }
