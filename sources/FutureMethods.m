@@ -120,65 +120,6 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 
 @end
 
-@implementation FutureWKWebViewConfiguration
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKWebViewConfiguration");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKPreferences
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKPreferences");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKProcessPool
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKProcessPool");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKUserContentController
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKUserContentController");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKWebsiteDataStore
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKWebsiteDataStore");
-    return [theClass alloc];
-}
-
-+ (instancetype)defaultDataStore {
-    Class theClass = NSClassFromString(@"WKWebsiteDataStore");
-    return [theClass defaultDataStore];
-}
-
-@end
-
-@implementation FutureWKWebView
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKWebView");
-    return [theClass alloc];
-}
-
-@end
-
 @implementation NSValue(Future)
 
 + (NSValue *)futureValueWithEdgeInsets:(NSEdgeInsets)edgeInsets {
