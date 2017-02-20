@@ -516,6 +516,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value;
 
+- (void)showFireworks;
+
 #pragma mark - Testing only
 
 - (id)selectedTextAttributed:(BOOL)attributed

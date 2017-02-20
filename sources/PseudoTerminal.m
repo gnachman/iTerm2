@@ -1431,7 +1431,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)findCursor:(id)sender
 {
-    [[[self currentSession] textview] beginFindCursor:YES];
+    [[[self currentSession] textview] beginFindCursor:YES forceFireworks:NO];
     if (!(GetCurrentKeyModifiers() & cmdKey)) {
         [[[self currentSession] textview] placeFindCursorOnAutoHide];
     }

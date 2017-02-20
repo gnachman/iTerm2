@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTextViewDataSource.h"
+#import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
 
 @class VT100RemoteHost;
@@ -173,7 +174,7 @@
 - (void)screenIncrementBadge;
 
 // Bounce the dock. Set request to false to cancel.
-- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical;
+- (void)screenRequestAttention:(VT100AttentionRequestType)request;
 - (NSString *)screenCurrentWorkingDirectory;
 
 // Show/hide the cursor.

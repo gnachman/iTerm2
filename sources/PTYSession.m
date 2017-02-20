@@ -7351,12 +7351,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
-    if (request) {
-        _requestAttentionId =
-            [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
-    } else {
-        [NSApp cancelUserAttentionRequest:_requestAttentionId];
+- (void)screenRequestAttention:(VT100AttentionRequestType)request {
+    switch (request) {
+        case VT100AttentionRequestTypeFireworks:
+            [_textview showFireworks];
+            break;
+        case VT100AttentionRequestTypeStopBouncingDockIcon:
+            [NSApp cancelUserAttentionRequest:_requestAttentionId];
+            break;
+        case VT100AttentionRequestTypeStartBouncingDockIcon:
+            _requestAttentionId =
+                [NSApp requestUserAttention:NSCriticalRequest];
+            break;
     }
 }
 

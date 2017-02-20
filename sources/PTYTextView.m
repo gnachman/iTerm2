@@ -5482,7 +5482,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return frame;
 }
 
-- (void)createFindCursorWindow {
+- (void)createFindCursorWindowWithFireworks:(BOOL)forceFireworks {
     [self scrollRectToVisible:[self cursorFrame]];
     self.findCursorWindow = [[[NSWindow alloc] initWithContentRect:NSZeroRect
                                                          styleMask:NSBorderlessWindowMask
@@ -5496,10 +5496,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[_findCursorWindow animator] setAlphaValue:1];
     _findCursorWindow.opaque = NO;
     [_findCursorWindow makeKeyAndOrderFront:nil];
-    self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
-                                                                                0,
-                                                                                screenFrame.size.width,
-                                                                                screenFrame.size.height)];
+
+    if (forceFireworks) {
+        self.findCursorView = [iTermFindCursorView newFireworksViewWithFrame:NSMakeRect(0,
+                                                                                        0,
+                                                                                        screenFrame.size.width,
+                                                                                        screenFrame.size.height)];
+    } else {
+        self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
+                                                                                    0,
+                                                                                    screenFrame.size.width,
+                                                                                    screenFrame.size.height)];
+    }
     _findCursorView.delegate = self;
     NSPoint p = [self cursorCenterInFindCursorWindowCoords];
     _findCursorView.cursorPosition = p;
@@ -5507,10 +5515,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)beginFindCursor:(BOOL)hold {
+    [self beginFindCursor:hold forceFireworks:NO];
+}
+
+- (void)beginFindCursor:(BOOL)hold forceFireworks:(BOOL)forceFireworks {
     _drawingHelper.cursorVisible = YES;
     [self setNeedsDisplayInRect:self.cursorFrame];
     if (!_findCursorView) {
-        [self createFindCursorWindow];
+        [self createFindCursorWindowWithFireworks:forceFireworks];
     }
     if (hold) {
         [_findCursorView startTearDownTimer];
@@ -5550,6 +5562,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setFindCursorView:(iTermFindCursorView *)view {
     [_findCursorView autorelease];
     _findCursorView = [view retain];
+}
+
+- (void)showFireworks {
+    [self beginFindCursor:YES forceFireworks:YES];
+    [self placeFindCursorOnAutoHide];
 }
 
 - (BOOL)getAndResetChangedSinceLastExpose

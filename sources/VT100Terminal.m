@@ -2161,7 +2161,13 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalCopyBufferToPasteboard];
         }
     } else if ([key isEqualToString:@"RequestAttention"]) {
-        [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
+        if ([value isEqualToString:@"fireworks"]) {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeFireworks];
+        } else if ([value boolValue]) {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStartBouncingDockIcon];
+        } else {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStopBouncingDockIcon];
+        }
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetBackgroundImageFile:value];

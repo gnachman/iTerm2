@@ -272,6 +272,10 @@ const double kFindCursorHoleRadius = 30;
     }
 }
 
++ (instancetype)newFireworksViewWithFrame:(NSRect)frameRect {
+    return [[iTermFindCursorViewStarsImpl alloc] initWithFrame:frameRect];
+}
+
 - (void)setCursorPosition:(NSPoint)cursorPosition {
     _cursorPosition = cursorPosition;
 }

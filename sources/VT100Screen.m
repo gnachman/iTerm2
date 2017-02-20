@@ -3614,8 +3614,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
 }
 
-- (void)terminalRequestAttention:(BOOL)request {
-    [delegate_ screenRequestAttention:request isCritical:YES];
+- (void)terminalRequestAttention:(VT100AttentionRequestType)request {
+    [delegate_ screenRequestAttention:request];
 }
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
