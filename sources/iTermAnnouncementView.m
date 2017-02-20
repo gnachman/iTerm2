@@ -87,14 +87,6 @@ static const CGFloat kMargin = 8;
         _internalView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         [self addSubview:_internalView];
 
-        NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
-        [dropShadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:0.5]];
-        [dropShadow setShadowOffset:NSMakeSize(0, -2.0)];
-        [dropShadow setShadowBlurRadius:2.0];
-
-        [self setWantsLayer:YES];
-        [self setShadow:dropShadow];
-
         NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
         NSSize closeSize = closeImage.size;
         _buttonWidth = ceil(closeSize.width + kMargin);
@@ -206,7 +198,14 @@ static const CGFloat kMargin = 8;
         [_actionButtons addObject:button];
         [_internalView addSubview:button];
     }
+}
 
+- (void)viewDidMoveToWindow {
+    if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
+        for (NSButton *button in _actionButtons) {
+            button.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
+        }
+    }
 }
 
 - (NSImage *)iconImage {
