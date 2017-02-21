@@ -251,17 +251,11 @@ static iTermController *gSharedInstance;
 - (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal {
     BOOL windowIsObscured = NO;
     NSWindow *window = [terminal window];
-    // occlusionState is new in 10.9.
-    if ([window respondsToSelector:@selector(occlusionState)]) {
-        NSWindowOcclusionState occlusionState = window.occlusionState;
-        // The occlusionState tells if you if you're on another space or another app's window is
-        // occluding yours, but for some reason one terminal window can occlude another without
-        // it noticing, so we compute that ourselves.
-        windowIsObscured = !(occlusionState & NSWindowOcclusionStateVisible);
-    } else {
-        // Use a very rough approximation. Users who complain should upgrade to 10.9.
-        windowIsObscured = !window.isOnActiveSpace;
-    }
+    NSWindowOcclusionState occlusionState = window.occlusionState;
+    // The occlusionState tells if you if you're on another space or another app's window is
+    // occluding yours, but for some reason one terminal window can occlude another without
+    // it noticing, so we compute that ourselves.
+    windowIsObscured = !(occlusionState & NSWindowOcclusionStateVisible);
     if (!windowIsObscured) {
         // Try to refine the guess by seeing if another terminal is covering this one.
         static const double kOcclusionThreshold = 0.4;

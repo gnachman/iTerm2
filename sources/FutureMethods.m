@@ -10,18 +10,6 @@
 
 static NSString *const kApplicationServicesFramework = @"/System/Library/Frameworks/ApplicationServices.framework";
 
-@implementation NSScreen (future)
-
-+ (BOOL)futureScreensHaveSeparateSpaces {
-    if ([self respondsToSelector:@selector(screensHaveSeparateSpaces)]) {
-        return [self screensHaveSeparateSpaces];
-    } else {
-        return NO;
-    }
-}
-
-@end
-
 static void *GetFunctionByName(NSString *library, char *func) {
     CFBundleRef bundle;
     CFURLRef bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef) library, kCFURLPOSIXPathStyle, true);
@@ -128,65 +116,6 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
         return function((CTFontRef)self);
     }
     return NO;
-}
-
-@end
-
-@implementation FutureWKWebViewConfiguration
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKWebViewConfiguration");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKPreferences
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKPreferences");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKProcessPool
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKProcessPool");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKUserContentController
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKUserContentController");
-    return [theClass alloc];
-}
-
-@end
-
-@implementation FutureWKWebsiteDataStore
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKWebsiteDataStore");
-    return [theClass alloc];
-}
-
-+ (instancetype)defaultDataStore {
-    Class theClass = NSClassFromString(@"WKWebsiteDataStore");
-    return [theClass defaultDataStore];
-}
-
-@end
-
-@implementation FutureWKWebView
-
-+ (instancetype)alloc {
-    Class theClass = NSClassFromString(@"WKWebView");
-    return [theClass alloc];
 }
 
 @end

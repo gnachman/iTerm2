@@ -186,7 +186,7 @@ static BOOL sAuthenticated;
 
 - (void)orderOutOrEndSheet {
     if (self.window.isSheet) {
-        [NSApp endSheet:self.window];
+        [self.window.sheetParent endSheet:self.window];
     } else {
         [[self window] orderOut:nil];
     }
@@ -246,7 +246,7 @@ static BOOL sAuthenticated;
 
 - (void)closeOrEndSheet {
     if (self.window.isSheet) {
-        [NSApp endSheet:self.window];
+        [self.window.sheetParent endSheet:self.window];
     } else {
         [self.window close];
     }

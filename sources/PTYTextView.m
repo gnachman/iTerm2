@@ -254,6 +254,8 @@ static const int kDragThreshold = 3;
     
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
     iTermAltScreenMouseScrollInferer *_altScreenMouseScrollInferer;
+
+    NSEvent *_eventBeingHandled;
 }
 
 
@@ -1491,6 +1493,7 @@ static const int kDragThreshold = 3;
         gCurrentKeyEventTextView = [[self retain] autorelease];
 
         if (!eschewCocoaTextHandling) {
+            _eventBeingHandled = event;
             if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
               // This may cause -insertText:replacementRange: or -doCommandBySelector: to be called.
               // These methods have a side-effect of setting _keyPressHandled if they dispatched the event
@@ -1500,6 +1503,9 @@ static const int kDragThreshold = 3;
               [self.inputContext handleEvent:event];
             } else {
               [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+            }
+            if (_eventBeingHandled == event) {
+                _eventBeingHandled = nil;
             }
         }
         gCurrentKeyEventTextView = nil;
@@ -4711,15 +4717,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     }
-    NSAlert *alert = [NSAlert alertWithMessageText:text
-                                     defaultButton:@"OK"
-                                   alternateButton:@"Cancel"
-                                       otherButton:nil
-                         informativeTextWithFormat:@""];
-
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = text;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
     [alert layout];
     NSInteger button = [alert runModal];
-    return (button == NSAlertDefaultReturn);
+    return (button == NSAlertFirstButtonReturn);
 }
 
 - (void)maybeUpload:(NSArray *)tuple {
@@ -4852,9 +4856,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         path = [searchPaths objectAtIndex:0];
     }
 
-    NSString* nowStr = [[NSDate date] descriptionWithCalendarFormat:@"Log at %Y-%m-%d %H.%M.%S.txt"
-                                                           timeZone:nil
-                                                             locale:[[NSUserDefaults standardUserDefaults] dictionaryRepresentation]];
+    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd hh-mm-ss" options:0 locale:nil];
+    NSString *formattedDate = [dateFormatter stringFromDate:[NSDate date]];
+    // Stupid mac os can't have colons in filenames
+    formattedDate = [formattedDate stringByReplacingOccurrencesOfString:@":" withString:@"-"];
+    NSString *nowStr = [NSString stringWithFormat:@"Log at %@.txt", formattedDate];
 
     if ([aSavePanel legacyRunModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
         if (![aData writeToFile:[aSavePanel legacyFilename] atomically:YES]) {
@@ -4972,9 +4979,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // insertText:replacementRange:, unless an IME is in use. An example of when this gets called
         // but we should not pass the event to the delegate is when there is marked text and you press
         // Enter.
-        if (![self hasMarkedText] && !_hadMarkedTextBeforeHandlingKeypressEvent) {
+        if (![self hasMarkedText] && !_hadMarkedTextBeforeHandlingKeypressEvent && _eventBeingHandled) {
             _keyPressHandled = YES;
-            [self.delegate keyDown:[NSApp currentEvent]];
+            [self.delegate keyDown:_eventBeingHandled];
         }
     }
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
@@ -5482,7 +5489,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return frame;
 }
 
-- (void)createFindCursorWindow {
+- (void)createFindCursorWindowWithFireworks:(BOOL)forceFireworks {
     [self scrollRectToVisible:[self cursorFrame]];
     self.findCursorWindow = [[[NSWindow alloc] initWithContentRect:NSZeroRect
                                                          styleMask:NSBorderlessWindowMask
@@ -5496,10 +5503,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[_findCursorWindow animator] setAlphaValue:1];
     _findCursorWindow.opaque = NO;
     [_findCursorWindow makeKeyAndOrderFront:nil];
-    self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
-                                                                                0,
-                                                                                screenFrame.size.width,
-                                                                                screenFrame.size.height)];
+
+    if (forceFireworks) {
+        self.findCursorView = [iTermFindCursorView newFireworksViewWithFrame:NSMakeRect(0,
+                                                                                        0,
+                                                                                        screenFrame.size.width,
+                                                                                        screenFrame.size.height)];
+    } else {
+        self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
+                                                                                    0,
+                                                                                    screenFrame.size.width,
+                                                                                    screenFrame.size.height)];
+    }
     _findCursorView.delegate = self;
     NSPoint p = [self cursorCenterInFindCursorWindowCoords];
     _findCursorView.cursorPosition = p;
@@ -5507,10 +5522,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)beginFindCursor:(BOOL)hold {
+    [self beginFindCursor:hold forceFireworks:NO];
+}
+
+- (void)beginFindCursor:(BOOL)hold forceFireworks:(BOOL)forceFireworks {
     _drawingHelper.cursorVisible = YES;
     [self setNeedsDisplayInRect:self.cursorFrame];
     if (!_findCursorView) {
-        [self createFindCursorWindow];
+        [self createFindCursorWindowWithFireworks:forceFireworks];
     }
     if (hold) {
         [_findCursorView startTearDownTimer];
@@ -5550,6 +5569,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setFindCursorView:(iTermFindCursorView *)view {
     [_findCursorView autorelease];
     _findCursorView = [view retain];
+}
+
+- (void)showFireworks {
+    [self beginFindCursor:YES forceFireworks:YES];
+    [self placeFindCursorOnAutoHide];
 }
 
 - (BOOL)getAndResetChangedSinceLastExpose

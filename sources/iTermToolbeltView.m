@@ -56,12 +56,10 @@ static NSString *const kDynamicToolURL = @"URL";
     [iTermToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];
     [iTermToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
 
-    if (IsYosemiteOrLater()) {
-        NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
-        [dynamicTools enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull identifier, NSDictionary * _Nonnull dict, BOOL * _Nonnull stop) {
-            [iTermToolbeltView registerToolWithName:dict[kDynamicToolName] withClass:[ToolWebView class]];
-        }];
-    }
+    NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+    [dynamicTools enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull identifier, NSDictionary * _Nonnull dict, BOOL * _Nonnull stop) {
+        [iTermToolbeltView registerToolWithName:dict[kDynamicToolName] withClass:[ToolWebView class]];
+    }];
 }
 
 + (NSArray<NSString *> *)builtInToolNames {
@@ -72,9 +70,6 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 + (NSArray<NSString *> *)dynamicToolNames {
-    if (!IsYosemiteOrLater()) {
-        return @[];
-    }
     NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
     return [dynamicTools.allValues mapWithBlock:^id(NSDictionary *dict) {
         return dict[kDynamicToolName];
@@ -82,9 +77,6 @@ static NSString *const kDynamicToolURL = @"URL";
 
 }
 + (void)registerDynamicToolWithIdentifier:(NSString *)identifier name:(NSString *)name URL:(NSString *)url revealIfAlreadyRegistered:(BOOL)revealIfAlreadyRegistered {
-    if (!IsYosemiteOrLater()) {
-        return;
-    }
     if (!url) {
         return;
     }
@@ -386,7 +378,7 @@ static NSString *const kDynamicToolURL = @"URL";
                                   0,
                                   wrapper.container.frame.size.width,
                                   wrapper.container.frame.size.height);
-        if (IsYosemiteOrLater() && [c instancesRespondToSelector:@selector(initWithFrame:URL:)]) {
+        if ([c instancesRespondToSelector:@selector(initWithFrame:URL:)]) {
             NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
             NSDictionary *attrs = [registry.allKeys mapWithBlock:^id(NSString *key) {
                 NSDictionary *dict = registry[key];

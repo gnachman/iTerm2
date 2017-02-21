@@ -8,10 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-BOOL IsYosemiteOrLater(void);
-BOOL IsMavericksOrLater(void);
-BOOL IsElCapitanOrLater(void);
-BOOL IsSierraOrLater(void);
+BOOL IsElCapitanOrLater(void);  // 10.11
+BOOL IsSierraOrLater(void);  // 10.12
 
 BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix);
-BOOL IsTouchBarAvailable(void);
+BOOL IsTouchBarAvailable(void);  // 10.12.2, but only if a selector exists.

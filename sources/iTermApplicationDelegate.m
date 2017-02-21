@@ -67,6 +67,7 @@
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
+#import "iTermVersionComparator.h"
 #import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -129,8 +130,7 @@ static NSString *const kAPINextConfirmationDate = @"next confirmation";
 static NSString *const kAPIAccessLocalizedName = @"app name";
 static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
-
-@interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate, SUUpdaterDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -517,7 +517,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
+        ITERM_IGNORE_PARTIAL_BEGIN
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
+        ITERM_IGNORE_PARTIAL_END
     }
 
     if ([iTermAdvancedSettingsModel enableAPIServer]) {
@@ -528,7 +530,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
-    if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
+    if ([iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
         _appNapStoppingActivity =
@@ -958,6 +960,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
+        [[SUUpdater sharedUpdater] setDelegate:self];
     }
 
     return self;
@@ -2334,11 +2337,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                  peerIdentity:(NSDictionary *)peerIdentity
                       handler:(void (^)(ITMRegisterToolResponse *))handler {
     ITMRegisterToolResponse *response = [[[ITMRegisterToolResponse alloc] init] autorelease];
-    if (!IsYosemiteOrLater()) {
-        response.status = ITMRegisterToolResponse_Status_PermissionDenied;
-        handler(response);
-        return;
-    }
     if (!request.hasName || !request.hasIdentifier || !request.hasURL) {
         response.status = ITMRegisterToolResponse_Status_RequestMalformed;
         handler(response);
@@ -2414,6 +2412,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [response.windowsArray addObject:windowMessage];
     }
     handler(response);
+}
+
+#pragma mark - SUUpdaterDelegate
+
+- (id<SUVersionComparison>)versionComparatorForUpdater:(SUUpdater *)updater {
+    return [[[iTermVersionComparator alloc] init] autorelease];
 }
 
 @end

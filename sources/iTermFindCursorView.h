@@ -24,6 +24,8 @@ extern const double kFindCursorHoldTime;
 @property(nonatomic, assign) BOOL autohide;
 @property(nonatomic, assign) BOOL stopping;
 
++ (instancetype)newFireworksViewWithFrame:(NSRect)frameRect;
+
 - (void)startTearDownTimer;
 - (void)stopTearDownTimer;
 

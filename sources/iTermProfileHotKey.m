@@ -768,9 +768,8 @@ static NSString *const kArrangement = @"Arrangement";
         [self fastHideHotKeyWindow];
     }
 
-    // This used to iterate over hotkeyTerm.window.sheets, which seemed to
-    // work, but sheets wasn't defined prior to 10.9. Consider going back to
-    // that technique if this doesn't work well.
+    // If there are any problems here, iterate over self.windowController.window.sheets which was
+    // added in 10.9. This is a workaround from before we dropped 10.8.
     while (self.windowController.window.attachedSheet) {
         [NSApp endSheet:self.windowController.window.attachedSheet];
     }

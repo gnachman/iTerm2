@@ -32,6 +32,12 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
     kVT100TerminalUnitsAuto,
 };
 
+typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
+    VT100AttentionRequestTypeStartBouncingDockIcon,
+    VT100AttentionRequestTypeStopBouncingDockIcon,
+    VT100AttentionRequestTypeFireworks
+};
+
 @protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
@@ -316,7 +322,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)terminalRequestUpload:(NSString *)args;
 
 // Signal the user that the terminal wants attention.
-- (void)terminalRequestAttention:(BOOL)request;
+- (void)terminalRequestAttention:(VT100AttentionRequestType)request;
 
 // Set various colors.
 - (void)terminalSetForegroundColor:(NSColor *)color;

@@ -8,32 +8,43 @@
 
 #import "ToolWebView.h"
 #import "FutureMethods.h"
+#import "iTermSystemVersion.h"
+
+#import <WebKit/WebKit.h>
 
 @implementation ToolWebView {
-    FutureWKWebView *_webView;
+    WKWebView *_webView;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame URL:(NSURL *)url {
     self = [super initWithFrame:frame];
     if (self) {
-        FutureWKWebViewConfiguration *configuration = [[[FutureWKWebViewConfiguration alloc] init] autorelease];
+        WKWebViewConfiguration *configuration = [[[WKWebViewConfiguration alloc] init] autorelease];
         if (!configuration) {
             return nil;
         }
         if (configuration) {
             // If you get here, it's OS 10.10 or newer.
-            configuration.applicationNameForUserAgent = @"iTerm2";
-            FutureWKPreferences *prefs = [[[FutureWKPreferences alloc] init] autorelease];
+            ITERM_IGNORE_PARTIAL_BEGIN
+            if (IsElCapitanOrLater()) {
+                configuration.applicationNameForUserAgent = @"iTerm2";
+            }
+            ITERM_IGNORE_PARTIAL_END
+            WKPreferences *prefs = [[[WKPreferences alloc] init] autorelease];
             prefs.javaEnabled = NO;
             prefs.javaScriptEnabled = YES;
             prefs.javaScriptCanOpenWindowsAutomatically = NO;
             configuration.preferences = prefs;
-            configuration.processPool = [[[FutureWKProcessPool alloc] init] autorelease];
-            FutureWKUserContentController *userContentController =
-                [[[FutureWKUserContentController alloc] init] autorelease];
+            configuration.processPool = [[[WKProcessPool alloc] init] autorelease];
+            WKUserContentController *userContentController =
+                [[[WKUserContentController alloc] init] autorelease];
             configuration.userContentController = userContentController;
-            configuration.websiteDataStore = [FutureWKWebsiteDataStore defaultDataStore];
-            FutureWKWebView *webView = [[[FutureWKWebView alloc] initWithFrame:self.bounds
+            ITERM_IGNORE_PARTIAL_BEGIN
+            if (IsElCapitanOrLater()) {
+                configuration.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
+            }
+            ITERM_IGNORE_PARTIAL_END
+            WKWebView *webView = [[[WKWebView alloc] initWithFrame:self.bounds
                                                                  configuration:configuration] autorelease];
             NSURLRequest *request = [[[NSURLRequest alloc] initWithURL:url] autorelease];
             [webView loadRequest:request];

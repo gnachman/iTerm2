@@ -1,0 +1,8 @@
+#define ITERM_IGNORE_PARTIAL_BEGIN \
+_Pragma("clang diagnostic push") \
+_Pragma("clang diagnostic ignored \"-Wpartial-availability\"")
+
+#define ITERM_IGNORE_PARTIAL_END \
+_Pragma("clang diagnostic pop")
+
+

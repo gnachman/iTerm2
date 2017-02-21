@@ -5509,21 +5509,22 @@ ITERM_WEAKLY_REFERENCEABLE
                 (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
                 [[_delegate sessions] count] > 1) {
                 if ([self _askAboutOutdatedKeyMappings]) {
-                    int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
-                                                 @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
-                                                 @"Remove it",
-                                                 @"Remind me later",
-                                                 @"Keep it");
-                    switch (result) {
-                        case NSAlertDefaultReturn:
+                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                    alert.messageText = @"Outdated Key Mapping Found";
+                    alert.informativeText = @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?";
+                    [alert addButtonWithTitle:@"Remove it"];
+                    [alert addButtonWithTitle:@"Remind me later"];
+                    [alert addButtonWithTitle:@"Keep it"];
+                    switch ([alert runModal]) {
+                        case NSAlertFirstButtonReturn:
                             // Remove it
                             [self _removeOutdatedKeyMapping];
                             return;
                             break;
-                        case NSAlertAlternateReturn:
+                        case NSAlertSecondButtonReturn:
                             // Remind me later
                             break;
-                        case NSAlertOtherReturn:
+                        case NSAlertThirdButtonReturn:
                             // Keep it
                             [self _setKeepOutdatedKeyMapping];
                             break;
@@ -7066,12 +7067,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    viewIndex:[self screenViewIndex]
                                                       sticky:YES];
         } else {
-            if (NSRunAlertPanel(@"Alert",
-                                @"Mark set in session “%@.”",
-                                @"Reveal",
-                                @"OK",
-                                nil,
-                                [self name]) == NSAlertDefaultReturn) {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Alert";
+            alert.informativeText = [NSString stringWithFormat:@"Mark set in session “%@.”", [self name]];
+            [alert addButtonWithTitle:@"Reveal"];
+            [alert addButtonWithTitle:@"OK"];
+            if ([alert runModal] == NSAlertFirstButtonReturn) {
                 [self reveal];
             }
         }
@@ -7305,24 +7306,32 @@ ITERM_WEAKLY_REFERENCEABLE
                 NSArray<NSString *> *pathComponents = [path pathComponents];
                 NSArray<NSString *> *relativePathComponents = [pathComponents subarrayWithRange:NSMakeRange(baseComponents.count, pathComponents.count - baseComponents.count)];
                 NSString *relativePath = [relativePathComponents componentsJoinedByString:@"/"];
-                return relativePath;
+                // Start every path with "./" to deal with filenames beginning with -.
+                return [@"." stringByAppendingPathComponent:relativePath];
             }];
             NSError *error = nil;
             NSData *data = [NSData dataWithTGZContainingFiles:relativePaths relativeToPath:base error:&error];
             if (!data && error) {
                 NSString *message = error.userInfo[@"errorMessage"];
                 if (message) {
-                    NSAlert *alert = [NSAlert alertWithMessageText:@"Error Preparing Upload"
-                                                     defaultButton:@"OK"
-                                                   alternateButton:nil
-                                                       otherButton:nil
-                                         informativeTextWithFormat:@"tar failed with this message: %@", message];
+                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                    alert.messageText = @"Error Preparing Upload";
+                    alert.informativeText = [NSString stringWithFormat:@"tar failed with this message: %@", message];
                     [alert runModal];
+                    return;
                 }
             }
             NSString *base64String = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength |
                                                                            NSDataBase64EncodingEndLineWithCarriageReturn)];
             base64String = [base64String stringByAppendingString:@"\n\n"];
+            NSString *label;
+            if (relativePaths.count == 1) {
+                label = relativePaths.firstObject.lastPathComponent;
+            } else {
+                label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
+            }
+            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
+            [self.upload upload];
             [_pasteHelper pasteString:base64String
                                slowly:NO
                      escapeShellChars:NO
@@ -7332,14 +7341,6 @@ ITERM_WEAKLY_REFERENCEABLE
                              progress:^(NSInteger progress) {
                                  [self.upload didUploadBytes:progress];
                              }];
-            NSString *label;
-            if (relativePaths.count == 1) {
-                label = relativePaths.firstObject.lastPathComponent;
-            } else {
-                label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
-            }
-            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
-            [self.upload upload];
         } else {
             [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
         }
@@ -7351,12 +7352,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
-    if (request) {
-        _requestAttentionId =
-            [NSApp requestUserAttention:isCritical ? NSCriticalRequest : NSInformationalRequest];
-    } else {
-        [NSApp cancelUserAttentionRequest:_requestAttentionId];
+- (void)screenRequestAttention:(VT100AttentionRequestType)request {
+    switch (request) {
+        case VT100AttentionRequestTypeFireworks:
+            [_textview showFireworks];
+            break;
+        case VT100AttentionRequestTypeStopBouncingDockIcon:
+            [NSApp cancelUserAttentionRequest:_requestAttentionId];
+            break;
+        case VT100AttentionRequestTypeStartBouncingDockIcon:
+            _requestAttentionId =
+                [NSApp requestUserAttention:NSCriticalRequest];
+            break;
     }
 }
 

@@ -917,8 +917,8 @@ static const int kMaxScreenRows = 4096;
     }
 
     // Convert the coordRange to a 0-based rect (all coords are 1-based so far) and return it.
-    return VT100GridRectMake(coordRange.start.x - 1,
-                             coordRange.start.y - 1,
+    return VT100GridRectMake(MAX(0, coordRange.start.x - 1),
+                             MAX(0, coordRange.start.y - 1),
                              coordRange.end.x - coordRange.start.x + 1,
                              coordRange.end.y - coordRange.start.y + 1);
 }
@@ -2161,7 +2161,13 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalCopyBufferToPasteboard];
         }
     } else if ([key isEqualToString:@"RequestAttention"]) {
-        [delegate_ terminalRequestAttention:[value boolValue]];  // true: request, false: cancel
+        if ([value isEqualToString:@"fireworks"]) {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeFireworks];
+        } else if ([value boolValue]) {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStartBouncingDockIcon];
+        } else {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStopBouncingDockIcon];
+        }
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetBackgroundImageFile:value];

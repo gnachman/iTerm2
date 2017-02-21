@@ -3614,8 +3614,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
 }
 
-- (void)terminalRequestAttention:(BOOL)request {
-    [delegate_ screenRequestAttention:request isCritical:YES];
+- (void)terminalRequestAttention:(VT100AttentionRequestType)request {
+    [delegate_ screenRequestAttention:request];
 }
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
@@ -3928,7 +3928,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     int result = 0;
     for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
         screen_char_t *theLine = [self getLineAtScreenIndex:y];
-        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width; x++) {
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
             unichar code = theLine[x].code;
             BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
                               code > ITERM2_PRIVATE_END);

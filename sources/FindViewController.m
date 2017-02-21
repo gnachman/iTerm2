@@ -99,162 +99,47 @@ const CGFloat kEdgeWidth = 3;
 
 - (void)drawFocusRingMaskWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     if (controlView.frame.origin.y >= 0) {
-        if (IsYosemiteOrLater()) {
-            [super drawFocusRingMaskWithFrame:NSInsetRect(cellFrame, kFocusRingInset.width, kFocusRingInset.height)
-                                       inView:controlView];
-        } else {
-            [super drawFocusRingMaskWithFrame:cellFrame inView:controlView];
-        }
-    }    
+        [super drawFocusRingMaskWithFrame:NSInsetRect(cellFrame, kFocusRingInset.width, kFocusRingInset.height)
+                                   inView:controlView];
+    }
 }
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
 {
-    if (IsYosemiteOrLater()) {
-        NSRect originalFrame = cellFrame;
-        [[NSColor whiteColor] set];
-
-        BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
-                        [(NSControl *)controlView currentEditor]);
-
-        CGFloat xInset, yInset;
-        if (focused) {
-            xInset = 2.5;
-            yInset = 1.5;
-        } else {
-            xInset = 0.5;
-            yInset = 0.5;
-        }
-        cellFrame = NSInsetRect(cellFrame, xInset, yInset);
-        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
-                                                             xRadius:4
-                                                             yRadius:4];
-        [path fill];
-
-        if (!focused) {
-            [[NSColor colorWithCalibratedWhite:0.5 alpha:1] set];
-            [path setLineWidth:0.25];
-            [path stroke];
-
-            cellFrame = NSInsetRect(cellFrame, 0.25, 0.25);
-            path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
-                                                   xRadius:4
-                                                   yRadius:4];
-            [path setLineWidth:0.25];
-            [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
-            [path stroke];
-        }
-        [self drawInteriorWithFrame:originalFrame inView:controlView];
-        return;
-    }
-    NSColor *insetTopColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
-    NSColor *insetBottomColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.35];
-    NSColor *strokeTopColor = [NSColor colorWithCalibratedWhite:0.240 alpha:1.0];
-    NSColor *strokeBottomColor = [NSColor colorWithCalibratedWhite:0.380 alpha:1.0];
-
-    if (![[controlView window] isKeyWindow]) {
-            strokeTopColor = [NSColor colorWithCalibratedWhite:0.550 alpha:1.0];
-            strokeBottomColor = [NSColor colorWithCalibratedWhite:0.557 alpha:1.0];
-    }
-
-    NSRect strokeRect = cellFrame;
-    strokeRect.size.height -= 1.0;
-    NSBezierPath *strokePath = [NSBezierPath bezierPathWithRoundedRect:strokeRect xRadius:strokeRect.size.height/2.0 yRadius:strokeRect.size.height/2.0];
-
-    NSBezierPath *insetPath = [NSBezierPath bezierPath];
-    [insetPath appendBezierPath:strokePath];
-    NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform translateXBy:0 yBy:1.0];
-    [insetPath transformUsingAffineTransform:transform];
-    NSGradient *insetGradient = [[NSGradient alloc] initWithStartingColor:insetTopColor endingColor:insetBottomColor];
-    [insetGradient drawInBezierPath:insetPath angle:90.0];
-    [insetGradient release];
-
-    NSGradient *strokeGradient = [[NSGradient alloc] initWithStartingColor:strokeTopColor endingColor:strokeBottomColor];
-    [strokeGradient drawInBezierPath:strokePath angle:90.0];
-    [strokeGradient release];
-
-    NSRect fieldRect = NSInsetRect(cellFrame, 1.0, 1.0);
-    fieldRect.size.height -= 1.0;
-    NSBezierPath *fieldPath = [NSBezierPath bezierPathWithRoundedRect:fieldRect xRadius:fieldRect.size.height/2.0 yRadius:fieldRect.size.height/2.0];
-
+    NSRect originalFrame = cellFrame;
     [[NSColor whiteColor] set];
-    [fieldPath fill];
 
-    CGFloat w = fieldRect.size.width;
-    [[NSGraphicsContext currentContext] saveGraphicsState];
-    [fieldPath addClip];
+    BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
+                    [(NSControl *)controlView currentEditor]);
 
-    NSRect blueRect = NSMakeRect(0, 0, w * [self fraction] + kEdgeWidth, cellFrame.size.height);
-    const CGFloat alpha = 0.3 * _alphaMultiplier;
-    NSGradient *horizontalGradient =
-        [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedRed:204.0/255.0
-                                                                             green:219.0/255.0
-                                                                              blue:233.0/255.0
-                                                                             alpha:alpha]
-                                       endingColor:[NSColor colorWithCalibratedRed:131.0/255.0
-                                                                             green:187.0/255.0
-                                                                              blue:239.0/255.0
-                                                                             alpha:alpha]] autorelease];
-    [horizontalGradient drawInRect:blueRect angle:0];
+    CGFloat xInset, yInset;
+    if (focused) {
+        xInset = 2.5;
+        yInset = 1.5;
+    } else {
+        xInset = 0.5;
+        yInset = 0.5;
+    }
+    cellFrame = NSInsetRect(cellFrame, xInset, yInset);
+    NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                                         xRadius:4
+                                                         yRadius:4];
+    [path fill];
 
-    NSGradient *verticalGradient =
-        [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedRed:0/255.0
-                                                                             green:0/255.0
-                                                                              blue:0/255.0
-                                                                             alpha:alpha]
-                                       endingColor:[NSColor colorWithCalibratedRed:10.0/255.0
-                                                                             green:13.0/255.0
-                                                                              blue:0/255.0
-                                                                             alpha:alpha]] autorelease];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositePlusLighter];
-    [verticalGradient drawInRect:blueRect angle:90];
+    if (!focused) {
+        [[NSColor colorWithCalibratedWhite:0.5 alpha:1] set];
+        [path setLineWidth:0.25];
+        [path stroke];
 
-    NSGradient *edgeGradient =
-        [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedRed:255/255.0
-                                                                             green:255/255.0
-                                                                              blue:255/255.0
-                                                                             alpha:0.0]
-                                       endingColor:[NSColor colorWithCalibratedRed:255.0/255.0
-                                                                             green:255.0/255.0
-                                                                              blue:255.0/255.0
-                                                                             alpha:1.0]] autorelease];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-    NSRect edgeRect = NSMakeRect(blueRect.size.width - kEdgeWidth, 0, kEdgeWidth, blueRect.size.height);
-    [edgeGradient drawInRect:edgeRect angle:0];
-
-    [[NSGraphicsContext currentContext] restoreGraphicsState];
-
-        // Draw the inner shadow
-        [[NSGraphicsContext currentContext] saveGraphicsState];
-        NSShadow *innerShadow = [[NSShadow alloc] init];
-        float innerShadowAlpha = 0.4;
-        if (![[controlView window] isKeyWindow])
-                innerShadowAlpha = 0.2;
-        [innerShadow setShadowColor:[NSColor colorWithCalibratedWhite:0.0 alpha:innerShadowAlpha]];
-        [innerShadow setShadowOffset:NSMakeSize(0, -1.0)];
-        [innerShadow setShadowBlurRadius:1.0];
-        [innerShadow set];
-
-        [fieldPath addClip];
-
-        NSBezierPath *outlinePath = [NSBezierPath bezierPath];
-        [outlinePath appendBezierPath:strokePath];
-        [outlinePath appendBezierPath:fieldPath];
-        [outlinePath setWindingRule:NSEvenOddWindingRule];
-        [strokeTopColor set];
-        [outlinePath fill];
-
-        [[NSGraphicsContext currentContext] restoreGraphicsState];
-        [innerShadow release];
-
-        [self drawInteriorWithFrame:cellFrame inView:controlView];
-        if ([controlView respondsToSelector:@selector(currentEditor)] && [(NSControl *)controlView currentEditor]) {
-                [[NSGraphicsContext currentContext] saveGraphicsState];
-                NSSetFocusRingStyle(NSFocusRingOnly);
-                [strokePath fill];
-                [[NSGraphicsContext currentContext] restoreGraphicsState];
-        }
+        cellFrame = NSInsetRect(cellFrame, 0.25, 0.25);
+        path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                               xRadius:4
+                                               yRadius:4];
+        [path setLineWidth:0.25];
+        [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
+        [path stroke];
+    }
+    [self drawInteriorWithFrame:originalFrame inView:controlView];
 }
 
 
@@ -343,7 +228,9 @@ const CGFloat kEdgeWidth = 3;
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
+        ITERM_IGNORE_PARTIAL_BEGIN
         [findBarTextField_ setDelegate:self];
+        ITERM_IGNORE_PARTIAL_END
         state_ = [[FindState alloc] init];
         state_.mode = gFindMode;
         [[NSNotificationCenter defaultCenter] addObserver:self

@@ -216,11 +216,7 @@
         }
     };
 
-    if (IsMavericksOrLater()) {
-        [panel beginSheetModalForWindow:self.view.window completionHandler:completion];
-    } else {
-        [panel beginWithCompletionHandler:completion];
-    }
+    [panel beginSheetModalForWindow:self.view.window completionHandler:completion];
 }
 
 #pragma mark - iTermImageWellDelegate

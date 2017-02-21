@@ -143,7 +143,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 
 // Indicates a rough guess as to whether a terminal window is substantially visible.
 // Being on another space will count as being obscured.
-// On OS 10.9+, if the window is completely covered by another app's window, it's obscured.
+// If the window is completely covered by another app's window, it's obscured.
 // If other iTerm windows cover more than ~40% of |terminal| then it's obscured.
 - (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal;
 

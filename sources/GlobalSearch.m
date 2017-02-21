@@ -343,7 +343,9 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 - (void)awakeFromNib
 {
     [self view];  // make sure the view is instantiated
+    ITERM_IGNORE_PARTIAL_BEGIN
     [searchField_ setDelegate:self];
+    ITERM_IGNORE_PARTIAL_END
     [searchField_ setArrowHandler:tableView_];
     [tableView_ setDataSource:self];
     [tableView_ setDelegate:self];

@@ -73,14 +73,6 @@ BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bu
     return version.bugfix >= bugfix;
 }
 
-BOOL IsMavericksOrLater(void) {
-    return SystemVersionIsGreaterOrEqualTo(10, 9, 0);
-}
-
-BOOL IsYosemiteOrLater(void) {
-    return SystemVersionIsGreaterOrEqualTo(10, 10, 0);
-}
-
 BOOL IsElCapitanOrLater(void) {
     return SystemVersionIsGreaterOrEqualTo(10, 11, 0);
 }
