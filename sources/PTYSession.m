@@ -417,10 +417,10 @@ static const NSUInteger kMaxHosts = 100;
 
     // Cached advanced setting
     NSTimeInterval _idleTime;
-    
+
     // Estimates throughput for adaptive framerate.
     iTermThroughputEstimator *_throughputEstimator;
-    
+
     // Current unicode version.
     NSInteger _unicodeVersion;
 
@@ -447,6 +447,9 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
+
+    // Used by auto-hide. We can't auto hide the tmux gateway session until at least one window has been opened.
+    BOOL _hideAfterTmuxWindowOpens;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -1717,6 +1720,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
+    _hideAfterTmuxWindowOpens = NO;
     _tmuxController = nil;
 
     // The source pane may have just exited. Dogs and cats living together!
@@ -4582,9 +4586,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)hideSession {
-    [[MovePaneController sharedInstance] moveSessionToNewWindow:self
-                                                        atPoint:[[_view window] pointToScreenCoords:NSMakePoint(0, 0)]];
-    [[[_delegate realParentWindow] window] miniaturize:self];
+    [self bury];
 }
 
 - (NSString *)preferredTmuxClientName {
@@ -4649,10 +4651,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self printTmuxMessage:@"  C    Run tmux command."];
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
-        // System window restoration causes this to get called before the tab has been added to the window
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self bury];
-        });
+        _hideAfterTmuxWindowOpens = YES;
     }
 }
 
@@ -4859,6 +4858,12 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 
+- (void)tmuxDidOpenInitialWindows {
+    if (_hideAfterTmuxWindowOpens) {
+        _hideAfterTmuxWindowOpens = NO;
+        [self hideSession];
+    }
+}
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
                            zoomed:(NSNumber *)zoomed {
@@ -4913,8 +4918,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return _delegate.realParentWindow;
 }
 
-- (void)tmuxHostDisconnected
-{
+- (void)tmuxHostDisconnected {
+    _hideAfterTmuxWindowOpens = NO;
+
     [_tmuxController detach];
 
     // Autorelease the gateway because it called this function so we can't free

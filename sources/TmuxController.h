@@ -44,6 +44,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly) int sessionId;
 @property(nonatomic, readonly) BOOL hasOutstandingWindowResize;
 @property(nonatomic, readonly, getter=isAttached) BOOL attached;
+@property(nonatomic, readonly) BOOL detaching;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
 - (void)openWindowsInitial;
