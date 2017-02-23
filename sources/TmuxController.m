@@ -77,6 +77,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
+    BOOL _haveOpenendInitialWindows;
+
+    // Number of windows that are in the process of being opened.
+    NSInteger _pendingWindowOpens;
 }
 
 @synthesize gateway = gateway_;
@@ -152,6 +156,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.selector = @selector(windowDidOpen:);
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
+    _pendingWindowOpens++;
     [windowOpener openWindows:YES];
 }
 
@@ -179,7 +184,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     self.sessionGuid = nil;
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
+    _detaching = YES;
     [self closeAllPanes];
+    _detaching = NO;
     [self openWindowsInitial];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerAttachedSessionDidChange
                                                         object:nil];
@@ -293,6 +300,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
     if (windowsToOpen.count == 0) {
         gateway_.acceptNotifications = YES;
+        [self sendInitialWindowsOpenedNotificationIfNeeded];
     }
 }
 
@@ -1385,6 +1393,17 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [[term window] setFrameOrigin:[p pointValue]];
     }
     [self saveAffinities];
+    --_pendingWindowOpens;
+    if (_pendingWindowOpens == 0) {
+        [self sendInitialWindowsOpenedNotificationIfNeeded];
+    }
+}
+
+- (void)sendInitialWindowsOpenedNotificationIfNeeded {
+    if (!_haveOpenendInitialWindows) {
+        [gateway_.delegate tmuxDidOpenInitialWindows];
+        _haveOpenendInitialWindows = YES;
+    }
 }
 
 - (void)setPartialWindowIdOrder:(NSArray *)partialOrder {

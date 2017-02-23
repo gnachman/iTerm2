@@ -244,6 +244,11 @@
     return [[self tmuxController] window:windowId] != nil;
 }
 
+- (void)tmuxWindowsTableDidSelectWindowWithId:(int)windowId {
+    PTYTab *tab = [[self tmuxController] window:windowId];
+    [tab.activeSession reveal];
+}
+
 - (NSString *)selectedSessionName
 {
     return [sessionsTable_ selectedSessionName];

@@ -3796,7 +3796,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         @{ @"tcsh": @2,
            @"bash": @2,
            @"zsh": @2,
-           @"fish": @2 };
+           @"fish": @5 };
     NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
     if (!shell || versionNumber < latestKnownVersion) {
         [delegate_ screenSuggestShellIntegrationUpgrade];

@@ -45,6 +45,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow;
 - (void)tmuxInitialCommandDidCompleteSuccessfully;
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error;
+- (void)tmuxDidOpenInitialWindows;
 
 @end
 
