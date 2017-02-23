@@ -8288,7 +8288,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "exec tools/updateVersion.py";
+			shellScript = "exec tools/updateVersion.py\ncd $BUILT_PRODUCTS_DIR/iTerm2.app/Contents/MacOS\nln -s iTerm2 iTerm";
 		};
 		9BBD363F8EFCE3455037F54C /* Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
