@@ -78,9 +78,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
     BOOL _haveOpenendInitialWindows;
-
-    // Number of windows that are in the process of being opened.
-    NSInteger _pendingWindowOpens;
 }
 
 @synthesize gateway = gateway_;
@@ -156,7 +153,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.selector = @selector(windowDidOpen:);
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
-    _pendingWindowOpens++;
     [windowOpener openWindows:YES];
 }
 
@@ -1393,8 +1389,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [[term window] setFrameOrigin:[p pointValue]];
     }
     [self saveAffinities];
-    --_pendingWindowOpens;
-    if (_pendingWindowOpens == 0) {
+    if (pendingWindowOpens_.count == 0) {
         [self sendInitialWindowsOpenedNotificationIfNeeded];
     }
 }
