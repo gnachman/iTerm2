@@ -1005,8 +1005,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     string = _useHFSPlusMapping ? [string precomposedStringWithHFSPlusMapping]
                                 : [string precomposedStringWithCanonicalMapping];
     len = [string length];
-    if (2 * len > kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) calloc(2 * len,
+    if (3 * len >= kStaticBufferElements) {
+        buffer = dynamicBuffer = (screen_char_t *) calloc(3 * len,
                                                           sizeof(screen_char_t));
         assert(buffer);
         if (!buffer) {
