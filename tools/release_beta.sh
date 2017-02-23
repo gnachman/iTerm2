@@ -47,7 +47,6 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  /usr/bin/codesign --force --sign 52DB52C08D1999EA7FB57E10967C03F31BEA12A4 --timestamp=none "build/$BUILDTYPE/iTerm2.app"
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
  
