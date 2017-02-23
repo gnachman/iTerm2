@@ -329,7 +329,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                    ![PseudoTerminalRestorer willOpenWindows] &&
                    [[[iTermController sharedInstance] terminals] count] == 0 &&
                    ![self isApplescriptTestApp] &&
-                   [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0) {
+                   [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0 &&
+                   [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0) {
             [self newWindow:nil];
         }
     }

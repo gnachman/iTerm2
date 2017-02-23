@@ -135,6 +135,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
     BOOL _manualOpenRequested;
+    BOOL _haveOpenendInitialWindows;
 }
 
 @synthesize gateway = gateway_;
@@ -251,7 +252,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     self.sessionGuid = nil;
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
+    _detaching = YES;
     [self closeAllPanes];
+    _detaching = NO;
     [self openWindowsInitial];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerAttachedSessionDidChange
                                                         object:nil];
@@ -375,6 +378,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (windowsToOpen.count == 0) {
         DLog(@"Did not open any windows so turn on accept notifications in tmux gateway");
         gateway_.acceptNotifications = YES;
+        [self sendInitialWindowsOpenedNotificationIfNeeded];
     }
 }
 
@@ -1696,6 +1700,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [[term window] setFrameOrigin:[p pointValue]];
     }
     [self saveAffinities];
+    if (pendingWindowOpens_.count == 0) {
+        [self sendInitialWindowsOpenedNotificationIfNeeded];
+    }
+}
+
+- (void)sendInitialWindowsOpenedNotificationIfNeeded {
+    if (!_haveOpenendInitialWindows) {
+        [gateway_.delegate tmuxDidOpenInitialWindows];
+        _haveOpenendInitialWindows = YES;
+    }
 }
 
 - (void)setPartialWindowIdOrder:(NSArray *)partialOrder {

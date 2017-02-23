@@ -34,9 +34,10 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     return self;
 }
 
-- (void)awakeFromNib
-{
+- (void)awakeFromNib {
     [tableView_ setDraggingSourceOperationMask:NSDragOperationLink forLocal:NO];
+    [tableView_ setTarget:self];
+    [tableView_ setDoubleAction:@selector(didDoubleClickTableView:)];
 }
 
 - (void)dealloc
@@ -184,8 +185,14 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     return YES;
 }
 
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
-{
+- (void)didDoubleClickTableView:(id)sender {
+    NSInteger rowIndex = tableView_.clickedRow;
+    if (rowIndex >= 0) {
+        [delegate_ tmuxWindowsTableDidSelectWindowWithId:[[[[self filteredModel] objectAtIndex:rowIndex] objectAtIndex:1] intValue]];
+    }
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
     [self updateEnabledStateOfButtons];
 }
 

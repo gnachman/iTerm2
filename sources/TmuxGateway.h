@@ -46,6 +46,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxInitialCommandDidCompleteSuccessfully;
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error;
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane;
+- (void)tmuxDidOpenInitialWindows;
 
 @end
 

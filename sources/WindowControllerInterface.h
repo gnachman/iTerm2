@@ -21,6 +21,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
     BROADCAST_CUSTOM
 };
 
+@class iTermRestorableSession;
+
 // This is a very basic interface, which is sufficient for simulating a window
 // controller for instant replay.
 @protocol WindowControllerInterface <NSObject>
@@ -308,6 +310,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)sendInputToAllSessions:(NSString *)string
                       encoding:(NSStringEncoding)optionalEncoding
                  forceEncoding:(BOOL)forceEncoding;
+
+- (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 #pragma mark - Tmux
 

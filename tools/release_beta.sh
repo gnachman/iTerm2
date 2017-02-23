@@ -36,18 +36,11 @@ function SparkleSign {
 # Fifth arg is a prefix for sparkle files.
 # Sixth arg is extra args for codesign
 function Build {
-  pushd build/$BUILDTYPE/iTerm2.app/Contents/MacOS
-  echo Making link
-  ln -s iTerm2 iTerm
-  ls -l
-  popd
-
   BUILDTYPE=$1
   NAME=$(echo $VERSION | sed -e "s/\\./_/g")$2
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  /usr/bin/codesign --force --sign 52DB52C08D1999EA7FB57E10967C03F31BEA12A4 --timestamp=none "build/$BUILDTYPE/iTerm2.app"
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
  
@@ -65,7 +58,7 @@ function Build {
   # Place files in website git.
   cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
  
-  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
+  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
   echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
@@ -96,7 +89,7 @@ make release
 
 BUILDTYPE=Deployment
 
-Build $BUILDTYPE "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+Build $BUILDTYPE "" "OS 10.10+" "This is the recommended beta build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x

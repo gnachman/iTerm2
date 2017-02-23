@@ -2224,7 +2224,7 @@ static const int kMaxScreenRows = 4096;
                 NSString *variableValue = [delegate_ terminalValueOfVariableNamed:name];
                 encodedValue = [[variableValue dataUsingEncoding:self.encoding] base64EncodedStringWithOptions:0];
             }
-            NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue, VT100CC_BEL];
+            NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue ?: @"", VT100CC_BEL];
             [delegate_ terminalSendReport:[report dataUsingEncoding:self.encoding]];
         }
     }

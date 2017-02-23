@@ -43,7 +43,7 @@
 }
 
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
-    PseudoTerminal *windowController = (PseudoTerminal *)sessionToBury.textview.window.windowController;
+    id<iTermWindowController> windowController = (PseudoTerminal *)sessionToBury.delegate.parentWindow;
     iTermRestorableSession *restorableSession = [windowController restorableSessionForSession:sessionToBury];
     if (!restorableSession) {
         return;

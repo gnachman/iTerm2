@@ -1016,8 +1016,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     screen_char_t *buffer;
     string = StringByNormalizingString(string, _normalization);
     len = [string length];
-    if (2 * len > kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) calloc(2 * len,
+    if (3 * len >= kStaticBufferElements) {
+        buffer = dynamicBuffer = (screen_char_t *) calloc(3 * len,
                                                           sizeof(screen_char_t));
         assert(buffer);
         if (!buffer) {
@@ -3895,8 +3895,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     
     NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
         @{ @"tcsh": @2,
-           @"bash": @2,
-           @"zsh": @2,
+           @"bash": @4,
+           @"zsh": @5,
            @"fish": @5 };
     NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
     if (!shell || versionNumber < latestKnownVersion) {

@@ -15,4 +15,3 @@
 #define THE_CLASS iTermPanel
 #include "iTermWindowScriptingImpl.m"
 #undef THE_CLASS
-

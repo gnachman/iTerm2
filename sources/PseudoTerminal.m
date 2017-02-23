@@ -4133,8 +4133,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [tmuxController saveWindowOrigins];
 }
 
-- (void)saveAffinitiesLater:(PTYTab *)theTab
-{
+- (void)saveAffinitiesLater:(PTYTab *)theTab {
+    // Avoid saving affinities during detach because the windows will be gone by the time it saves them.
+//    if ([theTab isTmuxTab] && !theTab.tmuxController.detaching) {
     if ([theTab isTmuxTab]) {
         PtyLog(@"Queueing call to saveAffinitiesLater from %@", [NSThread callStackSymbols]);
         [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
