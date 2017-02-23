@@ -3070,12 +3070,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *theCommand = nil;
     switch ([warning runModal]) {
         case kiTermWarningSelection0:
-            theCommand = @"curl -L https://iterm2.com/misc/install_shell_integration_and_utilities.sh | bash\n";
+            theCommand = @"curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash\n";
             break;
         case kiTermWarningSelection1:
             return;
         case kiTermWarningSelection2:
-            theCommand = @"curl -L https://iterm2.com/misc/install_shell_integration.sh | bash\n";
+            theCommand = @"curl -L https://iterm2.com/shell_integration/install_shell_integration.sh | bash\n";
             break;
         case kItermWarningSelectionError:
             assert(false);
