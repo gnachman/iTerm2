@@ -58,7 +58,7 @@ function Build {
   # Place files in website git.
   cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
  
-  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" beta ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
+  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
   echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
@@ -89,7 +89,7 @@ make release
 
 BUILDTYPE=Deployment
 
-Build $BUILDTYPE "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
+Build $BUILDTYPE "" "OS 10.10+" "This is the recommended beta build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x
