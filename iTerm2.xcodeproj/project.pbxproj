@@ -1632,11 +1632,6 @@
 		A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */; };
 		A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */; };
 		A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */; };
-		A685DA001E5B87FF0091C3A7 /* iTermVersionComparator.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FE1E5B87FF0091C3A7 /* iTermVersionComparator.h */; };
-		A685DA011E5B87FF0091C3A7 /* iTermVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9FF1E5B87FF0091C3A7 /* iTermVersionComparator.m */; };
-		A685DA031E5B8A280091C3A7 /* iTermVersionComparatorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A685DA021E5B8A280091C3A7 /* iTermVersionComparatorTest.m */; };
-		A685DA041E5B8AA30091C3A7 /* iTermVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9FF1E5B87FF0091C3A7 /* iTermVersionComparator.m */; };
-		A685DA061E5B8B0D0091C3A7 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; fileRef = A685DA051E5B8B0D0091C3A7 /* Sparkle */; };
 		A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
 		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
@@ -3426,10 +3421,6 @@
 		A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+TouchBar.h"; sourceTree = "<group>"; };
 		A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+TouchBar.m"; sourceTree = "<group>"; };
 		A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Private.h"; sourceTree = "<group>"; };
-		A685D9FE1E5B87FF0091C3A7 /* iTermVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermVersionComparator.h; sourceTree = "<group>"; };
-		A685D9FF1E5B87FF0091C3A7 /* iTermVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermVersionComparator.m; sourceTree = "<group>"; };
-		A685DA021E5B8A280091C3A7 /* iTermVersionComparatorTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermVersionComparatorTest.m; sourceTree = "<group>"; };
-		A685DA051E5B8B0D0091C3A7 /* Sparkle */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Sparkle; path = ThirdParty/Sparkle.framework/Versions/A/Sparkle; sourceTree = "<group>"; };
 		A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NewOutputForDarkTheme.png; path = images/NewOutputForDarkTheme.png; sourceTree = "<group>"; };
 		A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutputForDarkTheme@2x.png"; path = "images/NewOutputForDarkTheme@2x.png"; sourceTree = "<group>"; };
 		A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DeadForDarkTheme.png; path = images/DeadForDarkTheme.png; sourceTree = "<group>"; };
@@ -4080,7 +4071,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A685DA061E5B8B0D0091C3A7 /* Sparkle in Frameworks */,
 				A667196B1DCE3970000CE608 /* libiTerm2SharedARC.a in Frameworks */,
 				A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */,
 				A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */,
@@ -5041,7 +5031,6 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A685DA051E5B8B0D0091C3A7 /* Sparkle */,
 				A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */,
 				A6184F881BAB3ED70088EF3C /* ColorPicker.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
@@ -5674,8 +5663,6 @@
 				A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */,
 				A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */,
 				A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */,
-				A685D9FE1E5B87FF0091C3A7 /* iTermVersionComparator.h */,
-				A685D9FF1E5B87FF0091C3A7 /* iTermVersionComparator.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -5768,7 +5755,6 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
-				A685DA021E5B8A280091C3A7 /* iTermVersionComparatorTest.m */,
 				C6675EB91C4FE95E0041173B /* Utilities */,
 				A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */,
 				A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */,
@@ -6863,7 +6849,6 @@
 				A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */,
 				A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */,
 				A685D9DA1E5A24AA0091C3A7 /* PTYSession.h in Headers */,
-				A685DA001E5B87FF0091C3A7 /* iTermVersionComparator.h in Headers */,
 				A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */,
 				A6CEC1151DCE8146009F4FD2 /* GPBArray_PackagePrivate.h in Headers */,
 				A6CEC0781DCE80C9009F4FD2 /* FieldMask.pbobjc.h in Headers */,
@@ -8598,7 +8583,6 @@
 				A6C762F91B45C52B00E3C992 /* iTermExposeView.m in Sources */,
 				A6C762E51B45C52B00E3C992 /* TextViewWrapper.m in Sources */,
 				A6C762F41B45C52B00E3C992 /* FakeWindow.m in Sources */,
-				A685DA011E5B87FF0091C3A7 /* iTermVersionComparator.m in Sources */,
 				A6C7632B1B45C52B00E3C992 /* SmartMatch.m in Sources */,
 				A6C763CB1B45C52B00E3C992 /* VT100TmuxParser.m in Sources */,
 				A6C763641B45C52B00E3C992 /* AppearancePreferencesViewController.m in Sources */,
@@ -8823,12 +8807,10 @@
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
 				A6BDB04E1B45EC8A00F511E6 /* PTYSessionTest.m in Sources */,
 				A6BDB04C1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m in Sources */,
-				A685DA031E5B8A280091C3A7 /* iTermVersionComparatorTest.m in Sources */,
 				A6BDB0501B45FBCB00F511E6 /* PTYTextViewTest.m in Sources */,
 				A667F3871B48615900705186 /* iTermToolbeltTest.m in Sources */,
 				A67778B71CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m in Sources */,
 				C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */,
-				A685DA041E5B8AA30091C3A7 /* iTermVersionComparator.m in Sources */,
 				A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */,
 				A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */,
 				A6BDB0B51B45FE7700F511E6 /* iTermSemanticHistoryTest.m in Sources */,
@@ -9984,7 +9966,6 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -10008,10 +9989,6 @@
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/Sparkle.framework/Versions/A",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -10051,7 +10028,6 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -10067,10 +10043,6 @@
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/Sparkle.framework/Versions/A",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -10109,7 +10081,6 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -10125,10 +10096,6 @@
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/Sparkle.framework/Versions/A",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
