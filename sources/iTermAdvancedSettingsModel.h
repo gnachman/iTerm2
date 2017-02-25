@@ -175,5 +175,6 @@
 + (BOOL)enableAPIServer;
 + (double)shortLivedSessionDuration;
 + (int)minimumTabDragDistance;
++ (BOOL)useVirtualKeyCodesForDetectingDigits;
 
 @end

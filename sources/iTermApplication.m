@@ -27,6 +27,7 @@
 
 #import "iTermApplication.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
@@ -109,15 +110,44 @@
     return NO;
 }
 
+- (int)digitKeyForEvent:(NSEvent *)event {
+    if ([iTermAdvancedSettingsModel useVirtualKeyCodesForDetectingDigits]) {
+        switch (event.keyCode) {
+            case kVK_ANSI_1:
+                return 1;
+            case kVK_ANSI_2:
+                return 2;
+            case kVK_ANSI_3:
+                return 3;
+            case kVK_ANSI_4:
+                return 4;
+            case kVK_ANSI_5:
+                return 5;
+            case kVK_ANSI_6:
+                return 6;
+            case kVK_ANSI_7:
+                return 7;
+            case kVK_ANSI_8:
+                return 8;
+            case kVK_ANSI_9:
+                return 9;
+        }
+        return -1;
+    } else {
+        int digit = [[event charactersIgnoringModifiers] intValue];
+        if (!digit) {
+            digit = [[event characters] intValue];
+        }
+        return digit;
+    }
+}
+
 - (BOOL)switchToWindowByNumber:(NSEvent *)event {
     const NSUInteger allModifiers =
         (NSShiftKeyMask | NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask);
     if (([event modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
         // Command-Alt (or selected modifier) + number: Switch to window by number.
-        int digit = [[event charactersIgnoringModifiers] intValue];
-        if (!digit) {
-            digit = [[event characters] intValue];
-        }
+        int digit = [self digitKeyForEvent:event];
         if (digit >= 1 && digit <= 9) {
             PseudoTerminal* termWithNumber = [[iTermController sharedInstance] terminalWithNumber:(digit - 1)];
             DLog(@"Switching windows");
@@ -139,10 +169,7 @@
 - (BOOL)switchToPaneInWindowController:(PseudoTerminal *)currentTerminal byNumber:(NSEvent *)event {
     const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
     if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
-        int digit = [[event charactersIgnoringModifiers] intValue];
-        if (!digit) {
-            digit = [[event characters] intValue];
-        }
+        int digit = [self digitKeyForEvent:event];
         NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
         int numSessions = [orderedSessions count];
         if (digit == 9 && numSessions > 0) {
@@ -164,10 +191,7 @@
 - (BOOL)switchToTabInTabView:(PTYTabView *)tabView byNumber:(NSEvent *)event {
     const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
     if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
-        int digit = [[event charactersIgnoringModifiers] intValue];
-        if (!digit) {
-            digit = [[event characters] intValue];
-        }
+        int digit = [self digitKeyForEvent:event];
         if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
             // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
             DLog(@"Switching to last tab");
