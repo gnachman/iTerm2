@@ -37,6 +37,7 @@
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -3546,11 +3547,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             font = [NSFont systemFontOfSize:size];
         }
     }
-    return @{ NSForegroundColorAttributeName: fgColor,
-              NSBackgroundColorAttributeName: bgColor,
-              NSFontAttributeName: font,
-              NSParagraphStyleAttributeName: paragraphStyle,
-              NSUnderlineStyleAttributeName: @(underlineStyle) };
+    NSDictionary *attributes = @{ NSForegroundColorAttributeName: fgColor,
+                                  NSBackgroundColorAttributeName: bgColor,
+                                  NSFontAttributeName: font,
+                                  NSParagraphStyleAttributeName: paragraphStyle,
+                                  NSUnderlineStyleAttributeName: @(underlineStyle) };
+    if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
+        attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
+    }
+
+    return attributes;
 }
 
 - (void)paste:(id)sender
