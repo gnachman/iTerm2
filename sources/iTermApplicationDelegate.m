@@ -1950,15 +1950,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     return [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
 }
 
-- (void)genericCloseSheet:(NSWindow *)sheet
-               returnCode:(int)returnCode
-              contextInfo:(id)contextInfo {
-#warning I think this is dead code. Make sure it is and remove it.
-    [sheet close];
-    [_passwordManagerWindowController release];
-    _passwordManagerWindowController = nil;
-}
-
 - (BOOL)possiblyTmuxValueForWindow:(BOOL)isWindow {
     static NSString *const kPossiblyTmuxIdentifier = @"NoSyncNewWindowOrTabFromTmuxOpensTmux";
     if ([[[[iTermController sharedInstance] currentTerminal] currentSession] isTmuxClient]) {
