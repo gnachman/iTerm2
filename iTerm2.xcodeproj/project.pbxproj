@@ -3016,8 +3016,6 @@
 		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplicationDelegate.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; tabWidth = 4; };
-		23658ABA8E29A79F0A46D61B /* Pods-iTerm2XCTests.development.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.development.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.development.xcconfig"; sourceTree = "<group>"; };
-		3741A0CF54BF0ADE416210C2 /* Pods-iTerm2XCTests.nightly.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.nightly.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.nightly.xcconfig"; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
 		534690271C94FF0000B7E4E9 /* overflowImagePressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImagePressed.png; sourceTree = "<group>"; };
@@ -3057,7 +3055,6 @@
 		8786A96E052CEC220073D10E /* script.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = script.png; path = images/script.png; sourceTree = "<group>"; };
 		90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleScriptTest.h; sourceTree = "<group>"; };
 		90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = AppleScriptTest.m; sourceTree = "<group>"; };
-		92779E87472493DB8B1127BF /* Pods_iTerm2XCTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iTerm2XCTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		93A6FEF910685E9900A5F905 /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dsa_pub.pem; sourceTree = "<group>"; };
 		9D737D5D17495B4100B3334D /* PrefsGeneral.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsGeneral.png; path = images/PrefsGeneral.png; sourceTree = "<group>"; };
 		9D737D5E17495B4100B3334D /* PrefsGeneral@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsGeneral@2x.png"; path = "images/PrefsGeneral@2x.png"; sourceTree = "<group>"; };
@@ -3900,7 +3897,6 @@
 		A6FEA2851CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesWindowController.h; sourceTree = "<group>"; };
 		A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesWindowController.m; sourceTree = "<group>"; };
 		A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHotkeyPreferencesWindowController.xib; sourceTree = "<group>"; };
-		AAB59A0F4D1FA1458C4086F1 /* Pods-iTerm2XCTests.deployment.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iTerm2XCTests.deployment.xcconfig"; path = "Pods/Target Support Files/Pods-iTerm2XCTests/Pods-iTerm2XCTests.deployment.xcconfig"; sourceTree = "<group>"; };
 		C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectorSwizzler.h; sourceTree = "<group>"; };
 		C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectorSwizzler.m; sourceTree = "<group>"; };
 		D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkTabStyle.h; sourceTree = "<group>"; };
@@ -4096,7 +4092,6 @@
 				A6755F4A1D729A0500F3726C /* image_decoder */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
-				EEB0D1447D18934432D7F4D9 /* Pods */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -5050,7 +5045,6 @@
 				1DFA7C9D1923F77100DF1410 /* Security.framework */,
 				A624230F19CF6B0C00182C08 /* Sparkle.framework */,
 				1DF0897013DBAF4C00A52AD8 /* Quartz.framework */,
-				92779E87472493DB8B1127BF /* Pods_iTerm2XCTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -6020,16 +6014,6 @@
 			);
 			name = images;
 			path = PSMTabBarControl/images;
-			sourceTree = "<group>";
-		};
-		EEB0D1447D18934432D7F4D9 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				23658ABA8E29A79F0A46D61B /* Pods-iTerm2XCTests.development.xcconfig */,
-				AAB59A0F4D1FA1458C4086F1 /* Pods-iTerm2XCTests.deployment.xcconfig */,
-				3741A0CF54BF0ADE416210C2 /* Pods-iTerm2XCTests.nightly.xcconfig */,
-			);
-			name = Pods;
 			sourceTree = "<group>";
 		};
 		F6441F610E748404000EC682 /* CGSInternal */ = {
@@ -9899,7 +9883,6 @@
 		};
 		A6C764251B45CB2800E3C992 /* Development */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 23658ABA8E29A79F0A46D61B /* Pods-iTerm2XCTests.development.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -9960,7 +9943,6 @@
 		};
 		A6C764261B45CB2800E3C992 /* Deployment */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AAB59A0F4D1FA1458C4086F1 /* Pods-iTerm2XCTests.deployment.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -10013,7 +9995,6 @@
 		};
 		A6C764271B45CB2800E3C992 /* Nightly */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3741A0CF54BF0ADE416210C2 /* Pods-iTerm2XCTests.nightly.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
