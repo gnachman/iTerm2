@@ -1,1 +1,0 @@
-../../../OCMockito/Source/OCMockito/MKTProtocolMock.h

@@ -175,5 +175,7 @@
 + (BOOL)enableAPIServer;
 + (double)shortLivedSessionDuration;
 + (int)minimumTabDragDistance;
++ (BOOL)useVirtualKeyCodesForDetectingDigits;
++ (BOOL)excludeBackgroundColorsFromCopiedStyle;
 
 @end

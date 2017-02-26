@@ -27,6 +27,7 @@
 
 #import "iTermApplication.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
@@ -109,135 +110,226 @@
     return NO;
 }
 
+- (int)digitKeyForEvent:(NSEvent *)event {
+    if ([iTermAdvancedSettingsModel useVirtualKeyCodesForDetectingDigits]) {
+        switch (event.keyCode) {
+            case kVK_ANSI_1:
+                return 1;
+            case kVK_ANSI_2:
+                return 2;
+            case kVK_ANSI_3:
+                return 3;
+            case kVK_ANSI_4:
+                return 4;
+            case kVK_ANSI_5:
+                return 5;
+            case kVK_ANSI_6:
+                return 6;
+            case kVK_ANSI_7:
+                return 7;
+            case kVK_ANSI_8:
+                return 8;
+            case kVK_ANSI_9:
+                return 9;
+        }
+        return -1;
+    } else {
+        int digit = [[event charactersIgnoringModifiers] intValue];
+        if (!digit) {
+            digit = [[event characters] intValue];
+        }
+        return digit;
+    }
+}
+
+- (BOOL)switchToWindowByNumber:(NSEvent *)event {
+    const NSUInteger allModifiers =
+        (NSShiftKeyMask | NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask);
+    if (([event modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
+        // Command-Alt (or selected modifier) + number: Switch to window by number.
+        int digit = [self digitKeyForEvent:event];
+        if (digit >= 1 && digit <= 9) {
+            PseudoTerminal* termWithNumber = [[iTermController sharedInstance] terminalWithNumber:(digit - 1)];
+            DLog(@"Switching windows");
+            if (termWithNumber) {
+                if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
+                    iTermProfileHotKey *hotKey =
+                        [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:termWithNumber];
+                    [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
+                } else {
+                    [[termWithNumber window] makeKeyAndOrderFront:self];
+                }
+            }
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)switchToPaneInWindowController:(PseudoTerminal *)currentTerminal byNumber:(NSEvent *)event {
+    const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+    if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
+        int digit = [self digitKeyForEvent:event];
+        NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
+        int numSessions = [orderedSessions count];
+        if (digit == 9 && numSessions > 0) {
+            // Modifier+9: Switch to last split pane if there are fewer than 9.
+            DLog(@"Switching to last split pane");
+            [currentTerminal.currentTab setActiveSession:[orderedSessions lastObject]];
+            return YES;
+        }
+        if (digit >= 1 && digit <= numSessions) {
+            // Modifier+number: Switch to split pane by number.
+            DLog(@"Switching to split pane");
+            [currentTerminal.currentTab setActiveSession:orderedSessions[digit - 1]];
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)switchToTabInTabView:(PTYTabView *)tabView byNumber:(NSEvent *)event {
+    const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+    if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
+        int digit = [self digitKeyForEvent:event];
+        if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
+            // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
+            DLog(@"Switching to last tab");
+            [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
+            return YES;
+        }
+        if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+            // Command (or selected modifier)+number: Switch to tab by number.
+            DLog(@"Switching tabs");
+            [tabView selectTabViewItemAtIndex:digit-1];
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)remapEvent:(NSEvent *)event inResponder:(NSResponder *)responder currentSession:(PTYSession *)currentSession {
+    BOOL okToRemap = YES;
+    if ([responder isKindOfClass:[NSTextView class]]) {
+        // Disable keymaps that send text
+        if ([currentSession hasTextSendingKeyMappingForEvent:event]) {
+            okToRemap = NO;
+        }
+        if ([self _eventUsesNavigationKeys:event]) {
+            okToRemap = NO;
+        }
+    }
+
+    if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
+        // Remap key.
+        DLog(@"Remapping to actionable event");
+        [currentSession keyDown:event];
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)dispatchHotkeyLocally:(NSEvent *)event {
+    if (IsSecureEventInputEnabled() &&
+        [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
+        // User pressed the hotkey while secure input is enabled so the event
+        // tap won't get it. Do what the event tap would do in this case.
+        DLog(@"Directing to hotkey handler");
+        [[iTermHotKeyController sharedInstance] hotkeyPressed:event];
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)inputMethodHandlerTakesPrecedenceForResponder:(NSResponder *)responder {
+    const BOOL inTextView = [responder isKindOfClass:[PTYTextView class]];
+    return (inTextView && [(PTYTextView *)responder hasMarkedText]);
+}
+
+- (BOOL)handleKeypressInTerminalWindow:(NSEvent *)event {
+    if ([[self keyWindow] isTerminalWindow]) {
+        // Focus is in a terminal window.
+        NSResponder *responder = [[self keyWindow] firstResponder];
+
+        if ([self inputMethodHandlerTakesPrecedenceForResponder:responder]) {
+            // Let the IM process it (I used to call interpretKeyEvents:
+            // here but it caused bug 2882).
+            DLog(@"Sending to input method handler");
+            [super sendEvent:event];
+            return YES;
+        }
+
+        PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
+        if ([self switchToPaneInWindowController:currentTerminal byNumber:event]) {
+            return YES;
+        }
+        if ([self switchToTabInTabView:[currentTerminal tabView] byNumber:event]) {
+            return YES;
+        }
+        if ([self remapEvent:event inResponder:responder currentSession:[currentTerminal currentSession]]) {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
+- (BOOL)handleShortcutWithoutTerminal:(NSEvent *)event {
+    if ([[self keyWindow] isTerminalWindow]) {
+        return NO;
+    }
+    if ([PTYSession handleShortcutWithoutTerminal:event]) {
+        DLog(@"handled by session");
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)handleFlagsChangedEvent:(NSEvent *)event {
+    if ([self routeEventToShortcutInputView:event]) {
+        return YES;
+    }
+
+    return NO;
+}
+
+- (BOOL)handleKeyDownEvent:(NSEvent *)event {
+    DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
+
+    if ([self dispatchHotkeyLocally:event]) {
+        return YES;
+    }
+
+    if ([self routeEventToShortcutInputView:event]) {
+        return YES;
+    }
+
+    if ([self switchToWindowByNumber:event]) {
+        return YES;
+    }
+
+    if ([self handleKeypressInTerminalWindow:event]) {
+        return YES;
+    }
+
+    if ([self handleShortcutWithoutTerminal:event]) {
+        return YES;
+    }
+
+    return NO;
+}
+
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
     if ([event type] == NSFlagsChanged) {
         event = [self eventByRemappingForSecureInput:event];
-        if ([self routeEventToShortcutInputView:event]) {
+        if ([self handleFlagsChangedEvent:event]) {
             return;
         }
     } else if ([event type] == NSKeyDown) {
-        DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
-        iTermController* cont = [iTermController sharedInstance];
-
         event = [self eventByRemappingForSecureInput:event];
-        if (IsSecureEventInputEnabled() &&
-            [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
-            // User pressed the hotkey while secure input is enabled so the event
-            // tap won't get it. Do what the event tap would do in this case.
-            DLog(@"Directing to hotkey handler");
-            [[iTermHotKeyController sharedInstance] hotkeyPressed:event];
+        if ([self handleKeyDownEvent:event]) {
             return;
-        }
-        PseudoTerminal* currentTerminal = [cont currentTerminal];
-        PTYTabView* tabView = [currentTerminal tabView];
-        PTYSession* currentSession = [currentTerminal currentSession];
-        NSResponder *responder;
-
-        if ([self routeEventToShortcutInputView:event]) {
-            return;
-        }
-
-        const NSUInteger allModifiers =
-            (NSShiftKeyMask | NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask);
-        if (([event modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
-            // Command-Alt (or selected modifier) + number: Switch to window by number.
-            int digit = [[event charactersIgnoringModifiers] intValue];
-            if (!digit) {
-                digit = [[event characters] intValue];
-            }
-            if (digit >= 1 && digit <= 9) {
-                PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
-                DLog(@"Switching windows");
-                if (termWithNumber) {
-                    if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                        iTermProfileHotKey *hotKey =
-                            [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:termWithNumber];
-                        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
-                    } else {
-                        [[termWithNumber window] makeKeyAndOrderFront:self];
-                    }
-                }
-                return;
-            }
-        }
-
-        if ([[self keyWindow] isTerminalWindow]) {
-            // Focus is in a terminal window.
-            responder = [[self keyWindow] firstResponder];
-            bool inTextView = [responder isKindOfClass:[PTYTextView class]];
-
-            if (inTextView && [(PTYTextView *)responder hasMarkedText]) {
-                // Let the IM process it (I used to call interpretKeyEvents:
-                // here but it caused bug 2882).
-                DLog(@"Sending to input method handler");
-                [super sendEvent:event];
-                return;
-            }
-
-            const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
-                int digit = [[event charactersIgnoringModifiers] intValue];
-                if (!digit) {
-                    digit = [[event characters] intValue];
-                }
-                NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
-                int numSessions = [orderedSessions count];
-                if (digit == 9 && numSessions > 0) {
-                    // Modifier+9: Switch to last split pane if there are fewer than 9.
-                    DLog(@"Switching to last split pane");
-                    [currentTerminal.currentTab setActiveSession:[orderedSessions lastObject]];
-                    return;
-                }
-                if (digit >= 1 && digit <= numSessions) {
-                    // Modifier+number: Switch to split pane by number.
-                    DLog(@"Switching to split pane");
-                    [currentTerminal.currentTab setActiveSession:orderedSessions[digit - 1]];
-                    return;
-                }
-            }
-            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
-                int digit = [[event charactersIgnoringModifiers] intValue];
-                if (!digit) {
-                    digit = [[event characters] intValue];
-                }
-                if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
-                    // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
-                    DLog(@"Switching to last tab");
-                    [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
-                    return;
-                }
-                if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
-                    // Command (or selected modifier)+number: Switch to tab by number.
-                    DLog(@"Switching tabs");
-                    [tabView selectTabViewItemAtIndex:digit-1];
-                    return;
-                }
-            }
-
-            BOOL okToRemap = YES;
-            if ([responder isKindOfClass:[NSTextView class]]) {
-                // Disable keymaps that send text
-                if ([currentSession hasTextSendingKeyMappingForEvent:event]) {
-                    okToRemap = NO;
-                }
-                if ([self _eventUsesNavigationKeys:event]) {
-                    okToRemap = NO;
-                }
-            }
-
-            if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
-                // Remap key.
-                DLog(@"Remapping to actionable event");
-                [currentSession keyDown:event];
-                return;
-            }
-        } else {
-            // Focus not in terminal window.
-            if ([PTYSession handleShortcutWithoutTerminal:event]) {
-                DLog(@"handled by session");
-                return;
-            }
         }
         DLog(@"NSKeyDown event taking the regular path");
     }

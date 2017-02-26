@@ -74,11 +74,12 @@ function Build {
   popd
 }
 
-echo "$1".beta > version.txt
+echo "$1" > version.txt
 echo Set version to
 cat version.txt
 
-VERSION=$(cat version.txt)
+COMPACTDATE=$(date +"%Y%m%d")
+VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 

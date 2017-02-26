@@ -163,6 +163,12 @@ static NSString *const kHotKeyModifierActivation = @"modifier activation";
     return temp;
 }
 
+- (NSDictionary *)dictionaryByRemovingObjectForKey:(id)key {
+    NSMutableDictionary *temp = [self mutableCopy];
+    [temp removeObjectForKey:key];
+    return temp;
+}
+
 - (NSData *)propertyListData {
     NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
     [self writeToFile:filename atomically:NO];

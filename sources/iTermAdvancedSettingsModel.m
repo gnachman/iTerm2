@@ -153,6 +153,7 @@ DEFINE_FLOAT(pointSizeOfTimeStamp, 10, @"General: Point size for timestamps");
 DEFINE_INT(terminalMargin, 5, @"General: Width of left and right margins in terminal panes\nHow much space to leave between the left and right edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_INT(terminalVMargin, 2, @"General: Height of top and bottom margins in terminal panes\nHow much space to leave between the top and bottom edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_BOOL(zippyTextDrawing, YES, @"General: Use zippy text drawing algorithm?\nThis draws non-ASCII text more quickly but with lower fidelity. This setting is ignored if ligatures are enabled in Prefs > Profiles > Text.");
+DEFINE_BOOL(useVirtualKeyCodesForDetectingDigits, YES, @"General: On keyboards that require a modifier to press a digit, do not require that modifier for switching between windows, tabs, and panes by number.\nFor example, AZERTY requires you to hold down Shift to enter a number. To switch tabs with Cmd+Number on an AZERTY keyboard, you must enable this setting. Then, for example, Cmd-& switches to tab 1. When this setting is enabled, some user-defined shortcuts may become unavailable because the tab/window/pane switching behavior takes precedence.");
 
 #pragma mark - Semantic History
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlines for the purposes of locating URLs and file names for Semantic History.\nIf a hard newline occurs at the end of a line then cmd-click will not see it all unless this setting is turned on. This is useful for some interactive applications. Turning this on will remove newlines from the \\3 and \\4 substitutions.");
@@ -225,6 +226,7 @@ DEFINE_BOOL(typingClearsSelection, YES, @"Pasteboard: Pressing a key will remove
 DEFINE_SETTABLE_BOOL(promptForPasteWhenNotAtPrompt, PromptForPasteWhenNotAtPrompt, NO, @"Pasteboard: Warn before pasting when not at shell prompt?");
 DEFINE_SETTABLE_BOOL(noSyncSuppressClipboardAccessDeniedWarning, NoSyncSuppressClipboardAccessDeniedWarning, NO, @"Session: Suppress the notification that the terminal attempted to access the clipboard but it was denied?");
 DEFINE_SETTABLE_BOOL(noSyncSuppressMissingProfileInArrangementWarning, NoSyncSuppressMissingProfileInArrangementWarning, NO, @"Session: Suppress the notification that a restored session’s profile no longer exists?");
+DEFINE_BOOL(excludeBackgroundColorsFromCopiedStyle, NO, @"Pasteboard: Exclude background colors when text is copied with color and font style?");
 
 #pragma mark - Tip of the day
 

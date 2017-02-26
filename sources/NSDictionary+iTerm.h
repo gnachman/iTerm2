@@ -42,6 +42,7 @@
 
 - (NSDictionary *)dictionaryByRemovingNullValues;
 - (NSDictionary *)dictionaryBySettingObject:(ObjectType)object forKey:(KeyType)key;
+- (NSDictionary *)dictionaryByRemovingObjectForKey:(KeyType)key;
 
 - (NSData *)propertyListData;
 

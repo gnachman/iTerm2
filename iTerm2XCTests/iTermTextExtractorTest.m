@@ -7,14 +7,13 @@
 //
 
 #import <XCTest/XCTest.h>
+#import "iTermFakeUserDefaults.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import "iTermTextExtractor.h"
 #import "NSStringITerm.h"
 #import "ScreenChar.h"
 #import "SmartSelectionController.h"
-#import <OCHamcrest/OCHamcrest.h>
-#import <OCMockito/OCMockito.h>
 
 static const NSInteger kUnicodeVersion = 9;
 
@@ -116,14 +115,14 @@ static const NSInteger kUnicodeVersion = 9;
 - (void)performTestForWordSelectionUsingLine:(NSString *)line
                         wordForEachCharacter:(NSArray<NSString *> *)expected
                          extraWordCharacters:(NSString *)extraWordCharacters {
-    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
-    [MKTGiven([mockDefaults objectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]) willReturn:extraWordCharacters];
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:extraWordCharacters forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     _lines = @[ line ];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
     
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return mockDefaults; }
+                                 withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
                                       VT100GridWindowedRange range;
                                       for (int i = 0; i < line.length; i++) {

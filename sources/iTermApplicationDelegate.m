@@ -67,7 +67,6 @@
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
-#import "iTermVersionComparator.h"
 #import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -130,7 +129,8 @@ static NSString *const kAPINextConfirmationDate = @"next confirmation";
 static NSString *const kAPIAccessLocalizedName = @"app name";
 static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
-@interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate, SUUpdaterDelegate>
+
+@interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -961,7 +961,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
-        [[SUUpdater sharedUpdater] setDelegate:self];
     }
 
     return self;
@@ -2413,12 +2412,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [response.windowsArray addObject:windowMessage];
     }
     handler(response);
-}
-
-#pragma mark - SUUpdaterDelegate
-
-- (id<SUVersionComparison>)versionComparatorForUpdater:(SUUpdater *)updater {
-    return [[[iTermVersionComparator alloc] init] autorelease];
 }
 
 @end

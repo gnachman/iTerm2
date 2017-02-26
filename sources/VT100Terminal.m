@@ -1195,7 +1195,7 @@ static const int kMaxScreenRows = 4096;
     // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.
     if (receivingFile_) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
-            [delegate_ terminalDidReceiveBase64FileData:token.string];
+            [delegate_ terminalDidReceiveBase64FileData:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING) {
             [delegate_ terminalDidReceiveBase64FileData:[token stringForAsciiData]];
@@ -1210,7 +1210,7 @@ static const int kMaxScreenRows = 4096;
         }
     } else if (_copyingToPasteboard) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
-            [delegate_ terminalDidReceiveBase64PasteboardString:token.string];
+            [delegate_ terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING) {
             [delegate_ terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];

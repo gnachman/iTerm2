@@ -6800,6 +6800,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)screenShouldBeginPrinting {
+    
     return ![[[self profile] objectForKey:KEY_DISABLE_PRINTING] boolValue];
 }
 

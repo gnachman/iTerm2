@@ -1,1 +1,0 @@
-../../../OCHamcrest/Source/Library/Object/HCHasProperty.h
