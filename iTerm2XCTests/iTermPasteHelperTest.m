@@ -9,6 +9,7 @@
 #import "iTermApplicationDelegate.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermFakeUserDefaults.h"
 #import "iTermPasteHelper.h"
 #import "iTermSelectorSwizzler.h"
 #import "iTermWarning.h"
@@ -16,8 +17,6 @@
 #import "NSStringITerm.h"
 #import "PasteEvent.h"
 #import "PasteboardHistory.h"
-#import <OCHamcrest/OCHamcrest.h>
-#import <OCMockito/OCMockito.h>
 #import <XCTest/XCTest.h>
 
 typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier);
@@ -270,12 +269,12 @@ static const double kFloatingPointTolerance = 0.00001;
 }
 
 - (void)testMultilineWarningWithOverride {
-    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
-    [MKTGiven([mockDefaults objectForKey:@"PromptForPasteWhenNotAtPrompt"]) willReturn:@YES];
-    [MKTGiven([mockDefaults boolForKey:@"PromptForPasteWhenNotAtPrompt"]) willReturnBool:YES];
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:@YES forKey:@"PromptForPasteWhenNotAtPrompt"];
+    [fakeDefaults setFakeObject:@YES forKey:@"PromptForPasteWhenNotAtPrompt"];
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return mockDefaults; }
+                                 withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
                                       [self doMultilineWarningTestWithOverride:YES];
                                   }];

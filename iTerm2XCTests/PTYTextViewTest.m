@@ -12,12 +12,11 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermFakeUserDefaults.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import <objc/runtime.h>
 #import <XCTest/XCTest.h>
-#import <OCHamcrest/OCHamcrest.h>
-#import <OCMockito/OCMockito.h>
 
 #define NUM_DIFF_BUCKETS 10
 #define STRINGIFY(s) #s
@@ -2468,13 +2467,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     _textView.dataSource = session.screen;
     NSString *text = @"123456789";
     [session synchronousReadTask:text];
-    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
-    [MKTGiven([mockDefaults objectForKey:kPreferenceKeyCopyLastNewline]) willReturn:@YES];
-    [MKTGiven([mockDefaults objectForKey:@"TrimWhitespaceOnCopy"]) willReturn:@YES];
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:@YES forKey:kPreferenceKeyCopyLastNewline];
+    [fakeDefaults setFakeObject:@YES forKey:@"TrimWhitespaceOnCopy"];
 
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return mockDefaults; }
+                                 withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
                                       // When
                                       [_textView selectAll:nil];
@@ -2491,13 +2490,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     _textView.dataSource = session.screen;
     NSString *text = @"123456789abc";
     [session synchronousReadTask:text];
-    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
-    [MKTGiven([mockDefaults objectForKey:kPreferenceKeyCopyLastNewline]) willReturn:@YES];
-    [MKTGiven([mockDefaults objectForKey:@"TrimWhitespaceOnCopy"]) willReturn:@YES];
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:@YES forKey:kPreferenceKeyCopyLastNewline];
+    [fakeDefaults setFakeObject:@YES forKey:@"TrimWhitespaceOnCopy"];
 
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return mockDefaults; }
+                                 withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
                                       // When
                                       [_textView selectAll:nil];
@@ -2514,13 +2513,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     _textView.dataSource = session.screen;
     NSString *text = @"123456789abcdefghi";
     [session synchronousReadTask:text];
-    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
-    [MKTGiven([mockDefaults objectForKey:kPreferenceKeyCopyLastNewline]) willReturn:@YES];
-    [MKTGiven([mockDefaults objectForKey:@"TrimWhitespaceOnCopy"]) willReturn:@YES];
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:@YES forKey:kPreferenceKeyCopyLastNewline];
+    [fakeDefaults setFakeObject:@YES forKey:@"TrimWhitespaceOnCopy"];
 
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return mockDefaults; }
+                                 withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
                                       // When
                                       [_textView selectAll:nil];
@@ -2549,13 +2548,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     _textView.dataSource = session.screen;
     NSString *text = @"blah\r\n12345";
     [session synchronousReadTask:text];
-    NSUserDefaults *mockDefaults = MKTMock([NSUserDefaults class]);
-    [MKTGiven([mockDefaults objectForKey:kPreferenceKeyCopyLastNewline]) willReturn:@YES];
-    [MKTGiven([mockDefaults objectForKey:@"TrimWhitespaceOnCopy"]) willReturn:@YES];
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:@YES forKey:kPreferenceKeyCopyLastNewline];
+    [fakeDefaults setFakeObject:@YES forKey:@"TrimWhitespaceOnCopy"];
 
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return mockDefaults; }
+                                 withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
                                       // When
                                       [_textView selectAll:nil];
