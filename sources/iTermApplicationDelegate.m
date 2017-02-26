@@ -197,6 +197,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [[iTermApplication sharedApplication] setIsUIElementApplication:[iTermPreferences boolForKey:kPreferenceKeyUIElement]];
 }
 
+#pragma mark - Notifications
+
 // NSApplication delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     // Cleanly crash on uncaught exceptions, such as during actions.
@@ -236,6 +238,247 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                   block:^(id before, id after) {
                                       [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
                                   }];
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [self warnAboutChangeToDefaultPasteBehavior];
+    if (IsTouchBarAvailable()) {
+        ITERM_IGNORE_PARTIAL_BEGIN
+        NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
+        ITERM_IGNORE_PARTIAL_END
+    }
+
+    if ([iTermAdvancedSettingsModel enableAPIServer]) {
+        _apiServer = [[iTermAPIServer alloc] init];
+        _apiServer.delegate = self;
+    }
+
+    if ([self shouldNotifyAboutIncompatibleSoftware]) {
+        [self notifyAboutIncompatibleSoftware];
+    }
+    if ([iTermAdvancedSettingsModel disableAppNap]) {
+        [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
+        [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
+        _appNapStoppingActivity =
+                [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
+                                                                reason:@"User Preference"] retain];
+    }
+    [iTermFontPanel makeDefault];
+
+    finishedLaunching_ = YES;
+    // Create the app support directory
+    [self createVersionFile];
+
+    // Prevent the input manager from swallowing control-q. See explanation here:
+    // http://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system/
+    CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
+                             CFSTR(""),
+                             kCFPreferencesCurrentApplication);
+    // This is off by default, but would wreack havoc if set globally.
+    CFPreferencesSetAppValue(CFSTR("NSRepeatCountBinding"),
+                             CFSTR(""),
+                             kCFPreferencesCurrentApplication);
+
+    // Ensure hotkeys are registered.
+    [iTermAppHotKeyProvider sharedInstance];
+    [iTermHotKeyProfileBindingController sharedInstance];
+
+    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+        // Use a brief delay so windows have a chance to open before the dialog is shown.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+              [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
+            }
+        });
+    }
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
+
+    // register for services
+    [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
+                                                       returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    // Register our services provider. Registration must happen only when we're
+    // ready to accept requests, so I do it after a spin of the runloop.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [NSApp setServicesProvider:[[iTermServiceProvider alloc] init]];
+    });
+
+    // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
+    // a chance to run because a "special" filename cancels performStartupActivities.
+    [self checkForQuietMode];
+    [self performSelector:@selector(performStartupActivities)
+               withObject:nil
+               afterDelay:0];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
+                                                        object:nil];
+
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(workspaceSessionDidBecomeActive:)
+                                                               name:NSWorkspaceSessionDidBecomeActiveNotification
+                                                             object:nil];
+
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(workspaceSessionDidResignActive:)
+                                                               name:NSWorkspaceSessionDidResignActiveNotification
+                                                             object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(sparkleWillRestartApp:)
+                                                 name:SUUpdaterWillRestartNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(processTypeDidChange:)
+                                                 name:iTermProcessTypeDidChangeNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(dynamicToolsDidChange:)
+                                                 name:kDynamicToolsDidChange
+                                               object:nil];
+
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        !self.isApplescriptTestApp) {
+        [PseudoTerminalRestorer setRestorationCompletionBlock:^{
+            [self restoreBuriedSessionsState];
+            if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
+                _orphansAdopted = YES;
+                [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
+            } else {
+                [[NSNotificationCenter defaultCenter] addObserver:self
+                                                         selector:@selector(itermDidDecodeWindowRestorableState:)
+                                                             name:iTermDidDecodeWindowRestorableStateNotification
+                                                           object:nil];
+            }
+        }];
+    } else {
+        [self restoreBuriedSessionsState];
+    }
+}
+
+- (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
+    if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
+        _orphansAdopted = YES;
+        [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
+    }
+}
+
+- (void)dynamicToolsDidChange:(NSNotification *)notification {
+    [iTermToolbeltView populateMenu:toolbeltMenu];
+}
+
+- (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
+    _workspaceSessionActive = YES;
+}
+
+- (void)workspaceSessionDidResignActive:(NSNotification *)notification {
+    _workspaceSessionActive = NO;
+}
+
+- (void)sparkleWillRestartApp:(NSNotification *)notification {
+    [NSApp invalidateRestorableState];
+    [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
+    _sparkleRestarting = YES;
+}
+
+- (void)processTypeDidChange:(NSNotification *)notification {
+    [self updateProcessType];
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
+    DLog(@"applicationShouldTerminate:");
+    NSArray *terminals;
+
+    terminals = [[iTermController sharedInstance] terminals];
+    int numSessions = 0;
+
+    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
+    for (PseudoTerminal *term in terminals) {
+        numSessions += [[term allSessions] count];
+
+        [reason addReason:term.promptOnCloseReason];
+    }
+
+    // Display prompt if we need to
+    if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
+        [terminals count] > 0 &&  // there are terminal windows
+        [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
+        [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
+    }
+    quittingBecauseLastWindowClosed_ = NO;
+    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
+        // closing multiple sessions
+        [reason addReason:[iTermPromptOnCloseReason closingMultipleSessionsPreferenceEnabled]];
+    }
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        self.sparkleRestarting &&
+        [iTermAdvancedSettingsModel restoreWindowContents] &&
+        [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
+        // Nothing will be lost so just restart without asking.
+        [reason addReason:[iTermPromptOnCloseReason noReason]];
+    }
+
+    if (reason.hasReason) {
+        DLog(@"Showing quit alert");
+        NSString *message;
+        if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
+            message = @"Sessions will be restored automatically when iTerm2 is relaunched.";
+        } else {
+            message = @"All sessions will be closed.";
+        }
+        [NSApp activateIgnoringOtherApps:YES];
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Quit iTerm2?";
+        alert.informativeText = message;
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Cancel"];
+        iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                                               prompt:@"Details"
+                                                                              message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
+                                                                                       reason.message]];
+        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+        accessory.requestLayout = ^{
+            [alert layout];
+        };
+        alert.accessoryView = accessory;
+
+        if ([alert runModal] != NSAlertFirstButtonReturn) {
+            DLog(@"User declined to quit");
+            return NSTerminateCancel;
+        }
+    }
+
+    // Ensure [iTermController dealloc] is called before prefs are saved
+    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
+
+    // Prevent sessions from making their termination undoable since we're quitting.
+    [[iTermController sharedInstance] setApplicationIsQuitting:YES];
+
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
+        // If jobs aren't run in servers, they'll just die normally.
+        [[iTermController sharedInstance] killRestorableSessions];
+    }
+
+    // Last chance before windows get closed.
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillTerminate object:nil];
+
+    // This causes all windows to be closed and all sessions to be terminated.
+    [iTermController releaseSharedInstance];
+
+    // save preferences
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    if (![[iTermRemotePreferences sharedInstance] customFolderChanged]) {
+        [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
+    }
+
+    DLog(@"applicationShouldTerminate returning Now");
+    return NSTerminateNow;
+}
+
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+    DLog(@"applicationWillTerminate called");
+    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
+    DLog(@"applicationWillTerminate returning");
 }
 
 - (void)promptAboutRemainingInBetaIfNeeded {
@@ -513,247 +756,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    [self warnAboutChangeToDefaultPasteBehavior];
-    if (IsTouchBarAvailable()) {
-        ITERM_IGNORE_PARTIAL_BEGIN
-        NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
-        ITERM_IGNORE_PARTIAL_END
-    }
-
-    if ([iTermAdvancedSettingsModel enableAPIServer]) {
-        _apiServer = [[iTermAPIServer alloc] init];
-        _apiServer.delegate = self;
-    }
-
-    if ([self shouldNotifyAboutIncompatibleSoftware]) {
-        [self notifyAboutIncompatibleSoftware];
-    }
-    if ([iTermAdvancedSettingsModel disableAppNap]) {
-        [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
-        [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
-        _appNapStoppingActivity =
-                [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
-                                                                reason:@"User Preference"] retain];
-    }
-    [iTermFontPanel makeDefault];
-
-    finishedLaunching_ = YES;
-    // Create the app support directory
-    [self createVersionFile];
-
-    // Prevent the input manager from swallowing control-q. See explanation here:
-    // http://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system/
-    CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
-                             CFSTR(""),
-                             kCFPreferencesCurrentApplication);
-    // This is off by default, but would wreack havoc if set globally.
-    CFPreferencesSetAppValue(CFSTR("NSRepeatCountBinding"),
-                             CFSTR(""),
-                             kCFPreferencesCurrentApplication);
-
-    // Ensure hotkeys are registered.
-    [iTermAppHotKeyProvider sharedInstance];
-    [iTermHotKeyProfileBindingController sharedInstance];
-
-    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
-        // Use a brief delay so windows have a chance to open before the dialog is shown.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
-              [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
-            }
-        });
-    }
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
-    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
-
-    // register for services
-    [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
-                                                       returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
-    // Register our services provider. Registration must happen only when we're
-    // ready to accept requests, so I do it after a spin of the runloop.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [NSApp setServicesProvider:[[iTermServiceProvider alloc] init]];
-    });
-
-    // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
-    // a chance to run because a "special" filename cancels performStartupActivities.
-    [self checkForQuietMode];
-    [self performSelector:@selector(performStartupActivities)
-               withObject:nil
-               afterDelay:0];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
-                                                        object:nil];
-
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                           selector:@selector(workspaceSessionDidBecomeActive:)
-                                                               name:NSWorkspaceSessionDidBecomeActiveNotification
-                                                             object:nil];
-
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                           selector:@selector(workspaceSessionDidResignActive:)
-                                                               name:NSWorkspaceSessionDidResignActiveNotification
-                                                             object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(sparkleWillRestartApp:)
-                                                 name:SUUpdaterWillRestartNotification
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(processTypeDidChange:)
-                                                 name:iTermProcessTypeDidChangeNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(dynamicToolsDidChange:)
-                                                 name:kDynamicToolsDidChange
-                                               object:nil];
-
-    if ([iTermAdvancedSettingsModel runJobsInServers] &&
-        !self.isApplescriptTestApp) {
-        [PseudoTerminalRestorer setRestorationCompletionBlock:^{
-            [self restoreBuriedSessionsState];
-            if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
-                _orphansAdopted = YES;
-                [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
-            } else {
-                [[NSNotificationCenter defaultCenter] addObserver:self
-                                                         selector:@selector(itermDidDecodeWindowRestorableState:)
-                                                             name:iTermDidDecodeWindowRestorableStateNotification
-                                                           object:nil];
-            }
-        }];
-    } else {
-        [self restoreBuriedSessionsState];
-    }
-}
-
-- (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
-    if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
-        _orphansAdopted = YES;
-        [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
-    }
-}
-
-- (void)dynamicToolsDidChange:(NSNotification *)notification {
-    [iTermToolbeltView populateMenu:toolbeltMenu];
-}
-
-- (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
-    _workspaceSessionActive = YES;
-}
-
-- (void)workspaceSessionDidResignActive:(NSNotification *)notification {
-    _workspaceSessionActive = NO;
-}
-
-- (void)sparkleWillRestartApp:(NSNotification *)notification {
-    [NSApp invalidateRestorableState];
-    [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
-    _sparkleRestarting = YES;
-}
-
-- (void)processTypeDidChange:(NSNotification *)notification {
-    [self updateProcessType];
-}
-
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
-    DLog(@"applicationShouldTerminate:");
-    NSArray *terminals;
-
-    terminals = [[iTermController sharedInstance] terminals];
-    int numSessions = 0;
-
-    iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
-    for (PseudoTerminal *term in terminals) {
-        numSessions += [[term allSessions] count];
-
-        [reason addReason:term.promptOnCloseReason];
-    }
-
-    // Display prompt if we need to
-    if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
-        [terminals count] > 0 &&  // there are terminal windows
-        [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
-        [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
-    }
-    quittingBecauseLastWindowClosed_ = NO;
-    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
-        // closing multiple sessions
-        [reason addReason:[iTermPromptOnCloseReason closingMultipleSessionsPreferenceEnabled]];
-    }
-    if ([iTermAdvancedSettingsModel runJobsInServers] &&
-        self.sparkleRestarting &&
-        [iTermAdvancedSettingsModel restoreWindowContents] &&
-        [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
-        // Nothing will be lost so just restart without asking.
-        [reason addReason:[iTermPromptOnCloseReason noReason]];
-    }
-
-    if (reason.hasReason) {
-        DLog(@"Showing quit alert");
-        NSString *message;
-        if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
-            message = @"Sessions will be restored automatically when iTerm2 is relaunched.";
-        } else {
-            message = @"All sessions will be closed.";
-        }
-        [NSApp activateIgnoringOtherApps:YES];
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = @"Quit iTerm2?";
-        alert.informativeText = message;
-        [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Cancel"];
-        iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                               prompt:@"Details"
-                                                                              message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
-                                                                                       reason.message]];
-        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
-        accessory.requestLayout = ^{
-            [alert layout];
-        };
-        alert.accessoryView = accessory;
-
-        if ([alert runModal] != NSAlertFirstButtonReturn) {
-            DLog(@"User declined to quit");
-            return NSTerminateCancel;
-        }
-    }
-
-    // Ensure [iTermController dealloc] is called before prefs are saved
-    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
-
-    // Prevent sessions from making their termination undoable since we're quitting.
-    [[iTermController sharedInstance] setApplicationIsQuitting:YES];
-
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
-        // If jobs aren't run in servers, they'll just die normally.
-        [[iTermController sharedInstance] killRestorableSessions];
-    }
-
-    // Last chance before windows get closed.
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillTerminate object:nil];
-
-    // This causes all windows to be closed and all sessions to be terminated.
-    [iTermController releaseSharedInstance];
-
-    // save preferences
-    [[NSUserDefaults standardUserDefaults] synchronize];
-    if (![[iTermRemotePreferences sharedInstance] customFolderChanged]) {
-        [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
-    }
-
-    DLog(@"applicationShouldTerminate returning Now");
-    return NSTerminateNow;
-}
-
-- (void)applicationWillTerminate:(NSNotification *)aNotification {
-    DLog(@"applicationWillTerminate called");
-    [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
-    DLog(@"applicationWillTerminate returning");
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn {
