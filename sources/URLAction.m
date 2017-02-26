@@ -7,7 +7,17 @@
 //
 
 #import "URLAction.h"
+
+#import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
+#import "iTermSemanticHistoryController.h"
+#import "iTermTextExtractor.h"
+#import "NSCharacterSet+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
+#import "RegexKitLite.h"
+#import "SmartSelectionController.h"
 #import "SCPPath.h"
 
 @interface URLAction ()
@@ -62,6 +72,8 @@
     action.identifier = imageInfo;
     return action;
 }
+
+#pragma mark - NSObject
 
 - (void)dealloc {
     [_string release];
