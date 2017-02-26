@@ -435,6 +435,73 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     return [[iTermController sharedInstance] terminals];
 }
 
+- (BOOL)useBackgroundPatternIndicator {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
+}
+
+- (NSMenu *)downloadsMenu {
+    if (!downloadsMenu_) {
+        downloadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
+        downloadsMenu_.title = @"Downloads";
+        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
+        [mainMenu insertItem:downloadsMenu_
+                     atIndex:mainMenu.itemArray.count - 1];
+        [downloadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Downloads"] autorelease]];
+
+        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllDownloads:) keyEquivalent:@""] autorelease];
+        [downloadsMenu_.submenu addItem:clearAll];
+        [downloadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
+    }
+    return [downloadsMenu_ submenu];
+}
+
+- (NSMenu *)uploadsMenu {
+    if (!uploadsMenu_) {
+        uploadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
+        uploadsMenu_.title = @"Uploads";
+        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
+        [mainMenu insertItem:uploadsMenu_
+                     atIndex:mainMenu.itemArray.count - 1];
+        [uploadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Uploads"] autorelease]];
+
+        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllUploads:) keyEquivalent:@""] autorelease];
+        [uploadsMenu_.submenu addItem:clearAll];
+        [uploadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
+    }
+    return [uploadsMenu_ submenu];
+}
+
+- (void)updateBroadcastMenuState {
+    BOOL sessions = NO;
+    BOOL panes = NO;
+    BOOL noBroadcast = NO;
+    PseudoTerminal *frontTerminal;
+    frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    switch ([frontTerminal broadcastMode]) {
+        case BROADCAST_OFF:
+            noBroadcast = YES;
+            break;
+
+        case BROADCAST_TO_ALL_TABS:
+            sessions = YES;
+            break;
+
+        case BROADCAST_TO_ALL_PANES:
+            panes = YES;
+            break;
+
+        case BROADCAST_CUSTOM:
+            break;
+    }
+    [sendInputToAllSessions setState:sessions];
+    [sendInputToAllPanes setState:panes];
+    [sendInputNormally setState:noBroadcast];
+}
+
+- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
+    [_apiServer postAPINotification:notification toConnection:connection];
+}
+
 #pragma mark - Application Delegate Overrides
 
 /**
@@ -1409,33 +1476,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [self updateRestoreWindowArrangementsMenu:container asTabs:NO];
 }
 
-- (void)updateBroadcastMenuState {
-    BOOL sessions = NO;
-    BOOL panes = NO;
-    BOOL noBroadcast = NO;
-    PseudoTerminal *frontTerminal;
-    frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    switch ([frontTerminal broadcastMode]) {
-        case BROADCAST_OFF:
-            noBroadcast = YES;
-            break;
-
-        case BROADCAST_TO_ALL_TABS:
-            sessions = YES;
-            break;
-
-        case BROADCAST_TO_ALL_PANES:
-            panes = YES;
-            break;
-
-        case BROADCAST_CUSTOM:
-            break;
-    }
-    [sendInputToAllSessions setState:sessions];
-    [sendInputToAllPanes setState:panes];
-    [sendInputNormally setState:noBroadcast];
-}
-
 - (void)buildSessionSubmenu:(NSNotification *)aNotification {
     [self updateMaximizePaneMenuItem];
 
@@ -1486,38 +1526,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         }
         [menu removeItemAtIndex:0];
     }
-}
-
-- (NSMenu *)downloadsMenu {
-    if (!downloadsMenu_) {
-        downloadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
-        downloadsMenu_.title = @"Downloads";
-        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
-        [mainMenu insertItem:downloadsMenu_
-                     atIndex:mainMenu.itemArray.count - 1];
-        [downloadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Downloads"] autorelease]];
-
-        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllDownloads:) keyEquivalent:@""] autorelease];
-        [downloadsMenu_.submenu addItem:clearAll];
-        [downloadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
-    }
-    return [downloadsMenu_ submenu];
-}
-
-- (NSMenu *)uploadsMenu {
-    if (!uploadsMenu_) {
-        uploadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
-        uploadsMenu_.title = @"Uploads";
-        NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
-        [mainMenu insertItem:uploadsMenu_
-                     atIndex:mainMenu.itemArray.count - 1];
-        [uploadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Uploads"] autorelease]];
-
-        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllUploads:) keyEquivalent:@""] autorelease];
-        [uploadsMenu_.submenu addItem:clearAll];
-        [uploadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
-    }
-    return [uploadsMenu_ submenu];
 }
 
 // This is called whenever a tab becomes key or logging starts/stops.
@@ -1900,10 +1908,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [pty editCurrentSession:sender];
 }
 
-- (BOOL)useBackgroundPatternIndicator {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
-}
-
 - (IBAction)toggleUseBackgroundPatternIndicator:(id)sender {
     BOOL value = [self useBackgroundPatternIndicator];
     value = !value;
@@ -2270,10 +2274,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)apiServerRemoveSubscriptionsForConnection:(id)connection {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connection];
-}
-
-- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
-    [_apiServer postAPINotification:notification toConnection:connection];
 }
 
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request

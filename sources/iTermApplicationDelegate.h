@@ -74,6 +74,8 @@ extern NSString *const iTermApplicationWillTerminate;
 - (void)updateBuriedSessionsMenu;
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
 
+#pragma mark - Actions
+
 - (void)toggleToolbeltTool:(id)sender;
 - (void)newSession:(id)sender;
 - (void)undo:(id)sender;
