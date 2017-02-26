@@ -346,6 +346,95 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 }
 
+#pragma mark - APIs
+
+- (BOOL)isApplescriptTestApp {
+    return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
+}
+
+- (BOOL)isRunningOnTravis {
+    NSString *travis = [[[NSProcessInfo processInfo] environment] objectForKey:@"TRAVIS"];
+    return [travis isEqualToString:@"true"];
+}
+
+- (void)userDidInteractWithASession {
+    userHasInteractedWithAnySession_ = YES;
+}
+
+- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
+    id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
+    if (session) {
+        term = session.delegate.realParentWindow;
+    }
+    if (term) {
+        DLog(@"Open password manager as sheet in terminal %@", term);
+        return [term openPasswordManagerToAccountName:name inSession:session];
+    } else {
+        DLog(@"Open password manager as standalone window");
+        if (!_passwordManagerWindowController) {
+            _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+            _passwordManagerWindowController.delegate = self;
+        }
+        [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
+        [_passwordManagerWindowController selectAccountName:name];
+    }
+}
+
+- (BOOL)warnBeforeMultiLinePaste {
+    if ([iTermWarning warningHandler]) {
+        // In a test.
+        return YES;
+    }
+    return ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste];
+}
+
+- (void)makeHotKeyWindowKeyIfOpen {
+    for (PseudoTerminal* term in [self terminals]) {
+        if ([term isHotKeyWindow] && [[term window] alphaValue] == 1) {
+            [[term window] makeKeyAndOrderFront:self];
+        }
+    }
+}
+
+- (void)updateMaximizePaneMenuItem {
+    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSOnState : NSOffState];
+}
+
+- (void)updateUseTransparencyMenuItem {
+    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
+}
+
+- (NSString *)markAlertAction {
+    NSString *action = [[NSUserDefaults standardUserDefaults] objectForKey:kMarkAlertAction];
+    if (!action) {
+        return kMarkAlertActionPostNotification;
+    } else {
+        return action;
+    }
+}
+
+- (void)updateBuriedSessionsMenu {
+    [_buriedSessions removeAllItems];
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
+        item.representedObject = session;
+        [_buriedSessions addItem:item];
+    }
+}
+
+- (void)disinter:(NSMenuItem *)menuItem {
+    PTYSession *session = menuItem.representedObject;
+    [[iTermBuriedSessions sharedInstance] restoreSession:session];
+}
+
+- (PseudoTerminal *)currentTerminal {
+    return [[iTermController sharedInstance] currentTerminal];
+}
+
+- (NSArray*)terminals {
+    return [[iTermController sharedInstance] terminals];
+}
+
 #pragma mark - Application Delegate Overrides
 
 /**
@@ -1833,95 +1922,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (IBAction)showTipOfTheDay:(id)sender {
     [[iTermTipController sharedInstance] showTip];
-}
-
-#pragma mark - APIs
-
-- (BOOL)isApplescriptTestApp {
-    return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
-}
-
-- (BOOL)isRunningOnTravis {
-    NSString *travis = [[[NSProcessInfo processInfo] environment] objectForKey:@"TRAVIS"];
-    return [travis isEqualToString:@"true"];
-}
-
-- (void)userDidInteractWithASession {
-    userHasInteractedWithAnySession_ = YES;
-}
-
-- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
-    id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
-    if (session) {
-        term = session.delegate.realParentWindow;
-    }
-    if (term) {
-        DLog(@"Open password manager as sheet in terminal %@", term);
-        return [term openPasswordManagerToAccountName:name inSession:session];
-    } else {
-        DLog(@"Open password manager as standalone window");
-        if (!_passwordManagerWindowController) {
-            _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
-            _passwordManagerWindowController.delegate = self;
-        }
-        [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
-        [_passwordManagerWindowController selectAccountName:name];
-    }
-}
-
-- (BOOL)warnBeforeMultiLinePaste {
-    if ([iTermWarning warningHandler]) {
-        // In a test.
-        return YES;
-    }
-    return ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste];
-}
-
-- (void)makeHotKeyWindowKeyIfOpen {
-    for (PseudoTerminal* term in [self terminals]) {
-        if ([term isHotKeyWindow] && [[term window] alphaValue] == 1) {
-            [[term window] makeKeyAndOrderFront:self];
-        }
-    }
-}
-
-- (void)updateMaximizePaneMenuItem {
-    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSOnState : NSOffState];
-}
-
-- (void)updateUseTransparencyMenuItem {
-    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
-}
-
-- (NSString *)markAlertAction {
-    NSString *action = [[NSUserDefaults standardUserDefaults] objectForKey:kMarkAlertAction];
-    if (!action) {
-        return kMarkAlertActionPostNotification;
-    } else {
-        return action;
-    }
-}
-
-- (void)updateBuriedSessionsMenu {
-    [_buriedSessions removeAllItems];
-    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
-        item.representedObject = session;
-        [_buriedSessions addItem:item];
-    }
-}
-
-- (void)disinter:(NSMenuItem *)menuItem {
-    PTYSession *session = menuItem.representedObject;
-    [[iTermBuriedSessions sharedInstance] restoreSession:session];
-}
-
-- (PseudoTerminal *)currentTerminal {
-    return [[iTermController sharedInstance] currentTerminal];
-}
-
-- (NSArray*)terminals {
-    return [[iTermController sharedInstance] terminals];
 }
 
 #pragma mark - Private
