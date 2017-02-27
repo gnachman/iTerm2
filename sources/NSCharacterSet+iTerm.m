@@ -695,4 +695,26 @@
     return characterSet;
 }
 
++ (NSCharacterSet *)filenameCharacterSet {
+    static NSMutableCharacterSet* filenameChars;
+    if (!filenameChars) {
+        filenameChars = [[NSCharacterSet whitespaceCharacterSet] mutableCopy];
+        [filenameChars formUnionWithCharacterSet:[self urlCharacterSet]];
+    }
+
+    return filenameChars;
+}
+
++ (NSCharacterSet *)urlCharacterSet {
+    static NSMutableCharacterSet* urlChars;
+    if (!urlChars) {
+        NSString *chars = [iTermAdvancedSettingsModel URLCharacterSet];
+        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
+        [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
+        [urlChars retain];
+    }
+
+    return urlChars;
+}
+
 @end

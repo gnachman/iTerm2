@@ -10,7 +10,10 @@
 #import "VT100GridTypes.h"
 
 @class iTermImageInfo;
+@class iTermSemanticHistoryController;
+@class iTermTextExtractor;
 @class SCPPath;
+@class VT100RemoteHost;
 
 typedef NS_ENUM(NSInteger, URLActionType) {
     kURLActionOpenURL,
@@ -53,11 +56,11 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 // will be passed as the argument.
 @property(nonatomic, assign) SEL selector;
 
++ (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath;
 + (instancetype)urlActionToOpenURL:(NSString *)filename;
 + (instancetype)urlActionToPerformSmartSelectionRule:(NSDictionary *)rule
                                             onString:(NSString *)content;
 + (instancetype)urlActionToOpenExistingFile:(NSString *)filename;
 + (instancetype)urlActionToOpenImage:(iTermImageInfo *)imageInfo;
-+ (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath;
 
 @end

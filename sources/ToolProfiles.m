@@ -14,10 +14,13 @@
 static const int kVerticalMargin = 5;
 static const int kMargin = 0;
 static const int kPopupHeight = 26;
+static const CGFloat kButtonHeight = 23;
+static const CGFloat kInnerMargin = 5;
 
 @implementation ToolProfiles {
     ProfileListView *listView_;
     NSPopUpButton *popup_;
+    NSButton *_openButton;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -28,12 +31,24 @@ static const int kPopupHeight = 26;
         [listView_ setDelegate:self];
         [listView_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [listView_ disableArrowHandler];
+        [listView_ allowMultipleSelections];
         [listView_.tableView setHeaderView:nil];
 
         [self addSubview:listView_];
         [listView_ release];
 
-        popup_ = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight)] autorelease];
+        _openButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)] autorelease];
+        [_openButton setButtonType:NSMomentaryPushInButton];
+        [_openButton setTitle:@"Open"];
+        [_openButton setTarget:self];
+        [_openButton setAction:@selector(open:)];
+        [_openButton setBezelStyle:NSSmallSquareBezelStyle];
+        [_openButton sizeToFit];
+        [_openButton setAutoresizingMask:NSViewMinYMargin];
+        [self addSubview:_openButton];
+        [_openButton bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
+
+        popup_ = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)] autorelease];
         [[popup_ cell] setControlSize:NSSmallControlSize];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [[popup_ menu] addItemWithTitle:@"New Tab"
@@ -55,6 +70,7 @@ static const int kPopupHeight = 26;
         [popup_ setAutoresizingMask:NSViewMinYMargin | NSViewWidthSizable];
 
         [popup_ bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
+
     }
     return self;
 }
@@ -62,14 +78,18 @@ static const int kPopupHeight = 26;
 - (void)dealloc
 {
     [popup_ unbind:@"enabled"];
+    [_openButton unbind:@"enabled"];
     [super dealloc];
 }
 
-- (void)relayout
-{
+- (void)relayout {
     NSRect frame = self.frame;
     listView_.frame = NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin);
-    popup_.frame = NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight);
+    popup_.frame = NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight);
+    _openButton.frame = NSMakeRect(frame.size.width - _openButton.frame.size.width,
+                                   frame.size.height - kPopupHeight,
+                                   _openButton.frame.size.width,
+                                   _openButton.frame.size.height);
 }
 
 - (BOOL)isFlipped
@@ -133,6 +153,10 @@ static const int kPopupHeight = 26;
 - (CGFloat)minimumHeight
 {
     return 88;
+}
+
+- (void)open:(id)sender {
+    [self performSelector:[[popup_ selectedItem] action]];
 }
 
 @end

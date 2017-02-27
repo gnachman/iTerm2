@@ -44,8 +44,6 @@ extern NSString *const kMarkAlertActionPostNotification;
 extern NSString *const kShowFullscreenTabsSettingDidChange;
 extern NSString *const iTermApplicationWillTerminate;
 
-int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
-
 @interface iTermApplicationDelegate : NSObject<iTermApplicationDelegate>
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
@@ -60,86 +58,27 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 @property(nonatomic, readonly) BOOL useBackgroundPatternIndicator;
 @property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
-
-- (void)awakeFromNib;
-
-// NSApplication Delegate methods
-- (NSMenu*)bookmarksMenu;
-
-- (IBAction)undo:(id)sender;
-- (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem;
-- (IBAction)toggleFullScreenTabBar:(id)sender;
-- (IBAction)maximizePane:(id)sender;
-- (IBAction)toggleUseTransparency:(id)sender;
-- (IBAction)toggleSecureInput:(id)sender;
-
-- (IBAction)newWindow:(id)sender;
-- (IBAction)newSessionWithSameProfile:(id)sender;
-- (IBAction)newSession:(id)sender;
-- (IBAction)buildScriptMenu:(id)sender;
-
-- (IBAction)debugLogging:(id)sender;
-- (IBAction)openQuickly:(id)sender;
+@property(nonatomic, readonly) NSMenu *downloadsMenu;
+@property(nonatomic, readonly) NSMenu *uploadsMenu;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;
-
-    // About window
-- (IBAction)showAbout:(id)sender;
-
-- (IBAction)makeDefaultTerminal:(id)sender;
-- (IBAction)unmakeDefaultTerminal:(id)sender;
-
-- (IBAction)saveWindowArrangement:(id)sender;
-
-- (IBAction)showPrefWindow:(id)sender;
-- (IBAction)showBookmarkWindow:(id)sender;
-
-    // navigation
-- (IBAction)arrangeHorizontally:(id)sender;
-
-// Notifications
-- (void)reloadMenus: (NSNotification *) aNotification;
-- (void)buildSessionSubmenu: (NSNotification *) aNotification;
-- (void)reloadSessionMenus: (NSNotification *) aNotification;
-- (void)nonTerminalWindowBecameKey: (NSNotification *) aNotification;
-
-// font control
-- (IBAction) biggerFont: (id) sender;
-- (IBAction) smallerFont: (id) sender;
-
-// Paste speed control
-- (IBAction)pasteFaster:(id)sender;
-- (IBAction)pasteSlower:(id)sender;
-- (IBAction)pasteSlowlyFaster:(id)sender;
-- (IBAction)pasteSlowlySlower:(id)sender;
-
-- (IBAction)toggleMultiLinePasteWarning:(id)sender;
-
-// size
-- (IBAction)returnToDefaultSize:(id)sender;
-- (IBAction)exposeForTabs:(id)sender;
-- (IBAction)editCurrentSession:(id)sender;
-
-- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender;
+- (void)updateBroadcastMenuState;
 
 - (void)makeHotKeyWindowKeyIfOpen;
-
-- (void)updateBroadcastMenuState;
 
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;
 
-- (NSMenu *)downloadsMenu;
-- (NSMenu *)uploadsMenu;
-
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
-
-- (PseudoTerminal *)currentTerminal;
-- (NSArray*)terminals;
-
 - (void)updateBuriedSessionsMenu;
-
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
+
+#pragma mark - Actions
+
+- (void)toggleToolbeltTool:(id)sender;
+- (void)newSession:(id)sender;
+- (void)undo:(id)sender;
+- (void)showPrefWindow:(id)sender;
 
 @end
