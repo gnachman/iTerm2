@@ -1633,9 +1633,11 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
         case XTERMCC_PASTE64: {
-            NSString *decoded = [self decodedBase64PasteCommand:token.string];
-            if (decoded) {
-                [delegate_ terminalPasteString:decoded];
+            if (token.string) {
+                NSString *decoded = [self decodedBase64PasteCommand:token.string];
+                if (decoded) {
+                    [delegate_ terminalPasteString:decoded];
+                }
             }
             break;
         }
