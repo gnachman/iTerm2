@@ -272,7 +272,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
     NSMutableDictionary *augmentedSubs = [[substitutions mutableCopy] autorelease];
-    augmentedSubs[@"1"] = path ? [path stringWithEscapedShellCharacters] : @"";
+    augmentedSubs[@"1"] = path ? [path stringWithEscapedShellCharactersIncludingNewlines:YES] : @"";
     augmentedSubs[@"2"] = lineNumber ? lineNumber : @"";
     augmentedSubs[@"3"] = substitutions[kSemanticHistoryPrefixSubstitutionKey];
     augmentedSubs[@"4"] = substitutions[kSemanticHistorySuffixSubstitutionKey];

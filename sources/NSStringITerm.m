@@ -87,7 +87,7 @@
         NSMutableArray *escapedFilenames = [NSMutableArray array];
         DLog(@"Pasteboard has filenames: %@.", filenames);
         for (NSString *filename in filenames) {
-            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharactersIncludingNewlines:YES]];
         }
         if (escapedFilenames.count > 0) {
             info = [escapedFilenames componentsJoinedByString:@" "];
@@ -103,12 +103,12 @@
 }
 
 + (NSString *)shellEscapableCharacters {
-    return @"\\ ()\"&'!$<>;|*?[]#`";
+    return @"\\ ()\"&'!$<>;|*?[]#`\t";
 }
 
-- (NSString *)stringWithEscapedShellCharacters {
+- (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString:self] autorelease];
-    [aMutableString escapeShellCharacters];
+    [aMutableString escapeShellCharactersIncludingNewlines:includingNewlines];
     return [NSString stringWithString:aMutableString];
 }
 
@@ -1713,8 +1713,11 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
-- (void)escapeShellCharacters {
+- (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     NSString* charsToEscape = [NSString shellEscapableCharacters];
+    if (includingNewlines) {
+        charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
+    }
     for (int i = 0; i < [charsToEscape length]; i++) {
         NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
         NSString* after = [@"\\" stringByAppendingString:before];

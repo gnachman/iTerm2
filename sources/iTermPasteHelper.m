@@ -131,7 +131,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
 
     if (flags & kPasteFlagsEscapeSpecialCharacters) {
         // Put backslash before anything the shell might interpret.
-        theString = [theString stringWithEscapedShellCharacters];
+        theString = [theString stringWithEscapedShellCharactersIncludingNewlines:NO];
     }
 
     if (flags & kPasteFlagsRemovingUnsafeControlCodes) {

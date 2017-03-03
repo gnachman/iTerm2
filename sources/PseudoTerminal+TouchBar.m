@@ -146,7 +146,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
             button.title = word;
             button.imagePosition = NSImageLeft;
             button.enabled = YES;
-            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharacters]] };
+            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharactersIncludingNewlines:YES]] };
         }
     } else if (button.enabled) {
         button.title = @"";

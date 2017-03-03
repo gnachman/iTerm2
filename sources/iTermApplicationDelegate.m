@@ -544,7 +544,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             bookmark[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
         } else {
             // escape filename
-            filename = [filename stringWithEscapedShellCharacters];
+            filename = [filename stringWithEscapedShellCharactersIncludingNewlines:YES];
             if (filename) {
                 NSString *initialText = bookmark[KEY_INITIAL_TEXT];
                 if (initialText && ![iTermAdvancedSettingsModel openFileOverridesSendText]) {

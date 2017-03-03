@@ -25,7 +25,7 @@
         }
 
         if (escape) {
-            filename = [filename stringWithEscapedShellCharacters];
+            filename = [filename stringWithEscapedShellCharactersIncludingNewlines:YES];
         }
         [results addObject:filename];
     }
