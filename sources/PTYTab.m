@@ -1912,6 +1912,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             break;
     }
 
+    if (viewSize.width == 0 || viewSize.height == 0) {
+        return nil;
+    }
     NSImage* viewImage = [[[NSImage alloc] initWithSize:viewSize] autorelease];
     [viewImage lockFocus];
     [[NSColor windowBackgroundColor] set];
