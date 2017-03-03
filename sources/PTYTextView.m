@@ -2573,10 +2573,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         workingDirectory:(NSString *)workingDirectory {
     NSMutableDictionary *subs = [[[_delegate textViewVariables] mutableCopy] autorelease];
     NSDictionary *semanticHistorySubs =
-        @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharacters] ?: @"",
-           kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharacters] ?: @"",
-           kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharacters] ?: @"",
-           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharacters] ?: @"" };
+        @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
+           kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
+           kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
+           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"" };
     [subs addEntriesFromDictionary:semanticHistorySubs];
     return subs;
 }

@@ -705,13 +705,13 @@ static BOOL hasBecomeActive = NO;
         BOOL isDir;
         [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
         if (!isDir) {
-            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", [filename stringWithEscapedShellCharacters]];
+            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", [filename stringWithEscapedShellCharactersIncludingNewlines:YES]];
             [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
             // Sleeping a while waiting for the login.
             sleep(1);
             [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
         } else {
-            NSString *aString = [NSString stringWithFormat:@"cd %@\n", [filename stringWithEscapedShellCharacters]];
+            NSString *aString = [NSString stringWithFormat:@"cd %@\n", [filename stringWithEscapedShellCharactersIncludingNewlines:YES]];
             [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
             // Sleeping a while waiting for the login.
             sleep(1);

@@ -554,8 +554,8 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 + (NSString *)shellLauncherCommand {
     return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell",
             [self hushlogin] ? @"q" : @"",
-            [NSUserName() stringWithEscapedShellCharacters],
-            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+            [NSUserName() stringWithEscapedShellCharactersIncludingNewlines:YES],
+            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharactersIncludingNewlines:YES]];
 }
 
 + (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
