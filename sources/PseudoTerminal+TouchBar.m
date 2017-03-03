@@ -562,7 +562,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
 
 - (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
     NSScrubberTextItemView *itemView = [scrubber makeItemWithIdentifier:iTermTabBarItemTouchBarIdentifier owner:nil];
-    itemView.textField.stringValue = [self scrubber:scrubber labelAtIndex:index];
+    itemView.textField.stringValue = [self scrubber:scrubber labelAtIndex:index] ?: @"";
     return itemView;
 }
 
