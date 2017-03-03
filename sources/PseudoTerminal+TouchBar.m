@@ -242,6 +242,9 @@ ITERM_IGNORE_PARTIAL_BEGIN
             NSColor *textColor = nil;
             NSColor *backgroundColor = nil;
             textColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_FOREGROUND_COLOR]];
+            if (!textColor) {
+                continue;
+            }
             backgroundColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_BACKGROUND_COLOR]];
             NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor };
             NSAttributedString *title = [[[NSAttributedString alloc] initWithString:name
