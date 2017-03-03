@@ -2217,6 +2217,9 @@ static const int kMaxScreenRows = 4096;
     } else if ([key isEqualToString:@"ReportVariable"]) {
         if ([delegate_ terminalShouldSendReport] && [delegate_ terminalIsTrusted]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
+            if (!valueAsData) {
+                return;
+            }
             NSData *decodedData = [[[NSData alloc] initWithBase64EncodedData:valueAsData options:0] autorelease];
             NSString *name = [decodedData stringWithEncoding:self.encoding];
             NSString *encodedValue = @"";
