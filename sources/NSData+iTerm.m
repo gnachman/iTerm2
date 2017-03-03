@@ -68,7 +68,7 @@
                                    @"1",  // Block size
                                    @"-f",
                                    @"-",  // write to stdout
-                                   [NSString stringWithFormat:@"-C%@", [basePath stringWithEscapedShellCharacters]] ];  // Base path
+                                   [NSString stringWithFormat:@"-C%@", [basePath stringWithEscapedShellCharactersIncludingNewlines:YES]] ];  // Base path
     args = [args arrayByAddingObjectsFromArray:files];  // Files to zip
 
     NSTask *task = [[[NSTask alloc] init] autorelease];

@@ -560,7 +560,6 @@ static int MyForkPty(int *amaster,
         // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
         iTermFileDescriptorServerLog("Calling MyForkPty");
         pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win, serverConnectionFd, deadMansPipe[1]);
-        iTermFileDescriptorServerLog("Returned from MyForkPty with pid %d", (int)pid);
         numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
     } else {
         pid = _childPid = forkpty(&fd, theTtyname, &term, &win);

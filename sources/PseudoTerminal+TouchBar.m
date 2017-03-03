@@ -146,7 +146,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
             button.title = word;
             button.imagePosition = NSImageLeft;
             button.enabled = YES;
-            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharacters]] };
+            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharactersIncludingNewlines:YES]] };
         }
     } else if (button.enabled) {
         button.title = @"";
@@ -242,6 +242,9 @@ ITERM_IGNORE_PARTIAL_BEGIN
             NSColor *textColor = nil;
             NSColor *backgroundColor = nil;
             textColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_FOREGROUND_COLOR]];
+            if (!textColor) {
+                continue;
+            }
             backgroundColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_BACKGROUND_COLOR]];
             NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor };
             NSAttributedString *title = [[[NSAttributedString alloc] initWithString:name
@@ -559,7 +562,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
 
 - (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
     NSScrubberTextItemView *itemView = [scrubber makeItemWithIdentifier:iTermTabBarItemTouchBarIdentifier owner:nil];
-    itemView.textField.stringValue = [self scrubber:scrubber labelAtIndex:index];
+    itemView.textField.stringValue = [self scrubber:scrubber labelAtIndex:index] ?: @"";
     return itemView;
 }
 

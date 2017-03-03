@@ -1004,13 +1004,13 @@ static iTermController *gSharedInstance;
         if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
             if ([urlRep user]) {
-                [tempString appendFormat:@"-l %@ ", [urlRep user]];
+                [tempString appendFormat:@"-l %@ ", [[urlRep user] stringWithEscapedShellCharactersIncludingNewlines:YES]];
             }
             if ([urlRep port]) {
                 [tempString appendFormat:@"-p %@ ", [urlRep port]];
             }
             if ([urlRep host]) {
-                [tempString appendString:[urlRep host]];
+                [tempString appendString:[[urlRep host] stringWithEscapedShellCharactersIncludingNewlines:YES]];
             }
             [tempDict setObject:tempString forKey:KEY_COMMAND_LINE];
             [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
@@ -1023,10 +1023,10 @@ static iTermController *gSharedInstance;
         } else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"telnet "];
             if ([urlRep user]) {
-                [tempString appendFormat:@"-l %@ ", [urlRep user]];
+                [tempString appendFormat:@"-l %@ ", [[urlRep user] stringWithEscapedShellCharactersIncludingNewlines:YES]];
             }
             if ([urlRep host]) {
-                [tempString appendString:[urlRep host]];
+                [tempString appendString:[[urlRep host] stringWithEscapedShellCharactersIncludingNewlines:YES]];
                 if ([urlRep port]) [tempString appendFormat:@" %@", [urlRep port]];
             }
             [tempDict setObject:tempString forKey:KEY_COMMAND_LINE];

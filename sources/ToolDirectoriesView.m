@@ -234,7 +234,7 @@ static const CGFloat kHelpMargin = 5;
     iTermRecentDirectoryMO *entry = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
-    NSString *escapedPath = [entry.path stringWithEscapedShellCharacters];
+    NSString *escapedPath = [entry.path stringWithEscapedShellCharactersIncludingNewlines:YES];
     if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
         text = [@"cd " stringByAppendingString:escapedPath];
     } else {

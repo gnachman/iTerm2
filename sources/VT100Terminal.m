@@ -1660,9 +1660,11 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
         case XTERMCC_PASTE64: {
-            NSString *decoded = [self decodedBase64PasteCommand:token.string];
-            if (decoded) {
-                [delegate_ terminalPasteString:decoded];
+            if (token.string) {
+                NSString *decoded = [self decodedBase64PasteCommand:token.string];
+                if (decoded) {
+                    [delegate_ terminalPasteString:decoded];
+                }
             }
             break;
         }
@@ -2217,6 +2219,9 @@ static const int kMaxScreenRows = 4096;
     } else if ([key isEqualToString:@"ReportVariable"]) {
         if ([delegate_ terminalShouldSendReport] && [delegate_ terminalIsTrusted]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
+            if (!valueAsData) {
+                return;
+            }
             NSData *decodedData = [[[NSData alloc] initWithBase64EncodedData:valueAsData options:0] autorelease];
             NSString *name = [decodedData stringWithEncoding:self.encoding];
             NSString *encodedValue = @"";

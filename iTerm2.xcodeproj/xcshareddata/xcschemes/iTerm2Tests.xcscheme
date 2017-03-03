@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "874206460564169600CFC3F1"
-               BuildableName = "iTerm2.app"
-               BlueprintName = "iTerm2"
+               BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
+               BuildableName = "iTerm2Tests.app"
+               BlueprintName = "iTerm2Tests"
                ReferencedContainer = "container:iTerm2.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -26,8 +26,7 @@
       buildConfiguration = "Development"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      enableAddressSanitizer = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
          <TestableReference
             skipped = "NO">
@@ -43,18 +42,13 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "874206460564169600CFC3F1"
-            BuildableName = "iTerm2.app"
-            BlueprintName = "iTerm2"
+            BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
+            BuildableName = "iTerm2Tests.app"
+            BlueprintName = "iTerm2Tests"
             ReferencedContainer = "container:iTerm2.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
-         <AdditionalOption
-            key = "NSZombieEnabled"
-            value = "YES"
-            isEnabled = "YES">
-         </AdditionalOption>
       </AdditionalOptions>
    </TestAction>
    <LaunchAction
@@ -65,25 +59,19 @@
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
-      enableAddressSanitizer = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "874206460564169600CFC3F1"
-            BuildableName = "iTerm2.app"
-            BlueprintName = "iTerm2"
+            BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
+            BuildableName = "iTerm2Tests.app"
+            BlueprintName = "iTerm2Tests"
             ReferencedContainer = "container:iTerm2.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
-         <AdditionalOption
-            key = "NSZombieEnabled"
-            value = "YES"
-            isEnabled = "YES">
-         </AdditionalOption>
       </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
@@ -96,9 +84,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "874206460564169600CFC3F1"
-            BuildableName = "iTerm2.app"
-            BlueprintName = "iTerm2"
+            BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
+            BuildableName = "iTerm2Tests.app"
+            BlueprintName = "iTerm2Tests"
             ReferencedContainer = "container:iTerm2.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
