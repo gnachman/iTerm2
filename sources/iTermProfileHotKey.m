@@ -354,6 +354,7 @@ static NSString *const kArrangement = @"Arrangement";
     }
     [self.windowController.window makeKeyAndOrderFront:nil];
     if (!animated) {
+        [self moveToPreferredScreen];
         self.windowController.window.alphaValue = 1;
         [self rollInFinished];
         return;
