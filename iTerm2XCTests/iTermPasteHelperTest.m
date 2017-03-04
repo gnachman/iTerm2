@@ -248,7 +248,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"\t"
                   slowly:NO
         escapeShellChars:YES
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
@@ -260,7 +260,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"\r"
                   slowly:NO
         escapeShellChars:YES
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
@@ -284,7 +284,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"“"
                   slowly:NO
         escapeShellChars:YES
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformEscapeWithCtrlV
             spacesPerTab:0];
     [self runTimer];
@@ -296,7 +296,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [_helper pasteString:@"\x16"
                   slowly:NO
         escapeShellChars:YES
-                commands:NO
+                isUpload:NO
             tabTransform:kTabTransformEscapeWithCtrlV
             spacesPerTab:0];
     [self runTimer];
