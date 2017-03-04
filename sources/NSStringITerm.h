@@ -68,6 +68,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns the number of lines in a string.
 - (NSUInteger)numberOfLines;
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
+- (NSString *)stringWithEscapedShellCharactersExceptTabAndNewline;
 
 // Replaces tab with ^V + tab.
 - (NSString *)stringWithShellEscapedTabs;
