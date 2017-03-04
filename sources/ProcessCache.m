@@ -74,7 +74,11 @@ static ProcessCache* instance;
 NSString *PID_INFO_IS_FOREGROUND = @"foreground";
 NSString *PID_INFO_NAME = @"name";
 
-@implementation ProcessCache
+@implementation ProcessCache {
+    NSMutableDictionary* pidInfoCache_;
+    BOOL newOutput_;
+    NSLock *_lock;
+}
 
 + (void)initialize
 {
@@ -90,8 +94,15 @@ NSString *PID_INFO_NAME = @"name";
     self = [super init];
     if (self) {
         pidInfoCache_ = [[NSMutableDictionary alloc] init];
+        _lock = [[NSLock alloc] init];
     }
     return self;
+}
+
+- (void)dealloc {
+    [pidInfoCache_ release];
+    [_lock release];
+    [super dealloc];
 }
 
 + (ProcessCache*)sharedInstance
@@ -328,21 +339,21 @@ NSString *PID_INFO_NAME = @"name";
     [old release];
 }
 
-- (BOOL)testAndClearNewOutput
-{
+- (BOOL)testAndClearNewOutput {
     BOOL v;
-    @synchronized ([ProcessCache class]) {
-        v = newOutput_;
-        newOutput_ = NO;
-    }
+
+    [_lock lock];
+    v = newOutput_;
+    newOutput_ = NO;
+    [_lock unlock];
+
     return v;
 }
 
-- (void)notifyNewOutput
-{
-    @synchronized ([ProcessCache class]) {
-        newOutput_ = YES;
-    }
+- (void)notifyNewOutput {
+    [_lock lock];
+    newOutput_ = YES;
+    [_lock unlock];
 }
 
 - (void)_run
