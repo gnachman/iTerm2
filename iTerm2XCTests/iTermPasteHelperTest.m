@@ -141,7 +141,7 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)testSanitizeEscapeSpecialCharacters {
     [self sanitizeString:kTestString
-                  expect:@"a\\ \\(\t\r\r\n" @"\x16" @"“”‘’–—b"
+                  expect:@"a\\ \\(\\\t\r\r\n" @"\x16" @"“”‘’–—b"
                    flags:kPasteFlagsEscapeSpecialCharacters
             tabTransform:kTabTransformNone
             spacesPerTab:0];
@@ -188,7 +188,7 @@ static const double kFloatingPointTolerance = 0.00001;
 }
 
 - (void)testSanitizeAllFlagsOn {
-    NSString *expectedString = @"a\\ \\(\t\r\r\\\"\\\"\\'\\'--b";
+    NSString *expectedString = @"a\\ \\(\\\t\r\r\\\"\\\"\\'\\'--b";
     NSData *data = [expectedString dataUsingEncoding:NSUTF8StringEncoding];
     NSString *expected = [data stringWithBase64EncodingWithLineBreak:@"\r"];
     [self sanitizeString:kTestString
@@ -244,6 +244,30 @@ static const double kFloatingPointTolerance = 0.00001;
     XCTAssert([_writeBuffer isEqualToString:expected]);
 }
 
+- (void)testExpandTabsBeforeEscaping {
+    [_helper pasteString:@"\t"
+                  slowly:NO
+        escapeShellChars:YES
+                isUpload:NO
+            tabTransform:kTabTransformConvertToSpaces
+            spacesPerTab:4];
+    [self runTimer];
+    NSString *expected = @"\\ \\ \\ \\ ";
+    XCTAssert([_writeBuffer isEqualToString:expected]);
+}
+
+- (void)testEscapeDoesNotEscapeCarriageReturn {
+    [_helper pasteString:@"\r"
+                  slowly:NO
+        escapeShellChars:YES
+                isUpload:NO
+            tabTransform:kTabTransformConvertToSpaces
+            spacesPerTab:4];
+    [self runTimer];
+    NSString *expected = @"\r";
+    XCTAssert([_writeBuffer isEqualToString:expected]);
+}
+
 - (void)testPasteStringWithFlagsAndConvertToSpacesTabTransform {
     [_helper pasteString:kTestString
                   slowly:NO
@@ -252,7 +276,31 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
-    NSString *expected = @"a\\ \\(    \r\r“”‘’–—b";
+    NSString *expected = @"a\\ \\(\\ \\ \\ \\ \r\r“”‘’–—b";
+    XCTAssert([_writeBuffer isEqualToString:expected]);
+}
+
+- (void)testDoNotEscapeNonAscii {
+    [_helper pasteString:@"“"
+                  slowly:NO
+        escapeShellChars:YES
+                isUpload:NO
+            tabTransform:kTabTransformEscapeWithCtrlV
+            spacesPerTab:0];
+    [self runTimer];
+    NSString *expected = @"“";
+    XCTAssert([_writeBuffer isEqualToString:expected]);
+}
+
+- (void)testStripControlV {
+    [_helper pasteString:@"\x16"
+                  slowly:NO
+        escapeShellChars:YES
+                isUpload:NO
+            tabTransform:kTabTransformEscapeWithCtrlV
+            spacesPerTab:0];
+    [self runTimer];
+    NSString *expected = @"";
     XCTAssert([_writeBuffer isEqualToString:expected]);
 }
 

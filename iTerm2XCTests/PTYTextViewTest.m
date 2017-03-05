@@ -535,6 +535,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return 9;
 }
 
+- (NSURL *)textViewCurrentLocation {
+    return nil;
+}
+
+- (void)textViewBurySession {
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
     return NO;
 }

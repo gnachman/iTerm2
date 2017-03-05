@@ -112,6 +112,12 @@
     return [NSString stringWithString:aMutableString];
 }
 
+- (NSString *)stringWithEscapedShellCharactersExceptTabAndNewline {
+    NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString:self] autorelease];
+    [aMutableString escapeShellCharactersExceptTabAndNewline];
+    return [NSString stringWithString:aMutableString];
+}
+
 - (NSString *)stringWithShellEscapedTabs
 {
     const int kLNEXT = 22;
@@ -1713,11 +1719,20 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (void)escapeShellCharactersExceptTabAndNewline {
+    NSString *charsToEscape = [[NSString shellEscapableCharacters] stringByReplacingOccurrencesOfString:@"\t" withString:@""];
+    return [self escapeCharacters:charsToEscape];
+}
+
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     NSString* charsToEscape = [NSString shellEscapableCharacters];
     if (includingNewlines) {
         charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
     }
+    [self escapeCharacters:charsToEscape];
+}
+
+- (void)escapeCharacters:(NSString *)charsToEscape {
     for (int i = 0; i < [charsToEscape length]; i++) {
         NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
         NSString* after = [@"\\" stringByAppendingString:before];

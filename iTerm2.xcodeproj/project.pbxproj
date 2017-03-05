@@ -1267,6 +1267,7 @@
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
+		A62A1F6E1E6BEA7900363EE9 /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
 		A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */; };
 		A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */; };
 		A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */; };
@@ -6894,6 +6895,7 @@
 				A6CEC11E1DCE8146009F4FD2 /* GPBDictionary_PackagePrivate.h in Headers */,
 				A6CEC1161DCE8146009F4FD2 /* GPBArray.h in Headers */,
 				A6CEC12F1DCE8146009F4FD2 /* GPBWellKnownTypes.h in Headers */,
+				A62A1F6E1E6BEA7900363EE9 /* DVR.h in Headers */,
 				A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */,
 				1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */,
 				A6FEA2701CF2C8EE00376F28 /* iTermProfileHotKey.h in Headers */,

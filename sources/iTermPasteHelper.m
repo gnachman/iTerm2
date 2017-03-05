@@ -129,17 +129,13 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                                               range:NSMakeRange(0, theString.length)];
     }
 
-    if (flags & kPasteFlagsEscapeSpecialCharacters) {
-        // Put backslash before anything the shell might interpret.
-        theString = [theString stringWithEscapedShellCharactersIncludingNewlines:NO];
-    }
-
     if (flags & kPasteFlagsRemovingUnsafeControlCodes) {
-        // All control codes except tab (9), newline (10), form feed (12), and carriage return (13)
-        // are removed.
+        // All control codes except tab (9), newline (10), form feed (12), carriage return (13),
+        // and shell escape (22) are removed. This must be done before transforming tabs since
+        // that transformation might add ^Vs.
         theString =
-            [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper unsafeControlCodeSet]]
-                componentsJoinedByString:@""];
+        [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper unsafeControlCodeSet]]
+         componentsJoinedByString:@""];
     }
 
     switch (pasteEvent.tabTransform) {
@@ -156,6 +152,16 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         case kTabTransformEscapeWithCtrlV:
             theString = [theString stringWithShellEscapedTabs];
             break;
+    }
+
+    if (flags & kPasteFlagsEscapeSpecialCharacters) {
+        // Put backslash before anything the shell might interpret.
+        if (pasteEvent.tabTransform != kTabTransformEscapeWithCtrlV) {
+            theString = [theString stringWithEscapedShellCharactersIncludingNewlines:NO];
+        } else {
+            // Avoid double-escaping tabs with both ^V and backslash.
+            theString = [theString stringWithEscapedShellCharactersExceptTabAndNewline];
+        }
     }
 
     if (pasteEvent.flags & kPasteFlagsUseRegexSubstitution && pasteEvent.regex.length > 0) {
