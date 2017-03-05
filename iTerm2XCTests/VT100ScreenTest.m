@@ -882,6 +882,16 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenTerminalAttemptedPasteboardAccess {
 }
 
+- (void)screenPromptDidEndAtLine:(int)line {
+}
+
+- (void)screenRequestUpload:(NSString *)args {
+}
+
+- (NSString *)screenValueOfVariableNamed:(NSString *)name {
+    return nil;
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
