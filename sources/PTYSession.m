@@ -879,9 +879,6 @@ ITERM_WEAKLY_REFERENCEABLE
             theBookmark = [theBookmark dictionaryBySettingObject:@YES forKey:KEY_USE_TAB_COLOR];
             needDivorce = YES;
         }
-    } else if ([iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark]) {
-        theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:KEY_USE_TAB_COLOR];
-        needDivorce = YES;
     }
     if (needDivorce) {
         // Keep it from stepping on an existing sesion with the same guid. Assign a fresh GUID.
