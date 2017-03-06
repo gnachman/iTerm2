@@ -109,8 +109,7 @@ NSString *PID_INFO_NAME = @"name";
     [super dealloc];
 }
 
-+ (ProcessCache*)sharedInstance
-{
++ (ProcessCache*)sharedInstance {
     assert(instance);
     return instance;
 }
@@ -123,17 +122,14 @@ NSString *PID_INFO_NAME = @"name";
 //   ps -aef -o stat
 // If a + occurs in the STAT column then it is considered to be a foreground
 // job.
-- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground
-{
+- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground {
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
     struct kinfo_proc kp;
     size_t bufSize = sizeof(kp);
 
     kp.kp_proc.p_comm[0] = 0;
-    @synchronized ([ProcessCache class]) {
-        if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
-            return nil;
-        }
+    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
+        return nil;
     }
 
     // has a controlling terminal and
@@ -150,21 +146,16 @@ NSString *PID_INFO_NAME = @"name";
     }
 }
 
-+ (NSArray *)allPids
-{
++ (NSArray *)allPids {
     int numBytes;
-    @synchronized ([ProcessCache class]) {
-        numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    }
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
     if (numBytes <= 0) {
         return nil;
     }
     
     // Put all the pids of running jobs in the pids array.
     int* pids = (int*) malloc(numBytes);
-    @synchronized ([ProcessCache class]) {
-        numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
-    }
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
     if (numBytes <= 0) {
         free(pids);
         return nil;
@@ -182,19 +173,16 @@ NSString *PID_INFO_NAME = @"name";
     return pidsArray;
 }
 
-// Returns 0 on failure. Not reliable before OS 10.7.
-+ (pid_t)ppidForPid:(pid_t)thePid
-{
+// Returns 0 on failure.
++ (pid_t)ppidForPid:(pid_t)thePid {
     struct proc_bsdshortinfo taskShortInfo;
     memset(&taskShortInfo, 0, sizeof(taskShortInfo));
     int rc;
-    @synchronized ([ProcessCache class]) {
-      rc = proc_pidinfo(thePid,
-                        PROC_PIDT_SHORTBSDINFO,
-                        0,
-                        &taskShortInfo,
-                        sizeof(taskShortInfo));
-    }
+    rc = proc_pidinfo(thePid,
+                      PROC_PIDT_SHORTBSDINFO,
+                      0,
+                      &taskShortInfo,
+                      sizeof(taskShortInfo));
     if (rc <= 0) {
       return 0;
     } else {
