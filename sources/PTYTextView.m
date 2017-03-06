@@ -1121,8 +1121,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
     _drawingHelper.boldAllowed = _useBoldFont;
     _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
-    _drawingHelper.asciiLigatures = _asciiLigatures;
-    _drawingHelper.nonAsciiLigatures = _nonAsciiLigatures;
+    _drawingHelper.asciiLigatures = _primaryFont.hasDefaultLigatures || _asciiLigatures;
+    _drawingHelper.nonAsciiLigatures = _secondaryFont.hasDefaultLigatures || _nonAsciiLigatures;
     
     const NSRect *rectArray;
     NSInteger rectCount;
