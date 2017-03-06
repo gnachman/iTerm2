@@ -75,7 +75,9 @@ NSString *PID_INFO_IS_FOREGROUND = @"foreground";
 NSString *PID_INFO_NAME = @"name";
 
 @implementation ProcessCache {
-    NSMutableDictionary* pidInfoCache_;
+    NSMutableDictionary* pidInfoCache_;  // guraded by _cacheLock
+    NSLock *_cacheLock;
+
     BOOL newOutput_;
     NSLock *_lock;
 }
@@ -95,6 +97,7 @@ NSString *PID_INFO_NAME = @"name";
     if (self) {
         pidInfoCache_ = [[NSMutableDictionary alloc] init];
         _lock = [[NSLock alloc] init];
+        _cacheLock = [[NSLock alloc] init];
     }
     return self;
 }
@@ -102,6 +105,7 @@ NSString *PID_INFO_NAME = @"name";
 - (void)dealloc {
     [pidInfoCache_ release];
     [_lock release];
+    [_cacheLock release];
     [super dealloc];
 }
 
@@ -322,21 +326,16 @@ NSString *PID_INFO_NAME = @"name";
     }
 }
 
-- (void)_update
-{
+- (void)_update {
     // Calculate a new ancestorPid->jobName dict.
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:100];
     [self _refreshProcessCache:temp];
 
     // Quickly swap the pointer to minimize lock time, and then free the old cache.
-    NSMutableDictionary* old = pidInfoCache_;
-    [temp retain];
-   
-    @synchronized ([ProcessCache class]) {
-        pidInfoCache_ = temp;
-    }
-    
-    [old release];
+    [_cacheLock lock];
+    [pidInfoCache_ autorelease];
+    pidInfoCache_ = [temp retain];
+    [_cacheLock unlock];
 }
 
 - (BOOL)testAndClearNewOutput {
@@ -370,16 +369,11 @@ NSString *PID_INFO_NAME = @"name";
     }
 }
 
-- (NSString*)jobNameWithPid:(int)pid
-{
-    NSString* jobName;
-    @synchronized ([ProcessCache class]) {
-        jobName = [pidInfoCache_ objectForKey:[NSNumber numberWithInt:pid]];
-        // Move jobName into this thread's autorelease pool so it will survive until we return to
-        // mainloop.
-        [[jobName retain] autorelease];
-    }
-    
+- (NSString*)jobNameWithPid:(int)pid {
+    [_cacheLock lock];
+    NSString *jobName = [[[pidInfoCache_ objectForKey:@(pid)] retain] autorelease];
+    [_cacheLock unlock];
+
     return jobName;
 }
 
