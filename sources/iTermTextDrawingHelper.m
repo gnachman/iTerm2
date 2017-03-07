@@ -629,6 +629,12 @@ typedef struct iTermTextColorContext {
         const CGFloat kMaxHeight = 15;
         const CGFloat kMinMargin = 3;
         const CGFloat kMargin = MAX(kMinMargin, (_cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
+
+        const CGFloat overage = rect.size.width - rect.size.height + 2 * kMargin;
+        if (overage > 0) {
+            rect.origin.x += overage * .7;
+            rect.size.width -= overage;
+        }
         NSPoint top = NSMakePoint(NSMinX(rect), rect.origin.y + kMargin);
         NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
         NSPoint bottom = NSMakePoint(NSMinX(rect), NSMaxY(rect) - kMargin);
