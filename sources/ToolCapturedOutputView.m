@@ -21,6 +21,7 @@
 #import "ToolCommandHistoryView.h"
 
 static const CGFloat kMargin = 4;
+static const CGFloat kButtonHeight = 23;
 
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
@@ -38,6 +39,7 @@ static const CGFloat kMargin = 4;
     VT100ScreenMark *mark_;  // Mark from which captured output came
     iTermSearchField *searchField_;
     NSButton *help_;
+    NSButton *_clearButton;
     NSArray *filteredEntries_;
 }
 
@@ -58,6 +60,16 @@ static const CGFloat kMargin = 4;
         help_.title = @"";
         [help_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:help_];
+
+        _clearButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)] autorelease];
+        [_clearButton setButtonType:NSMomentaryPushInButton];
+        [_clearButton setTitle:@"Clear"];
+        [_clearButton setTarget:self];
+        [_clearButton setAction:@selector(clear:)];
+        [_clearButton setBezelStyle:NSSmallSquareBezelStyle];
+        [_clearButton sizeToFit];
+        [_clearButton setAutoresizingMask:NSViewMinYMargin];
+        [self addSubview:_clearButton];
 
         searchField_ = [[iTermSearchField alloc] initWithFrame:CGRectZero];
         [searchField_ sizeToFit];
@@ -178,7 +190,7 @@ static const CGFloat kMargin = 4;
     // Search field
     NSRect searchFieldFrame = NSMakeRect(0,
                                          0,
-                                         frame.size.width - help_.frame.size.width - kMargin,
+                                         frame.size.width - help_.frame.size.width - _clearButton.frame.size.width - 2 * kMargin,
                                          searchField_.frame.size.height);
     searchField_.frame = searchFieldFrame;
 
@@ -187,6 +199,11 @@ static const CGFloat kMargin = 4;
                              1,
                              help_.frame.size.width,
                              help_.frame.size.height);
+
+    _clearButton.frame = NSMakeRect(help_.frame.origin.x - _clearButton.frame.size.width - kMargin,
+                                    1,
+                                    _clearButton.frame.size.width,
+                                    _clearButton.frame.size.height);
 
     // Scroll view
     [scrollView_ setFrame:NSMakeRect(0,
@@ -207,7 +224,21 @@ static const CGFloat kMargin = 4;
     return YES;
 }
 
+- (void)clear:(id)sender {
+    [allCapturedOutput_ release];
+    allCapturedOutput_ = [[NSMutableArray alloc] init];
+
+    [filteredEntries_ release];
+    filteredEntries_ = [[NSMutableArray alloc] init];
+
+    [tableView_ reloadData];
+
+    // Updating the table data causes the cursor to change into an arrow!
+    [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+}
+
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
+    _clearButton.enabled = (filteredEntries_.count > 0);
     return filteredEntries_.count;
 }
 
