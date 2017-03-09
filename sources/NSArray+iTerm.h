@@ -69,6 +69,8 @@
 // returns /a/b
 - (NSURL *)lowestCommonAncestorOfURLs;
 
+- (NSArray<ObjectType> *)subarrayFromIndex:(NSUInteger)index;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)

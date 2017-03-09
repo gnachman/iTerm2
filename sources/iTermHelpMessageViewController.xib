@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermHelpMessageViewController">
+            <connections>
+                <outlet property="_textField" destination="dvQ-0b-mWz" id="qfL-Yk-5PH"/>
+                <outlet property="view" destination="yCd-a0-Zco" id="7Ix-nl-fHC"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="yCd-a0-Zco">
+            <rect key="frame" x="0.0" y="0.0" width="163" height="33"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dvQ-0b-mWz">
+                    <rect key="frame" x="6" y="8" width="151" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Label" id="IN3-yQ-Jj4">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <constraints>
+                <constraint firstItem="dvQ-0b-mWz" firstAttribute="leading" secondItem="yCd-a0-Zco" secondAttribute="leading" constant="8" id="4IJ-pj-1e5"/>
+                <constraint firstAttribute="trailing" secondItem="dvQ-0b-mWz" secondAttribute="trailing" constant="8" id="4ql-ZO-epg"/>
+                <constraint firstAttribute="bottom" secondItem="dvQ-0b-mWz" secondAttribute="bottom" constant="8" id="7Hs-4r-JCh"/>
+                <constraint firstItem="dvQ-0b-mWz" firstAttribute="top" secondItem="yCd-a0-Zco" secondAttribute="top" constant="8" id="bcP-yd-4Li"/>
+            </constraints>
+        </customView>
+    </objects>
+</document>
