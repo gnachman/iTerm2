@@ -22,6 +22,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermMenuOpener.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
@@ -4868,6 +4869,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_hideAfterTmuxWindowOpens) {
         _hideAfterTmuxWindowOpens = NO;
         [self hideSession];
+
+        static NSString *const kAutoBurialKey = @"NoSyncAutoBurialReveal";
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:kAutoBurialKey]) {
+            [iTermMenuOpener revealMenuWithPath:@[ @"Session", @"Buried Sessions" ]
+                                        message:@"The session that started tmux has been hidden.\nYou can restore it here, in “Buried Sessions.”"];
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kAutoBurialKey];
+        }
     }
 }
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
