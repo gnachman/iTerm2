@@ -83,8 +83,6 @@
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 #import "QLPreviewPanel+iTerm.h"
-#import "Sparkle/SUStandardVersionComparator.h"
-#import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
 
@@ -95,6 +93,8 @@
 #include <libproc.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+@import Sparkle;
 
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
