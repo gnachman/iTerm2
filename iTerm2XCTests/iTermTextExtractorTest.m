@@ -136,6 +136,11 @@ static const NSInteger kUnicodeVersion = 9;
                                   }];
 }
 
+- (void)testSmartSelectionRulesPlistParseable {
+    NSArray *rules = [SmartSelectionController defaultRules];
+    XCTAssertTrue(rules.count > 0, @"No default smart selection rules"); 
+}
+
 // Ensures double-width characters are handled properly.
 - (void)testDoubleWidthCharacterSmartSelection {
     _lines = @[ @"blah 页页的翻真的很不方便.txt blah" ];
