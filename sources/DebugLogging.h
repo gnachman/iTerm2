@@ -69,6 +69,12 @@ extern BOOL gDebugLogging;
 #define ITCriticalError(condition, args...) \
   do { \
     if (!(condition)) { \
+      static BOOL haveAlerted; \
+      if (haveAlerted) { \
+        DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+        break; \
+      } \
+      haveAlerted = YES; \
       TurnOnDebugLoggingSilently(); \
       DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
       DLog(args); \
