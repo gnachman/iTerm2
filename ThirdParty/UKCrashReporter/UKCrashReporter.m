@@ -16,6 +16,35 @@
 
 NSString*    UKCrashReporterFindTenFiveCrashReportPath( NSString* appName, NSArray *folders );
 
+static NSString *UKReadErrorLog(void) {
+    NSString *executableName =
+        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory,
+                                                         NSUserDomainMask,
+                                                         YES);
+    NSString *path = paths.firstObject;
+    if (!path) {
+        return nil;
+    }
+    if (executableName) {
+        path = [path stringByAppendingPathComponent:executableName];
+    }
+
+    NSMutableString *result = [NSMutableString string];
+    for (NSInteger i = 0; i < 3; i++) {
+        path = [path stringByAppendingPathComponent:[NSString stringWithFormat:@"log.%ld.txt", i]];
+        if (!path) {
+            break;
+        }
+        NSString *log = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
+        if (log) {
+            [result appendString:log];
+        }
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    }
+    return result;
+}
+
 // -----------------------------------------------------------------------------
 //    UKCrashReporterCheckForCrash:
 //        This submits the crash report to a CGI form as a POST request by
@@ -57,7 +86,14 @@ void    UKCrashReporterCheckForCrash(void)
         NSDate*            lastTimeCrashLogged = (fileAttrs == nil) ? nil : [fileAttrs fileModificationDate];
         NSTimeInterval    lastCrashReportInterval = [[NSUserDefaults standardUserDefaults] floatForKey: @"UKCrashReporterLastCrashReportDate"];
         NSDate*            lastTimeCrashReported = [NSDate dateWithTimeIntervalSince1970: lastCrashReportInterval];
-        
+
+        NSString *errorLog = nil;
+        @try {
+            errorLog = UKReadErrorLog();
+        } @catch (NSException *exception) {
+            errorLog = [exception debugDescription];
+        }
+
         if( lastTimeCrashLogged )    // We have a crash log file and its mod date? Means we crashed sometime in the past.
         {
             // If we never before reported a crash or the last report lies before the last crash:
@@ -67,27 +103,24 @@ void    UKCrashReporterCheckForCrash(void)
                 NSString*            crashLog = [NSString stringWithContentsOfFile:crashLogPath
                                                                  encoding:NSUTF8StringEncoding
                                                                     error:nil];
-
+                if (errorLog.length > 0) {
+                    NSString *const ERROR_LOG_HEADER = @"~~ Error Logs ~~\n";
+                    if (![crashLog containsString:ERROR_LOG_HEADER]) {
+                        crashLog = [crashLog stringByAppendingString:ERROR_LOG_HEADER];
+                        crashLog = [crashLog stringByAppendingString:errorLog];
+                        [crashLog writeToFile:crashLogPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                    }
+                }
                 NSArray*            separateReports = [crashLog componentsSeparatedByString: @"\n\n**********\n\n"];
                 NSString*            currentReport = [separateReports count] > 0 ? [separateReports objectAtIndex: [separateReports count] -1] : @"*** Couldn't read Report ***";    // 1 since report 0 is empty (file has a delimiter at the top).
                 unsigned            numCores = UKCountCores();
                 NSString*            numCPUsString = (numCores == 1) ? @"" : [NSString stringWithFormat: @"%dx ",numCores];
                 
                 // Create a string containing Mac and CPU info, crash log and prefs:
-                NSDictionary *prefsDictionary = [[NSUserDefaults standardUserDefaults] persistentDomainForName: [[NSBundle mainBundle] bundleIdentifier]];
-                NSError *error;
-                NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:prefsDictionary
-                                                                             format:NSPropertyListXMLFormat_v1_0
-                                                                            options:0
-                                                                              error:&error];
-                
-                NSString *prefs = [[NSString alloc] initWithData:xmlData encoding:NSUTF8StringEncoding];
-
                 currentReport = [NSString stringWithFormat:
-                                    @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n\nPreferences:\n%@",
+                                    @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n",
                                     UKMachineName(), numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
-                                    currentReport,
-                                    prefs];
+                                    currentReport];
                 
                 // Now show a crash reporter window so the user can edit the info to send:
                 [[UKCrashReporter alloc] initWithLogString: currentReport];

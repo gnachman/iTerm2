@@ -196,14 +196,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy,
                                          (CGEventTapCallBack)OnTappedEvent,
                                          self);
     if (!_eventTapMachPort) {
-        ELog(@"CGEventTapCreate failed");
+        XLog(@"CGEventTapCreate failed");
         return NO;
     }
 
     DLog(@"Create runloop source");
     _runLoopEventSource = CFMachPortCreateRunLoopSource(NULL, _eventTapMachPort, 0);
     if (_runLoopEventSource == NULL) {
-        ELog(@"CFMachPortCreateRunLoopSource failed.");
+        XLog(@"CFMachPortCreateRunLoopSource failed.");
         CFRelease(_eventTapMachPort);
         _eventTapMachPort = NULL;
         return NO;

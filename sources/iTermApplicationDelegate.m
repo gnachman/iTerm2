@@ -2046,12 +2046,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)setSecureInput:(BOOL)secure {
     if (secure && _secureInputCount > 0) {
-        ELog(@"Want to turn on secure input but it's already on");
+        XLog(@"Want to turn on secure input but it's already on");
         return;
     }
 
     if (!secure && _secureInputCount == 0) {
-        ELog(@"Want to turn off secure input but it's already off");
+        XLog(@"Want to turn off secure input but it's already off");
         return;
     }
     DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
@@ -2067,7 +2067,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         OSErr err = DisableSecureEventInput();
         DLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
-            ELog(@"DisableSecureEventInput failed with error %d", (int)err);
+            XLog(@"DisableSecureEventInput failed with error %d", (int)err);
         } else {
             --_secureInputCount;
         }
@@ -2159,7 +2159,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     } else {
         processIdentifier = [iTermLSOF commandForProcess:pid execName:&processName];
         if (!processName || !processIdentifier) {
-            ELog(@"Could not identify name for process with pid %d", (int)pid);
+            XLog(@"Could not identify name for process with pid %d", (int)pid);
             return nil;
         }
         processName = [processName lastPathComponent];
@@ -2181,7 +2181,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             NSDate *confirm = setting[kAPINextConfirmationDate];
             if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
                 // No need to reauth, allow it.
-                ELog(@"Allowing API access to process id %d, name %@, bundle ID %@", pid, processName, processIdentifier);
+                XLog(@"Allowing API access to process id %d, name %@, bundle ID %@", pid, processName, processIdentifier);
                 return authorizedIdentity;
             }
 
@@ -2325,7 +2325,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                options:NSJSONReadingAllowFragments
                                                  error:&error];
     if (!value || error) {
-        ELog(@"JSON parsing error %@ for value in request %@", error, request);
+        XLog(@"JSON parsing error %@ for value in request %@", error, request);
         ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
         response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
         handler(response);

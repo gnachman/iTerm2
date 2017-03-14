@@ -5431,7 +5431,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         default:
-            ELog(@"Unknown key action %d", keyBindingAction);
+            XLog(@"Unknown key action %d", keyBindingAction);
             break;
     }
 }
@@ -7225,7 +7225,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self setPasteboard:NSGeneralPboard];
         }
     } else {
-        ELog(@"Clipboard access denied for CopyToClipboard");
+        XLog(@"Clipboard access denied for CopyToClipboard");
     }
 }
 
@@ -7313,7 +7313,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         return [NSURL fileURLWithPath:[anObject.path stringByDeletingLastPathComponent]];
                     }
                 } else {
-                    ELog(@"Could not find %@", anObject.path);
+                    XLog(@"Could not find %@", anObject.path);
                     return nil;
                 }
             }];
@@ -7459,7 +7459,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
         _textview.badgeLabel = [self badgeLabel];
     } else {
-        ELog(@"Badge is not properly base64 encoded: %@", base64Format);
+        XLog(@"Badge is not properly base64 encoded: %@", base64Format);
     }
 }
 
@@ -8829,7 +8829,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value {
     ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
     if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
-        ELog(@"Value %@ is not legal for key %@", value, key);
+        XLog(@"Value %@ is not legal for key %@", value, key);
         response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
         return response;
     }
