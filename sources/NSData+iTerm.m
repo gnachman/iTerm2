@@ -86,7 +86,7 @@
         if (errorString) {
             *error = [NSError errorWithDomain:@"com.googlecode.iterm2" code:1 userInfo:@{ @"errorMessage": errorString }];
         } else {
-            ELog(@"Error %s", errorMessage.bytes);
+            XLog(@"Error %s", errorMessage.bytes);
         }
     }
     [task waitUntilExit];

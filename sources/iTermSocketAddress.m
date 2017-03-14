@@ -30,7 +30,7 @@
         }
 
         default:
-            ELog(@"Unrecognized address family %@", @(sockaddr.sa_family));
+            XLog(@"Unrecognized address family %@", @(sockaddr.sa_family));
             return nil;
     }
 }

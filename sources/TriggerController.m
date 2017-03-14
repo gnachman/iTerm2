@@ -243,7 +243,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 
 - (IBAction)removeTrigger:(id)sender {
     if (_tableView.selectedRow < 0) {
-        ELog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
+        XLog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
         return;
     }
     [self setTriggerDictionary:nil forRow:[_tableView selectedRow] reloadData:YES];

@@ -2005,11 +2005,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     int height = (size.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / [[aSession textview] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
-        ELog(@"WARNING: Session has %d width", width);
+        XLog(@"WARNING: Session has %d width", width);
         width = 1;
     }
     if (height <= 0) {
-        ELog(@"WARNING: Session has %d height", height);
+        XLog(@"WARNING: Session has %d height", height);
         height = 1;
     }
 
@@ -2555,10 +2555,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 result[TAB_ARRANGEMENT_SESSION] =
                     [[self sessionForSessionView:sessionView] arrangementWithContents:YES];
             } else {
-                ELog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
+                XLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
             }
         } else {
-            ELog(@"No session ID in arrangement node %@", node);
+            XLog(@"No session ID in arrangement node %@", node);
         }
     }
     return result;
@@ -3873,7 +3873,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (overflow > 0) {
         // We can't maintain the locked size without making some other subview smaller than
         // its allowed min. Ignore the lockedness of the session.
-        ELog(@"Warning: locked session doesn't leave enough space for other views. overflow=%lf", overflow);
+        XLog(@"Warning: locked session doesn't leave enough space for other views. overflow=%lf", overflow);
         [splitView adjustSubviews];
         [self _splitViewDidResizeSubviews:splitView];
     } else {
@@ -4142,7 +4142,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             }
         }
         if (!anyChange) {
-            ELog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
+            XLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
             return;
         }
     }
@@ -4160,7 +4160,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
     if ([splitView frame].size.width == 0) {
-        ELog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
+        XLog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
         return;
     }
     PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
@@ -4289,7 +4289,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 if (fabs(currentSumOfSizes - targetSize) > [[splitView subviews] count]) {
                     // I'm not sure this will ever happen, but just in case quantization prevents us
                     // from converging give up and ignore constraints.
-                    ELog(@"No changes! Ignoring constraints!");
+                    XLog(@"No changes! Ignoring constraints!");
                     ignoreConstraints = YES;
                 } else {
                     PtyLog(@"splitView:resizeSubviewsWithOldSize - redistribute quantization error");
@@ -4417,7 +4417,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
     if ([root_ frame].size.width == 0) {
-        ELog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
+        XLog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
         return;
     }
     PtyLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);

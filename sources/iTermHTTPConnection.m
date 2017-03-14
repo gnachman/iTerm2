@@ -10,8 +10,6 @@
 #import "DebugLogging.h"
 #import "iTermSocketAddress.h"
 
-#define ILog ELog
-
 @implementation iTermHTTPConnection {
     int _fd;
     iTermSocketAddress *_clientAddress;
@@ -32,16 +30,16 @@
 
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
     return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
-        ILog(@"Channel closed");
+        DLog(@"Channel closed");
     });
 }
 
 - (void)close {
     if (_fd >= 0) {
-        ILog(@"Close http connection from %@", [NSThread callStackSymbols]);
+        DLog(@"Close http connection from %@", [NSThread callStackSymbols]);
         int rc = close(_fd);
         if (rc != 0) {
-            ILog(@"close failed with %s", strerror(errno));
+            XLog(@"close failed with %s", strerror(errno));
         }
         _fd = -1;
     }
@@ -52,7 +50,7 @@
         return NO;
     }
 
-    ILog(@"Send %d code", code);
+    DLog(@"Send %d code", code);
     BOOL ok;
     ok = [self writeString:[NSString stringWithFormat:@"HTTP/1.1 %d %@\r\n", code, reason]];
     if (!ok) {
@@ -73,10 +71,10 @@
     }
 
     if (code >= 100 && code < 200) {
-        ILog(@"Removing deadline because code is in the 100s");
+        DLog(@"Removing deadline because code is in the 100s");
         _deadline = INFINITY;
     } else {
-        ILog(@"Non-10x code, closing connection");
+        DLog(@"Non-10x code, closing connection");
         [self close];
     }
     return YES;
@@ -91,19 +89,19 @@
 }
 
 - (NSURLRequest *)readRequest {
-    ILog(@"Begin reading request. Begin clock towards deadline.");
+    DLog(@"Begin reading request. Begin clock towards deadline.");
     _deadline = [NSDate timeIntervalSinceReferenceDate] + 30;
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     NSString *requestLine = [self nextLine];
     if (!requestLine) {
-        ILog(@"No request line");
+        DLog(@"No request line");
         [self badRequest];
         return nil;
     }
 
     NSArray<NSString *> *parts = [requestLine componentsSeparatedByString:@" "];
     if (parts.count != 3) {
-        ILog(@"Wrong number of parts in request: %@", parts);
+        DLog(@"Wrong number of parts in request: %@", parts);
         [self badRequest];
         return nil;
     }
@@ -112,14 +110,14 @@
     request.URL = [NSURL URLWithString:parts[1]];
     NSString *protocol = parts[2];
     if (![protocol isEqualToString:@"HTTP/1.1"]) {
-        ILog(@"Protocol not 1.1: %@", protocol);
+        DLog(@"Protocol not 1.1: %@", protocol);
         [self badRequest];
         return nil;
     }
 
     NSMutableDictionary<NSString *, NSString *> *headers = [self readHeaders];
     if (!headers) {
-        ILog(@"No headers");
+        DLog(@"No headers");
         [self badRequest];
         return nil;
     }
@@ -127,17 +125,17 @@
 
     // Requests with contents are not supported.
     if (headers[@"content-length"]) {
-        ILog(@"Received unsupported header content-length");
+        DLog(@"Received unsupported header content-length");
         [self badRequest];
         return nil;
     }
 
-    ILog(@"Request looks good");
+    DLog(@"Request looks good");
     return request;
 }
 
 - (NSMutableDictionary<NSString *, NSString *> *)readHeaders {
-    ILog(@"Reading headers");
+    DLog(@"Reading headers");
     NSMutableDictionary<NSString *, NSString *> *headers = [NSMutableDictionary dictionary];
     const int kMaxHeaders = 100;
     while (headers.count < kMaxHeaders) {
@@ -147,22 +145,22 @@
             return nil;
         }
         if (line.length == 0) {
-            ILog(@"found end of headers");
+            DLog(@"found end of headers");
             break;
         }
         NSInteger colon = [line rangeOfString:@":"].location;
         if (colon == NSNotFound || colon + 1 == line.length) {
-            ILog(@"header has no colon: %@", line);
+            DLog(@"header has no colon: %@", line);
             return nil;
         }
 
         NSString *key = [[line substringToIndex:colon] lowercaseString];
         NSString *value = [line substringFromIndex:colon + 1];
         headers[key] = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        ILog(@"Add header: %@: %@", key, value);
+        DLog(@"Add header: %@: %@", key, value);
     }
     if (headers.count == kMaxHeaders) {
-        ILog(@"Too many headers");
+        DLog(@"Too many headers");
         return nil;
     }
     return headers;
@@ -184,7 +182,7 @@
             return nil;
         }
     }
-    ILog(@"Overly long line");
+    DLog(@"Overly long line");
     return nil;
 }
 
@@ -237,9 +235,9 @@
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc <= 0) {
         if (rc < 0) {
-            ILog(@"Read failed with %s", strerror(errno));
+            DLog(@"Read failed with %s", strerror(errno));
         } else {
-            ILog(@"EOF reached");
+            DLog(@"EOF reached");
         }
         _fd = -1;
         return NO;
@@ -251,7 +249,7 @@
 
 - (BOOL)waitForIO:(BOOL)read {
     if (_fd < 0) {
-        ILog(@"Tried select on closed file descriptor");
+        DLog(@"Tried select on closed file descriptor");
         return NO;
     }
     fd_set set;
@@ -282,10 +280,10 @@
         }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
-        ILog(@"select timed out");
+        DLog(@"select timed out");
         return NO;
     } else if (rc < 0) {
-        ILog(@"Select failed with %s", strerror(errno));
+        DLog(@"Select failed with %s", strerror(errno));
         return NO;
     }
 
@@ -297,7 +295,7 @@
 }
 
 - (BOOL)writeData:(NSData *)data {
-    ILog(@"Want to write %d bytes of data", (int)data.length);
+    DLog(@"Want to write %d bytes of data", (int)data.length);
     NSInteger offset = 0;
     while (offset < data.length) {
         if (![self waitForIO:NO]) {
@@ -310,9 +308,9 @@
         } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
         if (rc <= 0) {
             if (rc < 0) {
-                ILog(@"Write failed with %s", strerror(errno));
+                DLog(@"Write failed with %s", strerror(errno));
             } else {
-                ILog(@"EOF reached");
+                DLog(@"EOF reached");
             }
             _fd = -1;
             return NO;

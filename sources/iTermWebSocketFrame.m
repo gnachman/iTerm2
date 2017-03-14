@@ -9,8 +9,6 @@
 #import "iTermWebSocketFrame.h"
 #import "DebugLogging.h"
 
-#define ILog ELog
-
 @interface iTermWebSocketFrame()
 @property (nonatomic, readwrite) BOOL fin;
 @property (nonatomic, readwrite) iTermWebSocketOpcode opcode;
@@ -88,7 +86,7 @@
 }
 
 + (instancetype)frameWithDataSource:(unsigned char *(^)(int64_t))dataSource {
-    ILog(@"Reading a frame...");
+    DLog(@"Reading a frame...");
     iTermWebSocketFrame *frame = [[iTermWebSocketFrame alloc] init];
 
     unsigned char *data;
@@ -98,7 +96,7 @@
     }
     frame.fin = !!(data[0] & 0x80);
     frame.opcode = (data[0] & 0x0f);
-    ILog(@"Frame without payload: %@", frame);
+    DLog(@"Frame without payload: %@", frame);
 
     NSInteger payloadLength = 0;
     data = dataSource(1);
@@ -109,7 +107,7 @@
 
     payloadLength = (data[0] & 0x7f);
     if (payloadLength == 126) {
-        ILog(@"Read medium length payload size");
+        DLog(@"Read medium length payload size");
         data = dataSource(2);
         if (!data) {
             return nil;
@@ -118,7 +116,7 @@
         memmove(&networkLength, data, sizeof(networkLength));
         payloadLength = ntohs(networkLength);
     } else if (payloadLength == 127) {
-        ILog(@"Read long payload size");
+        DLog(@"Read long payload size");
         data = dataSource(8);
         if (!data) {
             return nil;
@@ -127,16 +125,16 @@
         memmove(&networkLength, data, sizeof(networkLength));
         payloadLength = ntohll(networkLength);
     }
-    ILog(@"Payload length is %@", @(payloadLength));
+    DLog(@"Payload length is %@", @(payloadLength));
 
     unsigned char maskingKey[4] = { 0 };
     if (mask) {
-        ILog(@"Have mask");
+        DLog(@"Have mask");
         data = dataSource(4);
         if (!data) {
             return nil;
         }
-        ILog(@"Mask is %@", [NSData dataWithBytes:data length:4]);
+        DLog(@"Mask is %@", [NSData dataWithBytes:data length:4]);
         memmove(maskingKey, data, 4);
     }
 
@@ -197,11 +195,11 @@
         return nil;
     }
     if (!_data) {
-        ILog(@"Encoding frame %@", self);
+        DLog(@"Encoding frame %@", self);
         NSMutableData *data = [NSMutableData data];
         uint8_t byte = 0;
         if (self.fin) {
-            ILog(@"Set fin bit");
+            DLog(@"Set fin bit");
             byte |= 0x80;
         }
         byte |= (self.opcode & 0x0f);
@@ -211,25 +209,25 @@
         // We're a server so we never mask outgoing data. Mask bit won't get set here (would go in
         // high bit of 'byte').
         if (self.payload.length <= 125) {
-            ILog(@"Payload is short so using 1 byte encoding");
+            DLog(@"Payload is short so using 1 byte encoding");
             byte = self.payload.length;
             [data appendBytes:&byte length:1];
         } else if (self.payload.length <= 0xffff) {
-            ILog(@"Medium length payload, using 3 byte encoding");
+            DLog(@"Medium length payload, using 3 byte encoding");
             byte = 126;
             [data appendBytes:&byte length:1];
 
             uint16_t payloadLength = htons(self.payload.length);
             [data appendBytes:&payloadLength length:sizeof(payloadLength)];
         } else {
-            ILog(@"Long payload, using 9 byte encoding");
+            DLog(@"Long payload, using 9 byte encoding");
             byte = 127;
             [data appendBytes:&byte length:1];
 
             uint64_t payloadLength = htonll(self.payload.length);
             [data appendBytes:&payloadLength length:sizeof(payloadLength)];
         }
-        ILog(@"Frame without payload: %@", data);
+        DLog(@"Frame without payload: %@", data);
 
         // Do not encode masking key since we're a server.
 
@@ -265,15 +263,15 @@
 
 - (BOOL)appendFragment:(iTermWebSocketFrame *)fragment {
     if (fragment.opcode != iTermWebSocketOpcodeContinuation) {
-        ELog(@"Fragment opcode not continuation");
+        XLog(@"Fragment opcode not continuation");
         return NO;
     }
     if (!self.fin) {
-        ELog(@"Appending fragment to finished frame");
+        XLog(@"Appending fragment to finished frame");
         return NO;
     }
 
-    ILog(@"Appending fragment to frame %@", self);
+    DLog(@"Appending fragment to frame %@", self);
 
     self.fin = fragment.fin;
     @autoreleasepool {
@@ -281,16 +279,16 @@
         [temp appendData:fragment.payload];
         self.payload = temp;
     }
-    ILog(@"Frame is now %@", self);
+    DLog(@"Frame is now %@", self);
 
     return YES;
 }
 
 - (iTermWebSocketFrame *)fragmentFromStartWithPayloadLength:(uint64_t)length {
-    ILog(@"Fragmenting frame by taking %@ bytes from start", @(length));
+    DLog(@"Fragmenting frame by taking %@ bytes from start", @(length));
     iTermWebSocketFrame *first;
     if (length >= self.payload.length) {
-        ILog(@"Payload not large enough to fragment");
+        DLog(@"Payload not large enough to fragment");
         return nil;
     }
     if (self.opcode == iTermWebSocketOpcodeText) {
@@ -301,7 +299,7 @@
         return nil;
     }
     self.payload = [self.payload subdataWithRange:NSMakeRange(length, self.payload.length - length)];
-    ILog(@"Now have two frames: %@ and %@", first, self);
+    DLog(@"Now have two frames: %@ and %@", first, self);
     return first;
 }
 

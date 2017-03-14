@@ -205,7 +205,7 @@ static NSError *SCPFileError(NSString *description) {
             if (config) {
                 [configs addObject:config];
             } else {
-                ELog(@"Could not parse config file at %@", path);
+                XLog(@"Could not parse config file at %@", path);
             }
         }
     }
@@ -254,7 +254,7 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
         [self.session connect];
         if (self.stopped) {
-            ELog(@"Stop after connect");
+            XLog(@"Stop after connect");
             dispatch_sync(dispatch_get_main_queue(), ^() {
                 [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
             });
@@ -307,11 +307,11 @@ static NSError *SCPFileError(NSString *description) {
         }
         for (NSString *authType in authTypes) {
             if (self.stopped) {
-                ELog(@"Break out of auth loop because stopped");
+                XLog(@"Break out of auth loop because stopped");
                 break;
             }
             if (!self.session.session) {
-                ELog(@"Break out of auth loop because disconnected");
+                XLog(@"Break out of auth loop because disconnected");
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
@@ -356,7 +356,7 @@ static NSError *SCPFileError(NSString *description) {
                 for (NSString *keyPath in keyPaths) {
                     keyPath = [self filenameByExpandingMetasyntaticVariables:keyPath];
                     if (![fileManager fileExistsAtPath:keyPath]) {
-                        ELog(@"No key file at %@", keyPath);
+                        XLog(@"No key file at %@", keyPath);
                         continue;
                     }
                     __block NSString *password = nil;
@@ -369,10 +369,10 @@ static NSError *SCPFileError(NSString *description) {
                                                                      keyboardInteractivePrompt:prompt];
                         });
                     }
-                    ELog(@"Attempting to authenticate with key %@", keyPath);
+                    XLog(@"Attempting to authenticate with key %@", keyPath);
                     NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
                     if (![[NSFileManager defaultManager] fileExistsAtPath:publicKeyPath]) {
-                        ELog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
+                        XLog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
                         publicKeyPath = nil;
                     }
                     [self.session authenticateByPublicKey:publicKeyPath
@@ -380,12 +380,12 @@ static NSError *SCPFileError(NSString *description) {
                                               andPassword:password];
                 
                     if (self.session.isAuthorized) {
-                        ELog(@"Authorized!");
+                        XLog(@"Authorized!");
                         break;
                     }
 
                     if (!self.session.session) {
-                        ELog(@"Disconnected!");
+                        XLog(@"Disconnected!");
                         break;
                     }
                 }
@@ -396,7 +396,7 @@ static NSError *SCPFileError(NSString *description) {
         }
     }
     if (self.stopped) {
-        ELog(@"Stop after auth");
+        XLog(@"Stop after auth");
         dispatch_sync(dispatch_get_main_queue(), ^() {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         });
@@ -460,7 +460,7 @@ static NSError *SCPFileError(NSString *description) {
                                                     }
                                                 });
                                                 if (self.stopped) {
-                                                    ELog(@"Stopping mid-download");
+                                                    XLog(@"Stopping mid-download");
                                                 }
                                                 return !self.stopped;
                                             }];

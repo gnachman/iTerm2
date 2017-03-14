@@ -263,7 +263,7 @@ static BOOL gShowingWarning;
         return pre;
     }
     if (pre < 0 || pre >= mapping.count) {
-        ELog(@"Selected value %@ is out of range for mapping %@", @(pre), mapping);
+        XLog(@"Selected value %@ is out of range for mapping %@", @(pre), mapping);
         return pre;
     }
     return [mapping[pre] integerValue];

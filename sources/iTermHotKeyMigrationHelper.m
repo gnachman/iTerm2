@@ -235,7 +235,7 @@
                 NSError *error = nil;
                 NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
                 if (error) {
-                    ELog(@"Failed to create JSON data from dictionary %@ with error %@", dict, error);
+                    XLog(@"Failed to create JSON data from dictionary %@ with error %@", dict, error);
                 }
                 return data;
             }
