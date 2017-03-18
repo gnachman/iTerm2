@@ -48,8 +48,6 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 @interface iTermAPIServer()<iTermWebSocketConnectionDelegate>
 @end
 
-#define ILog ELog
-
 @interface iTermAPIRequest : NSObject
 @property (nonatomic, weak) iTermWebSocketConnection *connection;
 @property (nonatomic) ITMRequest *request;
@@ -151,7 +149,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         _connections = [[NSMutableDictionary alloc] init];
         _socket = [iTermSocket tcpIPV4Socket];
         if (!_socket) {
-            ELog(@"Failed to create socket");
+            XLog(@"Failed to create socket");
             return nil;
         }
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
@@ -162,7 +160,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         iTermSocketAddress *socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
                                                                                         port:1912];
         if (![_socket bindToAddress:socketAddress]) {
-            ELog(@"Failed to bind");
+            XLog(@"Failed to bind");
             return nil;
         }
 
@@ -170,7 +168,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress];
         }];
         if (!ok) {
-            ELog(@"Failed to listen");
+            XLog(@"Failed to listen");
             return nil;
         }
     }
@@ -191,7 +189,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 }
 
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
-    ILog(@"Accepted connection");
+    DLog(@"Accepted connection");
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
     dispatch_async(queue, ^{
@@ -199,7 +197,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
         pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
         if (pid == -1) {
-            ELog(@"Reject connection from unidentifiable process with address %@", address);
+            XLog(@"Reject connection from unidentifiable process with address %@", address);
             [connection unauthorized];
             return;
         }
@@ -209,7 +207,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             if (identity) {
                 dispatch_async(queue, ^{ [weakSelf startRequestOnConnection:connection identity:identity]; });
             } else {
-                ELog(@"Reject unauthenticated process (pid %d)", pid);
+                XLog(@"Reject unauthenticated process (pid %d)", pid);
                 [connection unauthorized];
                 return;
             }
@@ -220,30 +218,30 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 - (void)startRequestOnConnection:(iTermHTTPConnection *)connection identity:(NSDictionary *)identity {
     NSURLRequest *request = [connection readRequest];
     if (!request) {
-        ELog(@"Failed to read request from HTTP connection");
+        XLog(@"Failed to read request from HTTP connection");
         [connection badRequest];
         return;
     }
     if (![request.URL.path isEqualToString:@"/"]) {
-        ELog(@"Path %@ not known", request.URL.path);
+        XLog(@"Path %@ not known", request.URL.path);
         [connection badRequest];
         return;
     }
     if ([iTermWebSocketConnection validateRequest:request]) {
-        ILog(@"Upgrading request to websocket");
+        DLog(@"Upgrading request to websocket");
         iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
         webSocketConnection.peerIdentity = identity;
         webSocketConnection.delegate = self;
         _connections[webSocketConnection.handle] = webSocketConnection;
         [webSocketConnection handleRequest:request];
     } else {
-        ELog(@"Bad request %@", request);
+        XLog(@"Bad request %@", request);
         [connection badRequest];
     }
 }
 
 - (void)sendResponse:(ITMResponse *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
-    ILog(@"Sending response %@", response);
+    DLog(@"Sending response %@", response);
     [webSocketConnection sendBinary:[response data]];
 }
 
@@ -424,7 +422,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
     dispatch_async(_queue, ^{
-        ILog(@"Connection terminated");
+        DLog(@"Connection terminated");
         [_connections removeObjectForKey:webSocketConnection.handle];
         dispatch_async(_executionQueue, ^{
             if (self.transaction.connection == webSocketConnection) {
@@ -443,14 +441,14 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (frame.opcode == iTermWebSocketOpcodeBinary) {
         ITMRequest *request = [ITMRequest parseFromData:frame.payload error:nil];
         if (request) {
-            ILog(@"Received request: %@", request);
+            DLog(@"Received request: %@", request);
             __weak __typeof(self) weakSelf = self;
             dispatch_async(_executionQueue, ^{
                 [weakSelf enqueueOrDispatchRequest:request onConnection:webSocketConnection];
             });
         }
     }
-    ILog(@"Got a frame: %@", frame);
+    DLog(@"Got a frame: %@", frame);
 }
 
 @end

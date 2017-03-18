@@ -2155,9 +2155,9 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalRequestUpload:value];
         }
     } else if ([key isEqualToString:@"BeginFile"]) {
-        ELog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
+        XLog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndFile"]) {
-        ELog(@"Deprecated and unsupported code EndFile received. Use File instead.");
+        XLog(@"Deprecated and unsupported code EndFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndCopy"]) {
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalCopyBufferToPasteboard];

@@ -160,7 +160,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
     @try {
         [fileHandle writeData:compressedData];
     } @catch (NSException *exception) {
-        ELog(@"Couldn't write: %@", exception);
+        XLog(@"Couldn't write: %@", exception);
         return NO;
     }
     return YES;
@@ -171,7 +171,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
     @try {
         return [fileHandle readDataToEndOfFile];
     } @catch (NSException *exception) {
-        ELog(@"Couldn't read: %@", exception);
+        XLog(@"Couldn't read: %@", exception);
         return nil;
     }
 }
@@ -193,13 +193,13 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
     }
     int jsonFDs[2] = { 0, 0 };
     if (pipe(jsonFDs)) {
-        ELog(@"Failed to create a pipe: %s", strerror(errno));
+        XLog(@"Failed to create a pipe: %s", strerror(errno));
         return nil;
     }
     
     int compressedImageFDs[2] = { 0, 0 };
     if (pipe(compressedImageFDs)) {
-        ELog(@"Failed to create a pipe: %s", strerror(errno));
+        XLog(@"Failed to create a pipe: %s", strerror(errno));
         close(jsonFDs[0]);
         close(jsonFDs[1]);
         return nil;

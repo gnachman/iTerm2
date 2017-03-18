@@ -91,7 +91,7 @@
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            ELog(@"Igoring dynamic profiles in malformed file %@ and continuing.", fullName);
+            XLog(@"Igoring dynamic profiles in malformed file %@ and continuing.", fullName);
         }
     }
 
@@ -141,7 +141,7 @@
         // Try JSON
         NSData *data = [NSData dataWithContentsOfFile:filename];
         if (!data) {
-            ELog(@"Dynamic Profiles file %@ is unreadable", filename);
+            XLog(@"Dynamic Profiles file %@ is unreadable", filename);
             return nil;
         }
         NSError *error = nil;
@@ -149,7 +149,7 @@
                                                options:0
                                                  error:&error];
         if (!dict) {
-            ELog(@"Dynamic Profiles file %@ doesn't contain a valid property list", filename);
+            XLog(@"Dynamic Profiles file %@ doesn't contain a valid property list", filename);
             return nil;
         }
         if (fileType) {
@@ -158,22 +158,22 @@
     }
     NSArray *entries = dict[@"Profiles"];
     if (!entries) {
-        ELog(@"Property list in %@ has no entries", entries);
+        XLog(@"Property list in %@ has no entries", entries);
         return nil;
     }
     
     NSMutableArray *profiles = [NSMutableArray array];
     for (Profile *profile in entries) {
         if (![profile[KEY_GUID] isKindOfClass:[NSString class]]) {
-            ELog(@"Dynamic profile is missing the Guid field in file %@", filename);
+            XLog(@"Dynamic profile is missing the Guid field in file %@", filename);
             continue;
         }
         if (![profile[KEY_NAME] isKindOfClass:[NSString class]]) {
-            ELog(@"Dynamic profile with guid %@ is missing the name field", profile[KEY_GUID]);
+            XLog(@"Dynamic profile with guid %@ is missing the name field", profile[KEY_GUID]);
             continue;
         }
         if ([self nonDynamicProfileHasGuid:profile[KEY_GUID]]) {
-            ELog(@"Dynamic profile with guid %@ conflicts with non-dynamic profile with same guid",
+            XLog(@"Dynamic profile with guid %@ conflicts with non-dynamic profile with same guid",
                  profile[KEY_GUID]);
             continue;
         }
@@ -196,7 +196,7 @@
     
     for (Profile *profile in allProfiles) {
         if ([guids containsObject:profile[KEY_GUID]]) {
-            ELog(@"Two dynamic profiles have the same guid: %@", profile[KEY_GUID]);
+            XLog(@"Two dynamic profiles have the same guid: %@", profile[KEY_GUID]);
             continue;
         }
         DLog(@"Read profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
@@ -269,7 +269,7 @@
     if (parentName) {
         prototype = [[ProfileModel sharedInstance] bookmarkWithName:parentName];
         if (!prototype) {
-            ELog(@"Dynamic profile %@ references unknown parent name %@. Using default profile as parent.",
+            XLog(@"Dynamic profile %@ references unknown parent name %@. Using default profile as parent.",
                  profile[KEY_NAME], parentName);
         }
     }

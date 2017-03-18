@@ -8,6 +8,7 @@
 
 #import "DebugLogging.h"
 #import "iTermApplication.h"
+#import "NSFileManager+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import <Cocoa/Cocoa.h>
 
@@ -156,6 +157,50 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         [gDebugLogLock unlock];
     }
     return 1;
+}
+
+void LogForNextCrash(const char *file, int line, const char *function, NSString* value) {
+    static NSFileHandle *handle;
+    NSFileHandle *handleToUse;
+    static dispatch_once_t onceToken;
+    static NSObject *object;
+    dispatch_once(&onceToken, ^{
+        object = [[NSObject alloc] init];
+    });
+    @synchronized (object) {
+        static NSInteger numLines;
+        if (numLines % 100 == 0) {
+            static NSInteger fileNumber;
+            NSString *path = [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:[NSString stringWithFormat:@"log.%ld.txt", fileNumber]];
+            fileNumber = (fileNumber + 1) % 3;
+            [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+            [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
+            handle = [[NSFileHandle fileHandleForWritingAtPath:path] retain];
+            NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+            dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd HH:mm:ss.SSS ZZZ"
+                                                                       options:0
+                                                                        locale:nil];
+            NSDate *date = [NSDate dateWithTimeIntervalSinceNow:-clock()/CLOCKS_PER_SEC];
+            NSString *string = [NSString stringWithFormat:@"%@ %@\n", @(getpid()), [dateFormatter stringFromDate:date]];
+            [handle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+        handleToUse = [[handle retain] autorelease];
+        numLines++;
+    }
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    const char *lastSlash = strrchr(file, '/');
+    if (!lastSlash) {
+        lastSlash = file;
+    } else {
+        lastSlash++;
+    }
+    NSString *string = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): %@\n",
+                        (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, value];
+    @synchronized (object) {
+        [handleToUse writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
+    }
 }
 
 static void StartDebugLogging() {

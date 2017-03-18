@@ -579,7 +579,7 @@ exit:
         case kPTYTextViewSelectionExtensionUnitMark:
             return @"By Mark";
     }
-    ELog(@"Unrecognized selection movement unit %@", @(unit));
+    XLog(@"Unrecognized selection movement unit %@", @(unit));
     return @"";
 }
 
@@ -1194,7 +1194,7 @@ exit:
                 }
                 [iTermKeyBindingMgr removeMappingAtIndex:i inBookmark:mutableBookmark];
             } else {
-                ELog(@"Profile with guid %@ has key mapping referencing guid %@ with key %@ but I can't find it in sorted keys",
+                XLog(@"Profile with guid %@ has key mapping referencing guid %@ with key %@ but I can't find it in sorted keys",
                      bookmark[KEY_GUID],
                      guid,
                      keyToRemove);

@@ -47,8 +47,24 @@ extern BOOL gDebugLogging;
             DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
         } \
     } while (0)
-// Error log: write to debug log and system log.
+
+// Info log: no private info. Low-volume. Logged to crash reports.
+#define ILog(args...) \
+    do { \
+        DLog(args); \
+        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+    } while (0)
+
+// Error log: no private info. Low-volume. Logged to crash reports.
 #define ELog(args...) \
+    do { \
+        DLog(args); \
+        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+        NSLog(args); \
+    } while (0)
+
+// Private error log. May contain private info. Logged to syslog, but not crash reports.
+#define XLog(args...) \
     do { \
         DLog(args); \
         NSLog(args); \
@@ -69,6 +85,12 @@ extern BOOL gDebugLogging;
 #define ITCriticalError(condition, args...) \
   do { \
     if (!(condition)) { \
+      static BOOL haveAlerted; \
+      if (haveAlerted) { \
+        DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+        break; \
+      } \
+      haveAlerted = YES; \
       TurnOnDebugLoggingSilently(); \
       DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
       DLog(args); \
@@ -86,6 +108,7 @@ extern BOOL gDebugLogging;
 
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+void LogForNextCrash(const char *file, int line, const char *function, NSString* value);
 void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);
 

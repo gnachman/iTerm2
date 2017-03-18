@@ -1268,6 +1268,12 @@
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1F6E1E6BEA7900363EE9 /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
+		A62A1F711E6E724B00363EE9 /* iTermMenuOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1F6F1E6E724B00363EE9 /* iTermMenuOpener.h */; };
+		A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1F701E6E724B00363EE9 /* iTermMenuOpener.m */; };
+		A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */; };
+		A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */; };
+		A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
+		A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
 		A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */; };
 		A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */; };
 		A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */; };
@@ -3212,6 +3218,11 @@
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
 		A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextDrawingHelper.m; sourceTree = "<group>"; tabWidth = 4; };
+		A62A1F6F1E6E724B00363EE9 /* iTermMenuOpener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMenuOpener.h; sourceTree = "<group>"; };
+		A62A1F701E6E724B00363EE9 /* iTermMenuOpener.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMenuOpener.m; sourceTree = "<group>"; };
+		A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHelpMessageViewController.h; sourceTree = "<group>"; };
+		A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHelpMessageViewController.m; sourceTree = "<group>"; };
+		A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHelpMessageViewController.xib; sourceTree = "<group>"; };
 		A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoryTreeNode.h; sourceTree = "<group>"; };
 		A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoryTreeNode.m; sourceTree = "<group>"; };
 		A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoryTree.h; sourceTree = "<group>"; };
@@ -5651,6 +5662,8 @@
 				A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */,
 				A66E5E5B1E63625600E8FE35 /* iTermURLActionFactory.h */,
 				A66E5E5C1E63625600E8FE35 /* iTermURLActionFactory.m */,
+				A62A1F6F1E6E724B00363EE9 /* iTermMenuOpener.h */,
+				A62A1F701E6E724B00363EE9 /* iTermMenuOpener.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -5718,6 +5731,9 @@
 				1D4BAFE91BFE77E4004FF52B /* iTermPrintAccessoryViewController.h */,
 				1D4BAFEA1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m */,
 				1D4BAFEB1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib */,
+				A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */,
+				A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */,
+				A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -6737,6 +6753,7 @@
 				A667190B1DCE36C3000CE608 /* iTermCarbonHotKeyController.h in Headers */,
 				A667190C1DCE36C3000CE608 /* iTermWeakReference.h in Headers */,
 				A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
+				A62A1F711E6E724B00363EE9 /* iTermMenuOpener.h in Headers */,
 				A667190E1DCE36C3000CE608 /* iTermMark.h in Headers */,
 				A667190F1DCE36C3000CE608 /* SSKeychain.h in Headers */,
 				A66719101DCE36C3000CE608 /* iTermCapturedOutputMark.h in Headers */,
@@ -6788,6 +6805,7 @@
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
+				A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */,
 				A66719411DCE36C3000CE608 /* iTermSystemVersion.h in Headers */,
 				A66719421DCE36C3000CE608 /* iTermTip.h in Headers */,
 				A66719431DCE36C3000CE608 /* iTermScriptingWindow.h in Headers */,
@@ -7490,6 +7508,7 @@
 				1D44D09D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */,
+				A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */,
 				1D44D08C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSelectedTab.png in Resources */,
 				1D44D0A81CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testUseNonAsciiFont.png in Resources */,
 				A67D0D361A2EE12A003A8B35 /* AddressBook.strings in Resources */,
@@ -7749,6 +7768,7 @@
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
+				A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */,
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
@@ -8300,6 +8320,8 @@
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
+				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
+				A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
 				A66719631DCE3772000CE608 /* iTermSocketIPV4Address.m in Sources */,
@@ -9901,7 +9923,7 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -9961,7 +9983,7 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -10013,7 +10035,7 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";

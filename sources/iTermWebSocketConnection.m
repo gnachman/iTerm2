@@ -15,8 +15,6 @@
 
 #import <CommonCrypto/CommonDigest.h>
 
-#define ILog ELog
-
 static NSString *const kProtocolName = @"api.iterm2.com";
 static const NSInteger kWebSocketVersion = 13;
 
@@ -38,11 +36,11 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
 + (BOOL)validateRequest:(NSURLRequest *)request {
     if (![request.HTTPMethod isEqualToString:@"GET"]) {
-        ILog(@"Method not GET");
+        DLog(@"Method not GET");
         return NO;
     }
     if (request.URL.path.length == 0) {
-        ILog(@"Empty path");
+        DLog(@"Empty path");
         return NO;
     }
     NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
@@ -53,7 +51,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
          };
     for (NSString *key in requiredValues) {
         if (![headers[key] isEqualToString:requiredValues[key]]) {
-            ILog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
+            DLog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
             return NO;
         }
     }
@@ -65,14 +63,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
            @"origin" ];
     for (NSString *key in requiredKeys) {
         if ([headers[key] length] == 0) {
-            ILog(@"Empty or missing value for header %@", key);
+            DLog(@"Empty or missing value for header %@", key);
             return NO;
         }
     }
 
     NSURL *originURL = [NSURL URLWithString:headers[@"origin"]];
     if (![originURL.host isEqualToString:@"localhost"]) {
-        ILog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
+        DLog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
         return NO;
     }
 
@@ -87,17 +85,17 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
     NSArray<NSString *> *loopbackNames = @[ @"localhost", @"127.0.0.1", @"[::1]" ];
     if (![loopbackNames containsObject:host]) {
-        ILog(@"Host header does not specify a loopback host: %@", host);
+        DLog(@"Host header does not specify a loopback host: %@", host);
         return NO;
     }
 
     NSString *version = headers[@"sec-websocket-version"];
     if ([version integerValue] < kWebSocketVersion) {
-        ILog(@"websocket version too old");
+        DLog(@"websocket version too old");
         return NO;
     }
 
-    ILog(@"Request validates as websocket upgrade request");
+    DLog(@"Request validates as websocket upgrade request");
     return YES;
 }
 
@@ -110,7 +108,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 }
 
 - (void)handleRequest:(NSURLRequest *)request {
-    ILog(@"Handling websocket request %@", request);
+    DLog(@"Handling websocket request %@", request);
     NSAssert(_state == iTermWebSocketConnectionStateConnecting, @"Request already handled");
 
     if (![self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]
@@ -141,7 +139,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 }
 
 - (BOOL)didReceiveData:(NSMutableData *)data {
-    ILog(@"Read %@ bytes of data", @(data.length));
+    DLog(@"Read %@ bytes of data", @(data.length));
     __weak __typeof(self) weakSelf = self;
     [_frameBuilder addData:data
                      frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
@@ -162,36 +160,36 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
 - (void)sendBinary:(NSData *)binaryData {
     if (_state == iTermWebSocketConnectionStateOpen) {
-        ILog(@"Sending binary frame");
+        DLog(@"Sending binary frame");
         [self sendFrame:[iTermWebSocketFrame binaryFrameWithData:binaryData]];
     } else {
-        ILog(@"Not sending binary frame because not open");
+        DLog(@"Not sending binary frame because not open");
     }
 }
 
 - (void)sendText:(NSString *)text {
     if (_state == iTermWebSocketConnectionStateOpen) {
-        ILog(@"Sending text frame");
+        DLog(@"Sending text frame");
         [self sendFrame:[iTermWebSocketFrame textFrameWithString:text]];
     } else {
-        ILog(@"Not sending text frame because not open");
+        DLog(@"Not sending text frame because not open");
     }
 }
 
 - (void)sendFrame:(iTermWebSocketFrame *)frame {
-    ILog(@"Send frame %@", frame);
+    DLog(@"Send frame %@", frame);
     [self sendData:frame.data];
 }
 
 - (void)sendData:(NSData *)data {
     dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _queue, ^{
-        ILog(@"Disposing of data %p", data);
+        DLog(@"Disposing of data %p", data);
         [data length];  // Keep a reference to data
     });
 
     __weak __typeof(self) weakSelf = self;
     dispatch_io_write(_channel, 0, dispatchData, _queue, ^(bool done, dispatch_data_t  _Nullable data, int error) {
-        ILog(@"Write progress: done=%d error=%d", (int)done, (int)error);
+        DLog(@"Write progress: done=%d error=%d", (int)done, (int)error);
         if (error) {
             [weakSelf abort];
         }
@@ -200,7 +198,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
 - (void)abort {
     if (_state != iTermWebSocketConnectionStateClosed) {
-        ILog(@"Aborting connection");
+        DLog(@"Aborting connection");
         _state = iTermWebSocketConnectionStateClosed;
         [_delegate webSocketConnectionDidTerminate:self];
         [_connection close];
@@ -208,19 +206,19 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 }
 
 - (void)handleFrame:(iTermWebSocketFrame *)frame {
-    ILog(@"Handle frame %@", frame);
+    DLog(@"Handle frame %@", frame);
     switch (frame.opcode) {
         case iTermWebSocketOpcodeBinary:
         case iTermWebSocketOpcodeText:
             if (_state == iTermWebSocketConnectionStateOpen) {
                 if (frame.fin) {
-                    ILog(@"Pass finished frame to delegate");
+                    DLog(@"Pass finished frame to delegate");
                     [_delegate webSocketConnection:self didReadFrame:frame];
                 } else if (_fragment == nil) {
-                    ILog(@"Begin fragmented frame");
+                    DLog(@"Begin fragmented frame");
                     _fragment = frame;
                 } else {
-                    ILog(@"Already have a fragmented frame started. Opcode should have been Continuation");
+                    DLog(@"Already have a fragmented frame started. Opcode should have been Continuation");
                     [self abort];
                 }
             } else {
@@ -230,7 +228,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
         case iTermWebSocketOpcodePing:
             if (_state == iTermWebSocketConnectionStateOpen) {
-                ILog(@"Sending pong");
+                DLog(@"Sending pong");
                 [self sendFrame:[iTermWebSocketFrame pongFrameForPingFrame:frame]];
             } else {
                 [self abort];
@@ -238,20 +236,20 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             break;
 
         case iTermWebSocketOpcodePong:
-            ILog(@"Got pong");
+            DLog(@"Got pong");
             break;
 
         case iTermWebSocketOpcodeContinuation:
             if (_state == iTermWebSocketConnectionStateOpen) {
                 if (!_fragment) {
-                    ILog(@"Continuation without fragment");
+                    DLog(@"Continuation without fragment");
                     [self abort];
                     break;
                 }
-                ILog(@"Append fragment");
+                DLog(@"Append fragment");
                 [_fragment appendFragment:frame];
                 if (frame.fin) {
-                    ILog(@"Fragmented frame finished. Sending to delegate");
+                    DLog(@"Fragmented frame finished. Sending to delegate");
                     [_delegate webSocketConnection:self didReadFrame:_fragment];
                     _fragment = nil;
                 }
@@ -262,7 +260,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
         case iTermWebSocketOpcodeConnectionClose:
             if (_state == iTermWebSocketConnectionStateOpen) {
-                ILog(@"open->closing");
+                DLog(@"open->closing");
                 _state = iTermWebSocketConnectionStateClosing;
                 [self sendFrame:[iTermWebSocketFrame closeFrame]];
 
@@ -270,7 +268,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 [_delegate webSocketConnectionDidTerminate:self];
                 [_connection close];
             } else if (_state == iTermWebSocketConnectionStateClosing) {
-                ILog(@"closing->closed");
+                DLog(@"closing->closed");
                 _state = iTermWebSocketConnectionStateClosed;
                 [_delegate webSocketConnectionDidTerminate:self];
                 [_connection close];
@@ -280,16 +278,16 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 }
 
 - (void)close {
-    ILog(@"Client initiated close");
+    DLog(@"Client initiated close");
     if (_state == iTermWebSocketConnectionStateOpen) {
-        ILog(@"Send close frame");
+        DLog(@"Send close frame");
         _state = iTermWebSocketConnectionStateClosing;
         [self sendFrame:[iTermWebSocketFrame closeFrame]];
     }
 }
 
 - (BOOL)sendUpgradeResponseWithKey:(NSString *)key version:(NSInteger)version {
-    ILog(@"Upgrading with key %@", key);
+    DLog(@"Upgrading with key %@", key);
     key = [key stringByAppendingString:@"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"];
 
     NSData *data = [key dataUsingEncoding:NSUTF8StringEncoding];
@@ -308,7 +306,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             temp[@"Sec-Websocket-Version"] = [@(kWebSocketVersion) stringValue];
             headers = temp;
         }
-        ILog(@"Send headers %@", headers);
+        DLog(@"Send headers %@", headers);
         return [_connection sendResponseWithCode:101
                                           reason:@"Switching Protocols"
                                          headers:headers];

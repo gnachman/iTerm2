@@ -4132,7 +4132,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            by:(PTYTextViewSelectionExtensionUnit)unit {
     // Ensure the unit is valid, since it comes from preferences.
     if (![self unitIsValid:unit]) {
-        ELog(@"ERROR: Unrecognized unit enumerated value %@, treating as character.", @(unit));
+        XLog(@"ERROR: Unrecognized unit enumerated value %@, treating as character.", @(unit));
         unit = kPTYTextViewSelectionExtensionUnitCharacter;
     }
 
