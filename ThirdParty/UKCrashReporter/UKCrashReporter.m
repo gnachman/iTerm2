@@ -103,13 +103,13 @@ void    UKCrashReporterCheckForCrash(void)
                 NSString*            crashLog = [NSString stringWithContentsOfFile:crashLogPath
                                                                  encoding:NSUTF8StringEncoding
                                                                     error:nil];
-                if (errorLog.length > 0) {
-                    NSString *const ERROR_LOG_HEADER = @"~~ Error Logs ~~\n";
-                    if (![crashLog containsString:ERROR_LOG_HEADER]) {
-                        crashLog = [crashLog stringByAppendingString:ERROR_LOG_HEADER];
+                NSString *const ERROR_LOG_HEADER = @"~~ Error Logs ~~\n";
+                if (![crashLog containsString:ERROR_LOG_HEADER]) {
+                    crashLog = [crashLog stringByAppendingString:ERROR_LOG_HEADER];
+                    if (errorLog != nil) {
                         crashLog = [crashLog stringByAppendingString:errorLog];
-                        [crashLog writeToFile:crashLogPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
                     }
+                    [crashLog writeToFile:crashLogPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
                 }
                 NSArray*            separateReports = [crashLog componentsSeparatedByString: @"\n\n**********\n\n"];
                 NSString*            currentReport = [separateReports count] > 0 ? [separateReports objectAtIndex: [separateReports count] -1] : @"*** Couldn't read Report ***";    // 1 since report 0 is empty (file has a delimiter at the top).
