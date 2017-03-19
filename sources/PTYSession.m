@@ -283,9 +283,14 @@ static const NSUInteger kMaxHosts = 100;
     // top margin above the textview.
     TextViewWrapper *_wrapper;
 
+    BOOL _useGCDUpdateTimer;
     // This timer fires periodically to redraw textview, update the scroll position, tab appearance,
     // etc.
     NSTimer *_updateTimer;
+
+    // This is the experimental GCD version of the update timer that seems to have more regular refreshes.
+    dispatch_source_t _gcdUpdateTimer;
+    NSTimeInterval _cadence;
 
     // Anti-idle timer that sends a character every so often to the host.
     NSTimer *_antiIdleTimer;
@@ -474,6 +479,7 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _useGCDUpdateTimer = [iTermAdvancedSettingsModel useGCDUpdateTimer];
         _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
         _triggerLineNumber = -1;
         _fakePromptDetectedAbsLine = -1;
@@ -602,7 +608,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_backgroundImagePath release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
-    [_updateTimer invalidate];
+    if (_gcdUpdateTimer != nil) {
+        dispatch_source_cancel(_gcdUpdateTimer);
+        dispatch_release(_gcdUpdateTimer);
+    }
     [_originalProfile release];
     [_liveSession release];
     [_tmuxGateway release];
@@ -3903,9 +3912,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)updateTimerIsValid {
+    if (_useGCDUpdateTimer) {
+        return _gcdUpdateTimer != nil;
+    } else {
+        return _updateTimer.isValid;
+    }
+}
+
 - (void)setActive:(BOOL)active {
     DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
-         @(active), @(_timerRunning), @(_updateTimer.isValid), _lastTimeout, self);
+         @(active), @(_timerRunning), @(self.updateTimerIsValid), _lastTimeout, self);
     _active = active;
     [self changeCadenceIfNeeded];
 }
@@ -3931,6 +3948,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setUpdateCadence:(NSTimeInterval)cadence {
+    if (_useGCDUpdateTimer) {
+        [self setGCDUpdateCadence:cadence];
+    } else {
+        [self setTimerUpdateCadence:cadence];
+    }
+}
+
+- (void)setTimerUpdateCadence:(NSTimeInterval)cadence {
     if (_updateTimer.timeInterval == cadence) {
         DLog(@"No change to cadence.");
         return;
@@ -3955,6 +3980,33 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       userInfo:nil
                                                        repeats:YES];
     }
+}
+- (void)setGCDUpdateCadence:(NSTimeInterval)cadence {
+    const NSTimeInterval period = _inLiveResize ? kActiveUpdateCadence : cadence;
+    if (_cadence == period) {
+        DLog(@"No change to cadence.");
+        return;
+    }
+    DLog(@"Set cadence of %@ to %f", self, cadence);
+
+    _cadence = period;
+
+    if (_gcdUpdateTimer != nil) {
+        dispatch_source_cancel(_gcdUpdateTimer);
+        dispatch_release(_gcdUpdateTimer);
+        _gcdUpdateTimer = nil;
+    }
+
+    _gcdUpdateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+    dispatch_source_set_timer(_gcdUpdateTimer,
+                              dispatch_walltime(NULL, 0),
+                              period * NSEC_PER_SEC,
+                              0.005 * NSEC_PER_SEC);
+    PTYSession *weakSelf = self.weakSelf;
+    dispatch_source_set_event_handler(_gcdUpdateTimer, ^{
+        [weakSelf updateDisplay];
+    });
+    dispatch_resume(_gcdUpdateTimer);
 }
 
 - (void)doAntiIdle {
@@ -4109,8 +4161,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
         if (notification.object == self.textview.window) {
             _inLiveResize = YES;
-            if (_updateTimer) {
-                [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+            if (!_useGCDUpdateTimer) {
+                if (_updateTimer) {
+                    [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+                }
             }
         }
     }
@@ -4120,11 +4174,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
         if (notification.object == self.textview.window) {
             _inLiveResize = NO;
-            if (_updateTimer) {
-                NSTimeInterval cadence = _updateTimer.timeInterval;
-                [_updateTimer invalidate];
-                _updateTimer = nil;
+            if (_useGCDUpdateTimer) {
+                NSTimeInterval cadence = _cadence;
+                _cadence = 0;
                 [self setUpdateCadence:cadence];
+            } else {
+                if (_updateTimer) {
+                    NSTimeInterval cadence = _updateTimer.timeInterval;
+                    [_updateTimer invalidate];
+                    _updateTimer = nil;
+                    [self setUpdateCadence:cadence];
+                }
             }
         }
     }
