@@ -194,7 +194,7 @@ typedef struct iTermTextColorContext {
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount {
-//    NSLog(@"drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+    DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     if (_debug) {
         [[NSColor redColor] set];
         NSRectFill(rect);
@@ -270,6 +270,7 @@ typedef struct iTermTextColorContext {
 
     [_selectedFont release];
     _selectedFont = nil;
+    DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
 }
 
 - (NSInteger)numberOfEquivalentBackgroundColorLinesInRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
@@ -1684,7 +1685,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     if (!c->complexChar) {
         if (_useNonAsciiFont) {
             BOOL ascii = c->code < 128;
-            BOOL pcAscii = c->code < 128;
+            BOOL pcAscii = pc->code < 128;
             if (ascii != pcAscii) {
                 return NO;
             }

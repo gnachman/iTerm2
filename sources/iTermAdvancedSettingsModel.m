@@ -263,5 +263,6 @@ DEFINE_BOOL(acceptOSC7, YES, @"Experimental Features: Accept OSC 7 to set userna
 DEFINE_BOOL(trackingRunloopForLiveResize, YES, @"Experimental Features: Use a tracking runloop for live resizing.");
 
 DEFINE_BOOL(enableAPIServer, NO, @"Experimental Features: Enable websocket API server.\nYou must restart iTerm2 for this change to take effect.");
+DEFINE_BOOL(useGCDUpdateTimer, NO, @"Experimental Features: Use GCD-based update timer instead of NSTimer.\nThis should cause more regular screen updates. Restart iTerm2 after changing this setting.");
 
 @end
