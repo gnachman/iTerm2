@@ -167,4 +167,6 @@
 - (void)createSplitSelectionView;
 - (SplitSessionHalf)removeSplitSelectionView;
 
+- (void)setHoverURL:(NSString *)url;
+
 @end

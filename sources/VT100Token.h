@@ -129,6 +129,7 @@ typedef enum {
     // http://www.eterm.org/docs/view.php?doc=ref#escape
     XTERMCC_PROPRIETARY_ETERM_EXT,
     XTERMCC_PWD_URL,
+    XTERMCC_LINK,
     XTERMCC_SET_PALETTE,
     XTERMCC_SET_KVP,
     // OSC 1337;File=(args):(data) gets changed by the parser from XTERMCC_SET_KVP to a

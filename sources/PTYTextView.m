@@ -126,7 +126,7 @@ static const int kDragThreshold = 3;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, retain) iTermQuickLookController *quickLookController;
-@property (strong, readwrite, nullable) NSTouchBar *touchBar;
+@property(strong, readwrite, nullable) NSTouchBar *touchBar;
 
 // Set when a context menu opens, nilled when it closes. If the data source changes between when we
 // ask the context menu to open and when the main thread enters a tracking runloop, the text under
@@ -134,7 +134,6 @@ static const int kDragThreshold = 3;
 // See issue 4048.
 @property(nonatomic, copy) NSString *savedSelectedText;
 @end
-
 
 @implementation PTYTextView {
     // -refresh does not want to be reentrant.
@@ -308,10 +307,6 @@ static const int kDragThreshold = 3;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_pointerSettingsChanged:)
                                                      name:kPointerPrefsChangedNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(flagsChangedNotification:)
-                                                     name:@"iTermFlagsChanged"
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(hostnameLookupFailed:)
@@ -1716,6 +1711,11 @@ static const int kDragThreshold = 3;
 }
 
 - (void)updateCursor:(NSEvent *)event {
+    [self updateCursor:event action:nil];
+}
+
+- (void)updateCursor:(NSEvent *)event action:(URLAction *)action {
+    NSString *hover = nil;
     BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         changed = [self setCursor:[NSCursor openHandCursor]];
@@ -1723,6 +1723,9 @@ static const int kDragThreshold = 3;
         changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
+        if (action.hover && action.string.length) {
+            hover = action.string;
+        }
     } else if ([self mouseIsOverImageInEvent:event]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([self xtermMouseReporting] &&
@@ -1734,6 +1737,7 @@ static const int kDragThreshold = 3;
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];
     }
+    [_delegate textViewShowHoverURL:hover];
 }
 
 - (BOOL)hasUnderline {
@@ -1755,7 +1759,8 @@ static const int kDragThreshold = 3;
 }
 
 // Update range of underlined chars indicating cmd-clicakble url.
-- (void)updateUnderlinedURLs:(NSEvent *)event {
+- (URLAction *)updateUnderlinedURLs:(NSEvent *)event {
+    URLAction *action = nil;
     if (([event modifierFlags] & NSCommandKeyMask) && (self.window.isKeyWindow ||
                                                        [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory])) {
         NSPoint screenPoint = [NSEvent mouseLocation];
@@ -1766,18 +1771,18 @@ static const int kDragThreshold = 3;
         NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
         if (!NSPointInRect(locationInTextView, [self bounds])) {
             [self removeUnderline];
-            return;
+            return action;
         }
         NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
         int x = viewPoint.x;
         int y = viewPoint.y;
         if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] || y < 0) {
             [self removeUnderline];
-            return;
+            return action;
         } else {
-            URLAction *action = [self urlActionForClickAtX:x
-                                                         y:y
-                                    respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+            action = [self urlActionForClickAtX:x
+                                              y:y
+                         respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
             if (action) {
                 _drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range, [_dataSource totalScrollbackOverflow]);
 
@@ -1809,25 +1814,22 @@ static const int kDragThreshold = 3;
                 }
             } else {
                 [self removeUnderline];
-                return;
+                return action;
             }
         }
     } else {
         [self removeUnderline];
-        return;
+        return action;
     }
 
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    return action;
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent {
-    [self updateCursor:theEvent];
-    [self updateUnderlinedURLs:theEvent];
+    URLAction *action = [self updateUnderlinedURLs:theEvent];
+    [self updateCursor:theEvent action:action];
     [super flagsChanged:theEvent];
-}
-
-- (void)flagsChangedNotification:(NSNotification *)notification {
-    [self updateCursor:(NSEvent *)[notification object]];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -1886,6 +1888,7 @@ static const int kDragThreshold = 3;
     }
     [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
+    [_delegate textViewShowHoverURL:nil];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -1898,8 +1901,7 @@ static const int kDragThreshold = 3;
             [self setNeedsDisplay:YES];
         }
     }
-    [self updateCursor:event];
-    [self updateUnderlinedURLs:event];
+    [self updateCursor:event action:[self updateUnderlinedURLs:event]];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
         [[self window] alphaValue] > 0 &&
         ![NSApp modalWindow]) {
@@ -2398,9 +2400,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseMoved:(NSEvent *)event {
     [self resetMouseLocationToRefuseFirstResponderAt];
-    [self updateUnderlinedURLs:event];
+    URLAction *action = [self updateUnderlinedURLs:event];
     [self reportMouseEvent:event];
-    [self updateCursor:event];
+    [self updateCursor:event action:action];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -3527,7 +3529,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              isBackground:YES];
     fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
 
-    int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
+    int underlineStyle = (c.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
 
     BOOL isItalic = c.italic;
     PTYFontInfo *fontInfo = [self getFontForChar:c.code

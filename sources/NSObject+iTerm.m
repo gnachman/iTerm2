@@ -13,6 +13,13 @@
 
 @implementation NSObject (iTerm)
 
++ (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b {
+    if (a == b) {
+        return YES;
+    }
+    return [a isEqual:b];
+}
+
 - (void)performSelectorWithObjects:(NSArray *)tuple {
     SEL selector = NSSelectorFromString(tuple[0]);
     NSArray *objects = tuple[1];
@@ -50,6 +57,14 @@
                        [delayedPerform release];
                    });
     return delayedPerform;
+}
+
+- (instancetype)nilIfNull {
+    if ([self isKindOfClass:[NSNull class]]) {
+        return nil;
+    } else {
+        return self;
+    }
 }
 
 @end

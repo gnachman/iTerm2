@@ -176,7 +176,11 @@ typedef struct screen_char_t
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 6;
+    unsigned int unused : 5;
+
+    // This comes after unused so it can be byte-aligned.
+    // If the current text is part of a hypertext link, this gives an index into the URL store.
+    unsigned short urlCode;
 } screen_char_t;
 
 // Typically used to store a single screen line.
@@ -212,6 +216,7 @@ static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char
             c1->italic == c2->italic &&
             c1->blink == c2->blink &&
             c1->underline == c2->underline &&
+            !c1->urlCode == !c2->urlCode &&  // Only tests if urlCode is zero/nonzero in both
             c1->image == c2->image);
 }
 
@@ -227,6 +232,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->italic = from.italic;
     to->blink = from.blink;
     to->underline = from.underline;
+    to->urlCode = from.urlCode;
     to->image = from.image;
 }
 
@@ -267,7 +273,8 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
         a.faint != b.faint ||
         a.italic != b.italic ||
         a.blink != b.blink ||
-        a.underline != b.underline) {
+        a.underline != b.underline ||
+        !a.urlCode != !b.urlCode) {
         return NO;
     }
     if (a.foregroundColorMode == b.foregroundColorMode) {
@@ -296,7 +303,8 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             !s.faint &&
             !s.italic &&
             !s.blink &&
-            !s.underline);
+            !s.underline &&
+            !s.urlCode);
 }
 
 // Represents an array of screen_char_t's as a string and facilitates mapping a

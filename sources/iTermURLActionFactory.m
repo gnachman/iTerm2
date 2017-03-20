@@ -33,6 +33,12 @@
                       extractor:(iTermTextExtractor *)extractor
       semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
                     pathFactory:(SCPPath *(^)(NSString *, int))pathFactory {
+    URLAction *action;
+    action = [self urlActionForHypertextLinkAt:coord extractor:extractor];
+    if (action) {
+        return action;
+    }
+
     NSMutableIndexSet *continuationCharsCoords = [NSMutableIndexSet indexSet];
     NSMutableArray *prefixCoords = [NSMutableArray array];
     NSString *prefix = [extractor wrappedStringAt:coord
@@ -52,7 +58,6 @@
                               convertNullsToSpace:NO
                                            coords:suffixCoords];
 
-    URLAction *action;
     action = [self urlActionForExistingFileAt:coord
                                        prefix:prefix
                                  prefixCoords:prefixCoords
@@ -106,6 +111,18 @@
 }
 
 #pragma mark - Sub-factories
+
++ (URLAction *)urlActionForHypertextLinkAt:(VT100GridCoord)coord
+                                 extractor:(iTermTextExtractor *)extractor {
+    NSURL *url = [extractor urlOfHypertextLinkAt:coord];
+    if (url != nil) {
+        URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
+        action.hover = YES;
+        return action;
+    } else {
+        return nil;
+    }
+}
 
 + (URLAction *)urlActionForExistingFileAt:(VT100GridCoord)coord
                                    prefix:(NSString *)prefix

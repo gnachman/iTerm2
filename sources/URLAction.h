@@ -56,6 +56,8 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 // will be passed as the argument.
 @property(nonatomic, assign) SEL selector;
 
+@property(nonatomic) BOOL hover;
+
 + (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath;
 + (instancetype)urlActionToOpenURL:(NSString *)filename;
 + (instancetype)urlActionToPerformSmartSelectionRule:(NSDictionary *)rule

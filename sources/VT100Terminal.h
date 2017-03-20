@@ -63,6 +63,9 @@
 @property(nonatomic, readonly) BOOL receivingFile;
 @property(nonatomic, readonly) BOOL copyingToPasteboard;
 
+// If nonnil then we're currently in a hypertext link.
+@property(nonatomic, readonly) NSURL *url;
+
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;

@@ -18,6 +18,8 @@
 
 @interface NSObject (iTerm)
 
++ (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b;
+
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects;
 
 // Retains self for |delay| time, whether canceled or not.
@@ -44,5 +46,8 @@
 //   _delayedPerform = nil;
 // }
 - (iTermDelayedPerform *)performBlock:(void (^)())block afterDelay:(NSTimeInterval)delay;
+
+// Returns nil if this object is an instance of NSNull, otherwise returns self.
+- (instancetype)nilIfNull;
 
 @end

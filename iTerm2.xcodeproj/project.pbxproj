@@ -1485,6 +1485,8 @@
 		A667F3941B4CC8BA00705186 /* iTermBadgeLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */; };
 		A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3951B4F71AE00705186 /* iTermSavePanel.h */; };
 		A667F3981B4F71AE00705186 /* iTermSavePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F3961B4F71AE00705186 /* iTermSavePanel.m */; };
+		A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */; };
+		A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */; };
 		A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
 		A66A1FA91A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
 		A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
@@ -3345,6 +3347,8 @@
 		A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBadgeLabel.m; sourceTree = "<group>"; };
 		A667F3951B4F71AE00705186 /* iTermSavePanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSavePanel.h; sourceTree = "<group>"; };
 		A667F3961B4F71AE00705186 /* iTermSavePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSavePanel.m; sourceTree = "<group>"; };
+		A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLStore.h; sourceTree = "<group>"; };
+		A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLStore.m; sourceTree = "<group>"; };
 		A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.h; sourceTree = "<group>"; };
 		A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.m; sourceTree = "<group>"; };
 		A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermWindowShortcutAccessoryView.xib; path = Interfaces/iTermWindowShortcutAccessoryView.xib; sourceTree = "<group>"; };
@@ -5664,6 +5668,8 @@
 				A66E5E5C1E63625600E8FE35 /* iTermURLActionFactory.m */,
 				A62A1F6F1E6E724B00363EE9 /* iTermMenuOpener.h */,
 				A62A1F701E6E724B00363EE9 /* iTermMenuOpener.m */,
+				A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */,
+				A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6809,6 +6815,7 @@
 				A66719411DCE36C3000CE608 /* iTermSystemVersion.h in Headers */,
 				A66719421DCE36C3000CE608 /* iTermTip.h in Headers */,
 				A66719431DCE36C3000CE608 /* iTermScriptingWindow.h in Headers */,
+				A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */,
 				A66719441DCE36C3000CE608 /* iTermHotKeyProfileBindingController.h in Headers */,
 				A66719451DCE36C3000CE608 /* iTermSavePanel.h in Headers */,
 				A66719461DCE36C3000CE608 /* iTermSocketIPV4Address.h in Headers */,
@@ -8318,6 +8325,7 @@
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
+				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,

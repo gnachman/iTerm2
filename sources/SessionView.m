@@ -22,6 +22,36 @@ static const double kTitleHeight = 22;
 // Last time any window was resized TODO(georgen):it would be better to track per window.
 static NSDate* lastResizeDate_;
 
+@interface iTermHoverContainerView : NSView
+@end
+
+@implementation iTermHoverContainerView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    NSSize size = self.bounds.size;
+    size.width -= 1.5;
+    size.height -= 1.5;
+    const CGFloat radius = 4;
+    [path moveToPoint:NSMakePoint(0, 0)];
+    [path lineToPoint:NSMakePoint(0, size.height)];
+    [path lineToPoint:NSMakePoint(size.width - radius, size.height)];
+    [path curveToPoint:NSMakePoint(size.width, size.height - radius)
+         controlPoint1:NSMakePoint(size.width, size.height)
+         controlPoint2:NSMakePoint(size.width, size.height)];
+    [path lineToPoint:NSMakePoint(size.width, 0)];
+    [path lineToPoint:NSMakePoint(0, 0)];
+
+    [[NSColor darkGrayColor] setStroke];
+    [[NSColor lightGrayColor] setFill];
+
+    [path stroke];
+    [path fill];
+}
+
+@end
+
+
 @interface SessionView () <iTermAnnouncementDelegate>
 @property(nonatomic, retain) PTYScrollView *scrollview;
 @end
@@ -49,6 +79,9 @@ static NSDate* lastResizeDate_;
     
     BOOL _inAddSubview;
     NSView *_subviewWithLayer;
+
+    NSView *_hoverURLView;
+    NSTextField *_hoverURLTextField;
 }
 
 + (double)titleHeight {
@@ -190,6 +223,20 @@ static NSDate* lastResizeDate_;
             frame.origin.y = maxY;
             _scrollview.frame = frame;
         }
+    }
+
+    if (_hoverURLView) {
+        [_hoverURLTextField sizeToFit];
+        NSRect frame = _hoverURLTextField.bounds;
+        const CGFloat horizontalPadding = 8;
+        const CGFloat verticalPadding = 4;
+        frame.size.width += horizontalPadding * 2;
+        frame.size.height += verticalPadding * 2;
+        _hoverURLView.frame = frame;
+
+        frame = _hoverURLTextField.frame;
+        frame.origin = NSMakePoint(horizontalPadding, verticalPadding);
+        _hoverURLTextField.frame = frame;
     }
 }
 
@@ -471,6 +518,36 @@ static NSDate* lastResizeDate_;
     [_splitSelectionView removeFromSuperview];
     _splitSelectionView = nil;
     return half;
+}
+
+- (void)setHoverURL:(NSString *)url {
+    if (_hoverURLView == nil) {
+        if (url == nil) {
+            return;
+        }
+        _hoverURLView = [[[iTermHoverContainerView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)] autorelease];
+        _hoverURLTextField = [[[NSTextField alloc] initWithFrame:_hoverURLView.bounds] autorelease];
+        [_hoverURLTextField setDrawsBackground:NO];
+        [_hoverURLTextField setBordered:NO];
+        [_hoverURLTextField setEditable:NO];
+        [_hoverURLTextField setSelectable:NO];
+        [_hoverURLTextField setStringValue:url];
+        [_hoverURLTextField setAlignment:NSLeftTextAlignment];
+        [_hoverURLTextField setAutoresizingMask:NSViewWidthSizable];
+        [_hoverURLTextField setTextColor:[NSColor headerTextColor]];
+        _hoverURLTextField.autoresizingMask = NSViewNotSizable;
+        [_hoverURLView addSubview:_hoverURLTextField];
+        _hoverURLView.frame = _hoverURLTextField.bounds;
+        [self addSubview:_hoverURLView];
+    } else if (url == nil) {
+        [_hoverURLView removeFromSuperview];
+        _hoverURLView = nil;
+        _hoverURLTextField = nil;
+    } else {
+        [_hoverURLTextField setStringValue:url];
+    }
+
+    [self updateLayout];
 }
 
 #pragma mark NSDraggingSource protocol
