@@ -114,10 +114,16 @@
 
 + (URLAction *)urlActionForHypertextLinkAt:(VT100GridCoord)coord
                                  extractor:(iTermTextExtractor *)extractor {
+    screen_char_t oc = [extractor characterAt:coord];
     NSURL *url = [extractor urlOfHypertextLinkAt:coord];
     if (url != nil) {
         URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
         action.hover = YES;
+        action.range = [extractor rangeOfCoordinatesAround:coord
+                                           maximumDistance:1000
+                                               passingTest:^BOOL(screen_char_t *c) {
+                                                   return (c->urlCode == oc.urlCode);
+                                               }];
         return action;
     } else {
         return nil;
