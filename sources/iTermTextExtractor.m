@@ -214,7 +214,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 
     VT100GridWindowedRange range;
     range.columnWindow = _logicalWindow;
-    range.coordRange.start = coord;
+    range.coordRange.start = previousCoord;
 
     coord = origin;
     previousCoord = origin;
