@@ -9,6 +9,7 @@
 #import "iTermTextExtractor.h"
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
+#import "iTermURLStore.h"
 #import "NSStringITerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "RegexKitLite.h"
@@ -189,6 +190,11 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     } else {
         return nil;
     }
+}
+
+- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord {
+    screen_char_t c = [self characterAt:coord];
+    return [[iTermURLStore sharedInstance] urlForCode:c.urlCode];
 }
 
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location

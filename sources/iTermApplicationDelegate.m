@@ -67,6 +67,7 @@
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
+#import "iTermURLStore.h"
 #import "iTermWarning.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -107,6 +108,7 @@ NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSetti
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
+static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
 static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
 static NSString *const iTermBuriedSessionState = @"iTermBuriedSessionState";
@@ -756,7 +758,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     DLog(@"app encoding restorable state");
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
-
+    [coder encodeObject:[[iTermURLStore sharedInstance] dictionaryValue] forKey:kURLStoreRestorableStateKey];
     [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
 
     NSArray *hotkeyWindowsStates = [[iTermHotKeyController sharedInstance] restorableStates];
@@ -781,6 +783,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
+    }
+
+    NSDictionary *urlStoreState = [coder decodeObjectForKey:kURLStoreRestorableStateKey];
+    if (urlStoreState) {
+        [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
     }
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {

@@ -1,5 +1,6 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
+#import "iTermURLStore.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -64,6 +65,7 @@ NSString *const kTerminalStateColumnModeKey = @"Column Mode";
 NSString *const kTerminalStateDisableSMCUPAndRMCUPKey = @"Disable Alt Screen";
 NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
+NSString *const kTerminalStateURL = @"URL";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -75,6 +77,7 @@ NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 @property(nonatomic, assign) BOOL allowColumnMode;
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
 @property(nonatomic, assign) BOOL disableSmcupRmcup;
+@property(nonatomic, retain) NSURL *url;
 
 // A write-only property, at the moment. TODO: What should this do?
 @property(nonatomic, assign) BOOL strictAnsiMode;
@@ -130,6 +133,9 @@ typedef struct {
     // TODO: Actually use this.
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
     NSMutableArray *_unicodeVersionStack;
+
+    // Code for the current hypertext link, or 0 if not in a hypertext link.
+    unsigned short _currentURLCode;
 }
 
 @synthesize delegate = delegate_;
@@ -231,6 +237,7 @@ static const int kMaxScreenRows = 4096;
     [_termType release];
     [_answerBackString release];
     [_unicodeVersionStack release];
+    [_url release];
 
     [super dealloc];
 }
@@ -403,6 +410,7 @@ static const int kMaxScreenRows = 4096;
     result.underline = graphicRendition_.under;
     result.blink = graphicRendition_.blink;
     result.image = NO;
+    result.urlCode = _currentURLCode;
     return result;
 }
 
@@ -440,6 +448,7 @@ static const int kMaxScreenRows = 4096;
     result.italic = graphicRendition_.italic;
     result.underline = graphicRendition_.under;
     result.blink = graphicRendition_.blink;
+    result.urlCode = _currentURLCode;
     return result;
 }
 
@@ -1882,6 +1891,10 @@ static const int kMaxScreenRows = 4096;
             [self executeWorkingDirectoryURL:token];
             break;
 
+        case XTERMCC_LINK:
+            [self executeLink:token];
+            break;
+
         case XTERMCC_SET_PALETTE:
             [self executeXtermSetPalette:token];
             break;
@@ -2086,6 +2099,15 @@ static const int kMaxScreenRows = 4096;
 - (void)executeWorkingDirectoryURL:(VT100Token *)token {
     if ([delegate_ terminalIsTrusted]) {
         [delegate_ terminalSetWorkingDirectoryURL:token.string];
+    }
+}
+
+- (void)executeLink:(VT100Token *)token {
+    self.url = token.string.length ? [NSURL URLWithString:token.string] : nil;
+    if (self.url == nil) {
+        _currentURLCode = 0;
+    } else {
+        _currentURLCode = [[iTermURLStore sharedInstance] codeForURL:self.url];
     }
 }
 
@@ -2569,7 +2591,8 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateColumnModeKey: @(self.columnMode),
            kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
            kTerminalStateInCommandKey: @(inCommand_),
-           kTerminalStateUnicodeVersionStack: _unicodeVersionStack };
+           kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
+           kTerminalStateURL: self.url ?: [NSNull null] };
     return [dict dictionaryByRemovingNullValues];
 }
 
@@ -2577,7 +2600,7 @@ static const int kMaxScreenRows = 4096;
     if (!dict) {
         return;
     }
-    self.termType = dict[kTerminalStateTermTypeKey];
+    self.termType = [dict[kTerminalStateTermTypeKey] nilIfNull];
 
     self.answerBackString = dict[kTerminalStateAnswerBackStringKey];
     if ([self.answerBackString isKindOfClass:[NSNull class]]) {
@@ -2602,6 +2625,8 @@ static const int kMaxScreenRows = 4096;
     self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
+    self.url = [dict[kTerminalStateURL] nilIfNull];
+
     self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
     ansiMode_ = [dict[kTerminalStateAnsiModeKey] boolValue];
     numLock_ = [dict[kTerminalStateNumLockKey] boolValue];

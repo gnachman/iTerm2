@@ -620,7 +620,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->blink = fg.blink;
     s->underline = fg.underline;
     s->image = NO;
-
+    s->urlCode = fg.urlCode;
     s->unused = 0;
 }
 

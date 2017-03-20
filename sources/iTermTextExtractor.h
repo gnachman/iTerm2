@@ -180,4 +180,6 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 // all punctuation except -.
 - (NSString *)fastWordAt:(VT100GridCoord)location;
 
+- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord;
+
 @end

@@ -6534,6 +6534,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self bury];
 }
 
+- (void)textViewShowHoverURL:(NSString *)url {
+    [_view setHoverURL:url];
+}
+
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];

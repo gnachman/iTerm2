@@ -196,6 +196,7 @@ static iTermObjectPool *gPool;
                           @(XTERMCC_MULTITOKEN_END):          @"XTERMCC_MULTITOKEN_END",
                           @(XTERMCC_PASTE64):                 @"XTERMCC_PASTE64",
                           @(XTERMCC_FINAL_TERM):              @"XTERMCC_FINAL_TERM",
+                          @(XTERMCC_LINK):                    @"XTERMCC_LINK",
                           @(ANSICSI_CHA):                     @"ANSICSI_CHA",
                           @(ANSICSI_VPA):                     @"ANSICSI_VPA",
                           @(ANSICSI_VPR):                     @"ANSICSI_VPR",
