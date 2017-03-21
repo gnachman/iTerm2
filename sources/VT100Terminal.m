@@ -6,6 +6,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
@@ -1170,6 +1171,9 @@ static const int kMaxScreenRows = 4096;
     // Reset UNDERLINE
     graphicRendition_.under = NO;
 
+    self.url = nil;
+    _currentURLCode = 0;
+
     // (Not supported: Reset INVISIBLE)
 
     // Save screen flags
@@ -2103,7 +2107,10 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeLink:(VT100Token *)token {
-    self.url = token.string.length ? [NSURL URLWithString:token.string] : nil;
+    if (token.string.length > 2083) {
+        return;
+    }
+    self.url = token.string.length ? [NSURL URLWithUserSuppliedString:token.string] : nil;
     if (self.url == nil) {
         _currentURLCode = 0;
     } else {
