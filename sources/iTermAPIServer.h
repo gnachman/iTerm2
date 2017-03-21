@@ -26,6 +26,8 @@ extern NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier;
                             handler:(void (^)(ITMSetProfilePropertyResponse *))handler;
 - (void)apiServerListSessions:(ITMListSessionsRequest *)request
                       handler:(void (^)(ITMListSessionsResponse *))handler;
+- (void)apiServerSendText:(ITMSendTextRequest *)request
+                  handler:(void (^)(ITMSendTextResponse *))handler;
 @end
 
 @interface iTermAPIServer : NSObject

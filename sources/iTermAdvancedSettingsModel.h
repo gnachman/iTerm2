@@ -178,5 +178,6 @@
 + (BOOL)useVirtualKeyCodesForDetectingDigits;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)useGCDUpdateTimer;
++ (BOOL)fullHeightCursor;
 
 @end

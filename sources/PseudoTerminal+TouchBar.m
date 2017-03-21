@@ -174,54 +174,63 @@ ITERM_IGNORE_PARTIAL_BEGIN
         [button sizeToFit];
         [documentView addSubview:button];
         button.translatesAutoresizingMaskIntoConstraints = NO;
-        if (previous == nil) {
-            // Constrain the first item's left to the document view's left
-            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                     attribute:NSLayoutAttributeLeft
-                                                                     relatedBy:NSLayoutRelationEqual
-                                                                        toItem:documentView
-                                                                     attribute:NSLayoutAttributeLeft
-                                                                    multiplier:1
-                                                                      constant:0]];
-        } else {
-            // Constrain non-first button's left to predecessor's right + 8pt
-            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                     attribute:NSLayoutAttributeLeft
-                                                                     relatedBy:NSLayoutRelationEqual
-                                                                        toItem:previous
-                                                                     attribute:NSLayoutAttributeRight
-                                                                    multiplier:1
-                                                                      constant:8]];
-        }
-        // Constrain top and bottom to document view's top and bottom
-        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                 attribute:NSLayoutAttributeTop
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:documentView
-                                                                 attribute:NSLayoutAttributeTop
-                                                                multiplier:1
-                                                                  constant:0]];
-        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                 attribute:NSLayoutAttributeBottom
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:documentView
-                                                                 attribute:NSLayoutAttributeBottom
-                                                                multiplier:1
-                                                                  constant:0]];
+        [self addConstraintsToButton:button superView:documentView previous:previous];
         previous = button;
     }
     if (previous) {
         // Constrain last button's right to document view's right
-        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:previous
-                                                                 attribute:NSLayoutAttributeRight
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:documentView
-                                                                 attribute:NSLayoutAttributeRight
-                                                                multiplier:1
-                                                                  constant:0]];
+        [self constrainButton:previous toRightOfSuperview:documentView];
     }
     item.customizationLabel = @"Function Keys";
     return item;
+}
+
+- (void)addConstraintsToButton:(iTermTouchBarButton *)button superView:(NSView *)documentView previous:(NSButton *)previous {
+    if (previous == nil) {
+        // Constrain the first item's left to the document view's left
+        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                 attribute:NSLayoutAttributeLeft
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:documentView
+                                                                 attribute:NSLayoutAttributeLeft
+                                                                multiplier:1
+                                                                  constant:0]];
+    } else {
+        // Constrain non-first button's left to predecessor's right + 8pt
+        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                                 attribute:NSLayoutAttributeLeft
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:previous
+                                                                 attribute:NSLayoutAttributeRight
+                                                                multiplier:1
+                                                                  constant:8]];
+    }
+    // Constrain top and bottom to document view's top and bottom
+    [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                             attribute:NSLayoutAttributeTop
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:documentView
+                                                             attribute:NSLayoutAttributeTop
+                                                            multiplier:1
+                                                              constant:0]];
+    [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
+                                                             attribute:NSLayoutAttributeBottom
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:documentView
+                                                             attribute:NSLayoutAttributeBottom
+                                                            multiplier:1
+                                                              constant:0]];
+}
+
+- (void)constrainButton:(NSButton *)previous toRightOfSuperview:(NSView *)documentView {
+    // Constrain button's right to document view's right
+    [documentView addConstraint:[NSLayoutConstraint constraintWithItem:previous
+                                                             attribute:NSLayoutAttributeRight
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:documentView
+                                                             attribute:NSLayoutAttributeRight
+                                                            multiplier:1
+                                                              constant:0]];
 }
 
 - (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
@@ -258,52 +267,12 @@ ITERM_IGNORE_PARTIAL_BEGIN
             button.keyBindingAction = @{ @"presetName": name };
             [documentView addSubview:button];
             button.translatesAutoresizingMaskIntoConstraints = NO;
-            if (previous == nil) {
-                // Constrain the first item's left to the document view's left
-                [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                         attribute:NSLayoutAttributeLeft
-                                                                         relatedBy:NSLayoutRelationEqual
-                                                                            toItem:documentView
-                                                                         attribute:NSLayoutAttributeLeft
-                                                                        multiplier:1
-                                                                          constant:0]];
-            } else {
-                // Constrain non-first button's left to predecessor's right + 8pt
-                [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                         attribute:NSLayoutAttributeLeft
-                                                                         relatedBy:NSLayoutRelationEqual
-                                                                            toItem:previous
-                                                                         attribute:NSLayoutAttributeRight
-                                                                        multiplier:1
-                                                                          constant:8]];
-            }
-            // Constrain top and bottom to document view's top and bottom
-            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                     attribute:NSLayoutAttributeTop
-                                                                     relatedBy:NSLayoutRelationEqual
-                                                                        toItem:documentView
-                                                                     attribute:NSLayoutAttributeTop
-                                                                    multiplier:1
-                                                                      constant:0]];
-            [documentView addConstraint:[NSLayoutConstraint constraintWithItem:button
-                                                                     attribute:NSLayoutAttributeBottom
-                                                                     relatedBy:NSLayoutRelationEqual
-                                                                        toItem:documentView
-                                                                     attribute:NSLayoutAttributeBottom
-                                                                    multiplier:1
-                                                                      constant:0]];
+            [self addConstraintsToButton:button superView:documentView previous:previous];;
             previous = button;
         }
     }
     if (previous) {
-        // Constrain last button's right to document view's right
-        [documentView addConstraint:[NSLayoutConstraint constraintWithItem:previous
-                                                                 attribute:NSLayoutAttributeRight
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:documentView
-                                                                 attribute:NSLayoutAttributeRight
-                                                                multiplier:1
-                                                                  constant:0]];
+        [self constrainButton:previous toRightOfSuperview:documentView];
     }
     return item;
 }

@@ -247,8 +247,6 @@ typedef struct iTermTextColorContext {
 
     [self drawRanges:ranges count:numRowsInRect origin:boundingCoordRange.start boundingRect:[self rectForCoordRange:boundingCoordRange]];
     
-    [self drawCursor];
-
     if (_showDropTargets) {
         [self drawDropTargets];
     }
@@ -371,6 +369,11 @@ typedef struct iTermTextColorContext {
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect];
 
+    const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
+    if (drawCursorBeforeText) {
+        [self drawCursor];
+    }
+
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     iTermBackgroundColorRunsInLine *representativeRunArray = nil;
@@ -407,6 +410,9 @@ typedef struct iTermTextColorContext {
                          cursorHeight:_cellSizeWithoutSpacing.height
                                   ctx:ctx];
     _blinkingFound |= self.cursorBlinking;
+    if (!drawCursorBeforeText) {
+        [self drawCursor];
+    }
 }
 
 #pragma mark - Drawing: Background
@@ -2203,11 +2209,19 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 - (NSRect)cursorFrame {
     const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
-    const CGFloat height = MIN(_cellSize.height, _cellSizeWithoutSpacing.height);
-    return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
-                      rowNumber * _cellSize.height + MAX(0, round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0)),
-                      MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
-                      height);
+    if ([iTermAdvancedSettingsModel fullHeightCursor]) {
+        const CGFloat height = MAX(_cellSize.height, _cellSizeWithoutSpacing.height);
+        return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
+                          rowNumber * _cellSize.height,
+                          MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
+                          height);
+    } else {
+        const CGFloat height = MIN(_cellSize.height, _cellSizeWithoutSpacing.height);
+        return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
+                          rowNumber * _cellSize.height + MAX(0, round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0)),
+                          MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
+                          height);
+    }
 }
 
 - (void)drawCursor {

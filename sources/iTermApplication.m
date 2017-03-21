@@ -49,9 +49,7 @@
 @property(nonatomic, retain) NSStatusItem *statusBarItem;
 @end
 
-@implementation iTermApplication {
-    BOOL _isUIElement;
-}
+@implementation iTermApplication
 
 - (void)dealloc {
     [_fakeCurrentEvent release];
@@ -358,7 +356,7 @@
     }];
 }
 
-- (void)setIsUIElementApplication:(BOOL)uiElement {
+- (void)setIsUIElement:(BOOL)uiElement {
     if (uiElement == _isUIElement) {
         return;
     }

@@ -393,6 +393,16 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.listSessionsResponse = listSessionsResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
+        return;
+    }
+    if (request.hasSendTextRequest) {
+        [_delegate apiServerSendText:request.sendTextRequest handler:^(ITMSendTextResponse *sendTextResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.sendTextResponse = sendTextResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
     }
 }
 

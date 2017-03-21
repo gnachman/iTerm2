@@ -17,6 +17,14 @@ def list_sessions(ws, argv):
     request.list_sessions_request.SetInParent()
     SendRPC(ws, request, callback)
 
+def send_text(ws, argv):
+  def callback(response):
+    print str(response)
+    ws.close()
+  request = api_pb2.Request()
+  request.send_text_request.text = argv[2]
+  SendRPC(ws, request, callback)
+
 def handle_location_change_notification(location_change_notification):
     print "Location changed"
     print str(location_change_notification)
@@ -58,7 +66,8 @@ def on_close(ws):
     print "Connection closed"
 
 def main(argv):
-    commands = { "list-sessions": list_sessions }
+    commands = { "list-sessions": list_sessions,
+                 "send-text": send_text }
     if len(argv) < 2:
       print "Not enough arguments"
       return -1
@@ -70,7 +79,7 @@ def main(argv):
       f = commands[argv[1]]
       f(ws, argv)
 
-    websocket.enableTrace(True)
+    #websocket.enableTrace(True)
     ws = websocket.WebSocketApp("ws://localhost:1912/",
                               on_message = on_message,
                               on_error = on_error,

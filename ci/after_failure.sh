@@ -9,6 +9,6 @@ if ls /tmp/failed-* 1> /dev/null 2>&1; then
   cd /tmp
   source /tmp/diffs > diffs.txt
   tar cvfz failed-images.tgz failed-*.png diffs.txt accept.sh
-  /usr/bin/curl -F "file=@failed-images.tgz" https://file.io
+  /usr/bin/curl -k -F "file=@failed-images.tgz" https://file.io
 fi
 

@@ -88,12 +88,13 @@ extern BOOL gDebugLogging;
       static BOOL haveAlerted; \
       if (haveAlerted) { \
         DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+        DLog(args); \
         break; \
       } \
       haveAlerted = YES; \
       TurnOnDebugLoggingSilently(); \
-      DLog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
-      DLog(args); \
+      ELog(@"Critical error %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      ELog(args); \
       if (TurnOffDebugLoggingSilently()) { \
         dispatch_async(dispatch_get_main_queue(), ^{ \
           NSAlert *alert = [[[NSAlert alloc] init] autorelease]; \
