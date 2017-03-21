@@ -247,8 +247,6 @@ typedef struct iTermTextColorContext {
 
     [self drawRanges:ranges count:numRowsInRect origin:boundingCoordRange.start boundingRect:[self rectForCoordRange:boundingCoordRange]];
     
-    [self drawCursor];
-
     if (_showDropTargets) {
         [self drawDropTargets];
     }
@@ -371,6 +369,11 @@ typedef struct iTermTextColorContext {
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect];
 
+    const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
+    if (drawCursorBeforeText) {
+        [self drawCursor];
+    }
+
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     iTermBackgroundColorRunsInLine *representativeRunArray = nil;
@@ -407,6 +410,9 @@ typedef struct iTermTextColorContext {
                          cursorHeight:_cellSizeWithoutSpacing.height
                                   ctx:ctx];
     _blinkingFound |= self.cursorBlinking;
+    if (!drawCursorBeforeText) {
+        [self drawCursor];
+    }
 }
 
 #pragma mark - Drawing: Background
