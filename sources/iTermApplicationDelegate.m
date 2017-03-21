@@ -2325,6 +2325,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
         response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
         handler(response);
+        return;
     }
 
     NSError *error = nil;
@@ -2361,6 +2362,20 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
         [response.windowsArray addObject:windowMessage];
     }
+    handler(response);
+}
+
+- (void)apiServerSendText:(ITMSendTextRequest *)request handler:(void (^)(ITMSendTextResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session || session.exited) {
+        ITMSendTextResponse *response = [[[ITMSendTextResponse alloc] init] autorelease];
+        response.status = ITMSendTextResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+    [session writeTask:request.text];
+    ITMSendTextResponse *response = [[[ITMSendTextResponse alloc] init] autorelease];
+    response.status = ITMSendTextResponse_Status_Ok;
     handler(response);
 }
 

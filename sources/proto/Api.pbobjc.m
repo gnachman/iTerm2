@@ -94,6 +94,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic hasRegisterToolRequest, registerToolRequest;
 @dynamic hasSetProfilePropertyRequest, setProfilePropertyRequest;
 @dynamic hasListSessionsRequest, listSessionsRequest;
+@dynamic hasSendTextRequest, sendTextRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -104,6 +105,7 @@ typedef struct ITMRequest__storage_ {
   ITMRegisterToolRequest *registerToolRequest;
   ITMSetProfilePropertyRequest *setProfilePropertyRequest;
   ITMListSessionsRequest *listSessionsRequest;
+  ITMSendTextRequest *sendTextRequest;
   int64_t id_p;
 } ITMRequest__storage_;
 
@@ -185,6 +187,15 @@ typedef struct ITMRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "sendTextRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSendTextRequest),
+        .number = ITMRequest_FieldNumber_SendTextRequest,
+        .hasIndex = 8,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, sendTextRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
@@ -214,6 +225,7 @@ typedef struct ITMRequest__storage_ {
 @dynamic hasRegisterToolResponse, registerToolResponse;
 @dynamic hasSetProfilePropertyResponse, setProfilePropertyResponse;
 @dynamic hasListSessionsResponse, listSessionsResponse;
+@dynamic hasSendTextResponse, sendTextResponse;
 @dynamic hasNotification, notification;
 
 typedef struct ITMResponse__storage_ {
@@ -225,6 +237,7 @@ typedef struct ITMResponse__storage_ {
   ITMRegisterToolResponse *registerToolResponse;
   ITMSetProfilePropertyResponse *setProfilePropertyResponse;
   ITMListSessionsResponse *listSessionsResponse;
+  ITMSendTextResponse *sendTextResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMResponse__storage_;
@@ -308,10 +321,19 @@ typedef struct ITMResponse__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "sendTextResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSendTextResponse),
+        .number = ITMResponse_FieldNumber_SendTextResponse,
+        .hasIndex = 8,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, sendTextResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMResponse_FieldNumber_Notification,
-        .hasIndex = 8,
+        .hasIndex = 9,
         .offset = (uint32_t)offsetof(ITMResponse__storage_, notification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -2091,6 +2113,137 @@ typedef struct ITMListSessionsRequest__storage_ {
 }
 
 @end
+
+#pragma mark - ITMSendTextRequest
+
+@implementation ITMSendTextRequest
+
+@dynamic hasSession, session;
+@dynamic hasText, text;
+
+typedef struct ITMSendTextRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *session;
+  NSString *text;
+} ITMSendTextRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSendTextRequest_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSendTextRequest__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "text",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSendTextRequest_FieldNumber_Text,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMSendTextRequest__storage_, text),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSendTextRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSendTextRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMSendTextResponse
+
+@implementation ITMSendTextResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMSendTextResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSendTextResponse_Status status;
+} ITMSendTextResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMSendTextResponse_Status_EnumDescriptor,
+        .number = ITMSendTextResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSendTextResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSendTextResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSendTextResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMSendTextResponse_Status
+
+GPBEnumDescriptor *ITMSendTextResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000";
+    static const int32_t values[] = {
+        ITMSendTextResponse_Status_Ok,
+        ITMSendTextResponse_Status_SessionNotFound,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSendTextResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMSendTextResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMSendTextResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMSendTextResponse_Status_Ok:
+    case ITMSendTextResponse_Status_SessionNotFound:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMListSessionsResponse
 

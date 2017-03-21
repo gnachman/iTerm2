@@ -51,6 +51,8 @@ CF_EXTERN_C_BEGIN
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
 @class ITMScreenUpdateNotification;
+@class ITMSendTextRequest;
+@class ITMSendTextResponse;
 @class ITMSetProfilePropertyRequest;
 @class ITMSetProfilePropertyResponse;
 @class ITMTransactionRequest;
@@ -227,6 +229,21 @@ GPBEnumDescriptor *ITMLineContents_Continuation_EnumDescriptor(void);
  **/
 BOOL ITMLineContents_Continuation_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMSendTextResponse_Status
+
+typedef GPB_ENUM(ITMSendTextResponse_Status) {
+  ITMSendTextResponse_Status_Ok = 0,
+  ITMSendTextResponse_Status_SessionNotFound = 1,
+};
+
+GPBEnumDescriptor *ITMSendTextResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSendTextResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - ITMApiRoot
 
 /**
@@ -253,6 +270,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_RegisterToolRequest = 104,
   ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
   ITMRequest_FieldNumber_ListSessionsRequest = 106,
+  ITMRequest_FieldNumber_SendTextRequest = 107,
 };
 
 /**
@@ -293,6 +311,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c listSessionsRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasListSessionsRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSendTextRequest *sendTextRequest;
+/** Test to see if @c sendTextRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasSendTextRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -306,6 +328,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_RegisterToolResponse = 104,
   ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
   ITMResponse_FieldNumber_ListSessionsResponse = 106,
+  ITMResponse_FieldNumber_SendTextResponse = 107,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -345,6 +368,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse *listSessionsResponse;
 /** Test to see if @c listSessionsResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasListSessionsResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMSendTextResponse *sendTextResponse;
+/** Test to see if @c sendTextResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasSendTextResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -1079,6 +1106,43 @@ typedef GPB_ENUM(ITMCodePointsPerCell_FieldNumber) {
 
 @interface ITMListSessionsRequest : GPBMessage
 
+@end
+
+#pragma mark - ITMSendTextRequest
+
+typedef GPB_ENUM(ITMSendTextRequest_FieldNumber) {
+  ITMSendTextRequest_FieldNumber_Session = 1,
+  ITMSendTextRequest_FieldNumber_Text = 2,
+};
+
+@interface ITMSendTextRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+/**
+ * The text to send. As usual for proto buffers, this should be UTF-8
+ * encoded. It will be converted to the session's encoding before being sent.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *text;
+/** Test to see if @c text has been set. */
+@property(nonatomic, readwrite) BOOL hasText;
+
+@end
+
+#pragma mark - ITMSendTextResponse
+
+typedef GPB_ENUM(ITMSendTextResponse_FieldNumber) {
+  ITMSendTextResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSendTextResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSendTextResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMListSessionsResponse

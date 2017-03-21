@@ -15,6 +15,7 @@ message Request {
   optional RegisterToolRequest register_tool_request = 104;
   optional SetProfilePropertyRequest set_profile_property_request = 105;
   optional ListSessionsRequest list_sessions_request = 106;
+  optional SendTextRequest send_text_request = 107;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -29,6 +30,7 @@ message Response {
   optional RegisterToolResponse register_tool_response = 104;
   optional SetProfilePropertyResponse set_profile_property_response = 105;
   optional ListSessionsResponse list_sessions_response = 106;
+  optional SendTextResponse send_text_response = 107;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
@@ -451,6 +453,24 @@ message CodePointsPerCell {
 }
 
 message ListSessionsRequest {
+}
+
+message SendTextRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  // The text to send. As usual for proto buffers, this should be UTF-8
+  // encoded. It will be converted to the session's encoding before being sent.
+  optional string text = 2;
+}
+
+message SendTextResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+  }
+
+  optional Status status = 1;
 }
 
 message ListSessionsResponse {
