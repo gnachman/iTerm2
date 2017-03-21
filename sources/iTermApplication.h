@@ -48,14 +48,12 @@
 // Sets the return value for -currentEvent. Only for testing.
 @property(atomic, retain) NSEvent *fakeCurrentEvent;
 @property(nonatomic, readonly) NSStatusItem *statusBarItem;
+@property(nonatomic) BOOL isUIElement;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
 
 // Like orderedWindows, but only iTermWindow/iTermPanel objects wrapped in iTermScriptingWindow*s are returned.
 - (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows;
-
-// Changes the process type.
-- (void)setIsUIElementApplication:(BOOL)uiElement;
 
 @end

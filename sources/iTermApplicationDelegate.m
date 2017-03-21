@@ -1938,7 +1938,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 #pragma mark - Private
 
 - (void)updateProcessType {
-    [[iTermApplication sharedApplication] setIsUIElementApplication:[iTermPreferences boolForKey:kPreferenceKeyUIElement]];
+    [[iTermApplication sharedApplication] setIsUIElement:[iTermPreferences boolForKey:kPreferenceKeyUIElement]];
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn {

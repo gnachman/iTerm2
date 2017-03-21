@@ -1458,7 +1458,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
     DLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
-    if (!NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
+    if ([(iTermApplication *)NSApp isUIElement] && !NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
         DLog(@"Activating app because lion full screen window is on active space. %@", self);
         [NSApp activateIgnoringOtherApps:YES];
     }
