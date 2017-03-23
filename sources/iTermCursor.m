@@ -76,7 +76,7 @@
              outline:(BOOL)outline {
     const CGFloat height = 2;
     NSRect cursorRect = NSMakeRect(rect.origin.x,
-                                   rect.origin.y + rect.size.height - height,
+                                   rect.origin.y + rect.size.height - height - [iTermAdvancedSettingsModel underlineCursorOffset],
                                    ceil(rect.size.width),
                                    height);
     if (outline) {
