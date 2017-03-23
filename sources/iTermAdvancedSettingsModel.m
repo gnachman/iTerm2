@@ -265,5 +265,6 @@ DEFINE_BOOL(trackingRunloopForLiveResize, YES, @"Experimental Features: Use a tr
 
 DEFINE_BOOL(enableAPIServer, NO, @"Experimental Features: Enable websocket API server.\nYou must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(useGCDUpdateTimer, NO, @"Experimental Features: Use GCD-based update timer instead of NSTimer.\nThis should cause more regular screen updates. Restart iTerm2 after changing this setting.");
+DEFINE_BOOL(drawOutlineAroundCursor, NO, @"Experimental Features: Draw outline around underline and vertical bar cursors using background color.");
 
 @end
