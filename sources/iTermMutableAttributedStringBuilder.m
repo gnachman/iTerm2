@@ -70,6 +70,7 @@
 - (void)dealloc {
     [_attributedString release];
     [_attributes release];
+    [_characterData release];
     [_string release];
     [super dealloc];
 }
