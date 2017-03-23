@@ -48,7 +48,7 @@ typedef struct {
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-          cellHeight:(CGFloat)cellHeight;
+             outline:(BOOL)outline;
 
 
 @end

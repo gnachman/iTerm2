@@ -179,5 +179,7 @@
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)useGCDUpdateTimer;
 + (BOOL)fullHeightCursor;
++ (BOOL)drawOutlineAroundCursor;
++ (double)underlineCursorOffset;
 
 @end
