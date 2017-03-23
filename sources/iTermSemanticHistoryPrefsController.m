@@ -22,6 +22,7 @@ NSString *kTextmateIdentifier = @"com.macromates.TextMate";
 NSString *kTextmate2Identifier = @"com.macromates.TextMate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
 NSString *kAtomIdentifier = @"com.github.atom";
+NSString *kVSCodeIdentifier = @"com.microsoft.VSCode";
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
 NSString *kSemanticHistoryUrlAction = @"url";
 NSString *kSemanticHistoryEditorAction = @"editor";
@@ -45,6 +46,7 @@ enum {
     kSublimeText3Tag,
     kAtomTag,
     kTextmate2Tag,
+    kVSCodeTag,
     // Only append to the end of the list; never delete or change.
 };
 
@@ -91,7 +93,8 @@ enum {
                                kTextmateIdentifier: @"txmt",
                                kTextmate2Identifier: @"txmt",
                                kBBEditIdentifier: @"txmt",
-                               kAtomIdentifier: @"atom" };
+                               kAtomIdentifier: @"atom",
+                               kVSCodeIdentifier: @"vscode" };
     return schemes[editor];
 }
 
@@ -103,7 +106,8 @@ enum {
               kTextmateIdentifier,
               kTextmate2Identifier,
               kBBEditIdentifier,
-              kAtomIdentifier ];
+              kAtomIdentifier,
+              kVSCodeIdentifier ];
 }
 
 + (NSString *)bestEditor {
@@ -122,7 +126,8 @@ enum {
                                   kTextmateIdentifier,
                                   kTextmate2Identifier,
                                   kBBEditIdentifier,
-                                  kAtomIdentifier ];
+                                  kAtomIdentifier,
+                                  kVSCodeIdentifier ];
     return [editorBundleIds containsObject:bundleId];
 }
 
@@ -133,7 +138,8 @@ enum {
                                 kTextmateIdentifier: @(kTextmateTag),
                                kTextmate2Identifier: @(kTextmate2Tag),
                                   kBBEditIdentifier: @(kBBEditTag),
-                                    kAtomIdentifier: @(kAtomTag) };
+                                    kAtomIdentifier: @(kAtomTag),
+                                  kVSCodeIdentifier: @(kVSCodeTag) };
     return tags;
 }
 
@@ -144,7 +150,8 @@ enum {
                                  kTextmateIdentifier: @"Textmate",
                                 kTextmate2Identifier: @"Textmate Preview",
                                    kBBEditIdentifier: @"BBEdit",
-                                     kAtomIdentifier: @"Atom" };
+                                     kAtomIdentifier: @"Atom",
+                                   kVSCodeIdentifier: @"VSCode" };
 
     NSDictionary *tags = [[self class] identifierToTagMap];
 
@@ -199,7 +206,8 @@ enum {
                                @(kTextmateTag): kTextmateIdentifier,
                               @(kTextmate2Tag): kTextmate2Identifier,
                                  @(kBBEditTag): kBBEditIdentifier,
-                                   @(kAtomTag): kAtomIdentifier };
+                                   @(kAtomTag): kAtomIdentifier,
+                                 @(kVSCodeTag): kVSCodeIdentifier };
     return map[@([[editors_ selectedItem] tag])];
 }
 
