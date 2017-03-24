@@ -880,8 +880,8 @@ static iTermController *gSharedInstance;
 }
 
 + (void)switchToSpaceInBookmark:(Profile *)aDict {
-    if ([aDict objectForKey:KEY_SPACE]) {
-        int spaceNum = [[aDict objectForKey:KEY_SPACE] intValue];
+    if (aDict[KEY_SPACE]) {
+        int spaceNum = [aDict[KEY_SPACE] intValue];
         if (spaceNum > 0 && spaceNum < 10) {
             // keycodes for digits 1-9. Send control-n to switch spaces.
             // TODO: This would get remapped by the event tap. It requires universal access to be on and

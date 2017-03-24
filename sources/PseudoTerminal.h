@@ -81,6 +81,9 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 // called yet.
 @property(nonatomic) BOOL restorableStateDecodePending;
 
+// Used only by hotkey windows. Indicate if it should move to the active space when opening.
+@property(nonatomic, readonly) BOOL openInCurrentSpace;
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.
