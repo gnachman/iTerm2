@@ -2264,9 +2264,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
-    if ([addressbookEntry objectForKey:KEY_SPACE] &&
-        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
+    if ([addressbookEntry[KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
+    } else if ([addressbookEntry[KEY_SPACE] intValue] == iTermProfileOpenInCurrentSpace) {
+        _openInCurrentSpace = YES;
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
@@ -7475,16 +7476,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1 &&
-        profile[KEY_SPACE] &&
         [profile[KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
+    } else if ([profile[KEY_SPACE] intValue] == iTermProfileOpenInCurrentSpace) {
+        _openInCurrentSpace = YES;
     }
 
     return aSession;
 }
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {
-    [self loadArrangement:[state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]
+    NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
+    if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
+        NSString *log = [arrangement sizeInfo];
+        [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.window-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+    [self loadArrangement:arrangement
                  sessions:nil];
     self.restorableStateDecodePending = NO;
 }

@@ -45,6 +45,7 @@
 - (NSDictionary *)dictionaryByRemovingObjectForKey:(KeyType)key;
 
 - (NSData *)propertyListData;
+- (NSString *)sizeInfo;
 
 @end
 

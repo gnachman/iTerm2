@@ -168,6 +168,7 @@ DEFINE_BOOL(performDNSLookups, YES, @"Semantic History: Perform DNS lookups to c
 #pragma mark - Debugging
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(logDrawingPerformance, NO, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
+DEFINE_BOOL(logRestorableStateSize, NO, @"Debugging: Log restorable state size info to /tmp/statesize.*.txt.");
 
 #pragma mark - Session
 DEFINE_BOOL(runJobsInServers, YES, @"Session: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");

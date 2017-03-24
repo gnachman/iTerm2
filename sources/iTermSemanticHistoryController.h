@@ -47,7 +47,8 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 // rejected.
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber;
+               lineNumber:(NSString **)lineNumber
+             columnNumber:(NSString **)columnNumber;
 
 // Opens the file at the relative |path| (which may include :lineNumber) in |workingDirectory|.
 // The |substitutions| dictionary is used to expand \references in the command to run (gotten from

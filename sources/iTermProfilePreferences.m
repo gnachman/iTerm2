@@ -265,7 +265,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HIDE_AFTER_OPENING: @NO,
                   KEY_WINDOW_TYPE: @(WINDOW_TYPE_NORMAL),
                   KEY_SCREEN: @-1,
-                  KEY_SPACE: @0,
+                  KEY_SPACE: @(iTermProfileOpenInCurrentSpace),
                   KEY_SYNC_TITLE: @NO,
                   KEY_DISABLE_WINDOW_RESIZING: @NO,
                   KEY_PREVENT_TAB: @NO,
