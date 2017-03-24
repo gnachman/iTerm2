@@ -79,6 +79,14 @@
     }
 }
 
+- (NSAppearance *)effectiveAppearance {
+    if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
+        return [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
+    } else {
+        return [super effectiveAppearance];
+    }
+}
+
 - (BOOL)isLegacyScroller
 {
     return [self scrollerStyle] == NSScrollerStyleLegacy;

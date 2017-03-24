@@ -45,7 +45,9 @@
 NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
 
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
-NSInteger iTermProfileJoinsAllSpaces = -1;
+const NSInteger iTermProfileJoinsAllSpaces = -1;
+const NSInteger iTermProfileOpenInCurrentSpace = 0;
+
 static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 @implementation ITAddressBookMgr {

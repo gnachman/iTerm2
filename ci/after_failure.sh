@@ -8,7 +8,6 @@ if ls /tmp/failed-* 1> /dev/null 2>&1; then
   export PATH=$PATH:$PWD/tests
   cd /tmp
   source /tmp/diffs > diffs.txt
-  tar cvfz failed-images.tgz failed-*.png diffs.txt accept.sh
-  /usr/bin/curl -k -F "file=@failed-images.tgz" https://file.io
+  tar cvfz - failed-*.png diffs.txt accept.sh | base64 -b 80
 fi
 

@@ -371,7 +371,7 @@ typedef struct iTermTextColorContext {
 
     const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
     if (drawCursorBeforeText) {
-        [self drawCursor];
+        [self drawCursor:NO];
     }
 
     // Now iterate over the lines and paint the characters.
@@ -410,8 +410,12 @@ typedef struct iTermTextColorContext {
                          cursorHeight:_cellSizeWithoutSpacing.height
                                   ctx:ctx];
     _blinkingFound |= self.cursorBlinking;
-    if (!drawCursorBeforeText) {
-        [self drawCursor];
+    if (drawCursorBeforeText) {
+        if ([iTermAdvancedSettingsModel drawOutlineAroundCursor]) {
+            [self drawCursor:YES];
+        }
+    } else {
+        [self drawCursor:NO];
     }
 }
 
@@ -2224,8 +2228,21 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 }
 
-- (void)drawCursor {
-    DLog(@"drawCursor");
+- (NSRect)cursorFrameIncludingDoubleWidthAdjustment {
+    screen_char_t *theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
+    BOOL isDoubleWidth;
+    [self charForCursorAtColumn:_cursorCoord.x
+                         inLine:theLine
+                    doubleWidth:&isDoubleWidth];
+    NSRect rect = [self cursorFrame];
+    if (isDoubleWidth) {
+        rect.size.width *= 2;
+    }
+    return rect;
+}
+
+- (void)drawCursor:(BOOL)outline {
+    DLog(@"drawCursor:%@", @(outline));
 
     // Update the last time the cursor moved.
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
@@ -2246,7 +2263,11 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
         // Get the color of the cursor.
         NSColor *cursorColor;
-        cursorColor = [self backgroundColorForCursor];
+        if (outline) {
+            cursorColor = [_colorMap colorForKey:kColorMapBackground];
+        } else {
+            cursorColor = [self backgroundColorForCursor];
+        }
         NSRect rect = [self cursorFrame];
         if (isDoubleWidth) {
             rect.size.width *= 2;
@@ -2274,7 +2295,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                        smart:_useSmartCursorColor
                      focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
                        coord:_cursorCoord
-                  cellHeight:_cellSize.height];
+                     outline:outline];
         if (_showSearchingCursor) {
             NSImage *image = [NSImage imageNamed:@"SearchCursor"];
             if (image) {

@@ -47,7 +47,18 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-          cellHeight:(CGFloat)cellHeight {
+             outline:(BOOL)outline {
+}
+
+- (void)drawOutlineOfRect:(NSRect)cursorRect withColor:(NSColor *)color {
+    [[color colorWithAlphaComponent:0.75] set];
+    NSRect rect = cursorRect;
+    CGFloat frameWidth = 0.5;
+    rect.origin.x -= frameWidth;
+    rect.origin.y -= frameWidth;
+    rect.size.width += frameWidth * 2;
+    rect.size.height += frameWidth * 2;
+    NSFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositeSourceOver);
 }
 
 @end
@@ -62,12 +73,18 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-          cellHeight:(CGFloat)cellHeight {
-    [backgroundColor set];
-    NSRectFill(NSMakeRect(rect.origin.x,
-                          rect.origin.y + rect.size.height - 2,
-                          ceil(rect.size.width),
-                          2));
+             outline:(BOOL)outline {
+    const CGFloat height = 2;
+    NSRect cursorRect = NSMakeRect(rect.origin.x,
+                                   rect.origin.y + rect.size.height - height - [iTermAdvancedSettingsModel underlineCursorOffset],
+                                   ceil(rect.size.width),
+                                   height);
+    if (outline) {
+        [self drawOutlineOfRect:cursorRect withColor:backgroundColor];
+    } else {
+        [backgroundColor set];
+        NSRectFill(cursorRect);
+    }
 }
 
 @end
@@ -82,9 +99,14 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-          cellHeight:(CGFloat)cellHeight {
-    [backgroundColor set];
-    NSRectFill(NSMakeRect(rect.origin.x, rect.origin.y, 1, rect.size.height));
+             outline:(BOOL)outline {
+    NSRect cursorRect = NSMakeRect(rect.origin.x, rect.origin.y, 1, rect.size.height);
+    if (outline) {
+        [self drawOutlineOfRect:cursorRect withColor:backgroundColor];
+    } else {
+        [backgroundColor set];
+        NSRectFill(cursorRect);
+    }
 }
 
 @end
@@ -99,7 +121,9 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-          cellHeight:(CGFloat)cellHeight {
+             outline:(BOOL)outline {
+    assert(!outline);
+
     // Draw the colored box/frame
     if (smart) {
         iTermCursorNeighbors neighbors = [self.delegate cursorNeighbors];
