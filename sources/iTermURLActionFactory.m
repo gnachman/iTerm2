@@ -190,7 +190,8 @@
 
         action.fullPath = [semanticHistoryController getFullPath:filename
                                                 workingDirectory:workingDirectory
-                                                      lineNumber:NULL];
+                                                      lineNumber:NULL
+                                                    columnNumber:NULL];
         action.workingDirectory = workingDirectory;
         return action;
     }
