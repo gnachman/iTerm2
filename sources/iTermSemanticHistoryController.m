@@ -50,7 +50,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber {
+               lineNumber:(NSString **)lineNumber
+             columnNumber:(NSString **)columnNumber {
     DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
     NSString *origPath = path;
     // TODO(chendo): Move regex, define capture semantics in config file/prefs
@@ -69,6 +70,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     if (lineNumber != nil) {
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
+    }
+    if (columnNumber != nil) {
+        *columnNumber = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
     }
     path = [[path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
                                            withString:@""]
@@ -104,7 +108,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         // ... and calculate the full path again
         return [self getFullPath:origPath
                 workingDirectory:workingDirectory
-                      lineNumber:lineNumber];
+                      lineNumber:lineNumber
+                    columnNumber:columnNumber];
     }
 
     DLog(@"     NO: no valid path found");
@@ -139,6 +144,28 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 }
 
+- (void)launchVSCodeWithPath:(NSString *)path {
+    assert(path);
+    if (!path) {
+        // I don't expect this to ever happen.
+        return;
+    }
+    NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:kVSCodeIdentifier];
+    if (bundlePath) {
+        NSString *codeExecutable =
+        [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
+        if ([self.fileManager fileExistsAtPath:codeExecutable]) {
+            DLog(@"Launch VSCode %@ %@", codeExecutable, path);
+            [self launchTaskWithPath:codeExecutable arguments:@[ path, @"-g" ] wait:NO];
+        } else {
+            // This isn't as good as opening "code -g" because it always opens a new instance
+            // of the app but it's the OS-sanctioned way of running VSCode.  We can't
+            // use Applescript because it won't open the file to a particular line number.
+            [self launchAppWithBundleIdentifier:kVSCodeIdentifier path:path];
+        }
+    }
+}
+
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
     return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
 }
@@ -167,6 +194,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 + (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
     return @[ kAtomIdentifier,
+              kVSCodeIdentifier,
               kSublimeText2Identifier,
               kSublimeText3Identifier,
               kMacVimIdentifier,
@@ -177,18 +205,33 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 - (void)openFile:(NSString *)path
     inEditorWithBundleId:(NSString *)identifier
-          lineNumber:(NSString *)lineNumber {
+          lineNumber:(NSString *)lineNumber
+        columnNumber:(NSString *)columnNumber {
     if (identifier) {
         DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
         if ([identifier isEqualToString:kAtomIdentifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
+            if (columnNumber != nil) {
+                path = [path stringByAppendingFormat:@":%@", columnNumber];
+            }
             [self launchAtomWithPath:path];
+        } else if ([identifier isEqualToString:kVSCodeIdentifier]) {
+            if (lineNumber != nil) {
+                path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+            }
+            if (columnNumber != nil) {
+                path = [path stringByAppendingFormat:@":%@", columnNumber];
+            }
+            [self launchVSCodeWithPath:path];
         } else if ([identifier isEqualToString:kSublimeText2Identifier] ||
                    [identifier isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+            }
+            if (columnNumber != nil) {
+                path = [path stringByAppendingFormat:@":%@", columnNumber];
             }
             NSString *bundleId;
             if ([identifier isEqualToString:kSublimeText3Identifier]) {
@@ -220,8 +263,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 }
 
-- (void)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
-    [self openFile:path inEditorWithBundleId:[self preferredEditorIdentifier] lineNumber:lineNumber];
+- (void)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber columnNumber:(NSString *)columnNumber {
+    [self openFile:path inEditorWithBundleId:[self preferredEditorIdentifier] lineNumber:lineNumber columnNumber:columnNumber];
 }
 
 - (BOOL)activatesOnAnyString {
@@ -263,10 +306,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@", path, workingDirectory, substitutions);
     BOOL isDirectory;
     NSString *lineNumber = @"";
+    NSString *columnNumber = @"";
 
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
     if (!isRawAction) {
-        path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber];
+        path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber columnNumber:&columnNumber];
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
@@ -329,7 +373,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
         [self preferredEditorIdentifier]) {
         // Action is to open in a specific editor, so open it in the editor.
-        [self openFileInEditor:path lineNumber:lineNumber];
+        [self openFileInEditor:path lineNumber:lineNumber columnNumber:columnNumber];
         return YES;
     }
 
@@ -338,7 +382,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         if ([self canOpenFileWithLineNumberUsingEditorWithBundleId:appBundleId]) {
             DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
                  appBundleId);
-            [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber];
+            [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber columnNumber:columnNumber];
             return YES;
         }
     }
@@ -442,7 +486,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
-                    exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL] != nil);
+                    exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL columnNumber:NULL] != nil);
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {
