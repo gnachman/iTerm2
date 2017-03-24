@@ -7486,7 +7486,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {
-    [self loadArrangement:[state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]
+    NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
+    if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
+        NSString *log = [arrangement sizeInfo];
+        [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.window-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+    [self loadArrangement:arrangement
                  sessions:nil];
     self.restorableStateDecodePending = NO;
 }

@@ -181,5 +181,6 @@
 + (BOOL)fullHeightCursor;
 + (BOOL)drawOutlineAroundCursor;
 + (double)underlineCursorOffset;
++ (BOOL)logRestorableStateSize;
 
 @end
