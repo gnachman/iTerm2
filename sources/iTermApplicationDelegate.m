@@ -1508,14 +1508,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     NSMenu *aMenu = [[NSMenu alloc] initWithTitle: @"SessionMenu"];
     PTYTabView *aTabView = [currentTerminal tabView];
     NSArray *tabViewItemArray = [aTabView tabViewItems];
-    NSEnumerator *enumerator = [tabViewItemArray objectEnumerator];
-    NSTabViewItem *aTabViewItem;
     int i=1;
 
     // clear whatever menu we already have
-    [selectTab setSubmenu: nil];
+    [selectTab setSubmenu:nil];
 
-    while ((aTabViewItem = [enumerator nextObject])) {
+    for (NSTabViewItem *aTabViewItem in tabViewItemArray) {
         PTYTab *aTab = [aTabViewItem identifier];
         NSMenuItem *aMenuItem;
 
