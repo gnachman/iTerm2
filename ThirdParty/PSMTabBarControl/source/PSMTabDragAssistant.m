@@ -7,6 +7,8 @@
 //
 
 #import "PSMTabDragAssistant.h"
+
+#import "DebugLogging.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabStyle.h"
 #import "PSMTabDragWindow.h"
@@ -506,6 +508,7 @@
 }
 
 - (void)finishDrag {
+    ILog(@"Drag of %p finished from\n%@", [self sourceTabBar], [NSThread callStackSymbols]);
     if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 0 &&
         [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:closeWindowForLastTabViewItem:)]) {
         [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView]
@@ -541,6 +544,7 @@
 }
 
 - (void)draggingBeganAt:(NSPoint)aPoint {
+    ILog(@"Drag of %p began with current event %@ in window with frame %@ from\n%@", [self sourceTabBar], [NSApp currentEvent], NSStringFromRect(self.sourceTabBar.window.frame), [NSThread callStackSymbols]);
     if (_dragTabWindow) {
         [_dragTabWindow setFrameTopLeftPoint:aPoint];
 
