@@ -20,25 +20,6 @@
 #define PI 3.1417
 
 @interface PSMTabDragAssistant : NSObject
-{
-    PSMTabBarControl            *_sourceTabBar;
-    PSMTabBarControl            *_destinationTabBar;
-    NSMutableSet                *_participatingTabBars;
-    PSMTabBarCell               *_draggedCell;
-    int                         _draggedCellIndex;   // for snap back
-    BOOL                        _isDragging;
-	
-	// Support for dragging into new windows
-	PSMTabDragWindow			*_dragTabWindow, *_dragViewWindow;
-	NSSize						_dragWindowOffset;
-	NSTimer						*_fadeTimer;
-	
-    // Animation
-    NSTimer                     *_animationTimer;
-    NSMutableArray              *_sineCurveWidths;
-    NSPoint                     _currentMouseLoc;
-    PSMTabBarCell               *_targetCell;
-}
 
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;

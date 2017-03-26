@@ -1371,7 +1371,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return YES;
 }
 
-// NSDraggingSource
+#pragma mark NSDraggingSource
 - (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
@@ -1382,19 +1382,17 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return YES;
 }
 
-- (void)draggedImage:(NSImage *)anImage beganAt:(NSPoint)screenPoint
-{
+- (void)draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint {
     [[PSMTabDragAssistant sharedDragAssistant] draggingBeganAt:screenPoint];
 }
 
-- (void)draggedImage:(NSImage *)image movedTo:(NSPoint)screenPoint
-{
+- (void)draggingSession:(NSDraggingSession *)session movedToPoint:(NSPoint)screenPoint {
     [[PSMTabDragAssistant sharedDragAssistant] draggingMovedTo:screenPoint];
 }
 
-// NSDraggingDestination
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
-{
+#pragma mark NSDraggingDestination
+
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
         if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
             ![[self delegate] tabView:[[sender draggingSource] tabView]
@@ -1417,8 +1415,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     }
 }
 
-- (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender
-{
+- (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
     PSMTabBarCell *cell = [self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil];
 
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
@@ -1445,13 +1442,11 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return NSDragOperationNone;
 }
 
-- (void)draggingExited:(id <NSDraggingInfo>)sender
-{
+- (void)draggingExited:(id <NSDraggingInfo>)sender {
     [[PSMTabDragAssistant sharedDragAssistant] draggingExitedTabBar:self];
 }
 
-- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
-{
+- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
     // validate the drag operation only if there's a valid tab bar to drop into
     BOOL badType = [[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] == NSNotFound;
     if (badType && [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
@@ -1462,14 +1457,12 @@ const NSInteger kPSMStartResizeAnimation = 0;
            [[PSMTabDragAssistant sharedDragAssistant] destinationTabBar] != nil;
 }
 
-- (BOOL)_delegateAcceptsSender:(id <NSDraggingInfo>)sender
-{
+- (BOOL)_delegateAcceptsSender:(id <NSDraggingInfo>)sender {
     return [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
            [[self delegate] tabView:_tabView shouldAcceptDragFromSender:sender];
 }
 
-- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
-{
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound ||
         [self _delegateAcceptsSender:sender]) {
         [[PSMTabDragAssistant sharedDragAssistant] performDragOperation:sender];
@@ -1480,19 +1473,13 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return YES;
 }
 
-- (void)draggedImage:(NSImage *)anImage endedAt:(NSPoint)aPoint operation:(NSDragOperation)operation
-{
+- (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)aPoint operation:(NSDragOperation)operation {
     if (operation != NSDragOperationNone) {
         [self removeTabForCell:[[PSMTabDragAssistant sharedDragAssistant] draggedCell]];
         [[PSMTabDragAssistant sharedDragAssistant] finishDrag];
     } else {
         [[PSMTabDragAssistant sharedDragAssistant] draggedImageEndedAt:aPoint operation:operation];
     }
-}
-
-- (void)concludeDragOperation:(id <NSDraggingInfo>)sender
-{
-
 }
 
 #pragma mark -
