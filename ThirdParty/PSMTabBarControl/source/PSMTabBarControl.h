@@ -219,4 +219,7 @@ enum {
 
 - (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
 
+// Safely remove a cell.
+- (void)removeCell:(PSMTabBarCell *)cell;
+
 @end

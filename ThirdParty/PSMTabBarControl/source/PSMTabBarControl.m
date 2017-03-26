@@ -723,8 +723,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     [self update:YES];
 }
 
-- (void)update
-{
+- (void)update {
     [self update:NO];
 }
 
@@ -869,8 +868,20 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return newWidths;
 }
 
-- (void)_removeCellTrackingRects
-{
+- (void)removeCell:(PSMTabBarCell *)cell {
+    if ([cell closeButtonTrackingTag] != 0) {
+        [self removeTrackingRect:[cell closeButtonTrackingTag]];
+        [cell setCloseButtonTrackingTag:0];
+    }
+
+    if ([cell cellTrackingTag] != 0) {
+        [self removeTrackingRect:[cell cellTrackingTag]];
+        [cell setCellTrackingTag:0];
+    }
+    [[self cells] removeObject:cell];
+}
+
+- (void)_removeCellTrackingRects {
     // size all cells appropriately and create tracking rects
     // nuke old tracking rects
     int i, cellCount = [_cells count];

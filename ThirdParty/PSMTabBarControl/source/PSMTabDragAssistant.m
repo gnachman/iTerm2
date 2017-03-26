@@ -19,6 +19,14 @@
 @property (nonatomic) BOOL isDragging;
 @property (nonatomic) NSPoint currentMouseLoc;
 @property (nonatomic, retain) PSMTabBarCell *targetCell;
+
+// While the last tab in a window is being dragged, the window is hidden so
+// that you can drop the tab on targets beneath the window. Setting the
+// window's alpha to 0 is not sufficient to allow this, unfortunately. So we
+// orderOut: the window temporarily until the drag operation is complete and
+// then order it back in. This property remembers the window and keeps a
+// reference to it.
+@property (nonatomic, retain) NSWindow *temporarilyHiddenWindow;
 @end
 
 @implementation PSMTabDragAssistant {
@@ -67,6 +75,7 @@
     [_animationTimer release];
     [_sineCurveWidths release];
     [_targetCell release];
+    [_temporarilyHiddenWindow release];
     [super dealloc];
 }
 
@@ -280,8 +289,8 @@
             [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
 
             [[[self sourceTabBar] window] setAlphaValue:0.0];
-            // Move the window out of the way so it doesn't block drop targets under it.
-            [[[self sourceTabBar] window] setFrameOrigin:NSMakePoint(-1000000, -1000000)];
+            self.temporarilyHiddenWindow = [[self sourceTabBar] window];
+            [self.temporarilyHiddenWindow orderOut:nil];
             [_dragViewWindow setAlphaValue:kPSMTabDragWindowAlpha];
         } else {
             _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
@@ -433,7 +442,7 @@
 }
 
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
-    if ([self isDragging]){  // means there was not a successful drop (performDragOperation)
+    if ([self isDragging]) {  // means there was not a successful drop (performDragOperation)
         id sourceDelegate = [[self sourceTabBar] delegate];
 
         //split off the dragged tab into a new window
@@ -482,6 +491,7 @@
                 NSLog(@"Delegate returned no control to add to.");
                 [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
                 [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
+                [[[self sourceTabBar] window] orderFront:nil];
             }
 
         } else {
@@ -518,9 +528,7 @@
     [self removeAllPlaceholdersFromTabBar:[self sourceTabBar]];
     [self setSourceTabBar:nil];
     [self setDestinationTabBar:nil];
-    NSEnumerator *e = [_participatingTabBars objectEnumerator];
-    PSMTabBarControl *tabBar;
-    while ( (tabBar = [e nextObject]) ) {
+    for (PSMTabBarControl *tabBar in _participatingTabBars) {
         [self removeAllPlaceholdersFromTabBar:tabBar];
     }
     [_participatingTabBars removeAllObjects];
@@ -529,6 +537,7 @@
     _animationTimer = nil;
     [_sineCurveWidths removeAllObjects];
     [self setTargetCell:nil];
+    self.temporarilyHiddenWindow = nil;
 }
 
 - (void)draggingBeganAt:(NSPoint)aPoint {
@@ -742,8 +751,9 @@
     int i, cellCount = [[control cells] count];
     for (i = (cellCount - 1); i >= 0; i--) {
         PSMTabBarCell *cell = [[control cells] objectAtIndex:i];
-        if ([cell isPlaceholder])
-            [[control cells] removeObject:cell];
+        if ([cell isPlaceholder]) {
+            [control removeCell:cell];
+        }
     }
     // redraw
     [[NSRunLoop currentRunLoop] performSelector:@selector(update)
