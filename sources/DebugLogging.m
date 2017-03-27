@@ -201,6 +201,8 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
     @synchronized (object) {
         [handleToUse writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
     }
+
+    AppendPinnedDebugLogMessage(@"CrashLogMessage", string);
 }
 
 static void StartDebugLogging() {
