@@ -344,7 +344,7 @@
     _pasteSpecialViewController.regexString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialRegex];
     _pasteSpecialViewController.substitutionString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialSubstitution];
     _pasteSpecialViewController.enableWaitForPrompt = _canWaitForPrompt;
-    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt;
+    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt && _canWaitForPrompt;
 
     [self updatePreview];
 }
