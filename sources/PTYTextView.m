@@ -533,6 +533,9 @@ static const int kDragThreshold = 3;
 - (BOOL)resignFirstResponder {
     [_altScreenMouseScrollInferer firstResponderDidChange];
     [self removeUnderline];
+    [self placeFindCursorOnAutoHide];
+    DLog(@"resignFirstResponder %@", self);
+    DLog(@"%@", [NSThread callStackSymbols]);
     return YES;
 }
 
