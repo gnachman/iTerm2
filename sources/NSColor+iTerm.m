@@ -31,6 +31,9 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 @implementation NSColor (iTerm)
 
 + (NSColor *)colorWithString:(NSString *)s {
+    if ([s hasPrefix:@"#"] && s.length == 7) {
+        return [self colorFromHexString:s];
+    }
     NSData *data = [[[NSData alloc] initWithBase64EncodedString:s options:0] autorelease];
     if (!data.length) {
         return nil;
