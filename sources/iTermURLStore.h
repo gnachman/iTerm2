@@ -11,8 +11,9 @@
 @interface iTermURLStore : NSObject
 
 + (instancetype)sharedInstance;
-- (unsigned short)codeForURL:(NSURL *)url;
+- (unsigned short)codeForURL:(NSURL *)url withParams:(NSString *)params;
 - (NSURL *)urlForCode:(unsigned short)code;
+- (NSString *)paramWithKey:(NSString *)key forCode:(unsigned short)code;
 
 - (NSDictionary *)dictionaryValue;
 - (void)loadFromDictionary:(NSDictionary *)dictionary;

@@ -12,6 +12,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
+#import "iTermURLStore.h"
 #import "iTermSemanticHistoryController.h"
 #import "NSCharacterSet+iTerm.h"
 #import "NSStringITerm.h"
@@ -115,13 +116,18 @@
 + (URLAction *)urlActionForHypertextLinkAt:(VT100GridCoord)coord
                                  extractor:(iTermTextExtractor *)extractor {
     screen_char_t oc = [extractor characterAt:coord];
-    NSURL *url = [extractor urlOfHypertextLinkAt:coord];
+    NSString *urlId = nil;
+    NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId];
     if (url != nil) {
         URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
         action.hover = YES;
         action.range = [extractor rangeOfCoordinatesAround:coord
                                            maximumDistance:1000
-                                               passingTest:^BOOL(screen_char_t *c) {
+                                               passingTest:^BOOL(screen_char_t *c, VT100GridCoord coord) {
+                                                   // For now a difference in URL code implies separate hovering.
+                                                   // This could be because there's a different parameter--even an
+                                                   // undefined one. Discussion here:
+                                                   // https://bugzilla.gnome.org/show_bug.cgi?id=779734
                                                    return (c->urlCode == oc.urlCode);
                                                }];
         return action;

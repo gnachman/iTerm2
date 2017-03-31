@@ -67,6 +67,7 @@ NSString *const kTerminalStateDisableSMCUPAndRMCUPKey = @"Disable Alt Screen";
 NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 NSString *const kTerminalStateURL = @"URL";
+NSString *const kTerminalStateURLParams = @"URL Params";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -79,6 +80,7 @@ NSString *const kTerminalStateURL = @"URL";
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
 @property(nonatomic, assign) BOOL disableSmcupRmcup;
 @property(nonatomic, retain) NSURL *url;
+@property(nonatomic, retain) NSString *urlParams;
 
 // A write-only property, at the moment. TODO: What should this do?
 @property(nonatomic, assign) BOOL strictAnsiMode;
@@ -239,6 +241,7 @@ static const int kMaxScreenRows = 4096;
     [_answerBackString release];
     [_unicodeVersionStack release];
     [_url release];
+    [_urlParams release];
 
     [super dealloc];
 }
@@ -1172,6 +1175,7 @@ static const int kMaxScreenRows = 4096;
     graphicRendition_.under = NO;
 
     self.url = nil;
+    self.urlParams = nil;
     _currentURLCode = 0;
 
     // (Not supported: Reset INVISIBLE)
@@ -2107,14 +2111,22 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeLink:(VT100Token *)token {
-    if (token.string.length > 2083) {
+    NSInteger index = [token.string rangeOfString:@";"].location;
+    if (index == NSNotFound) {
         return;
     }
-    self.url = token.string.length ? [NSURL URLWithUserSuppliedString:token.string] : nil;
+    NSString *params = [token.string substringToIndex:index];
+    NSString *urlString = [token.string substringFromIndex:index + 1];
+    if (urlString.length > 2083) {
+        return;
+    }
+    self.url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
     if (self.url == nil) {
         _currentURLCode = 0;
+        self.urlParams = nil;
     } else {
-        _currentURLCode = [[iTermURLStore sharedInstance] codeForURL:self.url];
+        self.urlParams = params;
+        _currentURLCode = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
     }
 }
 
@@ -2599,7 +2611,8 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
            kTerminalStateInCommandKey: @(inCommand_),
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
-           kTerminalStateURL: self.url ?: [NSNull null] };
+           kTerminalStateURL: self.url ?: [NSNull null],
+           kTerminalStateURLParams: self.urlParams ?: [NSNull null] };
     return [dict dictionaryByRemovingNullValues];
 }
 
@@ -2633,6 +2646,7 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
     self.url = [dict[kTerminalStateURL] nilIfNull];
+    self.urlParams = [dict[kTerminalStateURLParams] nilIfNull];
 
     self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
     ansiMode_ = [dict[kTerminalStateAnsiModeKey] boolValue];

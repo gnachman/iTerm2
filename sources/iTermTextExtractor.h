@@ -180,11 +180,11 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 // all punctuation except -.
 - (NSString *)fastWordAt:(VT100GridCoord)location;
 
-- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord;
+- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString **)urlId;
 
 // Searches before and after `coord` until a coordinate is found that does not pass the test.
 // Returns the resulting range.
 - (VT100GridWindowedRange)rangeOfCoordinatesAround:(VT100GridCoord)coord
                                    maximumDistance:(int)maximumDistance
-                                       passingTest:(BOOL(^)(screen_char_t *c))block;
+                                       passingTest:(BOOL(^)(screen_char_t *c, VT100GridCoord coord))block;
 @end

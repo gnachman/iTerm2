@@ -65,6 +65,7 @@
 
 // If nonnil then we're currently in a hypertext link.
 @property(nonatomic, readonly) NSURL *url;
+@property(nonatomic, readonly) NSString *urlParams;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
