@@ -4826,7 +4826,7 @@ static void SwapInt(int *a, int *b) {
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         [lineBuffer appendMessage:@"Session Contents Restored"];
     }
-    [lineBuffer setMaxLines:maxScrollbackLines_];
+    [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
     if (!unlimitedScrollback_) {
         [lineBuffer dropExcessLinesWithWidth:self.width];
     }
@@ -4847,6 +4847,12 @@ static void SwapInt(int *a, int *b) {
     DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
     currentGrid_.cursorY = linesRestored + 1;
     currentGrid_.cursorX = 0;
+
+    // Reduce line buffer's max size to not include the grid height. This is its final state.
+    [lineBuffer setMaxLines:maxScrollbackLines_];
+    if (!unlimitedScrollback_) {
+        [lineBuffer dropExcessLinesWithWidth:self.width];
+    }
 
     if (screenState) {
         [tabStops_ removeAllObjects];
