@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+// See https://bugzilla.gnome.org/show_bug.cgi?id=779734 for the original discussion.
 @interface iTermURLStore : NSObject
 
 + (instancetype)sharedInstance;

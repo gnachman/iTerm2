@@ -89,7 +89,7 @@
         return nil;
     }
 
-    NSArray<NSString *> *parts = [params componentsSeparatedByString:@" "];
+    NSArray<NSString *> *parts = [params componentsSeparatedByString:@":"];
     for (NSString *part in parts) {
         NSInteger i = [part rangeOfString:@"="].location;
         if (i != NSNotFound) {
