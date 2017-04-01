@@ -11,6 +11,8 @@
 
 @implementation iTermImageMark
 
+#warning Serialize and deserialize these
+
 - (void)dealloc {
     if (_imageCode) {
         ReleaseImage(_imageCode.integerValue);

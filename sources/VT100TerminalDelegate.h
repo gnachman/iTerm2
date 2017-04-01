@@ -396,4 +396,8 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 
 - (NSString *)terminalValueOfVariableNamed:(NSString *)name;
 
+// Links
+- (void)terminalWillEndLinkWithCode:(unsigned short)code;
+- (void)terminalWillStartLinkWithCode:(unsigned short)code;
+
 @end

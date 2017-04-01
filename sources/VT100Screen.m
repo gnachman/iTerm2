@@ -12,6 +12,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermImage.h"
 #import "iTermImageMark.h"
+#import "iTermURLMark.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -3521,6 +3522,24 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                                        ofClass:[iTermImageMark class]];
     mark.imageCode = @(c.code);
     [delegate_ screenNeedsRedraw];
+}
+
+- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned short)code {
+    long long absLine = (self.totalScrollbackOverflow +
+                         [self numberOfScrollbackLines] +
+                         currentGrid_.cursor.y + 1);
+    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                     oneLine:YES
+                                                     ofClass:[iTermURLMark class]];
+    mark.code = code;
+}
+
+- (void)terminalWillStartLinkWithCode:(unsigned short)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
+- (void)terminalWillEndLinkWithCode:(unsigned short)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
 }
 
 - (void)terminalDidFinishReceivingFile {

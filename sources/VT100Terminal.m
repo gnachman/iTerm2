@@ -2122,11 +2122,22 @@ static const int kMaxScreenRows = 4096;
     }
     self.url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
     if (self.url == nil) {
+        if (_currentURLCode) {
+            [delegate_ terminalWillEndLinkWithCode:_currentURLCode];
+        }
         _currentURLCode = 0;
         self.urlParams = nil;
     } else {
         self.urlParams = params;
-        _currentURLCode = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
+        unsigned short code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
+        if (code) {
+            if (_currentURLCode) {
+                [delegate_ terminalWillEndLinkWithCode:_currentURLCode];
+            } else {
+                [delegate_ terminalWillStartLinkWithCode:code];
+            }
+            _currentURLCode = code;
+        }
     }
 }
 
