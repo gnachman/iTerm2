@@ -1386,6 +1386,13 @@ const NSInteger kPSMStartResizeAnimation = 0;
 }
 
 #pragma mark NSDraggingSource
+
+- (NSDraggingSession *)beginDraggingSessionWithItems:(NSArray<NSDraggingItem *> *)items event:(NSEvent *)event source:(id<NSDraggingSource>)source {
+    ILog(@"Begin dragging tab bar control %p with event %@ source from\n%@",
+         self, event, [NSThread callStackSymbols]);
+    return [super beginDraggingSessionWithItems:items event:event source:source];
+}
+
 - (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
