@@ -11,7 +11,25 @@
 
 @implementation iTermImageMark
 
-#warning Serialize and deserialize these
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [super init];
+    if (self) {
+        _imageCode = dict[@"imageCode"];
+    }
+    if (!_imageCode) {
+        return nil;
+    } else {
+        return self;
+    }
+}
+
+- (NSDictionary *)dictionaryValue {
+    if (_imageCode) {
+        return @{ @"imageCode": _imageCode };
+    } else {
+        return @{};
+    }
+}
 
 - (void)dealloc {
     if (_imageCode) {
