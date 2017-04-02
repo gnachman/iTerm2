@@ -12,6 +12,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermImage.h"
 #import "iTermImageMark.h"
+#import "iTermURLMark.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -3523,6 +3524,24 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenNeedsRedraw];
 }
 
+- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned short)code {
+    long long absLine = (self.totalScrollbackOverflow +
+                         [self numberOfScrollbackLines] +
+                         currentGrid_.cursor.y + 1);
+    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                     oneLine:YES
+                                                     ofClass:[iTermURLMark class]];
+    mark.code = code;
+}
+
+- (void)terminalWillStartLinkWithCode:(unsigned short)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
+- (void)terminalWillEndLinkWithCode:(unsigned short)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
         // TODO: Handle objects other than images.
@@ -4807,7 +4826,7 @@ static void SwapInt(int *a, int *b) {
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         [lineBuffer appendMessage:@"Session Contents Restored"];
     }
-    [lineBuffer setMaxLines:maxScrollbackLines_];
+    [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
     if (!unlimitedScrollback_) {
         [lineBuffer dropExcessLinesWithWidth:self.width];
     }
@@ -4828,6 +4847,12 @@ static void SwapInt(int *a, int *b) {
     DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
     currentGrid_.cursorY = linesRestored + 1;
     currentGrid_.cursorX = 0;
+
+    // Reduce line buffer's max size to not include the grid height. This is its final state.
+    [lineBuffer setMaxLines:maxScrollbackLines_];
+    if (!unlimitedScrollback_) {
+        [lineBuffer dropExcessLinesWithWidth:self.width];
+    }
 
     if (screenState) {
         [tabStops_ removeAllObjects];

@@ -323,8 +323,10 @@ static NSString *const kIntervalLengthKey = @"Length";
                 Class theClass = NSClassFromString(className);
                 if ([theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
                     id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:objectDict] autorelease];
-                    Interval *interval = [Interval intervalWithDictionary:intervalDict];
-                    [self addObject:object withInterval:interval];
+                    if (object) {
+                        Interval *interval = [Interval intervalWithDictionary:intervalDict];
+                        [self addObject:object withInterval:interval];
+                    }
                 }
             }
         }

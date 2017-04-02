@@ -17,6 +17,8 @@
     // @(unsigned short) -> { "url": NSURL, "params": NSString }
     NSMutableDictionary<NSNumber *, NSDictionary *> *_reverseStore;
 
+    NSCountedSet<NSNumber *> *_referenceCounts;
+
     // Internally, the code is stored as a 64-bit integer so we don't have to think about overflow.
     // The value that's exported is truncated to 16 bits and will never equal zero.
     NSInteger _nextCode;
@@ -40,8 +42,26 @@
     if (self) {
         _store = [NSMutableDictionary dictionary];
         _reverseStore = [NSMutableDictionary dictionary];
+        _referenceCounts = [NSCountedSet set];
     }
     return self;
+}
+
+- (void)retainCode:(unsigned short)code {
+    [_referenceCounts addObject:@(code)];
+}
+
+- (void)releaseCode:(unsigned short)code {
+    [_referenceCounts removeObject:@(code)];
+    if (![_referenceCounts containsObject:@(code)]) {
+        NSDictionary *dict = _reverseStore[@(code)];
+        [_reverseStore removeObjectForKey:@(code)];
+        NSString *url = [dict[@"url"] absoluteString];
+        NSString *params = dict[@"params"];
+        if (url) {
+            [_store removeObjectForKey:@{ @"url": url, @"params": params }];
+        }
+    }
 }
 
 - (unsigned short)codeForURL:(NSURL *)url withParams:(NSString *)params {
@@ -89,7 +109,7 @@
         return nil;
     }
 
-    NSArray<NSString *> *parts = [params componentsSeparatedByString:@" "];
+    NSArray<NSString *> *parts = [params componentsSeparatedByString:@":"];
     for (NSString *part in parts) {
         NSInteger i = [part rangeOfString:@"="].location;
         if (i != NSNotFound) {
@@ -103,11 +123,27 @@
 }
 
 - (NSDictionary *)dictionaryValue {
-    return _store;
+    NSMutableData *data = [NSMutableData data];
+    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
+    [_referenceCounts encodeWithCoder:coder];
+    [coder finishEncoding];
+
+    return @{ @"store": _store,
+              @"refcounts": data };
 }
 
 - (void)loadFromDictionary:(NSDictionary *)dictionary {
-    [dictionary enumerateKeysAndObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+    NSDictionary *store = dictionary[@"store"];
+    NSData *refcounts = dictionary[@"refcounts"];
+
+    if (!store || !refcounts) {
+        DLog(@"URLStore restoration dictionary missing value");
+        DLog(@"store=%@", store);
+        DLog(@"refcounts=%@", refcounts);
+        return;
+    }
+    [store enumerateKeysAndObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
         if (![key isKindOfClass:[NSDictionary class]] ||
             ![obj isKindOfClass:[NSNumber class]]) {
             ELog(@"Unexpected types when loading dictionary: %@ -> %@", key.class, obj.class);
@@ -124,6 +160,14 @@
         _reverseStore[@(truncated)] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
         _nextCode = MAX(_nextCode, obj.integerValue + 1);
     }];
+
+    @try {
+        NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingWithData:refcounts];
+        _referenceCounts = [[NSCountedSet alloc] initWithCoder:decoder];
+    }
+    @catch (NSException *exception) {
+        NSLog(@"Failed to decode refcounts from data %@", refcounts);
+    }
 }
 
 @end

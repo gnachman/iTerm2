@@ -124,11 +124,13 @@
         action.range = [extractor rangeOfCoordinatesAround:coord
                                            maximumDistance:1000
                                                passingTest:^BOOL(screen_char_t *c, VT100GridCoord coord) {
-                                                   // For now a difference in URL code implies separate hovering.
-                                                   // This could be because there's a different parameter--even an
-                                                   // undefined one. Discussion here:
-                                                   // https://bugzilla.gnome.org/show_bug.cgi?id=779734
-                                                   return (c->urlCode == oc.urlCode);
+                                                   if (c->urlCode == oc.urlCode) {
+                                                       return YES;
+                                                   }
+                                                   NSString *thisId;
+                                                   NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId];
+                                                   // Hover together only if URL and ID are equal.
+                                                   return ([thisURL isEqual:url] && (thisId == urlId || [thisId isEqualToString:urlId]));
                                                }];
         return action;
     } else {

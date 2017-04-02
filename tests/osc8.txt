@@ -63,5 +63,8 @@ Invisible explicit and implicit link: [8m]8;;http://example.com/invisibleCan 
 The following three links have the same target. The first two should highlight together.
 ]8;id=id1;http://example.com/<Some text with id=id1>]8;;]8;id=id1;http://example.com/]8;id=id1;http://example.com/<More text with id=id1>]8;;]8;id=id2;http://example.com/<Some text with id=id2>]8;;
 
-The following links have the same target, same ID, but different spam parameters. spam is not defined.
-]8;spam=id1;http://example.com/<Some text with spam=id1>]8;;]8;spam=id1;http://example.com/]8;spam=id1;http://example.com/<More text with spam=id1>]8;;]8;spam=id2;http://example.com/<Some text with spam=id2>]8;;
+The following links have the same target, same ID, but different spam parameters. spam is not defined. They should all hover as one.
+]8;spam=id1;http://example.com/<Some text with spam=id1>]8;;]8;spam=id2;http://example.com/<Some text with spam=id2>]8;;]8;spam=id3;http://example.com/<Some text with spam=id3>]8;;
+
+These links have both an undefined spam parameter and an id. They should hover separately.
+]8;spam=1:id=1;http://example.com/<Some text with spam=1;id=1>]8;;]8;spam=1:id=2;http://example.com/<More text with spam=1;id=2>]8;;]8;spam=1:id=3;http://example.com/<Some text with spam=1;id=3>]8;;
