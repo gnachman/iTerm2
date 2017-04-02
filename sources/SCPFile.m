@@ -16,7 +16,7 @@
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "NSStringiTerm.h"
+#import "NSStringITerm.h"
 
 @interface NMSSHSession(iTerm)
 - (id)agent;
