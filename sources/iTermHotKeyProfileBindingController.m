@@ -76,7 +76,14 @@
     }];
     if (!shortcuts.count) {
         DLog(@"None of the shortcuts in profile %@ are assigned", profile[KEY_NAME]);
-        return;
+
+        // Check if there's double-tap of modifier enabled.
+        if (![profile[KEY_HOTKEY_ACTIVATE_WITH_MODIFIER] boolValue]) {
+            DLog(@"Double-tap of modifier not enabled either");
+            return;
+        } else {
+            DLog(@"Double-tap of modifier IS enabled");
+        }
     }
     
     iTermProfileHotKey *hotKey =
