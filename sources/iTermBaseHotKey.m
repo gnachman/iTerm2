@@ -12,7 +12,7 @@ static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskAlphaShi
                                                         kCGEventFlagMaskControl);
 
 
-@interface iTermBaseHotKey()<iTermEventTapObserver>
+@interface iTermBaseHotKey()<iTermEventTapObserver, iTermWeaklyReferenceable>
 
 // Override this to do a thing that needs to be done. `siblings` are other hotkeys (besides the one
 // this call was made for) that have the same keypress.
@@ -52,6 +52,17 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p shortcuts=%@ modifierActivation=%@,%@>",
             NSStringFromClass([self class]), self, _shortcuts, @(self.hasModifierActivation), @(self.modifierActivation)];
+}
+
+// isEqual: uses pointer equality. Sigh. I really need to just use ARC.
+- (BOOL)isEqual:(id)object {
+    if ([self respondsToSelector:@selector(weaklyReferencedObject)]) {
+        return [[(iTermWeakReference *)self weaklyReferencedObject] isEqual:object];
+    }
+    if ([object respondsToSelector:@selector(weaklyReferencedObject)]) {
+        return [self isEqual:[(iTermWeakReference *)object weaklyReferencedObject]];
+    }
+    return [super isEqual:object];
 }
 
 - (NSArray<iTermHotKeyDescriptor *> *)hotKeyDescriptors {

@@ -207,6 +207,20 @@ ITERM_WEAKLY_REFERENCEABLE
     dispatch_release(doneGroup);
 }
 
+- (void)testRespondsToSelector {
+    iTerm2FakeObject *fakeObject = [[[iTerm2FakeObject alloc] init] autorelease];
+    fakeObject.number = 1234;
+    iTerm2FakeObject *ref = [fakeObject weakSelf];
+    // Method from subclass
+    XCTAssertTrue([ref respondsToSelector:@selector(number)]);
+    // Method from iTermWeakReference
+    XCTAssertTrue([ref respondsToSelector:@selector(weaklyReferencedObject)]);
+    // Method from superclass
+    XCTAssertTrue([ref respondsToSelector:@selector(isEqual:)]);
+    // Method that doesn't exist
+    XCTAssertFalse([ref respondsToSelector:@selector(testRespondsToSelector)]);
+}
+
 // This is a regression test. There was a bug that the weak reference did not properly remove itself
 // from notification center. It was hard to see because it didn't happen in 10.11.
 - (void)testReferenceRemovedFromNotificationCenter {

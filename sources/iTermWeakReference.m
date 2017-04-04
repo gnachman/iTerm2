@@ -22,6 +22,7 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 }
 
 - (instancetype)initWithObject:(id<iTermWeaklyReferenceable>)object {
+    assert([object conformsToProtocol:@protocol(iTermWeaklyReferenceable)]);
     if (self) {
         _object = object;
         _class = [[object class] retain];
@@ -74,6 +75,14 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 }
 
 #pragma mark - NSProxy
+
+- (BOOL)respondsToSelector:(SEL)aSelector {
+    if ([NSStringFromSelector(aSelector) isEqualToString:NSStringFromSelector(@selector(weaklyReferencedObject))]) {
+        return YES;
+    } else {
+        return [super respondsToSelector:aSelector];
+    }
+}
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
     OSSpinLockLock(&lock);
