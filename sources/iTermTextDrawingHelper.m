@@ -200,6 +200,9 @@ typedef struct iTermTextColorContext {
         [[NSColor redColor] set];
         NSRectFill(rect);
     }
+    if (rect.size.height > 100) {
+        rect.size.height = 100;
+    }
     [self updateCachedMetrics];
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects

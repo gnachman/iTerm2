@@ -10,6 +10,7 @@
 #import "Coprocess.h"
 #import "DebugLogging.h"
 #import "PTYTask.h"
+#import "iTermPreciseTimer.h"
 
 #define PtyTaskDebugLog(args...)
 
@@ -235,6 +236,14 @@ void UnblockTaskNotifier(void) {
     int highfd;
     NSEnumerator* iter;
     NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
+    iTermPreciseTimerStats stats[2];
+    iTermPreciseTimerStats *selectTimer = &stats[0];
+    iTermPreciseTimerStats *busyTimer = &stats[1];
+
+    iTermPreciseTimerStatsInit(selectTimer, "select");
+    iTermPreciseTimerStatsInit(busyTimer, "busy");
+
+    iTermPreciseTimerStatsStartTimer(busyTimer);
 
     // FIXME: replace this with something better...
     for(;;) {
@@ -349,7 +358,18 @@ void UnblockTaskNotifier(void) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kTaskNotifierDidSpin object:nil];
 
         // Poll...
-        if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
+        iTermPreciseTimerStatsMeasureAndRecordTimer(busyTimer);
+
+        iTermPreciseTimerPeriodicLog(stats, sizeof(stats) / sizeof(*stats), 1);
+
+        iTermPreciseTimerStatsStartTimer(selectTimer);
+
+        int selectResult = select(highfd+1, &rfds, &wfds, &efds, NULL);
+
+        iTermPreciseTimerStatsMeasureAndRecordTimer(selectTimer);
+        iTermPreciseTimerStatsStartTimer(busyTimer);
+
+        if (selectResult <= 0) {
             switch(errno) {
                 case EAGAIN:
                 case EINTR:
