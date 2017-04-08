@@ -353,6 +353,7 @@ NSString *PID_INFO_NAME = @"name";
         while (![self testAndClearNewOutput]) {
             [NSThread sleepForTimeInterval:[NSApp isActive] ? 0.5 : 5];
         }
+        [NSThread sleepForTimeInterval:0.1];
         [pool release];
     }
 }
