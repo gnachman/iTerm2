@@ -63,6 +63,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, assign) iTermUnicodeNormalization normalization;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 @property(nonatomic, readonly) NSIndexSet *animatedLines;
+@property(nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
 
 // Assigning to `size` resizes the session and tty. Its contents are reflowed. The alternate grid's
 // contents are reflowed, and the selection is updated. It is a little slow so be judicious.
