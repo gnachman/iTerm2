@@ -9,7 +9,6 @@
 iTerm2.xcodeproj/project.xcworkspace
 build/
 .DS_Store
-iTerm.xcodeproj/*
 canary.xml
 testing.xml
 testing_changes.html
@@ -18,8 +17,7 @@ DerivedData/
 Intermediates/
 NMSSH.framework.dSYM/
 NMSSH/
-iTerm2.xcodeproj/xcuserdata/
+iTerm2.xcodeproj/xcuserdata/*
 ColorPicker/ColorPicker.xcodeproj/project.xcworkspace/xcuserdata/
 ColorPicker/ColorPicker.xcodeproj/xcuserdata/
 iTerm2.xcodeproj/project.xcworkspace/contents.xcworkspacedata
-
