@@ -16,6 +16,8 @@
 // Tries to guess if this is the local host.
 @property(nonatomic, readonly) BOOL isLocalhost;
 
++ (NSString *)localHostName;
+
 - (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other;
 
 // Returns username@hostname.

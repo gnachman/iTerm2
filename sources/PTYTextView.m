@@ -2582,9 +2582,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
                 break;
             }
-            case kURLActionOpenURL:
-                [self openURL:[NSURL URLWithUserSuppliedString:action.string] inBackground:openInBackground];
+            case kURLActionOpenURL: {
+                NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
+                if ([url.scheme isEqualToString:@"file"] && url.host.length > 0 && ![url.host isEqualToString:[VT100RemoteHost localHostName]]) {
+                    SCPPath *path = [[[SCPPath alloc] init] autorelease];
+                    path.path = url.path;
+                    path.hostname = url.host;
+                    path.username = [PTYTextView usernameToDownloadFileOnHost:url.host];
+                    if (path.username == nil) {
+                        return;
+                    }
+                    [self downloadFileAtSecureCopyPath:path
+                                           displayName:url.path.lastPathComponent
+                                        locationInView:action.range.coordRange];
+                } else {
+                    [self openURL:url inBackground:openInBackground];
+                }
                 break;
+            }
 
             case kURLActionSmartSelectionAction: {
                 DLog(@"Run smart selection selector %@", NSStringFromSelector(action.selector));
@@ -6072,6 +6087,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Not allowing drag");
         return NSDragOperationNone;
     }
+}
+
++ (NSString *)usernameToDownloadFileOnHost:(NSString *)host {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = [NSString stringWithFormat:@"Enter username for host %@ to download file with scp", host];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
+    [input setStringValue:NSUserName()];
+    [alert setAccessoryView:input];
+    [alert layout];
+    [[alert window] makeFirstResponder:input];
+    NSInteger button = [alert runModal];
+    if (button == NSAlertFirstButtonReturn) {
+        [input validateEditing];
+        return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    }
+    return nil;
 }
 
 // If iTerm2 is the handler for the scheme, then the profile is launched directly.
