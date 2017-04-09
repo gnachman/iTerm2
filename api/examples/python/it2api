@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # This is python 2.7 on macOS 10.12.
 
+from __future__ import print_function
+
 import api_pb2
 import sys
 import thread
@@ -11,7 +13,7 @@ callbacks = []
 
 def list_sessions(ws, argv):
     def callback(response):
-      print str(response)
+      print(str(response))
       ws.close()
     request = api_pb2.Request()
     request.list_sessions_request.SetInParent()
@@ -19,15 +21,15 @@ def list_sessions(ws, argv):
 
 def send_text(ws, argv):
   def callback(response):
-    print str(response)
+    print(str(response))
     ws.close()
   request = api_pb2.Request()
   request.send_text_request.text = argv[2]
   SendRPC(ws, request, callback)
 
 def handle_location_change_notification(location_change_notification):
-    print "Location changed"
-    print str(location_change_notification)
+    print("Location changed")
+    print(str(location_change_notification))
 
 def SendRPC(ws, message, callback):
     ws.send(message.SerializeToString(), opcode=websocket.ABNF.OPCODE_BINARY)
@@ -39,14 +41,14 @@ def handle_notification(notification):
 
 def handle_notification_response(response):
   if not response.HasField('notification_response'):
-    print "Malformed notification response"
-    print str(response)
+    print("Malformed notification response")
+    print(str(response))
     return
   if response.notification_response.status != api_pb2.NotificationResponse.OK:
-    print "Bad status in notification response"
-    print str(response)
+    print("Bad status in notification response")
+    print(str(response))
     return
-  print "Notifcation response ok"
+  print("Notifcation response ok")
 
 def on_message(ws, message):
     response = api_pb2.Response()
@@ -60,19 +62,19 @@ def on_message(ws, message):
       callback(response)
 
 def on_error(ws, error):
-    print "Error: " + str(error)
+    print("Error: " + str(error))
 
 def on_close(ws):
-    print "Connection closed"
+    print("Connection closed")
 
 def main(argv):
     commands = { "list-sessions": list_sessions,
                  "send-text": send_text }
     if len(argv) < 2:
-      print "Not enough arguments"
+      print("Not enough arguments")
       return -1
     if argv[1] not in commands:
-      print "Unrecognized command " + argv[1]
+      print("Unrecognized command " + argv[1])
       return -2
 
     def on_open(ws):
