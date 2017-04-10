@@ -147,7 +147,6 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _shellIntegrationInstalled;
 
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
-    VT100GridAbsCoord nextCommandOutputStart_;
     NSTimeInterval lastBell_;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
@@ -215,7 +214,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
-        nextCommandOutputStart_ = VT100GridAbsCoordMake(-1, -1);
+        _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _animatedLines = [[NSMutableIndexSet alloc] init];
     }
@@ -3748,7 +3747,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     _shellIntegrationInstalled = YES;
 
     _lastCommandOutputRange.end = coord;
-    _lastCommandOutputRange.start = nextCommandOutputStart_;
+    _lastCommandOutputRange.start = _startOfRunningCommandOutput;
 
     _currentPromptRange.start = coord;
     _currentPromptRange.end = coord;
@@ -3788,7 +3787,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
-        nextCommandOutputStart_ = coord;
+        _startOfRunningCommandOutput = coord;
         return YES;
     }
     return NO;
@@ -4778,7 +4777,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateSavedIntervalTreeKey: [savedIntervalTree_ dictionaryValueWithOffset:0] ?: [NSNull null],
            kScreenStateCommandStartXKey: @(commandStartX_),
            kScreenStateCommandStartYKey: @(commandStartY_),
-           kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:nextCommandOutputStart_],
+           kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],
            kScreenStateCursorVisibleKey: @(_cursorVisible),
            kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
@@ -4889,7 +4888,7 @@ static void SwapInt(int *a, int *b) {
         [self reloadMarkCache];
         commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
         commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
-        nextCommandOutputStart_ = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+        _startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
         _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];

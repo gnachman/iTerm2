@@ -1,3 +1,5 @@
+# iTerm2 API
+
 This is an example of how to use the iTerm2 API in Python. It sets up a
 websocket connection, sends an RPC to subscribe to notifications about changes
 to the current username, hostname, or working directory. It prints incoming
@@ -7,16 +9,24 @@ notifications.
 
 First, install the dependencies.
 
+### Using virtualenvwrapper
+
+```
+mkvirtualenv iterm2api
+pip install websocket-client
+pip install protobuf
+```
+
+### Using system python
+
+It is also possible to install the dependencies as system libraries.
+
 ```
 sudo /usr/bin/python -m pip install websocket-client
 sudo /usr/bin/python -m pip install protobuf
-
 ```
 
 Then `cd api/examples/python` and then `./iterm2.py` to run the program.
-
-This silly way of running pip is needed if you have more than one version of
-python installed.
 
 Now you can run `iTerm2/api/examples/python`.
 

@@ -10,7 +10,7 @@
 #import "CapturedOutput.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "NSStringiTerm.h"
+#import "NSStringITerm.h"
 
 static NSString *const kScreenMarkIsPrompt = @"Is Prompt";
 static NSString *const kMarkGuidKey = @"Guid";

@@ -6403,11 +6403,26 @@ ITERM_WEAKLY_REFERENCEABLE
         [iTermShellHistoryController showInformationalMessage];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
-        DLog(@"Returning cached range.");
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
-        return [extractor rangeByTrimmingWhitespaceFromRange:_screen.lastCommandOutputRange
-                                                     leading:NO
-                                                    trailing:iTermTextExtractorTrimTrailingWhitespaceOneLine];
+        long long absCursorY = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+
+        if (self.isAtShellPrompt ||
+            _screen.startOfRunningCommandOutput.x == -1 ||
+            (absCursorY == _screen.startOfRunningCommandOutput.y && _screen.cursorX == 1)) {
+            DLog(@"Returning cached range.");
+            return [extractor rangeByTrimmingWhitespaceFromRange:_screen.lastCommandOutputRange
+                                                         leading:NO
+                                                        trailing:iTermTextExtractorTrimTrailingWhitespaceOneLine];
+        } else {
+            DLog(@"Returning range of current command.");
+            VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(_screen.startOfRunningCommandOutput.x,
+                                                                      _screen.startOfRunningCommandOutput.y,
+                                                                      _screen.cursorX - 1,
+                                                                      absCursorY);
+            return [extractor rangeByTrimmingWhitespaceFromRange:range
+                                                         leading:NO
+                                                        trailing:iTermTextExtractorTrimTrailingWhitespaceOneLine];
+        }
     }
 }
 
