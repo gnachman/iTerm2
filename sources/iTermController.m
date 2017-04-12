@@ -1003,7 +1003,16 @@ static iTermController *gSharedInstance;
 
         if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
-            if ([urlRep user]) {
+            NSString *username = [urlRep user];
+            if (username) {
+                NSMutableCharacterSet *legalCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
+                [legalCharacters addCharactersInString:@"_-+"];
+                NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
+                NSRange range = [username rangeOfCharacterFromSet:illegalCharacters];
+                if (range.location != NSNotFound) {
+                    ELog(@"username %@ contains illegal character at position %@", username, @(range.location));
+                    return nil;
+                }
                 [tempString appendFormat:@"-l %@ ", [[urlRep user] stringWithEscapedShellCharactersIncludingNewlines:YES]];
             }
             if ([urlRep port]) {
