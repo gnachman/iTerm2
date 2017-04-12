@@ -310,7 +310,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                                   theChar.code < ITERM2_PRIVATE_BEGIN ||
                                   theChar.code > ITERM2_PRIVATE_END) {
                                   [indexesInSuffix addObject:@(stringFromLocation.length)];
-                                  [stringFromLocation appendString:ScreenCharToStr(&theChar)];
+                                  [stringFromLocation appendString:(ScreenCharToStr(&theChar) ?: @"")];
                                   [coords addObject:[NSValue valueWithGridCoord:coord]];
                               }
                           }
