@@ -1003,14 +1003,31 @@ static iTermController *gSharedInstance;
 
         if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
-            if ([urlRep user]) {
+            NSString *username = [urlRep user];
+            if (username) {
+                NSMutableCharacterSet *legalCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
+                [legalCharacters addCharactersInString:@"_-+"];
+                NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
+                NSRange range = [username rangeOfCharacterFromSet:illegalCharacters];
+                if (range.location != NSNotFound) {
+                    ELog(@"username %@ contains illegal character at position %@", username, @(range.location));
+                    return nil;
+                }
                 [tempString appendFormat:@"-l %@ ", [[urlRep user] stringWithEscapedShellCharactersIncludingNewlines:YES]];
             }
             if ([urlRep port]) {
                 [tempString appendFormat:@"-p %@ ", [urlRep port]];
             }
-            if ([urlRep host]) {
-                [tempString appendString:[[urlRep host] stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            NSString *hostname = [urlRep host];
+            if (hostname) {
+                NSCharacterSet *legalCharacters = [NSCharacterSet characterSetWithCharactersInString:@":abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."];
+                NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
+                NSRange range = [hostname rangeOfCharacterFromSet:illegalCharacters];
+                if (range.location != NSNotFound) {
+                    ELog(@"Hostname %@ contains illegal character at position %@", hostname, @(range.location));
+                    return nil;
+                }
+                [tempString appendString:[hostname stringWithEscapedShellCharactersIncludingNewlines:YES]];
             }
             [tempDict setObject:tempString forKey:KEY_COMMAND_LINE];
             [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
@@ -1071,6 +1088,10 @@ static iTermController *gSharedInstance;
         DLog(@"Add URL to profile");
         // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
         aDict = [self profile:aDict modifiedToOpenURL:url forObjectType:objectType];
+        if (aDict == nil) {
+            // Bogus hostname detected
+            return nil;
+        }
     }
     if (!bookmarkData) {
         DLog(@"Using profile:\n%@", aDict);
