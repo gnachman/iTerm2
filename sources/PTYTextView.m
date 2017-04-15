@@ -32,6 +32,7 @@
 #import "iTermTextExtractor.h"
 #import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLActionFactory.h"
+#import "iTermURLStore.h"
 #import "iTermWebViewWrapperViewController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -3574,6 +3575,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   NSUnderlineStyleAttributeName: @(underlineStyle) };
     if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
         attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
+    }
+    if (c.urlCode) {
+        NSURL *url = [[iTermURLStore sharedInstance] urlForCode:c.urlCode];
+        if (url != nil) {
+            attributes = [attributes dictionaryBySettingObject:url forKey:NSLinkAttributeName];
+        }
     }
 
     return attributes;
