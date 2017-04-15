@@ -171,6 +171,7 @@ enum {
 }
 
 - (void)drawOneRect:(NSRect)rect {
+    assert(rect.size.width > 0);
     // The range of chars in the line that need to be drawn.
     VT100GridCoordRange coordRange = [self drawableCoordRangeForRect:rect];
 
@@ -200,6 +201,9 @@ enum {
     // element per line. That element (a PTYTextViewBackgroundRunArray) contains the line number,
     // y origin, and an array of PTYTextViewBackgroundRunBox objects.
     NSRange charRange = NSMakeRange(coordRange.start.x, coordRange.end.x - coordRange.start.x);
+    assert(charRange.location < _gridSize.width);
+    assert(charRange.location + charRange.length <= _gridSize.width);
+
     double y = coordRange.start.y * _cellSize.height;
     // An array of PTYTextViewBackgroundRunArray objects (one element per line).
     NSMutableArray *backgroundRunArrays = [NSMutableArray array];
@@ -210,6 +214,10 @@ enum {
         screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInLine:line];
+        assert(_gridSize.width > 0);
+        assert(charRange.location < _gridSize.width);
+        assert(charRange.location + charRange.length <= _gridSize.width);
+
         iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width
@@ -1786,6 +1794,9 @@ enum {
 }
 
 - (NSRange)rangeOfColumnsFrom:(CGFloat)x ofWidth:(CGFloat)width {
+    assert(width > 0);
+    assert(_cellSize.width > 0);
+    assert(_gridSize.width > 0);
     NSRange charRange;
     charRange.location = MAX(0, (x - MARGIN) / _cellSize.width);
     charRange.length = ceil((x + width - MARGIN) / _cellSize.width) - charRange.location;

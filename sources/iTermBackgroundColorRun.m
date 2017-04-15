@@ -68,6 +68,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     BOOL first = YES;
     int j;
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
+        assert(j < width);
         int x = j;
         if (theLine[j].code == DWC_RIGHT) {
             x = j - 1;
