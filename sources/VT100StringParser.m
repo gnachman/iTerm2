@@ -234,6 +234,30 @@ static void DecodeCP949Bytes(unsigned char *datap,
     }
 }
 
+static void DecodeGBKBytes(unsigned char *datap,
+                           int datalen,
+                           int *rmlen,
+                           VT100Token *token) {
+    unsigned char *p = datap;
+    int len = datalen;
+
+    while (len > 0) {
+        if (iscp949(*p) && len > 1) {
+            p += 2;
+            len -= 2;
+        } else {
+            break;
+        }
+    }
+    if (len == datalen) {
+        *rmlen = 0;
+        token->type = VT100_WAIT;
+    } else {
+        *rmlen = datalen - len;
+        token->type = VT100_STRING;
+    }
+}
+
 static void DecodeOtherBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
@@ -339,6 +363,8 @@ void ParseString(unsigned char *datap,
     } else if (isCP949Encoding(encoding)) {
         // korean
         DecodeCP949Bytes(datap, datalen, rmlen, result);
+    } else if (isGBKEncoding(encoding)) {
+        DecodeGBKBytes(datap, datalen, rmlen, result);
     } else {
         DecodeOtherBytes(datap, datalen, rmlen, result);
     }

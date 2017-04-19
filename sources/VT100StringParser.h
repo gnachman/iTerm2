@@ -32,6 +32,10 @@ NS_INLINE BOOL iscp949(unsigned char c) {
     return (c >= 0x81 && c <= 0xfe);
 }
 
+NS_INLINE BOOL isgbk(unsigned char c) {
+    return (c >= 0x81 && c <= 0xfe);
+}
+
 NS_INLINE BOOL isEUCCNEncoding(NSStringEncoding stringEncoding) {
     return (stringEncoding == (0x80000000 | kCFStringEncodingMacChineseSimp) ||
             stringEncoding == (0x80000000 | kCFStringEncodingDOSChineseSimplif) ||
@@ -68,6 +72,10 @@ NS_INLINE BOOL isCP949Encoding(NSStringEncoding stringEncoding) {
     return (stringEncoding == (0x80000000 | kCFStringEncodingDOSKorean));
 }
 
+NS_INLINE BOOL isGBKEncoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingGBK_95));
+}
+
 NS_INLINE BOOL isAsciiString(unsigned char *code) {
     return *code >= 0x20 && *code <= 0x7f;
 }
@@ -87,6 +95,8 @@ NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
         return iseuckr(*code);
     } else if (isCP949Encoding(encoding)) {
         return iscp949(*code);
+    } else if (isGBKEncoding(encoding)) {
+        return isgbk(*code);
     } else if (*code >= 0x20) {
         return YES;
     }
