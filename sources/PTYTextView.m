@@ -1077,6 +1077,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)drawRect:(NSRect)rect {
+    if (_dataSource.width <= 0) {
+        ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
+        return;
+    }
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
     // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
