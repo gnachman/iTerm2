@@ -7,6 +7,8 @@
 //
 
 #import "ProfilesTextPreferencesViewController.h"
+
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
@@ -286,10 +288,13 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 // sent by NSFontManager up the responder chain
 - (void)changeFont:(id)fontManager {
+    DLog(@"change font from %@", [NSThread callStackSymbols]);
     if (_fontPickerIsForNonAsciiFont) {
+        DLog(@"Converted nonascii %@ is %@.", _nonAsciiFont, [fontManager convertFont:_nonAsciiFont]);
         [self setString:[[fontManager convertFont:_nonAsciiFont] stringValue]
                  forKey:KEY_NON_ASCII_FONT];
     } else {
+        DLog(@"Converted ascii %@ is %@", _nonAsciiFont, [fontManager convertFont:_nonAsciiFont]);
         [self setString:[[fontManager convertFont:_normalFont] stringValue]
                  forKey:KEY_NORMAL_FONT];
     }

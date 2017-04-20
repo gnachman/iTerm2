@@ -342,6 +342,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)changeFont:(id)fontManager {
+    DLog(@"change font from %@", [NSThread callStackSymbols]);
     [_profilesViewController changeFont:fontManager];
 }
 

@@ -729,6 +729,7 @@ static const int kDragThreshold = 3;
 
 - (void)changeFont:(id)fontManager
 {
+    DLog(@"change font from %@", [NSThread callStackSymbols]);
     if ([[[PreferencePanel sharedInstance] windowIfLoaded] isVisible]) {
         [[PreferencePanel sharedInstance] changeFont:fontManager];
     } else if ([[[PreferencePanel sessionsInstance] windowIfLoaded] isVisible]) {

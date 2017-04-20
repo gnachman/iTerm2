@@ -313,6 +313,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (void)changeFont:(id)fontManager {
+    DLog(@"change font from %@", [NSThread callStackSymbols]);
     [_textViewController changeFont:fontManager];
 }
 
