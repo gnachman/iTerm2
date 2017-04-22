@@ -228,18 +228,40 @@ typedef struct iTermTextColorContext {
         VT100GridCoordRange coordRange = [self coordRangeForRect:rectArray[i]];
 //        NSLog(@"Have to draw rect %@ (%@)", NSStringFromRect(rectArray[i]), VT100GridCoordRangeDescription(coordRange));
         int coordRangeMinX = 0;
-        int coordRangeMaxX = MIN(_gridSize.width, coordRange.end.x + haloWidth);
+        int coordRangeMaxX = MIN(_gridSize.width, MAX(0, coordRange.end.x + haloWidth));
 
         for (int j = 0; j < numRowsInRect; j++) {
             NSRange gridRange = ranges[j];
             if (gridRange.location == 0 && gridRange.length == 0) {
                 ranges[j].location = coordRangeMinX;
                 ranges[j].length = coordRangeMaxX - coordRangeMinX;
+                if (ranges[j].location + ranges[j].length > _gridSize.width) {
+                    ITCriticalError(NO, @"gridRange %@ produces range %@ with min=%@ max=%@ gridwidth=%@ rect=%@ cellsize=%@",
+                                    NSStringFromRange(gridRange),
+                                    NSStringFromRange(ranges[j]),
+                                    @(coordRangeMinX),
+                                    @(coordRangeMaxX),
+                                    @(_gridSize.width),
+                                    NSStringFromRect(rectArray[i]),
+                                    NSStringFromSize(_cellSize));
+                    ranges[j].length = 0;
+                }
             } else {
                 const int min = MIN(gridRange.location, coordRangeMinX);
                 const int max = MAX(gridRange.location + gridRange.length, coordRangeMaxX);
                 ranges[j].location = min;
                 ranges[j].length = max - min;
+                if (ranges[j].location + ranges[j].length > _gridSize.width) {
+                    ITCriticalError(NO, @"gridRange %@ produces range %@ with min=%@ max=%@ gridwidth=%@ rect=%@ cellsize=%@",
+                                    NSStringFromRange(gridRange),
+                                    NSStringFromRange(ranges[j]),
+                                    @(coordRangeMinX),
+                                    @(coordRangeMaxX),
+                                    @(_gridSize.width),
+                                    NSStringFromRect(rectArray[i]),
+                                    NSStringFromSize(_cellSize));
+                    ranges[j].length = 0;
+                }
             }
 //            NSLog(@"Set range on line %d to %@", j + boundingCoordRange.start.y, NSStringFromRange(ranges[j]));
         }
