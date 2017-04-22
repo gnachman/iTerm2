@@ -3794,7 +3794,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     
     NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
         @{ @"tcsh": @2,
-           @"bash": @2,
+           @"bash": @5,
            @"zsh": @2,
            @"fish": @5 };
     NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
