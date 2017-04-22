@@ -62,6 +62,11 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                        textExtractor:(iTermTextExtractor *)extractor
                                    y:(CGFloat)y
                                 line:(int)line {
+    assert(width > 0);
+    assert(row >= 0);
+    assert(charRange.location < width);
+    assert(charRange.location + charRange.length <= width);
+
     NSMutableArray *runs = [NSMutableArray array];
     iTermBackgroundColorRun previous;
     iTermBackgroundColorRun current;
@@ -69,6 +74,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     int j;
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
         int x = j;
+        assert(j < width);
         if (theLine[j].code == DWC_RIGHT) {
             x = j - 1;
             if (x < 0) {
@@ -76,6 +82,9 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                 continue;
             }
         }
+        assert(x >= 0);
+        assert(x < width);
+
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
                                     VT100GridCoordMake(x, row),
