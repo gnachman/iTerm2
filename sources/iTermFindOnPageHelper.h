@@ -85,8 +85,7 @@ totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 // Erase the find cursor.
 - (void)resetFindCursor;
 
-// Highlights a search result.  TODO: This should add it to the set of search results as well so
-// tail-find results can be nagivated with find next/find previous.
+// Highlights a search result.
 - (void)addSearchResult:(SearchResult *)searchResult width:(int)width;
 
 // Search the next block (calling out to the delegate to do the real work) and update highlights and
