@@ -183,6 +183,10 @@ static NSString *const kVariableKeySessionUsername = @"session.username";
 static NSString *const kVariableKeySessionPath = @"session.path";
 static NSString *const kVariableKeySessionLastCommand = @"session.lastCommand";
 static NSString *const kVariableKeySessionTTY = @"session.tty";
+static NSString *const kVariableKeyTermID = @"session.termid";
+static NSString *const kVariableKeySessionCreationTimeString = @"session.creationTimeString";
+static NSString *const kVariableKeySessionPID = @"iterm2.pid";
+static NSString *const kVariableKeySessionAutoLogID = @"session.autoLogId";
 
 // Maps Session GUID to saved contents. Only live between window restoration
 // and the end of startup activities.
@@ -461,6 +465,7 @@ static const NSUInteger kMaxHosts = 100;
     NSInteger _adaptiveFrameRateThroughputThreshold;
     double _slowFrameRate;
 
+    uint32_t _autoLogId;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -484,6 +489,7 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
         _slowFrameRate = [iTermAdvancedSettingsModel slowFrameRate];
@@ -787,6 +793,19 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [_variables removeObjectForKey:kVariableKeySessionTTY];
     }
+
+    if (_variables[kVariableKeyTermID] == nil) {
+        // Variables that only need to be updated once.
+        _variables[kVariableKeyTermID] = [self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."];
+
+        NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+        dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
+        _variables[kVariableKeySessionCreationTimeString] = [dateFormatter stringFromDate:_creationDate];
+
+        _variables[kVariableKeySessionPID] = [@(getpid()) stringValue];
+        _variables[kVariableKeySessionAutoLogID] = [@(_autoLogId) stringValue];
+    }
+
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -1103,7 +1122,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession setWindowTitle:title];
         }
         if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
-            [aSession.shell startLoggingToFileWithPath:[aSession _autoLogFilenameForTermId:[aSession.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]]
+            [aSession.shell startLoggingToFileWithPath:[aSession autoLogFilename]
                                           shouldAppend:NO];
         }
     }
@@ -1513,17 +1532,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
 
-- (NSString *)_autoLogFilenameForTermId:(NSString *)termid {
-    // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
+- (NSString *)autoLogFilename {
     NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
     dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
-    return [NSString stringWithFormat:@"%@/%@.%@.%@.%d.%0x.log",
-            [_profile objectForKey:KEY_LOGDIR],
-            [dateFormatter stringFromDate:[NSDate date]],
-            [_profile objectForKey:KEY_NAME],
-            termid,
-            (int)getpid(),
-            (int)arc4random()];
+    NSString *format = [iTermAdvancedSettingsModel autoLogFormat];
+    [self updateVariables];
+    NSString *name = [[format stringByReplacingVariableReferencesWithVariables:self.variables] stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
+    NSString *filename = [[iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:_profile] stringByAppendingPathComponent:name];
+    DLog(@"Using autolog filename %@ from format %@ and variables %@", filename, format, self.variables);
+    return filename;
 }
 
 - (BOOL)shouldSetCtype {
@@ -1602,7 +1619,7 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:[itermId stringByReplacingOccurrencesOfString:@":" withString:@"."]]
+        [_shell startLoggingToFileWithPath:[self autoLogFilename]
                               shouldAppend:NO];
     }
     @synchronized(self) {
