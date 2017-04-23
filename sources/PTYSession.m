@@ -8168,7 +8168,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)currentLocalWorkingDirectory {
-    if (_lastDirectoryIsRemote) {
+    if (_lastDirectoryIsRemote || _lastDirectory == nil) {
         // Ask the kernel what the child's process's working directory is.
         return [_shell getWorkingDirectory];
     } else {
