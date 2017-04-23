@@ -288,7 +288,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     IBOutlet NSButton *coprocessIgnoreErrors_;
 
     NSDictionary *lastArrangement_;
-    BOOL wellFormed_;
 
     BOOL exitingLionFullscreen_;
 
@@ -705,7 +704,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Update the collection behavior.
     self.hotkeyWindowType = hotkeyWindowType;
 
-    wellFormed_ = YES;
+    _wellFormed = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
@@ -776,7 +775,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self closeInstantReplayWindow];
     doNotSetRestorableState_ = YES;
-    wellFormed_ = NO;
+    _wellFormed = NO;
 
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -7530,7 +7529,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self ptyWindow] setRestoreState:nil];
         return;
     }
-    if (wellFormed_) {
+    if (_wellFormed) {
         [lastArrangement_ release];
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
         BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];

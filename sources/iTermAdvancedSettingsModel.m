@@ -177,7 +177,7 @@ DEFINE_SETTABLE_BOOL(suppressRestartAnnouncement, SuppressRestartAnnouncement, N
 DEFINE_BOOL(showSessionRestoredBanner, YES, @"Session: When restoring a session without restoring a running job, draw a banner saying “Session Restored” below the restored contents.");
 DEFINE_STRING(autoLogFormat,
               @"\\(session.creationTimeString).\\(session.name).\\(session.termid).\\(iterm2.pid).\\(session.autoLogId).log",
-              @"Session: Format for automatic session log filenames. See the Badges documentation for supported substitutions.");
+              @"Session: Format for automatic session log filenames.\nSee the Badges documentation for supported substitutions.");
 
 
 
