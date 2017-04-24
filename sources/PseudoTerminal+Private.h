@@ -16,6 +16,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;
 @property (nonatomic, retain) NSCandidateListTouchBarItem<NSString *> *autocompleteCandidateListItem;
 ITERM_IGNORE_PARTIAL_END
+@property(nonatomic, readonly) BOOL wellFormed;
 
 // This is a reference to the window's content view, here for convenience because it has
 // the right type.

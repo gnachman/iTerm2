@@ -182,5 +182,6 @@
 + (BOOL)drawOutlineAroundCursor;
 + (double)underlineCursorOffset;
 + (BOOL)logRestorableStateSize;
++ (NSString *)autoLogFormat;
 
 @end

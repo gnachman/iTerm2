@@ -9,6 +9,7 @@
 #import "PseudoTerminal+TouchBar.h"
 #import "PseudoTerminal+Private.h"
 
+#import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "iTermColorPresets.h"
@@ -96,6 +97,10 @@ ITERM_IGNORE_PARTIAL_BEGIN
 }
 
 - (void)updateTouchBarIfNeeded {
+    if (!self.wellFormed) {
+        DLog(@"Not updating touch bar in %@ because not well formed", self);
+        return;
+    }
     if (IsTouchBarAvailable()) {
         NSTouchBar *replacement = [self amendTouchBar:[self makeGenericTouchBar]];
         if (![replacement.customizationIdentifier isEqualToString:self.touchBar.customizationIdentifier]) {
