@@ -65,16 +65,14 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     assert(width > 0);
     assert(row >= 0);
     assert(charRange.location < width);
-    assert(charRange.location + charRange.length <= width);
 
     NSMutableArray *runs = [NSMutableArray array];
     iTermBackgroundColorRun previous;
     iTermBackgroundColorRun current;
     BOOL first = YES;
     int j;
-    for (j = charRange.location; j < charRange.location + charRange.length; j++) {
+    for (j = MAX(0, charRange.location); j < charRange.location + charRange.length && j < width; j++) {
         int x = j;
-        assert(j < width);
         if (theLine[j].code == DWC_RIGHT) {
             x = j - 1;
             if (x < 0) {
