@@ -28,6 +28,8 @@
 
 #import "FontSizeEstimator.h"
 
+#import "DebugLogging.h"
+
 @implementation FontSizeEstimator
 
 @synthesize size;
@@ -49,7 +51,7 @@
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:aFont forKey:NSFontAttributeName];
         NSSize size = [@"W" sizeWithAttributes:dic];
-
+        DLog(@"Initial guess at a size for %@ is %@", aFont, NSStringFromSize(size));
         CGGlyph glyphs[1];
         int advances[1];
         UniChar characters[1];
@@ -65,11 +67,23 @@
             size.width *= [aFont pointSize];
             size.width /= CGFontGetUnitsPerEm(cgfont);
             size.width = round(size.width);
+            DLog(@"Improving my guess for width using formula round(%d * %f / %d) giving %f",
+                 advances[0],
+                 [aFont pointSize],
+                 CGFontGetUnitsPerEm(cgfont),
+                 size.width);
         }
+
         CGFontRelease(cgfont);
 
         size.height = [aFont ascender] - [aFont descender];
+
+        // Things go very badly indeed if the size is 0.
+        size.width = MAX(1, size.width);
+        size.height = MAX(1, size.height);
+
         double baseline = -(floorf([aFont leading]) - floorf([aFont descender]));
+
         fse.size = size;
         fse.baseline = baseline;
     }

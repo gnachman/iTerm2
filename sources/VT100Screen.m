@@ -3252,7 +3252,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         return;
     }
     NSURL *URL = [NSURL URLWithString:URLString];
-    if (!URL) {
+    if (!URL || URLString.length == 0) {
         return;
     }
     NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO] autorelease];
