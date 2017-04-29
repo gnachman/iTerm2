@@ -29,10 +29,15 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     } else {
         run->isMatch = NO;
     }
-    run->bgColor = theLine[coord.x].backgroundColor;
-    run->bgGreen = theLine[coord.x].bgGreen;
-    run->bgBlue = theLine[coord.x].bgBlue;
-    run->bgColorMode = theLine[coord.x].backgroundColorMode;
+    if (theLine[coord.x].image) {
+        run->bgColor = run->bgGreen = run->bgBlue = ALTSEM_DEFAULT;
+        run->bgColorMode = ColorModeAlternate;
+    } else {
+        run->bgColor = theLine[coord.x].backgroundColor;
+        run->bgGreen = theLine[coord.x].bgGreen;
+        run->bgBlue = theLine[coord.x].bgBlue;
+        run->bgColorMode = theLine[coord.x].backgroundColorMode;
+    }
 }
 
 @implementation iTermBackgroundColorRunsInLine

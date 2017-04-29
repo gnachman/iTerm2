@@ -2054,9 +2054,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     [transform scaleXBy:1.0 yBy:-1.0];
     [transform concat];
     
-    NSColor *backgroundColor = [self defaultBackgroundColor];
-    [backgroundColor set];
-    NSRectFill(NSMakeRect(0, 0, _cellSize.width * length, _cellSize.height));
     if (imageInfo.animated) {
         [_delegate drawingHelperDidFindRunOfAnimatedCellsStartingAt:origin ofLength:length];
         _animated = YES;
