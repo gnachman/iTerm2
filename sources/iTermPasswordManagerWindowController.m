@@ -145,8 +145,10 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 
 - (IBAction)edit:(id)sender {
     if ([_tableView selectedRow] >= 0) {
+        NSInteger row = _tableView.selectedRow;
+        [self setPasswordBeingShown:[self selectedPassword] onRow:row];
         [_tableView editColumn:[[_tableView tableColumns] indexOfObject:_passwordColumn]
-                           row:[_tableView selectedRow]
+                           row:row
                      withEvent:nil
                         select:YES];
     }
