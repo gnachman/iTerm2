@@ -147,6 +147,12 @@ typedef struct iTermTextColorContext {
     // Does the current ascii font have ligatures? Used to determine if ASCII
     // symbols (non-alphanumerics) get to use the fastpath.
     BOOL _asciiLigaturesAvailable;
+
+    // The cache we're using now.
+    NSMutableDictionary<NSAttributedString *, id> *_lineRefCache;
+
+    // The cache we'll use next time.
+    NSMutableDictionary<NSAttributedString *, id> *_replacementLineRefCache;
 }
 
 - (instancetype)init {
@@ -170,6 +176,8 @@ typedef struct iTermTextColorContext {
             iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
         }
         _missingImages = [[NSMutableSet alloc] init];
+        _lineRefCache = [[NSMutableDictionary alloc] init];
+        _replacementLineRefCache = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -186,6 +194,8 @@ typedef struct iTermTextColorContext {
 
     [_missingImages release];
     [_backgroundStripesImage release];
+    [_lineRefCache release];
+    [_replacementLineRefCache release];
 
     [super dealloc];
 }
@@ -269,6 +279,13 @@ typedef struct iTermTextColorContext {
 
     [_selectedFont release];
     _selectedFont = nil;
+
+    // Release cached CTLineRefs from the last set of drawings and update them with the new ones.
+    // This keeps us from having too many lines cached at once.
+    [_lineRefCache release];
+    _lineRefCache = _replacementLineRefCache;
+    _replacementLineRefCache = [[NSMutableDictionary alloc] init];
+
     DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
 }
 
@@ -1050,7 +1067,7 @@ typedef struct iTermTextColorContext {
 
     for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:theCharacter
                                                                                       cellSize:_cellSize]) {
-        NSColor *color = attributes[NSForegroundColorAttributeName];
+        NSColor *color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
         [color set];
         [path stroke];
     }
@@ -1100,7 +1117,7 @@ typedef struct iTermTextColorContext {
                                                      smear:NO];
         return cheapString.length;
     }
-    NSColor *const color = cheapString.attributes[NSForegroundColorAttributeName];
+    CGColorRef const color = (CGColorRef)cheapString.attributes[(NSString *)kCTForegroundColorAttributeName];
     const BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
     const BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
     const BOOL antiAlias = [cheapString.attributes[iTermAntiAliasAttribute] boolValue];
@@ -1108,7 +1125,9 @@ typedef struct iTermTextColorContext {
     CGContextSetShouldAntialias(ctx, antiAlias);
 
     int savedFontSmoothingStyle = 0;
-    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
+    const CGFloat *components = CGColorGetComponents(color);
+    const CGFloat brightness = PerceivedBrightness(components[0], components[1], components[2]);
+    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < brightness);
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(ctx, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
@@ -1120,11 +1139,7 @@ typedef struct iTermTextColorContext {
     size_t numCodes = cheapString.length;
     size_t length = numCodes;
     [self selectFont:font inContext:ctx];
-    CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
-    int componentCount = [color numberOfComponents];
-
-    CGFloat components[componentCount];
-    [color getComponents:components];
+    CGContextSetFillColorSpace(ctx, CGColorGetColorSpace(color));
     CGContextSetFillColor(ctx, components);
 
     double y = point.y + _cellSize.height + _baselineOffset;
@@ -1213,7 +1228,7 @@ typedef struct iTermTextColorContext {
                                      graphicsContext:(NSGraphicsContext *)ctx
                                                smear:(BOOL)smear {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
-    NSColor *color = attributes[NSForegroundColorAttributeName];
+    CGColorRef cgColor = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
     
     BOOL bold = [attributes[iTermBoldAttribute] boolValue];
     BOOL fakeBold = [attributes[iTermFakeBoldAttribute] boolValue];
@@ -1228,12 +1243,20 @@ typedef struct iTermTextColorContext {
     // to what WebKit does and appears to be the highest quality text
     // rendering available.
 
-    CTLineRef lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+    CTLineRef lineRef;
+    lineRef = (CTLineRef)_lineRefCache[attributedString];
+    if (lineRef == nil) {
+        lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+        _lineRefCache[attributedString] = (id)lineRef;
+        CFRelease(lineRef);
+    }
+    _replacementLineRefCache[attributedString] = (id)lineRef;
+
     CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
     CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
     CGContextSetShouldAntialias(cgContext, antiAlias);
-    CGContextSetFillColorWithColor(cgContext, [self cgColorForColor:color]);
-    CGContextSetStrokeColorWithColor(cgContext, [self cgColorForColor:color]);
+    CGContextSetFillColorWithColor(cgContext, cgColor);
+    CGContextSetStrokeColorWithColor(cgContext, cgColor);
 
     CGFloat c = 0.0;
     if (fakeItalic) {
@@ -1241,7 +1264,9 @@ typedef struct iTermTextColorContext {
     }
 
     int savedFontSmoothingStyle = 0;
-    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < [color brightnessComponent]);
+    const CGFloat *components = CGColorGetComponents(cgColor);
+    const CGFloat brightness = PerceivedBrightness(components[0], components[1], components[2]);
+    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < brightness);
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(cgContext, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
@@ -1323,8 +1348,7 @@ typedef struct iTermTextColorContext {
         }
     }
     
-    CFRelease(lineRef);
-    
+
     if (useThinStrokes) {
         CGContextSetFontSmoothingStyle(cgContext, savedFontSmoothingStyle);
     }
@@ -1347,7 +1371,7 @@ typedef struct iTermTextColorContext {
 
     __block CGContextRef maskGraphicsContext = nil;
     __block CGImageRef alphaMask = nil;
-    NSDictionary *maskingAttributes = @{ NSForegroundColorAttributeName: [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1] };
+    NSDictionary *maskingAttributes = @{ (NSString *)kCTForegroundColorAttributeName: (id)[[NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1] CGColor] };
     CGContextRef cgContext = (CGContextRef) [graphicsContet graphicsPort];
 
     [attributedString enumerateAttribute:NSUnderlineStyleAttributeName
@@ -1377,7 +1401,7 @@ typedef struct iTermTextColorContext {
                                               // Draw text into the mask
                                               NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
                                               NSRange fullRange = NSMakeRange(0, modifiedAttributedString.length);
-                                              [modifiedAttributedString removeAttribute:NSForegroundColorAttributeName range:fullRange];
+                                              [modifiedAttributedString removeAttribute:(NSString *)kCTForegroundColorAttributeName range:fullRange];
                                               [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
 
                                               [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
@@ -1405,8 +1429,8 @@ typedef struct iTermTextColorContext {
                                       }
 
                                       NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
-                                      NSColor *color = (underline ? underline : attributes[NSForegroundColorAttributeName]);
-                                      [self drawUnderlineOfColor:color
+                                      CGColorRef cgColor = (underline ? [underline CGColor] : (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]);
+                                      [self drawUnderlineOfColor:[NSColor colorWithCGColor:cgColor]
                                                            style:underlineStyle
                                                     atCellOrigin:NSMakePoint(xOrigin, origin.y)
                                                             font:attributes[NSFontAttributeName]
@@ -1685,15 +1709,24 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     } else if (attributes->isURL) {
         underlineStyle = NSUnderlinePatternDash;
     }
+    static NSMutableParagraphStyle *paragraphStyle;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.lineBreakMode = NSLineBreakByClipping;
+        paragraphStyle.tabStops = @[];
+        paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
+    });
     return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
-              NSForegroundColorAttributeName: attributes->foregroundColor,
+              (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
               NSFontAttributeName: attributes->font,
               iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
               iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
               iTermFakeBoldAttribute: @(attributes->fakeBold),
               iTermBoldAttribute: @(attributes->bold),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
-              NSUnderlineStyleAttributeName: @(underlineStyle) };
+              NSUnderlineStyleAttributeName: @(underlineStyle),
+              NSParagraphStyleAttributeName: paragraphStyle };
 }
 
 - (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c displayColumn:(int)displayColumn {
