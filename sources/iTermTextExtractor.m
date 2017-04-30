@@ -234,6 +234,24 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     return range;
 }
 
+- (int)startOfIndentationOnLine:(int)line {
+    if (line >= [_dataSource numberOfLines]) {
+        return 0;
+    }
+    __block int result = 0;
+    [self enumerateCharsInRange:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, line, [_dataSource width], line), _logicalWindow.location, _logicalWindow.length) charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+        if (!theChar.complexChar && (theChar.code == ' ' || theChar.code == '\t' || theChar.code == 0 || theChar.code == TAB_FILLER)) {
+            result++;
+            return NO;
+        } else {
+            return YES;
+        }
+    } eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+        return YES;
+    }];
+    return result;
+}
+
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
     DLog(@"Compute range for word at %@, max length %@", VT100GridCoordDescription(location), @(maximumLength));

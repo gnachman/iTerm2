@@ -20,6 +20,7 @@ NSString *const kiTermIndicatorCoprocess = @"kiTermIndicatorCoprocess";
 NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
 NSString *const kiTermIndicatorAllOutputSuppressed = @"kiTermIndicatorAllOutputSuppressed";
 NSString *const kiTermIndicatorZoomedIn = @"kiTermIndicatorZoomedIn";
+NSString *const kiTermIndicatorCopyMode = @"kiTermIndicatorCopyMode";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -74,7 +75,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                               kiTermIndicatorCoprocess: [NSImage imageNamed:@"Coprocess"],
                               kiTermIndicatorAlert: [NSImage imageNamed:@"Alert"],
                               kiTermIndicatorAllOutputSuppressed: [NSImage imageNamed:@"SuppressAllOutput"],
-                              kiTermIndicatorZoomedIn: [NSImage imageNamed:@"Zoomed"] };
+                              kiTermIndicatorZoomedIn: [NSImage imageNamed:@"Zoomed"],
+                              kiTermIndicatorCopyMode: [NSImage imageNamed:@"CopyMode"] };
         [gIndicatorImages retain];
     });
 
@@ -118,7 +120,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorCoprocess,
               kiTermIndicatorAlert,
               kiTermIndicatorAllOutputSuppressed,
-              kiTermIndicatorZoomedIn ];
+              kiTermIndicatorZoomedIn,
+              kiTermIndicatorCopyMode ];
 }
 
 - (void)drawInFrame:(NSRect)frame {

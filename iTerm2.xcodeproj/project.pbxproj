@@ -1232,6 +1232,16 @@
 		A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
+		A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */; };
+		A60BB37F1EB5149100D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
+		A60BB3811EB51D0E00D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
+		A60BB3851EB54B6700D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
+		A60BB3861EB54BD100D76C09 /* CopyMode.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3821EB54B6700D76C09 /* CopyMode.png */; };
+		A60BB3871EB54BD200D76C09 /* CopyMode.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3821EB54B6700D76C09 /* CopyMode.png */; };
+		A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3821EB54B6700D76C09 /* CopyMode.png */; };
+		A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
+		A60BB38A1EB54BD800D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
+		A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
 		A60BD9131B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */; };
 		A60BD9141B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */; };
 		A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
@@ -3196,6 +3206,10 @@
 		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6099B0418D6B0FD00081FA9 /* iTermWarning.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWarning.m; sourceTree = "<group>"; tabWidth = 4; };
+		A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCopyModeState.h; sourceTree = "<group>"; };
+		A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCopyModeState.m; sourceTree = "<group>"; };
+		A60BB3821EB54B6700D76C09 /* CopyMode.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CopyMode.png; path = images/CopyMode.png; sourceTree = "<group>"; };
+		A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "CopyMode@2x.png"; path = "images/CopyMode@2x.png"; sourceTree = "<group>"; };
 		A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextViewAccessibilityHelper.h; sourceTree = "<group>"; };
 		A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextViewAccessibilityHelper.m; sourceTree = "<group>"; };
 		A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenDirectory.framework; path = System/Library/Frameworks/OpenDirectory.framework; sourceTree = SDKROOT; };
@@ -4623,6 +4637,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A60BB3821EB54B6700D76C09 /* CopyMode.png */,
+				A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */,
 				A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */,
 				A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */,
 				A68E333D1DE79284003F1D8E /* Color Preset Touch Bar Icon.png */,
@@ -5677,6 +5693,8 @@
 				A62A1F701E6E724B00363EE9 /* iTermMenuOpener.m */,
 				A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */,
 				A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */,
+				A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */,
+				A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6786,6 +6804,7 @@
 				A667191D1DCE36C3000CE608 /* iTermHotKeyMigrationHelper.h in Headers */,
 				A667191E1DCE36C3000CE608 /* iTermCPS.h in Headers */,
 				A667191F1DCE36C3000CE608 /* PSMDarkHighContrastTabStyle.h in Headers */,
+				A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */,
 				A66719201DCE36C3000CE608 /* iTermImageMark.h in Headers */,
 				A66719211DCE36C3000CE608 /* iTermHTTPConnection.h in Headers */,
 				A66719221DCE36C3000CE608 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
@@ -7279,6 +7298,7 @@
 				1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */,
 				A67D0D701A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
+				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
@@ -7304,6 +7324,7 @@
 				A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
+				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
 				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
 				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
@@ -7395,6 +7416,7 @@
 				1D44D0021CC7F5A600BE5630 /* PTYTextViewTest-golden-testCharacterSelection.png in Resources */,
 				1D44CFC71CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testRegionStartingWithDWCRight.png in Resources */,
 				1D44CFA51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */,
+				A60BB38A1EB54BD800D76C09 /* CopyMode@2x.png in Resources */,
 				1D44CFCD1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png in Resources */,
 				1D44D0741CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testEmoji.png in Resources */,
 				1D44D0871CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testNote.png in Resources */,
@@ -7448,6 +7470,7 @@
 				A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
 				1D44CFF31CC7F5A600BE5630 /* PTYTextViewTest-golden-testBadge.png in Resources */,
 				1D44D05E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorReverseVideo.png in Resources */,
+				A60BB3871EB54BD200D76C09 /* CopyMode.png in Resources */,
 				1D44D0631CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testCharacterSelection.png in Resources */,
 				1D44D0261CC7F5A600BE5630 /* PTYTextViewTest-golden-testNote.png in Resources */,
 				1D44D0001CC7F5A600BE5630 /* PTYTextViewTest-golden-testBrightBoldOff.png in Resources */,
@@ -7854,6 +7877,7 @@
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
+				A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
@@ -7902,6 +7926,7 @@
 				A67D0D381A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
 				1D99C8E71BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
+				A60BB3861EB54BD100D76C09 /* CopyMode.png in Resources */,
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
@@ -8144,6 +8169,7 @@
 				A6BDB0AF1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUseNonAsciiFont.png in Resources */,
 				1D44CD991CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testBasicDraw.png in Resources */,
 				1D44CDA11CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testBoxDrawing.png in Resources */,
+				A60BB3851EB54B6700D76C09 /* CopyMode@2x.png in Resources */,
 				1D44D0BD1CC7F5A700BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorReverseVideo.png in Resources */,
 				1D44CEB61CC7F00800BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndMinimumContrast.png in Resources */,
 				1D44CDD71CC7E8D600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
@@ -8591,6 +8617,7 @@
 				A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */,
 				A6C763291B45C52B00E3C992 /* PTYFontInfo.m in Sources */,
 				A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */,
+				A60BB3811EB51D0E00D76C09 /* iTermCopyModeState.m in Sources */,
 				A6C763B31B45C52B00E3C992 /* PasswordTrigger.m in Sources */,
 				A6C763531B45C52B00E3C992 /* iTermOpenQuicklyModel.m in Sources */,
 				A6C7633D1B45C52B00E3C992 /* FindView.m in Sources */,
@@ -8800,6 +8827,7 @@
 				A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */,
 				A602516B1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m in Sources */,
 				A6ACD1F81B62F2210095CB57 /* iTermRuleTest.m in Sources */,
+				A60BB37F1EB5149100D76C09 /* iTermCopyModeState.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

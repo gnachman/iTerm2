@@ -4927,6 +4927,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+
+- (IBAction)toggleCopyMode:(id)sender {
+    PTYSession *session = self.currentSession;
+    session.copyMode = !session.copyMode;
+}
+
+- (IBAction)copyModeShortcuts:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]];
+}
+
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
     PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
     syntheticSession.textview.cursorVisible = NO;
