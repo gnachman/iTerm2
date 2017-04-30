@@ -110,6 +110,12 @@
 // Is the cursor configured to blink?
 @property(nonatomic, assign) BOOL cursorBlinking;
 
+// Are we in copy mode?
+@property(nonatomic, assign) BOOL copyMode;
+
+// Location of the copy-mode cursor
+@property(nonatomic, assign) VT100GridCoord copyModeCursorCoord;
+
 // Height of the "excess" region between the last line and the bottom of the view.
 @property(nonatomic, assign) double excess;
 

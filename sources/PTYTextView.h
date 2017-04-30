@@ -51,7 +51,16 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionEndpoint) {
 
 typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionDirection) {
     kPTYTextViewSelectionExtensionDirectionLeft,
-    kPTYTextViewSelectionExtensionDirectionRight
+    kPTYTextViewSelectionExtensionDirectionRight,
+
+    // These ignore the unit and are simple movements.
+    kPTYTextViewSelectionExtensionDirectionUp,
+    kPTYTextViewSelectionExtensionDirectionDown,
+    kPTYTextViewSelectionExtensionDirectionStartOfLine,
+    kPTYTextViewSelectionExtensionDirectionEndOfLine,
+    kPTYTextViewSelectionExtensionDirectionTop,
+    kPTYTextViewSelectionExtensionDirectionBottom,
+    kPTYTextViewSelectionExtensionDirectionStartOfIndentation,
 };
 
 typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
@@ -177,6 +186,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (NSURL *)textViewCurrentLocation;
 - (void)textViewBurySession;
 - (void)textViewShowHoverURL:(NSString *)url;
+
+- (BOOL)textViewCopyMode;
+- (VT100GridCoord)textViewCopyModeCursorCoord;
 
 @end
 
@@ -307,6 +319,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Returns the desired height of this view that exactly fits its contents.
 @property(nonatomic, readonly) CGFloat desiredHeight;
+
+// Lines that are currently visible on the screen.
+@property(nonatomic, readonly) VT100GridRange rangeOfVisibleLines;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -506,6 +521,17 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
                   inDirection:(PTYTextViewSelectionExtensionDirection)direction
                            by:(PTYTextViewSelectionExtensionUnit)unit;
+
+- (void)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
+                  inDirection:(PTYTextViewSelectionExtensionDirection)direction
+                           by:(PTYTextViewSelectionExtensionUnit)unit
+                  cursorCoord:(VT100GridCoord)cursorCoord;
+
+- (VT100GridWindowedRange)rangeByExtendingRange:(VT100GridWindowedRange)existingRange
+                                       endpoint:(PTYTextViewSelectionEndpoint)endpoint
+                                      direction:(PTYTextViewSelectionExtensionDirection)direction
+                                      extractor:(iTermTextExtractor *)extractor
+                                           unit:(PTYTextViewSelectionExtensionUnit)unit;
 
 // For focus follows mouse. Allows a new split pane to become focused even though the mouse pointer
 // is elsewhere. Records the mouse position. Refuses first responder as long as the mouse doesn't

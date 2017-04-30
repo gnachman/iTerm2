@@ -187,4 +187,7 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 - (VT100GridWindowedRange)rangeOfCoordinatesAround:(VT100GridCoord)coord
                                    maximumDistance:(int)maximumDistance
                                        passingTest:(BOOL(^)(screen_char_t *c, VT100GridCoord coord))block;
+
+- (int)startOfIndentationOnLine:(int)line;
+
 @end

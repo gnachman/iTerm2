@@ -135,9 +135,9 @@
         return;
     }
     AXUIElementRef element = (__bridge AXUIElementRef)elements.firstObject;
-    [self openMenuElement:element];
 
     if (elements.count > 1) {
+        [self openMenuElement:element];
         DLog(@"Schedule next click...");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [self clickThroughElements:[elements subarrayFromIndex:1] completion:completion];

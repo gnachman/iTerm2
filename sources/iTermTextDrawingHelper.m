@@ -417,6 +417,10 @@ typedef struct iTermTextColorContext {
     } else {
         [self drawCursor:NO];
     }
+
+    if (self.copyMode) {
+        [self drawCopyModeCursor];
+    }
 }
 
 #pragma mark - Drawing: Background
@@ -2054,9 +2058,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     [transform scaleXBy:1.0 yBy:-1.0];
     [transform concat];
     
-    NSColor *backgroundColor = [self defaultBackgroundColor];
-    [backgroundColor set];
-    NSRectFill(NSMakeRect(0, 0, _cellSize.width * length, _cellSize.height));
     if (imageInfo.animated) {
         [_delegate drawingHelperDidFindRunOfAnimatedCellsStartingAt:origin ofLength:length];
         _animated = YES;
@@ -2211,34 +2212,34 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 #pragma mark - Drawing: Cursor
 
-- (NSRect)cursorFrame {
-    const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
+- (NSRect)frameForCursorAt:(VT100GridCoord)cursorCoord {
+    const int rowNumber = cursorCoord.y + _numberOfLines - _gridSize.height;
     if ([iTermAdvancedSettingsModel fullHeightCursor]) {
         const CGFloat height = MAX(_cellSize.height, _cellSizeWithoutSpacing.height);
-        return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
+        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
                           rowNumber * _cellSize.height,
                           MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                           height);
     } else {
         const CGFloat height = MIN(_cellSize.height, _cellSizeWithoutSpacing.height);
-        return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
+        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
                           rowNumber * _cellSize.height + MAX(0, round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0)),
                           MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                           height);
     }
 }
 
-- (NSRect)cursorFrameIncludingDoubleWidthAdjustment {
-    screen_char_t *theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
-    BOOL isDoubleWidth;
-    [self charForCursorAtColumn:_cursorCoord.x
-                         inLine:theLine
-                    doubleWidth:&isDoubleWidth];
-    NSRect rect = [self cursorFrame];
-    if (isDoubleWidth) {
-        rect.size.width *= 2;
-    }
-    return rect;
+- (NSRect)cursorFrame {
+    return [self frameForCursorAt:_cursorCoord];
+}
+
+- (void)drawCopyModeCursor {
+    iTermCursor *cursor = [iTermCursor copyModeCursor];
+    cursor.delegate = self;
+
+    [self reallyDrawCursor:cursor
+                        at:VT100GridCoordMake(_copyModeCursorCoord.x, _copyModeCursorCoord.y - _numberOfScrollbackLines)
+                   outline:NO];
 }
 
 - (void)drawCursor:(BOOL)outline {
@@ -2251,51 +2252,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 
     if ([self shouldDrawCursor]) {
-        // Get the character that's under the cursor.
-        screen_char_t *theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
-        BOOL isDoubleWidth;
-        screen_char_t screenChar = [self charForCursorAtColumn:_cursorCoord.x
-                                                        inLine:theLine
-                                                   doubleWidth:&isDoubleWidth];
-
-        // Update the "find cursor" view.
-        [self.delegate drawingHelperUpdateFindCursorView];
-
-        // Get the color of the cursor.
-        NSColor *cursorColor;
-        if (outline) {
-            cursorColor = [_colorMap colorForKey:kColorMapBackground];
-        } else {
-            cursorColor = [self backgroundColorForCursor];
-        }
-        NSRect rect = [self cursorFrame];
-        if (isDoubleWidth) {
-            rect.size.width *= 2;
-        }
         iTermCursor *cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
+        NSRect rect = [self reallyDrawCursor:cursor at:_cursorCoord outline:outline];
 
-        NSColor *cursorTextColor;
-        if (_reverseVideo) {
-            cursorTextColor = [_colorMap colorForKey:kColorMapBackground];
-        } else {
-            cursorTextColor = [_delegate drawingHelperColorForCode:ALTSEM_CURSOR
-                                                             green:0
-                                                              blue:0
-                                                         colorMode:ColorModeAlternate
-                                                              bold:NO
-                                                             faint:NO
-                                                      isBackground:NO];
-        }
-        [cursor drawWithRect:rect
-                 doubleWidth:isDoubleWidth
-                  screenChar:screenChar
-             backgroundColor:cursorColor
-             foregroundColor:cursorTextColor
-                       smart:_useSmartCursorColor
-                     focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
-                       coord:_cursorCoord
-                     outline:outline];
         if (_showSearchingCursor) {
             NSImage *image = [NSImage imageNamed:@"SearchCursor"];
             if (image) {
@@ -2320,6 +2280,58 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 
     _oldCursorPosition = _cursorCoord;
+}
+
+- (NSRect)reallyDrawCursor:(iTermCursor *)cursor at:(VT100GridCoord)cursorCoord outline:(BOOL)outline {
+    // Get the character that's under the cursor.
+    screen_char_t *theLine;
+    if (cursorCoord.y >= 0) {
+        theLine = [self.delegate drawingHelperLineAtScreenIndex:cursorCoord.y];
+    } else {
+        theLine = [self.delegate drawingHelperLineAtIndex:cursorCoord.y + _numberOfScrollbackLines];
+    }
+    BOOL isDoubleWidth;
+    screen_char_t screenChar = [self charForCursorAtColumn:cursorCoord.x
+                                                    inLine:theLine
+                                               doubleWidth:&isDoubleWidth];
+
+    // Update the "find cursor" view.
+    [self.delegate drawingHelperUpdateFindCursorView];
+
+    // Get the color of the cursor.
+    NSColor *cursorColor;
+    if (outline) {
+        cursorColor = [_colorMap colorForKey:kColorMapBackground];
+    } else {
+        cursorColor = [self backgroundColorForCursor];
+    }
+    NSRect rect = [self frameForCursorAt:cursorCoord];
+    if (isDoubleWidth) {
+        rect.size.width *= 2;
+    }
+
+    NSColor *cursorTextColor;
+    if (_reverseVideo) {
+        cursorTextColor = [_colorMap colorForKey:kColorMapBackground];
+    } else {
+        cursorTextColor = [_delegate drawingHelperColorForCode:ALTSEM_CURSOR
+                                                         green:0
+                                                          blue:0
+                                                     colorMode:ColorModeAlternate
+                                                          bold:NO
+                                                         faint:NO
+                                                  isBackground:NO];
+    }
+    [cursor drawWithRect:rect
+             doubleWidth:isDoubleWidth
+              screenChar:screenChar
+         backgroundColor:cursorColor
+         foregroundColor:cursorTextColor
+                   smart:_useSmartCursorColor
+                 focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
+                   coord:cursorCoord
+                 outline:outline];
+    return rect;
 }
 
 #pragma mark - Text Run Construction
@@ -2433,7 +2445,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                    column >= 0 &&
                    row >= 0 &&
                    row < height);
-    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d, "
+    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
          @"width=%d, height=%d. Result=%@",
          (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
          width, height, @(result));

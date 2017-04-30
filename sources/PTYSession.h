@@ -436,6 +436,7 @@ typedef enum {
 
 @property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
 @property(nonatomic, readonly) iTermRestorableSession *restorableSession;
+@property(nonatomic) BOOL copyMode;
 
 #pragma mark - methods
 

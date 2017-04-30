@@ -218,7 +218,7 @@
         }
     }
 
-    if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
+    if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event] && !currentSession.copyMode) {
         // Remap key.
         DLog(@"Remapping to actionable event");
         [currentSession keyDown:event];

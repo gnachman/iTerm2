@@ -20,6 +20,9 @@
 @interface iTermBoxCursor : iTermCursor
 @end
 
+@interface iTermCopyModeCursor : iTermCursor
+@end
+
 @implementation iTermCursor
 
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType {
@@ -38,6 +41,9 @@
     }
 }
 
++ (instancetype)copyModeCursor {
+    return [[[iTermCopyModeCursor alloc] init] autorelease];
+}
 
 - (void)drawWithRect:(NSRect)rect
          doubleWidth:(BOOL)doubleWidth
@@ -107,6 +113,37 @@
         [backgroundColor set];
         NSRectFill(cursorRect);
     }
+}
+
+@end
+
+@implementation iTermCopyModeCursor
+
+- (void)drawWithRect:(NSRect)rect
+         doubleWidth:(BOOL)doubleWidth
+          screenChar:(screen_char_t)screenChar
+     backgroundColor:(NSColor *)backgroundColor
+     foregroundColor:(NSColor *)foregroundColor
+               smart:(BOOL)smart
+             focused:(BOOL)focused
+               coord:(VT100GridCoord)coord
+             outline:(BOOL)outline {
+    const CGFloat heightFraction = 1 / 3.0;
+    NSRect cursorRect = NSMakeRect(rect.origin.x - rect.size.width,
+                                   rect.origin.y,
+                                   rect.size.width * 2,
+                                   rect.size.height * heightFraction);
+
+    NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
+    [path moveToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect), NSMaxY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMaxX(cursorRect), NSMinY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
+    [[NSColor whiteColor] set];
+    [path fill];
+
+    [[NSColor blackColor] set];
+    [path stroke];
 }
 
 @end

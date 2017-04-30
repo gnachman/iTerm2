@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16E195" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
     </dependencies>
     <objects>
@@ -332,6 +331,11 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="copyWithStyles:" target="-1" id="B2X-kC-nrq"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Copy Mode" keyEquivalent="C" id="CQc-0U-rfn">
+                                <connections>
+                                    <action selector="toggleCopyMode:" target="-1" id="nrd-WW-ADX"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Paste" keyEquivalent="v" id="213">
@@ -1086,6 +1090,12 @@ DQ
                             <menuItem title="iTerm2 Help" keyEquivalent="?" id="111">
                                 <connections>
                                     <action selector="showHelp:" target="201" id="hFO-6H-VeJ"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Copy Mode Shortcuts" id="wTB-km-9Qm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="copyModeShortcuts:" target="-1" id="fOs-EL-nnE"/>
                                 </connections>
                             </menuItem>
                         </items>
