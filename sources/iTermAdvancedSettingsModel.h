@@ -183,5 +183,6 @@
 + (double)underlineCursorOffset;
 + (BOOL)logRestorableStateSize;
 + (NSString *)autoLogFormat;
++ (BOOL)killSessionsOnLogout;
 
 @end
