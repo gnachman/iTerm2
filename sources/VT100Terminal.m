@@ -2284,6 +2284,28 @@ static const int kMaxScreenRows = 4096;
             NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue ?: @"", VT100CC_BEL];
             [delegate_ terminalSendReport:[report dataUsingEncoding:self.encoding]];
         }
+    } else if ([key isEqualToString:@"Custom"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            // Custom=key1=value1;key2=value2;...;keyN=valueN:payload
+            // ex:
+            // Custom=id=SenderIdentity:MessageGoesHere
+            NSInteger colon = [value rangeOfString:@":"].location;
+            if (colon != NSNotFound) {
+                NSArray<NSString *> *parts = [[value substringToIndex:colon] componentsSeparatedByString:@";"];
+                NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+                [parts enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                    NSInteger equals = [obj rangeOfString:@"="].location;
+                    if (equals != NSNotFound) {
+                        NSString *key = [obj substringToIndex:equals];
+                        NSString *parameterValue = [obj substringFromIndex:equals + 1];
+                        parameters[key] = parameterValue;
+                    }
+                }];
+                NSString *payload = [value substringFromIndex:colon + 1];
+                [delegate_ terminalCustomEscapeSequenceWithParameters:parameters
+                                                              payload:payload];
+            }
+        }
     }
 }
 

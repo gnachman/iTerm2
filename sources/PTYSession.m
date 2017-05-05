@@ -458,6 +458,7 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_customEscapeSequenceNotifications;
 
     // Used by auto-hide. We can't auto hide the tmux gateway session until at least one window has been opened.
     BOOL _hideAfterTmuxWindowOpens;
@@ -544,6 +545,7 @@ static const NSUInteger kMaxHosts = 100;
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
+        _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -672,6 +674,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_updateSubscriptions release];
     [_promptSubscriptions release];
     [_locationChangeSubscriptions release];
+    [_customEscapeSequenceNotifications release];
+
     [_copyModeState release];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -4367,6 +4371,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
     [_locationChangeSubscriptions removeObjectForKey:notification.object];
+    [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
@@ -8088,6 +8093,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 }
 
+- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                                   payload:(NSString *)payload {
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.customEscapeSequenceNotification = [[[ITMCustomEscapeSequenceNotification alloc] init] autorelease];
+    notification.customEscapeSequenceNotification.session = self.guid;
+    notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
+    notification.customEscapeSequenceNotification.payload = payload;
+    [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
+}
+
 - (BOOL)screenShouldSendReport {
     return (_shell != nil) && (![self isTmuxClient]);
 }
@@ -9135,6 +9152,9 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case ITMNotificationType_NotifyOnLocationChange:
             subscriptions = _locationChangeSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnCustomEscapeSequence:
+            subscriptions = _customEscapeSequenceNotifications;
             break;
     }
     if (!subscriptions) {

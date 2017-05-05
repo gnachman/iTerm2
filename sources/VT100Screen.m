@@ -4098,6 +4098,12 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [delegate_ screenSetColor:color forKey:key];
 }
 
+- (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                           payload:(NSString *)payload {
+    [delegate_ screenDidReceiveCustomEscapeSequenceWithParameters:parameters
+                                                          payload:payload];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

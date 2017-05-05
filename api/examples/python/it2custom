@@ -1,0 +1,44 @@
+#!/bin/bash
+# This is meant to be used a with a websocket server based on remote_control.py that can receive payloads form this command.
+
+# tmux requires unrecognized OSC sequences to be wrapped with DCS tmux;
+# <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
+# only accepts ESC backslash for ST.
+function print_osc() {
+    if [[ $TERM == screen* ]] ; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [[ $TERM == screen* ]] ; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
+function error() {
+    echo "ERROR: $*" 1>&2
+}
+
+function show_help() {
+    echo "Usage: it2custom identity payload" 1>& 2
+}
+
+## Main
+
+# Show help if no arguments and no stdin.
+if [ $# -ne 2 ]; then
+    show_help
+    exit
+fi
+
+print_osc
+printf "1337;Custom=id=%s:%s" "$1" "$2"
+print_st
+
+exit 0

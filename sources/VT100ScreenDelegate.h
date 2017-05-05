@@ -222,6 +222,8 @@
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host;
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath;
+- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                                   payload:(NSString *)payload;
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;

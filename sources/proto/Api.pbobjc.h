@@ -30,6 +30,7 @@ CF_EXTERN_C_BEGIN
 @class ITMCodePointsPerCell;
 @class ITMCoord;
 @class ITMCoordRange;
+@class ITMCustomEscapeSequenceNotification;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
 @class ITMGetPromptRequest;
@@ -67,6 +68,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnScreenUpdate = 2,
   ITMNotificationType_NotifyOnPrompt = 3,
   ITMNotificationType_NotifyOnLocationChange = 4,
+  ITMNotificationType_NotifyOnCustomEscapeSequence = 5,
 };
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
@@ -484,6 +486,7 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_ScreenUpdateNotification = 2,
   ITMNotification_FieldNumber_PromptNotification = 3,
   ITMNotification_FieldNumber_LocationChangeNotification = 4,
+  ITMNotification_FieldNumber_CustomEscapeSequenceNotification = 5,
 };
 
 @interface ITMNotification : GPBMessage
@@ -503,6 +506,10 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMLocationChangeNotification *locationChangeNotification;
 /** Test to see if @c locationChangeNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasLocationChangeNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCustomEscapeSequenceNotification *customEscapeSequenceNotification;
+/** Test to see if @c customEscapeSequenceNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasCustomEscapeSequenceNotification;
 
 @end
 
@@ -594,6 +601,33 @@ typedef GPB_ENUM(ITMLocationChangeNotification_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
+
+@end
+
+#pragma mark - ITMCustomEscapeSequenceNotification
+
+typedef GPB_ENUM(ITMCustomEscapeSequenceNotification_FieldNumber) {
+  ITMCustomEscapeSequenceNotification_FieldNumber_Session = 1,
+  ITMCustomEscapeSequenceNotification_FieldNumber_SenderIdentity = 2,
+  ITMCustomEscapeSequenceNotification_FieldNumber_Payload = 3,
+};
+
+/**
+ * OSC 1337 ; Custom=id=<identity>:<payload> ST
+ **/
+@interface ITMCustomEscapeSequenceNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *senderIdentity;
+/** Test to see if @c senderIdentity has been set. */
+@property(nonatomic, readwrite) BOOL hasSenderIdentity;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *payload;
+/** Test to see if @c payload has been set. */
+@property(nonatomic, readwrite) BOOL hasPayload;
 
 @end
 
