@@ -37,6 +37,3 @@
 
 @end
 
-@interface NSFont(PTYFontInfo)
-- (BOOL)it_supportsLigatures;
-@end

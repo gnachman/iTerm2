@@ -2267,7 +2267,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 }
 
 - (void)drawCopyModeCursor {
-    iTermCursor *cursor = [iTermCursor copyModeCursor];
+    iTermCursor *cursor = [iTermCursor copyModeCursorInSelectionState:self.copyModeSelecting];
     cursor.delegate = self;
 
     [self reallyDrawCursor:cursor

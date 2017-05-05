@@ -785,6 +785,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                                   _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
         _copyModeState.numberOfLines = _screen.numberOfLines;
         _copyModeState.textView = _textview;
+
+        if (_textview.selection.allSubSelections.count == 1) {
+            [_textview.window makeFirstResponder:_textview];
+            iTermSubSelection *sub = _textview.selection.allSubSelections.firstObject;
+            _copyModeState.start = sub.range.coordRange.start;
+            _copyModeState.coord = sub.range.coordRange.end;
+            _copyModeState.selecting = YES;
+            _copyModeState.start = sub.range.coordRange.start;
+            _copyModeState.coord = sub.range.coordRange.end;
+        }
+        [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
     } else {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
@@ -1974,6 +1985,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)handleKeyPressInCopyMode:(NSEvent *)event {
+    BOOL wasSelecting = _copyModeState.selecting;
     NSString *string = event.charactersIgnoringModifiers;
     unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
     NSUInteger mask = (NSAlternateKeyMask | NSControlKeyMask | NSCommandKeyMask);
@@ -2116,7 +2128,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    if (moved) {
+    if (moved || (_copyModeState.selecting != wasSelecting)) {
         if (self.copyMode) {
             [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
         }
@@ -6775,8 +6787,20 @@ ITERM_WEAKLY_REFERENCEABLE
     return _copyMode;
 }
 
+- (BOOL)textViewCopyModeSelecting {
+    return _copyModeState.selecting;
+}
+
 - (VT100GridCoord)textViewCopyModeCursorCoord {
     return _copyModeState.coord;
+}
+
+- (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
+    if (_copyMode) {
+        _copyModeState.coord = range.start;
+        _copyModeState.start = range.end;
+        [self.textview setNeedsDisplay:YES];
+    }
 }
 
 - (void)bury {

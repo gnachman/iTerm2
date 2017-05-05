@@ -13,31 +13,11 @@
 @implementation NSFont(PTYFontInfo)
 
 - (NSInteger)it_ligatureLevel {
-    // Some fonts have great ligatures but unlike FiraCode you need to ask for them. FiraCode gives
-    // you ligatures whether you like it or not.
+    // Returns the proper ligature level for this font. Defaults to 1.
     static NSDictionary *fontNameToLigatureLevel;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        fontNameToLigatureLevel = @{ @"PragmataPro": @1,
-                                     @"PragmataPro-Regular": @1,
-                                     @"PragmataPro-Italic": @1,
-                                     @"PragmataPro-Bold": @1,
-                                     @"PragmataPro-BoldItalic": @1,
-                                     @"Hasklig-Black": @1,
-                                     @"Hasklig-BlackIt": @1,
-                                     @"Hasklig-Bold": @1,
-                                     @"Hasklig-BoldIt": @1,
-                                     @"Hasklig-ExtraLight": @1,
-                                     @"Hasklig-ExtraLightIt": @1,
-                                     @"Hasklig-It": @1,
-                                     @"Hasklig-Light": @1,
-                                     @"Hasklig-LightIt": @1,
-                                     @"Hasklig-Medium": @1,
-                                     @"Hasklig-MediumIt": @1,
-                                     @"Hasklig-Regular": @1,
-                                     @"Hasklig-Semibold": @1,
-                                     @"Hasklig-SemiboldIt": @1,
-                                     @"Iosevka": @2,
+        fontNameToLigatureLevel = @{ @"Iosevka": @2,
                                      @"Iosevka-Bold": @2,
                                      @"Iosevka-Bold-Italic": @2,
                                      @"Iosevka-Bold-Oblique": @2,
@@ -120,24 +100,11 @@
                                      @"IosevkaCC-Slab-Oblique": @2,
                                      @"IosevkaCC-Slab-Thin": @2,
                                      @"IosevkaCC-Slab-Thin-Italic": @2,
-                                     @"IosevkaCC-Slab-Thin-Oblique": @2,
-                                     @"Monoisome-Bold": @1,
-                                     @"Monoisome-Italic": @1,
-                                     @"Monoisome-Regular": @1,
-                                     @"Monoisome-Retina": @1,
-                                     @"OperatorMono-XLight": @1,
-                                     @"OperatorMono-XLightItalic": @1,
-                                     @"OperatorMono-Light": @1,
-                                     @"OperatorMono-LightItalic": @1,
-                                     @"OperatorMono-Book": @1,
-                                     @"OperatorMono-BookItalic": @1,
-                                     @"OperatorMono-Medium": @1,
-                                     @"OperatorMono-MediumItalic": @1,
-                                     @"OperatorMono-Bold": @1,
-                                     @"OperatorMono-BoldItalic": @1 };
+                                     @"IosevkaCC-Slab-Thin-Oblique": @2, };
         [fontNameToLigatureLevel retain];
     });
-    return [fontNameToLigatureLevel[self.fontName] integerValue];
+    NSNumber *value = fontNameToLigatureLevel[self.fontName];
+    return value ? value.integerValue : 1;
 }
 
 - (BOOL)it_defaultLigatures {
@@ -160,10 +127,6 @@
     BOOL result = [fontsWithDefaultLigatures containsObject:self.fontName];
     DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
     return result;
-}
-
-- (BOOL)it_supportsLigatures {
-    return self.it_defaultLigatures || self.it_ligatureLevel > 0;
 }
 
 @end
