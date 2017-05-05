@@ -255,8 +255,6 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 - (void)updateWarnings {
     [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
     [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
-    _asciiLigatures.hidden = !self.normalFont.it_supportsLigatures;
-    _nonAsciiLigatures.hidden = !self.nonAsciiFont.it_supportsLigatures;
 }
 
 
