@@ -66,6 +66,7 @@
 
 #import "ProcessCache.h"
 #import "iTerm.h"
+#import "iTermProcessCollection.h"
 #include <libproc.h>
 #include <sys/sysctl.h>
 
@@ -75,7 +76,7 @@ NSString *PID_INFO_IS_FOREGROUND = @"foreground";
 NSString *PID_INFO_NAME = @"name";
 
 @implementation ProcessCache {
-    NSMutableDictionary* pidInfoCache_;  // guraded by _cacheLock
+    NSDictionary* pidInfoCache_;  // guarded by _cacheLock
     NSLock *_cacheLock;
 
     BOOL newOutput_;
@@ -95,7 +96,7 @@ NSString *PID_INFO_NAME = @"name";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        pidInfoCache_ = [[NSMutableDictionary alloc] init];
+        pidInfoCache_ = [[NSDictionary alloc] init];
         _lock = [[NSLock alloc] init];
         _cacheLock = [[NSLock alloc] init];
     }
@@ -250,74 +251,39 @@ NSString *PID_INFO_NAME = @"name";
     return closure;
 }
 
-// Constructs a map of pid -> name of tty controller where pid is the tty
-// controller or any ancestor of the tty controller.
-- (void)_refreshProcessCache:(NSMutableDictionary*)cache
-{    
-    [cache removeAllObjects];
-    // Add a mapping to 'temp' of pid->job name for all foreground jobs.
-    // Add a mapping to 'ancestry' of of pid->ppid for all pid's.
-    
+- (NSDictionary<NSNumber *, NSString *> *)pidToForegroundJobName {
     NSArray *allPids = [ProcessCache allPids];
-    int numPids = [allPids count];
-    
-    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:numPids];
-    NSMutableDictionary* ancestry = [NSMutableDictionary dictionaryWithCapacity:numPids];
-    for (NSNumber *n in allPids) {
-        pid_t thePid = [n intValue];
+    iTermProcessCollection *collection = [[[iTermProcessCollection alloc] init] autorelease];
+    for (NSNumber *pidNumber in allPids) {
+        pid_t pid = pidNumber.intValue;
 
-        pid_t ppid = [ProcessCache ppidForPid:thePid];
+        pid_t ppid = [ProcessCache ppidForPid:pid];
         if (!ppid) {
             continue;
         }
 
         BOOL isForeground;
-        NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
+        NSString* name = [self getNameOfPid:pid isForeground:&isForeground];
         if (name) {
-            if (isForeground) {
-                [temp setObject:name forKey:[NSNumber numberWithInt:thePid]];
-            }
-            [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:n];
+            [collection addProcessWithName:name processID:pid parentProcessID:ppid isForegroundJob:isForeground];
         }
     }
 
-    // For each pid in 'temp', follow the parent pid chain in 'ancestry' and add a map of
-    // ancestorPid->job name to 'cache' for all ancestors of the job with that name.
-    for (NSNumber* tempPid in temp) {
-        NSString* value = [temp objectForKey:tempPid];
-        [cache setObject:value forKey:tempPid];
-        
-        NSNumber* parent = [ancestry objectForKey:tempPid];
-        NSNumber* cycleFinder = parent;
-        while (parent != nil) {
-            [cache setObject:value forKey:parent];
-            
-            // cycleFinder moves through the chain of ancestry at twice the
-            // rate of parent. If it ever catches up to parent then there is a cycle.
-            // A cycle can occur because there's a race in getting each process's
-            // ppid. See bug 771 for details.
-            if (cycleFinder) {
-                cycleFinder = [ancestry objectForKey:cycleFinder];
-                if (cycleFinder && [cycleFinder isEqualToNumber:parent]) {
-                    break;
-                }
-            }
-            if (cycleFinder) {
-                cycleFinder = [ancestry objectForKey:cycleFinder];
-                if (cycleFinder && [cycleFinder isEqualToNumber:parent]) {
-                    break;
-                }
-            }
-            
-            parent = [ancestry objectForKey:parent];
+    [collection commit];
+
+    NSMutableDictionary *pidToForegroundJobName = [NSMutableDictionary dictionary];
+    for (NSNumber *pidNumber in allPids) {
+        NSString *name = [[[collection infoForProcessID:pidNumber.intValue] deepestForegroundJob] name];
+        if (name != nil) {
+            pidToForegroundJobName[pidNumber] = name;
         }
     }
+    return pidToForegroundJobName;
 }
 
 - (void)_update {
     // Calculate a new ancestorPid->jobName dict.
-    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:100];
-    [self _refreshProcessCache:temp];
+    NSDictionary* temp = [self pidToForegroundJobName];
 
     // Quickly swap the pointer to minimize lock time, and then free the old cache.
     [_cacheLock lock];
@@ -363,10 +329,10 @@ NSString *PID_INFO_NAME = @"name";
 
 - (NSString*)jobNameWithPid:(int)pid {
     [_cacheLock lock];
-    NSString *jobName = [[[pidInfoCache_ objectForKey:@(pid)] retain] autorelease];
+    NSString *jobName = [pidInfoCache_[@(pid)] retain];
     [_cacheLock unlock];
 
-    return jobName;
+    return [jobName autorelease];
 }
 
 
