@@ -1125,6 +1125,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.asciiLigatures = _primaryFont.hasDefaultLigatures || _asciiLigatures;
     _drawingHelper.nonAsciiLigatures = _secondaryFont.hasDefaultLigatures || _nonAsciiLigatures;
     _drawingHelper.copyMode = _delegate.textViewCopyMode;
+    _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
     _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
 
     const NSRect *rectArray;

@@ -795,6 +795,7 @@ ITERM_WEAKLY_REFERENCEABLE
             _copyModeState.start = sub.range.coordRange.start;
             _copyModeState.coord = sub.range.coordRange.end;
         }
+        [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
     } else {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
@@ -1984,6 +1985,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)handleKeyPressInCopyMode:(NSEvent *)event {
+    BOOL wasSelecting = _copyModeState.selecting;
     NSString *string = event.charactersIgnoringModifiers;
     unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
     NSUInteger mask = (NSAlternateKeyMask | NSControlKeyMask | NSCommandKeyMask);
@@ -2126,7 +2128,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    if (moved) {
+    if (moved || (_copyModeState.selecting != wasSelecting)) {
         if (self.copyMode) {
             [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
         }
@@ -6783,6 +6785,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)textViewCopyMode {
     return _copyMode;
+}
+
+- (BOOL)textViewCopyModeSelecting {
+    return _copyModeState.selecting;
 }
 
 - (VT100GridCoord)textViewCopyModeCursorCoord {

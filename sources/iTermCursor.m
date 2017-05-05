@@ -21,6 +21,7 @@
 @end
 
 @interface iTermCopyModeCursor : iTermCursor
+@property (nonatomic) BOOL selecting;
 @end
 
 @implementation iTermCursor
@@ -41,8 +42,10 @@
     }
 }
 
-+ (instancetype)copyModeCursor {
-    return [[[iTermCopyModeCursor alloc] init] autorelease];
++ (instancetype)copyModeCursorInSelectionState:(BOOL)selecting {
+    iTermCopyModeCursor *cursor = [[[iTermCopyModeCursor alloc] init] autorelease];
+    cursor.selecting = selecting;
+    return cursor;
 }
 
 - (void)drawWithRect:(NSRect)rect
@@ -134,16 +137,21 @@
                                    rect.size.width * 2,
                                    rect.size.height * heightFraction);
 
+    const CGFloat r = self.selecting ? 2 : 1;
     NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
     path = [[[NSBezierPath alloc] init] autorelease];
     [path moveToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - 1, NSMaxY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - 1, NSMaxY(rect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + 1, NSMaxY(rect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + 1, NSMaxY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - r, NSMaxY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - r, NSMaxY(rect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMaxY(rect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMaxY(cursorRect))];
     [path lineToPoint:NSMakePoint(NSMaxX(cursorRect), NSMinY(cursorRect))];
     [path lineToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
-    [[NSColor whiteColor] set];
+    if (self.selecting) {
+        [[NSColor colorWithRed:0xc1 / 255.0 green:0xde / 255.0 blue:0xff / 255.0 alpha:1] set];
+    } else {
+        [[NSColor whiteColor] set];
+    }
     [path fill];
 
     [[NSColor blackColor] set];

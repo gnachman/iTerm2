@@ -38,7 +38,7 @@ typedef struct {
 @property(nonatomic, assign) id<iTermCursorDelegate> delegate;
 
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType;
-+ (instancetype)copyModeCursor;
++ (instancetype)copyModeCursorInSelectionState:(BOOL)selecting;
 
 // No default implementation.
 - (void)drawWithRect:(NSRect)rect

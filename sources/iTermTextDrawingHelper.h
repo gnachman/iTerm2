@@ -112,6 +112,7 @@
 
 // Are we in copy mode?
 @property(nonatomic, assign) BOOL copyMode;
+@property(nonatomic, assign) BOOL copyModeSelecting;
 
 // Location of the copy-mode cursor
 @property(nonatomic, assign) VT100GridCoord copyModeCursorCoord;
