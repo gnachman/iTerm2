@@ -603,7 +603,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
 - (PTYSession *)sessionWithProfileOverrides:(NSDictionary *)profileOverrides
                                        size:(VT100GridSize)size {
-    PTYSession *session = [[[PTYSession alloc] init] autorelease];
+    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     NSString* plistFile = [[NSBundle bundleForClass:[self class]]
                            pathForResource:@"DefaultBookmark"
                            ofType:@"plist"];

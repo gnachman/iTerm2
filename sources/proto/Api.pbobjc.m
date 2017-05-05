@@ -51,13 +51,15 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
     static const char *valueNames =
         "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
         "otifyOnPrompt\000NotifyOnLocationChange\000Not"
-        "ifyOnCustomEscapeSequence\000";
+        "ifyOnCustomEscapeSequence\000NotifyOnNewSes"
+        "sion\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
         ITMNotificationType_NotifyOnPrompt,
         ITMNotificationType_NotifyOnLocationChange,
         ITMNotificationType_NotifyOnCustomEscapeSequence,
+        ITMNotificationType_NotifyOnNewSession,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
@@ -79,6 +81,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnPrompt:
     case ITMNotificationType_NotifyOnLocationChange:
     case ITMNotificationType_NotifyOnCustomEscapeSequence:
+    case ITMNotificationType_NotifyOnNewSession:
       return YES;
     default:
       return NO;
@@ -725,6 +728,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasPromptNotification, promptNotification;
 @dynamic hasLocationChangeNotification, locationChangeNotification;
 @dynamic hasCustomEscapeSequenceNotification, customEscapeSequenceNotification;
+@dynamic hasNewSessionNotification, newSessionNotification;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -733,6 +737,7 @@ typedef struct ITMNotification__storage_ {
   ITMPromptNotification *promptNotification;
   ITMLocationChangeNotification *locationChangeNotification;
   ITMCustomEscapeSequenceNotification *customEscapeSequenceNotification;
+  ITMNewSessionNotification *newSessionNotification;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -783,6 +788,15 @@ typedef struct ITMNotification__storage_ {
         .number = ITMNotification_FieldNumber_CustomEscapeSequenceNotification,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, customEscapeSequenceNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "newSessionNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMNewSessionNotification),
+        .number = ITMNotification_FieldNumber_NewSessionNotification,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, newSessionNotification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -1157,6 +1171,54 @@ typedef struct ITMCustomEscapeSequenceNotification__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCustomEscapeSequenceNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMNewSessionNotification
+
+@implementation ITMNewSessionNotification
+
+@dynamic hasUniqueIdentifier, uniqueIdentifier;
+
+typedef struct ITMNewSessionNotification__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *uniqueIdentifier;
+} ITMNewSessionNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "uniqueIdentifier",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMNewSessionNotification_FieldNumber_UniqueIdentifier,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMNewSessionNotification__storage_, uniqueIdentifier),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMNewSessionNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMNewSessionNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    static const char *extraTextFormatInfo =
+        "\001\001\020\000";
+    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
+#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }

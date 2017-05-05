@@ -27,6 +27,8 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 // Called when captured output for the current session changes.
 extern NSString *const kPTYSessionCapturedOutputDidChange;
 
+extern NSString *const PTYSessionCreatedNotification;
+
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
@@ -455,6 +457,9 @@ typedef enum {
 // Forget all sessions registered with registerSessionInArrangement. Normally
 // called after startup activities are done.
 + (void)removeAllRegisteredSessions;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
 
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;

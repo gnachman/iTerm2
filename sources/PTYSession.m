@@ -100,6 +100,8 @@ static NSString *const PTYSessionDidRepairSavedArrangement = @"PTYSessionDidRepa
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
 static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
 
+NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification";
+
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBellOffer";
@@ -490,7 +492,7 @@ static const NSUInteger kMaxHosts = 100;
     [gRegisteredSessionContents removeAllObjects];
 }
 
-- (instancetype)init {
+- (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
         _autoLogId = arc4random();
@@ -596,6 +598,10 @@ static const NSUInteger kMaxHosts = 100;
                                                      name:NSWindowDidEndLiveResizeNotification
                                                    object:nil];
         [self updateVariables];
+
+        if (!synthetic) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
+        }
     }
     return self;
 }
@@ -944,7 +950,7 @@ ITERM_WEAKLY_REFERENCEABLE
                           withDelegate:(id<PTYSessionDelegate>)delegate
                          forObjectType:(iTermObjectType)objectType {
     DLog(@"Restoring session from arrangement");
-    PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
+    PTYSession* aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
     [[sessionView findViewController] setDelegate:aSession];
@@ -9155,6 +9161,11 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case ITMNotificationType_NotifyOnCustomEscapeSequence:
             subscriptions = _customEscapeSequenceNotifications;
+            break;
+
+        case ITMNotificationType_NotifyOnNewSession:
+            // We won't get called for this
+            assert(NO);
             break;
     }
     if (!subscriptions) {

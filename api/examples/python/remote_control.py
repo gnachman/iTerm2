@@ -10,30 +10,44 @@ import time
 import websocket
 
 callbacks = []
+DEBUG=0
 
 def SendRPC(ws, message, callback):
+    if DEBUG > 0:
+      print(">>> " + str(message))
     ws.send(message.SerializeToString(), opcode=websocket.ABNF.OPCODE_BINARY)
     callbacks.append(callback)
 
-def handle_notification(notification):
+def handle_notification(ws, notification):
     def handle_custom_escape_sequence_notification(custom_escape_sequence_notification):
         # -- Your logic goes here --
         print(custom_escape_sequence_notification.sender_identity + " sends message " + custom_escape_sequence_notification.payload)
 
+    def handle_new_session_notification(new_session_notification):
+        subscribe_to_custom_escape_sequence(ws, new_session_notification.uniqueIdentifier)
+
     if notification.HasField('custom_escape_sequence_notification'):
       handle_custom_escape_sequence_notification(notification.custom_escape_sequence_notification)
+    elif notification.HasField('new_session_notification'):
+      handle_new_session_notification(notification.new_session_notification)
+
+def handle_notification_response(response):
+  if not response.HasField('notification_response'):
+    print("Malformed notification response")
+    print(str(response))
+    return
+  if response.notification_response.status != api_pb2.NotificationResponse.OK:
+    print("Bad status in notification response")
+    print(str(response))
+    return
+
+def subscribe_to_new_sessions(ws):
+    request = api_pb2.Request()
+    request.notification_request.subscribe = True
+    request.notification_request.notification_type = api_pb2.NOTIFY_ON_NEW_SESSION
+    SendRPC(ws, request, handle_notification_response)
 
 def subscribe_to_custom_escape_sequence(ws, session):
-    def handle_notification_response(response):
-      if not response.HasField('notification_response'):
-        print("Malformed notification response")
-        print(str(response))
-        return
-      if response.notification_response.status != api_pb2.NotificationResponse.OK:
-        print("Bad status in notification response")
-        print(str(response))
-        return
-
     request = api_pb2.Request()
     request.notification_request.subscribe = True
     request.notification_request.session = session
@@ -44,8 +58,10 @@ def main(argv):
     def on_message(ws, message):
         response = api_pb2.Response()
         response.ParseFromString(message)
+        if DEBUG > 0:
+          print("<<< " + str(response))
         if response.HasField('notification'):
-          handle_notification(response.notification)
+          handle_notification(ws, response.notification)
         else:
           global callbacks
           callback = callbacks[0]
@@ -69,6 +85,7 @@ def main(argv):
             request.list_sessions_request.SetInParent()
             SendRPC(ws, request, callback)
 
+        subscribe_to_new_sessions(ws)
         list_sessions(ws)
 
     #websocket.enableTrace(True)

@@ -4881,7 +4881,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *newSession;
 
     // Initialize a new session
-    newSession = [[[PTYSession alloc] init] autorelease];
+    newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
@@ -7287,7 +7287,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[PTYSession alloc] init];
+    aSession = [[PTYSession alloc] initSynthetic:NO];
 
     [[aSession screen] setUnlimitedScrollback:[[bookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[bookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
@@ -7425,7 +7425,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // Initialize a new session
-    PTYSession *aSession = [[[PTYSession alloc] init] autorelease];
+    PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     [[aSession screen] setUnlimitedScrollback:[[profile objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[profile objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -7567,7 +7567,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[[PTYSession alloc] init] autorelease];
+    aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences

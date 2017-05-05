@@ -193,6 +193,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     iTermAPIServer *_apiServer;
 
     NSArray<NSDictionary *> *_buriedSessionsState;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
 }
 
 - (instancetype)init {
@@ -241,6 +242,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                  selector:@selector(currentSessionDidChange)
                                                      name:kCurrentSessionDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionCreated:)
+                                                     name:PTYSessionCreatedNotification
+                                                   object:nil];
         [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                            andSelector:@selector(getUrl:withReplyEvent:)
                                                          forEventClass:kInternetEventClass
@@ -257,6 +262,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
+    [_newSessionSubscriptions release];
     [super dealloc];
 }
 
@@ -1092,6 +1098,16 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
     NSInteger newState = ([menuItem state] == NSOnState) ? NSOffState : NSOnState;
     [menuItem setState:newState];
+}
+
+- (void)sessionCreated:(NSNotification *)notification {
+    PTYSession *session = notification.object;
+    [_newSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+        notification.newSessionNotification = [[[ITMNewSessionNotification alloc] init] autorelease];
+        notification.newSessionNotification.uniqueIdentifier = session.guid;
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
 }
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
@@ -2275,16 +2291,47 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 }
 
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection {
+    ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
+    if (!request.hasSubscribe) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+    if (!_newSessionSubscriptions) {
+        _newSessionSubscriptions = [[NSMutableDictionary alloc] init];
+    }
+    if (request.subscribe) {
+        if (_newSessionSubscriptions[connection]) {
+            response.status = ITMNotificationResponse_Status_AlreadySubscribed;
+            return response;
+        }
+        _newSessionSubscriptions[connection] = request;
+    } else {
+        if (!_newSessionSubscriptions[connection]) {
+            response.status = ITMNotificationResponse_Status_NotSubscribed;
+            return response;
+        }
+        [_newSessionSubscriptions removeObjectForKey:connection];
+    }
+
+    response.status = ITMNotificationResponse_Status_Ok;
+    return response;
+}
+
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                    connection:(id)connection
                       handler:(void (^)(ITMNotificationResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
-    if (!session) {
-        ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
-        response.status = ITMNotificationResponse_Status_SessionNotFound;
-        handler(response);
+    if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
+        handler([self handleAPINotificationRequest:request connection:connection]);
     } else {
-        handler([session handleAPINotificationRequest:request connection:connection]);
+        PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+        if (!session) {
+            ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
+            response.status = ITMNotificationResponse_Status_SessionNotFound;
+            handler(response);
+        } else {
+            handler([session handleAPINotificationRequest:request connection:connection]);
+        }
     }
 }
 
