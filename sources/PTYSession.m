@@ -6779,6 +6779,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return _copyModeState.coord;
 }
 
+- (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
+    if (_copyMode) {
+        _copyModeState.coord = range.end;
+        [self.textview setNeedsDisplay:YES];
+    }
+}
+
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];

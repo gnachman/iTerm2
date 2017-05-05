@@ -189,6 +189,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 
 - (BOOL)textViewCopyMode;
 - (VT100GridCoord)textViewCopyModeCursorCoord;
+- (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range;
 
 @end
 

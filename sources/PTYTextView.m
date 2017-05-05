@@ -5471,7 +5471,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!wrapped) {
         [self setNeedsDisplay:YES];
     }
-
+    [_delegate textViewDidSelectRangeForFindOnPage:range];
 }
 
 - (void)findOnPageSaveFindContextAbsPos {
