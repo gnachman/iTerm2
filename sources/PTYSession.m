@@ -785,6 +785,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                                   _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
         _copyModeState.numberOfLines = _screen.numberOfLines;
         _copyModeState.textView = _textview;
+
+        if (_textview.selection.allSubSelections.count == 1) {
+            [_textview.window makeFirstResponder:_textview];
+            iTermSubSelection *sub = _textview.selection.allSubSelections.firstObject;
+            _copyModeState.start = sub.range.coordRange.start;
+            _copyModeState.coord = sub.range.coordRange.end;
+            _copyModeState.selecting = YES;
+            _copyModeState.start = sub.range.coordRange.start;
+            _copyModeState.coord = sub.range.coordRange.end;
+        }
     } else {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
@@ -6781,7 +6791,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
     if (_copyMode) {
-        _copyModeState.coord = range.end;
+        _copyModeState.coord = range.start;
+        _copyModeState.start = range.end;
         [self.textview setNeedsDisplay:YES];
     }
 }

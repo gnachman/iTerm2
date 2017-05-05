@@ -135,8 +135,12 @@
                                    rect.size.height * heightFraction);
 
     NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
+    path = [[[NSBezierPath alloc] init] autorelease];
     [path moveToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect), NSMaxY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - 1, NSMaxY(cursorRect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - 1, NSMaxY(rect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + 1, NSMaxY(rect))];
+    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + 1, NSMaxY(cursorRect))];
     [path lineToPoint:NSMakePoint(NSMaxX(cursorRect), NSMinY(cursorRect))];
     [path lineToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
     [[NSColor whiteColor] set];
