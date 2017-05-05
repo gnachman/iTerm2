@@ -1985,6 +1985,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)handleKeyPressInCopyMode:(NSEvent *)event {
+    [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
     BOOL wasSelecting = _copyModeState.selecting;
     NSString *string = event.charactersIgnoringModifiers;
     unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
@@ -2135,7 +2136,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (self.copyMode) {
             [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
         }
-        [self.textview setNeedsDisplay:YES];  // TODO optimize this and draw less
+        [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
     }
 }
 
