@@ -2114,6 +2114,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 [_textview copySelectionAccordingToUserPreferences];
                 self.copyMode = NO;
                 break;
+            case '/':
+                [self showFindPanel];
+                break;
             case '[':
                 moved = [_copyModeState previousMark];
                 break;
