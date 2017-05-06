@@ -400,4 +400,8 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 - (void)terminalWillEndLinkWithCode:(unsigned short)code;
 - (void)terminalWillStartLinkWithCode:(unsigned short)code;
 
+// Custom escape sequences
+- (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                           payload:(NSString *)payload;
+
 @end

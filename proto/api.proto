@@ -71,10 +71,15 @@ message RegisterToolResponse {
 }
 
 enum NotificationType {
+  // Notifications that use the `session` parameter.
   NOTIFY_ON_KEYSTROKE = 1;
   NOTIFY_ON_SCREEN_UPDATE = 2;
   NOTIFY_ON_PROMPT = 3;
   NOTIFY_ON_LOCATION_CHANGE = 4;
+  NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE = 5;
+
+  // Notifications that ignore the `session` parameter.
+  NOTIFY_ON_NEW_SESSION = 6;
 }
 
 message NotificationRequest {
@@ -104,6 +109,8 @@ message Notification {
   optional ScreenUpdateNotification screen_update_notification = 2;
   optional PromptNotification prompt_notification = 3;
   optional LocationChangeNotification location_change_notification=4;
+  optional CustomEscapeSequenceNotification custom_escape_sequence_notification=5;
+  optional NewSessionNotification new_session_notification=6;
 }
 
 message KeystrokeNotification {
@@ -135,6 +142,17 @@ message LocationChangeNotification {
   optional string user_name = 2;
   optional string directory = 3;
   optional string session = 4;
+}
+
+// OSC 1337 ; Custom=id=<identity>:<payload> ST
+message CustomEscapeSequenceNotification {
+  optional string session = 1;
+  optional string sender_identity = 2;
+  optional string payload = 3;
+}
+
+message NewSessionNotification {
+  optional string uniqueIdentifier = 1;
 }
 
 // Requests the contents of a range of lines.
@@ -481,7 +499,7 @@ message ListSessionsResponse {
     repeated Session sessions = 1;
   }
   message Session {
-    optional string uniqueIdentifier = 1;
+      optional string uniqueIdentifier = 1;
   }
   repeated Window windows = 1;
 }

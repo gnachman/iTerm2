@@ -22,8 +22,9 @@ pip install protobuf
 It is also possible to install the dependencies as system libraries.
 
 ```
+sudo easy_install pip
 sudo /usr/bin/python -m pip install websocket-client
-sudo /usr/bin/python -m pip install protobuf
+sudo /usr/bin/python -m pip install --ignore-installed protobuf
 ```
 
 Then `cd api/examples/python` and then `./iterm2.py` to run the program.

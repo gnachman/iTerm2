@@ -100,6 +100,8 @@ static NSString *const PTYSessionDidRepairSavedArrangement = @"PTYSessionDidRepa
 // outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
 static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
 
+NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification";
+
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBellOffer";
@@ -458,6 +460,7 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_customEscapeSequenceNotifications;
 
     // Used by auto-hide. We can't auto hide the tmux gateway session until at least one window has been opened.
     BOOL _hideAfterTmuxWindowOpens;
@@ -489,7 +492,7 @@ static const NSUInteger kMaxHosts = 100;
     [gRegisteredSessionContents removeAllObjects];
 }
 
-- (instancetype)init {
+- (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
         _autoLogId = arc4random();
@@ -544,6 +547,7 @@ static const NSUInteger kMaxHosts = 100;
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
+        _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -594,6 +598,10 @@ static const NSUInteger kMaxHosts = 100;
                                                      name:NSWindowDidEndLiveResizeNotification
                                                    object:nil];
         [self updateVariables];
+
+        if (!synthetic) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
+        }
     }
     return self;
 }
@@ -672,6 +680,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_updateSubscriptions release];
     [_promptSubscriptions release];
     [_locationChangeSubscriptions release];
+    [_customEscapeSequenceNotifications release];
+
     [_copyModeState release];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -940,7 +950,7 @@ ITERM_WEAKLY_REFERENCEABLE
                           withDelegate:(id<PTYSessionDelegate>)delegate
                          forObjectType:(iTermObjectType)objectType {
     DLog(@"Restoring session from arrangement");
-    PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
+    PTYSession* aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
     [[sessionView findViewController] setDelegate:aSession];
@@ -1985,6 +1995,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)handleKeyPressInCopyMode:(NSEvent *)event {
+    [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
     BOOL wasSelecting = _copyModeState.selecting;
     NSString *string = event.charactersIgnoringModifiers;
     unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
@@ -2114,6 +2125,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 [_textview copySelectionAccordingToUserPreferences];
                 self.copyMode = NO;
                 break;
+            case '/':
+                [self showFindPanel];
+                break;
             case '[':
                 moved = [_copyModeState previousMark];
                 break;
@@ -2132,7 +2146,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (self.copyMode) {
             [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
         }
-        [self.textview setNeedsDisplay:YES];  // TODO optimize this and draw less
+        [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
     }
 }
 
@@ -4363,6 +4377,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
     [_locationChangeSubscriptions removeObjectForKey:notification.object];
+    [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
@@ -8084,6 +8099,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 }
 
+- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                                   payload:(NSString *)payload {
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.customEscapeSequenceNotification = [[[ITMCustomEscapeSequenceNotification alloc] init] autorelease];
+    notification.customEscapeSequenceNotification.session = self.guid;
+    notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
+    notification.customEscapeSequenceNotification.payload = payload;
+    [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
+}
+
 - (BOOL)screenShouldSendReport {
     return (_shell != nil) && (![self isTmuxClient]);
 }
@@ -9131,6 +9158,14 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case ITMNotificationType_NotifyOnLocationChange:
             subscriptions = _locationChangeSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnCustomEscapeSequence:
+            subscriptions = _customEscapeSequenceNotifications;
+            break;
+
+        case ITMNotificationType_NotifyOnNewSession:
+            // We won't get called for this
+            assert(NO);
             break;
     }
     if (!subscriptions) {
