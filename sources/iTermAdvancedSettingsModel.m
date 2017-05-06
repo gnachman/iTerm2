@@ -191,6 +191,7 @@ DEFINE_BOOL(fontChangeAffectsBroadcastingSessions, NO, @"Windows: Should growing
 
 #pragma mark tmux
 DEFINE_BOOL(noSyncNewWindowOrTabFromTmuxOpensTmux, NO, @"Tmux Integration: Suppress alert asking what kind of tab/window to open in tmux integration.");
+DEFINE_BOOL(tmuxUsesDedicatedProfile, YES, @"Tmux Integration: Tmux always uses the “tmux” profile.\nIf disabled, tmux sessions use the profile of the session you ran tmux -CC in.");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled in Prefs>Profiles>Keys.");

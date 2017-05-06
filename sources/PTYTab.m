@@ -391,7 +391,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                       inTerminal:[self realParentWindow]
                                  hasFlexibleView:flexibleView_ != nil
                                          viewMap:nil
-                                      sessionMap:nil];
+                                      sessionMap:nil
+                                  tmuxController:tmuxController_];
     return [theCopy retain];
 }
 
@@ -742,7 +743,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!flexibleView_) {
         return;
     }
-    NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    NSSize cellSize = [PTYTab cellSizeForBookmark:self.tmuxController.profile];
     if (![realParentWindow_ anyFullScreen] &&
         flexibleView_.frame.size.width > root_.frame.size.width &&
         flexibleView_.frame.size.width - root_.frame.size.width < cellSize.width &&
@@ -751,8 +752,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // Root is just slightly smaller than flexibleView, by less than the size of a character.
         // Set flexible view's color to the default background color for tmux tabs.
         NSColor *bgColor;
-        Profile *bm = [PTYTab tmuxBookmark];
-        bgColor = [ITAddressBookMgr decodeColor:[bm objectForKey:KEY_BACKGROUND_COLOR]];
+        bgColor = [ITAddressBookMgr decodeColor:self.tmuxController.profile[KEY_BACKGROUND_COLOR]];
         [flexibleView_ setColor:bgColor];
     } else {
         // Fullscreen, overly large flexible view, or exact size flex view.
@@ -2438,7 +2438,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
                        viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
-                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap {
+                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                tmuxController:(TmuxController *)tmuxController {
     PTYTab *theTab;
     NSMutableArray<PTYSession *> *revivedSessions = [NSMutableArray array];
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -2449,6 +2450,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Create a tab.
     theTab = [[[PTYTab alloc] initWithRoot:newRoot sessions:nil] autorelease];
+    theTab->tmuxController_ = [tmuxController retain];
     if (hasFlexible) {
         [theTab enableFlexibleView];
     }
@@ -2522,7 +2524,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                      inTerminal:term
                                 hasFlexibleView:hasFlexible
                                         viewMap:viewMap
-                                     sessionMap:sessionMap];
+                                     sessionMap:sessionMap
+                                 tmuxController:nil];
     if ([[theTab sessionViews] count] == 0) {
         return nil;
     }
@@ -2813,41 +2816,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self nameOfSession:self.activeSession didChangeTo:self.activeSession.name];
 }
 
-+ (Profile *)tmuxBookmark {
-    return [[ProfileModel sharedInstance] tmuxProfile];
-}
-
-+ (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs {
-    [[ProfileModel sharedInstance] setObject:[font stringValue]
-                                       forKey:KEY_NORMAL_FONT
-                                   inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] setObject:[nonAsciiFont stringValue]
-                                       forKey:KEY_NON_ASCII_FONT
-                                   inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]
-                                       forKey:KEY_HORIZONTAL_SPACING
-                                   inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:vs]
-                                       forKey:KEY_VERTICAL_SPACING
-                                   inBookmark:[PTYTab tmuxBookmark]];
-    [[ProfileModel sharedInstance] postChangeNotification];
-}
-
 - (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
            vSpacing:(double)vs {
-    [PTYTab setTmuxFont:font nonAsciiFont:nonAsciiFont hSpacing:hs vSpacing:vs];
+    [self.tmuxController setTmuxFont:font nonAsciiFont:nonAsciiFont hSpacing:hs vSpacing:vs];
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                      inTerminal:(NSWindowController<iTermWindowController> *)term
-                         zoomed:(BOOL)zoomed {
-    Profile *bookmark = [PTYTab tmuxBookmark];
-
+                         zoomed:(BOOL)zoomed
+                        profile:(Profile *)profile {
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     BOOL showTitles =
@@ -2855,7 +2834,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
                                    showTitles:showTitles
-                                     bookmark:bookmark
+                                     bookmark:profile
                                    inTerminal:term];
 }
 
@@ -2879,7 +2858,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)reloadTmuxLayout {
-    [PTYTab setSizesInTmuxParseTree:parseTree_ inTerminal:realParentWindow_ zoomed:isMaximized_];
+    [PTYTab setSizesInTmuxParseTree:parseTree_
+                         inTerminal:realParentWindow_
+                             zoomed:isMaximized_
+                            profile:self.tmuxController.profile];
     [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
 }
@@ -2888,7 +2870,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController {
-    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term zoomed:NO];
+    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term zoomed:NO profile:tmuxController.profile];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
 
     // Grow the window to fit the tab before adding it
@@ -2898,13 +2880,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Now we can make an arrangement and restore it.
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
-                                                                    bookmark:[PTYTab tmuxBookmark]
+                                                                    bookmark:tmuxController.profile
                                                             activeWindowPane:0];
     PTYTab *theTab = [self tabWithArrangement:arrangement
                                    inTerminal:term
                               hasFlexibleView:YES
                                       viewMap:nil
-                                   sessionMap:nil];
+                                   sessionMap:nil
+                               tmuxController:tmuxController];
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
@@ -2917,7 +2900,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     
     theTab->tmuxWindow_ = tmuxWindow;
-    theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
 
     if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
@@ -2972,7 +2954,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
              origin:(NSPoint)origin {
     BOOL first = YES;
     int minPos, size;
-    NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    NSSize cellSize = [PTYTab cellSizeForBookmark:self.tmuxController.profile];
     for (NSView *view in [splitter subviews]) {
         if (forHeight == [splitter isVertical]) {
             if ([splitter isVertical]) {
@@ -3094,7 +3076,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  targetSizePixels.height - rootSizePixels.height);
 
     // The size of a character
-    NSSize charSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    NSSize charSize = [PTYTab cellSizeForBookmark:self.tmuxController.profile];
 
     // The characters growth (+ growth, - shrinkage) needed to attain the target
     NSSize charsDiff = NSMakeSize(floor(sizeDiff.width / charSize.width),
@@ -3235,7 +3217,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
-                                                                         bookmark:[PTYTab tmuxBookmark]
+                                                                         bookmark:self.tmuxController.profile
                                                                            origin:NSZeroPoint
                                                                  activeWindowPane:[activeSession_ tmuxPane]]
                     forKey:TAB_ARRANGEMENT_ROOT];
@@ -3323,7 +3305,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_
-                             zoomed:shouldZoom];
+                             zoomed:shouldZoom
+                            profile:tmuxController.profile];
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
@@ -3367,7 +3350,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                  kLayoutDictXOffsetKey: @0,
                  kLayoutDictYOffsetKey: @0,
              } mutableCopy] autorelease];
-        [PTYTab setSizesInTmuxParseTree:maximizedParseTree inTerminal:realParentWindow_ zoomed:YES];
+        [PTYTab setSizesInTmuxParseTree:maximizedParseTree
+                             inTerminal:realParentWindow_
+                                 zoomed:YES
+                                profile:tmuxController.profile];
         [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
         [self fitSubviewsToRoot];
     }
@@ -3475,7 +3461,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)resizeTmuxSessionView:(SessionView *)sessionView toGridSize:(VT100GridSize)gridSize {
     DLog(@"resize view %@ to grid size %@", sessionView, VT100GridSizeDescription(gridSize));
     const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
-    NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]]
+    NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:self.tmuxController.profile]
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
                                         showTitles:showTitles
                                         inTerminal:self.realParentWindow];
@@ -3788,7 +3774,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYSession *session = [self sessionForSessionView:sessionView];
 
     // Determine the number of characters moved
-    NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    NSSize cellSize = [PTYTab cellSizeForBookmark:self.tmuxController.profile];
     int amount;
     if (pxMoved.width) {
         amount = pxMoved.width / cellSize.width;
@@ -4731,4 +4717,25 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [_delegate tabRemoveTab:self];
     }
 }
+
+- (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile {
+    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+        return VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
+                                 [[profile objectForKey:KEY_ROWS] intValue]);
+    } else {
+        NSSize frameSize = tabView_.frame.size;
+        PTYSession *anySession = self.sessions.firstObject;
+
+        NSSize contentSize = [NSScrollView contentSizeForFrameSize:frameSize
+                                           horizontalScrollerClass:nil
+                                             verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[anySession.view.scrollview verticalScroller] class] : nil
+                                                        borderType:anySession.view.scrollview.borderType
+                                                       controlSize:NSRegularControlSize
+                                                     scrollerStyle:anySession.view.scrollview.scrollerStyle];
+        NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
+        return VT100GridSizeMake((contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width,
+                                 (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height);
+    }
+}
+
 @end

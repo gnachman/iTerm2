@@ -65,8 +65,6 @@
 // activities, their contents can be rescued.
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 
-+ (NSDictionary *)tmuxBookmark;
-
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
@@ -79,7 +77,8 @@
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
                        viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
-                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap;
+                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                tmuxController:(TmuxController *)tmuxController;
 
 + (NSDictionary<NSString *, PTYSession *> *)sessionMapWithArrangement:(NSDictionary *)arrangement
                                                              sessions:(NSArray *)sessions;
@@ -88,11 +87,6 @@
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController;
-
-+ (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs;
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
@@ -186,6 +180,11 @@
 // Returns true if the tmux layout is too large for the window to accommodate.
 - (BOOL)layoutIsTooLarge;
 - (TmuxController *)tmuxController;
+
+- (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)hs
+           vSpacing:(double)vs;
 
 - (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
