@@ -492,6 +492,10 @@ static const NSUInteger kMaxHosts = 100;
     [gRegisteredSessionContents removeAllObjects];
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    return [self initSynthetic:NO];
+}
+
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
@@ -4913,14 +4917,19 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self];
+    ProfileModel *model;
+    if (_isDivorced) {
+        model = [ProfileModel sessionsInstance];
+    } else {
+        model = [ProfileModel sharedInstance];
+    }
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
-                                                   clientName:[self preferredTmuxClientName]];
+                                                   clientName:[self preferredTmuxClientName]
+                                                      profile:[iTermAdvancedSettingsModel tmuxUsesDedicatedProfile] ? [[ProfileModel sharedInstance] tmuxProfile] : self.profile
+                                                 profileModel:model];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
-    NSSize theSize;
-    Profile *tmuxBookmark = [[ProfileModel sharedInstance] tmuxProfile];
-    theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
-    theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
+
     // We intentionally don't send anything to tmux yet. We wait to get a
     // begin-end pair from it to make sure everything is cool (we have a legit
     // session) and then we start going.
@@ -5345,20 +5354,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxController session:sessionId renamedTo:newName];
 }
 
-- (NSSize)tmuxBookmarkSize
-{
-    NSDictionary *dict = [[ProfileModel sharedInstance] tmuxProfile];
-    return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
-                      [[dict objectForKey:KEY_ROWS] intValue]);
+- (VT100GridSize)tmuxClientSize {
+    return [_delegate sessionTmuxSizeWithProfile:_tmuxController.profile];
 }
 
-- (NSInteger)tmuxNumHistoryLinesInBookmark {
-    NSDictionary *dict = [[ProfileModel sharedInstance] tmuxProfile];
-    if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
+- (NSInteger)tmuxNumberOfLinesOfScrollbackHistory {
+    Profile *profile = _tmuxController.profile;
+    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+        profile = [[ProfileModel sharedInstance] tmuxProfile];
+    }
+    if ([profile[KEY_UNLIMITED_SCROLLBACK] boolValue]) {
         // 10M is close enough to infinity to be indistinguishable.
         return 10 * 1000 * 1000;
     } else {
-        return [[dict objectForKey:KEY_SCROLLBACK_LINES] integerValue];
+        return [profile[KEY_SCROLLBACK_LINES] integerValue];
     }
 }
 

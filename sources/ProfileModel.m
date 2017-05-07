@@ -99,6 +99,7 @@ int gMigrated;
     [super dealloc];
 }
 
+// Use only when tmuxUsesDedicatedProfile is off
 - (Profile *)tmuxProfile {
     Profile *profile = [self bookmarkWithName:@"tmux"];
     if (!profile) {

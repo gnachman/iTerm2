@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ProfileModel.h"
 #import "iTermInitialDirectory.h"
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
@@ -45,8 +46,14 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly) BOOL hasOutstandingWindowResize;
 @property(nonatomic, readonly, getter=isAttached) BOOL attached;
 @property(nonatomic, readonly) BOOL detaching;
+@property(nonatomic, copy) Profile *profile;
 
-- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
+- (instancetype)initWithGateway:(TmuxGateway *)gateway
+                     clientName:(NSString *)clientName
+                        profile:(Profile *)profile
+                   profileModel:(ProfileModel *)profileModel NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
 - (void)openWindowsInitial;
 - (void)openWindowWithId:(int)windowId
 			 intentional:(BOOL)intentional;
@@ -147,5 +154,10 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)checkForUTF8;
 
 - (void)clearHistoryForWindowPane:(int)windowPane;
+
+- (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)hs
+           vSpacing:(double)vs;
 
 @end

@@ -11,7 +11,9 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermShortcut.h"
+#import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -136,6 +138,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSMutableDictionary *_windowOpenerOptions;
     BOOL _manualOpenRequested;
     BOOL _haveOpenendInitialWindows;
+    Profile *_profile;
+    ProfileModel *_profileModel;
+    NSDictionary *_fontOverrides;
 }
 
 @synthesize gateway = gateway_;
@@ -145,9 +150,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 @synthesize sessionId = sessionId_;
 
-- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName {
+- (instancetype)initWithGateway:(TmuxGateway *)gateway
+                     clientName:(NSString *)clientName
+                        profile:(NSDictionary *)profile
+                   profileModel:(ProfileModel *)profileModel {
     self = [super init];
     if (self) {
+        _profile = [profile copy];
+        _profileModel = [profileModel retain];
+        _fontOverrides = [@{ KEY_NORMAL_FONT: [iTermProfilePreferences stringForKey:KEY_NORMAL_FONT inProfile:profile],
+                             KEY_NON_ASCII_FONT: [iTermProfilePreferences stringForKey:KEY_NON_ASCII_FONT inProfile:profile],
+                             KEY_HORIZONTAL_SPACING: [iTermProfilePreferences objectForKey:KEY_HORIZONTAL_SPACING inProfile:profile],
+                             KEY_VERTICAL_SPACING: [iTermProfilePreferences objectForKey:KEY_VERTICAL_SPACING inProfile:profile] } retain];
+
         gateway_ = [gateway retain];
         _paneIDs = [[NSMutableSet alloc] init];
         windowPanes_ = [[NSMutableDictionary alloc] init];
@@ -182,7 +197,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [_windowOpenerOptions release];
     [_hotkeys release];
     [_tabColors release];
+    [_profile release];
+    [_profileModel release];
+    [_fontOverrides release];
     [super dealloc];
+}
+
+- (NSDictionary *)profile {
+    Profile *profile = [_profileModel bookmarkWithGuid:_profile[KEY_GUID]] ?: _profile;
+    NSMutableDictionary *temp = [profile mutableCopy];
+    [_fontOverrides enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        temp[key] = obj;
+    }];
+    return temp;
 }
 
 - (void)openWindowWithIndex:(int)windowIndex
@@ -210,8 +237,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.size = size;
     windowOpener.layout = layout;
     windowOpener.maxHistory =
-        MAX([[gateway_ delegate] tmuxBookmarkSize].height,
-            [[gateway_ delegate] tmuxNumHistoryLinesInBookmark]);
+        MAX([[gateway_ delegate] tmuxClientSize].height,
+            [[gateway_ delegate] tmuxNumberOfLinesOfScrollbackHistory]);
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
@@ -220,6 +247,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
     windowOpener.manuallyOpened = _manualOpenRequested;
     windowOpener.tabColors = _tabColors;
+    windowOpener.profile = self.profile;
     _manualOpenRequested = NO;
     if (![windowOpener openWindows:YES]) {
         [pendingWindowOpens_ removeObject:n];
@@ -235,8 +263,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.unicodeVersion = self.unicodeVersion;
     windowOpener.layout = layout;
     windowOpener.maxHistory =
-        MAX([[gateway_ delegate] tmuxBookmarkSize].height,
-            [[gateway_ delegate] tmuxNumHistoryLinesInBookmark]);
+        MAX([[gateway_ delegate] tmuxClientSize].height,
+            [[gateway_ delegate] tmuxNumberOfLinesOfScrollbackHistory]);
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.windowIndex = [tab tmuxWindow];
@@ -245,6 +273,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = zoomed;
     windowOpener.tabColors = _tabColors;
+    windowOpener.profile = self.profile;
     [windowOpener updateLayoutInTab:tab];
 }
 
@@ -397,13 +426,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                [scanner scanString:@"," intoString:nil] &&
                [scanner scanInt:&height]);
     if (ok) {
-        [self openWindowsOfSize:NSMakeSize(width, height)];
+        [self openWindowsOfSize:VT100GridSizeMake(width, height)];
     } else {
-        [self openWindowsOfSize:[[gateway_ delegate] tmuxBookmarkSize]];
+        [self openWindowsOfSize:[[gateway_ delegate] tmuxClientSize]];
     }
 }
 
-- (void)openWindowsOfSize:(NSSize)size {
+- (void)openWindowsOfSize:(VT100GridSize)size {
     // There's a (hopefully) minor race condition here. When we initially connect to
     // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
     // lets us know if a single instance of iTerm2 is trying to attach to the same
@@ -415,7 +444,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
-             (int)size.width, (int)size.height];
+             size.width, size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
@@ -1366,6 +1395,31 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                            responseObject:nil
                                                     flags:0] ];
     [gateway_ sendCommandList:commands];
+}
+
+- (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)hs
+           vSpacing:(double)vs {
+    [_fontOverrides release];
+    _fontOverrides = [@{ KEY_NORMAL_FONT: [font stringValue],
+                         KEY_NON_ASCII_FONT: [nonAsciiFont stringValue],
+                         KEY_HORIZONTAL_SPACING: @(hs),
+                         KEY_VERTICAL_SPACING: @(vs) } retain];
+
+    [_profileModel setObject:[font stringValue]
+                      forKey:KEY_NORMAL_FONT
+                  inBookmark:self.profile];
+    [_profileModel setObject:[nonAsciiFont stringValue]
+                      forKey:KEY_NON_ASCII_FONT
+                  inBookmark:self.profile];
+    [_profileModel setObject:[NSNumber numberWithDouble:hs]
+                      forKey:KEY_HORIZONTAL_SPACING
+                  inBookmark:self.profile];
+    [_profileModel setObject:[NSNumber numberWithDouble:vs]
+                      forKey:KEY_VERTICAL_SPACING
+                  inBookmark:self.profile];
+    [_profileModel postChangeNotification];
 }
 
 #pragma mark - Private

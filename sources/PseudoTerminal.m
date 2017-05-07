@@ -2733,6 +2733,14 @@ ITERM_WEAKLY_REFERENCEABLE
                 if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
                     DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
                     [self fitTabsToWindow];
+                    if (!tmuxOriginatedResizeInProgress_) {
+                        // When opening a new tmux tab in a fullscreen window, it'll be initialized
+                        // with legacy scrollers (if the system is configured to use them) and then
+                        // it needs to update its size when the scrollers are forced to be inline.
+                        for (TmuxController *controller in self.uniqueTmuxControllers) {
+                            [controller setClientSize:self.tmuxCompatibleSize];
+                        }
+                    }
                 }
             }
         }
@@ -5298,7 +5306,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                            inTerminal:nil
                                       hasFlexibleView:NO
                                               viewMap:nil
-                                           sessionMap:theMap];
+                                           sessionMap:theMap
+                                       tmuxController:nil];
     [tab replaceWithContentsOfTab:temporaryTab];
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
@@ -5325,7 +5334,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                   inTerminal:self
                              hasFlexibleView:NO
                                      viewMap:nil
-                                  sessionMap:sessionMap];
+                                  sessionMap:sessionMap
+                              tmuxController:nil];
     tab.uniqueId = tabUniqueId;
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];

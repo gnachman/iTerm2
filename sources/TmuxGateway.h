@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "VT100GridTypes.h"
 #import "WindowControllerInterface.h"
 
 // Constant values for flags:
@@ -38,8 +39,8 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxSessionsChanged;
 - (void)tmuxWindowsDidChange;
 - (void)tmuxSession:(int)sessionId renamed:(NSString *)newName;
-- (NSSize)tmuxBookmarkSize;  // rows, cols
-- (NSInteger)tmuxNumHistoryLinesInBookmark;
+- (VT100GridSize)tmuxClientSize;
+- (NSInteger)tmuxNumberOfLinesOfScrollbackHistory;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
 - (void)tmuxPrintLine:(NSString *)line;
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow;

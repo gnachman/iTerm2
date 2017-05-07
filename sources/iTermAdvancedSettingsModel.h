@@ -184,5 +184,6 @@
 + (BOOL)logRestorableStateSize;
 + (NSString *)autoLogFormat;
 + (BOOL)killSessionsOnLogout;
++ (BOOL)tmuxUsesDedicatedProfile;
 
 @end
