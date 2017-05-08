@@ -7699,15 +7699,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] showFindPanel];
 }
 
-// findNext and findPrevious are reversed here because in the search UI next
-// goes backwards and previous goes forwards.
-// Internally, next=forward and prev=backwards.
 - (IBAction)findPrevious:(id)sender {
-    [[self currentSession] searchNext];
+    [[self currentSession] searchPrevious];
 }
 
 - (IBAction)findNext:(id)sender {
-    [[self currentSession] searchPrevious];
+    [[self currentSession] searchNext];
 }
 
 - (IBAction)findWithSelection:(id)sender {
