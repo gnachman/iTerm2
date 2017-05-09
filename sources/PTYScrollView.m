@@ -114,12 +114,14 @@
         [aScroller release];
 
         creationDate_ = [[NSDate date] retain];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewDidScroll:) name:NSScrollViewDidLiveScrollNotification object:self];
     }
-    
+
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [creationDate_ release];
     [timer_ invalidate];
     timer_ = nil;
@@ -134,6 +136,10 @@
 
 - (PTYScroller *)verticalScroller {
     return (PTYScroller *)[super verticalScroller];
+}
+
+- (void)it_scrollViewDidScroll:(id)sender {
+    [self detectUserScroll];
 }
 
 static CGFloat RoundTowardZero(CGFloat value) {
