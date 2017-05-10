@@ -14,7 +14,7 @@
 
 + (instancetype)sharedInstance;
 
-// Returns mountpoints having a given map.
-- (NSArray<NSString *> *)mountpointsWithMaps:(NSSet<NSString *> *)maps;
+// Returns all auto_master mountpoints. This is a conservative guess at what might be an nfs mount.
+- (NSArray<NSString *> *)mountpoints;
 
 @end
