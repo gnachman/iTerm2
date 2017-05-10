@@ -383,6 +383,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p label=%@ objectCount=%@>",
+            NSStringFromClass([self class]),
+            self,
+            tabViewItem_.label,
+            @(objectCount_)];
+}
+
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {

@@ -245,6 +245,19 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [super dealloc];
 }
 
+- (NSString *)description {
+    id identifier = nil;
+    if ([self.representedObject respondsToSelector:@selector(identifier)]) {
+        identifier = [self.representedObject identifier];
+    }
+    return [NSString stringWithFormat:@"<%@: %p representedObject=%@ identifier=%@ objectCount=%@>",
+            NSStringFromClass([self class]),
+            self,
+            self.representedObject,
+            identifier,
+            @(self.count)];
+}
+
 // we don't want this to be the first responder in the chain
 - (BOOL)acceptsFirstResponder {
   return NO;

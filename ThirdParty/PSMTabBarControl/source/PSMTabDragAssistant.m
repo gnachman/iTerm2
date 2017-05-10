@@ -437,6 +437,8 @@
                                  didDropTabViewItem:[[self draggedCell] representedObject]
                                            inTabBar:[self destinationTabBar]];
         }
+        [[self destinationTabBar] sanityCheck:@"destination performDragOperation"];
+        [[self sourceTabBar] sanityCheck:@"source performDragOperation"];
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
@@ -490,16 +492,19 @@
                          didDropTabViewItem:[[self draggedCell] representedObject]
                                    inTabBar:control];
                 }
+                [control sanityCheck:@"add dragged tab to new window"];
             } else {
                 NSLog(@"Delegate returned no control to add to.");
                 [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
                 [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
                 [[[self sourceTabBar] window] orderFront:nil];
+                [[self sourceTabBar] sanityCheck:@"delegate returned no control to add to"];
             }
 
         } else {
             // put cell back
             [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+            [[self sourceTabBar] sanityCheck:@"put cell back"];
         }
 
         [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
@@ -542,6 +547,8 @@
     [_sineCurveWidths removeAllObjects];
     [self setTargetCell:nil];
     self.temporarilyHiddenWindow = nil;
+    [[self sourceTabBar] sanityCheck:@"finishDrag source"];
+    [[self destinationTabBar] sanityCheck:@"finishDrag destination"];
 }
 
 - (void)draggingBeganAt:(NSPoint)aPoint {
@@ -620,7 +627,7 @@
 
 - (void)calculateDragAnimationForTabBar:(PSMTabBarControl *)control {
     BOOL removeFlag = YES;
-    NSMutableArray *cells = [control cells];
+    NSArray *cells = [control cells];
     int i, cellCount = [cells count];
     float position = [control orientation] == PSMTabBarHorizontalOrientation ? [[control style] leftMarginForTabBarControl] : [[control style] topMarginForTabBarControl];
 
@@ -721,6 +728,7 @@
     [[control cells] replaceObjectAtIndex:cellIndex withObject:pc];
     [[control cells] removeObjectAtIndex:(cellIndex + 1)];
     [[control cells] removeObjectAtIndex:(cellIndex - 1)];
+    ILog(@"distributePlaceholdersInTabBar:withDraggedCell:%@", cell);
     return;
 }
 
@@ -750,6 +758,7 @@
     } else {
         [[control cells] addObject:pc];
     }
+    ILog(@"distributePlaceholdersInTabBar draggedCell=%@", draggedCell);
 }
 
 - (void)removeAllPlaceholdersFromTabBar:(PSMTabBarControl *)control {
