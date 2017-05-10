@@ -59,5 +59,6 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 @interface PSMTabBarControl (StyleAccessors)
 
 - (NSMutableArray *)cells;
+- (void)sanityCheck:(NSString *)callsite;
 
 @end
