@@ -4435,18 +4435,20 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)synchronizeTmuxFonts:(NSNotification *)notification
-{
+- (void)synchronizeTmuxFonts:(NSNotification *)notification {
     if (!_exited && [self isTmuxClient]) {
-        NSArray *fonts = [notification object];
-        NSFont *font = [fonts objectAtIndex:0];
-        NSFont *nonAsciiFont = [fonts objectAtIndex:1];
-        NSNumber *hSpacing = [fonts objectAtIndex:2];
-        NSNumber *vSpacing = [fonts objectAtIndex:3];
-        [_textview setFont:font
-              nonAsciiFont:nonAsciiFont
-            horizontalSpacing:[hSpacing doubleValue]
-            verticalSpacing:[vSpacing doubleValue]];
+        NSArray *args = [notification object];
+        NSFont *font = args[0];
+        NSFont *nonAsciiFont = args[1];
+        NSNumber *hSpacing = args[2];
+        NSNumber *vSpacing = args[3];
+        TmuxController *controller = args[4];
+        if (controller == _tmuxController) {
+            [_textview setFont:font
+                  nonAsciiFont:nonAsciiFont
+             horizontalSpacing:[hSpacing doubleValue]
+               verticalSpacing:[vSpacing doubleValue]];
+        }
     }
 }
 
@@ -4459,7 +4461,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:@[ _textview.font,
                                                                       _textview.nonAsciiFontEvenIfNotUsed,
                                                                       @(_textview.horizontalSpacing),
-                                                                      @(_textview.verticalSpacing) ]];
+                                                                      @(_textview.verticalSpacing),
+                                                                      _tmuxController ?: [NSNull null] ]];
         fontChangeNotificationInProgress = NO;
         [_delegate setTmuxFont:_textview.font
                   nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
