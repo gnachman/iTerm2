@@ -472,6 +472,9 @@ static const NSUInteger kMaxHosts = 100;
     uint32_t _autoLogId;
 
     iTermCopyModeState *_copyModeState;
+
+    // Absolute line number where touchbar status changed.
+    long long _statusChangedAbsLine;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -552,6 +555,8 @@ static const NSUInteger kMaxHosts = 100;
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
+
+        _statusChangedAbsLine = -1;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -1899,6 +1904,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
+}
+
+- (void)jumpToLocationWhereCurrentStatusChanged {
+    if (_statusChangedAbsLine >= _screen.totalScrollbackOverflow) {
+        int line = _statusChangedAbsLine - _screen.totalScrollbackOverflow;
+        [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(line, 1)];
+        [_textview highlightMarkOnLine:line hasErrorCode:NO];
+    }
 }
 
 - (void)disinter {
@@ -8578,7 +8591,15 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_keyLabels) {
         _keyLabels = [[NSMutableDictionary alloc] init];
     }
-    _keyLabels[keyName] = [[label copy] autorelease];
+    const BOOL changed = ![_keyLabels[keyName] isEqualToString:label];
+    if (label.length == 0) {
+        [_keyLabels removeObjectForKey:keyName];
+    } else {
+        _keyLabels[keyName] = [[label copy] autorelease];
+    }
+    if ([keyName isEqualToString:@"status"] && changed) {
+        _statusChangedAbsLine = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+    }
     [_delegate sessionKeyLabelsDidChange:self];
 }
 

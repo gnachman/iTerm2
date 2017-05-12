@@ -710,6 +710,8 @@ typedef enum {
 // Undoes burying of a session.
 - (void)disinter;
 
+- (void)jumpToLocationWhereCurrentStatusChanged;
+
 #pragma mark - API
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
