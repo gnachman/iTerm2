@@ -8591,12 +8591,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_keyLabels) {
         _keyLabels = [[NSMutableDictionary alloc] init];
     }
+    const BOOL changed = ![_keyLabels[keyName] isEqualToString:label];
     if (label.length == 0) {
         [_keyLabels removeObjectForKey:keyName];
     } else {
         _keyLabels[keyName] = [[label copy] autorelease];
     }
-    if ([keyName isEqualToString:@"status"]) {
+    if ([keyName isEqualToString:@"status"] && changed) {
         _statusChangedAbsLine = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
     }
     [_delegate sessionKeyLabelsDidChange:self];
