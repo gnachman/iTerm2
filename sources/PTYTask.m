@@ -610,10 +610,6 @@ static int MyForkPty(int *amaster,
         free(newEnviron);
         return;
     }
-    for (int j = 0; newEnviron[j]; j++) {
-        free(newEnviron[j]);
-    }
-    free(newEnviron);
 
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
@@ -654,6 +650,16 @@ static int MyForkPty(int *amaster,
         fcntl(fd, F_SETFL, O_NONBLOCK);
         [[TaskNotifier sharedInstance] registerTask:self];
     }
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        for (int j = 0; newEnviron[j]; j++) {
+            if (strncmp("PATH=", newEnviron[j], 5) == 0) {
+                NSString *message = [NSString stringWithFormat:@"PTYTask set PATH before exec to %s\r\n", newEnviron[j]];
+                [_delegate threadedReadTask:(char *)message.UTF8String length:strlen(message.UTF8String)];
+            }
+            free(newEnviron[j]);
+        }
+        free(newEnviron);
+    });
 }
 
 - (void)registerAsCoprocessOnlyTask {

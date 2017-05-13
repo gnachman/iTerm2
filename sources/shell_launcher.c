@@ -52,7 +52,7 @@ int launch_shell(void) {
     if (len >= MAXPATHLEN) {
         errx(1, "shell path is too long");
     }
-
+    printf("shell_launcher: Exec'ing your shell %s with PATH=%s\r\n", shell, getenv("PATH"));
     execlp(shell, argv0, (char*)0);
     err(1, "Failed to exec %s with arg %s", shell, argv0);
 }
@@ -66,6 +66,7 @@ static void ExecChild(int argc, char *const *argv) {
     dup2(kPtySlaveFileDescriptor, 0);
     dup2(kPtySlaveFileDescriptor, 2);
 
+    printf("ExecChild: command=%s PATH=%s\r\n", argv[0], getenv("PATH"));
     // TODO: The first arg should be just the last path component.
     execvp(argv[0], argv);
     int error = errno;
