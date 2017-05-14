@@ -347,7 +347,7 @@
 }
 
 - (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows {
-    return [self.windows mapWithBlock:^id(NSWindow *window) {
+    return [self.orderedWindows mapWithBlock:^id(NSWindow *window) {
         if ([window conformsToProtocol:@protocol(PTYWindow)]) {
             return [iTermScriptingWindow scriptingWindowWithWindow:window];
         } else {
