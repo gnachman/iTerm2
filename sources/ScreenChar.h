@@ -104,12 +104,12 @@ typedef NS_ENUM(NSUInteger, kiTermScreenCharAnsiColor) {
 // Max unichars in a glyph.
 static const int kMaxParts = 20;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, ColorMode) {
     ColorModeAlternate = 0,  // ALTSEM_XXX values
     ColorModeNormal = 1,  // kiTermScreenCharAnsiColor values
     ColorMode24bit = 2,
     ColorModeInvalid = 3
-} ColorMode;
+};
 
 
 typedef struct screen_char_t

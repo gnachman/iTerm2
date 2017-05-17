@@ -3,7 +3,7 @@
 #import "iTermParser.h"
 #import "ScreenChar.h"
 
-typedef enum {
+typedef NS_ENUM(int, VT100TerminalTokenType) {
     // Any control character between 0-0x1f inclusive can by a token type. For these, the value
     // matters. Make sure to update the -codeName method when changing this enum.
     VT100CC_NULL = 0,
@@ -180,7 +180,7 @@ typedef enum {
     // so far.
     ISO2022_SELECT_LATIN_1,
     ISO2022_SELECT_UTF_8
-} VT100TerminalTokenType;
+};
 
 // A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
 // populated and all other fields zeroed out.

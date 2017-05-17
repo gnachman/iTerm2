@@ -240,7 +240,7 @@ extern const NSInteger iTermProfileOpenInCurrentSpace;
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.
-typedef enum {
+typedef NS_ENUM(int, iTermWindowType) {
     WINDOW_TYPE_NORMAL = 0,
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
     // note: 2 is out of order below
@@ -263,7 +263,7 @@ typedef enum {
     WINDOW_TYPE_RIGHT_PARTIAL = 11,
 
     WINDOW_TYPE_NO_TITLE_BAR = 12,
-} iTermWindowType;
+};
 
 typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,

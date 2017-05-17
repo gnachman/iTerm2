@@ -55,11 +55,11 @@ typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeCancel
 };
 
-typedef enum {
+typedef NS_ENUM(NSInteger, PTYSessionTmuxMode) {
     TMUX_NONE,
     TMUX_GATEWAY,  // Receiving tmux protocol messages
     TMUX_CLIENT  // Session mirrors a tmux virtual window
-} PTYSessionTmuxMode;
+};
 
 // This is implemented by a view that coontains a collection of sessions, nominally a tab.
 @protocol PTYSessionDelegate<NSObject>
