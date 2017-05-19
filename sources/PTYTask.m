@@ -1,8 +1,3 @@
-// Debug option
-#define PtyTaskDebugLog(fmt, ...)
-// Use this instead to debug this module:
-// #define PtyTaskDebugLog NSLog
-
 #define MAXRW 1024
 
 #import "Coprocess.h"
@@ -613,7 +608,7 @@ static int MyForkPty(int *amaster,
         _exit(-1);
     } else if (pid < (pid_t)0) {
         // Error
-        PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
+        DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
         
         for (int j = 0; newEnviron[j]; j++) {
@@ -866,7 +861,7 @@ static int MyForkPty(int *amaster,
 }
 
 - (void)setSize:(VT100GridSize)size {
-    PtyTaskDebugLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
+    DLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
     if (self.fd == -1) {
         return;
     }
