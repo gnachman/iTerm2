@@ -54,6 +54,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, retain) Coprocess *coprocess;
 @property(atomic, readonly) BOOL writeBufferHasRoom;
 @property(atomic, readonly) BOOL hasCoprocess;
+@property(nonatomic, readonly) BOOL passwordInput;
 
 - (instancetype)init;
 - (BOOL)hasBrokenPipe;

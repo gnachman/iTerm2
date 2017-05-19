@@ -431,6 +431,18 @@ static int MyForkPty(int *amaster,
     return newEnvironment;
 }
 
+- (BOOL)passwordInput {
+    struct termios termAttributes;
+    if ([iTermAdvancedSettingsModel detectPasswordInput] &&
+        fd > 0 &&
+        isatty(fd) &&
+        tcgetattr(fd, &termAttributes) == 0) {
+        return !(termAttributes.c_lflag & ECHO) && (termAttributes.c_lflag & ICANON);
+    } else {
+        return NO;
+    }
+}
+
 - (void)launchWithPath:(NSString *)progpath
              arguments:(NSArray *)args
            environment:(NSDictionary *)env

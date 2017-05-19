@@ -2343,6 +2343,23 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         rect.size.width *= 2;
     }
 
+    if (_passwordInput) {
+        NSString *key = @"🔑";
+        BOOL bold = NO;
+        BOOL italic = NO;
+        PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:' '
+                                                          isComplex:NO
+                                                         renderBold:&bold
+                                                       renderItalic:&italic];
+        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+        CGPoint point = rect.origin;
+        point.y += _baselineOffset;
+        [key drawAtPoint:point withAttributes:@{ NSBackgroundColorAttributeName: [NSColor clearColor],
+                                                 NSFontAttributeName: fontInfo.font }];
+        return rect;
+    }
+
+
     NSColor *cursorTextColor;
     if (_reverseVideo) {
         cursorTextColor = [_colorMap colorForKey:kColorMapBackground];

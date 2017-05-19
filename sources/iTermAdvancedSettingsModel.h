@@ -185,5 +185,6 @@
 + (NSString *)autoLogFormat;
 + (BOOL)killSessionsOnLogout;
 + (BOOL)tmuxUsesDedicatedProfile;
++ (BOOL)detectPasswordInput;
 
 @end
