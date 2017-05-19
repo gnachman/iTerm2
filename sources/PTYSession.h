@@ -443,6 +443,9 @@ typedef enum {
 @property(nonatomic, readonly) iTermRestorableSession *restorableSession;
 @property(nonatomic) BOOL copyMode;
 
+// Is the user currently typing at a password prompt?
+@property(nonatomic, readonly) BOOL passwordInput;
+
 #pragma mark - methods
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement

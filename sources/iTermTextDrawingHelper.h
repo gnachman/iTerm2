@@ -270,6 +270,9 @@
 @property(nonatomic, assign) BOOL asciiLigatures;
 @property(nonatomic, assign) BOOL nonAsciiLigatures;
 
+// Show the password input cursor?
+@property(nonatomic) BOOL passwordInput;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

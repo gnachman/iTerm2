@@ -4144,6 +4144,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self checkPartialLineTriggers];
+    _passwordInput = _shell.passwordInput;
     _timerRunning = NO;
 }
 
@@ -6833,6 +6834,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (VT100GridCoord)textViewCopyModeCursorCoord {
     return _copyModeState.coord;
+}
+
+- (BOOL)textViewPasswordInput {
+    return _passwordInput;
 }
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
