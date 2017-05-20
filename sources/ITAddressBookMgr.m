@@ -84,6 +84,12 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
             [[ProfileModel sharedInstance] removeAllBookmarks];
         }
 
+        if (![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+            // Even if we don't need to migrate from old-style bookmarks,
+            // make sure that the new-style bookmarks are non-nil.
+            [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
+        }
+
         // Load new-style bookmarks.
         id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
         NSString *originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
