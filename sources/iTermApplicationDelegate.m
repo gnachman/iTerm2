@@ -2435,4 +2435,64 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     handler(response);
 }
 
+- (void)apiServerCreateTab:(ITMCreateTabRequest *)request handler:(void (^)(ITMCreateTabResponse *))handler {
+    PseudoTerminal *term = nil;
+    if (request.hasWindowId) {
+        term = [[iTermController sharedInstance] terminalWithGuid:request.windowId];
+        if (!term) {
+            ITMCreateTabResponse *response = [[[ITMCreateTabResponse alloc] init] autorelease];
+            response.status = ITMCreateTabResponse_Status_InvalidWindowId;
+            handler(response);
+            return;
+        }
+    }
+
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    if (request.hasProfileName) {
+        profile = [[ProfileModel sharedInstance] bookmarkWithName:request.profileName];
+        if (!profile) {
+            ITMCreateTabResponse *response = [[[ITMCreateTabResponse alloc] init] autorelease];
+            response.status = ITMCreateTabResponse_Status_InvalidProfileName;
+            handler(response);
+            return;
+        }
+    }
+
+    PTYSession *session = [[iTermController sharedInstance] launchBookmark:profile
+                                                                inTerminal:term
+                                                                   withURL:nil
+                                                          hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                                   makeKey:YES
+                                                               canActivate:YES
+                                                                   command:request.hasCommand ? request.command : nil
+                                                                     block:nil];
+    if (!session) {
+        ITMCreateTabResponse *response = [[[ITMCreateTabResponse alloc] init] autorelease];
+        response.status = ITMCreateTabResponse_Status_MissingSubstitution;
+        handler(response);
+        return;
+    }
+
+    term = [[iTermController sharedInstance] terminalWithSession:session];
+    PTYTab *tab = [term tabForSession:session];
+
+    ITMCreateTabResponse_Status status = ITMCreateTabResponse_Status_Ok;
+
+    if (request.hasTabIndex) {
+        NSInteger sourceIndex = [term indexOfTab:tab];
+        if (term.numberOfTabs > request.tabIndex && sourceIndex != NSNotFound) {
+            [term.tabBarControl moveTabAtIndex:sourceIndex toIndex:request.tabIndex];
+        } else {
+            status = ITMCreateTabResponse_Status_InvalidTabIndex;
+        }
+    }
+
+    ITMCreateTabResponse *response = [[[ITMCreateTabResponse alloc] init] autorelease];
+    response.status = status;
+    response.windowId = term.terminalGuid;
+    response.tabId = tab.uniqueId;
+    response.sessionId = session.guid;
+    handler(response);
+}
+
 @end

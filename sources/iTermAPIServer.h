@@ -28,6 +28,9 @@ extern NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier;
                       handler:(void (^)(ITMListSessionsResponse *))handler;
 - (void)apiServerSendText:(ITMSendTextRequest *)request
                   handler:(void (^)(ITMSendTextResponse *))handler;
+- (void)apiServerCreateTab:(ITMCreateTabRequest *)request
+                   handler:(void (^)(ITMCreateTabResponse *))handler;
+
 @end
 
 @interface iTermAPIServer : NSObject

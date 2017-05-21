@@ -16,6 +16,7 @@ message Request {
   optional SetProfilePropertyRequest set_profile_property_request = 105;
   optional ListSessionsRequest list_sessions_request = 106;
   optional SendTextRequest send_text_request = 107;
+  optional CreateTabRequest create_tab_request = 108;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -31,6 +32,7 @@ message Response {
   optional SetProfilePropertyResponse set_profile_property_response = 105;
   optional ListSessionsResponse list_sessions_response = 106;
   optional SendTextResponse send_text_response = 107;
+  optional CreateTabResponse create_tab_response = 108;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
@@ -502,4 +504,34 @@ message ListSessionsResponse {
       optional string uniqueIdentifier = 1;
   }
   repeated Window windows = 1;
+}
+
+message CreateTabRequest {
+  // Leave unset to use the default profile.
+  optional string profile_name = 1;
+
+  // Leave unset to create the tab in a new window.
+  optional string window_id = 2;
+
+  // Valid to set only if window_id is set. Gives the desired index of the new tab.
+  optional uint32 tab_index = 3;
+
+  // If not set, the profile's command will be used.
+  optional string command = 4;
+}
+
+message CreateTabResponse {
+  enum Status {
+    OK = 0;
+    INVALID_PROFILE_NAME = 1;
+    INVALID_WINDOW_ID = 2;
+    // The tab is still created, just not with the desired index.
+    INVALID_TAB_INDEX = 3;
+    // A $$VAR$$ substitution was not provided by the user.
+    MISSING_SUBSTITUTION = 4;
+  }
+  optional Status status = 1;
+  optional string window_id = 2;
+  optional int32 tab_id = 3;
+  optional string session_id = 4;
 }

@@ -404,6 +404,15 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }];
         return;
     }
+    if (request.hasCreateTabRequest) {
+        [_delegate apiServerCreateTab:request.createTabRequest handler:^(ITMCreateTabResponse *createTabResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.createTabResponse = createTabResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
+    }
 }
 
 // Runs on execution queue.

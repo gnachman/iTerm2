@@ -30,6 +30,8 @@ CF_EXTERN_C_BEGIN
 @class ITMCodePointsPerCell;
 @class ITMCoord;
 @class ITMCoordRange;
+@class ITMCreateTabRequest;
+@class ITMCreateTabResponse;
 @class ITMCustomEscapeSequenceNotification;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
@@ -251,6 +253,28 @@ GPBEnumDescriptor *ITMSendTextResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMSendTextResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMCreateTabResponse_Status
+
+typedef GPB_ENUM(ITMCreateTabResponse_Status) {
+  ITMCreateTabResponse_Status_Ok = 0,
+  ITMCreateTabResponse_Status_InvalidProfileName = 1,
+  ITMCreateTabResponse_Status_InvalidWindowId = 2,
+
+  /** The tab is still created, just not with the desired index. */
+  ITMCreateTabResponse_Status_InvalidTabIndex = 3,
+
+  /** A $VAR$ substitution was not provided by the user. */
+  ITMCreateTabResponse_Status_MissingSubstitution = 4,
+};
+
+GPBEnumDescriptor *ITMCreateTabResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMCreateTabResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - ITMApiRoot
 
 /**
@@ -278,6 +302,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
   ITMRequest_FieldNumber_ListSessionsRequest = 106,
   ITMRequest_FieldNumber_SendTextRequest = 107,
+  ITMRequest_FieldNumber_CreateTabRequest = 108,
 };
 
 /**
@@ -322,6 +347,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c sendTextRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasSendTextRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMCreateTabRequest *createTabRequest;
+/** Test to see if @c createTabRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasCreateTabRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -336,6 +365,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
   ITMResponse_FieldNumber_ListSessionsResponse = 106,
   ITMResponse_FieldNumber_SendTextResponse = 107,
+  ITMResponse_FieldNumber_CreateTabResponse = 108,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -379,6 +409,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMSendTextResponse *sendTextResponse;
 /** Test to see if @c sendTextResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasSendTextResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCreateTabResponse *createTabResponse;
+/** Test to see if @c createTabResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasCreateTabResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -1256,6 +1290,65 @@ typedef GPB_ENUM(ITMListSessionsResponse_Session_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
 /** Test to see if @c uniqueIdentifier has been set. */
 @property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+@end
+
+#pragma mark - ITMCreateTabRequest
+
+typedef GPB_ENUM(ITMCreateTabRequest_FieldNumber) {
+  ITMCreateTabRequest_FieldNumber_ProfileName = 1,
+  ITMCreateTabRequest_FieldNumber_WindowId = 2,
+  ITMCreateTabRequest_FieldNumber_TabIndex = 3,
+  ITMCreateTabRequest_FieldNumber_Command = 4,
+};
+
+@interface ITMCreateTabRequest : GPBMessage
+
+/** Leave unset to use the default profile. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *profileName;
+/** Test to see if @c profileName has been set. */
+@property(nonatomic, readwrite) BOOL hasProfileName;
+
+/** Leave unset to create the tab in a new window. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+/** Valid to set only if window_id is set. Gives the desired index of the new tab. */
+@property(nonatomic, readwrite) uint32_t tabIndex;
+
+@property(nonatomic, readwrite) BOOL hasTabIndex;
+/** If not set, the profile's command will be used. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *command;
+/** Test to see if @c command has been set. */
+@property(nonatomic, readwrite) BOOL hasCommand;
+
+@end
+
+#pragma mark - ITMCreateTabResponse
+
+typedef GPB_ENUM(ITMCreateTabResponse_FieldNumber) {
+  ITMCreateTabResponse_FieldNumber_Status = 1,
+  ITMCreateTabResponse_FieldNumber_WindowId = 2,
+  ITMCreateTabResponse_FieldNumber_TabId = 3,
+  ITMCreateTabResponse_FieldNumber_SessionId = 4,
+};
+
+@interface ITMCreateTabResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMCreateTabResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@property(nonatomic, readwrite) int32_t tabId;
+
+@property(nonatomic, readwrite) BOOL hasTabId;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
 
 @end
 
