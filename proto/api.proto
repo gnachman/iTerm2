@@ -17,6 +17,7 @@ message Request {
   optional ListSessionsRequest list_sessions_request = 106;
   optional SendTextRequest send_text_request = 107;
   optional CreateTabRequest create_tab_request = 108;
+  optional SplitPaneRequest split_pane_request = 109;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -33,6 +34,7 @@ message Response {
   optional ListSessionsResponse list_sessions_response = 106;
   optional SendTextResponse send_text_response = 107;
   optional CreateTabResponse create_tab_response = 108;
+  optional SplitPaneResponse split_pane_response = 109;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
@@ -534,4 +536,36 @@ message CreateTabResponse {
   optional string window_id = 2;
   optional int32 tab_id = 3;
   optional string session_id = 4;
+}
+
+message SplitPaneRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  enum SplitDirection {
+    VERTICAL = 0;
+    HORIZONTAL = 1;
+  }
+  optional SplitDirection split_direction = 2;
+
+  // If true, new session is above/left of the session being split. Otherwise, it goes below/right.
+  optional bool before = 3 [default=false];
+
+  // Leave unset to use the default profile.
+  optional string profile_name = 4;
+}
+
+message SplitPaneResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    INVALID_PROFILE_NAME = 2;
+    // This can happen if the session to be split is too small.
+    CANNOT_SPLIT = 3;
+  }
+  optional Status status = 1;
+
+  // TODO(gln): this will not be set for tmux integration because the split happens only if/when the
+  // tmux server acts on the request.
+  optional string session_id = 2;
 }

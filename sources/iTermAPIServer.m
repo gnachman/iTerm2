@@ -413,6 +413,15 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }];
         return;
     }
+    if (request.hasSplitPaneRequest) {
+        [_delegate apiServerSplitPane:request.splitPaneRequest handler:^(ITMSplitPaneResponse *splitPaneResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.splitPaneResponse = splitPaneResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
+    }
 }
 
 // Runs on execution queue.

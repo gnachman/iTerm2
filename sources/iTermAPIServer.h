@@ -30,7 +30,8 @@ extern NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier;
                   handler:(void (^)(ITMSendTextResponse *))handler;
 - (void)apiServerCreateTab:(ITMCreateTabRequest *)request
                    handler:(void (^)(ITMCreateTabResponse *))handler;
-
+- (void)apiServerSplitPane:(ITMSplitPaneRequest *)request
+                   handler:(void (^)(ITMSplitPaneResponse *))handler;
 @end
 
 @interface iTermAPIServer : NSObject

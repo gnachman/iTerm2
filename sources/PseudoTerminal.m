@@ -5454,6 +5454,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (PTYSession *)splitVertically:(BOOL)isVertical
                    withBookmark:(Profile*)theBookmark
                   targetSession:(PTYSession*)targetSession {
+    return [self splitVertically:isVertical before:NO profile:theBookmark targetSession:targetSession];
+}
+
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                         before:(BOOL)before
+                        profile:(Profile *)theBookmark
+                  targetSession:(PTYSession *)targetSession {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         [[targetSession tmuxController] selectPane:targetSession.tmuxPane];
@@ -5476,7 +5483,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     PTYSession* newSession = [[self newSessionWithBookmark:theBookmark] autorelease];
     [self splitVertically:isVertical
-                   before:NO
+                   before:before
             addingSession:newSession
             targetSession:targetSession
              performSetup:YES];
@@ -7291,8 +7298,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Allocate a new session and assign it a bookmark. Returns a retained object.
-- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark
-{
+- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark {
     assert(bookmark);
     PTYSession *aSession;
 

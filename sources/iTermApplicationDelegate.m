@@ -2495,4 +2495,44 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     handler(response);
 }
 
+- (void)apiServerSplitPane:(ITMSplitPaneRequest *)request handler:(void (^)(ITMSplitPaneResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    PseudoTerminal *term = session ? [[iTermController sharedInstance] terminalWithSession:session] : nil;
+    if (!term || !session || session.exited) {
+        ITMSplitPaneResponse *response = [[[ITMSplitPaneResponse alloc] init] autorelease];
+        response.status = ITMSplitPaneResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    if (request.hasProfileName) {
+        profile = [[ProfileModel sharedInstance] bookmarkWithName:request.profileName];
+        if (!profile) {
+            ITMSplitPaneResponse *response = [[[ITMSplitPaneResponse alloc] init] autorelease];
+            response.status = ITMSplitPaneResponse_Status_InvalidProfileName;
+            handler(response);
+            return;
+        }
+    }
+
+    PTYSession *newSession = [term splitVertically:request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical
+                                            before:request.before
+                                           profile:profile
+                                     targetSession:session];
+    if (newSession == nil && !session.isTmuxClient) {
+        ITMSplitPaneResponse *response = [[[ITMSplitPaneResponse alloc] init] autorelease];
+        response.status = ITMSplitPaneResponse_Status_CannotSplit;
+        handler(response);
+        return;
+    }
+
+    ITMSplitPaneResponse *response = [[[ITMSplitPaneResponse alloc] init] autorelease];
+    response.status = ITMSplitPaneResponse_Status_Ok;
+    if (newSession != nil) {
+        response.sessionId = newSession.guid;
+    }
+    handler(response);
+}
+
 @end
