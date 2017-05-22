@@ -1,0 +1,84 @@
+#!/usr/bin/python
+# This is python 2.7 on macOS 10.12.
+
+from __future__ import print_function
+
+import api_pb2
+from it2global import get_socket, wait, register_notification_handler
+import dispatchq
+import it2session
+import it2socket
+import it2tab
+import threading
+import time
+
+_subscriptions = {}
+_dispatch_queue = dispatchq.IdleDispatchQueue()
+_cond = threading.Condition()
+
+class Subscription(object):
+  def __init__(self, notification_type, session_id, handler):
+    self.notification_type = notification_type
+    self.session_id = session_id
+    self.handler = handler
+    self.key = (session_id, notification_type)
+
+    global _subscriptions
+    if self.key not in _subscriptions:
+      _subscriptions[self.key] = []
+    _subscriptions[self.key].append(self)
+
+    self.future = get_socket().request_subscribe(True, notification_type, session_id)
+
+  def unsubscribe(self):
+    _subscriptions[self.key].remove(self)
+    get_socket().request_subscribe(False, self.notification_type, self.session_id)
+
+  def handle(self, notification):
+    self.handler(notification)
+
+class KeystrokeSubscription(Subscription):
+  def __init__(self, session_id, handler):
+    Subscription.__init__(self, api_pb2.NOTIFY_ON_KEYSTROKE, session_id, handler)
+
+def _extract(notification):
+  key = None
+
+  if notification.HasField('keystroke_notification'):
+    key = (notification.keystroke_notification.session, api_pb2.NOTIFY_ON_KEYSTROKE)
+    notification=notification.keystroke_notification
+  elif notification.HasField('screen_update_notification'):
+    key = (notification.screen_update_notification.session, api_pb2.NOTIFY_ON_SCREEN_UPDATE)
+    notification = notification.screen_update_notification
+  elif notification.HasField('prompt_notification'):
+    key = (notification.prompt_notification.session, api_pb2.NOTIFY_ON_PROMPT)
+    notification = notification.prompt_notification
+  elif notification.HasField('location_change_notification'):
+    key = (notification.location_change_notification.session, api_pb2.NOTIFY_ON_LOCATION_CHANGE)
+    notification = notification.location_change_notification
+  elif notification.HasField('custom_escape_sequence_notification'):
+    key = (notification.custom_escape_sequence_notification.session,
+        api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE)
+    notification = notification.custom_escape_sequence_notification
+  elif notification.HasField('new_session_notification'):
+    key = (None, api_pb2.NOTIFY_ON_NEW_SESSION)
+    notification = notification.new_session_notification
+  return key, notification
+
+def _dispatch_handle_notification(notification):
+  def _run_handlers():
+    print("Running handlers")
+    key, sub_notification = _extract(notification)
+    handlers = _subscriptions[key]
+    if handlers is not None:
+      for handler in handlers:
+        handler.handle(sub_notification)
+  print("Got a notification")
+  _dispatch_queue.dispatch_async(_run_handlers)
+
+def wait(timeout=None):
+  _dispatch_queue.wait(timeout)
+
+register_notification_handler(_dispatch_handle_notification)
+
+
