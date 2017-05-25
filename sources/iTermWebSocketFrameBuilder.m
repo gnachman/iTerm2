@@ -40,6 +40,7 @@
         }];
         if (!eof) {
             [_data replaceBytesInRange:NSMakeRange(0, offset) withBytes:"" length:0];
+            offset = 0;
         }
         if (frame) {
             if (_fragment) {
