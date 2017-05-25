@@ -37,6 +37,10 @@ class Subscription(object):
   def handle(self, notification):
     self.handler(notification)
 
+class NewSessionSubscription(Subscription):
+  def __init__(self, handler):
+    Subscription.__init__(self, api_pb2.NOTIFY_ON_NEW_SESSION, None, handler)
+
 class KeystrokeSubscription(Subscription):
   def __init__(self, session_id, handler):
     Subscription.__init__(self, api_pb2.NOTIFY_ON_KEYSTROKE, session_id, handler)
@@ -67,18 +71,21 @@ def _extract(notification):
 
 def _dispatch_handle_notification(notification):
   def _run_handlers():
-    print("Running handlers")
     key, sub_notification = _extract(notification)
     handlers = _subscriptions[key]
     if handlers is not None:
       for handler in handlers:
         handler.handle(sub_notification)
-  print("Got a notification")
   _dispatch_queue.dispatch_async(_run_handlers)
 
 def wait(timeout=None):
-  _dispatch_queue.wait(timeout)
+  n = _dispatch_queue.wait(timeout)
+  return n
+
+def quick_wait():
+  n = _dispatch_queue.wait(0)
 
 register_notification_handler(_dispatch_handle_notification)
+it2socket.add_idle_observer(quick_wait)
 
 

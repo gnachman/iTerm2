@@ -7,6 +7,11 @@ import api_pb2
 import rpcsocket
 import logging
 
+_idle_observers = []
+
+def add_idle_observer(observer):
+  _idle_observers.append(observer)
+
 class Future(rpcsocket.SynchronousCallback):
   def __init__(self, transform=None):
     rpcsocket.SynchronousCallback.__init__(self)
@@ -19,6 +24,7 @@ class Future(rpcsocket.SynchronousCallback):
 
   def get(self):
     if self.transformed_response is None:
+      logging.debug("Waiting on future")
       self.wait()
       logging.debug("REALIZING %s" % str(self))
       self.transformed_response = self.transform(self.response)
@@ -39,6 +45,11 @@ class Future(rpcsocket.SynchronousCallback):
     else:
       logging.debug("Immediately run callback for watch for %s" % str(self))
       callback(self.get())
+
+  def wait(self):
+    for o in _idle_observers:
+      o()
+    rpcsocket.SynchronousCallback.wait(self)
 
 class DependentFuture(Future):
   """If you have a future A and you want to create future B, but B can't be

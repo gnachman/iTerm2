@@ -1,5 +1,6 @@
 from asyncws import AsyncWebsocketApp
 
+import api_pb2
 import logging
 import threading
 import websocket
@@ -38,6 +39,7 @@ class RPCSocket(AsyncWebsocketApp):
   def sync_send_rpc(self, message):
     callback = SynchronousCallback()
     def f():
+      logging.debug("Send request")
       self.send(message, opcode=websocket.ABNF.OPCODE_BINARY)
     self.dispatch_async(f)
     self._append_callback(callback.callback)
@@ -48,6 +50,9 @@ class RPCSocket(AsyncWebsocketApp):
 
   def async_send_rpc(self, message, callback):
     def f():
+      request = api_pb2.Request()
+      request.ParseFromString(message)
+      logging.debug("SEND:\n" + str(request))
       self.send(message, opcode=websocket.ABNF.OPCODE_BINARY)
     self.dispatch_queue.dispatch_async(f)
     self._append_callback(callback)

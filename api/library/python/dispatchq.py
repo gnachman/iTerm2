@@ -65,10 +65,15 @@ class IdleDispatchQueue(AbstractDispatchQueue):
 
   def wait(self, timeout=None):
     start_time = time.time()
+    n = 0
     if timeout is None:
       self.cond.acquire()
-      while self._run_jobs_locked() == 0:
+      c = self._run_jobs_locked()
+      n += c
+      while c == 0:
         self.cond.wait()
+        c = self._run_jobs_locked()
+        n += c
       self.cond.release()
     else:
       end_time = start_time + timeout
@@ -82,4 +87,5 @@ class IdleDispatchQueue(AbstractDispatchQueue):
         if n > 0 or now >= end_time:
           break;
       self.cond.release()
+    return n
 

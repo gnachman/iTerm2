@@ -4,9 +4,10 @@
 from __future__ import print_function
 
 from it2global import get_socket, wait
+import api_pb2
 import it2session
 import it2socket
-import api_pb2
+import logging
 
 class AbstractTab(object):
   def __repr__(self):
