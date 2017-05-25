@@ -30,6 +30,8 @@ CF_EXTERN_C_BEGIN
 @class ITMCodePointsPerCell;
 @class ITMCoord;
 @class ITMCoordRange;
+@class ITMCreateTabRequest;
+@class ITMCreateTabResponse;
 @class ITMCustomEscapeSequenceNotification;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
@@ -57,6 +59,8 @@ CF_EXTERN_C_BEGIN
 @class ITMSendTextResponse;
 @class ITMSetProfilePropertyRequest;
 @class ITMSetProfilePropertyResponse;
+@class ITMSplitPaneRequest;
+@class ITMSplitPaneResponse;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
 
@@ -251,6 +255,62 @@ GPBEnumDescriptor *ITMSendTextResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMSendTextResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMCreateTabResponse_Status
+
+typedef GPB_ENUM(ITMCreateTabResponse_Status) {
+  ITMCreateTabResponse_Status_Ok = 0,
+  ITMCreateTabResponse_Status_InvalidProfileName = 1,
+  ITMCreateTabResponse_Status_InvalidWindowId = 2,
+
+  /** The tab is still created, just not with the desired index. */
+  ITMCreateTabResponse_Status_InvalidTabIndex = 3,
+
+  /** A $VAR$ substitution was not provided by the user. */
+  ITMCreateTabResponse_Status_MissingSubstitution = 4,
+};
+
+GPBEnumDescriptor *ITMCreateTabResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMCreateTabResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSplitPaneRequest_SplitDirection
+
+typedef GPB_ENUM(ITMSplitPaneRequest_SplitDirection) {
+  ITMSplitPaneRequest_SplitDirection_Vertical = 0,
+  ITMSplitPaneRequest_SplitDirection_Horizontal = 1,
+};
+
+GPBEnumDescriptor *ITMSplitPaneRequest_SplitDirection_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSplitPaneRequest_SplitDirection_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSplitPaneResponse_Status
+
+typedef GPB_ENUM(ITMSplitPaneResponse_Status) {
+  ITMSplitPaneResponse_Status_Ok = 0,
+  ITMSplitPaneResponse_Status_SessionNotFound = 1,
+  ITMSplitPaneResponse_Status_InvalidProfileName = 2,
+
+  /** This can happen if the session to be split is too small. */
+  ITMSplitPaneResponse_Status_CannotSplit = 3,
+};
+
+GPBEnumDescriptor *ITMSplitPaneResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSplitPaneResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - ITMApiRoot
 
 /**
@@ -278,6 +338,8 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
   ITMRequest_FieldNumber_ListSessionsRequest = 106,
   ITMRequest_FieldNumber_SendTextRequest = 107,
+  ITMRequest_FieldNumber_CreateTabRequest = 108,
+  ITMRequest_FieldNumber_SplitPaneRequest = 109,
 };
 
 /**
@@ -322,6 +384,14 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c sendTextRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasSendTextRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMCreateTabRequest *createTabRequest;
+/** Test to see if @c createTabRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasCreateTabRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMSplitPaneRequest *splitPaneRequest;
+/** Test to see if @c splitPaneRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasSplitPaneRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -336,6 +406,8 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
   ITMResponse_FieldNumber_ListSessionsResponse = 106,
   ITMResponse_FieldNumber_SendTextResponse = 107,
+  ITMResponse_FieldNumber_CreateTabResponse = 108,
+  ITMResponse_FieldNumber_SplitPaneResponse = 109,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -379,6 +451,14 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMSendTextResponse *sendTextResponse;
 /** Test to see if @c sendTextResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasSendTextResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCreateTabResponse *createTabResponse;
+/** Test to see if @c createTabResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasCreateTabResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMSplitPaneResponse *splitPaneResponse;
+/** Test to see if @c splitPaneResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasSplitPaneResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -1256,6 +1336,113 @@ typedef GPB_ENUM(ITMListSessionsResponse_Session_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
 /** Test to see if @c uniqueIdentifier has been set. */
 @property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+@end
+
+#pragma mark - ITMCreateTabRequest
+
+typedef GPB_ENUM(ITMCreateTabRequest_FieldNumber) {
+  ITMCreateTabRequest_FieldNumber_ProfileName = 1,
+  ITMCreateTabRequest_FieldNumber_WindowId = 2,
+  ITMCreateTabRequest_FieldNumber_TabIndex = 3,
+  ITMCreateTabRequest_FieldNumber_Command = 4,
+};
+
+@interface ITMCreateTabRequest : GPBMessage
+
+/** Leave unset to use the default profile. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *profileName;
+/** Test to see if @c profileName has been set. */
+@property(nonatomic, readwrite) BOOL hasProfileName;
+
+/** Leave unset to create the tab in a new window. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+/** Valid to set only if window_id is set. Gives the desired index of the new tab. */
+@property(nonatomic, readwrite) uint32_t tabIndex;
+
+@property(nonatomic, readwrite) BOOL hasTabIndex;
+/** If not set, the profile's command will be used. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *command;
+/** Test to see if @c command has been set. */
+@property(nonatomic, readwrite) BOOL hasCommand;
+
+@end
+
+#pragma mark - ITMCreateTabResponse
+
+typedef GPB_ENUM(ITMCreateTabResponse_FieldNumber) {
+  ITMCreateTabResponse_FieldNumber_Status = 1,
+  ITMCreateTabResponse_FieldNumber_WindowId = 2,
+  ITMCreateTabResponse_FieldNumber_TabId = 3,
+  ITMCreateTabResponse_FieldNumber_SessionId = 4,
+};
+
+@interface ITMCreateTabResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMCreateTabResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@property(nonatomic, readwrite) int32_t tabId;
+
+@property(nonatomic, readwrite) BOOL hasTabId;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
+
+@end
+
+#pragma mark - ITMSplitPaneRequest
+
+typedef GPB_ENUM(ITMSplitPaneRequest_FieldNumber) {
+  ITMSplitPaneRequest_FieldNumber_Session = 1,
+  ITMSplitPaneRequest_FieldNumber_SplitDirection = 2,
+  ITMSplitPaneRequest_FieldNumber_Before = 3,
+  ITMSplitPaneRequest_FieldNumber_ProfileName = 4,
+};
+
+@interface ITMSplitPaneRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+@property(nonatomic, readwrite) ITMSplitPaneRequest_SplitDirection splitDirection;
+
+@property(nonatomic, readwrite) BOOL hasSplitDirection;
+/** If true, new session is above/left of the session being split. Otherwise, it goes below/right. */
+@property(nonatomic, readwrite) BOOL before;
+
+@property(nonatomic, readwrite) BOOL hasBefore;
+/** Leave unset to use the default profile. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *profileName;
+/** Test to see if @c profileName has been set. */
+@property(nonatomic, readwrite) BOOL hasProfileName;
+
+@end
+
+#pragma mark - ITMSplitPaneResponse
+
+typedef GPB_ENUM(ITMSplitPaneResponse_FieldNumber) {
+  ITMSplitPaneResponse_FieldNumber_Status = 1,
+  ITMSplitPaneResponse_FieldNumber_SessionId = 2,
+};
+
+@interface ITMSplitPaneResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSplitPaneResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
 
 @end
 

@@ -101,6 +101,8 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic hasSetProfilePropertyRequest, setProfilePropertyRequest;
 @dynamic hasListSessionsRequest, listSessionsRequest;
 @dynamic hasSendTextRequest, sendTextRequest;
+@dynamic hasCreateTabRequest, createTabRequest;
+@dynamic hasSplitPaneRequest, splitPaneRequest;
 
 typedef struct ITMRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -112,6 +114,8 @@ typedef struct ITMRequest__storage_ {
   ITMSetProfilePropertyRequest *setProfilePropertyRequest;
   ITMListSessionsRequest *listSessionsRequest;
   ITMSendTextRequest *sendTextRequest;
+  ITMCreateTabRequest *createTabRequest;
+  ITMSplitPaneRequest *splitPaneRequest;
   int64_t id_p;
 } ITMRequest__storage_;
 
@@ -202,6 +206,24 @@ typedef struct ITMRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "createTabRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCreateTabRequest),
+        .number = ITMRequest_FieldNumber_CreateTabRequest,
+        .hasIndex = 9,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, createTabRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "splitPaneRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitPaneRequest),
+        .number = ITMRequest_FieldNumber_SplitPaneRequest,
+        .hasIndex = 10,
+        .offset = (uint32_t)offsetof(ITMRequest__storage_, splitPaneRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRequest class]
@@ -232,6 +254,8 @@ typedef struct ITMRequest__storage_ {
 @dynamic hasSetProfilePropertyResponse, setProfilePropertyResponse;
 @dynamic hasListSessionsResponse, listSessionsResponse;
 @dynamic hasSendTextResponse, sendTextResponse;
+@dynamic hasCreateTabResponse, createTabResponse;
+@dynamic hasSplitPaneResponse, splitPaneResponse;
 @dynamic hasNotification, notification;
 
 typedef struct ITMResponse__storage_ {
@@ -244,6 +268,8 @@ typedef struct ITMResponse__storage_ {
   ITMSetProfilePropertyResponse *setProfilePropertyResponse;
   ITMListSessionsResponse *listSessionsResponse;
   ITMSendTextResponse *sendTextResponse;
+  ITMCreateTabResponse *createTabResponse;
+  ITMSplitPaneResponse *splitPaneResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMResponse__storage_;
@@ -336,10 +362,28 @@ typedef struct ITMResponse__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "createTabResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCreateTabResponse),
+        .number = ITMResponse_FieldNumber_CreateTabResponse,
+        .hasIndex = 9,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, createTabResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "splitPaneResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitPaneResponse),
+        .number = ITMResponse_FieldNumber_SplitPaneResponse,
+        .hasIndex = 10,
+        .offset = (uint32_t)offsetof(ITMResponse__storage_, splitPaneResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMResponse_FieldNumber_Notification,
-        .hasIndex = 9,
+        .hasIndex = 11,
         .offset = (uint32_t)offsetof(ITMResponse__storage_, notification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -2565,6 +2609,401 @@ typedef struct ITMListSessionsResponse_Session__storage_ {
 }
 
 @end
+
+#pragma mark - ITMCreateTabRequest
+
+@implementation ITMCreateTabRequest
+
+@dynamic hasProfileName, profileName;
+@dynamic hasWindowId, windowId;
+@dynamic hasTabIndex, tabIndex;
+@dynamic hasCommand, command;
+
+typedef struct ITMCreateTabRequest__storage_ {
+  uint32_t _has_storage_[1];
+  uint32_t tabIndex;
+  NSString *profileName;
+  NSString *windowId;
+  NSString *command;
+} ITMCreateTabRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "profileName",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabRequest_FieldNumber_ProfileName,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, profileName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabRequest_FieldNumber_WindowId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabIndex",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabRequest_FieldNumber_TabIndex,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, tabIndex),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "command",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabRequest_FieldNumber_Command,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, command),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCreateTabRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCreateTabRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCreateTabResponse
+
+@implementation ITMCreateTabResponse
+
+@dynamic hasStatus, status;
+@dynamic hasWindowId, windowId;
+@dynamic hasTabId, tabId;
+@dynamic hasSessionId, sessionId;
+
+typedef struct ITMCreateTabResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMCreateTabResponse_Status status;
+  int32_t tabId;
+  NSString *windowId;
+  NSString *sessionId;
+} ITMCreateTabResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMCreateTabResponse_Status_EnumDescriptor,
+        .number = ITMCreateTabResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabResponse_FieldNumber_WindowId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabResponse_FieldNumber_TabId,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCreateTabResponse_FieldNumber_SessionId,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, sessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCreateTabResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCreateTabResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMCreateTabResponse_Status
+
+GPBEnumDescriptor *ITMCreateTabResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000InvalidProfileName\000InvalidWindowId\000In"
+        "validTabIndex\000MissingSubstitution\000";
+    static const int32_t values[] = {
+        ITMCreateTabResponse_Status_Ok,
+        ITMCreateTabResponse_Status_InvalidProfileName,
+        ITMCreateTabResponse_Status_InvalidWindowId,
+        ITMCreateTabResponse_Status_InvalidTabIndex,
+        ITMCreateTabResponse_Status_MissingSubstitution,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMCreateTabResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMCreateTabResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMCreateTabResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMCreateTabResponse_Status_Ok:
+    case ITMCreateTabResponse_Status_InvalidProfileName:
+    case ITMCreateTabResponse_Status_InvalidWindowId:
+    case ITMCreateTabResponse_Status_InvalidTabIndex:
+    case ITMCreateTabResponse_Status_MissingSubstitution:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMSplitPaneRequest
+
+@implementation ITMSplitPaneRequest
+
+@dynamic hasSession, session;
+@dynamic hasSplitDirection, splitDirection;
+@dynamic hasBefore, before;
+@dynamic hasProfileName, profileName;
+
+typedef struct ITMSplitPaneRequest__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSplitPaneRequest_SplitDirection splitDirection;
+  NSString *session;
+  NSString *profileName;
+} ITMSplitPaneRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSplitPaneRequest_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "splitDirection",
+        .dataTypeSpecific.enumDescFunc = ITMSplitPaneRequest_SplitDirection_EnumDescriptor,
+        .number = ITMSplitPaneRequest_FieldNumber_SplitDirection,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, splitDirection),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "before",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSplitPaneRequest_FieldNumber_Before,
+        .hasIndex = 2,
+        .offset = 3,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "profileName",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSplitPaneRequest_FieldNumber_ProfileName,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, profileName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSplitPaneRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSplitPaneRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMSplitPaneRequest_SplitDirection
+
+GPBEnumDescriptor *ITMSplitPaneRequest_SplitDirection_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Vertical\000Horizontal\000";
+    static const int32_t values[] = {
+        ITMSplitPaneRequest_SplitDirection_Vertical,
+        ITMSplitPaneRequest_SplitDirection_Horizontal,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSplitPaneRequest_SplitDirection)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMSplitPaneRequest_SplitDirection_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMSplitPaneRequest_SplitDirection_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMSplitPaneRequest_SplitDirection_Vertical:
+    case ITMSplitPaneRequest_SplitDirection_Horizontal:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMSplitPaneResponse
+
+@implementation ITMSplitPaneResponse
+
+@dynamic hasStatus, status;
+@dynamic hasSessionId, sessionId;
+
+typedef struct ITMSplitPaneResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSplitPaneResponse_Status status;
+  NSString *sessionId;
+} ITMSplitPaneResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMSplitPaneResponse_Status_EnumDescriptor,
+        .number = ITMSplitPaneResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSplitPaneResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSplitPaneResponse_FieldNumber_SessionId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMSplitPaneResponse__storage_, sessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSplitPaneResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSplitPaneResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMSplitPaneResponse_Status
+
+GPBEnumDescriptor *ITMSplitPaneResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000InvalidProfileName\000Ca"
+        "nnotSplit\000";
+    static const int32_t values[] = {
+        ITMSplitPaneResponse_Status_Ok,
+        ITMSplitPaneResponse_Status_SessionNotFound,
+        ITMSplitPaneResponse_Status_InvalidProfileName,
+        ITMSplitPaneResponse_Status_CannotSplit,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSplitPaneResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMSplitPaneResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMSplitPaneResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMSplitPaneResponse_Status_Ok:
+    case ITMSplitPaneResponse_Status_SessionNotFound:
+    case ITMSplitPaneResponse_Status_InvalidProfileName:
+    case ITMSplitPaneResponse_Status_CannotSplit:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 
 #pragma clang diagnostic pop

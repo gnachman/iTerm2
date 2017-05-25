@@ -50,7 +50,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
            @"sec-websocket-protocol": kProtocolName,
          };
     for (NSString *key in requiredValues) {
-        if (![headers[key] isEqualToString:requiredValues[key]]) {
+        if ([headers[key] caseInsensitiveCompare:requiredValues[key]] != NSOrderedSame) {
             DLog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
             return NO;
         }

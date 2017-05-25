@@ -4,9 +4,12 @@
 from __future__ import print_function
 
 import api_pb2
+import argparse
+import logging
 import sys
 import thread
 import time
+import traceback
 import websocket
 
 callbacks = []
@@ -27,11 +30,62 @@ def send_text(ws, argv):
   request.send_text_request.text = argv[2]
   SendRPC(ws, request, callback)
 
+def create_tab(ws, argv):
+  def callback(response):
+    print(str(response))
+    ws.close()
+  parser = argparse.ArgumentParser(description='Create a tab or window')
+  parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
+  parser.add_argument('--window', type=str, nargs='?', help='Window ID')
+  parser.add_argument('--index', type=int, nargs='?', help='Desired tab index')
+  parser.add_argument('--command', type=str, nargs='?', help='Command')
+  args = parser.parse_args(argv[2:])
+
+  request = api_pb2.Request()
+  request.create_tab_request.SetInParent()
+  if args.profile is not None:
+    request.create_tab_request.profile_name = args.profile
+  if args.window is not None:
+    request.create_tab_request.window_id = args.window
+  if args.index is not None:
+    request.create_tab_request.tab_index = args.index
+  if args.command is not None:
+    request.create_tab_request.command = args.command
+  SendRPC(ws, request, callback)
+
+def split_pane(ws, argv):
+  def callback(response):
+    print(str(response))
+    ws.close()
+  parser = argparse.ArgumentParser(description='Split a pane')
+  parser.add_argument('--session', type=str, nargs='?', help='Session ID')
+  parser.add_argument('--vertical', action='store_true', help='Split vertically?', default=False)
+  parser.add_argument('--before', action='store_true', help='Spilt left or above target', default=False)
+  parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
+  args = parser.parse_args(argv[2:])
+
+  request = api_pb2.Request()
+  request.split_pane_request.SetInParent()
+  if args.session is not None:
+    request.split_pane_request.session_id = args.session
+  if args.vertical is None:
+    request.split_pane_request.split_direction = api_pb2.SplitPaneRequest.VERTICAL
+  else:
+    request.split_pane_request.split_direction = api_pb2.SplitPaneRequest.HORIZONTAL;
+  if args.before is None:
+    request.split_pane_request.before = False
+  else:
+    request.split_pane_request.before = args.before
+  if args.profile is not None:
+    request.split_pane_request.profile_name = args.profile
+  SendRPC(ws, request, callback)
+
 def handle_location_change_notification(location_change_notification):
     print("Location changed")
     print(str(location_change_notification))
 
 def SendRPC(ws, message, callback):
+    print(message)
     ws.send(message.SerializeToString(), opcode=websocket.ABNF.OPCODE_BINARY)
     callbacks.append(callback)
 
@@ -68,8 +122,12 @@ def on_close(ws):
     print("Connection closed")
 
 def main(argv):
+    logging.basicConfig()
+
     commands = { "list-sessions": list_sessions,
-                 "send-text": send_text }
+                 "send-text": send_text,
+                 "create-tab": create_tab,
+                 "split-pane": split_pane }
     if len(argv) < 2:
       print("Not enough arguments")
       return -1
@@ -78,8 +136,11 @@ def main(argv):
       return -2
 
     def on_open(ws):
-      f = commands[argv[1]]
-      f(ws, argv)
+      try:
+        f = commands[argv[1]]
+        f(ws, argv)
+      except Exception as e:
+        traceback.print_exc()
 
     #websocket.enableTrace(True)
     ws = websocket.WebSocketApp("ws://localhost:1912/",

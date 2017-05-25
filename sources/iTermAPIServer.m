@@ -324,6 +324,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMRequest *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     __weak __typeof(self) weakSelf = self;
+    DLog(@"Got request %@", request);
     if (request.hasTransactionRequest) {
         if (request.transactionRequest.begin) {
             ITMResponse *response = [[ITMResponse alloc] init];
@@ -404,6 +405,24 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }];
         return;
     }
+    if (request.hasCreateTabRequest) {
+        [_delegate apiServerCreateTab:request.createTabRequest handler:^(ITMCreateTabResponse *createTabResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.createTabResponse = createTabResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
+    }
+    if (request.hasSplitPaneRequest) {
+        [_delegate apiServerSplitPane:request.splitPaneRequest handler:^(ITMSplitPaneResponse *splitPaneResponse) {
+            ITMResponse *response = [[ITMResponse alloc] init];
+            response.id_p = request.id_p;
+            response.splitPaneResponse = splitPaneResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+        return;
+    }
 }
 
 // Runs on execution queue.
@@ -450,6 +469,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
     if (frame.opcode == iTermWebSocketOpcodeBinary) {
         ITMRequest *request = [ITMRequest parseFromData:frame.payload error:nil];
+        NSLog(@"Dispatch %@", request);
         if (request) {
             DLog(@"Received request: %@", request);
             __weak __typeof(self) weakSelf = self;
