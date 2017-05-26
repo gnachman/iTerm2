@@ -86,7 +86,7 @@
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
 #include "iTermFileDescriptorClient.h"
-
+#import <QuartzCore/QuartzCore.h>
 #include <unistd.h>
 
 @class QLPreviewPanel;
@@ -344,6 +344,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // life because it remains possible to have no auto-layout as long as you don't use title bar
     // accessories. To see the whole mess, check out the clusterfuck[123] branches.
     iTermWindowShortcutLabelTitlebarAccessoryViewController *_shortcutAccessoryViewController;
+
 #endif
 
     // Is there a pending delayed-perform of enterFullScreen:? Used to figure
@@ -361,6 +362,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     // Used to prevent infinite re-entrancy in windowDidChangeScreen:.
     BOOL _inWindowDidChangeScreen;
+
+    iTermPasswordManagerWindowController *_passwordManagerWindowController;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -815,6 +818,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_desiredTitle release];
     [_tabsTouchBarItem release];
     [_autocompleteCandidateListItem release];
+    [_passwordManagerWindowController release];
+
     [super dealloc];
 }
 
@@ -4743,16 +4748,33 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
     [session reveal];
     DLog(@"Show the password manager as a sheet");
-    iTermPasswordManagerWindowController *passwordManagerWindowController =
-        [[iTermPasswordManagerWindowController alloc] init];
-    passwordManagerWindowController.delegate = self;
+     _passwordManagerWindowController.delegate = nil;
+     [_passwordManagerWindowController autorelease];
+     _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+    _passwordManagerWindowController.delegate = self;
+     BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
+     if (noAnimations) {
+        [CATransaction begin];
+        [CATransaction setValue:@YES
+                         forKey:kCATransactionDisableActions];
+     }
 
-    [self.window beginSheet:[passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
-        [[passwordManagerWindowController window] close];
-        [[passwordManagerWindowController window] release];
+    [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
+        if (noAnimations) {
+            [CATransaction begin];
+            [CATransaction setValue:@YES
+                             forKey:kCATransactionDisableActions];
+        }
+        [[_passwordManagerWindowController window] close];
+        if (noAnimations) {
+            [CATransaction commit];
+        }
     }];
+     if (noAnimations) {
+         [CATransaction commit];
+     }
 
-    [passwordManagerWindowController selectAccountName:name];
+    [_passwordManagerWindowController selectAccountName:name];
 }
 
 - (void)genericCloseSheet:(NSWindow *)sheet

@@ -186,5 +186,6 @@
 + (BOOL)killSessionsOnLogout;
 + (BOOL)tmuxUsesDedicatedProfile;
 + (BOOL)detectPasswordInput;
++ (BOOL)disablePasswordManagerAnimations;
 
 @end
