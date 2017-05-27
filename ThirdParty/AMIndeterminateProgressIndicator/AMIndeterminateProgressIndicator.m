@@ -149,8 +149,8 @@ static CGFloat DegreesToRadians(double radians) {
 
     for (NSInteger i = 0; i < self.numberOfSteps; i++) {
         CGFloat currentAngle = initialAngle - DegreesToRadians(anglePerStep) * i;
-        [[_color colorWithAlphaComponent:1.0 - sqrt(i) * 0.25] set];
-        
+        [[_color colorWithAlphaComponent:1.0 - sqrt(self.numberOfSteps - 1 - i) * 0.25] set];
+
         outerPoint = NSMakePoint(center.x + cos(currentAngle) * outerRadius,
                                  center.y + sin(currentAngle) * outerRadius);
         

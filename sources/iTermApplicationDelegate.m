@@ -1626,7 +1626,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (IBAction)newWindow:(id)sender {
     DLog(@"newWindow: invoked");
-    [[iTermController sharedInstance] newWindow:sender possiblyTmux:[self possiblyTmuxValueForWindow:YES]];
+    BOOL cancel;
+    BOOL tmux = [self possiblyTmuxValueForWindow:YES cancel:&cancel];
+    if (!cancel) {
+        [[iTermController sharedInstance] newWindow:sender possiblyTmux:tmux];
+    }
 }
 
 - (IBAction)newSessionWithSameProfile:(id)sender
@@ -1637,7 +1641,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 - (IBAction)newSession:(id)sender
 {
     DLog(@"iTermApplicationDelegate newSession:");
-    [[iTermController sharedInstance] newSession:sender possiblyTmux:[self possiblyTmuxValueForWindow:NO]];
+    BOOL cancel;
+    BOOL tmux = [self possiblyTmuxValueForWindow:NO cancel:&cancel];
+    if (!cancel) {
+        [[iTermController sharedInstance] newSession:sender possiblyTmux:tmux];
+    }
 }
 
 - (IBAction)arrangeHorizontally:(id)sender
@@ -1986,7 +1994,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     return [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
 }
 
-- (BOOL)possiblyTmuxValueForWindow:(BOOL)isWindow {
+- (BOOL)possiblyTmuxValueForWindow:(BOOL)isWindow cancel:(BOOL *)cancel {
+    *cancel = NO;
     static NSString *const kPossiblyTmuxIdentifier = @"NoSyncNewWindowOrTabFromTmuxOpensTmux";
     if ([[[[iTermController sharedInstance] currentTerminal] currentSession] isTmuxClient]) {
         NSString *heading =
@@ -1998,11 +2007,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                        isWindow ? @"window" : @"tab"];
         NSString *tmuxAction = isWindow ? @"New tmux Window" : @"New tmux Tab";
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:title
-                                                                     actions:@[ tmuxAction, @"Use Default Profile" ]
+                                                                     actions:@[ tmuxAction, @"Use Default Profile", @"Cancel" ]
                                                                    accessory:nil
                                                                   identifier:kPossiblyTmuxIdentifier
                                                                  silenceable:kiTermWarningTypePermanentlySilenceable
                                                                      heading:heading];
+        *cancel = (selection == kiTermWarningSelection2);
         return (selection == kiTermWarningSelection0);
     } else {
         return NO;
