@@ -13,16 +13,9 @@ import time
 
 import code, traceback, signal
 
-def main():
-  #logging.basicConfig(level=logging.DEBUG)
-  logging.basicConfig()
+debug = False
 
-  def handle_new_session(notification):
-    print("New session created\n" + str(notification))
-
-  logging.debug("Register for new sessions")
-  it2notifications.NewSessionSubscription(handle_new_session)
-
+def create_windows_and_tabs():
   logging.debug("Get hierarchy")
   hierarchy = it2hierarchy.Hierarchy()
 
@@ -36,12 +29,27 @@ def main():
   s2 = session.split_pane(vertical=True).split_pane()
   s2.send_text("Hello world").get_status()
 
+def read_keystrokes():
   def handle_keystroke(notification):
     print("Keypress\n" + str(notification))
 
   it2notifications.KeystrokeSubscription(s2.get_session_id(), handle_keystroke)
   while True:
     it2notifications.wait(1)
+
+def watch_hierarchy():
+  hierarchy = it2hierarchy.Hierarchy()
+  while True:
+    print(hierarchy.pretty_str())
+    it2notifications.wait(1)
+
+def main():
+  if debug:
+    logging.basicConfig(level=logging.DEBUG)
+  else:
+    logging.basicConfig()
+
+  watch_hierarchy()
 
 if __name__ == "__main__":
     main()

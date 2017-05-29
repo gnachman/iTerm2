@@ -30,6 +30,8 @@
 
 #define PtyLog DLog
 
+NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
+
 // No growl output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
 const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
 
@@ -770,6 +772,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
+    if (parentWindow_ && theParent && parentWindow_ != theParent) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabDidChangeWindowNotification object:self];
+    }
     parentWindow_ = realParentWindow_ = theParent;
     [self updateFlexibleViewColors];
     for (PTYSession *session in self.sessions) {
@@ -1220,7 +1225,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             NSSplitView* parentSplit = (NSSplitView*)[node superview];
             // 3. A non-root splitview's orientation must be the opposite of its parent's.
             ITCriticalError([node isVertical] != [parentSplit isVertical], @"A non-root splitview's orientation must be the opposite of its parent's. %@", when);
-            assert([node isVertical] != [parentSplit isVertical]);
         } else {
             if ([[node subviews] count] == 1) {
                 NSView* onlyChild = [[node subviews] objectAtIndex:0];

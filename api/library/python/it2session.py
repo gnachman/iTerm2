@@ -23,12 +23,17 @@ class TextSender(object):
   def parse(self, response):
     self.status = response.status
 
+
 class AbstractSession(object):
   def __repr__(self):
     raise NotImplementedError("unimplemented")
 
   def get_session_id(self):
     raise NotImplementedError("unimplemented")
+
+  def pretty_str(self, indent=""):
+    return indent + "Session id=%s\n" % self.get_session_id()
+
 
 class FutureSession(AbstractSession):
   def __init__(self, future):

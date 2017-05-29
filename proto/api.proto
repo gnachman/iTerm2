@@ -84,6 +84,8 @@ enum NotificationType {
 
   // Notifications that ignore the `session` parameter.
   NOTIFY_ON_NEW_SESSION = 6;
+  NOTIFY_ON_TERMINATE_SESSION = 7;
+  NOTIFY_ON_LAYOUT_CHANGE = 8;
 }
 
 message NotificationRequest {
@@ -112,9 +114,11 @@ message Notification {
   optional KeystrokeNotification keystroke_notification = 1;
   optional ScreenUpdateNotification screen_update_notification = 2;
   optional PromptNotification prompt_notification = 3;
-  optional LocationChangeNotification location_change_notification=4;
-  optional CustomEscapeSequenceNotification custom_escape_sequence_notification=5;
-  optional NewSessionNotification new_session_notification=6;
+  optional LocationChangeNotification location_change_notification = 4;
+  optional CustomEscapeSequenceNotification custom_escape_sequence_notification = 5;
+  optional NewSessionNotification new_session_notification = 6;
+  optional TerminateSessionNotification terminate_session_notification = 7;
+  optional LayoutChangedNotification layout_changed_notification = 8;
 }
 
 message KeystrokeNotification {
@@ -155,8 +159,18 @@ message CustomEscapeSequenceNotification {
   optional string payload = 3;
 }
 
+// Sent when a new session is created or a closure is undone.
 message NewSessionNotification {
   optional string uniqueIdentifier = 1;
+}
+
+// Note this is sent when a session is removed from the screen but its closure remains undoable.
+message TerminateSessionNotification {
+  optional string uniqueIdentifier = 1;
+}
+
+message LayoutChangedNotification {
+  optional ListSessionsResponse list_sessions_response = 1;
 }
 
 // Requests the contents of a range of lines.
@@ -498,9 +512,11 @@ message SendTextResponse {
 message ListSessionsResponse {
   message Window {
     repeated Tab tabs = 1;
+    optional string window_id = 2;
   }
   message Tab {
     repeated Session sessions = 1;
+    optional string tab_id = 2;
   }
   message Session {
       optional string uniqueIdentifier = 1;

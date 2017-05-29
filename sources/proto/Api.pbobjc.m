@@ -52,7 +52,8 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
         "otifyOnPrompt\000NotifyOnLocationChange\000Not"
         "ifyOnCustomEscapeSequence\000NotifyOnNewSes"
-        "sion\000";
+        "sion\000NotifyOnTerminateSession\000NotifyOnLa"
+        "youtChange\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
@@ -60,6 +61,8 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         ITMNotificationType_NotifyOnLocationChange,
         ITMNotificationType_NotifyOnCustomEscapeSequence,
         ITMNotificationType_NotifyOnNewSession,
+        ITMNotificationType_NotifyOnTerminateSession,
+        ITMNotificationType_NotifyOnLayoutChange,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
@@ -82,6 +85,8 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnLocationChange:
     case ITMNotificationType_NotifyOnCustomEscapeSequence:
     case ITMNotificationType_NotifyOnNewSession:
+    case ITMNotificationType_NotifyOnTerminateSession:
+    case ITMNotificationType_NotifyOnLayoutChange:
       return YES;
     default:
       return NO;
@@ -773,6 +778,8 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasLocationChangeNotification, locationChangeNotification;
 @dynamic hasCustomEscapeSequenceNotification, customEscapeSequenceNotification;
 @dynamic hasNewSessionNotification, newSessionNotification;
+@dynamic hasTerminateSessionNotification, terminateSessionNotification;
+@dynamic hasLayoutChangedNotification, layoutChangedNotification;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -782,6 +789,8 @@ typedef struct ITMNotification__storage_ {
   ITMLocationChangeNotification *locationChangeNotification;
   ITMCustomEscapeSequenceNotification *customEscapeSequenceNotification;
   ITMNewSessionNotification *newSessionNotification;
+  ITMTerminateSessionNotification *terminateSessionNotification;
+  ITMLayoutChangedNotification *layoutChangedNotification;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -841,6 +850,24 @@ typedef struct ITMNotification__storage_ {
         .number = ITMNotification_FieldNumber_NewSessionNotification,
         .hasIndex = 5,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, newSessionNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "terminateSessionNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTerminateSessionNotification),
+        .number = ITMNotification_FieldNumber_TerminateSessionNotification,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, terminateSessionNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "layoutChangedNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMLayoutChangedNotification),
+        .number = ITMNotification_FieldNumber_LayoutChangedNotification,
+        .hasIndex = 7,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, layoutChangedNotification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -1263,6 +1290,97 @@ typedef struct ITMNewSessionNotification__storage_ {
         "\001\001\020\000";
     [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
 #endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTerminateSessionNotification
+
+@implementation ITMTerminateSessionNotification
+
+@dynamic hasUniqueIdentifier, uniqueIdentifier;
+
+typedef struct ITMTerminateSessionNotification__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *uniqueIdentifier;
+} ITMTerminateSessionNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "uniqueIdentifier",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTerminateSessionNotification_FieldNumber_UniqueIdentifier,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTerminateSessionNotification__storage_, uniqueIdentifier),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTerminateSessionNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTerminateSessionNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    static const char *extraTextFormatInfo =
+        "\001\001\020\000";
+    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
+#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMLayoutChangedNotification
+
+@implementation ITMLayoutChangedNotification
+
+@dynamic hasListSessionsResponse, listSessionsResponse;
+
+typedef struct ITMLayoutChangedNotification__storage_ {
+  uint32_t _has_storage_[1];
+  ITMListSessionsResponse *listSessionsResponse;
+} ITMLayoutChangedNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "listSessionsResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse),
+        .number = ITMLayoutChangedNotification_FieldNumber_ListSessionsResponse,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMLayoutChangedNotification__storage_, listSessionsResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMLayoutChangedNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMLayoutChangedNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -2478,10 +2596,12 @@ typedef struct ITMListSessionsResponse__storage_ {
 @implementation ITMListSessionsResponse_Window
 
 @dynamic tabsArray, tabsArray_Count;
+@dynamic hasWindowId, windowId;
 
 typedef struct ITMListSessionsResponse_Window__storage_ {
   uint32_t _has_storage_[1];
   NSMutableArray *tabsArray;
+  NSString *windowId;
 } ITMListSessionsResponse_Window__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2498,6 +2618,15 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, tabsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_Window_FieldNumber_WindowId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -2522,10 +2651,12 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 @implementation ITMListSessionsResponse_Tab
 
 @dynamic sessionsArray, sessionsArray_Count;
+@dynamic hasTabId, tabId;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
   NSMutableArray *sessionsArray;
+  NSString *tabId;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2542,6 +2673,15 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, sessionsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "tabId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TabId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -2849,7 +2989,7 @@ typedef struct ITMSplitPaneRequest__storage_ {
         .number = ITMSplitPaneRequest_FieldNumber_Before,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue),
         .dataType = GPBDataTypeBool,
       },
       {

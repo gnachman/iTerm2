@@ -9,6 +9,7 @@ import dispatchq
 import it2session
 import it2socket
 import it2tab
+import logging
 import threading
 import time
 
@@ -41,9 +42,18 @@ class NewSessionSubscription(Subscription):
   def __init__(self, handler):
     Subscription.__init__(self, api_pb2.NOTIFY_ON_NEW_SESSION, None, handler)
 
+class TerminateSessionSubscription(Subscription):
+  def __init__(self, handler):
+    Subscription.__init__(self, api_pb2.NOTIFY_ON_TERMINATE_SESSION, None, handler)
+
 class KeystrokeSubscription(Subscription):
   def __init__(self, session_id, handler):
     Subscription.__init__(self, api_pb2.NOTIFY_ON_KEYSTROKE, session_id, handler)
+
+class LayoutChangeSubscription(Subscription):
+  def __init__(self, handler):
+    Subscription.__init__(self, api_pb2.NOTIFY_ON_LAYOUT_CHANGE, None, handler)
+
 
 def _extract(notification):
   key = None
@@ -67,15 +77,24 @@ def _extract(notification):
   elif notification.HasField('new_session_notification'):
     key = (None, api_pb2.NOTIFY_ON_NEW_SESSION)
     notification = notification.new_session_notification
+  elif notification.HasField('terminate_session_notification'):
+    key = (None, api_pb2.NOTIFY_ON_TERMINATE_SESSION)
+    notification = notification.terminate_session_notification
+  elif notification.HasField('layout_changed_notification'):
+    key = (None, api_pb2.NOTIFY_ON_LAYOUT_CHANGE)
+    notification = notification.layout_changed_notification
+
   return key, notification
 
 def _dispatch_handle_notification(notification):
   def _run_handlers():
     key, sub_notification = _extract(notification)
-    handlers = _subscriptions[key]
-    if handlers is not None:
-      for handler in handlers:
-        handler.handle(sub_notification)
+    logging.debug("Got a notification to dispatch. key=" + str(key) +", notification=\n" + str(notification))
+    if key in _subscriptions:
+      handlers = _subscriptions[key]
+      if handlers is not None:
+        for handler in handlers:
+          handler.handle(sub_notification)
   _dispatch_queue.dispatch_async(_run_handlers)
 
 def wait(timeout=None):

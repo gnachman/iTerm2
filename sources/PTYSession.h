@@ -28,6 +28,8 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 extern NSString *const kPTYSessionCapturedOutputDidChange;
 
 extern NSString *const PTYSessionCreatedNotification;
+extern NSString *const PTYSessionTerminatedNotification;
+extern NSString *const PTYSessionRevivedNotification;
 
 @class CapturedOutput;
 @class FakeWindow;

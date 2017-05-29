@@ -13,6 +13,9 @@ class AbstractWindow(object):
   def __repr__(self):
     raise NotImplementedError("unimplemented")
 
+  def get_status(self):
+    raise NotImplementedError("unimplemented")
+
   def get_window_id(self):
     raise NotImplementedError("unimplemented")
 
@@ -22,6 +25,11 @@ class AbstractWindow(object):
   def create_tab(self, profile=None, command=None, index=None):
     raise NotImplementedError("unimplemented")
 
+  def pretty_str(self, indent=""):
+    s = indent + "Window id=%s\n" % self.get_window_id()
+    for t in self.get_tabs():
+      s += t.pretty_str(indent=indent + "  ")
+    return s
 
 class FutureWindow(AbstractWindow):
   def __init__(self, future):

@@ -19,6 +19,12 @@ class AbstractTab(object):
   def get_sessions(self):
     raise NotImplementedError("unimplemented")
 
+  def pretty_str(self, indent=""):
+    s = indent + "Tab id=%s\n" % self.get_tab_id()
+    for session in self.get_sessions():
+      s += session.pretty_str(indent=indent + "  ")
+    return s
+
 class FutureTab(AbstractTab):
   def __init__(self, future):
     self.future = future

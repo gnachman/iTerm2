@@ -69,6 +69,7 @@
 #import "iTermToolbeltView.h"
 #import "iTermURLStore.h"
 #import "iTermWarning.h"
+#import "MovePaneController.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -194,6 +195,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
     NSArray<NSDictionary *> *_buriedSessionsState;
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
+    BOOL _layoutChanged;
 }
 
 - (instancetype)init {
@@ -246,6 +250,27 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                  selector:@selector(sessionCreated:)
                                                      name:PTYSessionCreatedNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionCreated:)
+                                                     name:PTYSessionRevivedNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionDidTerminate:)
+                                                     name:PTYSessionTerminatedNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermSessionDidChangeTabNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermTabDidChangeWindowNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermTabDidChangePositionInWindowNotification
+                                                   object:nil];
+
         [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                            andSelector:@selector(getUrl:withReplyEvent:)
                                                          forEventClass:kInternetEventClass
@@ -263,6 +288,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
     [_newSessionSubscriptions release];
+    [_layoutChangeSubscriptions release];
+    [_terminateSessionSubscriptions release];
     [super dealloc];
 }
 
@@ -1106,6 +1133,30 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.newSessionNotification = [[[ITMNewSessionNotification alloc] init] autorelease];
         notification.newSessionNotification.uniqueIdentifier = session.guid;
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
+}
+
+- (void)layoutChanged:(NSNotification *)notification {
+    if (!_layoutChanged) {
+        _layoutChanged = YES;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _layoutChanged = NO;
+            [_layoutChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+                ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+                notification.layoutChangedNotification.listSessionsResponse = [self newListSessionsResponse];
+                [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+            }];
+        });
+    }
+}
+
+- (void)sessionDidTerminate:(NSNotification *)notification {
+    PTYSession *session = notification.object;
+    [_terminateSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+        notification.terminateSessionNotification = [[[ITMTerminateSessionNotification alloc] init] autorelease];
+        notification.terminateSessionNotification.uniqueIdentifier = session.guid;
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
 }
@@ -2309,19 +2360,31 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     if (!_newSessionSubscriptions) {
         _newSessionSubscriptions = [[NSMutableDictionary alloc] init];
+        _terminateSessionSubscriptions = [[NSMutableDictionary alloc] init];
+        _layoutChangeSubscriptions = [[NSMutableDictionary alloc] init];
+    }
+    NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions;
+    if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
+        subscriptions = _newSessionSubscriptions;
+    } else if (request.notificationType == ITMNotificationType_NotifyOnTerminateSession) {
+        subscriptions = _terminateSessionSubscriptions;
+    } else if (request.notificationType == ITMNotificationType_NotifyOnLayoutChange) {
+        subscriptions = _layoutChangeSubscriptions;
+    } else {
+        assert(false);
     }
     if (request.subscribe) {
-        if (_newSessionSubscriptions[connection]) {
+        if (subscriptions[connection]) {
             response.status = ITMNotificationResponse_Status_AlreadySubscribed;
             return response;
         }
-        _newSessionSubscriptions[connection] = request;
+        subscriptions[connection] = request;
     } else {
-        if (!_newSessionSubscriptions[connection]) {
+        if (!subscriptions[connection]) {
             response.status = ITMNotificationResponse_Status_NotSubscribed;
             return response;
         }
-        [_newSessionSubscriptions removeObjectForKey:connection];
+        [subscriptions removeObjectForKey:connection];
     }
 
     response.status = ITMNotificationResponse_Status_Ok;
@@ -2331,7 +2394,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                    connection:(id)connection
                       handler:(void (^)(ITMNotificationResponse *))handler {
-    if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
+    if (request.notificationType == ITMNotificationType_NotifyOnNewSession ||
+        request.notificationType == ITMNotificationType_NotifyOnTerminateSession |
+        request.notificationType == ITMNotificationType_NotifyOnLayoutChange) {
         handler([self handleAPINotificationRequest:request connection:connection]);
     } else {
         PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
@@ -2410,12 +2475,18 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)apiServerListSessions:(ITMListSessionsRequest *)request
                       handler:(void (^)(ITMListSessionsResponse *))handler {
+    handler([self newListSessionsResponse]);
+}
+
+- (ITMListSessionsResponse *)newListSessionsResponse {
     ITMListSessionsResponse *response = [[[ITMListSessionsResponse alloc] init] autorelease];
     for (PseudoTerminal *window in [[iTermController sharedInstance] terminals]) {
         ITMListSessionsResponse_Window *windowMessage = [[[ITMListSessionsResponse_Window alloc] init] autorelease];
+        windowMessage.windowId = window.terminalGuid;
 
         for (PTYTab *tab in window.tabs) {
             ITMListSessionsResponse_Tab *tabMessage = [[[ITMListSessionsResponse_Tab alloc] init] autorelease];
+            tabMessage.tabId = [@(tab.uniqueId) stringValue];
 
             for (PTYSession *session in tab.sessions) {
                 ITMListSessionsResponse_Session *sessionMessage = [[[ITMListSessionsResponse_Session alloc] init] autorelease];
@@ -2428,7 +2499,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
         [response.windowsArray addObject:windowMessage];
     }
-    handler(response);
+    return response;
 }
 
 - (void)apiServerSendText:(ITMSendTextRequest *)request handler:(void (^)(ITMSendTextResponse *))handler {
