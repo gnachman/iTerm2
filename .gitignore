@@ -21,3 +21,14 @@ iTerm2.xcodeproj/xcuserdata/*
 ColorPicker/ColorPicker.xcodeproj/project.xcworkspace/xcuserdata/
 ColorPicker/ColorPicker.xcodeproj/xcuserdata/
 iTerm2.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+
+# Compiled python modules.
+*.pyc
+*.py-e
+
+# Setuptools distribution folder.
+api/library/python/iterm2/dist
+
+# Python egg metadata, regenerated from source files by setuptools.
+api/library/python/iterm2/*.egg-info
+

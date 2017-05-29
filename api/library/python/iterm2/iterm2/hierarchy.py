@@ -3,19 +3,19 @@
 
 from __future__ import print_function
 import api_pb2
-from it2global import get_socket, wait
-import it2notifications
-import it2session
-import it2socket
-import it2tab
-import it2window
+from sharedstate import get_socket, wait
+import notifications
+import session
+import socket
+import tab
+import window
 import logging
 
 class Synchronizer(object):
   def __init__(self):
-    it2notifications.NewSessionSubscription(lambda notification: self._refresh())
-    it2notifications.TerminateSessionSubscription(lambda notification: self._refresh())
-    it2notifications.LayoutChangeSubscription(self._layoutDidChange)
+    notifications.NewSessionSubscription(lambda notification: self._refresh())
+    notifications.TerminateSessionSubscription(lambda notification: self._refresh())
+    notifications.LayoutChangeSubscription(self._layoutDidChange)
 
     self.value = None
     self._refresh()
@@ -26,7 +26,7 @@ class Synchronizer(object):
 
   def _layoutDidChange(self, notification):
     logging.debug("Layout did change")
-    self.future = it2socket.Future()
+    self.future = socket.Future()
     self.future.callback(notification.list_sessions_response)
 
   def get(self):
@@ -55,18 +55,18 @@ class Hierarchy(object):
 
   def parse(self, response):
     windows = []
-    for window in response.windows:
+    for w in response.windows:
       tabs = []
-      for tab in window.tabs:
+      for t in w.tabs:
         sessions = []
-        for session in tab.sessions:
-          sessions.append(it2session.Session(session.uniqueIdentifier))
-        tabs.append(it2tab.Tab(tab.tab_id, sessions))
-      windows.append(it2window.Window(window.window_id, tabs))
+        for s in t.sessions:
+          sessions.append(session.Session(s.uniqueIdentifier))
+        tabs.append(tab.Tab(t.tab_id, sessions))
+      windows.append(window.Window(w.window_id, tabs))
     self.windows = windows
 
   def create_window(self, profile=None, command=None):
-    return it2window.FutureWindow(get_socket().request_create_tab(
+    return window.FutureWindow(get_socket().request_create_tab(
       profile=profile, window=None, index=None, command=command))
 
   def __repr__(self):

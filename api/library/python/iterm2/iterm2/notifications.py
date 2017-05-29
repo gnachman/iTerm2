@@ -4,11 +4,11 @@
 from __future__ import print_function
 
 import api_pb2
-from it2global import get_socket, wait, register_notification_handler
+from sharedstate import get_socket, wait, register_notification_handler
 import dispatchq
-import it2session
-import it2socket
-import it2tab
+import session
+import socket
+import tab
 import logging
 import threading
 import time
@@ -105,6 +105,6 @@ def quick_wait():
   n = _dispatch_queue.wait(0)
 
 register_notification_handler(_dispatch_handle_notification)
-it2socket.add_idle_observer(quick_wait)
+socket.add_idle_observer(quick_wait)
 
 

@@ -4,8 +4,8 @@
 from __future__ import print_function
 
 import api_pb2
-from it2global import get_socket, wait
-import it2socket
+from sharedstate import get_socket, wait
+import socket
 import logging
 
 class TextSender(object):
@@ -52,7 +52,7 @@ class FutureSession(AbstractSession):
 
     def create_inner(response):
       return get_socket().request_send_text(self.get_session_id(), text)
-    sendTextFuture = it2socket.DependentFuture(self.future, create_inner)
+    sendTextFuture = socket.DependentFuture(self.future, create_inner)
     return TextSender(sendTextFuture)
 
   def split_pane(self, vertical=False, before=False, profile=None):
@@ -62,7 +62,7 @@ class FutureSession(AbstractSession):
     def create_inner(response):
       return get_socket().request_split_pane(
           session=self.get_session_id(), vertical=vertical, before=before, profile=profile)
-    createSessionFuture = it2socket.DependentFuture(self.future, create_inner)
+    createSessionFuture = socket.DependentFuture(self.future, create_inner)
     return FutureSession(createSessionFuture);
 
   def _get_session(self):

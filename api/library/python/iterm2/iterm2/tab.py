@@ -3,10 +3,10 @@
 
 from __future__ import print_function
 
-from it2global import get_socket, wait
+from sharedstate import get_socket, wait
 import api_pb2
-import it2session
-import it2socket
+import session
+import socket
 import logging
 
 class AbstractTab(object):
@@ -21,8 +21,8 @@ class AbstractTab(object):
 
   def pretty_str(self, indent=""):
     s = indent + "Tab id=%s\n" % self.get_tab_id()
-    for session in self.get_sessions():
-      s += session.pretty_str(indent=indent + "  ")
+    for j in self.get_sessions():
+      s += j.pretty_str(indent=indent + "  ")
     return s
 
 class FutureTab(AbstractTab):
@@ -56,7 +56,7 @@ class FutureTab(AbstractTab):
   def _parse(self, response):
     self.status = response.status
     if self.status == api_pb2.CreateTabResponse.OK:
-       self.tab = Tab(response.tab_id, [ it2session.Session(response.session_id) ])
+       self.tab = Tab(response.tab_id, [ session.Session(response.session_id) ])
 
 class Tab(AbstractTab):
   def __init__(self, tab_id, sessions):
