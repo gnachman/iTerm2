@@ -14,6 +14,7 @@
 #import "TmuxController.h"
 
 NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
+NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTabNotification";
 
 @implementation MovePaneController {
     // If set then moving pane; otherwise swapping.
@@ -108,7 +109,9 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
     [oldView autorelease];
     [theTab numberOfSessionsDidChange];
     [[term currentTab] numberOfSessionsDidChange];
- }
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
+}
 
 - (void)clearSession
 {
@@ -183,6 +186,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
             [[self.session tmuxController] swapPane:[self.session tmuxPane]
                                            withPane:[dest tmuxPane]];
         }
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:self.session];
         return YES;
     }
 
@@ -217,6 +221,7 @@ NSString *const iTermMovePaneDragType = @"iTermDragPanePBType";
         [destinationTab swapSession:dest withSession:session_];
         [destinationTab checkInvariants:@"After swap"];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:self.session];
     return YES;
 }
 

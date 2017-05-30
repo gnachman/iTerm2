@@ -3,14 +3,17 @@
 
 from __future__ import print_function
 
-from it2global import get_socket, wait
-import it2session
-import it2socket
+from sharedstate import get_socket, wait
+import session
+import socket
 import api_pb2
-import it2tab
+import tab
 
 class AbstractWindow(object):
   def __repr__(self):
+    raise NotImplementedError("unimplemented")
+
+  def get_status(self):
     raise NotImplementedError("unimplemented")
 
   def get_window_id(self):
@@ -22,6 +25,11 @@ class AbstractWindow(object):
   def create_tab(self, profile=None, command=None, index=None):
     raise NotImplementedError("unimplemented")
 
+  def pretty_str(self, indent=""):
+    s = indent + "Window id=%s\n" % self.get_window_id()
+    for t in self.get_tabs():
+      s += t.pretty_str(indent=indent + "  ")
+    return s
 
 class FutureWindow(AbstractWindow):
   def __init__(self, future):
@@ -45,8 +53,8 @@ class FutureWindow(AbstractWindow):
     def create_inner(response):
       return get_socket().request_create_tab(
           profile=profile, window=self.get_window_id(), index=index, command=command)
-    createTabFuture = it2socket.DependentFuture(self.future, create_inner)
-    return it2tab.FutureTab(createTabFuture);
+    createTabFuture = socket.DependentFuture(self.future, create_inner)
+    return tab.FutureTab(createTabFuture);
 
   def get_status(self):
     self._parse_if_needed()
@@ -64,9 +72,9 @@ class FutureWindow(AbstractWindow):
   def _parse(self, response):
     self.status = response.status
     if self.status == api_pb2.CreateTabResponse.OK:
-      session = it2session.Session(response.session_id)
-      tab = it2tab.Tab(response.tab_id, [ session ])
-      self.window = Window(response.window_id, [ tab ])
+      s = session.Session(response.session_id)
+      t = tab.Tab(response.tab_id, [ s ])
+      self.window = Window(response.window_id, [ t ])
 
 class Window(AbstractWindow):
   def __init__(self, window_id, tabs):
@@ -83,7 +91,7 @@ class Window(AbstractWindow):
     return self.tabs
 
   def create_tab(self, profile=None, command=None, index=None):
-    return it2tab.FutureTab(get_socket().request_create_tab(
+    return tab.FutureTab(get_socket().request_create_tab(
       profile=profile, window=self.window_id, index=index, command=command))
 
 

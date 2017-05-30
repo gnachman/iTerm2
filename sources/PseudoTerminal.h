@@ -29,6 +29,8 @@ extern NSString *const kCurrentSessionDidChange;
 
 extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 
+extern NSString *const iTermTabDidChangePositionInWindowNotification;
+
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
 // status, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).

@@ -94,6 +94,7 @@
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
+NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidChangePositionInWindowNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -4712,6 +4713,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     [controller setPartialWindowIdOrder:windowIds];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabDidChangePositionInWindowNotification object:nil];
 }
 
 - (PTYTabView *)tabView

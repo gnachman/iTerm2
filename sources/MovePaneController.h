@@ -10,6 +10,7 @@
 #import "SplitSelectionView.h"
 
 extern NSString *const iTermMovePaneDragType;
+extern NSString *const iTermSessionDidChangeTabNotification;
 
 @class PTYTab;
 @class PTYSession;

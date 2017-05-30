@@ -1,4 +1,4 @@
-from asyncws import AsyncWebsocketApp
+from .asyncws import AsyncWebsocketApp
 
 import api_pb2
 import logging

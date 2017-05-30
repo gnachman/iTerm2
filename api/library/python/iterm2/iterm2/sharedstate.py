@@ -1,4 +1,4 @@
-import it2socket
+import socket
 
 _socket = None
 _notification_handlers = []
@@ -13,7 +13,7 @@ def _notification_handler(notification):
 def get_socket():
   global _socket
   if _socket is None:
-    _socket = it2socket.Connection()
+    _socket = socket.Connection()
     _socket.connect(_notification_handler)
   return _socket
 

@@ -38,6 +38,7 @@ CF_EXTERN_C_BEGIN
 @class ITMGetPromptRequest;
 @class ITMGetPromptResponse;
 @class ITMKeystrokeNotification;
+@class ITMLayoutChangedNotification;
 @class ITMLineContents;
 @class ITMLineRange;
 @class ITMListSessionsRequest;
@@ -61,6 +62,7 @@ CF_EXTERN_C_BEGIN
 @class ITMSetProfilePropertyResponse;
 @class ITMSplitPaneRequest;
 @class ITMSplitPaneResponse;
+@class ITMTerminateSessionNotification;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
 
@@ -78,6 +80,8 @@ typedef GPB_ENUM(ITMNotificationType) {
 
   /** Notifications that ignore the `session` parameter. */
   ITMNotificationType_NotifyOnNewSession = 6,
+  ITMNotificationType_NotifyOnTerminateSession = 7,
+  ITMNotificationType_NotifyOnLayoutChange = 8,
 };
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
@@ -573,6 +577,8 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_LocationChangeNotification = 4,
   ITMNotification_FieldNumber_CustomEscapeSequenceNotification = 5,
   ITMNotification_FieldNumber_NewSessionNotification = 6,
+  ITMNotification_FieldNumber_TerminateSessionNotification = 7,
+  ITMNotification_FieldNumber_LayoutChangedNotification = 8,
 };
 
 @interface ITMNotification : GPBMessage
@@ -600,6 +606,14 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMNewSessionNotification *newSessionNotification NS_RETURNS_NOT_RETAINED;
 /** Test to see if @c newSessionNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasNewSessionNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTerminateSessionNotification *terminateSessionNotification;
+/** Test to see if @c terminateSessionNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasTerminateSessionNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMLayoutChangedNotification *layoutChangedNotification;
+/** Test to see if @c layoutChangedNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasLayoutChangedNotification;
 
 @end
 
@@ -727,11 +741,45 @@ typedef GPB_ENUM(ITMNewSessionNotification_FieldNumber) {
   ITMNewSessionNotification_FieldNumber_UniqueIdentifier = 1,
 };
 
+/**
+ * Sent when a new session is created or a closure is undone.
+ **/
 @interface ITMNewSessionNotification : GPBMessage
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
 /** Test to see if @c uniqueIdentifier has been set. */
 @property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+@end
+
+#pragma mark - ITMTerminateSessionNotification
+
+typedef GPB_ENUM(ITMTerminateSessionNotification_FieldNumber) {
+  ITMTerminateSessionNotification_FieldNumber_UniqueIdentifier = 1,
+};
+
+/**
+ * Note this is sent when a session is removed from the screen but its closure remains undoable.
+ **/
+@interface ITMTerminateSessionNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
+/** Test to see if @c uniqueIdentifier has been set. */
+@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+@end
+
+#pragma mark - ITMLayoutChangedNotification
+
+typedef GPB_ENUM(ITMLayoutChangedNotification_FieldNumber) {
+  ITMLayoutChangedNotification_FieldNumber_ListSessionsResponse = 1,
+};
+
+@interface ITMLayoutChangedNotification : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse *listSessionsResponse;
+/** Test to see if @c listSessionsResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasListSessionsResponse;
 
 @end
 
@@ -1301,6 +1349,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_FieldNumber) {
 
 typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
   ITMListSessionsResponse_Window_FieldNumber_TabsArray = 1,
+  ITMListSessionsResponse_Window_FieldNumber_WindowId = 2,
 };
 
 @interface ITMListSessionsResponse_Window : GPBMessage
@@ -1309,12 +1358,17 @@ typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
 /** The number of items in @c tabsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger tabsArray_Count;
 
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
 @end
 
 #pragma mark - ITMListSessionsResponse_Tab
 
 typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_SessionsArray = 1,
+  ITMListSessionsResponse_Tab_FieldNumber_TabId = 2,
 };
 
 @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -1322,6 +1376,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListSessionsResponse_Session*> *sessionsArray;
 /** The number of items in @c sessionsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger sessionsArray_Count;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+/** Test to see if @c tabId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabId;
 
 @end
 
@@ -1440,6 +1498,10 @@ typedef GPB_ENUM(ITMSplitPaneResponse_FieldNumber) {
 @property(nonatomic, readwrite) ITMSplitPaneResponse_Status status;
 
 @property(nonatomic, readwrite) BOOL hasStatus;
+/**
+ * TODO(gln): this will not be set for tmux integration because the split happens only if/when the
+ * tmux server acts on the request.
+ **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
 /** Test to see if @c sessionId has been set. */
 @property(nonatomic, readwrite) BOOL hasSessionId;
