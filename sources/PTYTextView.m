@@ -4713,10 +4713,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Split pane options
-    [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Split Pane Vertically |" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
-    [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Split Pane Horizontally ―" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
