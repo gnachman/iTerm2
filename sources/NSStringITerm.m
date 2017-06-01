@@ -864,7 +864,8 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSDate *)dateValueFromUTC {
-    NSArray<NSString *> *formats = @[ @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+    NSArray<NSString *> *formats = @[ @"E, d MMM yyyy HH:mm:ss zzz",
+                                      @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                                       @"yyyy-MM-dd't'HH:mm:ss.SSS'z'",
                                       @"yyyy-MM-dd'T'HH:mm:ss'Z'",
                                       @"yyyy-MM-dd't'HH:mm:ss'z'",
