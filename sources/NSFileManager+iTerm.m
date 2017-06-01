@@ -202,7 +202,8 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     // Augment list of additional paths with nfs automounter mount points.
     NSMutableArray *networkPaths = [[additionalNetworkPaths mutableCopy] autorelease];
     [networkPaths addObjectsFromArray:[[iTermAutoMasterParser sharedInstance] mountpoints]];
-    
+    DLog(@"Including automounter paths, ignoring: %@", networkPaths);
+
     for (NSString *path in networkPaths) {
         if (!path.length) {
             continue;
