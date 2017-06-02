@@ -353,14 +353,7 @@ static NSString *const kArrangement = @"Arrangement";
         [NSApp activateIgnoringOtherApps:YES];
     }
     [self.windowController.window makeKeyAndOrderFront:nil];
-    if (!animated) {
-        [self moveToPreferredScreen];
-        self.windowController.window.alphaValue = 1;
-        [self rollInFinished];
-        return;
-    }
-    
-    if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
+    if (animated) {
         switch (self.windowController.windowType) {
             case WINDOW_TYPE_TOP:
             case WINDOW_TYPE_TOP_PARTIAL:
@@ -384,6 +377,7 @@ static NSString *const kArrangement = @"Arrangement";
                 assert(false);
         }
     } else {
+        [self moveToPreferredScreen];
         self.windowController.window.alphaValue = 1;
         [self rollInFinished];
     }
@@ -762,7 +756,7 @@ static NSString *const kArrangement = @"Arrangement";
         [self createWindowWithURL:url];
         result = YES;
     }
-    [self rollInAnimated:YES];
+    [self rollInAnimated:[iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]];
     return result;
 }
 
