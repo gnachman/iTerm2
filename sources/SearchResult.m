@@ -22,4 +22,17 @@
     return [NSString stringWithFormat:@"<%@: %p %d,%lld to %d,%lld>",
                [self class], self, _startX, _absStartY, _endX, _absEndY];
 }
+
+- (BOOL)isEqual:(id)object {
+    if ([object isKindOfClass:[SearchResult class]]) {
+        return [self isEqualToSearchResult:object];
+    } else {
+        return NO;
+    }
+}
+
+- (NSUInteger)hash {
+    return ((((((_startX * 33) ^ _endX) * 33) ^ _absStartY) * 33) ^ _absEndY);
+}
+
 @end
