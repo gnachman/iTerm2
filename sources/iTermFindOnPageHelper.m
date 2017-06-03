@@ -208,7 +208,21 @@
         return;
     }
 
-    [_searchResults insertObject:searchResult atIndex:0];
+    NSInteger insertionIndex = [_searchResults indexOfObject:searchResult
+                                               inSortedRange:NSMakeRange(0, _searchResults.count)
+                                                     options:NSBinarySearchingInsertionIndex
+                                             usingComparator:^NSComparisonResult(SearchResult  * _Nonnull obj1, SearchResult  * _Nonnull obj2) {
+                                                 NSComparisonResult result = [obj1 compare:obj2];
+                                                 switch (result) {
+                                                     case NSOrderedAscending:
+                                                         return NSOrderedDescending;
+                                                     case NSOrderedDescending:
+                                                         return NSOrderedAscending;
+                                                     default:
+                                                         return result;
+                                                 }
+                                             }];
+    [_searchResults insertObject:searchResult atIndex:insertionIndex];
 
     // Update highlights.
     for (long long y = searchResult.absStartY; y <= searchResult.absEndY; y++) {
