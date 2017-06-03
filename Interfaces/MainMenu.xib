@@ -811,7 +811,8 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>
-                            <menuItem title="Bury Session" keyEquivalent="b" id="m8k-FC-JBb">
+                            <menuItem title="Bury Session" keyEquivalent="B" id="m8k-FC-JBb">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="bury:" target="-1" id="jki-EJ-MEs"/>
                                 </connections>
