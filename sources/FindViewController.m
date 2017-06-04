@@ -126,6 +126,8 @@ const CGFloat kEdgeWidth = 3;
                                                          yRadius:4];
     [path fill];
 
+    [self drawProgressBarInFrame:originalFrame path:path];
+
     if (!focused) {
         [[NSColor colorWithCalibratedWhite:0.5 alpha:1] set];
         [path setLineWidth:0.25];
@@ -139,9 +141,26 @@ const CGFloat kEdgeWidth = 3;
         [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
         [path stroke];
     }
+
     [self drawInteriorWithFrame:originalFrame inView:controlView];
 }
 
+- (void)drawProgressBarInFrame:(NSRect)cellFrame path:(NSBezierPath *)fieldPath {
+    [[NSGraphicsContext currentContext] saveGraphicsState];
+    [fieldPath addClip];
+
+    const CGFloat maximumWidth = cellFrame.size.width - 1.0;
+    NSRect blueRect = NSMakeRect(0, 0, maximumWidth * [self fraction] + kEdgeWidth, cellFrame.size.height);
+    
+    const CGFloat alpha = 0.3 * _alphaMultiplier;
+    [[NSColor colorWithCalibratedRed:0.6
+                               green:0.6
+                               blue:1.0
+                               alpha:alpha] set];
+    NSRectFillUsingOperation(blueRect, NSCompositingOperationSourceOver);
+
+    [[NSGraphicsContext currentContext] restoreGraphicsState];
+}
 
 @end
 
@@ -383,8 +402,12 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)setProgress:(double)progress {
-    [findBarTextField_.cell setFraction:progress];
-    iTermSearchFieldCell *cell = findBarTextField_.cell;
+    iTermSearchFieldCell *cell = (iTermSearchFieldCell *)findBarTextField_.cell;
+    if (round(progress * 100) != round(cell.fraction * 100)) {
+        [findBarTextField_ setNeedsDisplay:YES];
+    }
+
+    [cell setFraction:progress];
     if (cell.needsAnimation && !_animationTimer) {
         _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1/60.0
                                                   target:self
@@ -404,7 +427,7 @@ const CGFloat kEdgeWidth = 3;
     [findBarTextField_ setNeedsDisplay:YES];
 }
 
-- (void)_continueSearch {
+- (BOOL)_continueSearch {
     BOOL more = NO;
     if ([delegate_ findInProgress]) {
         double progress;
@@ -416,6 +439,7 @@ const CGFloat kEdgeWidth = 3;
         timer_ = nil;
         [self setProgress:1];
     }
+    return more;
 }
 
 - (void)_setSearchString:(NSString *)s {
@@ -458,12 +482,15 @@ const CGFloat kEdgeWidth = 3;
     }
 
     if (ok && !timer_) {
-        timer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
-                                                  target:self
-                                                selector:@selector(_continueSearch)
-                                                userInfo:nil
-                                                 repeats:YES];
         [self setProgress:0];
+        if ([self _continueSearch]) {
+            timer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                      target:self
+                                                    selector:@selector(_continueSearch)
+                                                    userInfo:nil
+                                                     repeats:YES];
+            [[NSRunLoop currentRunLoop] addTimer:timer_ forMode:NSRunLoopCommonModes];
+        }
     } else if (!ok && timer_) {
         [timer_ invalidate];
         timer_ = nil;

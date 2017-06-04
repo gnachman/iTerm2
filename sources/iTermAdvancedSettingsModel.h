@@ -187,5 +187,6 @@
 + (BOOL)tmuxUsesDedicatedProfile;
 + (BOOL)detectPasswordInput;
 + (BOOL)disablePasswordManagerAnimations;
++ (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
 
 @end

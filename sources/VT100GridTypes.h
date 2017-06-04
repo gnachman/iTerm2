@@ -224,6 +224,23 @@ NS_INLINE NSComparisonResult VT100GridCoordOrder(VT100GridCoord a, VT100GridCoor
     return NSOrderedSame;
 }
 
+NS_INLINE NSComparisonResult VT100GridAbsCoordOrder(VT100GridAbsCoord a, VT100GridAbsCoord b) {
+    if (a.y < b.y) {
+        return NSOrderedAscending;
+    }
+    if (a.y > b.y) {
+        return NSOrderedDescending;
+    }
+    if (a.x < b.x) {
+        return NSOrderedAscending;
+    }
+    if (a.x > b.x) {
+        return NSOrderedDescending;
+    }
+
+    return NSOrderedSame;
+}
+
 NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
     VT100GridRun run;
     run.origin.x = x;

@@ -28,7 +28,7 @@
 
     // The set of SearchResult objects for which matches have been found.
     // Sorted by reverse position (last in the buffer is first in the array).
-    NSMutableArray<SearchResult *> *_searchResults;
+    NSMutableOrderedSet<SearchResult *> *_searchResults;
 
     // The next offset into _searchResults where values from _searchResults should
     // be added to the map.
@@ -120,7 +120,7 @@
 
         // Initialize state with new values.
         _mode = mode;
-        _searchResults = [[NSMutableArray alloc] init];
+        _searchResults = [[NSMutableOrderedSet alloc] init];
         _searchingForNextResult = YES;
         _lastStringSearchedFor = [aString copy];
 
@@ -203,7 +203,28 @@
 }
 
 - (void)addSearchResult:(SearchResult *)searchResult width:(int)width {
-    [_searchResults insertObject:searchResult atIndex:0];
+    if ([_searchResults containsObject:searchResult]) {
+        // Tail find produces duplicates sometimes. This can break monotonicity.
+        return;
+    }
+
+    NSInteger insertionIndex = [_searchResults indexOfObject:searchResult
+                                               inSortedRange:NSMakeRange(0, _searchResults.count)
+                                                     options:NSBinarySearchingInsertionIndex
+                                             usingComparator:^NSComparisonResult(SearchResult  * _Nonnull obj1, SearchResult  * _Nonnull obj2) {
+                                                 NSComparisonResult result = [obj1 compare:obj2];
+                                                 switch (result) {
+                                                     case NSOrderedAscending:
+                                                         return NSOrderedDescending;
+                                                     case NSOrderedDescending:
+                                                         return NSOrderedAscending;
+                                                     default:
+                                                         return result;
+                                                 }
+                                             }];
+    [_searchResults insertObject:searchResult atIndex:insertionIndex];
+
+    // Update highlights.
     for (long long y = searchResult.absStartY; y <= searchResult.absEndY; y++) {
         NSNumber* key = [NSNumber numberWithLongLong:y];
         NSMutableData* data = _highlightMap[key];
@@ -243,56 +264,76 @@
                           width:(int)width
                   numberOfLines:(int)numberOfLines
              overflowAdjustment:(long long)overflowAdjustment {
-    long long maxPos = -1;
-    long long minPos = -1;
+    NSRange range = NSMakeRange(NSNotFound, 0);
     int start;
     int stride;
+    const NSInteger bottomLimitPos = (1 + numberOfLines + overflowAdjustment) * width;
+    const NSInteger topLimitPos = overflowAdjustment * width;
     if (forward) {
         start = [_searchResults count] - 1;
         stride = -1;
         if ([self haveFindCursor]) {
-            minPos = _findCursor.x + _findCursor.y * width + offset;
-        } else {
-            minPos = -1;
+            const NSInteger afterCurrentSelectionPos = _findCursor.x + _findCursor.y * width + offset;
+            range = NSMakeRange(afterCurrentSelectionPos, MAX(0, bottomLimitPos - afterCurrentSelectionPos));
         }
     } else {
         start = 0;
         stride = 1;
         if ([self haveFindCursor]) {
-            maxPos = _findCursor.x + _findCursor.y * width - offset;
+            const NSInteger beforeCurrentSelectionPos = _findCursor.x + _findCursor.y * width - offset;
+            range = NSMakeRange(topLimitPos, MAX(0, beforeCurrentSelectionPos - topLimitPos));
         } else {
-            maxPos = (1 + numberOfLines + overflowAdjustment) * width;
+            range = NSMakeRange(topLimitPos, MAX(0, bottomLimitPos - topLimitPos));
         }
     }
     BOOL found = NO;
     VT100GridCoordRange selectedRange = VT100GridCoordRangeMake(0, 0, 0, 0);
+
+    // The position and result of the first/last (if going backward/forward) result to wrap around
+    // to if nothing is found. Reset to -1/nil when wrapping is not needed, so its nilness entirely
+    // determines whether wrapping should occur.
+    long long wrapAroundResultPosition = -1;
+    SearchResult *wrapAroundResult = nil;
     int i = start;
     for (int j = 0; !found && j < [_searchResults count]; j++) {
-        SearchResult* r = [_searchResults objectAtIndex:i];
-        long long pos = r.startX + (long long)r.absStartY * width;
-        if (!found &&
-            ((maxPos >= 0 && pos <= maxPos) ||
-             (minPos >= 0 && pos >= minPos))) {
-            found = YES;
-            selectedRange =
-                VT100GridCoordRangeMake(r.startX,
-                                        r.absStartY - overflowAdjustment,
-                                        r.endX + 1,  // half-open
-                                        r.absEndY - overflowAdjustment);
-            [_delegate findOnPageSelectRange:selectedRange wrapped:NO];
+        SearchResult* r = _searchResults[i];
+        NSInteger pos = r.startX + (long long)r.absStartY * width;
+        if (!found) {
+            if (NSLocationInRange(pos, range)) {
+                found = YES;
+                wrapAroundResult = nil;
+                wrapAroundResultPosition = -1;
+                selectedRange =
+                    VT100GridCoordRangeMake(r.startX,
+                                            r.absStartY - overflowAdjustment,
+                                            r.endX + 1,  // half-open
+                                            r.absEndY - overflowAdjustment);
+                [_delegate findOnPageSelectRange:selectedRange wrapped:NO];
+            } else if (!_haveRevealedSearchResult) {
+                if (forward) {
+                    if (wrapAroundResultPosition == -1 || pos < wrapAroundResultPosition) {
+                        wrapAroundResult = r;
+                        wrapAroundResultPosition = pos;
+                    }
+                } else {
+                    if (wrapAroundResultPosition == -1 || pos > wrapAroundResultPosition) {
+                        wrapAroundResult = r;
+                        wrapAroundResultPosition = pos;
+                    }
+                }
+            }
         }
         i += stride;
     }
 
-    if (!found && !_haveRevealedSearchResult && [_searchResults count] > 0) {
+    if (wrapAroundResult != nil) {
         // Wrap around
-        SearchResult* r = [_searchResults objectAtIndex:start];
         found = YES;
         selectedRange =
-            VT100GridCoordRangeMake(r.startX,
-                                    r.absStartY - overflowAdjustment,
-                                    r.endX + 1,  // half-open
-                                    r.absEndY - overflowAdjustment);
+            VT100GridCoordRangeMake(wrapAroundResult.startX,
+                                    wrapAroundResult.absStartY - overflowAdjustment,
+                                    wrapAroundResult.endX + 1,  // half-open
+                                    wrapAroundResult.absEndY - overflowAdjustment);
         [_delegate findOnPageSelectRange:selectedRange wrapped:YES];
         [_delegate findOnPageDidWrapForwards:forward];
     }

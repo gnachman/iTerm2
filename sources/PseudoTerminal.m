@@ -5446,8 +5446,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self fitTabsToWindow];
 
-    if (targetSession == [[self currentTab] activeSession] && ![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        [[self currentTab] setActiveSession:newSession];
+    if (targetSession == [[self currentTab] activeSession]) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
+            [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
+            [[self currentTab] setActiveSession:newSession];
+        }
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
