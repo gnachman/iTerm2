@@ -188,5 +188,6 @@
 + (BOOL)detectPasswordInput;
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
++ (NSString *)viewManPageCommand;
 
 @end

@@ -12,6 +12,8 @@
 #import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSStringITerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermColorPresets.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermRootTerminalView.h"
@@ -171,7 +173,9 @@ ITERM_IGNORE_PARTIAL_BEGIN
             button.title = word;
             button.imagePosition = NSImageLeft;
             button.enabled = YES;
-            button.keyBindingAction = @{ @"command": [NSString stringWithFormat:@"man %@", [word stringWithEscapedShellCharactersIncludingNewlines:YES]] };
+            NSString *manCommand = [NSString stringWithFormat:[iTermAdvancedSettingsModel viewManPageCommand],
+                                    [word stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            button.keyBindingAction = @{ @"command": manCommand };
         }
     } else if (button.enabled) {
         button.title = @"";
@@ -465,6 +469,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
 - (void)manPageTouchBarItemSelected:(iTermTouchBarButton *)sender {
     NSString *command = sender.keyBindingAction[@"command"];
     if (command) {
+        NSString *escapedCommand = [command stringWithEscapedShellCharactersIncludingNewlines:YES];
+        command = [NSString stringWithFormat:@"sh -c \"%@\"", escapedCommand];
         [[iTermController sharedInstance] launchBookmark:nil
                                               inTerminal:nil
                                                  withURL:nil
