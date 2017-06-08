@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
-                          styleMask:(NSWindowStyleMask)aStyle
+                          styleMask:(NSUInteger)aStyle
                             backing:(NSBackingStoreType)bufferingType
                               defer:(BOOL)flag
                              screen:(nullable NSScreen *)screen {
