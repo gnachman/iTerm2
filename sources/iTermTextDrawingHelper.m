@@ -1051,7 +1051,7 @@ typedef struct iTermTextColorContext {
 //                         green:arc4random_uniform(255) / 255.0
 //                          blue:arc4random_uniform(255) / 255.0
 //                         alpha:1] set];
-//        NSFrameRect(NSMakeRect(point.x + positions->elements[0], point.y, width, _cellSize.height));
+//        NSFrameRect(NSMakeRect(point.x + subpositions[0], point.y, numCellsDrawn * _cellSize.width, _cellSize.height));
 
         origin.x += numCellsDrawn;
 
@@ -1099,6 +1099,9 @@ typedef struct iTermTextColorContext {
                 positions:(CGFloat *)positions
                 inContext:(CGContextRef)ctx
           backgroundColor:(NSColor *)backgroundColor {
+    if (cheapString.length == 0) {
+        return 0;
+    }
     CGGlyph glyphs[cheapString.length];
     NSFont *const font = cheapString.attributes[NSFontAttributeName];
     BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
@@ -1143,7 +1146,7 @@ typedef struct iTermTextColorContext {
     CGContextSetFillColor(ctx, components);
 
     double y = point.y + _cellSize.height + _baselineOffset;
-    int x = point.x;
+    int x = point.x + positions[0];
     // Flip vertically and translate to (x, y).
     CGFloat m21 = 0.0;
     if (fakeItalic) {
@@ -1154,7 +1157,7 @@ typedef struct iTermTextColorContext {
                                                       x, y));
     CGPoint points[length];
     for (int i = 0; i < length; i++) {
-        points[i].x = positions[i];
+        points[i].x = positions[i] - positions[0];
         points[i].y = 0;
     }
     CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
@@ -1169,6 +1172,7 @@ typedef struct iTermTextColorContext {
 
         CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
     }
+
 #if 0
     // Indicates which regions were drawn with the fastpath
     [[NSColor yellowColor] set];
@@ -1227,6 +1231,9 @@ typedef struct iTermTextColorContext {
                                      backgroundColor:(NSColor *)backgroundColor
                                      graphicsContext:(NSGraphicsContext *)ctx
                                                smear:(BOOL)smear {
+    if (attributedString.length == 0) {
+        return;
+    }
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     CGColorRef cgColor = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
     
@@ -1278,7 +1285,7 @@ typedef struct iTermTextColorContext {
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
-                                                         origin.x, ty);
+                                                         origin.x + stringPositions[0], ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
 
     CGFloat cellOrigin = -1;
@@ -1310,9 +1317,10 @@ typedef struct iTermTextColorContext {
         CGFloat positionOfFirstGlyphInCluster = positions[0].x;
         for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
             CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            if (characterIndex != previousCharacterIndex && stringPositions[characterIndex] != cellOrigin) {
+            CGFloat characterPosition = stringPositions[characterIndex] - stringPositions[0];
+            if (characterIndex != previousCharacterIndex && characterPosition != cellOrigin) {
                 positionOfFirstGlyphInCluster = positions[glyphIndex].x;
-                cellOrigin = stringPositions[characterIndex];
+                cellOrigin = characterPosition;
             }
             positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
         }
