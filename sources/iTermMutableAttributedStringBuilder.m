@@ -18,6 +18,13 @@
 
 @implementation iTermCheapAttributedString
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@>",
+	   NSStringFromClass([self class]),
+	   self,
+	   [[[NSString alloc] initWithCharacters:[self characters] length:[self length]] autorelease]];
+}
+
 - (void)dealloc {
     [_attributes release];
     [_characterData release];
