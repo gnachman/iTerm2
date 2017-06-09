@@ -5342,18 +5342,23 @@ ITERM_WEAKLY_REFERENCEABLE
                      uniqueId:(int)tabUniqueId
                      sessions:(NSArray *)sessions
                  predecessors:(NSArray *)predecessors {
+    DLog(@"construct session map with sessions: %@\nArrangement:\n%@", sessions, arrangement);
     NSDictionary<NSString *, PTYSession *> *sessionMap = [PTYTab sessionMapWithArrangement:arrangement
                                                                                   sessions:sessions];
     if (!sessionMap) {
+        DLog(@"Failed to create a session map");
         // Can't do it. Just add each session as its own tab.
         for (PTYSession *session in sessions) {
+            DLog(@"Revive %@", session);
             if ([session revive]) {
+                DLog(@"Succeeded. Add revived session as a tab");
                 [self addRevivedSession:session];
             }
         }
         return;
     }
 
+    DLog(@"Creating a tab to receive the arrangement");
     PTYTab *tab = [PTYTab tabWithArrangement:arrangement
                                   inTerminal:self
                              hasFlexibleView:NO
@@ -5363,6 +5368,7 @@ ITERM_WEAKLY_REFERENCEABLE
     tab.uniqueId = tabUniqueId;
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
+        DLog(@"Revive %@", session);
         assert([session revive]);  // TODO: This isn't guarantted
     }
 

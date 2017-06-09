@@ -1799,8 +1799,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             switch (restorableSession.group) {
                 case kiTermRestorableSessionGroupSession:
                     // Restore a single session.
+                    DLog(@"Restore a single session");
                     term = [controller terminalWithGuid:restorableSession.terminalGuid];
                     if (term) {
+                        DLog(@"resuse an existing window");
                         // Reuse an existing window
                         tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
                         if (tab) {
@@ -1815,6 +1817,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                             [term addRevivedSession:restorableSession.sessions[0]];
                         }
                     } else {
+                        DLog(@"Create a new window");
                         // Create a new term and add the session to it.
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                                  windowType:WINDOW_TYPE_NORMAL
@@ -1832,10 +1835,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
                 case kiTermRestorableSessionGroupTab:
                     // Restore a tab, possibly with multiple sessions in split panes.
+                    DLog(@"Restore a tab, possibly with multiple sessions in split panes");
                     term = [controller terminalWithGuid:restorableSession.terminalGuid];
                     BOOL fitTermToTabs = NO;
                     if (!term) {
                         // Create a new window
+                        DLog(@"Create a new window");
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                                  windowType:WINDOW_TYPE_NORMAL
                                                             savedWindowType:WINDOW_TYPE_NORMAL
@@ -1845,6 +1850,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                         fitTermToTabs = YES;
                     }
                     // Add a tab to it.
+                    DLog(@"Add a tab to the window");
                     [term addTabWithArrangement:restorableSession.arrangement
                                        uniqueId:restorableSession.tabUniqueId
                                        sessions:restorableSession.sessions
@@ -1856,6 +1862,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
                 case kiTermRestorableSessionGroupWindow:
                     // Restore a widow.
+                    DLog(@"Restore a widow");
                     term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
                                                           sessions:restorableSession.sessions
                                           forceOpeningHotKeyWindow:YES];
