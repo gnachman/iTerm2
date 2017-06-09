@@ -2406,6 +2406,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     while (root_.subviews.count) {
         [root_.subviews[0] removeFromSuperview];
     }
+    [root_ setVertical:tabToGut->root_.isVertical];
     while (tabToGut->root_.subviews.count) {
         [root_ addSubview:tabToGut->root_.subviews[0]];
     }
