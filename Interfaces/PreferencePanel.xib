@@ -4534,7 +4534,7 @@ DQ
                             <items>
                                 <menuItem title="Use System Window Restoration Setting" id="Smv-f0-j9o"/>
                                 <menuItem title="Open Default Window Arrangement" state="on" tag="1" id="nMp-ky-1KX"/>
-                                <menuItem title="Don't Open Any Windows" tag="2" id="Qd0-Iv-vOs"/>
+                                <menuItem title="Only Restore Hotkey Window" tag="2" id="Qd0-Iv-vOs"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
