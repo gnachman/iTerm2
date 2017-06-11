@@ -1130,7 +1130,7 @@ typedef struct iTermTextColorContext {
     int savedFontSmoothingStyle = 0;
     const CGFloat *components = CGColorGetComponents(color);
     const CGFloat brightness = PerceivedBrightness(components[0], components[1], components[2]);
-    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < brightness);
+    BOOL useThinStrokes = [self useThinStrokes] && ([backgroundColor brightnessComponent] < brightness);
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(ctx, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
@@ -1273,7 +1273,7 @@ typedef struct iTermTextColorContext {
     int savedFontSmoothingStyle = 0;
     const CGFloat *components = CGColorGetComponents(cgColor);
     const CGFloat brightness = PerceivedBrightness(components[0], components[1], components[2]);
-    BOOL useThinStrokes = [self thinStrokes] && ([backgroundColor brightnessComponent] < brightness);
+    BOOL useThinStrokes = [self useThinStrokes] && ([backgroundColor brightnessComponent] < brightness);
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(cgContext, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
