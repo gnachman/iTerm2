@@ -1327,7 +1327,9 @@ static iTermController *gSharedInstance;
     iTermRestorableSession *session = self.currentRestorableSession;
     assert(session);
     if (session) {
-        [_restorableSessions addObject:session];
+        if (session.sessions.count > 0) {
+            [_restorableSessions addObject:session];
+        }
         [_currentRestorableSessionsStack removeObjectAtIndex:0];
     }
 }
