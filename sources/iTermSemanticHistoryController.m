@@ -48,6 +48,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                               additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
 }
 
+- (BOOL)fileHasForbiddenPrefix:(NSString *)path {
+    return [self.fileManager fileHasForbiddenPrefix:path
+                             additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
+}
+
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber
@@ -87,14 +92,30 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         DLog(@"  Prepend working directory, giving %@", path);
     }
 
-    NSURL *url = [NSURL fileURLWithPath:path];
+    DLog(@"  Checking if file exists locally: %@", path);
 
-    // Resolve path by removing ./ and ../ etc
-    path = [[url standardizedURL] path];
-    DLog(@"  Standardized path is %@", path);
+    // NOTE: The path used to be standardized first. While that would allow us to catch
+    // network paths, it also caused filesystem access that would hit network paths.
+    // That was also true for fileURLWithPath:.
+    //
+    // I think the statfs() flag check ought to be enough to prevent network access, anyway.
+    // A second check for forbidden prefixes is performed below to ensure backward compatibility
+    // and respect for explicitly excluded paths. The latter category will now
+    // be stat()ed, although they were always stat()ed because of unintentional
+    // disk access in the old code.
 
     if ([self fileExistsAtPathLocally:path]) {
         DLog(@"    YES: A file exists at %@", path);
+        NSURL *url = [NSURL fileURLWithPath:path];
+
+        // Resolve path by removing ./ and ../ etc
+        path = [[url standardizedURL] path];
+        DLog(@"    Check standardized path for forbidden prefix %@", path);
+
+        if ([self fileHasForbiddenPrefix:path]) {
+            DLog(@"    NO: Standardized path has forbidden prefix.");
+            return nil;
+        }
         return path;
     }
 
