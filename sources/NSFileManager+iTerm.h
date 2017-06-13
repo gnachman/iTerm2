@@ -39,6 +39,9 @@
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
          additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
 
+- (BOOL)fileHasForbiddenPrefix:(NSString *)filename
+        additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
+
 // Returns the path to the user's desktop.
 - (NSString *)desktopDirectory;
 

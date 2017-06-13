@@ -736,6 +736,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     DLog(@"applicationWillTerminate called");
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
     DLog(@"applicationWillTerminate returning");
+    TurnOffDebugLoggingSilently();
 }
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
