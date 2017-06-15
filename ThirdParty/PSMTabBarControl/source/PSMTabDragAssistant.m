@@ -268,7 +268,9 @@
                 [viewImage unlockFocus];
             }
 
-            if (styleMask | NSBorderlessWindowMask) {
+            if (self.sourceTabBar.tabLocation == PSMTab_LeftTab) {
+                _dragWindowOffset.height += kPSMTabBarControlHeight;
+            } else if (!(styleMask & NSTitledWindowMask)) {
                 _dragWindowOffset.height += 22;
             }
 
@@ -484,7 +486,31 @@
 
                 [[[self sourceTabBar] tabView] removeTabViewItem:[[self draggedCell] representedObject]];
 
+                void (^fixOriginBlock)() = nil;
+                switch (self.sourceTabBar.tabLocation) {
+                    case PSMTab_BottomTab: {
+                        NSPoint bottomLeft = control.window.frame.origin;
+                        fixOriginBlock = ^{
+                            [control.window setFrameOrigin:bottomLeft];
+                        };
+                        break;
+                    }
+                    case PSMTab_LeftTab:
+                    case PSMTab_TopTab: {
+                        NSPoint topLeft = control.window.frame.origin;
+                        topLeft.y += control.window.frame.size.height;
+                        fixOriginBlock = ^{
+                            [control.window setFrameTopLeftPoint:topLeft];
+                        };
+                        break;
+                    }
+                }
+
+                // This could cause an already correctly positioned window to resize.
                 [[control tabView] addTabViewItem:[[self draggedCell] representedObject]];
+
+                fixOriginBlock();
+
                 [[control window] makeKeyAndOrderFront:nil];
 
                 if ([sourceDelegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
