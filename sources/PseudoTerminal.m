@@ -3038,9 +3038,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
-    PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%p, proposedFrameSize width = %f; height = %f]",
-           __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
-    if (self.togglingLionFullScreen || self.lionFullScreen) {
+    DLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
+           self, NSStringFromSize(proposedFrameSize), self.window.screen);
+    if (self.togglingLionFullScreen || self.lionFullScreen || self.window.screen == nil) {
+        DLog(@"Accepting proposal");
         return proposedFrameSize;
     }
     NSSize originalProposal = proposedFrameSize;
