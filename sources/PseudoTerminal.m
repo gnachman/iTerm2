@@ -1419,11 +1419,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (IBAction)openDashboard:(id)sender
-{
-    [[TmuxDashboardController sharedInstance] showWindow:nil];
-}
-
 - (IBAction)findCursor:(id)sender
 {
     [[[self currentSession] textview] beginFindCursor:YES];
@@ -2125,8 +2120,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                           mode:iTermFindModeCaseSensitiveRegex];
 }
 
-- (IBAction)detachTmux:(id)sender
-{
+- (IBAction)detachTmux:(id)sender {
     [[self currentTmuxController] requestDetach];
 }
 
@@ -7025,16 +7019,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
 // Returns true if the given menu item is selectable.
-- (BOOL)validateMenuItem:(NSMenuItem *)item
-{
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
     BOOL logging = [[self currentSession] logging];
     BOOL result = YES;
 
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
-        [item action] == @selector(newTmuxTab:) ||
-        [item action] == @selector(openDashboard:)) {
-        result = [[iTermController sharedInstance] haveTmuxConnection];
+        [item action] == @selector(newTmuxTab:)) {
+        return [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
         return _contentView.shouldShowToolbelt;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
