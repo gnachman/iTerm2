@@ -35,6 +35,7 @@
 #import "iTermProfilesWindowController.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermQuickLookController.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -365,6 +366,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _inWindowDidChangeScreen;
 
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
+
+    // Keeps the touch bar from updating on every keypress which is distracting.
+    iTermRateLimitedUpdate *_touchBarRateLimitedUpdate;
+    NSString *_previousTouchBarWord;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -820,7 +825,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tabsTouchBarItem release];
     [_autocompleteCandidateListItem release];
     [_passwordManagerWindowController release];
-
+    [_touchBarRateLimitedUpdate invalidate];
+    [_touchBarRateLimitedUpdate release];
+    [_previousTouchBarWord release];
+    
     [super dealloc];
 }
 
@@ -7908,7 +7916,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
-    [self updateTouchBarWithWordAtCursor:word];
+    if (word == _previousTouchBarWord || [word isEqualToString:_previousTouchBarWord]) {
+        return;
+    }
+    [_previousTouchBarWord release];
+    _previousTouchBarWord = [word copy];
+    if (_touchBarRateLimitedUpdate == nil) {
+        _touchBarRateLimitedUpdate = [[iTermRateLimitedUpdate alloc] init];
+        _touchBarRateLimitedUpdate.minimumInterval = 0.5;
+    }
+    [_touchBarRateLimitedUpdate performRateLimitedBlock:^{
+        [self updateTouchBarWithWordAtCursor:word];
+    }];
 }
 
 #pragma mark - Toolbelt
