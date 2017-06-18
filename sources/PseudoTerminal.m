@@ -35,6 +35,7 @@
 #import "iTermProfilesWindowController.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermQuickLookController.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -365,6 +366,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _inWindowDidChangeScreen;
 
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
+
+    // Keeps the touch bar from updating on every keypress which is distracting.
+    iTermRateLimitedUpdate *_touchBarRateLimitedUpdate;
+    NSString *_previousTouchBarWord;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -820,7 +825,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tabsTouchBarItem release];
     [_autocompleteCandidateListItem release];
     [_passwordManagerWindowController release];
-
+    [_touchBarRateLimitedUpdate invalidate];
+    [_touchBarRateLimitedUpdate release];
+    [_previousTouchBarWord release];
+    
     [super dealloc];
 }
 
@@ -1409,11 +1417,6 @@ ITERM_WEAKLY_REFERENCEABLE
         PtyLog(@"closeSession - calling fitWindowToTabs");
         [self fitWindowToTabs];
     }
-}
-
-- (IBAction)openDashboard:(id)sender
-{
-    [[TmuxDashboardController sharedInstance] showWindow:nil];
 }
 
 - (IBAction)findCursor:(id)sender
@@ -2117,8 +2120,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                           mode:iTermFindModeCaseSensitiveRegex];
 }
 
-- (IBAction)detachTmux:(id)sender
-{
+- (IBAction)detachTmux:(id)sender {
     [[self currentTmuxController] requestDetach];
 }
 
@@ -3036,9 +3038,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
-    PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%p, proposedFrameSize width = %f; height = %f]",
-           __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
-    if (self.togglingLionFullScreen || self.lionFullScreen) {
+    DLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
+           self, NSStringFromSize(proposedFrameSize), self.window.screen);
+    if (self.togglingLionFullScreen || self.lionFullScreen || self.window.screen == nil) {
+        DLog(@"Accepting proposal");
         return proposedFrameSize;
     }
     NSSize originalProposal = proposedFrameSize;
@@ -7017,16 +7020,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
 // Returns true if the given menu item is selectable.
-- (BOOL)validateMenuItem:(NSMenuItem *)item
-{
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
     BOOL logging = [[self currentSession] logging];
     BOOL result = YES;
 
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
-        [item action] == @selector(newTmuxTab:) ||
-        [item action] == @selector(openDashboard:)) {
-        result = [[iTermController sharedInstance] haveTmuxConnection];
+        [item action] == @selector(newTmuxTab:)) {
+        return [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
         return _contentView.shouldShowToolbelt;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
@@ -7908,7 +7909,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
-    [self updateTouchBarWithWordAtCursor:word];
+    if (word == _previousTouchBarWord || [word isEqualToString:_previousTouchBarWord]) {
+        return;
+    }
+    [_previousTouchBarWord release];
+    _previousTouchBarWord = [word copy];
+    if (_touchBarRateLimitedUpdate == nil) {
+        _touchBarRateLimitedUpdate = [[iTermRateLimitedUpdate alloc] init];
+        _touchBarRateLimitedUpdate.minimumInterval = 0.5;
+    }
+    [_touchBarRateLimitedUpdate performRateLimitedBlock:^{
+        [self updateTouchBarWithWordAtCursor:word];
+    }];
 }
 
 #pragma mark - Toolbelt
