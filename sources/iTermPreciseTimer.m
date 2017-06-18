@@ -8,6 +8,7 @@
 
 #import "iTermPreciseTimer.h"
 
+#import "DebugLogging.h"
 #include <assert.h>
 #include <CoreServices/CoreServices.h>
 #include <mach/mach.h>
@@ -116,29 +117,34 @@ NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerStats *stats) {
 
 void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                                   size_t count,
-                                  NSTimeInterval interval) {
+                                  NSTimeInterval interval,
+                                  BOOL logToConsole) {
     static iTermPreciseTimer gLastLog;
     if (!gLastLog.start) {
         iTermPreciseTimerStart(&gLastLog);
     }
 
     if (iTermPreciseTimerMeasure(&gLastLog) >= interval) {
-        NSLog(@"-- Precise Timers --");
+        NSMutableString *log = [[@"-- Precise Timers --\n" mutableCopy] autorelease];
         for (size_t i = 0; i < count; i++) {
             NSTimeInterval mean = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
             NSTimeInterval stddev = iTermPreciseTimerStatsGetStddev(&stats[i]) * 1000.0;
-            NSLog(@"%20s: µ=%0.3fms σ=%.03fms (95%% CI ≅ %0.3fms–%0.3fms) 𝚺=%.2fms N=%@ avg. events=%01.f",
-                  stats[i].name,
-                  mean,
-                  stddev,
-                  MAX(0, mean - stddev),
-                  mean + stddev,
-                  stats[i].n * mean,
-                  @(stats[i].n),
-                  (double)stats[i].totalEventCount / (double)stats[i].n);
-            iTermPreciseTimerStatsInit(&stats[i], NULL);
+            [log appendFormat:@"%20s: µ=%0.3fms σ=%.03fms (95%% CI ≅ %0.3fms–%0.3fms) 𝚺=%.2fms N=%@ avg. events=%01.f\n",
+                stats[i].name,
+                mean,
+                stddev,
+                MAX(0, mean - stddev),
+                mean + stddev,
+                stats[i].n * mean,
+                @(stats[i].n),
+                (double)stats[i].totalEventCount / (double)stats[i].n];
+               iTermPreciseTimerStatsInit(&stats[i], NULL);
         }
-        NSLog(@"");
+        if (logToConsole) {
+            ELog(@"%@", log);
+        } else {
+            DLog(@"%@", log);
+        }
         iTermPreciseTimerStart(&gLastLog);
     }
 }

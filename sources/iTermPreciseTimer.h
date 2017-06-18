@@ -46,7 +46,8 @@ NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerStats *stats);
 
 void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                                   size_t count,
-                                  NSTimeInterval interval);
+                                  NSTimeInterval interval,
+                                  BOOL logToConsole);
 #else
 static inline void iTermPreciseTimerStart(iTermPreciseTimer *timer) { }
 static inline NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer) { return 0; }
@@ -68,5 +69,6 @@ static inline NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerSt
 
 static inline void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                                                 size_t count,
-                                                NSTimeInterval interval) { }
+                                                NSTimeInterval interval,
+                                                BOOL logToConsole) { }
 #endif
