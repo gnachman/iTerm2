@@ -335,7 +335,7 @@ typedef struct iTermTextColorContext {
         const double y = line * _cellSize.height;
         // An array of PTYTextViewBackgroundRunArray objects (one element per line).
         
-//        NSLog(@"    draw line %d", line);
+//        NSLog(@"Draw line %d at %f", line, y);
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
         screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =

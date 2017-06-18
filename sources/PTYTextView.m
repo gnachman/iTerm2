@@ -718,13 +718,16 @@ static const int kDragThreshold = 3;
     _secondaryFont.boldItalicVersion = [_secondaryFont computedBoldItalicVersion];
 
     [self updateMarkedTextAttributes];
-    [self setNeedsDisplay:YES];
 
     NSScrollView* scrollview = [self enclosingScrollView];
     [scrollview setLineScroll:[self lineHeight]];
     [scrollview setPageScroll:2 * [self lineHeight]];
     [self updateNoteViewFrames];
     [_delegate textViewFontDidChange];
+
+    // Refresh to avoid drawing before and after resize.
+    [self refresh];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)changeFont:(id)fontManager
@@ -1128,6 +1131,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
     _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
     _drawingHelper.passwordInput = _delegate.textViewPasswordInput;
+
+    DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
     
     const NSRect *rectArray;
     NSInteger rectCount;
