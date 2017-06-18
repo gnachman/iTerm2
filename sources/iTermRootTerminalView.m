@@ -30,6 +30,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 @property(nonatomic, retain) SolidColorView *divisionView;
 @property(nonatomic, retain) iTermToolbeltView *toolbelt;
 @property(nonatomic, retain) iTermDragHandleView *leftTabBarDragHandle;
+@property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;
+
 @end
 
 
@@ -47,7 +49,9 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _delegate = delegate;
 
         self.autoresizesSubviews = YES;
-        _leftTabBarWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
+        _leftTabBarPreferredWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
+        [self setLeftTabBarWidthFromPreferredWidth];
+        
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
@@ -352,7 +356,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             }
 
             case PSMTab_LeftTab: {
-                [self constrainLeftTabBarWidth];
+                [self setLeftTabBarWidthFromPreferredWidth];
                 CGFloat heightAdjustment = 0;
                 if (_delegate.haveBottomBorder) {
                     heightAdjustment += 1;
@@ -434,14 +438,14 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"repositionWidgets - return.");
 }
 
-- (void)constrainLeftTabBarWidth {
-    if (_leftTabBarWidth < 50) {
-        _leftTabBarWidth = 50;
-    }
-    const CGFloat maxWidth = self.bounds.size.width / 3;
-    if (_leftTabBarWidth > maxWidth) {
-        _leftTabBarWidth = maxWidth;
-    }
+- (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth {
+    const CGFloat minimumWidth = 50;
+    const CGFloat maximumWidth = self.bounds.size.width / 3;
+    return  MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
+}
+
+- (void)setLeftTabBarWidthFromPreferredWidth {
+    _leftTabBarWidth = [self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth];
 }
 
 #pragma mark - iTermTabBarControlViewDelegate
@@ -462,12 +466,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 // For the left-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
-    CGFloat originalValue = _leftTabBarWidth;
-    _leftTabBarWidth += delta;
+    CGFloat originalValue = _leftTabBarPreferredWidth;
+    _leftTabBarPreferredWidth = [self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + delta];
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
-    [[NSUserDefaults standardUserDefaults] setDouble:_leftTabBarWidth
+    [[NSUserDefaults standardUserDefaults] setDouble:_leftTabBarPreferredWidth
                                               forKey:kPreferenceKeyLeftTabBarWidth];
-    return _leftTabBarWidth - originalValue;
+    return _leftTabBarPreferredWidth - originalValue;
 }
 
 - (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
