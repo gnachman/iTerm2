@@ -3301,7 +3301,9 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)terminalClearScrollbackBuffer {
-    [self clearScrollbackBuffer];
+    if (![iTermAdvancedSettingsModel preventEscapeSequenceFromClearingHistory]) {
+        [self clearScrollbackBuffer];
+    }
 }
 
 - (void)terminalClearBuffer {

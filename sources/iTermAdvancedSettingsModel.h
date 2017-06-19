@@ -189,5 +189,6 @@
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
 + (NSString *)viewManPageCommand;
++ (BOOL)preventEscapeSequenceFromClearingHistory;
 
 @end

@@ -158,23 +158,21 @@ typedef struct iTermTextColorContext {
 - (instancetype)init {
     self = [super init];
     if (self) {
-        if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
-            NSLog(@"** Drawing performance timing enabled **");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
 
-            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_CONSTRUCTION], "Construction");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING], "Build attr strings");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_DRAW], "Drawing");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_CONSTRUCTION], "Construction");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING], "Build attr strings");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_STAT_DRAW], "Drawing");
 
-            iTermPreciseTimerStatsInit(&_stats[TIMER_ATTRS_FOR_CHAR], "Compute Attrs");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_SHOULD_SEGMENT], "Segment");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_UPDATE_BUILDER], "Update Builder");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_COMBINE_ATTRIBUTES], "Combine Attrs");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_ADVANCES], "Advances");
-            iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
-        }
+        iTermPreciseTimerStatsInit(&_stats[TIMER_ATTRS_FOR_CHAR], "Compute Attrs");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_SHOULD_SEGMENT], "Segment");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_UPDATE_BUILDER], "Update Builder");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_COMBINE_ATTRIBUTES], "Combine Attrs");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_ADVANCES], "Advances");
+        iTermPreciseTimerStatsInit(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT], "Between calls");
+
         _missingImages = [[NSMutableSet alloc] init];
         _lineRefCache = [[NSMutableDictionary alloc] init];
         _replacementLineRefCache = [[NSMutableDictionary alloc] init];
@@ -263,10 +261,7 @@ typedef struct iTermTextColorContext {
 
     [self stopTiming];
 
-    if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
-        iTermPreciseTimerPeriodicLog(_stats, sizeof(_stats) / sizeof(*_stats), 5);
-    }
-
+    iTermPreciseTimerPeriodicLog(_stats, sizeof(_stats) / sizeof(*_stats), 5, [iTermAdvancedSettingsModel logDrawingPerformance]);
 
     if (_debug) {
         NSColor *c = [NSColor colorWithCalibratedRed:(rand() % 255) / 255.0
@@ -335,7 +330,7 @@ typedef struct iTermTextColorContext {
         const double y = line * _cellSize.height;
         // An array of PTYTextViewBackgroundRunArray objects (one element per line).
         
-//        NSLog(@"    draw line %d", line);
+//        NSLog(@"Draw line %d at %f", line, y);
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
         screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =
