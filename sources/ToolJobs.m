@@ -381,6 +381,13 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
     self.killable = ([tableView_ selectedRow] >= 0 && [signal_ isValid]);
 }
 
+- (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+    NSString *aString = [pids_[row] stringValue];
+    [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
+    return pbItem;
+}
+
 - (void)kill:(id)sender
 {
     NSNumber *pid = [pids_ objectAtIndex:[tableView_ selectedRow]];
