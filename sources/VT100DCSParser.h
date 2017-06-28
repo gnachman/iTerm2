@@ -67,6 +67,9 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 // For debug logging; nil if no hook.
 @property(nonatomic, readonly) NSString *hookDescription;
 
+// Uniquely identifies this object so the main thread can avoid unhooking the wrong session.
+@property(nonatomic, readonly) NSString *uniqueID;
+
 + (NSDictionary *)termcapTerminfoNameDictionary;  // string name -> DcsTermcapTerminfoRequestName
 + (NSDictionary *)termcapTerminfoInverseNameDictionary;  // DcsTermcapTerminfoRequestName -> string name
 

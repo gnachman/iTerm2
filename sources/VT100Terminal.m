@@ -1202,7 +1202,7 @@ static const int kMaxScreenRows = 4096;
 - (void)executeToken:(VT100Token *)token {
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
-        [delegate_ terminalStartTmuxMode];
+        [delegate_ terminalStartTmuxModeWithDCSIdentifier:token.string];
         return;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
         [delegate_ terminalHandleTmuxInput:token];

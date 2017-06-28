@@ -63,12 +63,13 @@ static NSString *kCommandIsLastInList = @"lastInList";
 @synthesize delegate = delegate_;
 @synthesize acceptNotifications = acceptNotifications_;
 
-- (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate {
+- (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate dcsID:(NSString *)dcsID {
     self = [super init];
     if (self) {
         delegate_ = delegate;
         commandQueue_ = [[NSMutableArray alloc] init];
         strayMessages_ = [[NSMutableString alloc] init];
+        _dcsID = [dcsID copy];
     }
     return self;
 }
@@ -81,6 +82,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [strayMessages_ release];
     [_minimumServerVersion release];
     [_maximumServerVersion release];
+    [_dcsID release];
 
     [super dealloc];
 }
@@ -99,7 +101,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [alert addButtonWithTitle:@"OK"];
     [alert runModal];
     [self detach];
-    [delegate_ tmuxHostDisconnected];  // Force the client to quit
+    [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];  // Force the client to quit
 }
 
 - (NSData *)decodeEscapedOutput:(const char *)bytes
@@ -260,7 +262,7 @@ error:
 
 - (void)hostDisconnected
 {
-    [delegate_ tmuxHostDisconnected];
+    [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];
     [commandQueue_ removeAllObjects];
     disconnected_ = YES;
 }

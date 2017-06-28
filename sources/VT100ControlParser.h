@@ -19,6 +19,9 @@ NS_INLINE BOOL iscontrol(int c) {
 // If a DCS hook is present, returns a description of it for debug logging.
 @property(nonatomic, readonly) NSString *hookDescription;
 
+// Is the unique ID for the current DCS parser, if any, equal to this?
+- (BOOL)shouldUnhook:(NSString *)uniqueID;
+
 // Force the DCS parser to remove its hook (presently, that means terminating tmux integration).
 - (void)unhookDCS;
 

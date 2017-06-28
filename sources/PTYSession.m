@@ -140,6 +140,7 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 static NSString *const SESSION_ARRANGEMENT_TMUX_TAB_COLOR = @"Tmux Tab Color";
 static NSString *const SESSION_ARRANGEMENT_IS_TMUX_GATEWAY = @"Is Tmux Gateway";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME = @"Tmux Gateway Session Name";
+static NSString *const SESSION_ARRANGEMENT_TMUX_DCS_ID = @"Tmux DCS ID";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
 static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
@@ -1080,6 +1081,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
     BOOL didRestoreContents = NO;
     BOOL attachedToServer = NO;
@@ -1112,6 +1114,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
+                    tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
                 }
             }
         }
@@ -1323,7 +1326,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (shouldEnterTmuxMode) {
         // Restored a tmux gateway session.
-        [aSession startTmuxMode];
+        [aSession startTmuxMode:tmuxDCSIdentifier];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
     }
@@ -1828,7 +1831,7 @@ ITERM_WEAKLY_REFERENCEABLE
                      !_shouldRestart &&
                      !_synthetic &&
                      ![[iTermController sharedInstance] applicationIsQuitting]);
-    [_terminal.parser forceUnhookDCS];
+    [_terminal.parser forceUnhookDCS:nil];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
     _hideAfterTmuxWindowOpens = NO;
@@ -2195,7 +2198,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     } else if (unicode == 'X') {
         [self printTmuxMessage:@"Exiting tmux mode, but tmux client may still be running."];
-        [self tmuxHostDisconnected];
+        [self tmuxHostDisconnected:[[_tmuxGateway.dcsID copy] autorelease]];
     }
 }
 
@@ -4047,6 +4050,10 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;
         result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] = @(self.tmuxController.sessionId);
         result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] = self.tmuxController.sessionName;
+        NSString *dcsID = [[self.tmuxController.gateway.dcsID copy] autorelease];
+        if (dcsID) {
+            result[SESSION_ARRANGEMENT_TMUX_DCS_ID] = dcsID;
+        }
     }
 
     result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
@@ -4931,13 +4938,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)startTmuxMode
-{
+- (void)startTmuxMode:(NSString *)dcsID {
     if (self.tmuxMode != TMUX_NONE) {
         return;
     }
     self.tmuxMode = TMUX_GATEWAY;
-    _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self];
+    _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
     if (_isDivorced) {
         model = [ProfileModel sessionsInstance];
@@ -5263,11 +5269,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _delegate.realParentWindow;
 }
 
-- (void)tmuxHostDisconnected {
+- (void)tmuxHostDisconnected:(NSString *)dcsID {
     _hideAfterTmuxWindowOpens = NO;
 
     [_tmuxController detach];
-
     // Autorelease the gateway because it called this function so we can't free
     // it immediately.
     [_tmuxGateway autorelease];
@@ -5276,10 +5281,11 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxController = nil;
     [_screen appendStringAtCursor:@"Detached"];
     [_screen crlf];
-    // There's a not-so-bad race condition here. It's possible that tmux would exit and a new
-    // session would start right away and we'd wack the wrong tmux parser. However, it would be
-    // very unusual for that to happen so quickly.
-    [_terminal.parser forceUnhookDCS];
+    [dcsID retain];
+    dispatch_async([[self class] tmuxQueue], ^{
+        [_terminal.parser forceUnhookDCS:dcsID];
+        [dcsID release];
+    });
     self.tmuxMode = TMUX_NONE;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
@@ -7310,8 +7316,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[self view] viewId];
 }
 
-- (void)screenStartTmuxMode {
-    [self startTmuxMode];
+- (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
+    [self startTmuxMode:dcsID];
 }
 
 - (void)screenHandleTmuxInput:(VT100Token *)token {
