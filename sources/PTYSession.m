@@ -8234,7 +8234,8 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
         if (haveCommand) {
             [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
-                                                                   inSession:self];
+                                                                   inSession:self
+                                                                popIfNeeded:NO];
         }
     }
 }

@@ -5237,7 +5237,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session {
+- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session popIfNeeded:(BOOL)popIfNeeded {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
@@ -5245,7 +5245,11 @@ ITERM_WEAKLY_REFERENCEABLE
         NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
                                                                                      partialCommand:prefix
                                                                                              expand:NO];
-        if (![commands count]) {
+        if (commands.count) {
+            if (popIfNeeded) {
+                [commandHistoryPopup popWithDelegate:session];
+            }
+        } else {
             [commandHistoryPopup close];
             return;
         }
@@ -5286,11 +5290,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
     if ([self currentSession] == session && [[self window] isKeyWindow] && [[session currentCommand] length] > 0) {
         self.autoCommandHistorySessionGuid = session.guid;
-        if (!commandHistoryPopup) {
-            commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
-        }
-        [commandHistoryPopup popWithDelegate:session];
-        [self updateAutoCommandHistoryForPrefix:[session currentCommand] inSession:session];
+        [self updateAutoCommandHistoryForPrefix:[session currentCommand] inSession:session popIfNeeded:YES];
     }
 }
 
