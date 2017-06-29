@@ -387,6 +387,20 @@ static const NSInteger kUnicodeVersion = 9;
     _lines = [_lines arrayByAddingObject:data];
 }
 
+- (void)testRangeForWrappedLine_MaxChars {
+    for (int i = 0; i < 10; i++) {
+        [self appendWrappedLine:@"1234567890"
+                          width:10
+                            eol:i < 9 ? EOL_SOFT : EOL_HARD];
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 5) respectContinuations:NO maxChars:20];
+    XCTAssertEqual(range.coordRange.start.x, 0);
+    XCTAssertEqual(range.coordRange.start.y, 2);
+    XCTAssertEqual(range.coordRange.end.x, 10);
+    XCTAssertEqual(range.coordRange.end.y, 8);
+}
+
 - (void)testRangeForWrappedLine_EOL_DWC {
     [self appendWrappedLine:@"asdf" width:30 eol:EOL_HARD];
     [self appendWrappedLine:[NSString stringWithFormat:@"111111111111111111111111111中%C%C", DWC_RIGHT, DWC_SKIP] width:30 eol:EOL_DWC];
