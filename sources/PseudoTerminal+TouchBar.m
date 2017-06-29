@@ -37,7 +37,7 @@ static NSString *const iTermTouchBarIdentifierStatus = @"iTermTouchBarIdentifier
 
 ITERM_IGNORE_PARTIAL_BEGIN
 
-@implementation PseudoTerminal (TouchBar) 
+@implementation PseudoTerminal (TouchBar)
 
 - (void)updateTouchBarFunctionKeyLabels {
     if (!IsTouchBarAvailable()) {
@@ -469,18 +469,33 @@ ITERM_IGNORE_PARTIAL_BEGIN
 - (void)manPageTouchBarItemSelected:(iTermTouchBarButton *)sender {
     NSString *command = sender.keyBindingAction[@"command"];
     if (command) {
+        const BOOL background = [command hasSuffix:@"&"];
+        if (background) {
+            command = [command substringToIndex:command.length - 1];
+        }
         NSString *escapedCommand = [command stringWithEscapedShellCharactersIncludingNewlines:YES];
         command = [NSString stringWithFormat:@"sh -c \"%@\"", escapedCommand];
-        [[iTermController sharedInstance] launchBookmark:nil
+        Profile *windowProfile = [[iTermController sharedInstance] defaultBookmark];
+        if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+            [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
+            windowProfile = [windowProfile dictionaryBySettingObject:@(WINDOW_TYPE_NORMAL) forKey:KEY_WINDOW_TYPE];
+        }
+        [[iTermController sharedInstance] launchBookmark:windowProfile
                                               inTerminal:nil
                                                  withURL:nil
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:YES
-                                             canActivate:YES
+                                                 makeKey:!background
+                                             canActivate:!background
                                                  command:command
                                                    block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                                                        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
-                                                       return [term createTabWithProfile:profile withCommand:command];
+                                                       profile = [profile dictionaryBySettingObject:@YES forKey:KEY_CLOSE_SESSIONS_ON_END];
+                                                       PTYSession *session = [term createTabWithProfile:profile withCommand:command];
+                                                       session.isManPageViewer = YES;
+                                                       if (background) {
+                                                           [term.window orderOut:nil];
+                                                       }
+                                                       return session;
                                                    }];
     }
 }
