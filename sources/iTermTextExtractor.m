@@ -315,7 +315,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                           DLog(@"Character at %@ is '%@'", VT100GridCoordDescription(coord), [self stringForCharacter:theChar]);
                           ++iterations;
                           if (iterations > maximumLength) {
-                              DLog(@"Max length hit");
+                              DLog(@"Max length hit when searching forwards");
                               return YES;
                           }
                           iTermTextExtractorClass newClass = [self classForCharacter:theChar];
@@ -342,11 +342,6 @@ const NSInteger kLongMaximumWordLength = 100000;
                                              windowTouchesRightMargin:windowTouchesRightMargin
                                                      ignoringNewlines:NO];
                        }];
-    if (iterations > maximumLength) {
-        DLog(@"Word too long when searching forward");
-        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
-                                          _logicalWindow.location, _logicalWindow.length);
-    }
     
     // Search backward for the start of the word.
     theRange = VT100GridCoordRangeMake(0, 0, location.x, location.y);
@@ -357,6 +352,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     // they appear and then concatenate them after the enumeration.
     NSMutableArray *substrings = [NSMutableArray array];
     DLog(@"** Begin searching backward for the end of the word");
+    iterations = 0;
     [self enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                     _logicalWindow.location,
                                                                     _logicalWindow.length)
@@ -364,6 +360,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                    DLog(@"Character at %@ is '%@'", VT100GridCoordDescription(coord), [self stringForCharacter:theChar]);
                                    ++iterations;
                                    if (iterations > maximumLength) {
+                                       DLog(@"Max length hit when searching backwards");
                                        return YES;
                                    }
                                    iTermTextExtractorClass newClass = [self classForCharacter:theChar];
@@ -391,12 +388,6 @@ const NSInteger kLongMaximumWordLength = 100000;
 
                                 }];
     NSString *stringBeforeLocation = [substrings componentsJoinedByString:@""];
-
-    if (iterations > maximumLength) {
-        DLog(@"Word too long when searching backward");
-        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
-                                          _logicalWindow.location, _logicalWindow.length);
-    }
 
     if (!coords.count) {
         DLog(@"Found no coords");
