@@ -551,11 +551,34 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
      withValueLessThanOrEqualTo:(NSInteger)maximumValue
           searchingBackwardFrom:(NSInteger)start {
-    NSInteger i = start;
-    while (i > 0 && [indexes[i] integerValue] > maximumValue) {
-        i--;
+    if (start <= 0) {
+        return 0;
     }
-    return i;
+    NSInteger index = [indexes indexOfObject:@(maximumValue)
+             inSortedRange:NSMakeRange(0, start + 1)
+                   options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
+           usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+               return [obj1 compare:obj2];
+           }];
+    if (index == start + 1) {
+        // maximumValue is larger than all values. The last value is the largest one <= maximumValue.
+        return MAX(0, index - 1);
+    } else {
+        // maximumValue is less than or equal to largest value
+        NSInteger value = [indexes[index] integerValue];
+        if (value <= maximumValue) {
+            return index;
+        } else {
+            return MAX(0, index - 1);
+        }
+    }
+    return index;
+//    // This is the naïve algorithm the code above attempts to implement.
+//    NSInteger i = start;
+//    while (i > 0 && [indexes[i] integerValue] > maximumValue) {
+//        i--;
+//    }
+//    return i;
 }
 
 // Returns indexes.count if no value can be found greater or equal to `minimumValue`.

@@ -191,4 +191,10 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 
 - (int)startOfIndentationOnLine:(int)line;
 
+#pragma mark - For tests
+
+- (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
+     withValueLessThanOrEqualTo:(NSInteger)maximumValue
+          searchingBackwardFrom:(NSInteger)start;
+
 @end

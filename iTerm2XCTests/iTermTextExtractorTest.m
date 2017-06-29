@@ -440,6 +440,54 @@ static const NSInteger kUnicodeVersion = 9;
     XCTAssertEqual(range.coordRange.end.y, 1);
 }
 
+- (void)testBinarySearch_ExactMatch {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:20
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 1);
+}
+
+- (void)testBinarySearch_ExactMatchWithMultipleEqualValues {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @20, @30 ]
+                          withValueLessThanOrEqualTo:20
+                               searchingBackwardFrom:3];
+    XCTAssertEqual(actual, 2);
+}
+
+- (void)testBinarySearch_BetweenValues {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:25
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 1);
+}
+
+- (void)testBinarySearch_AtEnd {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:40
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 2);
+}
+
+- (void)testBinarySearch_AtStart {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:5
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 0);
+}
+
+- (void)testBinarySearch_RespectsStartLocation {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:40
+                               searchingBackwardFrom:1];
+    XCTAssertEqual(actual, 1);
+}
+
 #pragma mark - iTermTextDataSource
 
 - (int)lengthOfLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
