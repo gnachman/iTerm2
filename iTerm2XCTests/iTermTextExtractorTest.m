@@ -393,7 +393,7 @@ static const NSInteger kUnicodeVersion = 9;
     [self appendWrappedLine:@"文" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO maxChars:1000];
     XCTAssertEqual(range.coordRange.start.x, 0);
     XCTAssertEqual(range.coordRange.start.y, 1);
     XCTAssertEqual(range.coordRange.end.x, 30);
@@ -406,7 +406,7 @@ static const NSInteger kUnicodeVersion = 9;
     [self appendWrappedLine:@"hello world" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO maxChars:1000];
     XCTAssertEqual(range.coordRange.start.x, 0);
     XCTAssertEqual(range.coordRange.start.y, 1);
     XCTAssertEqual(range.coordRange.end.x, 30);
@@ -419,7 +419,7 @@ static const NSInteger kUnicodeVersion = 9;
     [self appendWrappedLine:@"hello world" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO maxChars:1000];
     XCTAssertEqual(range.coordRange.start.x, 0);
     XCTAssertEqual(range.coordRange.start.y, 1);
     XCTAssertEqual(range.coordRange.end.x, 30);

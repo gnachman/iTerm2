@@ -75,7 +75,8 @@ extern const NSInteger kLongMaximumWordLength;
 
 // Returns the range of the whole wrapped line including |coord|.
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
-                                  respectContinuations:(BOOL)respectContinuations;
+                                     respectContinuations:(BOOL)respectContinuations
+                                                 maxChars:(int)maxChars;
 
 // Returns the class for a character.
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter;

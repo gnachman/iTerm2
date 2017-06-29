@@ -6796,7 +6796,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
     return [extractor rangeForWrappedLineEncompassing:coord
-                                 respectContinuations:NO];
+                                 respectContinuations:NO
+                                             maxChars:-1];
 }
 
 - (int)selectionViewportWidth {
