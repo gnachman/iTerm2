@@ -37,3 +37,6 @@
 
 @end
 
+@interface NSFont(PTYFontInfo)
+@property (nonatomic, readonly) BOOL it_defaultLigatures;
+@end

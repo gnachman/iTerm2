@@ -249,6 +249,21 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     }
     [_nonAsciiFontDescription setStringValue:fontName];
 
+    if (self.normalFont.it_defaultLigatures) {
+        _asciiLigatures.state = NSOnState;
+        _asciiLigatures.enabled = NO;
+    } else {
+        _asciiLigatures.state = [self boolForKey:KEY_ASCII_LIGATURES] ? NSOnState : NSOffState;
+        _asciiLigatures.enabled = YES;
+    }
+    if (self.nonAsciiFont.it_defaultLigatures) {
+        _nonAsciiLigatures.state = NSOnState;
+        _nonAsciiLigatures.enabled = NO;
+    } else {
+        _nonAsciiLigatures.state = [self boolForKey:KEY_NON_ASCII_LIGATURES] ? NSOnState : NSOffState;
+        _nonAsciiLigatures.enabled = YES;
+    }
+
     [self updateWarnings];
 }
 
