@@ -1452,12 +1452,12 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (int)lineNumberWithStartOfWholeLineIncludingLine:(int)y
                               respectContinuations:(BOOL)respectContinuations
                                           maxChars:(int)maxChars {
+    const int width = [self widthOfWindowedRange];
     if (maxChars < 0) {
-        maxChars = INT_MAX;
+        maxChars = INT_MAX - width;
     }
     int i = y;
     NSInteger count = 0;
-    const int width = [self widthOfWindowedRange];
     while (count < maxChars + width && i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
         count += width;
         i--;
@@ -1470,11 +1470,11 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (int)lineNumberWithEndOfWholeLineIncludingLine:(int)y
                             respectContinuations:(BOOL)respectContinuations
                                         maxChars:(int)maxChars {
-    if (maxChars < 0) {
-        maxChars = INT_MAX;
-    }
     int i = y + 1;
     const int width = [self widthOfWindowedRange];
+    if (maxChars < 0) {
+        maxChars = INT_MAX - width;
+    }
     int maxY = [_dataSource numberOfLines];
     NSInteger count = 0;
     while (count < maxChars + width && i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
