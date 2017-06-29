@@ -9,7 +9,11 @@
 #import "LineBlock.h"
 #import "FindContext.h"
 #import "LineBufferHelpers.h"
+#import "NSBundle+iTerm.h"
 #import "RegexKitLite.h"
+#import "iTermAdvancedSettingsModel.h"
+
+static BOOL gEnableDoubleWidthCharacterLineCache = NO;
 
 NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
@@ -20,6 +24,10 @@ NSString *const kLineBlockCLLKey = @"Cumulative Line Lengths";
 NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
+
+void EnableDoubleWidthCharacterLineCache() {
+    gEnableDoubleWidthCharacterLineCache = YES;
+}
 
 @implementation LineBlock {
     // The raw lines, end-to-end. There is no delimiter between each line.
@@ -79,9 +87,17 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 }
 
 - (void)commonInit {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        if ([iTermAdvancedSettingsModel dwcLineCache] ||
+            [NSBundle it_isNightlyBuild]) {
+            gEnableDoubleWidthCharacterLineCache = YES;
+        }
+    });
+
     cached_numlines_width = -1;
     if (cll_capacity > 0) {
-        metadata_ = (LineBlockMetadata *)malloc(sizeof(LineBlockMetadata) * cll_capacity);
+        metadata_ = (LineBlockMetadata *)calloc(sizeof(LineBlockMetadata), cll_capacity);
     }
 }
 
@@ -118,9 +134,9 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
         cll_capacity = [cllArray count];
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        [self commonInit];
 
         NSArray *metadataArray = dictionary[kLineBlockMetadataKey];
-        metadata_ = (LineBlockMetadata *)calloc(cll_capacity, sizeof(LineBlockMetadata));
 
         for (int i = 0; i < cll_capacity; i++) {
             cumulative_line_lengths[i] = [cllArray[i] intValue];
@@ -133,6 +149,9 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
             metadata_[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
             metadata_[i].timestamp = [components[j++] doubleValue];
             metadata_[i].number_of_wrapped_lines = 0;
+            if (gEnableDoubleWidthCharacterLineCache) {
+                metadata_[i].double_width_characters = nil;
+            }
         }
 
         cll_entries = cll_capacity;
@@ -151,6 +170,11 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
         free(cumulative_line_lengths);
     }
     if (metadata_) {
+        if (gEnableDoubleWidthCharacterLineCache) {
+            for (int i = 0; i < cll_capacity; i++) {
+                [metadata_[i].double_width_characters release];
+            }
+        }
         free(metadata_);
     }
     [super dealloc];
@@ -173,6 +197,9 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
     for (int i = 0; i < cll_capacity; i++) {
         theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;
         theCopy->metadata_[i].number_of_wrapped_lines = 0;
+        if (gEnableDoubleWidthCharacterLineCache) {
+            theCopy->metadata_[i].double_width_characters = nil;
+        }
     }
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
@@ -200,6 +227,11 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
         cll_capacity = MAX(1, cll_capacity);
         cumulative_line_lengths = (int*) realloc((void*) cumulative_line_lengths, cll_capacity * sizeof(int));
         metadata_ = (LineBlockMetadata *)realloc((void *)metadata_, cll_capacity * sizeof(LineBlockMetadata));
+        if (gEnableDoubleWidthCharacterLineCache) {
+            memset(metadata_ + cll_entries,
+                   0,
+                   sizeof(LineBlockMetadata) * (cll_capacity - cll_entries));
+        }
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
     metadata_[cll_entries].timestamp = timestamp;
@@ -335,6 +367,11 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
         metadata_[cll_entries - 1].timestamp = timestamp;
         metadata_[cll_entries - 1].continuation = continuation;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
+        if (gEnableDoubleWidthCharacterLineCache) {
+            // TODO: Would be nice to add on to the index set instead of deleting it.
+            [metadata_[cll_entries - 1].double_width_characters release];
+            metadata_[cll_entries - 1].double_width_characters = nil;
+        }
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width: width];
 #endif
@@ -384,9 +421,67 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
     }
 }
 
+- (void)populateDoubleWidthCharacterCacheInMetadata:(LineBlockMetadata *)metadata
+                                             buffer:(screen_char_t *)p
+                                             length:(int)length
+                                              width:(int)width {
+    assert(gEnableDoubleWidthCharacterLineCache);
+    [metadata->double_width_characters release];
+    metadata->double_width_characters = [[NSMutableIndexSet alloc] init];
+    metadata->width_for_double_width_characters_cache = width;
+
+    int lines = 0;
+    int i = 0;
+    while (i + width < length) {
+        // Advance i to the start of the next line
+        i += width;
+        ++lines;
+        if (p[i].code == DWC_RIGHT) {
+            // Oops, the line starts with the second half of a double-width
+            // character. Wrap the last character of the previous line on to
+            // this line.
+            i--;
+            [metadata->double_width_characters addIndex:lines];
+        }
+    }
+}
+
+- (int)offsetOfWrappedLineInBuffer:(screen_char_t *)p
+                 wrappedLineNumber:(int)n
+                      bufferLength:(int)length
+                             width:(int)width
+                          metadata:(LineBlockMetadata *)metadata {
+    assert(gEnableDoubleWidthCharacterLineCache);
+    if (_mayHaveDoubleWidthCharacter) {
+        if (!metadata->double_width_characters ||
+            metadata->width_for_double_width_characters_cache != width) {
+            [self populateDoubleWidthCharacterCacheInMetadata:metadata buffer:p length:length width:width];
+        }
+
+        __block int lines = 0;
+        __block int i = 0;
+        __block NSUInteger lastIndex = 0;
+        [metadata->double_width_characters enumerateIndexesInRange:NSMakeRange(0, n + 1)
+                                                           options:0
+                                                        usingBlock:^(NSUInteger indexOfLineThatWouldStartWithRightHalf, BOOL * _Nonnull stop) {
+            int numberOfLines = indexOfLineThatWouldStartWithRightHalf - lastIndex;
+            lines += numberOfLines;
+            i += width * numberOfLines;
+            i--;
+            lastIndex = indexOfLineThatWouldStartWithRightHalf;
+        }];
+        if (lines < n) {
+            i += (n - lines) * width;
+        }
+        return i;
+    } else {
+        return n * width;
+    }
+}
+
+// TODO: Reduce use of this function in favor of the optimized method once I am confident it is correct.
 int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc) {
     if (mayHaveDwc) {
-        // TODO: Use memoization here.
         int lines = 0;
         int i = 0;
         while (lines < n) {
@@ -490,11 +585,30 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         } else {  // *lineNum <= spans
             // We found the raw line that inclues the wrapped line we're searching for.
             // eat up *lineNum many width-sized wrapped lines from this start of the current full line
-            int offset = OffsetOfWrappedLine(buffer_start + prev,
+            int offset;
+            if (gEnableDoubleWidthCharacterLineCache) {
+                offset = [self offsetOfWrappedLineInBuffer:buffer_start + prev
+                                         wrappedLineNumber:*lineNum
+                                              bufferLength:length
+                                                     width:width
+                                                  metadata:&metadata_[i]];
+#warning Remove this when I feel confident it is correct
+                if (arc4random_uniform(100) == 0) {
+                    int correctOffset = OffsetOfWrappedLine(buffer_start + prev,
+                                                            *lineNum,
+                                                            length,
+                                                            width,
+                                                            _mayHaveDoubleWidthCharacter);
+                    assert(offset == correctOffset);
+                }
+            } else {
+                offset = OffsetOfWrappedLine(buffer_start + prev,
                                              *lineNum,
                                              length,
                                              width,
                                              _mayHaveDoubleWidthCharacter);
+            }
+
             *lineNum = 0;
             // offset: the relevant part of the raw line begins at this offset into it
             *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
@@ -609,6 +723,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         *ptr = buffer_start + start + offset_from_start;
         cumulative_line_lengths[cll_entries - 1] -= *length;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
+        if (gEnableDoubleWidthCharacterLineCache) {
+            [metadata_[cll_entries - 1].double_width_characters release];
+            metadata_[cll_entries - 1].double_width_characters = nil;
+        }
 
         is_partial = YES;
     } else {

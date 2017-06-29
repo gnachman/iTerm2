@@ -279,5 +279,6 @@ DEFINE_BOOL(useGCDUpdateTimer, YES, @"Experimental Features: Use GCD-based updat
 DEFINE_BOOL(drawOutlineAroundCursor, NO, @"Experimental Features: Draw outline around underline and vertical bar cursors using background color.");
 DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on logout.\nA possible fix for issue 4147.");
 DEFINE_BOOL(detectPasswordInput, NO, @"Experimental Features: Show key at cursor at password prompt?");
+DEFINE_BOOL(dwcLineCache, NO, @"Experimental Features: Enable cache of double-width character locations?\nThis should improve performance. It is always on in nightly builds. You must restart iTerm2 for this setting to take effect.");
 
 @end
