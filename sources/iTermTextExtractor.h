@@ -38,7 +38,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 
 // Suggested word lengths for rangeForWordAt:maximumLength:
 extern const NSInteger kReasonableMaximumWordLength;
-extern const NSInteger kUnlimitedMaximumWordLength;
+extern const NSInteger kLongMaximumWordLength;
 
 @interface iTermTextExtractor : NSObject
 

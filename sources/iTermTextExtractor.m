@@ -27,7 +27,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 static const int kNumCharsToSearchForDivider = 8;
 
 const NSInteger kReasonableMaximumWordLength = 1000;
-const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
+const NSInteger kLongMaximumWordLength = 100000;
 
 @implementation iTermTextExtractor {
     id<iTermTextDataSource> _dataSource;
@@ -1127,11 +1127,14 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 }
 
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
-                                     respectContinuations:(BOOL)respectContinuations {
+                                     respectContinuations:(BOOL)respectContinuations
+                                                 maxChars:(int)maxChars {
     int start = [self lineNumberWithStartOfWholeLineIncludingLine:coord.y
-                                             respectContinuations:respectContinuations];
+                                             respectContinuations:respectContinuations
+                                                         maxChars:maxChars];
     int end = [self lineNumberWithEndOfWholeLineIncludingLine:coord.y
-                                             respectContinuations:respectContinuations];
+                                             respectContinuations:respectContinuations
+                                                     maxChars:maxChars];
     return [self windowedRangeWithRange:VT100GridCoordRangeMake(_logicalWindow.location,
                                                                 start,
                                                                 [self xLimit],
@@ -1413,23 +1416,39 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     return location;
 }
 
+// maxChars is a rough guideline here. If the line is very long it will go over by up to the width
+// of one windowed range.
 - (int)lineNumberWithStartOfWholeLineIncludingLine:(int)y
                               respectContinuations:(BOOL)respectContinuations
-{
+                                          maxChars:(int)maxChars {
+    if (maxChars < 0) {
+        maxChars = INT_MAX;
+    }
     int i = y;
-    while (i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+    NSInteger count = 0;
+    const int width = [self widthOfWindowedRange];
+    while (count < maxChars + width && i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+        count += width;
         i--;
     }
     return i;
 }
 
+// maxChars is a rough guideline here. If the line is very long it will go over by up to the width
+// of one windowed range.
 - (int)lineNumberWithEndOfWholeLineIncludingLine:(int)y
                             respectContinuations:(BOOL)respectContinuations
-{
+                                        maxChars:(int)maxChars {
+    if (maxChars < 0) {
+        maxChars = INT_MAX;
+    }
     int i = y + 1;
+    const int width = [self widthOfWindowedRange];
     int maxY = [_dataSource numberOfLines];
-    while (i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+    NSInteger count = 0;
+    while (count < maxChars + width && i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
         i++;
+        count += width;
     }
     return i - 1;
 }
@@ -1492,7 +1511,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     }
     VT100GridWindowedRange range;
     if (respectHardNewlines) {
-        range = [self rangeForWrappedLineEncompassing:coord respectContinuations:YES];
+        range = [self rangeForWrappedLineEncompassing:coord respectContinuations:YES maxChars:maxChars];
     } else {
         VT100GridCoordRange coordRange =
             VT100GridCoordRangeMake(_logicalWindow.location,
@@ -1737,6 +1756,14 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
         return [_dataSource width];
     } else {
         return _logicalWindow.location + _logicalWindow.length;
+    }
+}
+
+- (int)widthOfWindowedRange {
+    if (!_logicalWindow.length) {
+        return [_dataSource width];
+    } else {
+        return _logicalWindow.length;
     }
 }
 

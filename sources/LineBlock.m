@@ -256,6 +256,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
                       BOOL mayHaveDoubleWidthCharacter)
 {
     if (mayHaveDoubleWidthCharacter) {
+        // TODO: Use memoization here
         int fullLines = 0;
         for (int i = width; i < length; i += width) {
             if (buffer[i].code == DWC_RIGHT) {
@@ -376,6 +377,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
 
 int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc) {
     if (mayHaveDwc) {
+        // TODO: Use memoization here.
         int lines = 0;
         int i = 0;
         while (lines < n) {
