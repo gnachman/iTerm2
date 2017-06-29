@@ -42,9 +42,11 @@
     [super dealloc];
 }
 
-- (void)forceUnhookDCS {
-    _dcsHooked = NO;
-    [_controlParser unhookDCS];
+- (void)forceUnhookDCS:(NSString *)uniqueID {
+    if (uniqueID == nil || [_controlParser shouldUnhook:uniqueID]) {
+        _dcsHooked = NO;
+        [_controlParser unhookDCS];
+    }
 }
 
 - (BOOL)addNextParsedTokensToVector:(CVector *)vector {
@@ -248,7 +250,7 @@
 - (void)reset {
     @synchronized(self) {
         [_savedStateForPartialParse removeAllObjects];
-        [self forceUnhookDCS];
+        [self forceUnhookDCS:nil];
         [self clearStream];
     }
 }

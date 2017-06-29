@@ -108,6 +108,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     [_intermediateString release];
     [_privateMarkers release];
     [_hook release];
+    [_uniqueID release];
     [super dealloc];
 }
 
@@ -430,6 +431,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
         if (token) {
             token->type = DCS_TMUX_HOOK;
+            [_uniqueID autorelease];
+            _uniqueID = [[[NSUUID UUID] UUIDString] copy];
+            token.string = _uniqueID;
         }
 
         [_hook release];
@@ -441,6 +445,8 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 - (void)unhook {
     [_hook autorelease];
     _hook = nil;
+    [_uniqueID autorelease];
+    _uniqueID = nil;
 }
 
 // Force the ground state. Used when force-quitting tmux mode.

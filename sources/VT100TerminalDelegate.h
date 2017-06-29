@@ -226,7 +226,7 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 - (BOOL)terminalPostGrowlNotification:(NSString *)message;
 
 // Enters Tmux mode.
-- (void)terminalStartTmuxMode;
+- (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;
 
 // Handles input during tmux mode. A single line of input will be in the token's string.
 - (void)terminalHandleTmuxInput:(VT100Token *)token;

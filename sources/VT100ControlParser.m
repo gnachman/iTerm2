@@ -32,6 +32,10 @@
     [super dealloc];
 }
 
+- (BOOL)shouldUnhook:(NSString *)uniqueID {
+    return [_dcsParser.uniqueID isEqualToString:uniqueID];
+}
+
 - (void)unhookDCS {
     [_dcsParser reset];
 }

@@ -121,7 +121,7 @@
 - (int)screenViewIndex;
 
 // Requests that tmux integration mode begin.
-- (void)screenStartTmuxMode;
+- (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;
 
 // Handle a line of input in tmux mode in the token's string.
 - (void)screenHandleTmuxInput:(VT100Token *)token;
