@@ -13,6 +13,8 @@
 typedef struct {
     NSTimeInterval timestamp;
     screen_char_t continuation;
+    int number_of_wrapped_lines;
+    int width_for_number_of_wrapped_lines;
 } LineBlockMetadata;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously

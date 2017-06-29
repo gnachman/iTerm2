@@ -125,12 +125,14 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
         for (int i = 0; i < cll_capacity; i++) {
             cumulative_line_lengths[i] = [cllArray[i] intValue];
             int j = 0;
-            metadata_[i].continuation.code = [metadataArray[i][j++] unsignedShortValue];
-            metadata_[i].continuation.backgroundColor = [metadataArray[i][j++] unsignedCharValue];
-            metadata_[i].continuation.bgGreen = [metadataArray[i][j++] unsignedCharValue];
-            metadata_[i].continuation.bgBlue = [metadataArray[i][j++] unsignedCharValue];
-            metadata_[i].continuation.backgroundColorMode = [metadataArray[i][j++] unsignedCharValue];
-            metadata_[i].timestamp = [metadataArray[i][j++] doubleValue];
+            NSArray *components = metadataArray[i];
+            metadata_[i].continuation.code = [components[j++] unsignedShortValue];
+            metadata_[i].continuation.backgroundColor = [components[j++] unsignedCharValue];
+            metadata_[i].continuation.bgGreen = [components[j++] unsignedCharValue];
+            metadata_[i].continuation.bgBlue = [components[j++] unsignedCharValue];
+            metadata_[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
+            metadata_[i].timestamp = [components[j++] doubleValue];
+            metadata_[i].number_of_wrapped_lines = 0;
         }
 
         cll_entries = cll_capacity;
@@ -168,6 +170,10 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
     theCopy->metadata_ = (LineBlockMetadata *) malloc(sizeof(LineBlockMetadata) * cll_capacity);
     memmove(theCopy->metadata_, metadata_, sizeof(LineBlockMetadata) * cll_capacity);
+    for (int i = 0; i < cll_capacity; i++) {
+        theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;
+        theCopy->metadata_[i].number_of_wrapped_lines = 0;
+    }
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     theCopy->is_partial = is_partial;
@@ -198,6 +204,8 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
     cumulative_line_lengths[cll_entries] = cumulativeLength;
     metadata_[cll_entries].timestamp = timestamp;
     metadata_[cll_entries].continuation = continuation;
+    metadata_[cll_entries].number_of_wrapped_lines = 0;
+
     ++cll_entries;
 }
 
@@ -326,6 +334,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
         cumulative_line_lengths[cll_entries - 1] += length;
         metadata_[cll_entries - 1].timestamp = timestamp;
         metadata_[cll_entries - 1].continuation = continuation;
+        metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:@"appendLine partial case" width: width];
 #endif
@@ -444,21 +453,36 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                  continuation:(screen_char_t *)continuationPtr
 {
     int prev = 0;
-    int length;
-    int i;
     int numEmptyLines = 0;
-    for (i = first_entry; i < cll_entries; ++i) {
+    for (int i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
-        length = cll - prev;
+        const int length = cll - prev;
         if (length == 0) {
             ++numEmptyLines;
         } else {
             numEmptyLines = 0;
         }
-        int spans = NumberOfFullLines(buffer_start + prev,
+
+        int spans;
+        if (_mayHaveDoubleWidthCharacter) {
+            LineBlockMetadata *metadata = &metadata_[i];
+            if (metadata->width_for_number_of_wrapped_lines == width &&
+                metadata->number_of_wrapped_lines > 0) {
+                spans = metadata->number_of_wrapped_lines;
+            } else {
+                spans = NumberOfFullLines(buffer_start + prev,
+                                          length,
+                                          width,
+                                          _mayHaveDoubleWidthCharacter);
+                metadata->number_of_wrapped_lines = spans;
+                metadata->width_for_number_of_wrapped_lines = width;
+             }
+        } else {
+            spans = NumberOfFullLines(buffer_start + prev,
                                       length,
                                       width,
                                       _mayHaveDoubleWidthCharacter);
+        }
         if (*lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
@@ -584,6 +608,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         *length = available_len - offset_from_start;
         *ptr = buffer_start + start + offset_from_start;
         cumulative_line_lengths[cll_entries - 1] -= *length;
+        metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
+
         is_partial = YES;
     } else {
         // The last raw line is not longer than width. Return the whole thing.
