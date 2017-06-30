@@ -447,6 +447,10 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         DLog(@"Auto-hide temporarily disabled");
         return NO;
     }
+    if ([[iTermApplication sharedApplication] localAuthenticationDialogOpen]) {
+        DLog(@"Local auth dialog is open");
+        return NO;
+    }
     NSWindow *keyWindow = [NSApp keyWindow];
     if ([keyWindow respondsToSelector:@selector(autoHidesHotKeyWindow)] &&
         ![keyWindow autoHidesHotKeyWindow]) {

@@ -387,13 +387,27 @@ static const NSInteger kUnicodeVersion = 9;
     _lines = [_lines arrayByAddingObject:data];
 }
 
+- (void)testRangeForWrappedLine_MaxChars {
+    for (int i = 0; i < 10; i++) {
+        [self appendWrappedLine:@"1234567890"
+                          width:10
+                            eol:i < 9 ? EOL_SOFT : EOL_HARD];
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 5) respectContinuations:NO maxChars:20];
+    XCTAssertEqual(range.coordRange.start.x, 0);
+    XCTAssertEqual(range.coordRange.start.y, 2);
+    XCTAssertEqual(range.coordRange.end.x, 10);
+    XCTAssertEqual(range.coordRange.end.y, 8);
+}
+
 - (void)testRangeForWrappedLine_EOL_DWC {
     [self appendWrappedLine:@"asdf" width:30 eol:EOL_HARD];
     [self appendWrappedLine:[NSString stringWithFormat:@"111111111111111111111111111中%C%C", DWC_RIGHT, DWC_SKIP] width:30 eol:EOL_DWC];
     [self appendWrappedLine:@"文" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO maxChars:1000];
     XCTAssertEqual(range.coordRange.start.x, 0);
     XCTAssertEqual(range.coordRange.start.y, 1);
     XCTAssertEqual(range.coordRange.end.x, 30);
@@ -406,7 +420,7 @@ static const NSInteger kUnicodeVersion = 9;
     [self appendWrappedLine:@"hello world" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO maxChars:1000];
     XCTAssertEqual(range.coordRange.start.x, 0);
     XCTAssertEqual(range.coordRange.start.y, 1);
     XCTAssertEqual(range.coordRange.end.x, 30);
@@ -419,11 +433,59 @@ static const NSInteger kUnicodeVersion = 9;
     [self appendWrappedLine:@"hello world" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO];
+    VT100GridWindowedRange range = [extractor rangeForWrappedLineEncompassing:VT100GridCoordMake(5, 1) respectContinuations:NO maxChars:1000];
     XCTAssertEqual(range.coordRange.start.x, 0);
     XCTAssertEqual(range.coordRange.start.y, 1);
     XCTAssertEqual(range.coordRange.end.x, 30);
     XCTAssertEqual(range.coordRange.end.y, 1);
+}
+
+- (void)testBinarySearch_ExactMatch {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:20
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 1);
+}
+
+- (void)testBinarySearch_ExactMatchWithMultipleEqualValues {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @20, @30 ]
+                          withValueLessThanOrEqualTo:20
+                               searchingBackwardFrom:3];
+    XCTAssertEqual(actual, 2);
+}
+
+- (void)testBinarySearch_BetweenValues {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:25
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 1);
+}
+
+- (void)testBinarySearch_AtEnd {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:40
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 2);
+}
+
+- (void)testBinarySearch_AtStart {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:5
+                               searchingBackwardFrom:2];
+    XCTAssertEqual(actual, 0);
+}
+
+- (void)testBinarySearch_RespectsStartLocation {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSInteger actual = [extractor indexInSortedArray:@[ @10, @20, @30 ]
+                          withValueLessThanOrEqualTo:40
+                               searchingBackwardFrom:1];
+    XCTAssertEqual(actual, 1);
 }
 
 #pragma mark - iTermTextDataSource

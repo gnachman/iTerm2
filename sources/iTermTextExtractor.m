@@ -27,11 +27,15 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 static const int kNumCharsToSearchForDivider = 8;
 
 const NSInteger kReasonableMaximumWordLength = 1000;
-const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
+const NSInteger kLongMaximumWordLength = 100000;
 
 @implementation iTermTextExtractor {
     id<iTermTextDataSource> _dataSource;
     VT100GridRange _logicalWindow;
+
+    BOOL _shouldCacheLines;
+    int _cachedLineNumber;
+    screen_char_t *_cachedLine;
 }
 
 + (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource {
@@ -252,6 +256,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     return result;
 }
 
+// The maximum length is a rough guideline. You might get a word up to twice as long.
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
     DLog(@"Compute range for word at %@, max length %@", VT100GridCoordDescription(location), @(maximumLength));
@@ -314,7 +319,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                           DLog(@"Character at %@ is '%@'", VT100GridCoordDescription(coord), [self stringForCharacter:theChar]);
                           ++iterations;
                           if (iterations > maximumLength) {
-                              DLog(@"Max length hit");
+                              DLog(@"Max length hit when searching forwards");
                               return YES;
                           }
                           iTermTextExtractorClass newClass = [self classForCharacter:theChar];
@@ -341,11 +346,6 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                                              windowTouchesRightMargin:windowTouchesRightMargin
                                                      ignoringNewlines:NO];
                        }];
-    if (iterations > maximumLength) {
-        DLog(@"Word too long when searching forward");
-        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
-                                          _logicalWindow.location, _logicalWindow.length);
-    }
     
     // Search backward for the start of the word.
     theRange = VT100GridCoordRangeMake(0, 0, location.x, location.y);
@@ -356,6 +356,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     // they appear and then concatenate them after the enumeration.
     NSMutableArray *substrings = [NSMutableArray array];
     DLog(@"** Begin searching backward for the end of the word");
+    iterations = 0;
     [self enumerateInReverseCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                     _logicalWindow.location,
                                                                     _logicalWindow.length)
@@ -363,6 +364,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                                    DLog(@"Character at %@ is '%@'", VT100GridCoordDescription(coord), [self stringForCharacter:theChar]);
                                    ++iterations;
                                    if (iterations > maximumLength) {
+                                       DLog(@"Max length hit when searching backwards");
                                        return YES;
                                    }
                                    iTermTextExtractorClass newClass = [self classForCharacter:theChar];
@@ -391,12 +393,6 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                                 }];
     NSString *stringBeforeLocation = [substrings componentsJoinedByString:@""];
 
-    if (iterations > maximumLength) {
-        DLog(@"Word too long when searching backward");
-        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
-                                          _logicalWindow.location, _logicalWindow.length);
-    }
-
     if (!coords.count) {
         DLog(@"Found no coords");
         return [self windowedRangeWithRange:VT100GridCoordRangeMake(location.x,
@@ -415,134 +411,146 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
                                                                     end.y)];
     }
 
-    DLog(@"An alphanumeric character was selected. Begin language-specific logic");
+    __block VT100GridWindowedRange result;
+    [self performBlockWithLineCache:^{
+        DLog(@"An alphanumeric character was selected. Begin language-specific logic");
 
-    // An alphanumeric character was selected. This is where it gets interesting.
-    
-    // We have now retrieved the longest possible string that could have a word. This is because we
-    // are more permissive than the OS about what can be in a word (the user can add punctuation,
-    // for example, making foo/bar a word if / belongs to the “characters considered part of a
-    // word.”) Now we want to shrink the range. For non-English languages, there is an added
-    // wrinkle: in issue 4325 we see that 翻真的 consists of two words: 翻 and 真的. The OS
-    // (presumably by using ICU's text boundary analysis code) knows how to do the segmentation.
+        // An alphanumeric character was selected. This is where it gets interesting.
+        
+        // We have now retrieved the longest possible string that could have a word. This is because we
+        // are more permissive than the OS about what can be in a word (the user can add punctuation,
+        // for example, making foo/bar a word if / belongs to the “characters considered part of a
+        // word.”) Now we want to shrink the range. For non-English languages, there is an added
+        // wrinkle: in issue 4325 we see that 翻真的 consists of two words: 翻 and 真的. The OS
+        // (presumably by using ICU's text boundary analysis code) knows how to do the segmentation.
 
-    NSString *string = [stringBeforeLocation stringByAppendingString:stringFromLocation];
-    NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:string attributes:@{}] autorelease];
-    
-    // Will be in 1:1 correspondence with `coords`.
-    // The string in the cell at `coords[i]` starts at index `indexes[i]`.
-    NSMutableArray<NSNumber *> *indexes = [NSMutableArray array];
-    NSInteger prefixLength = 0;
-    for (NSNumber *length in stringLengthsInPrefix) {
-        [indexes addObject:@(prefixLength)];
-        prefixLength += length.integerValue;
-    }
-    for (NSNumber *index in indexesInSuffix) {
-        [indexes addObject:@(prefixLength + index.integerValue)];
-    }
-
-    DLog(@"indexes: %@", indexes);
-
-    // Set end to an index that is not in the middle of an OS-defined-word. It will be at the start
-    // of a word or on a whitelisted character.
-    BOOL previousCharacterWasWhitelisted = YES;
-
-    // `end` can index into `coords` and `indexes`.
-    NSInteger end = stringLengthsInPrefix.count;
-    while (end < coords.count) {
-        DLog(@"Consider end=%@ at %@", @(end), VT100GridCoordDescription([coords[end] gridCoordValue]));
-        if ([self isWhitelistedAlphanumericAtCoord:[coords[end] gridCoordValue]]) {
-            DLog(@"Is whitelisted");
-            ++end;
-            previousCharacterWasWhitelisted = YES;
-        } else if (previousCharacterWasWhitelisted) {
-            DLog(@"Previous character was whitelisted");
-            NSInteger index = [indexes[end] integerValue];
-            NSRange range = [attributedString doubleClickAtIndex:index];
-
-            end = [self indexInSortedArray:indexes
-                 withValueGreaterOrEqualTo:NSMaxRange(range)
-                      searchingForwardFrom:end];
-            previousCharacterWasWhitelisted = NO;
-        } else {
-            DLog(@"Not whitelisted, previous character not whitelisted");
-            break;
+        NSString *string = [stringBeforeLocation stringByAppendingString:stringFromLocation];
+        NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:string attributes:@{}] autorelease];
+        
+        // Will be in 1:1 correspondence with `coords`.
+        // The string in the cell at `coords[i]` starts at index `indexes[i]`.
+        NSMutableArray<NSNumber *> *indexes = [NSMutableArray array];
+        NSInteger prefixLength = 0;
+        for (NSNumber *length in stringLengthsInPrefix) {
+            [indexes addObject:@(prefixLength)];
+            prefixLength += length.integerValue;
         }
-    }
-    
-    // Same thing but in reverse.
-    
-    NSInteger start;
-    const NSUInteger numberOfCellsInPrefix = stringLengthsInPrefix.count;
+        for (NSNumber *index in indexesInSuffix) {
+            [indexes addObject:@(prefixLength + index.integerValue)];
+        }
 
-    // `provisionalStart` is an initial place to begin looking for the start of the word. This is
-    // used to compute the initial value of `start`, later on. If there is a suffix it is the index
-    // of the first character of the suffix. Otherwise it is the index of the last character of
-    // the prefix.
-    NSUInteger provisionalStart = numberOfCellsInPrefix;
-    if (coords.count == numberOfCellsInPrefix) {
-        // Earlier, we bailed out if `coords.count` was 0. Since `coords.count` > 0 and
-        // `coords.count` equals `numberOfCellsInPrefix` and
-        // `numberOfCellsInPrefix` equals `provisionalStart`,
-       //  then transitively `provisionalStart` > 0.
-        provisionalStart -= 1;
-    }
+        DLog(@"indexes: %@", indexes);
 
-    DLog(@"Provisional start is %@", @(provisionalStart));
+        // Set end to an index that is not in the middle of an OS-defined-word. It will be at the start
+        // of a word or on a whitelisted character.
+        BOOL previousCharacterWasWhitelisted = YES;
 
-    // First, ensure that start is either at the start of a word (as defined by the OS) or on a
-    // whitelisted character.
-    if ([self isWhitelistedAlphanumericAtCoord:[coords[provisionalStart] gridCoordValue]]) {
-        // On a whitelisted character. We'll search back past all of them.
-        DLog(@"Starting on a whitelisted character");
-        previousCharacterWasWhitelisted = YES;
-        start = provisionalStart;
-    } else {
-        // Not on a whitelisted character. Set start to the index of the cell of the first character
-        // of the word enclosing the cell indexed to by `provisionalStart`.
-        DLog(@"Not starting on a whitelisted character");
-        previousCharacterWasWhitelisted = NO;
-        NSUInteger location = [attributedString doubleClickAtIndex:[indexes[provisionalStart] integerValue]].location;
-        start = [self indexInSortedArray:indexes
-              withValueLessThanOrEqualTo:location
-                   searchingBackwardFrom:provisionalStart];
-    }
-    
-    //  Move back until two consecutive OS-defined words are found or we reach the start of the string.
-    while (start > 0) {
-        DLog(@"Consider start=%@ at %@", @(start-1), VT100GridCoordDescription([coords[start - 1] gridCoordValue]));
-        if ([self isWhitelistedAlphanumericAtCoord:[coords[start - 1] gridCoordValue]]) {
-            DLog(@"Is whitelisted");
-            --start;
+        // `end` can index into `coords` and `indexes`.
+        NSInteger end = stringLengthsInPrefix.count;
+        while (end < coords.count) {
+            DLog(@"Consider end=%@ at %@", @(end), VT100GridCoordDescription([coords[end] gridCoordValue]));
+            if ([self isWhitelistedAlphanumericAtCoord:[coords[end] gridCoordValue]]) {
+                DLog(@"Is whitelisted");
+                ++end;
+                previousCharacterWasWhitelisted = YES;
+            } else if (previousCharacterWasWhitelisted) {
+                DLog(@"Previous character was whitelisted");
+                NSInteger index = [indexes[end] integerValue];
+                NSRange range = [attributedString doubleClickAtIndex:index];
+
+                end = [self indexInSortedArray:indexes
+                     withValueGreaterOrEqualTo:NSMaxRange(range)
+                          searchingForwardFrom:end];
+                previousCharacterWasWhitelisted = NO;
+            } else {
+                DLog(@"Not whitelisted, previous character not whitelisted");
+                break;
+            }
+        }
+        
+        // Same thing but in reverse.
+        
+        NSInteger start;
+        const NSUInteger numberOfCellsInPrefix = stringLengthsInPrefix.count;
+
+        // `provisionalStart` is an initial place to begin looking for the start of the word. This is
+        // used to compute the initial value of `start`, later on. If there is a suffix it is the index
+        // of the first character of the suffix. Otherwise it is the index of the last character of
+        // the prefix.
+        NSUInteger provisionalStart = numberOfCellsInPrefix;
+        if (coords.count == numberOfCellsInPrefix) {
+            // Earlier, we bailed out if `coords.count` was 0. Since `coords.count` > 0 and
+            // `coords.count` equals `numberOfCellsInPrefix` and
+            // `numberOfCellsInPrefix` equals `provisionalStart`,
+           //  then transitively `provisionalStart` > 0.
+            provisionalStart -= 1;
+        }
+
+        DLog(@"Provisional start is %@", @(provisionalStart));
+
+        // First, ensure that start is either at the start of a word (as defined by the OS) or on a
+        // whitelisted character.
+        if ([self isWhitelistedAlphanumericAtCoord:[coords[provisionalStart] gridCoordValue]]) {
+            // On a whitelisted character. We'll search back past all of them.
+            DLog(@"Starting on a whitelisted character");
             previousCharacterWasWhitelisted = YES;
-        } else if (previousCharacterWasWhitelisted) {
-            DLog(@"Previous character was whitelisted");
-            NSUInteger location = [attributedString doubleClickAtIndex:[indexes[start - 1] integerValue]].location;
+            start = provisionalStart;
+        } else {
+            // Not on a whitelisted character. Set start to the index of the cell of the first character
+            // of the word enclosing the cell indexed to by `provisionalStart`.
+            DLog(@"Not starting on a whitelisted character");
+            previousCharacterWasWhitelisted = NO;
+            NSUInteger location = [attributedString doubleClickAtIndex:[indexes[provisionalStart] integerValue]].location;
             start = [self indexInSortedArray:indexes
                   withValueLessThanOrEqualTo:location
                        searchingBackwardFrom:provisionalStart];
-            previousCharacterWasWhitelisted = NO;
-        } else {
-            DLog(@"Not whitelisted, previous character not whitelisted");
-            break;
         }
-    }
+        
+        //  Move back until two consecutive OS-defined words are found or we reach the start of the string.
+        while (start > 0) {
+            DLog(@"Consider start=%@ at %@", @(start-1), VT100GridCoordDescription([coords[start - 1] gridCoordValue]));
+            if ([self isWhitelistedAlphanumericAtCoord:[coords[start - 1] gridCoordValue]]) {
+                DLog(@"Is whitelisted");
+                --start;
+                previousCharacterWasWhitelisted = YES;
+            } else if (previousCharacterWasWhitelisted) {
+                DLog(@"Previous character was whitelisted");
+                NSUInteger location = [attributedString doubleClickAtIndex:[indexes[start - 1] integerValue]].location;
+                start = [self indexInSortedArray:indexes
+                      withValueLessThanOrEqualTo:location
+                           searchingBackwardFrom:provisionalStart];
+                previousCharacterWasWhitelisted = NO;
+            } else {
+                DLog(@"Not whitelisted, previous character not whitelisted");
+                break;
+            }
+        }
 
-    VT100GridCoord startCoord = [coords[start] gridCoordValue];
-    VT100GridCoord endCoord = [coords[end - 1] gridCoordValue];
+        VT100GridCoord startCoord = [coords[start] gridCoordValue];
+        VT100GridCoord endCoord = [coords[end - 1] gridCoordValue];
 
-    // It's a half open interval so advance endCoord by one.
-    endCoord.x += 1;
-
-    // Make sure to include the DWC_RIGHT after the last character to be selected.
-    if (endCoord.x < [self xLimit] && [self haveDoubleWidthExtensionAt:endCoord]) {
+        // It's a half open interval so advance endCoord by one.
         endCoord.x += 1;
-    }
 
-    return [self windowedRangeWithRange:VT100GridCoordRangeMake(startCoord.x,
-                                                                startCoord.y,
-                                                                endCoord.x,
-                                                                endCoord.y)];
+        // Make sure to include the DWC_RIGHT after the last character to be selected.
+        if (endCoord.x < [self xLimit] && [self haveDoubleWidthExtensionAt:endCoord]) {
+            endCoord.x += 1;
+        }
+            result = [self windowedRangeWithRange:VT100GridCoordRangeMake(startCoord.x,
+                                                                          startCoord.y,
+                                                                          endCoord.x,
+                                                                          endCoord.y)];
+    }];
+    return result;
+}
+
+// Make characterAt: much faster when called with the same line number over and over again. Assumes
+// the line buffer won't be mutated while it's running.
+- (void)performBlockWithLineCache:(void (^)())block {
+    assert(!_shouldCacheLines);
+    _shouldCacheLines = YES;
+    block();
+    _shouldCacheLines = NO;
 }
 
 // Returns 0 if no value can be found less than or equal to `maximumValue`.
@@ -550,11 +558,34 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 - (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
      withValueLessThanOrEqualTo:(NSInteger)maximumValue
           searchingBackwardFrom:(NSInteger)start {
-    NSInteger i = start;
-    while (i > 0 && [indexes[i] integerValue] > maximumValue) {
-        i--;
+    if (start <= 0) {
+        return 0;
     }
-    return i;
+    NSInteger index = [indexes indexOfObject:@(maximumValue)
+             inSortedRange:NSMakeRange(0, start + 1)
+                   options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
+           usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+               return [obj1 compare:obj2];
+           }];
+    if (index == start + 1) {
+        // maximumValue is larger than all values. The last value is the largest one <= maximumValue.
+        return MAX(0, index - 1);
+    } else {
+        // maximumValue is less than or equal to largest value
+        NSInteger value = [indexes[index] integerValue];
+        if (value <= maximumValue) {
+            return index;
+        } else {
+            return MAX(0, index - 1);
+        }
+    }
+    return index;
+//    // This is the naïve algorithm the code above attempts to implement.
+//    NSInteger i = start;
+//    while (i > 0 && [indexes[i] integerValue] > maximumValue) {
+//        i--;
+//    }
+//    return i;
 }
 
 // Returns indexes.count if no value can be found greater or equal to `minimumValue`.
@@ -1127,11 +1158,14 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 }
 
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
-                                     respectContinuations:(BOOL)respectContinuations {
+                                     respectContinuations:(BOOL)respectContinuations
+                                                 maxChars:(int)maxChars {
     int start = [self lineNumberWithStartOfWholeLineIncludingLine:coord.y
-                                             respectContinuations:respectContinuations];
+                                             respectContinuations:respectContinuations
+                                                         maxChars:maxChars];
     int end = [self lineNumberWithEndOfWholeLineIncludingLine:coord.y
-                                             respectContinuations:respectContinuations];
+                                             respectContinuations:respectContinuations
+                                                     maxChars:maxChars];
     return [self windowedRangeWithRange:VT100GridCoordRangeMake(_logicalWindow.location,
                                                                 start,
                                                                 [self xLimit],
@@ -1413,23 +1447,39 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     return location;
 }
 
+// maxChars is a rough guideline here. If the line is very long it will go over by up to the width
+// of one windowed range.
 - (int)lineNumberWithStartOfWholeLineIncludingLine:(int)y
                               respectContinuations:(BOOL)respectContinuations
-{
+                                          maxChars:(int)maxChars {
+    const int width = [self widthOfWindowedRange];
+    if (maxChars < 0) {
+        maxChars = INT_MAX - width;
+    }
     int i = y;
-    while (i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+    NSInteger count = 0;
+    while (count < maxChars + width && i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+        count += width;
         i--;
     }
     return i;
 }
 
+// maxChars is a rough guideline here. If the line is very long it will go over by up to the width
+// of one windowed range.
 - (int)lineNumberWithEndOfWholeLineIncludingLine:(int)y
                             respectContinuations:(BOOL)respectContinuations
-{
+                                        maxChars:(int)maxChars {
     int i = y + 1;
+    const int width = [self widthOfWindowedRange];
+    if (maxChars < 0) {
+        maxChars = INT_MAX - width;
+    }
     int maxY = [_dataSource numberOfLines];
-    while (i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+    NSInteger count = 0;
+    while (count < maxChars + width && i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
         i++;
+        count += width;
     }
     return i - 1;
 }
@@ -1492,7 +1542,7 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     }
     VT100GridWindowedRange range;
     if (respectHardNewlines) {
-        range = [self rangeForWrappedLineEncompassing:coord respectContinuations:YES];
+        range = [self rangeForWrappedLineEncompassing:coord respectContinuations:YES maxChars:maxChars];
     } else {
         VT100GridCoordRange coordRange =
             VT100GridCoordRangeMake(_logicalWindow.location,
@@ -1740,6 +1790,14 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
     }
 }
 
+- (int)widthOfWindowedRange {
+    if (!_logicalWindow.length) {
+        return [_dataSource width];
+    } else {
+        return _logicalWindow.length;
+    }
+}
+
 - (screen_char_t)defaultChar {
     screen_char_t defaultChar = { 0 };
     defaultChar.foregroundColorMode = ColorModeAlternate;
@@ -1766,7 +1824,14 @@ const NSInteger kUnlimitedMaximumWordLength = NSIntegerMax;
 }
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord {
+    if (_shouldCacheLines && coord.y == _cachedLineNumber && _cachedLine != nil) {
+        return _cachedLine[coord.x];
+    }
     screen_char_t *theLine = [_dataSource getLineAtIndex:coord.y];
+    if (_shouldCacheLines) {
+        _cachedLineNumber = coord.y;
+        _cachedLine = theLine;
+    }
     return theLine[coord.x];
 }
 

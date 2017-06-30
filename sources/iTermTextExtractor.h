@@ -38,7 +38,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 
 // Suggested word lengths for rangeForWordAt:maximumLength:
 extern const NSInteger kReasonableMaximumWordLength;
-extern const NSInteger kUnlimitedMaximumWordLength;
+extern const NSInteger kLongMaximumWordLength;
 
 @interface iTermTextExtractor : NSObject
 
@@ -75,7 +75,8 @@ extern const NSInteger kUnlimitedMaximumWordLength;
 
 // Returns the range of the whole wrapped line including |coord|.
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
-                                  respectContinuations:(BOOL)respectContinuations;
+                                     respectContinuations:(BOOL)respectContinuations
+                                                 maxChars:(int)maxChars;
 
 // Returns the class for a character.
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter;
@@ -189,5 +190,11 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
                                        passingTest:(BOOL(^)(screen_char_t *c, VT100GridCoord coord))block;
 
 - (int)startOfIndentationOnLine:(int)line;
+
+#pragma mark - For tests
+
+- (NSInteger)indexInSortedArray:(NSArray<NSNumber *> *)indexes
+     withValueLessThanOrEqualTo:(NSInteger)maximumValue
+          searchingBackwardFrom:(NSInteger)start;
 
 @end

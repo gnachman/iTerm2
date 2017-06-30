@@ -13,6 +13,14 @@
 typedef struct {
     NSTimeInterval timestamp;
     screen_char_t continuation;
+    int number_of_wrapped_lines;
+    int width_for_number_of_wrapped_lines;
+
+    // Remembers the offsets at which double-width characters that are wrapped
+    // to the next line occur for a pane of width
+    // width_for_double_width_characters_cache.
+    NSMutableIndexSet *double_width_characters;
+    int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
@@ -178,5 +186,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 
 // Number of empty lines at the end of the block.
 - (int)numberOfTrailingEmptyLines;
+
+// Call this only before a line block has been created.
+void EnableDoubleWidthCharacterLineCache();
 
 @end

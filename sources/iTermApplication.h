@@ -49,6 +49,7 @@
 @property(atomic, retain) NSEvent *fakeCurrentEvent;
 @property(nonatomic, readonly) NSStatusItem *statusBarItem;
 @property(nonatomic) BOOL isUIElement;
+@property(nonatomic) BOOL localAuthenticationDialogOpen;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
