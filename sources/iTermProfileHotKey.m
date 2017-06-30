@@ -772,10 +772,8 @@ static NSString *const kArrangement = @"Arrangement";
         [self fastHideHotKeyWindow];
     }
 
-    // If there are any problems here, iterate over self.windowController.window.sheets which was
-    // added in 10.9. This is a workaround from before we dropped 10.8.
-    while (self.windowController.window.attachedSheet) {
-        [NSApp endSheet:self.windowController.window.attachedSheet];
+    for (NSWindow *sheet in self.windowController.window.sheets) {
+        [self.windowController.window endSheet:sheet];
     }
     self.closedByOtherHotkeyWindowOpening = otherIsRollingIn;
     [self rollOut];

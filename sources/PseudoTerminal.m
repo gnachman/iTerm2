@@ -4856,9 +4856,9 @@ ITERM_WEAKLY_REFERENCEABLE
             [CATransaction commit];
         }
     }];
-     if (noAnimations) {
-         [CATransaction commit];
-     }
+    if (noAnimations) {
+        [CATransaction commit];
+    }
 
     [_passwordManagerWindowController selectAccountName:name];
 }
