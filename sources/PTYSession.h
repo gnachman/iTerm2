@@ -448,7 +448,7 @@ typedef enum {
 // Is the user currently typing at a password prompt?
 @property(nonatomic, readonly) BOOL passwordInput;
 
-@property(nonatomic) BOOL isManPageViewer;
+@property(nonatomic) BOOL isSingleUseSession;
 
 #pragma mark - methods
 

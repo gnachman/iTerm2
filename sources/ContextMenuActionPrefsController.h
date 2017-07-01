@@ -16,7 +16,8 @@ typedef NS_ENUM(NSInteger, ContextMenuActions) {
     kOpenUrlContextMenuAction,
     kRunCommandContextMenuAction,
     kRunCoprocessContextMenuAction,
-    kSendTextContextMenuAction
+    kSendTextContextMenuAction,
+    kRunCommandInWindowContextMenuAction,
 };
 
 @protocol ContextMenuActionPrefsDelegate <NSObject>
