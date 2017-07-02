@@ -71,6 +71,7 @@ static NSString* kParameterKey = @"parameter";
 {
     switch (action) {
         case kRunCommandContextMenuAction:
+        case kRunCommandInWindowContextMenuAction:
         case kRunCoprocessContextMenuAction:
             return [parameter stringWithEscapedShellCharactersIncludingNewlines:NO];
         case kOpenFileContextMenuAction:
@@ -188,12 +189,14 @@ static NSString* kParameterKey = @"parameter";
                               @"Open URL…",
                               @"Run Command…",
                               @"Run Coprocess…",
-                              @"Send text…" ];
+                              @"Send text…",
+                              @"Run Command in Window…" ];
     NSArray *paramPlaceholders = @[ @"Enter file name",
                                     @"Enter URL",
                                     @"Enter command",
                                     @"Enter coprocess command",
-                                    @"Enter text" ];
+                                    @"Enter text",
+                                    @"Enter command" ];
 
 
     if (tableColumn == _titleColumn) {

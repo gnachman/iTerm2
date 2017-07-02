@@ -166,5 +166,7 @@ void OnHotKeyEvent(void);
 // Does a serialized fullscreening of the term's window. Slated for production in 3.1.
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term;
 
+- (void)openSingleUseWindowWithCommand:(NSString *)command;
+
 @end
 

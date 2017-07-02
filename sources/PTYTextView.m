@@ -3760,7 +3760,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
               @(kOpenUrlContextMenuAction): NSStringFromSelector(@selector(contextMenuActionOpenURL:)),
               @(kRunCommandContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommand:)),
               @(kRunCoprocessContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCoprocess:)),
-              @(kSendTextContextMenuAction): NSStringFromSelector(@selector(contextMenuActionSendText:)) };
+              @(kSendTextContextMenuAction): NSStringFromSelector(@selector(contextMenuActionSendText:)),
+              @(kRunCommandInWindowContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommandInWindow:)) };
 }
 
 - (SEL)selectorForSmartSelectionAction:(NSDictionary *)action {
@@ -3840,13 +3841,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)contextMenuActionRunCommand:(id)sender
-{
+- (void)contextMenuActionRunCommand:(id)sender {
     NSString *command = [sender representedObject];
-    NSLog(@"Run command: %@", command);
+    ELog(@"Run command: %@", command);
     [NSThread detachNewThreadSelector:@selector(runCommand:)
                              toTarget:[self class]
                            withObject:command];
+}
+
+- (void)contextMenuActionRunCommandInWindow:(id)sender {
+    NSString *command = [sender representedObject];
+    ELog(@"Run command in window: %@", command);
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command];
 }
 
 + (void)runCommand:(NSString *)command
