@@ -275,10 +275,9 @@ static void HandleSigChld(int n) {
 // Like login_tty but makes fd 0 the master, fd 1 the slave, fd 2 an open unix-domain socket
 // for transferring file descriptors, and fd 3 the write end of a pipe that closes when the server
 // dies.
+// IMPORTANT: This runs between fork and exec. Careful what you do.
 static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPipeWriteEnd) {
-    iTermFileDescriptorServerLog("Calling setsid");
     setsid();
-    iTermFileDescriptorServerLog("Calling ioctl");
     ioctl(slave, TIOCSCTTY, NULL);
 
     // This array keeps track of which file descriptors are in use and should not be dup2()ed over.
@@ -312,7 +311,6 @@ static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPi
             }
             if (!isInUse) {
                 // t is good. dup orig[o] to t and close orig[o]. Save t in temp[o].
-                iTermFileDescriptorServerLog("dup2 to candidate and close");
                 inuse[inuseCount++] = candidate;
                 temp[o] = candidate;
                 dup2(original, candidate);
@@ -325,7 +323,6 @@ static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPi
     // Dup the temp values to their desired values (which happens to equal the index in temp).
     // Close the temp file descriptors.
     for (int i = 0; i < sizeof(orig) / sizeof(*orig); i++) {
-        iTermFileDescriptorServerLog("dup2 to low number and close");
         dup2(temp[i], i);
         close(temp[i]);
     }
@@ -358,7 +355,6 @@ static int MyForkPty(int *amaster,
 
         case 0:
             // child
-            iTermFileDescriptorServerLog("Calling MyLoginTTY in child process");
             MyLoginTTY(master, slave, serverSocketFd, deadMansPipeWriteEnd);
             return 0;
 
