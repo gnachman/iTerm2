@@ -1656,9 +1656,6 @@ ITERM_WEAKLY_REFERENCEABLE
         // seems to be relatively slow, so we don't want to spend too much time doing that if the
         // terminal goes nuts and sends lots of title-change sequences.
         BOOL hadTimer = (self.desiredTitle != nil);
-        if (![self.window.title isEqualToString:title]) {
-            NSLog(@"Change title to %@", title);
-        }
         self.desiredTitle = title;
         if (!hadTimer) {
             if (!_windowWasJustCreated) {
