@@ -5530,9 +5530,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
           totalScrollbackOverflow:[_dataSource totalScrollbackOverflow]];
 }
 
-- (void)clearHighlights {
+- (void)clearHighlights:(BOOL)resetContext {
     [_findOnPageHelper clearHighlights];
-    [_findOnPageHelper resetCopiedFindContext];
+    if (resetContext) {
+        [_findOnPageHelper resetCopiedFindContext];
+    } else {
+        [_findOnPageHelper removeAllSearchResults];
+    }
 }
 
 - (void)setTransparency:(double)fVal {
@@ -6592,6 +6596,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (range.length > 0) {
                 foundDirty = YES;
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
+                [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
             }
         }

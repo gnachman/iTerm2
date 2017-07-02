@@ -74,7 +74,7 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 - (void)findViewControllerMakeDocumentFirstResponder;
 
 // Remove highlighted matches
-- (void)clearHighlights;
+- (void)findViewControllerClearSearch;
 
 // Preform a search
 - (void)findString:(NSString *)aString

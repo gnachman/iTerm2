@@ -1512,8 +1512,12 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Set session %@ to %@", self, VT100GridSizeDescription(size));
     [_screen setSize:size];
     [_shell setSize:size];
-    [_textview clearHighlights];
+    [_textview clearHighlights:NO];
     [[_delegate realParentWindow] invalidateRestorableState];
+    if (!_tailFindTimer &&
+        [_delegate sessionBelongsToVisibleTab]) {
+        [self beginTailFind];
+    }
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -4729,9 +4733,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self takeFocus];
 }
 
-- (void)clearHighlights
-{
-    [_textview clearHighlights];
+- (void)findViewControllerClearSearch {
+    [_textview clearHighlights:YES];
 }
 
 - (NSImage *)snapshot {
@@ -7368,7 +7371,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenClearHighlights {
-    [_textview clearHighlights];
+    [_textview clearHighlights:NO];
 }
 
 - (void)screenMouseModeDidChange {

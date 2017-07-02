@@ -344,7 +344,7 @@ const CGFloat kEdgeWidth = 3;
     [[[self view] animator] setFrame:[self collapsedFrame]];
     [NSAnimationContext endGrouping];
 
-    [delegate_ clearHighlights];
+    [delegate_ findViewControllerClearSearch];
     [delegate_ findViewControllerMakeDocumentFirstResponder];
 }
 
@@ -471,7 +471,7 @@ const CGFloat kEdgeWidth = 3;
     BOOL ok = NO;
     if ([delegate_ canSearch]) {
         if ([subString length] <= 0) {
-            [delegate_ clearHighlights];
+            [delegate_ findViewControllerClearSearch];
         } else {
             [delegate_ findString:subString
                  forwardDirection:direction
