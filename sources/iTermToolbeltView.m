@@ -1,9 +1,11 @@
 #import "iTermToolbeltView.h"
 
 #import "FutureMethods.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermDragHandleView.h"
+#import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
 #import "iTermToolWrapper.h"
 #import "iTermToolbeltSplitView.h"
@@ -245,7 +247,21 @@ static NSString *const kDynamicToolURL = @"URL";
 #pragma mark - NSView
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1] set];
+    NSColor *color = [NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1];
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            break;
+
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            if ([iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+                color = [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
+            }
+            break;
+    }
+
+    [color set];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
 }

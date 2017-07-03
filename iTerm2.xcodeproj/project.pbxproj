@@ -1696,6 +1696,8 @@
 		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
 		A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */; };
 		A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */; };
+		A68AC8F61F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */; };
+		A68AC8F71F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */; };
 		A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */; };
 		A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
@@ -3611,6 +3613,7 @@
 		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBundle+iTerm.h"; sourceTree = "<group>"; };
 		A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBundle+iTerm.m"; sourceTree = "<group>"; };
+		A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelperTest.m; sourceTree = "<group>"; };
 		A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys.png"; path = "images/Touch Bar Function Keys.png"; sourceTree = "<group>"; };
 		A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys@2x.png"; path = "images/Touch Bar Function Keys@2x.png"; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
@@ -5811,6 +5814,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */,
 				A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */,
 				C6675EB91C4FE95E0041173B /* Utilities */,
 				A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */,
@@ -8353,6 +8357,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A68AC8F61F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
@@ -8835,6 +8840,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A68AC8F71F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */,
 				A6BDB04A1B45EBD900F511E6 /* VT100CSIParserTest.m in Sources */,
 				A66B71231C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */,
 				A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */,

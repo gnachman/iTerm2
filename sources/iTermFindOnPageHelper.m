@@ -360,6 +360,75 @@
     }
 }
 
+- (NSInteger)smallestIndexOfLastSearchResultWithYLessThan:(NSInteger)query {
+    SearchResult *querySearchResult = [[[SearchResult alloc] init] autorelease];
+    querySearchResult.absStartY = query;
+    NSInteger index = [_searchResults indexOfObject:querySearchResult
+                                      inSortedRange:NSMakeRange(0, _searchResults.count)
+                                            options:(NSBinarySearchingInsertionIndex | NSBinarySearchingFirstEqual)
+                                    usingComparator:^NSComparisonResult(SearchResult * _Nonnull obj1, SearchResult * _Nonnull obj2) {
+                                        return [@(obj2.absStartY) compare:@(obj1.absStartY)];
+                                    }];
+    if (index == _searchResults.count) {
+        index--;
+    }
+    while (_searchResults[index].absStartY >= query) {
+        if (index + 1 == _searchResults.count) {
+            return NSNotFound;
+        }
+        index++;
+    }
+    return index;
+}
+
+- (NSInteger)largestIndexOfSearchResultWithYGreaterThanOrEqualTo:(NSInteger)query {
+    SearchResult *querySearchResult = [[[SearchResult alloc] init] autorelease];
+    querySearchResult.absStartY = query;
+    NSInteger index = [_searchResults indexOfObject:querySearchResult
+                                      inSortedRange:NSMakeRange(0, _searchResults.count)
+                                            options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
+                                    usingComparator:^NSComparisonResult(SearchResult * _Nonnull obj1, SearchResult * _Nonnull obj2) {
+                                        return [@(obj2.absStartY) compare:@(obj1.absStartY)];
+                                    }];
+    if (index == _searchResults.count) {
+        index--;
+    }
+    while (_searchResults[index].absStartY < query) {
+        if (index == 0) {
+            return NSNotFound;
+        }
+        index--;
+    }
+    return index;
+}
+
+- (NSRange)rangeOfSearchResultsInRangeOfLines:(NSRange)range {
+    if (_searchResults.count == 0) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    NSInteger tailIndex = [self largestIndexOfSearchResultWithYGreaterThanOrEqualTo:range.location];
+    if (tailIndex == NSNotFound) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    NSInteger headIndex = [self smallestIndexOfLastSearchResultWithYLessThan:NSMaxRange(range)];
+    if (tailIndex < headIndex) {
+        return NSMakeRange(NSNotFound, 0);
+    } else {
+        return NSMakeRange(headIndex, tailIndex - headIndex + 1);
+    }
+}
+
+- (void)removeAllSearchResults {
+    [_searchResults removeAllObjects];
+}
+
+- (void)removeSearchResultsInRange:(NSRange)range {
+    NSRange objectRange = [self rangeOfSearchResultsInRangeOfLines:range];
+    if (objectRange.location != NSNotFound && objectRange.length > 0) {
+        [_searchResults removeObjectsInRange:objectRange];
+    }
+}
+
 - (void)setStartPoint:(VT100GridAbsCoord)startPoint {
     _findCursor = startPoint;
 }

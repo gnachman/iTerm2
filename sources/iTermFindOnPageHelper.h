@@ -55,6 +55,7 @@
 @property(nonatomic, readonly) BOOL haveFindCursor;
 @property(nonatomic, readonly) VT100GridAbsCoord findCursorAbsCoord;
 @property(nonatomic, readonly) FindContext *copiedContext;
+@property(nonatomic, readonly) NSOrderedSet<SearchResult *> *searchResults;
 
 // Begin a new search.
 //
@@ -98,8 +99,12 @@ totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 
 // Remove highlights in a range of lines.
 - (void)removeHighlightsInRange:(NSRange)range;
+- (void)removeSearchResultsInRange:(NSRange)range;
+- (void)removeAllSearchResults;
 
 // Sets the location to start searching. TODO: Currently this only works for find next/prev.
 - (void)setStartPoint:(VT100GridAbsCoord)startPoint;
+
+- (NSRange)rangeOfSearchResultsInRangeOfLines:(NSRange)range;
 
 @end

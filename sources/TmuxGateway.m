@@ -87,10 +87,9 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [super dealloc];
 }
 
-- (void)abortWithErrorMessage:(NSString *)message
-{
-    [self abortWithErrorMessage:[NSString stringWithFormat:@"Reason: %@", message]
-                          title:@"A tmux protocol error occurred."];
+- (void)abortWithErrorMessage:(NSString *)message {
+    [self abortWithErrorMessage:[NSString stringWithFormat:@"%@", message]
+                          title:@"tmux Reported a Problem"];
 }
 
 - (void)abortWithErrorMessage:(NSString *)message title:(NSString *)title {
@@ -314,7 +313,15 @@ error:
                              withObject:nil
                              withObject:obj];
             } else {
-                [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@", currentCommand_]];
+                if ([currentCommandResponse_ hasPrefix:@"bad working directory:"] &&
+                    [currentCommand_[kCommandString] hasPrefix:@"new-window"] &&
+                    [currentCommand_[kCommandString] containsString:@"-c"] &&
+                    [self.maximumServerVersion compare:@2.1] != NSOrderedAscending) {
+                    [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistant initial working directory.\n\nInfo:\n%@",
+                                                 currentCommandResponse_, currentCommand_]];
+                } else {
+                    [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
+                }
                 return;
             }
         } else {

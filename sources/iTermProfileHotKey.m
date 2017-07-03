@@ -236,12 +236,29 @@ static NSString *const kArrangement = @"Arrangement";
     return rect.origin;
 }
 
+- (BOOL)rect:(NSRect)rect intersectsAnyScreenExcept:(NSScreen *)allowedScreen {
+    return [[NSScreen screens] anyWithBlock:^BOOL(NSScreen *screen) {
+        if (screen == allowedScreen) {
+            return NO;
+        }
+        NSRect screenFrame = screen.frame;
+        return NSIntersectsRect(rect, screenFrame);
+    }];
+}
+
 - (void)rollInAnimatingInDirection:(iTermAnimationDirection)direction {
     [self moveToPreferredScreen];
-    [self.windowController.window setFrameOrigin:[self hiddenOriginForScreen:self.windowController.screen]];
+    self.windowController.window.alphaValue = 0;
 
     NSRect destination = [self preferredFrameForWindowController:self.windowController];
-    self.windowController.window.alphaValue = 0;
+    NSRect proposedHiddenRect = self.windowController.window.frame;
+    proposedHiddenRect.origin = [self hiddenOriginForScreen:self.windowController.screen];
+    if ([self rect:proposedHiddenRect intersectsAnyScreenExcept:self.windowController.window.screen]) {
+        [self.windowController.window setFrame:destination display:YES];
+    } else {
+        [self.windowController.window setFrameOrigin:proposedHiddenRect.origin];
+    }
+
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         [context setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
         [context setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]];
@@ -258,6 +275,10 @@ static NSString *const kArrangement = @"Arrangement";
     NSRect source = self.windowController.window.frame;
     NSRect destination = source;
     destination.origin = [self hiddenOriginForScreen:self.windowController.window.screen];
+
+    if ([self rect:destination intersectsAnyScreenExcept:self.windowController.window.screen]) {
+        destination = source;
+    }
 
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         [context setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];

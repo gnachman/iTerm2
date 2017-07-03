@@ -370,6 +370,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Keeps the touch bar from updating on every keypress which is distracting.
     iTermRateLimitedUpdate *_touchBarRateLimitedUpdate;
     NSString *_previousTouchBarWord;
+
+    BOOL _windowWasJustCreated;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -456,6 +458,15 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
          windowType,
          screenNumber,
          @(hotkeyWindowType));
+
+    _windowWasJustCreated = YES;
+    PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        PseudoTerminal *strongSelf = weakSelf.weaklyReferencedObject;
+        if (strongSelf != nil) {
+            strongSelf->_windowWasJustCreated = NO;
+        }
+    });
 
     // Force the nib to load
     [self window];
@@ -1647,10 +1658,16 @@ ITERM_WEAKLY_REFERENCEABLE
         BOOL hadTimer = (self.desiredTitle != nil);
         self.desiredTitle = title;
         if (!hadTimer) {
+            if (!_windowWasJustCreated) {
+                // Unless the window was just created, set the title immediately. Issue 5876.
+                self.window.title = self.desiredTitle;
+            }
             PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
             static const NSTimeInterval kSetTitleDelay = 0.1;
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSetTitleDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                weakSelf.window.title = weakSelf.desiredTitle;
+                if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
+                    weakSelf.window.title = weakSelf.desiredTitle;
+                }
                 weakSelf.desiredTitle = nil;
             });
         }

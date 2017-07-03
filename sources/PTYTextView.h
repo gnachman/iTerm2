@@ -434,7 +434,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
         withOffset:(int)offset;
 
 // Remove highlighted terms from previous search.
-- (void)clearHighlights;
+// If resetContext is set then the search state will get reset to empty.
+// Otherwise, search results and highlights are removed and can be updated
+// on the next search.
+- (void)clearHighlights:(BOOL)resetContext;
 
 // Performs a find on the next chunk of text.
 - (BOOL)continueFind:(double *)progress;
