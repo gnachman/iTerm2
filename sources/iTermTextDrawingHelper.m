@@ -2702,6 +2702,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 }
 
 - (void)cursorDrawCharacterAt:(VT100GridCoord)coord
+                  doubleWidth:(BOOL)doubleWidth
                 overrideColor:(NSColor *)overrideColor
                       context:(CGContextRef)ctx
               backgroundColor:(NSColor *)backgroundColor {
@@ -2709,7 +2710,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     [context saveGraphicsState];
 
     int row = coord.y + _numberOfScrollbackLines;
-    VT100GridCoordRange coordRange = VT100GridCoordRangeMake(coord.x, row, coord.x + 1, row + 1);
+    int width = doubleWidth ? 2 : 1;
+    VT100GridCoordRange coordRange = VT100GridCoordRangeMake(coord.x, row, coord.x + width, row + 1);
     NSRect innerRect = [self rectForCoordRange:coordRange];
     NSRectClip(innerRect);
 

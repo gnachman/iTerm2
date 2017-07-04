@@ -279,7 +279,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
             if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profileHotKey.profile]) {
                 iTermHotKeyModifierActivation modifierActivation =
                     [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION
-                                                         inProfile:profileHotKey.profile];;
+                                                         inProfile:profileHotKey.profile];
                 [result addObject:[iTermHotKeyDescriptor descriptorWithModifierActivation:modifierActivation]];
             }
             return result;

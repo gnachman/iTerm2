@@ -40,6 +40,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     // Hotkey
     IBOutlet NSButton *_hotkeyEnabled;
+    IBOutlet NSView *_horizontalLine;
+    IBOutlet NSTextField *_shortcutOverloaded;
     IBOutlet NSTextField *_hotkeyField;
     IBOutlet NSTextField *_hotkeyLabel;
     IBOutlet NSButton *_configureHotKeyWindow;
@@ -117,6 +119,28 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self hotkeyEnabledDidChange]; };
     info.observer = ^() { [self updateHotkeyViews]; };
+    [self updateDuplicateWarning];
+}
+
+- (void)viewWillAppear {
+    [self updateDuplicateWarning];
+}
+
+- (iTermHotKeyDescriptor *)hotkeyDescriptor {
+    int theChar = [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter];
+    int modifiers = [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
+    int code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
+    if (code || theChar) {
+        return [NSDictionary descriptorWithKeyCode:code modifiers:modifiers];
+    } else {
+        return nil;
+    }
+}
+
+- (void)updateDuplicateWarning {
+    NSArray<iTermHotKeyDescriptor *> *descriptors = [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:nil];
+    _shortcutOverloaded.hidden = ![descriptors containsObject:[self hotkeyDescriptor]];
+    _horizontalLine.hidden = !_shortcutOverloaded.hidden;
 }
 
 - (void)ensureUniqunessOfModifierForButton:(NSPopUpButton *)buttonThatChanged
@@ -253,6 +277,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     BOOL isEnabled = [iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled];
     _hotkeyField.enabled = isEnabled;
     _hotkeyLabel.labelEnabled = isEnabled;
+    [self updateDuplicateWarning];
 }
 
 // Set the local copy of the hotkey, update the pref panel, and register it after a delay.

@@ -193,12 +193,14 @@
         CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
         if (smart && focused) {
             [self drawSmartCursorCharacter:screenChar
+                               doubleWidth:doubleWidth
                            backgroundColor:backgroundColor
                                        ctx:ctx
                                      coord:coord];
         } else {
             // Non-smart
             [self.delegate cursorDrawCharacterAt:coord
+                                     doubleWidth:doubleWidth
                                    overrideColor:foregroundColor
                                          context:ctx
                                  backgroundColor:backgroundColor];
@@ -207,6 +209,7 @@
 }
 
 - (void)drawSmartCursorCharacter:(screen_char_t)screenChar
+                     doubleWidth:(BOOL)doubleWidth
                  backgroundColor:(NSColor *)backgroundColor
                              ctx:(CGContextRef)ctx
                            coord:(VT100GridCoord)coord {
@@ -218,6 +221,7 @@
                                                                   backgroundColor:backgroundColor];
 
     [self.delegate cursorDrawCharacterAt:coord
+                             doubleWidth:doubleWidth
                            overrideColor:overrideColor
                                  context:ctx
                          backgroundColor:nil];
