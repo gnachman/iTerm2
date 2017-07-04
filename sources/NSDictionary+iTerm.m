@@ -27,6 +27,11 @@ static NSString *const kHotKeyKeyCode = @"keyCode";
 static NSString *const kHotKeyModifiers = @"modifiers";
 static NSString *const kHotKeyModifierActivation = @"modifier activation";
 
+static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlagCommand |
+                                                             NSEventModifierFlagControl |
+                                                             NSEventModifierFlagOption |
+                                                             NSEventModifierFlagShift);
+
 @interface NSArray(SizeEstimation)
 @end
 
@@ -256,7 +261,7 @@ static NSString *const kHotKeyModifierActivation = @"modifier activation";
 + (NSDictionary *)descriptorWithKeyCode:(NSUInteger)keyCode
                               modifiers:(NSEventModifierFlags)modifiers {
     return @{ kHotKeyKeyCode: @(keyCode),
-              kHotKeyModifiers: @(modifiers) };
+              kHotKeyModifiers: @(modifiers & iTermHotkeyModifierMask) };
 }
 
 + (iTermHotKeyDescriptor *)descriptorWithModifierActivation:(iTermHotKeyModifierActivation)activation {
@@ -268,7 +273,7 @@ static NSString *const kHotKeyModifierActivation = @"modifier activation";
 }
 
 - (NSEventModifierFlags)hotKeyModifiers {
-    return [self[kHotKeyModifiers] unsignedIntegerValue];
+    return [self[kHotKeyModifiers] unsignedIntegerValue] & iTermHotkeyModifierMask;
 }
 
 - (iTermHotKeyModifierActivation)hotKeyModifierActivation {
