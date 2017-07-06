@@ -551,6 +551,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     _shouldCacheLines = YES;
     block();
     _shouldCacheLines = NO;
+    _cachedLine = nil;
 }
 
 // Returns 0 if no value can be found less than or equal to `maximumValue`.
