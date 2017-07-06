@@ -1641,7 +1641,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if ((self.numberOfTabs == 1) && (self.tabs.firstObject.state & kPTYTabBellState) && !self.tabBarShouldBeVisible) {
         title = [title stringByAppendingString:@" 🔔"];
     }
-    if (liveResize_) {
+    if ((self.desiredTitle && [title isEqualToString:self.desiredTitle]) ||
+        [title isEqualToString:self.window.title]) {
+        return; // Title is already up to date
+    } else if (liveResize_) {
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
