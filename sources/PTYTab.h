@@ -208,5 +208,5 @@ extern NSString *const iTermTabDidChangeWindowNotification;
 - (void)updateIcon;
 
 - (void)checkInvariants:(NSString *)when;
-
+- (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 @end

@@ -156,10 +156,8 @@ typedef enum {
            hSpacing:(double)horizontalSpacing
            vSpacing:(double)verticalSpacing;
 
-// Notify the tab that this session, which is a tmux gateway, received a rename of a tmux window.
-- (void)sessionWithTmuxGateway:(PTYSession *)session
-       wasNotifiedWindowWithId:(int)windowId
-                     renamedTo:(NSString *)newName;
+// The tmux window title changed.
+- (void)sessionDidChangeTmuxWindowNameTo:(NSString *)newName;
 
 // Returns the objectSpecifier of the tab (used to identify a tab for Applescript).
 - (NSScriptObjectSpecifier *)objectSpecifier;

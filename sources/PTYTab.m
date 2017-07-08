@@ -535,13 +535,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [[tabViewItem_ tabView] selectedTabViewItem] == tabViewItem_;
 }
 
-- (void)sessionWithTmuxGateway:(PTYSession *)session
-       wasNotifiedWindowWithId:(int)windowId
-                     renamedTo:(NSString *)newName {
-    PTYTab *tab = [session.tmuxController window:windowId];
-    if (tab) {
-        [tab setTmuxWindowName:newName];
-    }
+- (void)sessionDidChangeTmuxWindowNameTo:(NSString *)newName {
+    [self setTmuxWindowName:newName];
 }
 
 - (void)sessionSelectContainingTab {

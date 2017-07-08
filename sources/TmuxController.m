@@ -569,6 +569,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     return [[windows_ objectForKey:[NSNumber numberWithInt:window]] objectAtIndex:0];
 }
 
+- (NSArray<PTYSession *> *)sessionsInWindow:(int)window {
+    return [[self window:window] sessions];
+}
+
 - (BOOL)isAttached
 {
     return !detached_;

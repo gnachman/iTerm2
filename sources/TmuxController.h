@@ -73,6 +73,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 
 - (PTYSession *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
+- (NSArray<PTYSession *> *)sessionsInWindow:(int)window;
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
                inWindow:(int)window;

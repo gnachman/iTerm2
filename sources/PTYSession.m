@@ -5249,7 +5249,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName {
-    [_delegate sessionWithTmuxGateway:self wasNotifiedWindowWithId:windowId renamedTo:newName];
+    PTYSession *representativeSession = [[_tmuxController sessionsInWindow:windowId] firstObject];
+    [representativeSession.delegate sessionDidChangeTmuxWindowNameTo:newName];
     [_tmuxController windowWasRenamedWithId:windowId to:newName];
 }
 
