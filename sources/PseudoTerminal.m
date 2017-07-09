@@ -3800,8 +3800,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTouchBarIfNeeded];
 }
 
-- (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
-{
+- (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
     // Disable redrawing during zoom-initiated live resize.
     zooming_ = YES;
     if (togglingLionFullScreen_) {
@@ -3810,23 +3809,6 @@ ITERM_WEAKLY_REFERENCEABLE
         return defaultFrame;
     }
 
-    // This function attempts to size the window to fit the screen with exactly
-    // MARGIN/VMARGIN-sized margins for the current session. If there are split
-    // panes then the margins probably won't turn out perfect. If other tabs have
-    // a different char size, they will also have imperfect margins.
-    float decorationHeight = [sender frame].size.height -
-        [[[[self currentSession] view] scrollview] documentVisibleRect].size.height + [iTermAdvancedSettingsModel terminalVMargin] * 2;
-    float decorationWidth = [sender frame].size.width -
-        [[[[self currentSession] view] scrollview] documentVisibleRect].size.width + [iTermAdvancedSettingsModel terminalMargin] * 2;
-
-    float charHeight = [self maxCharHeight:nil];
-    float charWidth = [self maxCharWidth:nil];
-    if (charHeight < 1 || charWidth < 1) {
-        DLog(@"During windowWillUseStandardFrame:defaultFrame:, charWidth or charHeight are less "
-             @"than 1 so using default frame. This is expected on 10.10 while restoring a "
-             @"fullscreen window.");
-        return defaultFrame;
-    }
     NSRect proposedFrame;
     // Initially, set the proposed x-origin to remain unchanged in case we're
     // zooming vertically only. The y-origin always goes to the top of the screen
@@ -3852,29 +3834,11 @@ ITERM_WEAKLY_REFERENCEABLE
         // Keep the width the same
         proposedFrame.size.width = [sender frame].size.width;
     } else {
-        // Set the width & origin to fill the screen horizontally to a character boundary
-        if ([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) {
-            // Don't snap width to character size multiples.
-            proposedFrame.size.width = defaultFrame.size.width;
-            proposedFrame.origin.x = defaultFrame.origin.x;
-        } else {
-            proposedFrame.size.width = decorationWidth + floor((defaultFrame.size.width - decorationWidth) / charWidth) * charWidth;
-        }
+        proposedFrame.size.width = defaultFrame.size.width;
         proposedFrame.origin.x = defaultFrame.origin.x;
     }
-    if ([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) {
-        // Don't snap width to character size multiples.
-        proposedFrame.size.height = defaultFrame.size.height;
-        proposedFrame.origin.y = defaultFrame.origin.y;
-    } else {
-        // Set the height to fill the screen to a character boundary.
-        proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight) / charHeight) * charHeight + decorationHeight;
-        proposedFrame.origin.y += defaultFrame.size.height - proposedFrame.size.height;
-        PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
-               defaultFrame.size.width, defaultFrame.size.height,
-               proposedFrame.origin.x, proposedFrame.origin.y,
-               proposedFrame.size.width, proposedFrame.size.height);
-    }
+    proposedFrame.size.height = defaultFrame.size.height;
+    proposedFrame.origin.y = defaultFrame.origin.y;
     return proposedFrame;
 }
 
