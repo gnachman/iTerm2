@@ -11,7 +11,11 @@
 @implementation iTermScriptingWindow
 
 + (instancetype)scriptingWindowWithWindow:(NSWindow *)window {
-    return [[[self alloc] initWithObject:window] autorelease];
+    if (window) {
+        return [[[self alloc] initWithObject:window] autorelease];
+    } else {
+        return nil;
+    }
 }
 
 - (instancetype)initWithObject:(NSWindow *)window {
