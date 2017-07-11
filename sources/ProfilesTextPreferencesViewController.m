@@ -293,7 +293,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
 }
 
-- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel {
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
     return kValidModesForFontPanel;
 }
 
