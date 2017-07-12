@@ -25,7 +25,7 @@
 #pragma mark - Handlers for commands
 
 - (id)handleSelectCommand:(NSScriptCommand *)command {
-    [[iTermController sharedInstance] setCurrentTerminal:_delegate];
+    [[iTermController sharedInstance] setCurrentTerminal:(PseudoTerminal *)self.ptyDelegate];
     return nil;
 }
 
@@ -40,14 +40,14 @@
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
     PTYSession *session =
         [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:_delegate
+                                              inTerminal:(PseudoTerminal *)self.ptyDelegate
                                                  withURL:nil
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:NO
                                                  command:command
                                                    block:nil];
-    return [_delegate tabForSession:session];
+    return [self.ptyDelegate tabForSession:session];
 }
 
 - (id)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
@@ -63,35 +63,35 @@
     }
     PTYSession *session =
         [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:_delegate
+                                              inTerminal:(PseudoTerminal *)self.ptyDelegate
                                                  withURL:nil
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:NO
                                                  command:command
                                                    block:nil];
-    return [_delegate tabForSession:session];
+    return [self.ptyDelegate tabForSession:session];
 }
 
 - (id)handleRevealHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {
-    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] revealForScripting];
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)self.ptyDelegate] revealForScripting];
     return nil;
 }
 
 - (id)handleHideHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {
-    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] hideForScripting];
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)self.ptyDelegate] hideForScripting];
     return nil;
 }
 
 - (id)handleToggleHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {
-    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] toggleForScripting];
+    [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)self.ptyDelegate] toggleForScripting];
     return nil;
 }
 
 #pragma mark - Accessors
 
 - (NSArray *)tabs {
-    return [_delegate tabs];
+    return [(PseudoTerminal *)self.ptyDelegate tabs];
 }
 
 - (void)setTabs:(NSArray *)tabs {
@@ -105,43 +105,43 @@
 }
 
 - (NSUInteger)countOfTabs {
-    return [[_delegate tabs] count];
+    return [[(PseudoTerminal *)self.ptyDelegate tabs] count];
 }
 
 - (id)valueInTabsAtIndex:(unsigned)anIndex {
-    return [_delegate tabs][anIndex];
+    return [(PseudoTerminal *)self.ptyDelegate tabs][anIndex];
 }
 
 - (void)replaceInTabs:(PTYTab *)replacementTab atIndex:(unsigned)anIndex {
-    [_delegate insertInTabs:replacementTab atIndex:anIndex];
-    [_delegate closeTab:[_delegate tabs][anIndex + 1]];
+    [self insertInTabs:replacementTab atIndex:anIndex];
+    [(PseudoTerminal *)self.ptyDelegate closeTab:[(PseudoTerminal *)self.ptyDelegate tabs][anIndex + 1]];
 }
 
 - (void)insertInTabs:(PTYTab *)tab atIndex:(unsigned)anIndex {
-    [_delegate insertTab:tab atIndex:anIndex];
+    [(PseudoTerminal *)self.ptyDelegate insertTab:tab atIndex:anIndex];
 }
 
 - (void)removeFromTabsAtIndex:(unsigned)anIndex {
-    NSArray *tabs = [_delegate tabs];
-    [_delegate closeTab:tabs[anIndex]];
+    NSArray *tabs = [(PseudoTerminal *)self.ptyDelegate tabs];
+    [(PseudoTerminal *)self.ptyDelegate closeTab:tabs[anIndex]];
 }
 
 
 - (PTYTab *)currentTab {
-    return [_delegate currentTab];
+    return [(PseudoTerminal *)self.ptyDelegate currentTab];
 }
 
 - (PTYSession *)currentSession {
-    return [_delegate currentSession];
+    return [(PseudoTerminal *)self.ptyDelegate currentSession];
 }
 
 - (BOOL)isHotkeyWindow {
-    return [_delegate isHotKeyWindow];
+    return [(PseudoTerminal *)self.ptyDelegate isHotKeyWindow];
 }
 
 - (NSString *)hotkeyWindowProfile {
-    if ([_delegate isHotKeyWindow]) {
-        return [[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:_delegate] profile] objectForKey:KEY_NAME];
+    if ([(PseudoTerminal *)self.ptyDelegate isHotKeyWindow]) {
+        return [[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)self.ptyDelegate] profile] objectForKey:KEY_NAME];
     } else {
         return nil;
     }

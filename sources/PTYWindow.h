@@ -56,6 +56,7 @@ extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 @property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
 // A unique identifier that does not get recycled during the program's lifetime.
 @property(nonatomic, readonly) NSString *windowIdentifier;
+@property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

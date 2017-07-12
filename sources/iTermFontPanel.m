@@ -15,7 +15,7 @@
     [NSFontManager setFontPanelFactory:[iTermFontPanel class]];
 }
 
-- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
 }

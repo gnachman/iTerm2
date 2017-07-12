@@ -7465,7 +7465,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       userInfo:nil];
 }
 
-- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
 }
