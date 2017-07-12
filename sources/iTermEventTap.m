@@ -14,8 +14,10 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 
 @implementation iTermEventTap {
     // When using an event tap, these will be non-NULL.
-    CFMachPortRef _eventTapMachPort;
-    CFRunLoopSourceRef _runLoopEventSource;
+    CFMachPortRef _keyDownMachPort;
+    CFRunLoopSourceRef _keyDownEventSource;
+    CFMachPortRef _flagsChangedMachPort;  // weak
+    CFRunLoopSourceRef _flagsChangedEventSource;  // weak
 }
 
 + (instancetype)sharedInstance {
@@ -78,7 +80,7 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 }
 
 - (BOOL)isEnabled {
-    return _eventTapMachPort != NULL;
+    return _keyDownMachPort != NULL && _flagsChangedMachPort != NULL;
 }
 
 #pragma mark - Private
@@ -149,7 +151,8 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy,
 }
 
 - (void)reEnable {
-    CGEventTapEnable(_eventTapMachPort, true);
+    CGEventTapEnable(_keyDownMachPort, true);
+    CGEventTapEnable(_flagsChangedMachPort, true);
 }
 
 // Indicates if the user at the keyboard is the same user that owns this process. Used to avoid
@@ -177,11 +180,23 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy,
     DLog(@"Stop event tap %@", [NSThread callStackSymbols]);
     assert(self.isEnabled);
     CFRunLoopRemoveSource(CFRunLoopGetCurrent(),
-                          _runLoopEventSource,
+                          _keyDownEventSource,
                           kCFRunLoopCommonModes);
-    CFMachPortInvalidate(_eventTapMachPort);  // Switches off the event tap.
-    CFRelease(_eventTapMachPort);
-    _eventTapMachPort = NULL;
+    CFRunLoopRemoveSource(CFRunLoopGetCurrent(),
+                          _flagsChangedEventSource,
+                          kCFRunLoopCommonModes);
+
+    // Switch off the event taps.
+    CFMachPortInvalidate(_keyDownMachPort);
+    CFRelease(_keyDownMachPort);
+    _keyDownMachPort = NULL;
+
+    CFMachPortInvalidate(_flagsChangedMachPort);
+    CFRelease(_flagsChangedMachPort);
+    _flagsChangedMachPort = NULL;
+
+    _keyDownEventSource = NULL;
+    _flagsChangedEventSource = NULL;
 }
 
 - (BOOL)startEventTap {
@@ -189,34 +204,75 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy,
     assert(!self.isEnabled);
 
     DLog(@"Register event tap.");
-    _eventTapMachPort = CGEventTapCreate(kCGHIDEventTap,
-                                         kCGTailAppendEventTap,
-                                         kCGEventTapOptionDefault,
-                                         (CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventFlagsChanged)),
-                                         (CGEventTapCallBack)OnTappedEvent,
-                                         self);
-    if (!_eventTapMachPort) {
-        XLog(@"CGEventTapCreate failed");
-        return NO;
+    _keyDownMachPort = CGEventTapCreate(kCGHIDEventTap,
+                                        kCGTailAppendEventTap,
+                                        kCGEventTapOptionDefault,
+                                        CGEventMaskBit(kCGEventKeyDown),
+                                        (CGEventTapCallBack)OnTappedEvent,
+                                        self);
+    if (!_keyDownMachPort) {
+        XLog(@"CGEventTapCreate failed for key down events");
+        goto error;
+    }
+    _flagsChangedMachPort = CGEventTapCreate(kCGHIDEventTap,
+                                             kCGTailAppendEventTap,
+                                             kCGEventTapOptionDefault,
+                                             CGEventMaskBit(kCGEventFlagsChanged),
+                                             (CGEventTapCallBack)OnTappedEvent,
+                                             self);
+    if (!_flagsChangedMachPort) {
+        XLog(@"CGEventTapCreate failed for flags changed events");
+        goto error;
     }
 
-    DLog(@"Create runloop source");
-    _runLoopEventSource = CFMachPortCreateRunLoopSource(NULL, _eventTapMachPort, 0);
-    if (_runLoopEventSource == NULL) {
-        XLog(@"CFMachPortCreateRunLoopSource failed.");
-        CFRelease(_eventTapMachPort);
-        _eventTapMachPort = NULL;
-        return NO;
+    DLog(@"Create runloop source for keydown");
+    _keyDownEventSource = CFMachPortCreateRunLoopSource(NULL, _keyDownMachPort, 0);
+    if (_keyDownEventSource == NULL) {
+        XLog(@"CFMachPortCreateRunLoopSource for key down failed.");
+        goto error;
+    }
+
+    DLog(@"Create runloop source for flags changed");
+    _flagsChangedEventSource = CFMachPortCreateRunLoopSource(NULL, _flagsChangedMachPort, 0);
+    if (_flagsChangedEventSource == NULL) {
+        XLog(@"CFMachPortCreateRunLoopSource for flags changed failed.");
+        goto error;
     }
 
     DLog(@"Adding run loop source.");
     // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
     CFRunLoopAddSource(CFRunLoopGetCurrent(),
-                       _runLoopEventSource,
+                       _keyDownEventSource,
                        kCFRunLoopCommonModes);
-    CFRelease(_runLoopEventSource);
+    CFRelease(_keyDownEventSource);
+
+    CFRunLoopAddSource(CFRunLoopGetCurrent(),
+                       _flagsChangedEventSource,
+                       kCFRunLoopCommonModes);
+    CFRelease(_flagsChangedEventSource);
 
     return YES;
+
+error:
+    if (_keyDownEventSource) {
+        CFRelease(_keyDownEventSource);
+        _keyDownEventSource = NULL;
+    }
+    if (_flagsChangedEventSource) {
+        CFRelease(_flagsChangedEventSource);
+        _flagsChangedEventSource = NULL;
+    }
+    if (_keyDownMachPort) {
+        CFMachPortInvalidate(_keyDownMachPort);
+        CFRelease(_keyDownMachPort);
+        _keyDownMachPort = NULL;
+    }
+    if (_flagsChangedMachPort) {
+        CFRelease(_flagsChangedMachPort);
+        _flagsChangedMachPort = NULL;
+    }
+    return NO;
+
 }
 
 @end
