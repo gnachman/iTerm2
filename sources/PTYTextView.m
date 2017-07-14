@@ -1660,6 +1660,10 @@ static const int kDragThreshold = 3;
         // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.
         return NO;
     }
+    if (event.modifierFlags & NSEventModifierFlagOption) {
+        // Hold alt to disable sending arrow keys.
+        return NO;
+    }
     BOOL alternateMouseScroll = [iTermAdvancedSettingsModel alternateMouseScroll];
     NSString *upString = [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
     NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
