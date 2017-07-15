@@ -1507,7 +1507,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 - (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem asTabs:(BOOL)asTabs {
     [WindowArrangements refreshRestoreArrangementsMenu:menuItem
                                           withSelector:asTabs ? @selector(restoreWindowArrangementAsTabs:) : @selector(restoreWindowArrangement:)
-                                       defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
+                                       defaultShortcut:kRestoreDefaultWindowArrangementShortcut
+                                            identifier:asTabs ? @"Restore Window Arrangement as Tabs" : @"Restore Window Arrangement"];
 }
 
 - (NSMenu *)topLevelViewNamed:(NSString *)menuName {

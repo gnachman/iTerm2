@@ -140,7 +140,8 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 
 + (void)refreshRestoreArrangementsMenu:(NSMenuItem *)menuItem
                           withSelector:(SEL)selector
-                       defaultShortcut:(NSString *)defaultShortcut {
+                       defaultShortcut:(NSString *)defaultShortcut
+                            identifier:(NSString *)identifier {
     while ([[menuItem submenu] numberOfItems]) {
         [[menuItem submenu] removeItemAtIndex:0];
     }
@@ -154,9 +155,10 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
         } else {
             theShortcut = @"";
         }
-        [[menuItem submenu] addItemWithTitle:theName
-                                       action:selector
-                                keyEquivalent:theShortcut];
+        NSMenuItem *individualItem = [[menuItem submenu] addItemWithTitle:theName
+                                                                   action:selector
+                                                            keyEquivalent:theShortcut];
+        individualItem.identifier = [NSString stringWithFormat:@"%@:%@", theName, identifier];
     }
 }
 
