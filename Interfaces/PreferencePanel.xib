@@ -5866,8 +5866,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" id="15140" userLabel="Copy Preferences to Profile push button">
-                    <rect key="frame" x="93" y="55" width="296" height="32"/>
+                <button verticalHuggingPriority="750" misplaced="YES" id="15140" userLabel="Copy Preferences to Profile push button">
+                    <rect key="frame" x="93" y="53" width="296" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Copy Current Settings to Selected Profile" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="15141">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
