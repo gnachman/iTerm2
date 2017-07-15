@@ -91,7 +91,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self registerShortcut:shortcut];
     }
     if (_hasModifierActivation && !_registered) {
-        [[iTermEventTap sharedInstance] addObserver:self];
+        [[iTermFlagsChangedEventTap sharedInstance] addObserver:self];
     }
     _registered = YES;
 }
@@ -122,7 +122,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self unregisterCarbonHotKey:_carbonHotKeys.firstObject];
     }
     if (_registered) {
-        [[iTermEventTap sharedInstance] removeObserver:self];
+        [[iTermFlagsChangedEventTap sharedInstance] removeObserver:self];
     }
     _registered = NO;
 }
@@ -187,7 +187,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)handleActivationModifierPress {
     if ([self activationModiferPressIsDoubleTap]) {
-        NSArray *siblings = [[[iTermEventTap sharedInstance] observers] mapWithBlock:^id(iTermWeakReference<id<iTermEventTapObserver>> *anObject) {
+        NSArray *siblings = [[[iTermFlagsChangedEventTap sharedInstance] observers] mapWithBlock:^id(iTermWeakReference<id<iTermEventTapObserver>> *anObject) {
             if (![anObject.weaklyReferencedObject isKindOfClass:[self class]]) {
                 return NO;
             }
