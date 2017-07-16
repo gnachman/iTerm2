@@ -23,16 +23,20 @@
  */
 @interface iTermEventTap : NSObject
 
-// Indicates if the event tap ahs started. When a remapping delegate or observers are present it will
+// Indicates if the event tap has started. When a remapping delegate or observers are present it will
 // be enabled.
 @property(nonatomic, getter=isEnabled, readonly) BOOL enabled;
 
-// While the event tap is enabled the delegate's method is invoked on each key-down.
+// While the event tap is enabled the delegate's method is invoked on each
+// event. The returned value replaces the original event. This must be set for
+// the event tap to be enabled. If you want read-only access add yourself as an
+// observer.
 @property(nonatomic, assign) id<iTermEventTapRemappingDelegate> remappingDelegate;
 
 @property(nonatomic, readonly) NSArray<iTermWeakReference<id<iTermEventTapObserver>> *> *observers;
 
-+ (instancetype)sharedInstance;
+// `types` is from CGEventMaskBit(kCGEventKeyDown), for example
+- (instancetype)initWithEventTypes:(CGEventMask)types NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)addObserver:(id<iTermEventTapObserver>)observer;
@@ -40,5 +44,14 @@
 
 // For testing. Returns the transformed event.
 - (NSEvent *)runEventTapHandler:(NSEvent *)event;
+
+@end
+
+// Use this event tap to catch flags-changed events. It's provided as a
+// convenience since there are multiple consumers. It is enabled even when the
+// remapping delegate is set to nil.
+@interface iTermFlagsChangedEventTap : iTermEventTap
+
++ (instancetype)sharedInstance;
 
 @end

@@ -37,7 +37,8 @@
 
 + (void)refreshRestoreArrangementsMenu:(NSMenuItem *)menuItem
                           withSelector:(SEL)selector
-                       defaultShortcut:(NSString *)defaultShortcut;
+                       defaultShortcut:(NSString *)defaultShortcut
+                            identifier:(NSString *)identifier;
 
 + (NSString *)nameForNewArrangement;
 

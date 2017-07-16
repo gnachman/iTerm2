@@ -39,6 +39,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
+#import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermWarning.h"
@@ -2823,16 +2824,21 @@ ITERM_WEAKLY_REFERENCEABLE
     return NO;
 }
 
-+ (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu {
++ (BOOL)_recursiveSelectMenuItemWithTitle:(NSString*)title identifier:(NSString *)identifier inMenu:(NSMenu*)menu {
     for (NSMenuItem* item in [menu itemArray]) {
         if (![item isEnabled] || [item isHidden]) {
             continue;
         }
         if ([item hasSubmenu]) {
-            if ([PTYSession _recursiveSelectMenuItem:theName inMenu:[item submenu]]) {
+            if ([PTYSession _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[item submenu]]) {
                 return YES;
             }
-        } else if ([theName isEqualToString:[item title]]) {
+        } else if (item.identifier && [identifier isEqualToString:item.identifier]) {
+            [NSApp sendAction:[item action]
+                           to:[item target]
+                         from:item];
+            return YES;
+        } else if (!identifier && [title isEqualToString:[item title]]) {
             [NSApp sendAction:[item action]
                            to:[item target]
                          from:item];
@@ -2876,9 +2882,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-+ (void)selectMenuItem:(NSString*)theName
-{
-    if (![self _recursiveSelectMenuItem:theName inMenu:[NSApp mainMenu]]) {
++ (void)selectMenuItem:(NSString*)theName {
+    NSArray *parts = [theName componentsSeparatedByString:@"\n"];
+    NSString *title = parts.firstObject;
+    NSString *identifier = nil;
+    // Only 10.12 and later support identifiers on menu items in interface builder.
+    if (IsSierraOrLater() && parts.count > 1) {
+        identifier = parts[1];
+    }
+    if (![self _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]]) {
         NSBeep();
     }
 }

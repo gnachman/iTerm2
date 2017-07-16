@@ -1,3 +1,4 @@
+
 #import <Cocoa/Cocoa.h>
 
 #import "iTermModifierRemapper.h"
@@ -12,7 +13,9 @@
 @interface iTermModifierRemapper()<iTermEventTapRemappingDelegate>
 @end
 
-@implementation iTermModifierRemapper
+@implementation iTermModifierRemapper {
+    iTermEventTap *_keyDown;
+}
 
 + (instancetype)sharedInstance {
   static dispatch_once_t onceToken;
@@ -21,6 +24,11 @@
       instance = [[self alloc] init];
   });
   return instance;
+}
+
+- (void)dealloc {
+    [_keyDown release];
+    [super dealloc];
 }
 
 #pragma mark - APIs
@@ -34,7 +42,7 @@
 }
 
 - (BOOL)isRemappingModifiers {
-  return [[iTermEventTap sharedInstance] isEnabled];
+  return [_keyDown isEnabled];
 }
 
 - (iTermPreferencesModifierTag)controlRemapping {
@@ -68,18 +76,27 @@
 
 #pragma mark - Private
 
+- (iTermEventTap *)keyDown {
+    if (!_keyDown) {
+        _keyDown = [[iTermEventTap alloc] initWithEventTypes:CGEventMaskBit(kCGEventKeyDown)];
+    }
+    return _keyDown;
+}
+
 - (void)beginRemappingModifiers {
     DLog(@"Begin remapping modifiers");
-    [[iTermEventTap sharedInstance] setRemappingDelegate:self];
+    [self.keyDown setRemappingDelegate:self];
+    [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:self];
     
-    if (![[iTermEventTap sharedInstance] isEnabled]) {
+    if (![_keyDown isEnabled]) {
         DLog(@"The event tap is NOT enabled");
         [self requestAccessibilityPermission];
     }
 }
 
 - (void)stopRemappingModifiers {
-    [[iTermEventTap sharedInstance] setRemappingDelegate:nil];
+    [_keyDown setRemappingDelegate:nil];
+    [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:nil];
 }
 
 - (void)requestAccessibilityPermission {
