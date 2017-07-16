@@ -1937,6 +1937,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                     orCharacter:code
                       positions:positions
                          offset:(i - indexRange.location) * _cellSize.width];
+            if (characterAttributes.boxDrawing) {
+                [builder disableFastPath];
+            }
         }
     }
     if (builder.length) {

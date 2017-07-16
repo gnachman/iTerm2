@@ -125,7 +125,9 @@
 }
 
 - (void)appendString:(NSString *)string {
-    if (_zippy) {
+    // Require a string length of 1 to avoid using zippy for combining marks, which core graphics
+    // renders poorly. Zippy still has value for using core graphics for nonascii uncombined characters.
+    if (_zippy && string.length == 1) {
         NSInteger i;
         for (i = 0; i < string.length; i++) {
             unichar c = [string characterAtIndex:i];
