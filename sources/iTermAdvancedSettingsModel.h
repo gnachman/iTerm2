@@ -191,5 +191,6 @@
 + (NSString *)viewManPageCommand;
 + (BOOL)preventEscapeSequenceFromClearingHistory;
 + (BOOL)dwcLineCache;
++ (BOOL)lowFiCombiningMarks;
 
 @end
