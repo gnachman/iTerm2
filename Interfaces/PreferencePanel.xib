@@ -2051,7 +2051,7 @@ DQ
                 <slider verticalHuggingPriority="750" id="4896">
                     <rect key="frame" x="141" y="125" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or whtie.</string>
+                    <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or white.</string>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
                     <connections>
                         <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>

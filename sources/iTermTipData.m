@@ -85,11 +85,11 @@
                         kTipBodyKey: @"Press ⌥⌘B to step back in time in a terminal window. Use arrow keys to go frame by frame. Hold ⇧ and press arrow keys to go faster." },
 
             @"0019": @{ kTipTitleKey: @"Hotkey Window",
-                        kTipBodyKey: @"You can have a terminal window open with a keystroke, even while in other apps. Turn on “Prefs > Keys > Show/Hide iTerm2 with a system-wide hotkey” and “Hotkey toggles a dedicated window with profile.”" },
+                        kTipBodyKey: @"You can have a terminal window open with a keystroke, even while in other apps. Click “Create a Dedicated Hotkey Window” in “Prefs > Keys.”" },
 
     // Small things
             @"0020": @{ kTipTitleKey: @"Hotkey Window",
-                        kTipBodyKey: @"New in iTerm2 version 3: hotkey windows can stay open after losing focus. Turn it on in “Prefs > Keys.”" },
+                        kTipBodyKey: @"Hotkey windows can stay open after losing focus. Turn it on in “Window > Pin Hotkey Window.”" },
 
             @"0021": @{ kTipTitleKey: @"Cursor Guide",
                         kTipBodyKey: @"The cursor guide is a horizontal line that follows your cursor. You can turn it on in “Prefs > Profiles > Colors” or toggle it with the ⌥⌘; shortcut." },  // TODO Add learn more for escape sequence
@@ -244,6 +244,24 @@
             @"0065": @{ kTipTitleKey: @"Coprocesses",
                         kTipBodyKey: @"A coprocess is a job, such as a shell script, that has a special relationship with a particular iTerm2 session. All output in a terminal window (that is, what you see on the screen) is also input to the coprocess. All output from the coprocess acts like text that the user is typing at the keyboard.",
                         kTipUrlKey: @"https://iterm2.com/coprocesses.html" },
+
+            @"0066": @{ kTipTitleKey: @"Touch Bar Customization",
+                        kTipBodyKey: @"You can customize the touch bar by selecting “View > Customize Touch Bar.” You can add a tab bar for full-screen mode, a user-customizable status button, and you can even define your own touch bar buttons in Prefs > Keys. There’s also a new shell integration tool to customize touch bar function key labels." },
+
+            @"0067": @{ kTipTitleKey: @"Ligatures",
+                        kTipBodyKey: @"If you use a font that supports ligatures, you can enable ligature support in Prefs > Profiles > Text." },
+
+            @"0068": @{ kTipTitleKey: @"Floating Hotkey Window",
+                        kTipBodyKey: @"New in 3.1: You can configure your hotkey window to appear over other apps’ full screen windows. Turn on “Floating Window” in “Prefs > Profiles > Keys > Customize Hotkey Window.”" },
+
+            @"0069": @{ kTipTitleKey: @"Multiple Hotkey Windows",
+                        kTipBodyKey: @"New in 3.1: You can have multiple hotkey windows. Each profile can have one or more hotkeys." },
+
+            @"0070": @{ kTipTitleKey: @"Double-Tap Hotkey",
+                        kTipBodyKey: @"New in 3.1: You can configure a hotkey window to open on double-tap of a modifier in “Prefs > Profiles > Keys > Customize Hotkey Window.”" },
+
+            @"0071": @{ kTipTitleKey: @"Buried Sessions",
+                        kTipBodyKey: @"You can “bury” a session with “Session > Bury Session.” It remains hidden until you restore it by selecting it from “Session > Buried Sessions > Your session.”" },
 
             };
 }
