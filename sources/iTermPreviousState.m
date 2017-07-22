@@ -6,20 +6,31 @@
 
 @implementation iTermPreviousState
 
-- (instancetype)init {
+- (instancetype)initWithBundleIdentifier:(NSString *)bundleIdentifier
+                               processID:(pid_t)processID {
     self = [super init];
     if (self) {
-        NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-        DLog(@"Saving state: active app is %@", activeAppDict);
-        if ([[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:[[NSBundle mainBundle] bundleIdentifier]]) {
+        if ([bundleIdentifier isEqualToString:[[NSBundle mainBundle] bundleIdentifier]]) {
             self.previouslyActiveAppPID = nil;
         } else {
-            self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
+            self.previouslyActiveAppPID = @(processID);
         }
-        DLog(@"Previously active pid for %p is %@", self, _previouslyActiveAppPID);
+        DLog(@"Previously active pid for %p is %@", self, @(processID));
         _itermWasActiveWhenHotkeyOpened = [NSApp isActive];
     }
     return self;
+}
+
+- (instancetype)init {
+    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+    DLog(@"Saving state: active app is %@", activeAppDict);
+    return [self initWithBundleIdentifier:activeAppDict[@"NSApplicationBundleIdentifier"]
+                                processID:[activeAppDict[@"NSApplicationProcessIdentifier"] longLongValue]];
+}
+
+- (instancetype)initWithRunningApp:(NSRunningApplication *)runningApp {
+    return [self initWithBundleIdentifier:runningApp.bundleIdentifier
+                                processID:runningApp.processIdentifier];
 }
 
 - (void)dealloc {

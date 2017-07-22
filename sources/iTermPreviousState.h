@@ -12,6 +12,8 @@
 
 @property(nonatomic, retain) iTermProfileHotKey *owner;
 
+- (instancetype)initWithRunningApp:(NSRunningApplication *)runningApp;
+
 // Returns YES if another app was activated.
 - (BOOL)restoreAllowingAppSwitch:(BOOL)allowAppSwitch;
 
