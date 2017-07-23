@@ -447,6 +447,50 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     return self;
 }
 
++ (int)screenNumberForPreferredScreenNumber:(int)screenNumber
+                                 windowType:(iTermWindowType)windowType
+                              defaultScreen:(NSScreen *)defaultScreen {
+    if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+         windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
+        screenNumber == -1) {
+        NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:defaultScreen];
+        if (n == NSNotFound) {
+            DLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
+            return 0;
+        } else {
+            DLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
+            return n;
+        }
+    } else if (screenNumber == -2) {
+        // Select screen with cursor.
+        NSScreen *screenWithCursor = [NSScreen screenWithCursor];
+        NSUInteger preference = [[NSScreen screens] indexOfObject:screenWithCursor];
+        if (preference == NSNotFound) {
+            preference = 0;
+        }
+        return preference;
+    } else {
+        return screenNumber;
+    }
+}
+
+- (NSScreen *)anchorToScreenNumber:(int)screenNumber {
+    NSScreen *screen = nil;
+    if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
+        screen = [[self window] screen];
+        DLog(@"Screen number %d is out of range [0,%d] so using 0",
+             screenNumber, (int)[[NSScreen screens] count]);
+        _anchoredScreenNumber = 0;
+        _isAnchoredToScreen = NO;
+    } else if (screenNumber >= 0) {
+        DLog(@"Selecting screen number %d", screenNumber);
+        screen = [[NSScreen screens] objectAtIndex:screenNumber];
+        _anchoredScreenNumber = screenNumber;
+        _isAnchoredToScreen = YES;
+    }
+    return screen;
+}
+
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
@@ -471,26 +515,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Force the nib to load
     [self window];
     _screenNumberFromFirstProfile = screenNumber;
-    if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
-         windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
-        screenNumber == -1) {
-        NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]];
-        if (n == NSNotFound) {
-            DLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
-            screenNumber = 0;
-        } else {
-            DLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
-            screenNumber = n;
-        }
-    } else if (screenNumber == -2) {
-        // Select screen with cursor.
-        NSScreen *screenWithCursor = [NSScreen screenWithCursor];
-        NSUInteger preference = [[NSScreen screens] indexOfObject:screenWithCursor];
-        if (preference == NSNotFound) {
-            preference = 0;
-        }
-        screenNumber = preference;
-    }
+    screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
+                                                             windowType:windowType
+                                                          defaultScreen:[[self window] screen]];
     if (windowType == WINDOW_TYPE_TOP ||
         windowType == WINDOW_TYPE_TOP_PARTIAL ||
         windowType == WINDOW_TYPE_BOTTOM ||
@@ -513,19 +540,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
-    NSScreen* screen = nil;
-    if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
-        screen = [[self window] screen];
-        DLog(@"Screen number %d is out of range [0,%d] so using 0",
-             screenNumber, (int)[[NSScreen screens] count]);
-        _anchoredScreenNumber = 0;
-        _isAnchoredToScreen = NO;
-    } else if (screenNumber >= 0) {
-        DLog(@"Selecting screen number %d", screenNumber);
-        screen = [[NSScreen screens] objectAtIndex:screenNumber];
-        _anchoredScreenNumber = screenNumber;
-        _isAnchoredToScreen = YES;
-    }
+    NSScreen *screen = [self anchorToScreenNumber:screenNumber];
 
     desiredRows_ = desiredColumns_ = -1;
     NSRect initialFrame;
@@ -7367,6 +7382,20 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[PreferencePanel sessionsInstance] isWindowLoaded]) {
                 [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
+        }
+    }
+    if (self.isHotKeyWindow) {
+        iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+        Profile *profile = profileHotKey.profile;
+        if (profile) {
+            int screenNumber = [iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile];
+            _screenNumberFromFirstProfile = screenNumber;
+            screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
+                                                                     windowType:windowType_
+                                                                  defaultScreen:[[self window] screen]];
+            [self anchorToScreenNumber:screenNumber];
+            DLog(@"Change hotkey window's anchored screen to %@ (isAnchored=%@) for %@",
+                 @(_anchoredScreenNumber), @(_isAnchoredToScreen), self);
         }
     }
     [self updateTouchBarIfNeeded];
