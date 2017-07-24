@@ -1124,8 +1124,8 @@ typedef struct iTermTextColorContext {
 
     int savedFontSmoothingStyle = 0;
     const CGFloat *components = CGColorGetComponents(color);
-    const CGFloat brightness = PerceivedBrightness(components[0], components[1], components[2]);
-    BOOL useThinStrokes = [self useThinStrokes] && ([backgroundColor brightnessComponent] < brightness);
+    const BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
+                                                           foregroundColor:color];
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(ctx, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
@@ -1266,9 +1266,8 @@ typedef struct iTermTextColorContext {
     }
 
     int savedFontSmoothingStyle = 0;
-    const CGFloat *components = CGColorGetComponents(cgColor);
-    const CGFloat brightness = PerceivedBrightness(components[0], components[1], components[2]);
-    BOOL useThinStrokes = [self useThinStrokes] && ([backgroundColor brightnessComponent] < brightness);
+    BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
+                                                     foregroundColor:cgColor];
     if (useThinStrokes) {
         CGContextSetShouldSmoothFonts(cgContext, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
@@ -1983,17 +1982,30 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ADVANCES]);
 }
 
-- (BOOL)useThinStrokes {
+- (BOOL)useThinStrokesAgainstBackgroundColor:(NSColor *)backgroundColor
+                             foregroundColor:(CGColorRef)foregroundColor {
+    const CGFloat *components = CGColorGetComponents(foregroundColor);
+
     switch (self.thinStrokes) {
         case iTermThinStrokesSettingAlways:
             return YES;
 
+        case iTermThinStrokesSettingDarkBackgroundsOnly:
+            break;
+
         case iTermThinStrokesSettingNever:
             return NO;
             
+        case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
+            if (!_isRetina) {
+                return NO;
+            }
+            break;
+
         case iTermThinStrokesSettingRetinaOnly:
             return _isRetina;
     }
+    return [backgroundColor brightnessComponent] < PerceivedBrightness(components[0], components[1], components[2]);
 }
 
 - (void)drawUnderlineOfColor:(NSColor *)color

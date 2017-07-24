@@ -273,9 +273,11 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
 
 // Type for KEY_THIN_STROKES
 typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
-    iTermThinStrokesSettingNever,
-    iTermThinStrokesSettingRetinaOnly,
-    iTermThinStrokesSettingAlways,
+    iTermThinStrokesSettingNever = 0,
+    iTermThinStrokesSettingRetinaDarkBackgroundsOnly = 1,
+    iTermThinStrokesSettingDarkBackgroundsOnly = 2,
+    iTermThinStrokesSettingAlways = 3,
+    iTermThinStrokesSettingRetinaOnly = 4,
 };
 
 typedef NS_ENUM(NSUInteger, iTermHotKeyDockPreference) {
