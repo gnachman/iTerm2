@@ -27,6 +27,7 @@
 
 - (BOOL)anyWithBlock:(BOOL (^)(ObjectType anObject))block;
 - (BOOL)allWithBlock:(BOOL (^)(ObjectType anObject))block;
+- (ObjectType)maxWithComparator:(NSComparisonResult (^)(ObjectType a, ObjectType b))comparator;
 
 // Does the array contain at least one object not equal to @c anObject?
 - (BOOL)containsObjectBesides:(ObjectType)anObject;
