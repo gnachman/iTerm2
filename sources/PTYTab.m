@@ -10,6 +10,7 @@
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "MovePaneController.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSView+iTerm.h"
@@ -871,124 +872,160 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
-- (PTYSession *)_sessionAdjacentTo:(PTYSession *)session
-                       verticalDir:(BOOL)verticalDir
-                             after:(BOOL)after {
-    NSRect myRect = [root_ convertRect:[[session view] frame] fromView:[[session view] superview]];
-    PtyLog(@"origin is %@", NSStringFromRect(myRect));
-    NSPoint targetPoint = myRect.origin;
-    NSSize rootSize = [root_ frame].size;
+// The following adjacency code works on this thesis:
+//
+// B is adjacent-right-of A if:
+//   B != A, AND
+//   B.bottom >= A.top, AND
+//   B.top < A.bottom, AND
+//   B.left >= A.right, AND
+//   No C exists where:
+//     C != A, AND
+//     C != B, AND
+//     C.bottom >= A.top, AND
+//     C.top < A.bottom, AND
+//     C.bottom >= B.top, AND
+//     C.top < B.bottom, AND
+//     C.left >= A.right, AND
+//     C.right < B.left, AND
+//
+// To select adjacent-right-of instead of adjacent-left-of, multiply use -1*right where it says left and -1*left where it says right.
+// To select adjacent-below instead of adjacent-right-of, swap all axes.
+// To select adjacent-above instead of adjacent-right-of, first swap all axes and then use -right and -left in place of left and right.
+//
+// As an example:
+//
+// +-------+------+----+
+// |       |   X1 |    |
+// |   A   +------+ x3 |
+// |       |   X2 |    |
+// +-------+------+----+
+// |           D       |
+// +-------------------+
+//
+// X1, X2, and X3 all sit "in the projection" of A, looking right.
+// D does not and can be ignored.
+//
+// For each B in {X1, X2, X3} we check if any C sits between A and B.
+// X1 sits between A and X3, so X3 is not adjacent-right-of A.
+// X1 and X2 have no such C, so they are adjacent-right-of A.
+// We did not consider D since it isn't in the projection.
 
-    // Rearrange coordinates so that the rest of this function can be written to find the session
-    // to the right or left (depending on 'after') of this one.
+- (NSArray<PTYSession *> *)sessionsSatisfying:(BOOL (^)(PTYSession *otherSession))condition {
+    return [self.sessions filteredArrayUsingBlock:^BOOL(PTYSession *anObject) {
+        return condition(anObject);
+    }];
+}
+
+- (NSArray<PTYSession *> *)sessionsInProjectionOfSession:(PTYSession *)aSession
+                                       verticalDirection:(BOOL)verticalDirection
+                                                   after:(BOOL)after {
+    NSRect aRect = [root_ convertRect:aSession.view.frame fromView:aSession.view.superview];
+    if (verticalDirection) {
+        SwapSize(&aRect.size);
+        SwapPoint(&aRect.origin);
+    }
+
+    const CGFloat aTop = NSMinY(aRect);
+    const CGFloat aBottom = NSMaxY(aRect);
+
+    return [self sessionsSatisfying:^BOOL(PTYSession *b) {
+        if (b == aSession) {
+            return NO;
+        }
+        NSRect bRect = [root_ convertRect:b.view.frame fromView:b.view.superview];
+        if (verticalDirection) {
+            SwapSize(&bRect.size);
+            SwapPoint(&bRect.origin);
+        }
+
+        const CGFloat bTop = NSMinY(bRect);
+        const CGFloat bBottom = NSMaxY(bRect);
+
+        const CGFloat bLeft = after ? NSMinX(bRect) : -NSMaxX(bRect);
+        const CGFloat aRight = after ? NSMaxX(aRect) : -NSMinX(aRect);
+
+        return (bBottom >= aTop &&
+                bTop < aBottom &&
+                bLeft >= aRight);
+    }];
+}
+
+- (NSArray<PTYSession *> *)sessionsAdjacentToSession:(PTYSession *)aSession
+                                         verticalDir:(BOOL)verticalDir
+                                               after:(BOOL)after {
+    NSArray<PTYSession *> *bCandidates = [self sessionsInProjectionOfSession:aSession verticalDirection:verticalDir after:after];
+    return [bCandidates filteredArrayUsingBlock:^BOOL(PTYSession *b) {
+        BOOL cExists = [bCandidates anyWithBlock:^BOOL(PTYSession *cCandidate) {
+            return [self session:cCandidate sitsBetween:aSession and:b verticalDir:verticalDir after:after];
+        }];
+        return !cExists;
+    }];
+}
+
+- (BOOL)session:(PTYSession *)c sitsBetween:(PTYSession *)a and:(PTYSession *)b verticalDir:(BOOL)verticalDir after:(BOOL)after {
+    if (c == a || c == b) {
+        return NO;
+    }
+    NSRect aRect = [root_ convertRect:a.view.frame fromView:a.view.superview];
+    NSRect bRect = [root_ convertRect:b.view.frame fromView:b.view.superview];
+    NSRect cRect = [root_ convertRect:c.view.frame fromView:c.view.superview];
+
     if (verticalDir) {
-        SwapSize(&myRect.size);
-        SwapPoint(&myRect.origin);
-        SwapPoint(&targetPoint);
-        SwapSize(&rootSize);
+        SwapSize(&aRect.size);
+        SwapPoint(&aRect.origin);
+
+        SwapSize(&bRect.size);
+        SwapPoint(&bRect.origin);
+
+        SwapSize(&cRect.size);
+        SwapPoint(&cRect.origin);
     }
 
-    int sign = after ? 1 : -1;
-    if (after) {
-        targetPoint.x += myRect.size.width;
-    }
-    targetPoint.x += sign * ([root_ dividerThickness] + 1);
-    const CGFloat maxAllowed = after ? rootSize.width : 0;
-    if (sign * targetPoint.x > maxAllowed) {
-        targetPoint.x -= sign * rootSize.width;
-    }
-    CGFloat offset = 0;
-    CGFloat defaultOffset = myRect.size.height / 2;
-    NSPoint origPoint = targetPoint;
-    PtyLog(@"OrigPoint is %lf,%lf", origPoint.x, origPoint.y);
-    PTYSession* bestResult = nil;
-    PTYSession* defaultResult = nil;
-    NSNumber *maxActivityCounter = nil;
-    // Iterate over every possible adjacent session and select the most recently active one.
-    while (offset < myRect.size.height) {
-        targetPoint = origPoint;
-        targetPoint.y += offset;
-        PTYSession* result;
+    const CGFloat aTop = NSMinY(aRect);
+    const CGFloat aBottom = NSMaxY(aRect);
+    const CGFloat aRight = after ? NSMaxX(aRect) : -NSMinX(aRect);
 
-        // First, get the session at the target point.
-        if (verticalDir) {
-            SwapPoint(&targetPoint);
-        }
-        PtyLog(@"Check session at %lf,%lf", targetPoint.x, targetPoint.y);
-        result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
-        if (verticalDir) {
-            SwapPoint(&targetPoint);
-        }
-        if (!result) {
-            // Oops, targetPoint must have landed right on a divider. Advance by
-            // one divider's width.
-            targetPoint.y += [root_ dividerThickness];
-            if (verticalDir) {
-                SwapPoint(&targetPoint);
-            }
-            result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
-            if (verticalDir) {
-                SwapPoint(&targetPoint);
-            }
-            targetPoint.y -= [root_ dividerThickness];
-        }
-        if (!result) {
-            // Maybe we fell off the end of the window? Try going the other direction.
-            targetPoint.y -= [root_ dividerThickness];
-            if (verticalDir) {
-                SwapPoint(&targetPoint);
-            }
-            result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
-            if (verticalDir) {
-                SwapPoint(&targetPoint);
-            }
-            targetPoint.y += [root_ dividerThickness];
-        }
+    const CGFloat bTop = NSMinY(bRect);
+    const CGFloat bBottom = NSMaxY(bRect);
+    const CGFloat bLeft = after ? NSMinX(bRect) : -NSMaxX(bRect);
 
-        // Advance offset to next sibling's origin.
-        NSRect rootRelativeResultRect = [root_ convertRect:[[result view] frame]
-                                                  fromView:[[result view] superview]];
-        PtyLog(@"Result is at %@", NSStringFromRect(rootRelativeResultRect));
-        if (verticalDir) {
-            SwapPoint(&rootRelativeResultRect.origin);
-            SwapSize(&rootRelativeResultRect.size);
-        }
-        offset = rootRelativeResultRect.origin.y - origPoint.y + rootRelativeResultRect.size.height;
-        PtyLog(@"set offset to %f", (float)offset);
-        if (verticalDir) {
-            SwapPoint(&rootRelativeResultRect.origin);
-            SwapSize(&rootRelativeResultRect.size);
-        }
+    const CGFloat cTop = NSMinY(cRect);
+    const CGFloat cBottom = NSMaxY(cRect);
+    const CGFloat cLeft = after ? NSMinX(cRect) : -NSMaxX(cRect);
+    const CGFloat cRight = after ? NSMaxX(cRect) : -NSMinX(cRect);
 
-        if ((!maxActivityCounter && [result activityCounter]) ||
-            (maxActivityCounter && [[result activityCounter] isGreaterThan:maxActivityCounter])) {
-            // Found a more recently used session.
-            bestResult = result;
-            maxActivityCounter = [result activityCounter];
-        }
-        if (!bestResult && offset > defaultOffset) {
-            // Haven't found a used session yet but this one is centered so we might pick it.
-            defaultResult = result;
-        }
-    }
+    return (cBottom >= aTop &&
+            cTop < aBottom &&
+            cBottom >= bTop &&
+            cTop < bBottom &&
+            cLeft >= aRight &&
+            cRight < bLeft);
+}
 
-    return bestResult ? bestResult : defaultResult;
+- (PTYSession *)sessionAdjacentTo:(PTYSession *)session
+                      verticalDir:(BOOL)verticalDir
+                            after:(BOOL)after {
+    NSArray<PTYSession *> *sessions = [self sessionsAdjacentToSession:session verticalDir:verticalDir after:after];
+    return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+        return [a.activityCounter compare:b.activityCounter];
+    }];
 }
 
 - (PTYSession*)sessionLeftOf:(PTYSession*)session {
-    return [self _sessionAdjacentTo:session verticalDir:NO after:NO];
+    return [self sessionAdjacentTo:session verticalDir:NO after:NO];
 }
 
 - (PTYSession*)sessionRightOf:(PTYSession*)session {
-    return [self _sessionAdjacentTo:session verticalDir:NO after:YES];
+    return [self sessionAdjacentTo:session verticalDir:NO after:YES];
 }
 
 - (PTYSession*)sessionAbove:(PTYSession*)session {
-    return [self _sessionAdjacentTo:session verticalDir:YES after:NO];
+    return [self sessionAdjacentTo:session verticalDir:YES after:NO];
 }
 
 - (PTYSession*)sessionBelow:(PTYSession*)session {
-    return [self _sessionAdjacentTo:session verticalDir:YES after:YES];
+    return [self sessionAdjacentTo:session verticalDir:YES after:YES];
 }
 
 - (void)updateLabelAttributes {

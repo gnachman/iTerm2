@@ -93,6 +93,15 @@
     }
 }
 
+- (id)maxWithComparator:(NSComparisonResult (^)(id, id))comparator {
+    id max = nil;
+    for (id object in self) {
+        if (max == nil || comparator(max, object) == NSOrderedAscending) {
+            max = object;
+        }
+    }
+    return max;
+}
 
 - (BOOL)anyWithBlock:(BOOL (^)(id anObject))block {
     for (id object in self) {
