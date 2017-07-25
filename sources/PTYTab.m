@@ -904,8 +904,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYSession* bestResult = nil;
     PTYSession* defaultResult = nil;
     NSNumber *maxActivityCounter = nil;
+    int iterations = 0;
     // Iterate over every possible adjacent session and select the most recently active one.
     while (offset < myRect.size.height) {
+        if (iterations++ > 100000) {
+            ITCriticalError(iterations > 100000, @"Too many iterations finding session %@ in %@", session, [root_ iterm_recursiveDescription]);
+            return nil;
+        }
         targetPoint = origPoint;
         targetPoint.y += offset;
         PTYSession* result;
@@ -944,7 +949,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             }
             targetPoint.y += [root_ dividerThickness];
         }
-
+        if (!result) {
+            ITCriticalError(!result, @"Failed to find adjacent session to %@ with %@", session, [root_ iterm_recursiveDescription]);
+            return nil;
+        }
         // Advance offset to next sibling's origin.
         NSRect rootRelativeResultRect = [root_ convertRect:[[result view] frame]
                                                   fromView:[[result view] superview]];
