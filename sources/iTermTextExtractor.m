@@ -1269,6 +1269,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                right = width;
                            }
                            // If there is no text after this, insert a hard line break.
+                           BOOL shouldAppendNewline = YES;
                            if (pad) {
                                for (int i = 0; i < numPreceedingNulls; i++) {
                                    VT100GridCoord coord =
@@ -1280,6 +1281,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                    case kiTermTextExtractorNullPolicyFromLastToEnd:
                                        [result deleteCharactersInRange:NSMakeRange(0, [result length])];
                                        [coords removeAllObjects];
+                                       shouldAppendNewline = NO;
                                        break;
                                    case kiTermTextExtractorNullPolicyFromStartToFirst:
                                        return YES;
@@ -1293,6 +1295,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                }
                            }
                            if (code == EOL_HARD &&
+                               shouldAppendNewline &&
                                (includeLastNewline || line < windowedRange.coordRange.end.y)) {
                                if (trimSelectionTrailingSpaces) {
                                    NSInteger lengthBeforeTrimming = [result length];
