@@ -1514,6 +1514,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } while (NSMaxRange(range) < self.length);
 }
 
+- (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
+                                    block:(void (^)(NSRange range))block {
+    NSRange range = [self rangeOfString:query options:NSBackwardsSearch];
+    while (range.location != NSNotFound) {
+        block(range);
+        range = [self rangeOfString:query options:NSBackwardsSearch range:NSMakeRange(0, range.location)];
+    }
+}
+
 - (NSUInteger)iterm_unsignedIntegerValue {
     NSScanner *scanner = [NSScanner scannerWithString:self];
     unsigned long long ull;

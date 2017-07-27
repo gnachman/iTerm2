@@ -212,6 +212,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                               NSString *complexString,
                                               BOOL *stop))block;
 
+// It is safe to modify, delete, or insert characters in `range` within `block`.
+- (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
+                                    block:(void (^)(NSRange range))block;
+
 - (NSUInteger)iterm_unsignedIntegerValue;
 
 // Returns modified attributes for drawing self fitting size within one point.

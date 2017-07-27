@@ -427,14 +427,11 @@ enum {
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
-    for (NSInteger i = 0; i < captureCount; i++) {
-        NSRange rangeInString = capturedRanges[i];
-        NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
-        [[aSession screen] highlightTextInRange:rangeInScreenChars
-                      basedAtAbsoluteLineNumber:lineNumber
-                                         colors:[self colors]];
-    }
-
+    NSRange rangeInString = capturedRanges[0];
+    NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
+    [[aSession screen] highlightTextInRange:rangeInScreenChars
+                  basedAtAbsoluteLineNumber:lineNumber
+                                     colors:[self colors]];
     return YES;
 }
 
