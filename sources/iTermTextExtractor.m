@@ -1589,7 +1589,16 @@ const NSInteger kLongMaximumWordLength = 100000;
                continuationChars:continuationChars
                           coords:coords];
     if (!respectHardNewlines) {
-        content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        if (coords == nil) {
+            content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        } else {
+            NSMutableString *mutableContent = [[content mutableCopy] autorelease];
+            [content reverseEnumerateSubstringsEqualTo:@"\n" block:^(NSRange range) {
+                [mutableContent replaceCharactersInRange:range withString:@""];
+                [coords removeObjectsInRange:range];
+            }];
+            content = mutableContent;
+        }
     }
     return content;
 }
