@@ -1174,6 +1174,7 @@ static int Search(NSString* needle,
                                            &deltas);
         int numUnichars = [haystack length];
         const unsigned long long kMaxSaneStringLength = 1000000000LL;
+        NSRange previousRange = NSMakeRange(NSNotFound, 0);
         do {
             haystack = CharArrayToString(charHaystack, numUnichars);
             if ([haystack length] >= kMaxSaneStringLength) {
@@ -1190,7 +1191,11 @@ static int Search(NSString* needle,
             while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
                 --numUnichars;
             }
-            if (tempPosition != -1 && tempPosition <= skip) {
+            NSRange range = NSMakeRange(tempPosition, tempResultLength);
+            if (tempPosition != -1 &&
+                tempPosition <= skip &&
+                !NSEqualRanges(NSIntersectionRange(range, previousRange), range)) {
+                previousRange = range;
                 ResultRange* r = [[[ResultRange alloc] init] autorelease];
                 r->position = tempPosition;
                 r->length = tempResultLength;
