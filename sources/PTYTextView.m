@@ -5583,11 +5583,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // service stuff
 - (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType
 {
-    if (sendType != nil && [sendType isEqualToString: NSStringPboardType]) {
+    if (sendType == nil || [sendType isEqualToString:NSStringPboardType]) {
         return self;
     }
 
-    return ([super validRequestorForSendType: sendType returnType: returnType]);
+    return ([super validRequestorForSendType:sendType returnType:returnType]);
 }
 
 // Service
@@ -5610,9 +5610,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Service
-- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard
-{
-    return NO;
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard {
+    return YES;
 }
 
 // This textview is about to be hidden behind another tab.
