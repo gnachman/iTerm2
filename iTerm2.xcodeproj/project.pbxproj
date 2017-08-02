@@ -1380,6 +1380,10 @@
 		A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
 		A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
 		A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
+		A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */ = {isa = PBXBuildFile; fileRef = A65EC02D1F31800300AC0A6B /* iTermUpdateCadenceController.h */; };
+		A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */ = {isa = PBXBuildFile; fileRef = A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */; };
+		A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */; };
+		A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
@@ -3353,6 +3357,10 @@
 		A65B72A81B3285A300F947A7 /* DisableTips@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DisableTips@2x.png"; path = "images/DisableTips@2x.png"; sourceTree = "<group>"; };
 		A65B72AF1B33C07D00F947A7 /* NextTip.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NextTip.png; path = images/NextTip.png; sourceTree = "<group>"; };
 		A65B72B01B33C07D00F947A7 /* NextTip@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NextTip@2x.png"; path = "images/NextTip@2x.png"; sourceTree = "<group>"; };
+		A65EC02D1F31800300AC0A6B /* iTermUpdateCadenceController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermUpdateCadenceController.h; sourceTree = "<group>"; };
+		A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermUpdateCadenceController.m; sourceTree = "<group>"; };
+		A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTimer+iTerm.h"; sourceTree = "<group>"; };
+		A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTimer+iTerm.m"; sourceTree = "<group>"; };
 		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
 		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
@@ -5719,6 +5727,10 @@
 				A60BB38D1EB6A08A00D76C09 /* iTermProcessCollection.m */,
 				A66EF82A1EF59CFC0005891A /* iTermRateLimitedUpdate.h */,
 				A66EF82B1EF59CFC0005891A /* iTermRateLimitedUpdate.m */,
+				A65EC02D1F31800300AC0A6B /* iTermUpdateCadenceController.h */,
+				A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */,
+				A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */,
+				A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6810,6 +6822,7 @@
 				A667190A1DCE36C3000CE608 /* iTermRootTerminalView.h in Headers */,
 				A667190B1DCE36C3000CE608 /* iTermCarbonHotKeyController.h in Headers */,
 				A667190C1DCE36C3000CE608 /* iTermWeakReference.h in Headers */,
+				A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */,
 				A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
 				A62A1F711E6E724B00363EE9 /* iTermMenuOpener.h in Headers */,
 				A667190E1DCE36C3000CE608 /* iTermMark.h in Headers */,
@@ -6879,6 +6892,7 @@
 				A66719481DCE36C3000CE608 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A66719491DCE36C3000CE608 /* iTermHotkeyPreferencesWindowController.h in Headers */,
 				A667194A1DCE36C3000CE608 /* iTermSessionHotkeyController.h in Headers */,
+				A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				A667194C1DCE36C3000CE608 /* iTermSocket.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
@@ -8397,7 +8411,9 @@
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */,
+				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
+				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,
 				A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
