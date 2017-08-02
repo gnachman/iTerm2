@@ -132,7 +132,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                                                   repeats:YES];
         [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
     } else {
-        if (_updateTimer && cadence > _updateTimer.timeInterval) {
+        if (!force && _updateTimer && cadence > _updateTimer.timeInterval) {
             DLog(@"Defer cadence change");
             _deferredCadenceChange = YES;
         } else {
