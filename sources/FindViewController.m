@@ -721,7 +721,7 @@ const CGFloat kEdgeWidth = 3;
     [self findSubString:theString
        forwardDirection:NO
                    mode:state_.mode
-             withOffset:0];
+             withOffset:-1];
 }
 
 - (void)deselectFindBarTextField {
