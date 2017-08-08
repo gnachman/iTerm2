@@ -5585,7 +5585,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSSet *acceptedReturnTypes = [NSSet setWithArray:@[ (NSString *)kUTTypeUTF8PlainText,
                                                         NSStringPboardType ]];
-    if (sendType == nil &&
+    NSSet *acceptedSendTypes = nil;
+    if (self._haveShortSelection) {
+        acceptedSendTypes = acceptedReturnTypes;
+    }
+    if ((sendType == nil || [acceptedSendTypes containsObject:sendType]) &&
         (returnType == nil || [acceptedReturnTypes containsObject:returnType])) {
         return self;
     } else {
