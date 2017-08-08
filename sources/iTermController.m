@@ -190,6 +190,7 @@ static iTermController *gSharedInstance;
     [_restorableSessions release];
     [_currentRestorableSessionsStack release];
     [_fullScreenWindowManager release];
+    [_lastSelection release];
     [super dealloc];
 }
 
@@ -600,26 +601,6 @@ static iTermController *gSharedInstance;
     for (PseudoTerminal *t in _terminalWindows) {
         [[t window] orderFront:nil];
     }
-}
-
-- (PTYSession *)sessionWithMostRecentSelection {
-    NSTimeInterval latest = 0;
-    PTYSession *best = nil;
-    for (PseudoTerminal *term in [self terminals]) {
-        PTYTab *aTab = [term currentTab];
-        for (PTYSession *aSession in [aTab sessions]) {
-            NSTimeInterval current = [[aSession textview] selectionTime];
-            if (current > latest) {
-                latest = current;
-                best = aSession;
-            }
-        }
-    }
-    return best;
-}
-
-- (PseudoTerminal *)currentTerminal {
-    return _frontTerminalWindowController;
 }
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow {

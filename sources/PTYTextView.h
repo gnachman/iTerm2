@@ -267,9 +267,6 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 // Returns the entire content of the view as a string.
 @property(nonatomic, readonly) NSString *content;
 
-// Returns the time (since 1970) when the selection was last modified, or 0 if there is no selection
-@property(nonatomic, readonly) NSTimeInterval selectionTime;
-
 // Regular and non-ascii fonts.
 @property(nonatomic, readonly) NSFont *font;
 @property(nonatomic, readonly) NSFont *nonAsciiFont;
