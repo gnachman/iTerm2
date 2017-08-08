@@ -125,6 +125,14 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     iTermBackgroundColorRun _value;
 }
 
++ (instancetype)boxedBackgroundColorRunWithValue:(iTermBackgroundColorRun)value {
+    iTermBoxedBackgroundColorRun *run = [[[self alloc] init] autorelease];
+    if (run) {
+        run->_value = value;
+    }
+    return run;
+}
+
 - (void)dealloc {
     [_backgroundColor release];
     [_unprocessedBackgroundColor release];

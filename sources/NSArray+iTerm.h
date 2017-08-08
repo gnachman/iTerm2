@@ -17,6 +17,8 @@
 - (NSArray *)mapWithBlock:(id (^)(ObjectType anObject))block;
 - (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
 
+- (id)reduceWithBlock:(id (^)(ObjectType first, ObjectType second))block;
+
 // Returns those elements of the array for which block(element) returns YES.
 // block is called on every element in order.
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(ObjectType anObject))block;

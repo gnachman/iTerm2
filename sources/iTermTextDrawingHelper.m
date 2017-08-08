@@ -388,27 +388,12 @@ typedef struct iTermTextColorContext {
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    iTermBackgroundColorRunsInLine *representativeRunArray = nil;
-    NSInteger count = 0;
-    for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
-        if (count == 0) {
-            representativeRunArray = runArray;
-            count = runArray.numberOfEquivalentRows;
-        }
-        count--;
-        [self drawCharactersForLine:runArray.line
-                                atY:runArray.y
-                     backgroundRuns:representativeRunArray.array
-                            context:ctx];
-        [self drawNoteRangesOnLine:runArray.line];
-
-        if (_debug) {
-            NSString *s = [NSString stringWithFormat:@"%d", runArray.line];
-            [s drawAtPoint:NSMakePoint(0, runArray.y)
-                withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor],
-                                  NSBackgroundColorAttributeName: [NSColor whiteColor],
-                                  NSFontAttributeName: [NSFont systemFontOfSize:8] }];
-        }
+    if (self.minimumContrast > 0) {
+        [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
+                                               ctx:ctx];
+    } else {
+        [self drawNoMinimumContrastContrastForegroundWithBackgroundRunArrays:backgroundRunArrays
+                                                                         ctx:ctx];
     }
 
     [self drawTopMargin];
@@ -937,6 +922,82 @@ typedef struct iTermTextColorContext {
     }
     for (NSInteger i = 0; i < labels.count; i++) {
         block(labels[i], [lineRanges[i] rangeValue]);
+    }
+}
+
+#pragma mark - Drawing: Foreground
+
+// Draw assuming no minimum contrast. Keeps glyphs together in a single background color run across different background colors.
+- (void)drawNoMinimumContrastContrastForegroundWithBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                                                                   ctx:(CGContextRef)ctx {
+    // Combine runs on each line, except those with different values of
+    // `selected` or `match`. Those properties affect foreground color and must
+    // split ligatures up.
+    NSArray<iTermBackgroundColorRunsInLine *> *fakeRunArrays = [backgroundRunArrays mapWithBlock:^id(iTermBackgroundColorRunsInLine *runs) {
+        NSMutableArray<iTermBoxedBackgroundColorRun *> *combinedRuns = [NSMutableArray array];
+        iTermBackgroundColorRun previousRun = { {0} };
+        BOOL havePreviousRun = NO;
+        for (iTermBoxedBackgroundColorRun *run in runs.array) {
+            if (!havePreviousRun) {
+                havePreviousRun = YES;
+                previousRun = *run.valuePointer;
+            } else if (run.valuePointer->selected == previousRun.selected &&
+                       run.valuePointer->isMatch == previousRun.isMatch) {
+                previousRun.range = NSUnionRange(previousRun.range, run.valuePointer->range);
+            } else {
+                [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
+                previousRun = *run.valuePointer;
+            }
+        }
+        if (havePreviousRun) {
+            [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
+        }
+
+        iTermBackgroundColorRunsInLine *fakeRuns = [[[iTermBackgroundColorRunsInLine alloc] init] autorelease];
+        fakeRuns.line = runs.line;
+        fakeRuns.y = runs.y;
+        fakeRuns.numberOfEquivalentRows = fakeRuns.numberOfEquivalentRows;
+        fakeRuns.array = combinedRuns;
+        return fakeRuns;
+    }];
+    [self drawForegroundForBackgroundRunArrays:fakeRunArrays
+                                           ctx:ctx];
+}
+
+// Draws 
+- (void)drawForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                                         ctx:(CGContextRef)ctx {
+    iTermBackgroundColorRunsInLine *representativeRunArray = nil;
+    NSInteger count = 0;
+    for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
+        if (count == 0) {
+            representativeRunArray = runArray;
+            count = runArray.numberOfEquivalentRows;
+        }
+        count--;
+        [self drawForegroundForLineNumber:runArray.line
+                                        y:runArray.y
+                           backgroundRuns:representativeRunArray.array
+                                  context:ctx];
+    }
+}
+
+- (void)drawForegroundForLineNumber:(int)line
+                                  y:(CGFloat)y
+                     backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
+                            context:(CGContextRef)ctx {
+    [self drawCharactersForLine:line
+                            atY:y
+                 backgroundRuns:backgroundRuns
+                        context:ctx];
+    [self drawNoteRangesOnLine:line];
+
+    if (_debug) {
+        NSString *s = [NSString stringWithFormat:@"%d", line];
+        [s drawAtPoint:NSMakePoint(0, y)
+        withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor],
+                          NSBackgroundColorAttributeName: [NSColor whiteColor],
+                          NSFontAttributeName: [NSFont systemFontOfSize:8] }];
     }
 }
 
