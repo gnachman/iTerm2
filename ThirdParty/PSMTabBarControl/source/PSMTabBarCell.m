@@ -379,6 +379,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [[[self psmTabControlView] style] drawTabCell:self highlightAmount:[self highlightAmount]];
 }
 
+- (void)drawPostHocDecorationsOnSelectedCell {
+    [[[self psmTabControlView] style] drawPostHocDecorationsOnSelectedCell:self];
+}
+
 - (CGFloat)highlightAmount {
     NSTimeInterval timeSinceChange = [NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime;
     CGFloat amount = self.highlighted ? 1 : 0;
