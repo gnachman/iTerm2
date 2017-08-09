@@ -3703,10 +3703,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
-        [item action]==@selector(pasteSelection:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return [_selection hasSelection];
+    } else if ([item action]==@selector(pasteSelection:)) {
+        return [[iTermController sharedInstance] lastSelection] != nil;
     } else if ([item action]==@selector(selectOutputOfLastCommand:)) {
         return [_delegate textViewCanSelectOutputOfLastCommand];
     } else if ([item action]==@selector(selectCurrentCommand:)) {
@@ -6774,14 +6775,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
-    if ([selection hasSelection]) {
-        _selectionTime = [[NSDate date] timeIntervalSince1970];
-    } else {
-        _selectionTime = 0;
-    }
     [_delegate refresh];
-    DLog(@"Update selection time to %lf. selection=%@. stack=%@",
-         (double)_selectionTime, selection, [NSThread callStackSymbols]);
+    if (!_selection.live && selection.hasSelection) {
+        const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
+        NSString *selection = [self selectedTextWithCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
+        if (selection.length == MAX_SELECTION_SIZE) {
+            selection = nil;
+        }
+        [[iTermController sharedInstance] setLastSelection:selection];
+    }
+    DLog(@"Selection did change: selection=%@. stack=%@",
+         selection, [NSThread callStackSymbols]);
 }
 
 - (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {

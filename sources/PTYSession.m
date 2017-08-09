@@ -5710,7 +5710,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
-            NSString *string = [self mostRecentlySelectedText];
+            NSString *string = [[iTermController sharedInstance] lastSelection];
             if (string.length) {
                 [_pasteHelper pasteString:string
                              stringConfig:keyBindingText];
@@ -6489,19 +6489,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_delegate realParentWindow] restartSessionWithConfirmation:self];
 }
 
-- (NSString *)mostRecentlySelectedText {
-    PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
-    if (session) {
-        PTYTextView *textview = [session textview];
-        if ([textview isAnyCharSelected]) {
-            return [textview selectedText];
-        }
-    }
-    return nil;
-}
-
 - (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags {
-    NSString *string = [self mostRecentlySelectedText];
+    NSString *string = [[iTermController sharedInstance] lastSelection];
     if (string) {
         [self pasteString:string flags:flags];
     }
