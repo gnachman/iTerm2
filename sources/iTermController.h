@@ -56,7 +56,6 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 @property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
 @property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
 @property(nonatomic, readonly) BOOL haveTmuxConnection;
-@property(nonatomic, readonly, strong) PTYSession *sessionWithMostRecentSelection;
 @property(nonatomic, nonatomic, assign) PseudoTerminal *currentTerminal;
 @property(nonatomic, readonly) int numberOfTerminals;
 @property(nonatomic, readonly) BOOL hasRestorableSession;
@@ -65,6 +64,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 @property(nonatomic, readonly) NSArray<iTermTerminalWindow *> *keyTerminalWindows;
 @property(nonatomic, readonly) NSString *savedArrangementNameBeingRestored;
 @property(nonatomic, readonly) NSInteger numberOfDecodesPending;
+@property(nonatomic, copy) NSString *lastSelection;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;
