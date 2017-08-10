@@ -554,9 +554,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }] != NSNotFound;
     if (anyTabHasColor) {
         const CGFloat brightness = [self tabColorBrightness:cell];
-        [[NSColor colorWithWhite:MIN(1, brightness + 0.5) alpha:1] set];
+        [[NSColor colorWithWhite:MIN(1, brightness + 0.6) alpha:1] set];
         NSFrameRect(cell.frame);
-        if (brightness > 0.6) {
+        if (brightness > 0.4) {
             NSRect rect = NSInsetRect(cell.frame, 1, 1);
             rect.origin.x += 0.25;
             rect.origin.y += 0.25;
@@ -564,7 +564,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             rect.size.height -= 0.5;
             NSBezierPath *path = [NSBezierPath bezierPathWithRect:rect];
             [path setLineWidth:0.5];
-            [[NSColor grayColor] set];
+            [[NSColor colorWithWhite:0 alpha:0.7] set];
             [path stroke];
         }
     }
