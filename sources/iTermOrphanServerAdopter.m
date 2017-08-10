@@ -7,6 +7,8 @@
 //
 
 #import "iTermOrphanServerAdopter.h"
+
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermFileDescriptorSocketPath.h"
@@ -70,16 +72,16 @@
 }
 
 - (void)adoptOrphanWithPath:(NSString *)filename {
-    NSLog(@"Try to connect to orphaned server at %@", filename);
+    DLog(@"Try to connect to orphaned server at %@", filename);
     pid_t pid = iTermFileDescriptorProcessIdFromPath(filename.UTF8String);
     if (pid < 0) {
-        NSLog(@"Invalid pid in filename %@", filename);
+        DLog(@"Invalid pid in filename %@", filename);
         return;
     }
 
     iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(pid);
     if (serverConnection.ok) {
-        NSLog(@"Restore it");
+        DLog(@"Restore it");
         if (_window) {
             [self openOrphanedSession:serverConnection inWindow:_window];
         } else {
@@ -87,7 +89,7 @@
             _window = [[iTermController sharedInstance] terminalWithSession:session];
         }
     } else {
-        NSLog(@"Failed: %s", serverConnection.error);
+        DLog(@"Failed: %s", serverConnection.error);
     }
 }
 
