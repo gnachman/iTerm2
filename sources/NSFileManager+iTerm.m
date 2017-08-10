@@ -133,7 +133,14 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)scriptsPath {
-    return [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
+    static dispatch_once_t onceToken;
+    NSString *legacyPath = [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
+    NSString *modernPath = [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
+    static BOOL useLegacy;
+    dispatch_once(&onceToken, ^{
+        useLegacy = [self fileExistsAtPath:legacyPath] && ![self fileExistsAtPath:modernPath];
+    });
+    return useLegacy ? legacyPath : modernPath;
 }
 
 - (NSString *)autolaunchScriptPath {

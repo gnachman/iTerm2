@@ -351,7 +351,7 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
-    if (cell.state == NSOnState) {
+    if (cell.state == NSOnState || [self anyTabHasColor]) {
         if (!cell.tabColor) {
             return [self textColorDefaultSelected:YES];
         } else if ([cell.tabColor brightnessComponent] > 0.2) {
@@ -540,7 +540,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
-    NSColor *tabColor = cell.tabColor ?: [self backgroundColorSelected:cell.state == NSOnState highlightAmount:0];
+    if (!cell.tabColor) {
+        return 0.7;
+    }
+    NSColor *tabColor = cell.tabColor;
     NSColor *safeColor = [tabColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     CGFloat brightness = PerceivedBrightness([safeColor redComponent],
                                              [safeColor greenComponent],
@@ -548,15 +551,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return brightness;
 }
 
-- (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell {
-    const BOOL anyTabHasColor = [_tabBar.cells indexOfObjectPassingTest:^BOOL(PSMTabBarCell * _Nonnull cell, NSUInteger idx, BOOL * _Nonnull stop) {
+- (BOOL)anyTabHasColor {
+    return [_tabBar.cells indexOfObjectPassingTest:^BOOL(PSMTabBarCell * _Nonnull cell, NSUInteger idx, BOOL * _Nonnull stop) {
         return cell.tabColor != nil;
     }] != NSNotFound;
-    if (anyTabHasColor) {
+}
+
+- (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell {
+    if (self.anyTabHasColor) {
         const CGFloat brightness = [self tabColorBrightness:cell];
-        [[NSColor colorWithWhite:MIN(1, brightness + 0.5) alpha:1] set];
+        [[NSColor colorWithWhite:MIN(1, brightness + 0.6) alpha:1] set];
         NSFrameRect(cell.frame);
-        if (brightness > 0.6) {
+        if (brightness > 0.4) {
             NSRect rect = NSInsetRect(cell.frame, 1, 1);
             rect.origin.x += 0.25;
             rect.origin.y += 0.25;
@@ -564,7 +570,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             rect.size.height -= 0.5;
             NSBezierPath *path = [NSBezierPath bezierPathWithRect:rect];
             [path setLineWidth:0.5];
-            [[NSColor grayColor] set];
+            [[NSColor colorWithWhite:0 alpha:0.7] set];
             [path stroke];
         }
     }

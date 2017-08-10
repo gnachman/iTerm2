@@ -559,7 +559,11 @@ int decode_utf8_char(const unsigned char *datap,
     NSRange rangeOfLastWantedCharacter = [self rangeOfCharacterFromSet:invertedCharset
                                                                options:NSBackwardsSearch];
     if (rangeOfLastWantedCharacter.location == NSNotFound) {
-        return self;
+        if ([self rangeOfCharacterFromSet:charset].location == NSNotFound) {
+            return self;
+        } else {
+            return @"";
+        }
     } else if (rangeOfLastWantedCharacter.location + rangeOfLastWantedCharacter.length < self.length) {
         NSUInteger i = rangeOfLastWantedCharacter.location + rangeOfLastWantedCharacter.length;
         return [self substringToIndex:i];

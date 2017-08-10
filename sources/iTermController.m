@@ -603,6 +603,10 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (PseudoTerminal *)currentTerminal {
+    return _frontTerminalWindowController;
+}
+
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow {
     if (_frontTerminalWindowController == theTerminalWindow) {
         [self setCurrentTerminal:nil];
