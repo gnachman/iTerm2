@@ -153,6 +153,14 @@
     [self assertString:@"\\~" parsesAsShellCommandTo:@[ @"~" ]];
 }
 
+- (void)testStringByTrimmingCharset {
+    XCTAssertEqualObjects([@"abc" stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"a"]], @"abc");
+    XCTAssertEqualObjects([@"abc" stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"c"]], @"ab");
+    XCTAssertEqualObjects([@"abc" stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"x"]], @"abc");
+    XCTAssertEqualObjects([@"abc" stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"bc"]], @"a");
+    XCTAssertEqualObjects([@"abc" stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"abc"]], @"");
+}
+
 - (void)testStringByTrimmingTrailingWhitespace {
     XCTAssert([[@"abc" stringByTrimmingTrailingWhitespace] isEqualToString:@"abc"]);
     XCTAssert([[@"abc " stringByTrimmingTrailingWhitespace] isEqualToString:@"abc"]);

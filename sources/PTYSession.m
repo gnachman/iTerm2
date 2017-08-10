@@ -1686,6 +1686,13 @@ ITERM_WEAKLY_REFERENCEABLE
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
     }
 
+    // Remove trailing slashes, unless the path is just "/"
+    NSString *trimmed = [env[PWD_ENVNAME] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+    if (trimmed.length == 0) {
+        trimmed = @"/";
+    }
+    env[PWD_ENVNAME] = trimmed;
+
     NSString *itermId = [self sessionId];
     env[@"ITERM_SESSION_ID"] = itermId;
     env[@"TERM_PROGRAM_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
