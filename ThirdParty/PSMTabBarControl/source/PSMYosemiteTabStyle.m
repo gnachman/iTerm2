@@ -462,10 +462,29 @@
 
     if (tabColor) {
         // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
-        CGFloat alpha = [_tabBar.window isKeyWindow] ? 1.0 : 0.6;
-        
+        CGFloat alpha;
+        if ([_tabBar.window isKeyWindow]) {
+            if (selected) {
+                alpha = 1;
+            } else {
+                alpha = 0.4;
+            }
+        } else {
+            if (selected) {
+                alpha = 0.6;
+            } else {
+                alpha = 0.3;
+            }
+        }
+        CGFloat components[4];
+        [tabColor getComponents:components];
+        for (int i = 0; i < 3; i++) {
+            components[i] = components[i] * alpha + 0.5 * (1 - alpha);
+        }
+        NSColor *color = [NSColor colorWithColorSpace:tabColor.colorSpace components:components count:4];
+
         // Alpha the inactive tab's colors a bit to make it clear which tab is active.
-        [[tabColor colorWithAlphaComponent:alpha] set];
+        [color set];
         NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
     }
 
@@ -560,19 +579,36 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell {
     if (self.anyTabHasColor) {
         const CGFloat brightness = [self tabColorBrightness:cell];
-        [[NSColor colorWithWhite:MIN(1, brightness + 0.6) alpha:1] set];
-        NSFrameRect(cell.frame);
-        if (brightness > 0.4) {
-            NSRect rect = NSInsetRect(cell.frame, 1, 1);
-            rect.origin.x += 0.25;
-            rect.origin.y += 0.25;
-            rect.size.width -= 0.5;
-            rect.size.height -= 0.5;
-            NSBezierPath *path = [NSBezierPath bezierPathWithRect:rect];
-            [path setLineWidth:0.5];
-            [[NSColor colorWithWhite:0 alpha:0.7] set];
-            [path stroke];
+        NSRect rect = NSInsetRect(cell.frame, -0.5, 0.5);
+        NSBezierPath *path;
+
+        NSColor *outerColor;
+        NSColor *innerColor;
+        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 1 : 0.5;
+        if (brightness < 0.5) {
+            outerColor = [NSColor colorWithWhite:1 alpha:alpha];
+            innerColor = [NSColor colorWithWhite:0 alpha:alpha];
+        } else {
+            outerColor = [NSColor colorWithWhite:0 alpha:alpha];
+            innerColor = [NSColor colorWithWhite:1 alpha:alpha];
         }
+
+        [outerColor set];
+        path = [NSBezierPath bezierPathWithRect:rect];
+        [path setLineWidth:1];
+        [path stroke];
+
+        [innerColor set];
+        rect = NSInsetRect(rect, 1, 1);
+        path = [NSBezierPath bezierPathWithRect:rect];
+        [path setLineWidth:1];
+        [path stroke];
+
+        [outerColor set];
+        rect = NSInsetRect(rect, 1, 1);
+        path = [NSBezierPath bezierPathWithRect:rect];
+        [path setLineWidth:1];
+        [path stroke];
     }
 }
 
