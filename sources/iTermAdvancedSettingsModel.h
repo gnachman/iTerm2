@@ -192,5 +192,6 @@
 + (BOOL)preventEscapeSequenceFromClearingHistory;
 + (BOOL)dwcLineCache;
 + (BOOL)lowFiCombiningMarks;
++ (CGFloat)verticalBarCursorWidth;
 
 @end

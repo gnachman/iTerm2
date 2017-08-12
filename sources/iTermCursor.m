@@ -109,7 +109,7 @@
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
              outline:(BOOL)outline {
-    NSRect cursorRect = NSMakeRect(rect.origin.x, rect.origin.y, 1, rect.size.height);
+    NSRect cursorRect = NSMakeRect(rect.origin.x, rect.origin.y, [iTermAdvancedSettingsModel verticalBarCursorWidth], rect.size.height);
     if (outline) {
         [self drawOutlineOfRect:cursorRect withColor:backgroundColor];
     } else {
