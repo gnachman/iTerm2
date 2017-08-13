@@ -119,6 +119,11 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p line=%@ numberEquiv=%@ runs:%@>",
+            self.class, self, @(self.line), @(self.numberOfEquivalentRows), self.array];
+}
+
 @end
 
 @implementation iTermBoxedBackgroundColorRun {
@@ -137,6 +142,15 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     [_backgroundColor release];
     [_unprocessedBackgroundColor release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p selected=%@ range=%@ backgroundColor=%@>",
+            self.class,
+            self,
+            @(_value.selected),
+            NSStringFromRange(_value.range),
+            self.backgroundColor];
 }
 
 - (iTermBackgroundColorRun *)valuePointer {

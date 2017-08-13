@@ -2480,13 +2480,13 @@ DQ
                             </buttonCell>
                         </column>
                         <column>
-                            <buttonCell type="radio" title="Vertical Bar" imagePosition="left" alignment="left" inset="2" id="4EF-ZY-624">
+                            <buttonCell type="radio" title="Vertical Bar" imagePosition="left" alignment="left" tag="1" inset="2" id="4EF-ZY-624">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
                         </column>
                         <column>
-                            <buttonCell type="radio" title="Box" imagePosition="left" alignment="left" inset="2" id="2Uw-hJ-dM5">
+                            <buttonCell type="radio" title="Box" imagePosition="left" alignment="left" tag="2" inset="2" id="2Uw-hJ-dM5">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
@@ -2579,17 +2579,17 @@ DQ
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="bp3-dc-JQV">
                     <rect key="frame" x="241" y="258" width="301" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Never" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ChU-JM-nQR" id="ODn-Ih-XKx">
+                    <popUpButtonCell key="cell" type="push" title="Never" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ChU-JM-nQR" id="ODn-Ih-XKx">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" id="0LS-QL-7pz">
                             <items>
-                                <menuItem title="Never" id="ChU-JM-nQR"/>
+                                <menuItem title="Never" state="on" id="ChU-JM-nQR"/>
                                 <menuItem title="Always" tag="3" id="U6s-xk-3OZ"/>
                                 <menuItem title="On Retina Displays" tag="4" id="52C-Wy-nkn"/>
                                 <menuItem isSeparatorItem="YES" id="IDM-4t-l1e"/>
                                 <menuItem title="With Dark Backgrounds" tag="2" id="9Na-yW-waM"/>
-                                <menuItem title="On Retina Displays and Dark Backgrounds" state="on" tag="1" id="Enb-ir-CSO"/>
+                                <menuItem title="On Retina Displays and Dark Backgrounds" tag="1" id="Enb-ir-CSO"/>
                             </items>
                         </menu>
                     </popUpButtonCell>

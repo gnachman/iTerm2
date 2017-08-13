@@ -74,4 +74,7 @@ extern NSString *const iTermImageDidLoad;
 // Coded representation
 - (NSDictionary *)dictionary;
 
+// Format inferred from extension
+- (void)saveToFile:(NSString *)filename;
+
 @end

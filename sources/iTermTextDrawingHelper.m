@@ -956,7 +956,7 @@ typedef struct iTermTextColorContext {
         iTermBackgroundColorRunsInLine *fakeRuns = [[[iTermBackgroundColorRunsInLine alloc] init] autorelease];
         fakeRuns.line = runs.line;
         fakeRuns.y = runs.y;
-        fakeRuns.numberOfEquivalentRows = fakeRuns.numberOfEquivalentRows;
+        fakeRuns.numberOfEquivalentRows = runs.numberOfEquivalentRows;
         fakeRuns.array = combinedRuns;
         return fakeRuns;
     }];
