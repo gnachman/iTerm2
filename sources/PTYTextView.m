@@ -3542,9 +3542,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [pboard declareTypes:types owner:self];
     if (copyAttributedString) {
-        NSData *RTFData = [copyAttributedString RTFFromRange:NSMakeRange(0, [copyAttributedString length])
-                                          documentAttributes:@{}];
-        [pboard setData:RTFData forType:NSRTFPboardType];
+        // I used to convert this to RTF data using
+        // RTFFromRange:documentAttributes: but images wouldn't paste right.
+        [pboard clearContents];
+        [pboard writeObjects:@[ copyAttributedString ]];
     }
     // I used to do
     //   [pboard setString:[copyAttributedString string] forType:NSStringPboardType]
@@ -4458,41 +4459,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [panel setExtensionHidden:NO];
 
     if ([panel runModal] == NSModalResponseOK) {
-        NSBitmapImageFileType fileType = NSPNGFileType;
         NSString *filename = [panel legacyFilename];
-        if ([filename hasSuffix:@".bmp"]) {
-            fileType = NSBMPFileType;
-        } else if ([filename hasSuffix:@".gif"]) {
-            fileType = NSGIFFileType;
-        } else if ([filename hasSuffix:@".jp2"]) {
-            fileType = NSJPEG2000FileType;
-        } else if ([filename hasSuffix:@".jpg"] || [filename hasSuffix:@".jpeg"]) {
-            fileType = NSJPEGFileType;
-        } else if ([filename hasSuffix:@".png"]) {
-            fileType = NSPNGFileType;
-        } else if ([filename hasSuffix:@".tiff"]) {
-            fileType = NSTIFFFileType;
-        }
-
-        NSData *data = nil;
-        NSDictionary *universalTypeToCocoaMap = @{ (NSString *)kUTTypeBMP: @(NSBMPFileType),
-                                                   (NSString *)kUTTypeGIF: @(NSGIFFileType),
-                                                   (NSString *)kUTTypeJPEG2000: @(NSJPEG2000FileType),
-                                                   (NSString *)kUTTypeJPEG: @(NSJPEGFileType),
-                                                   (NSString *)kUTTypePNG: @(NSPNGFileType),
-                                                   (NSString *)kUTTypeTIFF: @(NSTIFFFileType) };
-        NSString *imageType = imageInfo.imageType;
-        if (imageType) {
-            NSNumber *nsTypeNumber = universalTypeToCocoaMap[imageType];
-            if (nsTypeNumber.integerValue == fileType) {
-                data = imageInfo.data;
-            }
-        }
-        if (!data) {
-            NSBitmapImageRep *rep = [imageInfo.image.images.firstObject bitmapImageRep];
-            data = [rep representationUsingType:fileType properties:@{}];
-        }
-        [data writeToFile:filename atomically:NO];
+        [imageInfo saveToFile:filename];
     }
 }
 
