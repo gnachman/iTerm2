@@ -4618,7 +4618,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Allocate a menu
     theMenu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
-    if (imageInfo) {
+    if (imageInfo && !imageInfo.broken) {
         // Show context menu for an image.
         NSArray *entryDicts =
             @[ @{ @"title": @"Save Image As…",

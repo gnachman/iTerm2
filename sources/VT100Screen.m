@@ -11,6 +11,7 @@
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermImage.h"
+#import "iTermImageInfo.h"
 #import "iTermImageMark.h"
 #import "iTermURLMark.h"
 #import "iTermPreferences.h"
@@ -3411,7 +3412,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     } else {
         image = [iTermImage imageWithCompressedData:data];
     }
-    if (!image) {
+    const BOOL isBroken = !image;
+    if (isBroken) {
         image = [iTermImage imageWithNativeImage:[NSImage imageNamed:@"broken_image"]];
         assert(image);
     }
@@ -3500,6 +3502,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                            height,
                                            preserveAspectRatio,
                                            fractionalInset);
+    iTermImageInfo *imageInfo = GetImageInfo(c.code);
+    imageInfo.broken = isBroken;
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             [self linefeed];
