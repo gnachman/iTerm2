@@ -99,23 +99,31 @@
         _attributedString = cheap;
         return;
     } else if ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]) {
-        [_attributedString release];
+        iTermCheapAttributedString *cheap = [(id)_attributedString autorelease];
         _attributedString = nil;
+        [self appendRealAttributedStringWithText:[NSString stringWithCharacters:cheap.characters length:cheap.length]
+                                      attributes:cheap.attributes];
+        [_string setString:@""];
     }
     if (_characterData.length > 0) {
         [self flushCharacters];
     }
     if (_string.length) {
-        _canUseFastPath = NO;
-        if (!_attributedString) {
-            _attributedString = [[NSMutableAttributedString alloc] init];
-            [_attributedString beginEditing];
-        }
-        [_attributedString appendAttributedString:[NSAttributedString attributedStringWithString:_string
-                                                                                      attributes:_attributes]];
+        [self appendRealAttributedStringWithText:_string attributes:_attributes];
         [_string setString:@""];
     }
 }
+
+- (void)appendRealAttributedStringWithText:(NSString *)string attributes:(NSDictionary *)attributes {
+    _canUseFastPath = NO;
+    if (!_attributedString) {
+        _attributedString = [[NSMutableAttributedString alloc] init];
+        [_attributedString beginEditing];
+    }
+    [_attributedString appendAttributedString:[NSAttributedString attributedStringWithString:string
+                                                                                  attributes:attributes]];
+}
+
 - (id<iTermAttributedString>)attributedString {
     [self build];
     if ([_attributedString isKindOfClass:[NSAttributedString class]]) {
