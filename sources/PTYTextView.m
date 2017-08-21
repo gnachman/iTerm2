@@ -4478,7 +4478,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     iTermImageInfo *imageInfo = [sender representedObject];
     NSString *name = imageInfo.nameForNewSavedTempFile;
     if (name) {
-        [[NSWorkspace sharedWorkspace] openFile:name];
+        [[iTermLaunchServices sharedInstance] openFile:name];
     }
 }
 
@@ -4620,15 +4620,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
     if (imageInfo) {
         // Show context menu for an image.
-        NSArray *entryDicts =
-            @[ @{ @"title": @"Save Image As…",
-                  @"selector": @"saveImageAs:" },
-               @{ @"title": @"Copy Image",
-                  @"selector": @"copyImage:" },
-               @{ @"title": @"Open Image",
-                  @"selector": @"openImage:" },
-               @{ @"title": @"Inspect",
-                  @"selector": @"inspectImage:" } ];
+        NSArray *entryDicts;
+        if (imageInfo.broken) {
+            entryDicts =
+                @[ @{ @"title": @"Save File As…",
+                      @"selector": @"saveImageAs:" },
+                   @{ @"title": @"Copy File",
+                      @"selector": @"copyImage:" },
+                   @{ @"title": @"Open File",
+                      @"selector": @"openImage:" },
+                   @{ @"title": @"Inspect",
+                      @"selector": @"inspectImage:" } ];
+        } else {
+            entryDicts =
+                @[ @{ @"title": @"Save Image As…",
+                      @"selector": @"saveImageAs:" },
+                   @{ @"title": @"Copy Image",
+                      @"selector": @"copyImage:" },
+                   @{ @"title": @"Open Image",
+                      @"selector": @"openImage:" },
+                   @{ @"title": @"Inspect",
+                      @"selector": @"inspectImage:" } ];
+        }
         if (imageInfo.animated || imageInfo.paused) {
             NSString *selector = @"togglePauseAnimatingImage:";
             if (imageInfo.paused) {

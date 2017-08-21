@@ -56,6 +56,9 @@ extern NSString *const iTermImageDidLoad;
 // Creates a pasteboard item that responds with image or file.
 @property(nonatomic, readonly) NSPasteboardItem *pasteboardItem;
 
+// Is this a broken image?
+@property(nonatomic) BOOL broken;
+
 // Used to create a new instance for a new image. This may remain an empty container until
 // -setImageFromImage: is called.
 - (instancetype)initWithCode:(unichar)code;

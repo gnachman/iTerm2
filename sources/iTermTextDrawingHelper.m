@@ -388,7 +388,7 @@ typedef struct iTermTextColorContext {
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    if (self.minimumContrast > 0) {
+    if (self.minimumContrast > 0 || self.colorMap.mutingAmount > 0) {
         [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
                                                ctx:ctx];
     } else {
