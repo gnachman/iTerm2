@@ -168,7 +168,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     _gcdUpdateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
     dispatch_source_set_timer(_gcdUpdateTimer,
-                              dispatch_walltime(NULL, 0),
+                              dispatch_time(DISPATCH_TIME_NOW, period * NSEC_PER_SEC),
                               period * NSEC_PER_SEC,
                               0.005 * NSEC_PER_SEC);
     __weak __typeof(self) weakSelf = self;
