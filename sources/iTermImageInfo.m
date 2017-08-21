@@ -162,7 +162,9 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
                                                (NSString *)kUTTypePNG: @(NSPNGFileType),
                                                (NSString *)kUTTypeTIFF: @(NSTIFFFileType) };
     NSString *imageType = self.imageType;
-    if (imageType) {
+    if (self.broken) {
+        data = self.data;
+    } else if (imageType) {
         NSNumber *nsTypeNumber = universalTypeToCocoaMap[imageType];
         if (nsTypeNumber.integerValue == fileType) {
             data = self.data;
