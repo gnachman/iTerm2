@@ -117,6 +117,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
                       fromCharacterSet:(NSCharacterSet *)charSet
                   charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr;
 
+- (NSArray *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes;
+
 // This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
 // 1. Well formed strings like:
 //    "http://example.com/foo?query#fragment"
