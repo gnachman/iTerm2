@@ -559,7 +559,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         }
 
         int spans;
-        if (_mayHaveDoubleWidthCharacter) {
+#warning I think the cache was causing crashes in OffsetOfWrappedLine later in this function. See if that is true in beta 8.
+        const BOOL useCache = NO;
+        if (useCache && _mayHaveDoubleWidthCharacter) {
             LineBlockMetadata *metadata = &metadata_[i];
             if (metadata->width_for_number_of_wrapped_lines == width &&
                 metadata->number_of_wrapped_lines > 0) {

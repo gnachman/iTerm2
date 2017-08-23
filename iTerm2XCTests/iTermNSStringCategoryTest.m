@@ -264,4 +264,165 @@
   XCTAssertFalse([@"ABC" stringMatchesGlobPattern:@"a*x" caseSensitive:NO]);
 }
 
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_Basic {
+    NSString *s = @"foo bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_BackslashEscapesMidlineSpace {
+    NSString *s = @"foo\\ bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_BackslashEscapesLeadingTrailingSpace {
+    NSString *s = @"\\ foo bar\\ ";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @" foo", @"bar " ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_BackslashEscapesSingleQuote {
+    NSString *s = @"foo\\' bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo'", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_BackslashEscapesDoubleQuote {
+    NSString *s = @"foo\\\" bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo\"", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_BackslashEscapesBackslash {
+    NSString *s = @"foo\\\\ bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo\\", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_CustomEscapes {
+    NSString *s = @"foo \\1";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{ @'1': @"bar" }];
+    NSArray<NSString *> *expected = @[ @"foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_QuotedCustomEscapes {
+    NSString *s = @"foo \"\\1\"";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{ @'1': @"bar" }];
+    NSArray<NSString *> *expected = @[ @"foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_DoubleQuotesWithSpace {
+    NSString *s = @"foo\" \"bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_DoubleQuotesWithSingleQuote {
+    NSString *s = @"foo\"'\"bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo'bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_DoubleQuotesWithEscapedDoubleQuote {
+    NSString *s = @"foo\"\\\"\"bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo\"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_SingleQuotesWithSpace {
+    NSString *s = @"foo' 'bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_SingleQuotesWithDoubleQuote {
+    NSString *s = @"foo'\"'bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo\"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_SingleQuotesWithEscapedSingleQuote {
+    NSString *s = @"foo'\\''bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo'bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_MismatchedDoubleQuotes {
+    NSString *s = @"foo\" bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_MismatchedSingleQuotes {
+    NSString *s = @"foo' bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_OrphanBackslash {
+    NSString *s = @"foo bar\\";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_ExpandTilde {
+    NSString *s = @"~/foo bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    XCTAssertEqual(actual.count, 2);
+    XCTAssertFalse([actual[0] hasPrefix:@"~"]);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_MidlineTilde {
+    NSString *s = @"fo~o bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"fo~o", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_EscapedTilde {
+    NSString *s = @"\\~/foo bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"~/foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_DoubleQuotedTilde {
+    NSString *s = @"\"~/foo\" bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"~/foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_SingleQuotedTilde {
+    NSString *s = @"'~/foo' bar";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"~/foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testComponentsBySplittingStringWithQuotesAndBackslashEscaping_TrimSpace {
+    NSString *s = @"  foo   bar  ";
+    NSArray<NSString *> *actual = [s componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+    NSArray<NSString *> *expected = @[ @"foo", @"bar" ];
+    XCTAssertEqualObjects(actual, expected);
+}
+
 @end
