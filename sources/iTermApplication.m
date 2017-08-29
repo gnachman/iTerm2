@@ -407,10 +407,5 @@
     return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
 }
 
-- (BOOL)sendAction:(SEL)action to:(nullable id)target from:(nullable id)sender {
-    ILog(@"sendAction:%@ to:%@ from:%@", NSStringFromSelector(action), target, sender);
-    return [super sendAction:action to:target from:sender];
-}
-
 @end
 
