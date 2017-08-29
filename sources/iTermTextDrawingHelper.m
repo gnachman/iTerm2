@@ -388,12 +388,12 @@ typedef struct iTermTextColorContext {
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    if (self.minimumContrast > 0 || self.colorMap.mutingAmount > 0) {
+    if (self.minimumContrast > 0 || self.colorMap.mutingAmount > 0 || self.colorMap.dimmingAmount > 0) {
         [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
                                                ctx:ctx];
     } else {
-        [self drawNoMinimumContrastContrastForegroundWithBackgroundRunArrays:backgroundRunArrays
-                                                                         ctx:ctx];
+        [self drawUnprocessedForegroundForBackgroundRunArrays:backgroundRunArrays
+                                                          ctx:ctx];
     }
 
     [self drawTopMargin];
@@ -927,9 +927,9 @@ typedef struct iTermTextColorContext {
 
 #pragma mark - Drawing: Foreground
 
-// Draw assuming no minimum contrast. Keeps glyphs together in a single background color run across different background colors.
-- (void)drawNoMinimumContrastContrastForegroundWithBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
-                                                                   ctx:(CGContextRef)ctx {
+// Draw assuming no foreground color processing. Keeps glyphs together in a single background color run across different background colors.
+- (void)drawUnprocessedForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                                                    ctx:(CGContextRef)ctx {
     // Combine runs on each line, except those with different values of
     // `selected` or `match`. Those properties affect foreground color and must
     // split ligatures up.
