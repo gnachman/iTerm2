@@ -226,7 +226,12 @@ const NSInteger kPSMStartResizeAnimation = 0;
 }
 
 - (void)sanityCheck:(NSString *)callsite {
-    if ([[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
+    [self sanityCheck:callsite force:NO];
+}
+
+- (void)sanityCheck:(NSString *)callsite force:(BOOL)force {
+    if (!force && [[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
+        ILog(@"Skip sanity check during drag from callsite %@", callsite);
         return;
     }
     if (self.tabView.tabViewItems.count != self.cells.count) {
@@ -239,6 +244,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
                 [self sanityCheckFailedWithCallsite:callsite reason:@"cells[i].representedObject != tabView.tabViewItems[i].representedObject"];
             }
         }
+        NSLog(@"Sanity check passed. cells=%@. tabView.tabViewITems=%@", self.cells, self.tabView.tabViewItems);
     }
 }
 

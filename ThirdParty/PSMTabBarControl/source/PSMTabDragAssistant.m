@@ -439,17 +439,23 @@
                                  didDropTabViewItem:[[self draggedCell] representedObject]
                                            inTabBar:[self destinationTabBar]];
         }
-        [[self destinationTabBar] sanityCheck:@"destination performDragOperation"];
-        [[self sourceTabBar] sanityCheck:@"source performDragOperation"];
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
 
+    PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
+    PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
+
     [self finishDrag];
+
+    [destination sanityCheck:@"destination performDragOperation"];
+    [source sanityCheck:@"source performDragOperation"];
 }
 
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
     if ([self isDragging]) {  // means there was not a successful drop (performDragOperation)
+        PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
+        PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
         id sourceDelegate = [[self sourceTabBar] delegate];
 
         //split off the dragged tab into a new window
@@ -520,7 +526,7 @@
                 }
                 [control sanityCheck:@"add dragged tab to new window"];
             } else {
-                NSLog(@"Delegate returned no control to add to.");
+                ELog(@"Delegate returned no control to add to.");
                 [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
                 [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
                 [[[self sourceTabBar] window] orderFront:nil];
@@ -536,6 +542,9 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
 
         [self finishDrag];
+
+        [source sanityCheck:@"draggedImageEndedAt - source"];
+        [destination sanityCheck:@"draggedImageEndedAt - destination"];
     }
 }
 
