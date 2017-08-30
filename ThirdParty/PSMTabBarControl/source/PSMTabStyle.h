@@ -62,5 +62,6 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 - (NSMutableArray *)cells;
 - (void)sanityCheck:(NSString *)callsite;
+- (void)sanityCheck:(NSString *)callsite force:(BOOL)force;
 
 @end
