@@ -7,6 +7,8 @@
 //
 
 #import "LineBlock.h"
+
+#import "DebugLogging.h"
 #import "FindContext.h"
 #import "LineBufferHelpers.h"
 #import "NSBundle+iTerm.h"
@@ -14,6 +16,7 @@
 #import "iTermAdvancedSettingsModel.h"
 
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
+static BOOL gUseCachingNumberOfLines = NO;
 
 NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
@@ -92,6 +95,7 @@ void EnableDoubleWidthCharacterLineCache() {
         if ([iTermAdvancedSettingsModel dwcLineCache] ||
             [NSBundle it_isNightlyBuild]) {
             gEnableDoubleWidthCharacterLineCache = YES;
+            gUseCachingNumberOfLines = YES;
         }
     });
 
@@ -560,12 +564,25 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 
         int spans;
 #warning I think the cache was causing crashes in OffsetOfWrappedLine later in this function. See if that is true in beta 8.
-        const BOOL useCache = NO;
+        const BOOL useCache = gUseCachingNumberOfLines;
         if (useCache && _mayHaveDoubleWidthCharacter) {
             LineBlockMetadata *metadata = &metadata_[i];
             if (metadata->width_for_number_of_wrapped_lines == width &&
                 metadata->number_of_wrapped_lines > 0) {
                 spans = metadata->number_of_wrapped_lines;
+
+#warning Remove this when I feel confident it is correct
+                if (arc4random_uniform(100) == 0) {
+                    // Correctness checking code follows. Remove this for speed when I think it's correct.
+                    int referenceSpans = NumberOfFullLines(buffer_start + prev,
+                                                           length,
+                                                           width,
+                                                           _mayHaveDoubleWidthCharacter);
+                    if (spans != referenceSpans) {
+                        ILog(@"Metadata gives number of wrapped lines = %@ for width %@ while reference = %@", @(metadata->number_of_wrapped_lines), @(width), @(referenceSpans));
+                        assert(false);
+                    }
+                }
             } else {
                 spans = NumberOfFullLines(buffer_start + prev,
                                           length,
@@ -829,6 +846,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     int initialOffset = start_offset;
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
+        LineBlockMetadata *metadata = &metadata_[i];
         length = cll - prev;
         // Get the number of full-length wrapped lines in this raw line. If there
         // were only single-width characters the formula would be:
@@ -858,6 +876,12 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             buffer_start += prev + offset;
             start_offset = buffer_start - raw_buffer;
             first_entry = i;
+            metadata->number_of_wrapped_lines = 0;
+            if (gEnableDoubleWidthCharacterLineCache) {
+                [metadata_[i].double_width_characters release];
+                metadata_[i].double_width_characters = nil;
+            }
+
             *charsDropped = start_offset - initialOffset;
 
 #ifdef TEST_LINEBUFFER_SANITY
