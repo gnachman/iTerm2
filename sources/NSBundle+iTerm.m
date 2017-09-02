@@ -11,8 +11,13 @@
 @implementation NSBundle (iTerm)
 
 + (BOOL)it_isNightlyBuild {
-    NSString *testingFeed = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"];
-    return [testingFeed containsString:@"nightly"];
+    static dispatch_once_t onceToken;
+    static BOOL result;
+    dispatch_once(&onceToken, ^{
+        NSString *testingFeed = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"];
+        result = [testingFeed containsString:@"nightly"];
+    });
+    return result;
 }
 
 + (BOOL)it_isEarlyAdopter {
