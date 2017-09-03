@@ -1312,12 +1312,16 @@ static int Search(NSString* needle,
             skipped = 0;
         }
         NSMutableArray* newResults = [NSMutableArray arrayWithCapacity:1];
+
+        // Don't search arbitrarily long lines. If someone has a 10 million character long line then
+        // it'll hang for a long time.
+        static const int MAX_SEARCHABLE_LINE_LENGTH = 500000;
         [self _findInRawLine:entry
                       needle:substring
                      options:options
                         mode:mode
                         skip:skipped
-                      length:[self _lineLength: entry]
+                      length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength: entry])
              multipleResults:multipleResults
                      results:newResults];
         for (ResultRange* r in newResults) {

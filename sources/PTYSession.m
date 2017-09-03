@@ -42,6 +42,7 @@
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermUpdateCadenceController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -206,18 +207,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // shuold be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
-// Timer period between updates when active (not idle, tab is visible or title bar is changing,
-// etc.)
-static const NSTimeInterval kActiveUpdateCadence = 1 / 20.0;
-
-// Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
-static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
-
-// Timer period for background sessions. This changes the tab item's color
-// so it must run often enough for that to be useful.
-// TODO(georgen): There's room for improvement here.
-static const NSTimeInterval kBackgroundUpdateCadence = 1;
-
 // Limit for number of entries in self.directories, self.commands, self.hosts.
 // Keeps saved state from exploding like in issue 5029.
 static const NSUInteger kMaxDirectories = 100;
@@ -229,7 +218,8 @@ static const NSUInteger kMaxHosts = 100;
     iTermCoprocessDelegate,
     iTermHotKeyNavigableSession,
     iTermPasteHelperDelegate,
-    iTermSessionViewDelegate>
+    iTermSessionViewDelegate,
+    iTermUpdateCadenceControllerDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, retain) TerminalFileUpload *upload;
@@ -293,15 +283,6 @@ static const NSUInteger kMaxHosts = 100;
     // A view that wraps the textview. It is the scrollview's document. This exists to provide a
     // top margin above the textview.
     TextViewWrapper *_wrapper;
-
-    BOOL _useGCDUpdateTimer;
-    // This timer fires periodically to redraw textview, update the scroll position, tab appearance,
-    // etc.
-    NSTimer *_updateTimer;
-
-    // This is the experimental GCD version of the update timer that seems to have more regular refreshes.
-    dispatch_source_t _gcdUpdateTimer;
-    NSTimeInterval _cadence;
 
     // Anti-idle timer that sends a character every so often to the host.
     NSTimer *_antiIdleTimer;
@@ -479,6 +460,8 @@ static const NSUInteger kMaxHosts = 100;
 
     // Absolute line number where touchbar status changed.
     long long _statusChangedAbsLine;
+
+    iTermUpdateCadenceController *_cadenceController;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -510,7 +493,6 @@ static const NSUInteger kMaxHosts = 100;
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
         _slowFrameRate = [iTermAdvancedSettingsModel slowFrameRate];
-        _useGCDUpdateTimer = [iTermAdvancedSettingsModel useGCDUpdateTimer];
         _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
         _triggerLineNumber = -1;
         _fakePromptDetectedAbsLine = -1;
@@ -553,6 +535,8 @@ static const NSUInteger kMaxHosts = 100;
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
+        _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
+        _cadenceController.delegate = self;
 
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
@@ -646,10 +630,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_backgroundImagePath release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
-    if (_gcdUpdateTimer != nil) {
-        dispatch_source_cancel(_gcdUpdateTimer);
-        dispatch_release(_gcdUpdateTimer);
-    }
+    [_cadenceController release];
     [_originalProfile release];
     [_liveSession release];
     [_tmuxGateway release];
@@ -2372,7 +2353,7 @@ ITERM_WEAKLY_REFERENCEABLE
         dispatch_semaphore_signal(_executionSemaphore);
         dispatch_release(_executionSemaphore);
         [self release];
-    });
+        });
 }
 
 - (void)synchronousReadTask:(NSString *)string {
@@ -4208,100 +4189,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)updateTimerIsValid {
-    if (_useGCDUpdateTimer) {
-        return _gcdUpdateTimer != nil;
-    } else {
-        return _updateTimer.isValid;
-    }
-}
-
 - (void)setActive:(BOOL)active {
     DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
-         @(active), @(_timerRunning), @(self.updateTimerIsValid), _lastTimeout, self);
+         @(active), @(_timerRunning), @(_cadenceController.updateTimerIsValid), _lastTimeout, self);
     _active = active;
-    [self changeCadenceIfNeeded];
-}
-
-- (void)changeCadenceIfNeeded {
-    BOOL effectivelyActive = (_active || !self.isIdle || [NSApp isActive]);
-    if (effectivelyActive && [_delegate sessionBelongsToVisibleTab]) {
-        if (_useAdaptiveFrameRate) {
-            const NSInteger kThroughputLimit = _adaptiveFrameRateThroughputThreshold;
-            const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
-            if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
-                [self setUpdateCadence:kFastUpdateCadence];
-            } else {
-                [self setUpdateCadence:1.0 / _slowFrameRate];
-            }
-        } else {
-            [self setUpdateCadence:kActiveUpdateCadence];
-        }
-    } else {
-        [self setUpdateCadence:kBackgroundUpdateCadence];
-    }
-}
-
-- (void)setUpdateCadence:(NSTimeInterval)cadence {
-    if (_useGCDUpdateTimer) {
-        [self setGCDUpdateCadence:cadence];
-    } else {
-        [self setTimerUpdateCadence:cadence];
-    }
-}
-
-- (void)setTimerUpdateCadence:(NSTimeInterval)cadence {
-    if (_updateTimer.timeInterval == cadence) {
-        DLog(@"No change to cadence.");
-        return;
-    }
-    DLog(@"Set cadence of %@ to %f", self, cadence);
-
-    [_updateTimer invalidate];
-    if (_inLiveResize) {
-        // This solves the bug where we don't redraw properly during live resize.
-        // I'm worried about the possible side effects it might have since there's no way to
-        // know all the tracking event loops.
-        _updateTimer = [NSTimer timerWithTimeInterval:kActiveUpdateCadence
-                                               target:self.weakSelf
-                                             selector:@selector(updateDisplay)
-                                             userInfo:nil
-                                              repeats:YES];
-        [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
-    } else {
-        _updateTimer = [NSTimer scheduledTimerWithTimeInterval:cadence
-                                                        target:self.weakSelf
-                                                      selector:@selector(updateDisplay)
-                                                      userInfo:nil
-                                                       repeats:YES];
-    }
-}
-- (void)setGCDUpdateCadence:(NSTimeInterval)cadence {
-    const NSTimeInterval period = _inLiveResize ? kActiveUpdateCadence : cadence;
-    if (_cadence == period) {
-        DLog(@"No change to cadence.");
-        return;
-    }
-    DLog(@"Set cadence of %@ to %f", self, cadence);
-
-    _cadence = period;
-
-    if (_gcdUpdateTimer != nil) {
-        dispatch_source_cancel(_gcdUpdateTimer);
-        dispatch_release(_gcdUpdateTimer);
-        _gcdUpdateTimer = nil;
-    }
-
-    _gcdUpdateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
-    dispatch_source_set_timer(_gcdUpdateTimer,
-                              dispatch_walltime(NULL, 0),
-                              period * NSEC_PER_SEC,
-                              0.005 * NSEC_PER_SEC);
-    PTYSession *weakSelf = self.weakSelf;
-    dispatch_source_set_event_handler(_gcdUpdateTimer, ^{
-        [weakSelf updateDisplay];
-    });
-    dispatch_resume(_gcdUpdateTimer);
+    [_cadenceController changeCadenceIfNeeded];
 }
 
 - (void)doAntiIdle {
@@ -4457,11 +4349,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
         if (notification.object == self.textview.window) {
             _inLiveResize = YES;
-            if (!_useGCDUpdateTimer) {
-                if (_updateTimer) {
-                    [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
-                }
-            }
+            [_cadenceController willStartLiveResize];
         }
     }
 }
@@ -4470,18 +4358,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
         if (notification.object == self.textview.window) {
             _inLiveResize = NO;
-            if (_useGCDUpdateTimer) {
-                NSTimeInterval cadence = _cadence;
-                _cadence = 0;
-                [self setUpdateCadence:cadence];
-            } else {
-                if (_updateTimer) {
-                    NSTimeInterval cadence = _updateTimer.timeInterval;
-                    [_updateTimer invalidate];
-                    _updateTimer = nil;
-                    [self setUpdateCadence:cadence];
-                }
-            }
+            [_cadenceController liveResizeDidEnd];
         }
     }
 }
@@ -9052,6 +8929,24 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     }
                                                 }];
     [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
+}
+
+#pragma mark - iTermUpdateCadenceController
+
+- (void)updateCadenceControllerUpdateDisplay:(iTermUpdateCadenceController *)controller {
+    [self updateDisplay];
+}
+
+- (iTermUpdateCadenceState)updateCadenceControllerState {
+    iTermUpdateCadenceState state;
+    state.active = _active;
+    state.idle = self.isIdle;
+    state.visible = [_delegate sessionBelongsToVisibleTab];
+    state.useAdaptiveFrameRate = _useAdaptiveFrameRate;
+    state.adaptiveFrameRateThroughputThreshold = _adaptiveFrameRateThroughputThreshold;
+    state.slowFrameRate = _slowFrameRate;
+    state.liveResizing = _inLiveResize;
+    return state;
 }
 
 #pragma mark - API
