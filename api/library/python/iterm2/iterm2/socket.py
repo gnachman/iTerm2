@@ -4,77 +4,9 @@
 from __future__ import print_function
 
 import api_pb2
+import future
 import rpcsocket
 import logging
-
-_idle_observers = []
-
-def add_idle_observer(observer):
-  _idle_observers.append(observer)
-
-class Future(rpcsocket.SynchronousCallback):
-  def __init__(self, transform=None):
-    rpcsocket.SynchronousCallback.__init__(self)
-    if transform is None:
-      self.transform = lambda x: x
-    else:
-      self.transform = transform
-    self.transformed_response = None
-    self.watches = []
-
-  def get(self):
-    if self.transformed_response is None:
-      logging.debug("Waiting on future")
-      self.wait()
-      logging.debug("REALIZING %s" % str(self))
-      self.transformed_response = self.transform(self.response)
-      assert self.transformed_response is not None
-      self._invoke_watches(self.transformed_response)
-    return self.transformed_response
-
-  def _invoke_watches(self, response):
-    watches = self.watches
-    self.watches = None
-    for watch in watches:
-      watch(response)
-
-  def watch(self, callback):
-    if self.watches is not None:
-      logging.debug("Add watch to %s", str(self))
-      self.watches.append(callback)
-    else:
-      logging.debug("Immediately run callback for watch for %s" % str(self))
-      callback(self.get())
-
-  def wait(self):
-    for o in _idle_observers:
-      o()
-    rpcsocket.SynchronousCallback.wait(self)
-
-class DependentFuture(Future):
-  """If you have a future A and you want to create future B, but B can't be
-  created yet because the information needed to make it doesn't exist yet, use
-  this. This provides a future C that creates B when A is realized. Its get()
-  blocks until A and B are both realized."""
-  def __init__(self, parent, create_inner):
-    Future.__init__(self)
-    self.parent = parent
-    self.innerFuture = None
-    self.create_inner = create_inner
-    parent.watch(self._parent_did_realize)
-
-  def _parent_did_realize(self, response):
-    logging.debug("PARENT REALIZED FOR %s" % str(self.parent))
-    self.innerFuture = self.create_inner(response)
-    for watch in self.watches:
-      self.innerFuture.watch(watch)
-    self.watches = None
-
-  def get(self):
-    logging.debug("Dependent future %s getting parent future %s" % (str(self), str(self.parent)))
-    parent = self.parent.get()
-    logging.debug("Dependent future %s got parent from future %s, produced inner future %s" % (str(self), str(self.parent), str(self.innerFuture)))
-    return self.innerFuture.get()
 
 class Connection(object):
   def __init__(self):
@@ -84,6 +16,9 @@ class Connection(object):
     if self.last_future is not None:
       self.last_future.get()
       self.last_future = None
+
+  def finish(self):
+    self.ws.finish()
 
   def connect(self, notification_handler):
     self.notification_handler = notification_handler;
@@ -166,10 +101,10 @@ class Connection(object):
     return self.ws.sync_send_rpc(request.SerializeToString())
 
   def _send_async(self, request, transform):
-    future = Future(transform)
-    self.ws.async_send_rpc(request.SerializeToString(), future.callback)
-    self.last_future = future
-    return future
+    f = future.Future(transform)
+    self.ws.async_send_rpc(request.SerializeToString(), f.callback)
+    self.last_future = f
+    return f
 
   def _handler(self, message):
     response = api_pb2.Response()

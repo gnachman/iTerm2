@@ -3,8 +3,9 @@
 
 from __future__ import print_function
 
-from sharedstate import get_socket, wait
+import depfuture
 import session
+from sharedstate import get_socket, wait
 import socket
 import api_pb2
 import tab
@@ -53,7 +54,7 @@ class FutureWindow(AbstractWindow):
     def create_inner(response):
       return get_socket().request_create_tab(
           profile=profile, window=self.get_window_id(), index=index, command=command)
-    createTabFuture = socket.DependentFuture(self.future, create_inner)
+    createTabFuture = depfuture.DependentFuture(self.future, create_inner)
     return tab.FutureTab(createTabFuture);
 
   def get_status(self):

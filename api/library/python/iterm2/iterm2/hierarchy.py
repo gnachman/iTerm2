@@ -3,9 +3,10 @@
 
 from __future__ import print_function
 import api_pb2
-from sharedstate import get_socket, wait
+import future
 import notifications
 import session
+from sharedstate import get_socket, wait
 import socket
 import tab
 import window
@@ -26,7 +27,7 @@ class Synchronizer(object):
 
   def _layoutDidChange(self, notification):
     logging.debug("Layout did change")
-    self.future = socket.Future()
+    self.future = future.Future()
     self.future.callback(notification.list_sessions_response)
 
   def get(self):

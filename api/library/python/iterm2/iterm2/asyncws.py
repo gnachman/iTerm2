@@ -131,7 +131,6 @@ class AsyncWebsocketApp(websocket.WebSocketApp):
               # propagate SystemExit further
               raise
       finally:
-          logging.debug("Everything has gone to shit")
           if thread and thread.isAlive():
               event.set()
               thread.join()
