@@ -563,7 +563,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         }
 
         int spans;
-#warning I think the cache was causing crashes in OffsetOfWrappedLine later in this function. See if that is true in beta 8.
         const BOOL useCache = gUseCachingNumberOfLines;
         if (useCache && _mayHaveDoubleWidthCharacter) {
             LineBlockMetadata *metadata = &metadata_[i];
@@ -572,7 +571,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                 spans = metadata->number_of_wrapped_lines;
 
 #warning Remove this when I feel confident it is correct
-                if (arc4random_uniform(100) == 0) {
+                if (arc4random_uniform(100) < 10) {
                     // Correctness checking code follows. Remove this for speed when I think it's correct.
                     int referenceSpans = NumberOfFullLines(buffer_start + prev,
                                                            length,
@@ -612,7 +611,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                                      width:width
                                                   metadata:&metadata_[i]];
 #warning Remove this when I feel confident it is correct
-                if (arc4random_uniform(100) == 0) {
+                if (arc4random_uniform(100) < 10) {
                     int correctOffset = OffsetOfWrappedLine(buffer_start + prev,
                                                             *lineNum,
                                                             length,
