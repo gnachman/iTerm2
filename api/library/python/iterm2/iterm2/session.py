@@ -4,10 +4,10 @@
 from __future__ import print_function
 
 import api_pb2
-import depfuture
-import future
-from sharedstate import get_socket, wait
-import socket
+import _depfuture as depfuture
+import _future as future
+from _sharedstate import get_socket, wait as sharedstate 
+import _socket as socket
 import logging
 import notifications
 

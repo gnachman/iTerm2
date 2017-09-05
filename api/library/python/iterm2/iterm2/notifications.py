@@ -4,9 +4,9 @@
 from __future__ import print_function
 
 import api_pb2
-from sharedstate import get_socket, wait, register_notification_handler
-import dispatchq
-import future
+from ._sharedstate import get_socket, wait, register_notification_handler
+import _dispatchq as dispatchq
+import _future as future
 import session
 import socket
 import tab

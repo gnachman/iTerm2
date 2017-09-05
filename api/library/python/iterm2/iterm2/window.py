@@ -3,10 +3,10 @@
 
 from __future__ import print_function
 
-import depfuture
+import _depfuture as depfuture
 import session
-from sharedstate import get_socket, wait
-import socket
+from _sharedstate import get_socket, wait
+import _socket as socket
 import api_pb2
 import tab
 

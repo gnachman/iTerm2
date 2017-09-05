@@ -1,5 +1,5 @@
 import logging
-import synchronouscb
+import _synchronouscb as synchronouscb
 
 """0-argument callbacks that get invoked just before blocking."""
 _idle_observers = []

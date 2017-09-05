@@ -4,8 +4,8 @@
 from __future__ import print_function
 
 import api_pb2
-import future
-import rpcsocket
+import _future as future
+import _rpcsocket as rpcsocket
 import logging
 
 class Connection(object):

@@ -1,4 +1,4 @@
-import future
+import _future as future
 import logging
 
 class DependentFuture(future.Future):

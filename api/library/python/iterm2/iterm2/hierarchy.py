@@ -3,10 +3,10 @@
 
 from __future__ import print_function
 import api_pb2
-import future
+import _future as future
 import notifications
 import session
-from sharedstate import get_socket, wait
+from _sharedstate import get_socket, wait
 import socket
 import tab
 import window

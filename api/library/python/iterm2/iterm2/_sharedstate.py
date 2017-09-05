@@ -1,4 +1,4 @@
-import socket
+import _socket as socket
 
 _socket = None
 _notification_handlers = []

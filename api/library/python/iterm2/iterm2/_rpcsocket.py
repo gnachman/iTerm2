@@ -1,8 +1,8 @@
-from .asyncws import AsyncWebsocketApp
+from ._asyncws import AsyncWebsocketApp
 
 import api_pb2
 import logging
-import synchronouscb
+import _synchronouscb as synchronouscb
 import threading
 import websocket
 

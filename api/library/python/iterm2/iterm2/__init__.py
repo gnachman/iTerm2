@@ -3,7 +3,7 @@ from .notifications import NewSessionSubscription, TerminateSessionSubscription,
 from .session import Session
 from .tab import Tab
 from .window import Window
-import sharedstate
+import _sharedstate as sharedstate
 
 def run(function):
   function()
