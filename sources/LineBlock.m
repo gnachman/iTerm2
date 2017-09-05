@@ -1338,8 +1338,10 @@ static int Search(NSString* needle,
 - (BOOL)convertPosition:(int)position
               withWidth:(int)width
                     toX:(int*)x
-                    toY:(int*)y
-{
+                    toY:(int*)y {
+    if (width <= 0) {
+        return NO;
+    }
     int i;
     *x = 0;
     *y = 0;

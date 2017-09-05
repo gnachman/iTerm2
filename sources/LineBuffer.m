@@ -764,8 +764,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 // Returns an array of XRange values
-- (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width
-{
+- (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width {
+    if (width <= 0) {
+        return nil;
+    }
     // Create sorted array of all positions to convert.
     NSMutableArray* unsortedPositions = [NSMutableArray arrayWithCapacity:[resultRanges count] * 2];
     for (ResultRange* rr in resultRanges) {
