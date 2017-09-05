@@ -12,7 +12,7 @@ import tab
 import window
 import logging
 
-class Synchronizer(object):
+class _Synchronizer(object):
   def __init__(self):
     notifications.NewSessionSubscription(lambda notification: self._refresh())
     notifications.TerminateSessionSubscription(lambda notification: self._refresh())
@@ -36,11 +36,13 @@ class Synchronizer(object):
     return None
 
 class Hierarchy(object):
+  """Stores a representation of iTerm2's window-tab-session hierarchy. Also used to create new windows."""
   def __init__(self):
-    self.synchronizer = Synchronizer()
+    self.synchronizer = _Synchronizer()
     self.windows = None
 
   def pretty_str(self):
+    """Returns the hierarchy as a human-readable string"""
     s = ""
     for w in self.get_windows():
       if len(s) > 0:
@@ -49,12 +51,26 @@ class Hierarchy(object):
     return s
 
   def get_windows(self):
+    """Gets the current windows.
+
+    Returns:
+      An array of Window objects."""
     newValue = self.synchronizer.get()
     if newValue is not None:
-      self.parse(newValue)
+      self._parse(newValue)
     return self.windows
 
-  def parse(self, response):
+  def create_window(self, profile=None, command=None):
+    """Creates a new window.
+
+    Arguments;
+      profile: The name of the profile to use for the window's first session. If None, the default profile will be used.
+      command: A command to run in lieu of the default command or login shell, if not None.
+    """
+    return window.FutureWindow(get_socket().request_create_tab(
+      profile=profile, window=None, index=None, command=command))
+
+  def _parse(self, response):
     windows = []
     for w in response.windows:
       tabs = []
@@ -65,10 +81,6 @@ class Hierarchy(object):
         tabs.append(tab.Tab(t.tab_id, sessions))
       windows.append(window.Window(w.window_id, tabs))
     self.windows = windows
-
-  def create_window(self, profile=None, command=None):
-    return window.FutureWindow(get_socket().request_create_tab(
-      profile=profile, window=None, index=None, command=command))
 
   def __repr__(self):
     return "<Hierarchy windows=%s>" % self.get_windows()
