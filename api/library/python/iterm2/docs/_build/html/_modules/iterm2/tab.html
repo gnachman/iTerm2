@@ -1,0 +1,176 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>iterm2.tab &#8212; iTerm2 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for iterm2.tab</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/python</span>
+<span class="c1"># This is python 2.7 on macOS 10.12.</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">sharedstate</span> <span class="k">import</span> <span class="n">get_socket</span><span class="p">,</span> <span class="n">wait</span>
+<span class="kn">import</span> <span class="nn">api_pb2</span>
+<span class="kn">import</span> <span class="nn">session</span>
+<span class="kn">import</span> <span class="nn">_socket</span> <span class="k">as</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<div class="viewcode-block" id="AbstractTab"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.AbstractTab">[docs]</a><span class="k">class</span> <span class="nc">AbstractTab</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;unimplemented&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbstractTab.get_tab_id"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.AbstractTab.get_tab_id">[docs]</a>  <span class="k">def</span> <span class="nf">get_tab_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;unimplemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractTab.get_sessions"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.AbstractTab.get_sessions">[docs]</a>  <span class="k">def</span> <span class="nf">get_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;unimplemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractTab.pretty_str"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.AbstractTab.pretty_str">[docs]</a>  <span class="k">def</span> <span class="nf">pretty_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">indent</span> <span class="o">+</span> <span class="s2">&quot;Tab id=</span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tab_id</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">():</span>
+      <span class="n">s</span> <span class="o">+=</span> <span class="n">j</span><span class="o">.</span><span class="n">pretty_str</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="n">indent</span> <span class="o">+</span> <span class="s2">&quot;  &quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">s</span></div></div>
+
+<div class="viewcode-block" id="FutureTab"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.FutureTab">[docs]</a><span class="k">class</span> <span class="nc">FutureTab</span><span class="p">(</span><span class="n">AbstractTab</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="n">future</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tab</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;&lt;FutureTab status=</span><span class="si">%s</span><span class="s2"> tab=</span><span class="si">%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_status</span><span class="p">()),</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_tab</span><span class="p">()))</span>
+
+<div class="viewcode-block" id="FutureTab.get_tab_id"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.FutureTab.get_tab_id">[docs]</a>  <span class="k">def</span> <span class="nf">get_tab_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tab</span><span class="p">()</span><span class="o">.</span><span class="n">get_tab_id</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="FutureTab.get_sessions"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.FutureTab.get_sessions">[docs]</a>  <span class="k">def</span> <span class="nf">get_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tab</span><span class="p">()</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="FutureTab.get_status"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.FutureTab.get_status">[docs]</a>  <span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">parse_if_needed</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span></div>
+
+  <span class="k">def</span> <span class="nf">_get_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_parse_if_needed</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tab</span>
+
+  <span class="k">def</span> <span class="nf">_parse_if_needed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">api_pb2</span><span class="o">.</span><span class="n">CreateTabResponse</span><span class="o">.</span><span class="n">OK</span><span class="p">:</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">tab</span> <span class="o">=</span> <span class="n">Tab</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">tab_id</span><span class="p">,</span> <span class="p">[</span> <span class="n">session</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">session_id</span><span class="p">)</span> <span class="p">])</span></div>
+
+<div class="viewcode-block" id="Tab"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.Tab">[docs]</a><span class="k">class</span> <span class="nc">Tab</span><span class="p">(</span><span class="n">AbstractTab</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tab_id</span><span class="p">,</span> <span class="n">sessions</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tab_id</span> <span class="o">=</span> <span class="n">tab_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;&lt;Tab id=</span><span class="si">%s</span><span class="s2"> sessions=</span><span class="si">%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tab_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Tab.get_tab_id"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.Tab.get_tab_id">[docs]</a>  <span class="k">def</span> <span class="nf">get_tab_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tab_id</span></div>
+
+<div class="viewcode-block" id="Tab.get_sessions"><a class="viewcode-back" href="../../iterm2.html#iterm2.tab.Tab.get_sessions">[docs]</a>  <span class="k">def</span> <span class="nf">get_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">iTerm2</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../iterm2.html">iterm2 package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../iterm2.html">iterm2</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, George Nachman.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

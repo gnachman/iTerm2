@@ -1,0 +1,138 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>iterm2.depfuture &#8212; iTerm2 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for iterm2.depfuture</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">_future</span> <span class="k">as</span> <span class="nn">future</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<div class="viewcode-block" id="DependentFuture"><a class="viewcode-back" href="../../iterm2.html#iterm2.depfuture.DependentFuture">[docs]</a><span class="k">class</span> <span class="nc">DependentFuture</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">Future</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;If you have a future A and you want to create future B, but B can&#39;t be</span>
+<span class="sd">  created yet because the information needed to make it doesn&#39;t exist yet, use</span>
+<span class="sd">  this. This provides a future C that creates B when A is realized. Its get()</span>
+<span class="sd">  blocks until A and B are both realized.&quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">create_inner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializer.</span>
+
+<span class="sd">    parent: The future this object depends on (future A)</span>
+<span class="sd">    create_inner: A function that takes parent&#39;s response as its argument and</span>
+<span class="sd">      returns a new future (future B)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">future</span><span class="o">.</span><span class="n">Future</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">innerFuture</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">create_inner</span> <span class="o">=</span> <span class="n">create_inner</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">watch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parent_did_realize</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DependentFuture.get"><a class="viewcode-back" href="../../iterm2.html#iterm2.depfuture.DependentFuture.get">[docs]</a>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Waits until both the parent and the subordinate futures (A and B) are</span>
+<span class="sd">    realized. Return&#39;s B&#39;s value.&quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Dependent future </span><span class="si">%s</span><span class="s2"> getting parent future </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">)))</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Dependent future </span><span class="si">%s</span><span class="s2"> got parent from future </span><span class="si">%s</span><span class="s2">, produced inner future </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">innerFuture</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">innerFuture</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+  <span class="k">def</span> <span class="nf">_parent_did_realize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;PARENT REALIZED FOR </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">innerFuture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_inner</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">watch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">watches</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">innerFuture</span><span class="o">.</span><span class="n">watch</span><span class="p">(</span><span class="n">watch</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">watches</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">iTerm2</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../iterm2.html">iterm2 package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../iterm2.html">iterm2</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, George Nachman.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
