@@ -4831,6 +4831,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
     DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
+    if (_passwordManagerWindowController != nil) {
+        DLog(@"Password manager sheet already open");
+        return;
+    }
     [session reveal];
     DLog(@"Show the password manager as a sheet");
      _passwordManagerWindowController.delegate = nil;
@@ -4851,6 +4855,7 @@ ITERM_WEAKLY_REFERENCEABLE
                              forKey:kCATransactionDisableActions];
         }
         [[_passwordManagerWindowController window] close];
+        _passwordManagerWindowController = nil;
         if (noAnimations) {
             [CATransaction commit];
         }

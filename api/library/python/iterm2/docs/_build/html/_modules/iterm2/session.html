@@ -1,0 +1,215 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>iterm2.session &#8212; iTerm2 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for iterm2.session</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/python</span>
+<span class="c1"># This is python 2.7 on macOS 10.12.</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">api_pb2</span>
+<span class="kn">import</span> <span class="nn">_depfuture</span> <span class="k">as</span> <span class="nn">depfuture</span>
+<span class="kn">import</span> <span class="nn">_future</span> <span class="k">as</span> <span class="nn">future</span>
+<span class="kn">from</span> <span class="nn">_sharedstate</span> <span class="k">import</span> <span class="n">get_socket</span><span class="p">,</span> <span class="n">wait</span> <span class="k">as</span> <span class="n">sharedstate</span> 
+<span class="kn">import</span> <span class="nn">_socket</span> <span class="k">as</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">notifications</span>
+
+<div class="viewcode-block" id="TextSender"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.TextSender">[docs]</a><span class="k">class</span> <span class="nc">TextSender</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="n">future</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="TextSender.get_status"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.TextSender.get_status">[docs]</a>  <span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Getting future </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span></div>
+
+<div class="viewcode-block" id="TextSender.parse"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.TextSender.parse">[docs]</a>  <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span></div></div>
+
+
+<div class="viewcode-block" id="AbstractSession"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.AbstractSession">[docs]</a><span class="k">class</span> <span class="nc">AbstractSession</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;unimplemented&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbstractSession.get_session_id"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.AbstractSession.get_session_id">[docs]</a>  <span class="k">def</span> <span class="nf">get_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;unimplemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractSession.pretty_str"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.AbstractSession.pretty_str">[docs]</a>  <span class="k">def</span> <span class="nf">pretty_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">indent</span> <span class="o">+</span> <span class="s2">&quot;Session id=</span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_session_id</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="FutureSession"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.FutureSession">[docs]</a><span class="k">class</span> <span class="nc">FutureSession</span><span class="p">(</span><span class="n">AbstractSession</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="n">future</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;&lt;FutureSession status=</span><span class="si">%s</span><span class="s2"> session=</span><span class="si">%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_status</span><span class="p">()),</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_session</span><span class="p">()))</span>
+
+<div class="viewcode-block" id="FutureSession.get_session_id"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.FutureSession.get_session_id">[docs]</a>  <span class="k">def</span> <span class="nf">get_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_session</span><span class="p">()</span><span class="o">.</span><span class="n">get_session_id</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="FutureSession.send_text"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.FutureSession.send_text">[docs]</a>  <span class="k">def</span> <span class="nf">send_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_session</span><span class="p">()</span><span class="o">.</span><span class="n">send_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_inner</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">get_socket</span><span class="p">()</span><span class="o">.</span><span class="n">request_send_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_session_id</span><span class="p">(),</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">sendTextFuture</span> <span class="o">=</span> <span class="n">depfuture</span><span class="o">.</span><span class="n">DependentFuture</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">,</span> <span class="n">create_inner</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">TextSender</span><span class="p">(</span><span class="n">sendTextFuture</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FutureSession.split_pane"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.FutureSession.split_pane">[docs]</a>  <span class="k">def</span> <span class="nf">split_pane</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_session</span><span class="p">()</span><span class="o">.</span><span class="n">split_pane</span><span class="p">(</span><span class="n">vertical</span><span class="o">=</span><span class="n">vertical</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_inner</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">get_socket</span><span class="p">()</span><span class="o">.</span><span class="n">request_split_pane</span><span class="p">(</span>
+          <span class="n">session</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_session_id</span><span class="p">(),</span> <span class="n">vertical</span><span class="o">=</span><span class="n">vertical</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">)</span>
+    <span class="n">createSessionFuture</span> <span class="o">=</span> <span class="n">depfuture</span><span class="o">.</span><span class="n">DependentFuture</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="p">,</span> <span class="n">create_inner</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FutureSession</span><span class="p">(</span><span class="n">createSessionFuture</span><span class="p">);</span></div>
+
+  <span class="k">def</span> <span class="nf">_get_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_parse_if_needed</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span>
+
+  <span class="k">def</span> <span class="nf">_parse_if_needed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">api_pb2</span><span class="o">.</span><span class="n">SplitPaneResponse</span><span class="o">.</span><span class="n">OK</span><span class="p">:</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">session_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Session"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.Session">[docs]</a><span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">AbstractSession</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span> <span class="o">=</span> <span class="n">session_id</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;&lt;Session id=</span><span class="si">%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span>
+
+<div class="viewcode-block" id="Session.get_session_id"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.Session.get_session_id">[docs]</a>  <span class="k">def</span> <span class="nf">get_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span></div>
+
+<div class="viewcode-block" id="Session.send_text"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.Session.send_text">[docs]</a>  <span class="k">def</span> <span class="nf">send_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">TextSender</span><span class="p">(</span><span class="n">get_socket</span><span class="p">()</span><span class="o">.</span><span class="n">request_send_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Session.split_pane"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.Session.split_pane">[docs]</a>  <span class="k">def</span> <span class="nf">split_pane</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">FutureSession</span><span class="p">(</span><span class="n">get_socket</span><span class="p">()</span><span class="o">.</span><span class="n">request_split_pane</span><span class="p">(</span>
+      <span class="n">session</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span> <span class="n">vertical</span><span class="o">=</span><span class="n">vertical</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Session.read_keystroke"><a class="viewcode-back" href="../../iterm2.html#iterm2.session.Session.read_keystroke">[docs]</a>  <span class="k">def</span> <span class="nf">read_keystroke</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Blocks until a keystroke is received. Returns a KeystrokeNotification.&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">keystroke_notification</span><span class="p">):</span>
+      <span class="n">f</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">keystroke_notification</span><span class="p">)</span>
+    <span class="n">subscription</span> <span class="o">=</span> <span class="n">notifications</span><span class="o">.</span><span class="n">KeystrokeSubscription</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+    <span class="c1"># Can&#39;t do f.get() here because we need to keep dispatching notifications on the main thread</span>
+    <span class="c1"># until we get the notification we care about.</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">realized</span><span class="p">():</span>
+      <span class="n">notifications</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">iTerm2</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../iterm2.html">iterm2 package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../iterm2.html">iterm2</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, George Nachman.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

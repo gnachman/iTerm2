@@ -6,7 +6,7 @@ from __future__ import print_function
 from sharedstate import get_socket, wait
 import api_pb2
 import session
-import socket
+import _socket as socket
 import logging
 
 class AbstractTab(object):

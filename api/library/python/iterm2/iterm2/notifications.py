@@ -4,14 +4,16 @@
 from __future__ import print_function
 
 import api_pb2
-from sharedstate import get_socket, wait, register_notification_handler
-import dispatchq
+from ._sharedstate import get_socket, wait, register_notification_handler
+import _dispatchq as dispatchq
+import _future as future
 import session
 import socket
 import tab
 import logging
 import threading
 import time
+import traceback
 
 _subscriptions = {}
 _dispatch_queue = dispatchq.IdleDispatchQueue()
@@ -87,9 +89,9 @@ def _extract(notification):
   return key, notification
 
 def _dispatch_handle_notification(notification):
+  # Called on the websocket thread
   def _run_handlers():
     key, sub_notification = _extract(notification)
-    logging.debug("Got a notification to dispatch. key=" + str(key) +", notification=\n" + str(notification))
     if key in _subscriptions:
       handlers = _subscriptions[key]
       if handlers is not None:
@@ -105,6 +107,4 @@ def quick_wait():
   n = _dispatch_queue.wait(0)
 
 register_notification_handler(_dispatch_handle_notification)
-socket.add_idle_observer(quick_wait)
-
-
+future.add_idle_observer(quick_wait)

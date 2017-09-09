@@ -3,3 +3,9 @@ from .notifications import NewSessionSubscription, TerminateSessionSubscription,
 from .session import Session
 from .tab import Tab
 from .window import Window
+import _sharedstate as sharedstate
+
+def run(function):
+  function()
+  sharedstate.get_socket().finish()
+

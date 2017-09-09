@@ -4,9 +4,12 @@
 from __future__ import print_function
 
 import api_pb2
-from sharedstate import get_socket, wait
-import socket
+import _depfuture as depfuture
+import _future as future
+from _sharedstate import get_socket, wait as sharedstate 
+import _socket as socket
 import logging
+import notifications
 
 class TextSender(object):
   def __init__(self, future):
@@ -52,7 +55,7 @@ class FutureSession(AbstractSession):
 
     def create_inner(response):
       return get_socket().request_send_text(self.get_session_id(), text)
-    sendTextFuture = socket.DependentFuture(self.future, create_inner)
+    sendTextFuture = depfuture.DependentFuture(self.future, create_inner)
     return TextSender(sendTextFuture)
 
   def split_pane(self, vertical=False, before=False, profile=None):
@@ -62,7 +65,7 @@ class FutureSession(AbstractSession):
     def create_inner(response):
       return get_socket().request_split_pane(
           session=self.get_session_id(), vertical=vertical, before=before, profile=profile)
-    createSessionFuture = socket.DependentFuture(self.future, create_inner)
+    createSessionFuture = depfuture.DependentFuture(self.future, create_inner)
     return FutureSession(createSessionFuture);
 
   def _get_session(self):
@@ -96,5 +99,15 @@ class Session(AbstractSession):
     return FutureSession(get_socket().request_split_pane(
       session=self.session_id, vertical=vertical, before=before, profile=profile))
 
-
+  def read_keystroke(self):
+    """Blocks until a keystroke is received. Returns a KeystrokeNotification."""
+    f = future.Future()
+    def callback(keystroke_notification):
+      f.callback(keystroke_notification)
+    subscription = notifications.KeystrokeSubscription(self.session_id, callback)
+    # Can't do f.get() here because we need to keep dispatching notifications on the main thread
+    # until we get the notification we care about.
+    while not f.realized():
+      notifications.wait()
+    return f.get()
 

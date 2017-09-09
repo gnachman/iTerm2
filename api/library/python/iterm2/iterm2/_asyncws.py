@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 import argparse
-import _dispatchq as dispatchq
+import dispatchq
 import logging
 import os
 import select
