@@ -639,7 +639,7 @@ static NSError *SCPFileError(NSString *description) {
                 title = [NSString stringWithFormat:@"First time connecting to %@", session.host];
                 message =
                     [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n\n"
-                                               @"DSA key fingerprint is %@.\n\nConnect anyay?",
+                                               @"DSA key fingerprint is %@.\n\nConnect anyway?",
                         session.host, fingerprint];
                 _okToAdd = YES;
                 break;
