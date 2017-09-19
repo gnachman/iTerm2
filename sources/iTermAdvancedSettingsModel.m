@@ -258,8 +258,6 @@ DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin for the badge\nHow much space
 
 #pragma mark - Experimental Features
 DEFINE_BOOL(includePasteHistoryInAdvancedPaste, YES, @"Experimental Features: Include paste history in the advanced paste menu.");
-
-// This used to be on by default. Experiment with setting to to NO: it'll make ssh nicer.
 DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, @"Experimental Features: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session. Turning this off helps detect dead ssh sessions.");
 DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, YES, @"Experimental Features: When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 DEFINE_BOOL(useAdaptiveFrameRate, YES, @"Experimental Features: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will update at 30 frames per second.");
@@ -271,6 +269,7 @@ DEFINE_BOOL(hideStuckTooltips, YES, @"Experimental Features: Hide stuck tooltips
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, YES, @"Experimental Features: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
 DEFINE_BOOL(openFileOverridesSendText, YES, @"Experimental Features: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed inl lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
 
+DEFINE_BOOL(dwcLineCache, YES, @"Experimental Features: Enable cache of double-width character locations?\nThis should improve performance. It is always on in nightly builds. You must restart iTerm2 for this setting to take effect.");
 // This is half implemented and should not be turned on by default.
 DEFINE_BOOL(useLayers, NO, @"Experimental Features: Use Core Animation layers for opaque terminal views");
 
@@ -282,6 +281,5 @@ DEFINE_BOOL(useGCDUpdateTimer, YES, @"Experimental Features: Use GCD-based updat
 DEFINE_BOOL(drawOutlineAroundCursor, NO, @"Experimental Features: Draw outline around underline and vertical bar cursors using background color.");
 DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on logout.\nA possible fix for issue 4147.");
 DEFINE_BOOL(detectPasswordInput, NO, @"Experimental Features: Show key at cursor at password prompt?");
-DEFINE_BOOL(dwcLineCache, NO, @"Experimental Features: Enable cache of double-width character locations?\nThis should improve performance. It is always on in nightly builds. You must restart iTerm2 for this setting to take effect.");
 
 @end
