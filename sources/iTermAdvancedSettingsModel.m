@@ -182,7 +182,7 @@ DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlin
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'(（)）|[]", @"Semantic History: Non-alphanumeric characters considered part of a URL for Semantic History.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a URL begins and ends.");
 DEFINE_INT(maxSemanticHistoryPrefixOrSuffix, 2000, @"Semantic History: Maximum number of bytes of text before and after click location to take into account.\nThis also limits the size of the \\3 and \\4 substitutions.");
 DEFINE_STRING(pathsToIgnore, @"", @"Semantic History: Paths to ignore for Semantic History.\nSeparate paths with a comma. Any file under one of these paths will not be openable with Semantic History.");
-DEFINE_BOOL(performDNSLookups, YES, @"Semantic History: Perform DNS lookups to check if URLs are valid?\nWhen enabled, the name under the mouse will be resolved with DNS to determine if it is a clickable link.");
+DEFINE_BOOL(performDNSLookups, NO, @"Semantic History: Perform DNS lookups to check if URLs are valid?\nWhen enabled, the name under the mouse will be resolved with DNS to determine if it is a clickable link.");
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, YES, @"Semantic History: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
 
 #pragma mark - Debugging
