@@ -5,12 +5,12 @@ function die {
 }
 
 if [ $# -ne 1 ]; then
-   echo "Usage: release_beta.sh version"
+   echo "Usage: release_stable.sh version"
    exit 1
 fi
 
 test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid private key (not set or nonexistent)"
-# Usage: SparkleSign testing.xml template.xml
+# Usage: SparkleSign final.xml final_template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
@@ -26,7 +26,7 @@ function SparkleSign {
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" |
     sed -e "s,%SIG%,${SIG}," > $SVNDIR/source/appcasts/$1
-    cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
+    cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/stable/
 }
 
 # First arg is build directory name (e.g., Deployment)
@@ -42,7 +42,8 @@ function Build {
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
-  (codesign -dv --verbose=4 build/$BUILDTYPE/iTerm.app 2>&1) | fgrep 'Authority=Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)' || die "Not signed with the right certificate"
+  codesign -dv --verbose=4 "build/$BUILDTYPE/iTerm2.app" > /tmp/signature 2>&1
+  cat /tmp/signature | fgrep 'Authority=Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)' || die "Not signed with the right certificate"
   pushd "build/$BUILDTYPE"
  
   # Create the zip file
@@ -54,23 +55,23 @@ function Build {
   zip -ry iTerm2-${NAME}.zip iTerm.app
  
   # Update the list of changes
-  vi $SVNDIR/source/appcasts/testing_changes3.txt
+  vi $SVNDIR/source/appcasts/full_changes.txt
  
   # Place files in website git.
-  cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
+  cp iTerm2-${NAME}.zip $SVNDIR/downloads/stable/
  
-  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
-  test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
-  vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
-  echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  test -f $SVNDIR/downloads/stable/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" ($SUMMARY)" > $SVNDIR/downloads/stable/iTerm2-${NAME}.summary)
+  test -f $SVNDIR/downloads/stable/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/stable/iTerm2-${NAME}.description)
+  vi $SVNDIR/downloads/stable/iTerm2-${NAME}.description
+  echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
+  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
+  vi $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   pushd $SVNDIR
-  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
+  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/full_changes.txt
   popd
 
   # Prepare the sparkle xml file
-  SparkleSign ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template3.xml
+  SparkleSign ${SPARKLE_PREFIX}final.xml ${SPARKLE_PREFIX}final_template.xml
 
   popd
 }
@@ -91,16 +92,16 @@ make release
 
 BUILDTYPE=Deployment
 
-Build $BUILDTYPE "" "OS 10.10+" "This is the recommended beta build for most users." "" "--deep"
+Build $BUILDTYPE "" "OS 10.10+" "This is the recommended build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x
 
-git tag v${VERSION}
-git commit -am ${VERSION}
-git push origin master
-git push --tags
-cd $SVNDIR
-git commit -am v${VERSION}
-git push origin master
+echo git tag v${VERSION}
+echo git commit -am ${VERSION}
+echo git push origin master
+echo git push --tags
+echo cd $SVNDIR
+echo git commit -am v${VERSION}
+echo git push origin master
 
