@@ -268,6 +268,12 @@ static BOOL sAuthenticated;
     }
 }
 
+- (IBAction)copyPassword:(id)sender {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
+    [pasteboard setString:[self selectedPassword] forType:NSStringPboardType];
+}
+
 #pragma mark - Private
 
 - (Class)keychain {
