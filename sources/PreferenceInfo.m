@@ -49,7 +49,7 @@
     [super dealloc];
 }
 
-- (void)setObserver:(void (^)())observer {
+- (void)setObserver:(void (^)(void))observer {
     [_observer autorelease];
     _observer = [observer copy];
 }

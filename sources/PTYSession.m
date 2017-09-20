@@ -9124,6 +9124,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case ITMNotificationType_NotifyOnNewSession:
         case ITMNotificationType_NotifyOnTerminateSession:
+        case ITMNotificationType_NotifyOnLayoutChange:
             // We won't get called for this
             assert(NO);
             break;

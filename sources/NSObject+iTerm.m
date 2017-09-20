@@ -44,7 +44,7 @@
                         waitUntilDone:NO];
 }
 
-- (iTermDelayedPerform *)performBlock:(void (^)())block afterDelay:(NSTimeInterval)delay {
+- (iTermDelayedPerform *)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay {
     [self retain];
     iTermDelayedPerform *delayedPerform = [[iTermDelayedPerform alloc] init];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),

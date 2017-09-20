@@ -9,6 +9,7 @@
 #import "iTermHTTPConnection.h"
 #import "DebugLogging.h"
 #import "iTermSocketAddress.h"
+#include <sys/select.h>
 
 @implementation iTermHTTPConnection {
     int _fd;

@@ -10,7 +10,7 @@
 
 @interface iTermDisclosableView : NSView
 
-@property (nonatomic, copy) void (^requestLayout)();
+@property (nonatomic, copy) void (^requestLayout)(void);
 
 - (instancetype)initWithFrame:(NSRect)frameRect prompt:(NSString *)prompt message:(NSString *)message;
 

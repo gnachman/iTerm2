@@ -17,6 +17,6 @@
 + (BOOL)willOpenWindows;
 
 // Block is run when all windows are restored. It may be run immediately.
-+ (void)setRestorationCompletionBlock:(void(^)())completion;
++ (void)setRestorationCompletionBlock:(void(^)(void))completion;
 
 @end

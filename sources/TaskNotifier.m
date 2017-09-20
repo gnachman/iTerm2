@@ -11,6 +11,9 @@
 #import "DebugLogging.h"
 #import "PTYTask.h"
 
+#include <sys/time.h>
+#include <sys/select.h>
+
 #define PtyTaskDebugLog(args...)
 
 NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";

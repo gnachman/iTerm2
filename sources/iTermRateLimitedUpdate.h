@@ -16,7 +16,7 @@
 - (void)invalidate;
 
 // Performs the block immediately, or perhaps after up to minimumInterval time.
-- (void)performRateLimitedBlock:(void (^)())block;
+- (void)performRateLimitedBlock:(void (^)(void))block;
 
 // A target/action version of the above.
 - (void)performRateLimitedSelector:(SEL)selector

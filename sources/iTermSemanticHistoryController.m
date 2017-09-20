@@ -424,12 +424,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSString *)bundleIdForDefaultAppForURL:(NSURL *)fileUrl {
     NSURL *appUrl = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:fileUrl];
     if (!appUrl) {
-        return NO;
+        return nil;
     }
 
     NSBundle *appBundle = [NSBundle bundleWithURL:appUrl];
     if (!appBundle) {
-        return NO;
+        return nil;
     }
     return [appBundle bundleIdentifier];
 }

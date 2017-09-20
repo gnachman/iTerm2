@@ -204,7 +204,7 @@ static BOOL gWaitingForFullScreen;
     }
 }
 
-+ (void)setRestorationCompletionBlock:(void(^)())completion {
++ (void)setRestorationCompletionBlock:(void(^)(void))completion {
     if (queuedBlocks) {
         [queuedBlocks addObject:[[completion copy] autorelease]];
     } else {

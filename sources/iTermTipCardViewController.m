@@ -452,7 +452,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
               originalCardFrame:(NSRect)originalCardFrame
              postAnimationFrame:(NSRect)postAnimationFrame
                  superviewWidth:(CGFloat)superviewWidth
-                          block:(void (^)())block {
+                          block:(void (^)(void))block {
     [CATransaction begin];
     [self retain];
     [CATransaction setCompletionBlock:^{

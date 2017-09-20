@@ -14,6 +14,6 @@
 @property(nonatomic, assign) BOOL blackAndWhite;
 
 // Called when any property here changes.
-@property (nonatomic, copy) void (^userDidChangeSetting)();
+@property (nonatomic, copy) void (^userDidChangeSetting)(void);
 
 @end

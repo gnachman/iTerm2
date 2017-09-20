@@ -2409,6 +2409,18 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <button misplaced="YES" id="4773">
+                    <rect key="frame" x="324" y="366" width="119" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="fKi-di-3fk"/>
+                        <outlet property="nextKeyView" destination="4782" id="5249"/>
+                    </connections>
+                </button>
                 <button verticalHuggingPriority="750" misplaced="YES" id="4774">
                     <rect key="frame" x="14" y="139" width="138" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2586,19 +2598,6 @@ DQ
                         <action selector="settingChanged:" target="lhd-u6-xr5" id="aVZ-El-bBQ"/>
                     </connections>
                 </popUpButton>
-                <button misplaced="YES" id="jlZ-SF-XtE">
-                    <rect key="frame" x="280" y="234" width="207" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Apps (such as your shell or your editor) expect each character to have a particular “width,” between 0 and 2 cells. If the app and the terminal emulator have different width tables, rendering problems ensue. Notably, Unicode 8 defines most Emoji to be 1 cell wide. Most fonts render them as two cells wide. Unicode 9 fixes this. If your apps have been updated for Unicode 9, you should enable this.</string>
-                    <buttonCell key="cell" type="check" title="Use Unicode Version 9 Widths" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="usB-uD-pmw">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="lhd-u6-xr5" id="c3k-nj-VMp"/>
-                        <outlet property="nextKeyView" destination="4765" id="uIt-qC-lLY"/>
-                    </connections>
-                </button>
                 <button misplaced="YES" id="mlk-a6-xcL">
                     <rect key="frame" x="18" y="123" width="106" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2622,7 +2621,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="XDS-1Z-hVv">
-                    <rect key="frame" x="198" y="229" width="71" height="26"/>
+                    <rect key="frame" x="198" y="229" width="84" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="None" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="td0-LJ-Zf9" id="ttZ-UD-tsk">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2685,16 +2684,17 @@ DQ
                         <outlet property="nextKeyView" destination="4765" id="5254"/>
                     </connections>
                 </button>
-                <button misplaced="YES" id="4773">
-                    <rect key="frame" x="324" y="366" width="119" height="18"/>
+                <button misplaced="YES" id="jlZ-SF-XtE">
+                    <rect key="frame" x="324" y="234" width="207" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
+                    <string key="toolTip">Apps (such as your shell or your editor) expect each character to have a particular “width,” between 0 and 2 cells. If the app and the terminal emulator have different width tables, rendering problems ensue. Notably, Unicode 8 defines most Emoji to be 1 cell wide. Most fonts render them as two cells wide. Unicode 9 fixes this. If your apps have been updated for Unicode 9, you should enable this.</string>
+                    <buttonCell key="cell" type="check" title="Use Unicode Version 9 Widths" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="usB-uD-pmw">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="settingChanged:" target="lhd-u6-xr5" id="fKi-di-3fk"/>
-                        <outlet property="nextKeyView" destination="4782" id="5249"/>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="c3k-nj-VMp"/>
+                        <outlet property="nextKeyView" destination="4765" id="uIt-qC-lLY"/>
                     </connections>
                 </button>
             </subviews>

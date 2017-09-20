@@ -7495,10 +7495,13 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       userInfo:nil];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
 - (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
 }
+#pragma clang diagnostic pop
 
 - (void)incrementBadge {
     if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {

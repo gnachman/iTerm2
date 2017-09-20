@@ -188,6 +188,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 - (int)numberOfTrailingEmptyLines;
 
 // Call this only before a line block has been created.
-void EnableDoubleWidthCharacterLineCache();
+void EnableDoubleWidthCharacterLineCache(void);
 
 @end

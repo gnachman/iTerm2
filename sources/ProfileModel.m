@@ -721,7 +721,7 @@ int gMigrated;
     [self postChangeNotification];
 }
 
-- (void)performBlockWithCoalescedNotifications:(void (^)())block {
+- (void)performBlockWithCoalescedNotifications:(void (^)(void))block {
     if (!_delayedNotifications) {
         _delayedNotifications = [[NSMutableArray alloc] init];
 

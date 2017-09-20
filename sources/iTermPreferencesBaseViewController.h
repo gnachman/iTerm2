@@ -40,7 +40,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
                               key:(NSString *)key
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
-                           update:(BOOL (^)())update;
+                           update:(BOOL (^)(void))update;
 
 #pragma mark - IBActions
 

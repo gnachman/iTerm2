@@ -63,7 +63,7 @@
               originalCardFrame:(NSRect)originalCardFrame
              postAnimationFrame:(NSRect)postAnimationFrame
                  superviewWidth:(CGFloat)superviewWidth
-                          block:(void (^)())block;
+                          block:(void (^)(void))block;
 
 // Make two buttons share a row. Currently, this assumes a row has either 1 or
 // 2 buttons, and both titles must be for existing buttons.
