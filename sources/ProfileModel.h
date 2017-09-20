@@ -132,7 +132,7 @@ typedef struct {
               toMenu:(NSMenu*)menu
               params:(JournalParams*)params;
 
-- (void)performBlockWithCoalescedNotifications:(void (^)())block;
+- (void)performBlockWithCoalescedNotifications:(void (^)(void))block;
 
 @end
 

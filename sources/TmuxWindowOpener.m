@@ -350,7 +350,7 @@ static int OctalValue(const char *bytes) {
             DLog(@"Updating existing tab");
             [tabToUpdate_ setTmuxLayout:parseTree
                          tmuxController:controller_
-                                 zoomed:NO];
+                                 zoomed:@NO];
             if ([tabToUpdate_ layoutIsTooLarge]) {
                 DLog(@"layout is too large! fit the layout to windows");
                 [controller_ fitLayoutToWindows];

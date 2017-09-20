@@ -124,7 +124,7 @@
     _self = self;
 }
 
-- (void)clickThroughElements:(NSArray *)elements completion:(void(^)())completion {
+- (void)clickThroughElements:(NSArray *)elements completion:(void(^)(void))completion {
     if (_menu.delegate != self) {
         DLog(@"I'm not the menu's delegate. We must have been canceled.");
         return;

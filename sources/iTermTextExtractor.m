@@ -548,7 +548,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 // Make characterAt: much faster when called with the same line number over and over again. Assumes
 // the line buffer won't be mutated while it's running.
-- (void)performBlockWithLineCache:(void (^)())block {
+- (void)performBlockWithLineCache:(void (^)(void))block {
     assert(!_shouldCacheLines);
     _shouldCacheLines = YES;
     block();

@@ -37,7 +37,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     NSData *_data;
     NSString *_uniqueIdentifier;
     NSDictionary *_dictionary;
-    void (^_queuedBlock)();
+    void (^_queuedBlock)(void);
 }
 
 - (instancetype)initWithCode:(unichar)code {
@@ -97,7 +97,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     _dictionary = nil;
     
     DLog(@"Queueing load of %@", self.uniqueIdentifier);
-    void (^block)() = ^{
+    void (^block)(void) = ^{
         // This is a slow operation that blocks for a long time.
         iTermImage *image = [iTermImage imageWithCompressedData:_data];
         dispatch_sync(dispatch_get_main_queue(), ^{
@@ -116,7 +116,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         [blocks insertObject:_queuedBlock atIndex:0];
     }
     dispatch_async(queue, ^{
-        void (^blockToRun)() = nil;
+        void (^blockToRun)(void) = nil;
         @synchronized(self) {
             blockToRun = [blocks firstObject];
             [blockToRun retain];

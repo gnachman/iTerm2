@@ -747,7 +747,7 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
     }
 }
 
-+ (void)performBlockWithCoalescedNotifications:(void (^)())block {
++ (void)performBlockWithCoalescedNotifications:(void (^)(void))block {
     if (!sDelayedNotifications) {
         sDelayedNotifications = [[NSMutableArray alloc] init];
 

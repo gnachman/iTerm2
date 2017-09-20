@@ -355,7 +355,7 @@ static NSString *sPreviousVersion;
 }
 
 + (id)computedObjectForKey:(NSString *)key {
-    id (^block)() = [self computedObjectDictionary][key];
+    id (^block)(void) = [self computedObjectDictionary][key];
     if (block) {
         return block();
     } else {

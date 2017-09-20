@@ -106,7 +106,8 @@
 
 - (void)dealloc
 {
-    [_eventDate release], _eventDate = nil;
+    [_eventDate release];
+    _eventDate = nil;
 	
     [super dealloc];
 }

@@ -140,7 +140,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, copy) NSString *cancelLabel;
 
 // If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
-@property(nonatomic, copy) void (^showHelpBlock)();
+@property(nonatomic, copy) void (^showHelpBlock)(void);
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;

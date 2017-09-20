@@ -3609,10 +3609,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // This computes what to do and returns a block that actually does it. But if
 // it's not allowed, then it returns null. This combines the "can move" with
 // the "move" into a single function.
-- (void (^)())blockToMoveView:(NSView *)view
-                      inSplit:(NSView *)possibleSplit
-                 horizontally:(BOOL)horizontally
-                           by:(int)direction {
+- (void (^)(void))blockToMoveView:(NSView *)view
+                          inSplit:(NSView *)possibleSplit
+                     horizontally:(BOOL)horizontally
+                               by:(int)direction {
     if (![possibleSplit isKindOfClass:[PTYSplitView class]] ||
         possibleSplit.subviews.count == 1) {
         return NULL;
@@ -3672,7 +3672,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 
     // It would be ok to move the divider. Return a block that updates views' frames.
-    void (^block)() = ^void() {
+    void (^block)(void) = ^void() {
         [self splitView:split draggingWillBeginOfSplit:splitterIndex];
         before.frame = beforeFrame;
         after.frame = afterFrame;
@@ -3686,10 +3686,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
          inSplit:(NSView *)possibleSplit
     horizontally:(BOOL)horizontally
               by:(int)direction {
-    void (^block)() = [self blockToMoveView:view
-                                    inSplit:possibleSplit
-                               horizontally:horizontally
-                                         by:direction];
+    void (^block)(void) = [self blockToMoveView:view
+                                        inSplit:possibleSplit
+                                   horizontally:horizontally
+                                             by:direction];
     if (block) {
         block();
     }
@@ -3699,10 +3699,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             inSplit:(NSView *)possibleSplit
        horizontally:(BOOL)horizontally
                  by:(int)direction {
-    void (^block)() = [self blockToMoveView:view
-                                    inSplit:possibleSplit
-                               horizontally:horizontally
-                                         by:direction];
+    void (^block)(void) = [self blockToMoveView:view
+                                        inSplit:possibleSplit
+                                   horizontally:horizontally
+                                             by:direction];
     return block != nil;
 }
 

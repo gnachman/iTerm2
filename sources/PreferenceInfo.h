@@ -33,7 +33,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 
 // A function that indicates if the control should be enabled. If nil, then the control is always
 // enabled.
-@property(nonatomic, copy) BOOL (^shouldBeEnabled)();
+@property(nonatomic, copy) BOOL (^shouldBeEnabled)(void);
 
 // Called when the user changes a control's value by interacting with it (after the underlying user
 // default or profile is update), or after its value is changed programmatically. It is also invoked
@@ -41,12 +41,12 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 // This is typically used when changing one view's value affects another view's appearance. For
 // example, if turning on a checkbox causes a view to appear, the checkbox's observer would update
 // the view's hidden flag.
-@property(nonatomic, copy) void (^observer)();
+@property(nonatomic, copy) void (^observer)(void);
 
 // Called when the user changes a control's value by interacting with it.
 // This is typically used when changing a control triggers an event beyond simply updating the
 // display style. For example, it might open a file picker dialog or register for a hotkey.
-@property(nonatomic, copy) void (^onChange)();
+@property(nonatomic, copy) void (^onChange)(void);
 
 // Called when a user interacts with a control, changing its value. This is called before anything
 // else happens (such as invoking customSettingChangedHandler()) or updating user defaults.
@@ -54,14 +54,14 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 // irreparable harm (for example, renaming a profile while there is a search filter in place, such
 // that the renamed profile would no longer match the filter), and is the last chance to mitigate
 // the damage.
-@property(nonatomic, copy) void (^willChange)();
+@property(nonatomic, copy) void (^willChange)(void);
 
 // Called before a control's value is changed programatically (e.g., when a different profile is
 // selected). If it returns YES, the normal path is not taken, and the block is responsible for
 // updating the control to reflect the user preference.
 // This is normally used on popups and matrixes to update the control to reflect the
 // user preference.
-@property(nonatomic, copy) BOOL (^onUpdate)();
+@property(nonatomic, copy) BOOL (^onUpdate)(void);
 
 // Replaces the default settingChanged: handler, which updates user defaults and calls onChange.
 // It is called when the user interacts with a control, changing its value.

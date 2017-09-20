@@ -62,7 +62,7 @@ static BOOL sAuthenticated;
     return [[array sortedArrayUsingSelector:@selector(compare:)] retain];
 }
 
-+ (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reply:(void(^)(BOOL success, NSError * __nullable error))reply {
++ (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reply:(void(^)(BOOL success, NSError * __nullable error))reply NS_AVAILABLE_MAC(10_11) {
     DLog(@"Requesting authentication with policy %@", @(policy));
 
     NSString *myLocalizedReasonString = @"open the password manager";
@@ -87,7 +87,10 @@ static BOOL sAuthenticated;
                                     sAuthenticated = NO;
                                     if (error.code != LAErrorSystemCancel &&
                                         error.code != LAErrorAppCancel) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
                                         BOOL isTouchID = (policy == LAPolicyDeviceOwnerAuthenticationWithBiometrics);
+#pragma clang diagnostic pop
                                         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
                                         alert.messageText = @"Authentication Failed";
                                         alert.informativeText = [NSString stringWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]];
@@ -101,7 +104,7 @@ static BOOL sAuthenticated;
                         }];
 }
 
-+ (NSString *)reasonForAuthenticationError:(NSError *)error touchID:(BOOL)touchID {
++ (NSString *)reasonForAuthenticationError:(NSError *)error touchID:(BOOL)touchID NS_AVAILABLE_MAC(10_11) {
     switch (error.code) {
         case LAErrorAuthenticationFailed:
             return @"valid credentials weren't supplied.";
@@ -268,6 +271,12 @@ static BOOL sAuthenticated;
     }
 }
 
+- (IBAction)copyPassword:(id)sender {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
+    [pasteboard setString:[self selectedPassword] forType:NSStringPboardType];
+}
+
 #pragma mark - Private
 
 - (Class)keychain {
@@ -290,18 +299,26 @@ static BOOL sAuthenticated;
         return;
     }
 
-    LAContext *myContext = [[[LAContext alloc] init] autorelease];
-    if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
-        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext]) {
-            DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
-            sAuthenticated = YES;
+    if (@available(macOS 10.11, *)) {
+        LAContext *myContext = [[[LAContext alloc] init] autorelease];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
+        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
+#pragma clang diagnostic pop
+            if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext]) {
+                DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
+                sAuthenticated = YES;
+            }
         }
     }
 }
 
-- (BOOL)policyAvailableOnThisOSVersion:(LAPolicy)policy {
+- (BOOL)policyAvailableOnThisOSVersion:(LAPolicy)policy NS_AVAILABLE_MAC(10_11) {
     switch (policy) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
         case LAPolicyDeviceOwnerAuthenticationWithBiometrics:
+#pragma clang diagnostic pop
             return IsTouchBarAvailable();
 
         case LAPolicyDeviceOwnerAuthentication:
@@ -312,7 +329,7 @@ static BOOL sAuthenticated;
     }
 }
 
-- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
+- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext NS_AVAILABLE_MAC(10_11) {
     DLog(@"Try to auth with %@", @(policy));
     NSError *authError = nil;
     if (![self policyAvailableOnThisOSVersion:policy]) {
@@ -329,7 +346,7 @@ static BOOL sAuthenticated;
     }
 }
 
-- (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
+- (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext NS_AVAILABLE_MAC(10_11) {
     [[self class] authenticateWithPolicy:policy context:myContext reply:^(BOOL success, NSError * _Nullable error) {
         // When a sheet is attached to a hotkey window another app becomes active after the auth dialog
         // is dismissed, leaving the hotkey behind another app.

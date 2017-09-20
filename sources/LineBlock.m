@@ -92,8 +92,7 @@ void EnableDoubleWidthCharacterLineCache() {
 - (void)commonInit {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        if ([iTermAdvancedSettingsModel dwcLineCache] ||
-            [NSBundle it_isNightlyBuild]) {
+        if ([iTermAdvancedSettingsModel dwcLineCache]) {
             gEnableDoubleWidthCharacterLineCache = YES;
             gUseCachingNumberOfLines = YES;
         }
@@ -569,19 +568,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             if (metadata->width_for_number_of_wrapped_lines == width &&
                 metadata->number_of_wrapped_lines > 0) {
                 spans = metadata->number_of_wrapped_lines;
-
-#warning Remove this when I feel confident it is correct
-                if (arc4random_uniform(100) < 10) {
-                    // Correctness checking code follows. Remove this for speed when I think it's correct.
-                    int referenceSpans = NumberOfFullLines(buffer_start + prev,
-                                                           length,
-                                                           width,
-                                                           _mayHaveDoubleWidthCharacter);
-                    if (spans != referenceSpans) {
-                        ILog(@"Metadata gives number of wrapped lines = %@ for width %@ while reference = %@", @(metadata->number_of_wrapped_lines), @(width), @(referenceSpans));
-                        assert(false);
-                    }
-                }
             } else {
                 spans = NumberOfFullLines(buffer_start + prev,
                                           length,
@@ -610,15 +596,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                               bufferLength:length
                                                      width:width
                                                   metadata:&metadata_[i]];
-#warning Remove this when I feel confident it is correct
-                if (arc4random_uniform(100) < 10) {
-                    int correctOffset = OffsetOfWrappedLine(buffer_start + prev,
-                                                            *lineNum,
-                                                            length,
-                                                            width,
-                                                            _mayHaveDoubleWidthCharacter);
-                    assert(offset == correctOffset);
-                }
             } else {
                 offset = OffsetOfWrappedLine(buffer_start + prev,
                                              *lineNum,

@@ -45,7 +45,7 @@
 //   _delayedPerform.canceled = YES;
 //   _delayedPerform = nil;
 // }
-- (iTermDelayedPerform *)performBlock:(void (^)())block afterDelay:(NSTimeInterval)delay;
+- (iTermDelayedPerform *)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay;
 
 // Returns nil if this object is an instance of NSNull, otherwise returns self.
 - (instancetype)nilIfNull;

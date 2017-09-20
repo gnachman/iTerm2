@@ -445,7 +445,7 @@ static NSString *const kGridSizeKey = @"Size";
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
                             useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-                                         willScroll:(void (^)())willScroll {
+                                         willScroll:(void (^)(void))willScroll {
     // This doesn't call -bottomMargin because it was a hotspot in profiling.
     const int scrollBottom = VT100GridRangeMax(scrollRegionRows_);
 

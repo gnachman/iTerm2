@@ -492,7 +492,7 @@
 
                 [[[self sourceTabBar] tabView] removeTabViewItem:[[self draggedCell] representedObject]];
 
-                void (^fixOriginBlock)() = nil;
+                void (^fixOriginBlock)(void) = nil;
                 switch (self.sourceTabBar.tabLocation) {
                     case PSMTab_BottomTab: {
                         NSPoint bottomLeft = control.window.frame.origin;

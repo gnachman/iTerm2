@@ -299,7 +299,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
 - (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
+#pragma clang diagnostic pop
     return kValidModesForFontPanel;
 }
 

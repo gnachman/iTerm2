@@ -189,7 +189,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self activationModiferPressIsDoubleTap]) {
         NSArray *siblings = [[[iTermFlagsChangedEventTap sharedInstance] observers] mapWithBlock:^id(iTermWeakReference<id<iTermEventTapObserver>> *anObject) {
             if (![anObject.weaklyReferencedObject isKindOfClass:[self class]]) {
-                return NO;
+                return nil;
             }
             iTermBaseHotKey *other = (iTermBaseHotKey *)anObject;
             if (other.hasModifierActivation && other.modifierActivation == self.modifierActivation) {

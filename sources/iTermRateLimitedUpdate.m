@@ -12,7 +12,7 @@
 @implementation iTermRateLimitedUpdate {
     // While nonnil, block will not be performed.
     NSTimer *_timer;
-    void (^_block)();
+    void (^_block)(void);
 }
 
 - (void)invalidate {
@@ -21,7 +21,7 @@
     _block = nil;
 }
 
-- (void)performRateLimitedBlock:(void (^)())block {
+- (void)performRateLimitedBlock:(void (^)(void))block {
     if (_timer == nil) {
         block();
         _timer = [NSTimer scheduledWeakTimerWithTimeInterval:self.minimumInterval
@@ -50,7 +50,7 @@
 - (void)performBlockIfNeeded:(NSTimer *)timer {
     _timer = nil;
     if (_block != nil) {
-        void (^block)() = _block;
+        void (^block)(void) = _block;
         _block = nil;
         block();
     }

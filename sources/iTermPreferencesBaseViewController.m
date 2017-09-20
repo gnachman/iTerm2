@@ -264,7 +264,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                               key:(NSString *)key
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
-                           update:(BOOL (^)())update {
+                           update:(BOOL (^)(void))update {
     assert(![_keyMap objectForKey:key]);
     assert(key);
     assert(control);

@@ -111,7 +111,7 @@
             alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
                                      [error localizedDescription] ?: @"unknown error"];
             [alert runModal];
-            return NO;
+            return nil;
         }
 
         // Write it to disk
@@ -125,7 +125,7 @@
             alert.informativeText = [NSString stringWithFormat:@"Error on file %@: %@", tempFile,
                                      [error localizedDescription]];
             [alert runModal];
-            return NO;
+            return nil;
         }
 
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:tempFile];
