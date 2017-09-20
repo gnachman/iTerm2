@@ -67,7 +67,11 @@ function Build {
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   pushd $SVNDIR
-  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/full_changes.txt
+
+  echo 'Options +FollowSymlinks' > ~/iterm2-website/downloads/stable/.htaccess
+  echo 'Redirect 302 /downloads/stable/latest https://iterm2.com/downloads/stable/iTerm2-'${NAME}'.zip' >> ~/iterm2-website/downloads/stable/.htaccess
+
+  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/full_changes.txt downlaods/stable/.htaccess
   popd
 
   # Prepare the sparkle xml file
@@ -97,11 +101,12 @@ Build $BUILDTYPE "" "OS 10.10+" "This is the recommended build for most users." 
 git checkout -- version.txt
 #set -x
 
-echo git tag v${VERSION}
-echo git commit -am ${VERSION}
-echo git push origin master
-echo git push --tags
-echo cd $SVNDIR
-echo git commit -am v${VERSION}
-echo git push origin master
+
+git tag v${VERSION}
+git commit -am ${VERSION}
+git push origin master
+git push --tags
+cd $SVNDIR
+git commit -am v${VERSION}
+git push origin master
 
