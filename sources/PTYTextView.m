@@ -1,6 +1,5 @@
 #import "PTYTextView.h"
 
-#import "AsyncHostLookupController.h"
 #import "charmaps.h"
 #import "FileTransferManager.h"
 #import "FontSizeEstimator.h"
@@ -96,10 +95,6 @@ static const NSUInteger kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyM
 static const NSUInteger kRectangularSelectionModifiers = (NSCommandKeyMask | NSAlternateKeyMask);
 static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSControlKeyMask);
 
-// Notifications posted when hostname lookups finish. Notifications are used to
-// avoid dangling references.
-static NSString *const kHostnameLookupFailed = @"kHostnameLookupFailed";
-static NSString *const kHostnameLookupSucceeded = @"kHostnameLookupSucceeded";
 static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 
 // Minimum distance that the mouse must move before a cmd+drag will be
@@ -119,9 +114,6 @@ static const int kDragThreshold = 3;
     NSMenuDelegate,
     NSPopoverDelegate>
 
-// Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
-// up.
-@property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
 @property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
@@ -310,14 +302,6 @@ static const int kDragThreshold = 3;
                                                      name:kPointerPrefsChangedNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(hostnameLookupFailed:)
-                                                     name:kHostnameLookupFailed
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(hostnameLookupSucceeded:)
-                                                     name:kHostnameLookupSucceeded
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(imageDidLoad:)
                                                      name:iTermImageDidLoad
                                                    object:nil];
@@ -400,10 +384,6 @@ static const int kDragThreshold = 3;
     [threeFingerTapGestureRecognizer_ disconnectTarget];
     [threeFingerTapGestureRecognizer_ release];
 
-    if (self.currentUnderlineHostname) {
-        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-    }
-    [_currentUnderlineHostname release];
     _indicatorsHelper.delegate = nil;
     [_indicatorsHelper release];
     _selectionScrollHelper.delegate = nil;
@@ -1115,7 +1095,6 @@ static const int kDragThreshold = 3;
     // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
     _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
     _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
-    _drawingHelper.haveUnderlinedHostname = (self.currentUnderlineHostname != nil);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
     _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
@@ -1772,10 +1751,6 @@ static const int kDragThreshold = 3;
     }
     _drawingHelper.underlinedRange =
         VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
-    if (self.currentUnderlineHostname) {
-        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-    }
-    self.currentUnderlineHostname = nil;
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
 }
 
@@ -1809,29 +1784,9 @@ static const int kDragThreshold = 3;
 
                 if (action.actionType == kURLActionOpenURL) {
                     NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
-                    if (![url.host isEqualToString:self.currentUnderlineHostname]) {
-                        if (self.currentUnderlineHostname) {
-                            [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-                        }
-                        if (url && url.host) {
-                            self.currentUnderlineHostname = url.host;
-                            [[AsyncHostLookupController sharedInstance] getAddressForHost:url.host
-                                                                               completion:^(BOOL ok, NSString *hostname) {
-                                                                                   if (!ok) {
-                                                                                       [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupFailed
-                                                                                                                                           object:hostname];
-                                                                                   } else {
-                                                                                       [[NSNotificationCenter defaultCenter] postNotificationName:kHostnameLookupSucceeded
-                                                                                                                                           object:hostname];
-                                                                                   }
-                                                                               }];
-                        }
+                    if (url && url.host) {
+                        [self setNeedsDisplay:YES];
                     }
-                } else {
-                    if (self.currentUnderlineHostname) {
-                        [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
-                    }
-                    self.currentUnderlineHostname = nil;
                 }
             } else {
                 [self removeUnderline];
@@ -6186,23 +6141,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        pathFactory:^SCPPath *(NSString *path, int line) {
                                            return [_dataSource scpPathForFile:path onLine:line];
                                        }];
-}
-
-- (void)hostnameLookupFailed:(NSNotification *)notification {
-    if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
-        self.currentUnderlineHostname = nil;
-        [self removeUnderline];
-        _drawingHelper.underlinedRange =
-            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
-        [self setNeedsDisplay:YES];
-    }
-}
-
-- (void)hostnameLookupSucceeded:(NSNotification *)notification {
-    if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
-        self.currentUnderlineHostname = nil;
-        [self setNeedsDisplay:YES];
-    }
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {
