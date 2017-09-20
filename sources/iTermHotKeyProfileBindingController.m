@@ -71,9 +71,7 @@
     
     BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
-    NSArray<iTermShortcut *> *shortcuts = [[iTermShortcut shortcutsForProfile:profile] filteredArrayUsingBlock:^BOOL(iTermShortcut *anObject) {
-        return anObject.isAssigned;
-    }];
+    NSArray<iTermShortcut *> *shortcuts = [iTermShortcut shortcutsForProfile:profile];
     if (!shortcuts.count) {
         DLog(@"None of the shortcuts in profile %@ are assigned", profile[KEY_NAME]);
 
