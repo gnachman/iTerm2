@@ -42,7 +42,8 @@ function Build {
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
-  (codesign -dv --verbose=4 build/$BUILDTYPE/iTerm.app 2>&1) | fgrep 'Authority=Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)' || die "Not signed with the right certificate"
+  codesign -dv --verbose=4 "build/$BUILDTYPE/iTerm2.app" > /tmp/signature 2>&1
+  cat /tmp/signature | fgrep 'Authority=Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)' || die "Not signed with the right certificate"
   pushd "build/$BUILDTYPE"
  
   # Create the zip file
