@@ -2486,6 +2486,18 @@ DQ
                         <outlet property="nextKeyView" destination="4773" id="5248"/>
                     </connections>
                 </matrix>
+                <button misplaced="YES" id="4773">
+                    <rect key="frame" x="287" y="366" width="119" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="fKi-di-3fk"/>
+                        <outlet property="nextKeyView" destination="4782" id="5249"/>
+                    </connections>
+                </button>
                 <customView misplaced="YES" id="15P-ty-S1w">
                     <rect key="frame" x="20" y="20" width="519" height="71"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
