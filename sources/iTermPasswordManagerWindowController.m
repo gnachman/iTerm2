@@ -301,14 +301,15 @@ static BOOL sAuthenticated;
 
     if (@available(macOS 10.11, *)) {
         LAContext *myContext = [[[LAContext alloc] init] autorelease];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
-#pragma clang diagnostic pop
-            if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext]) {
-                DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
-                sAuthenticated = YES;
-            }
+        NSString *reason = nil;
+        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext reason:&reason]) {
+            DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
+
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Authentication Failed";
+            alert.informativeText = [NSString stringWithFormat:@"Device owner auth not available: %@", reason];
+            [alert addButtonWithTitle:@"OK"];
+            [alert runModal];
         }
     }
 }
@@ -329,11 +330,11 @@ static BOOL sAuthenticated;
     }
 }
 
-- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext NS_AVAILABLE_MAC(10_11) {
+- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reason:(NSString **)reason NS_AVAILABLE_MAC(10_11) {
     DLog(@"Try to auth with %@", @(policy));
     NSError *authError = nil;
     if (![self policyAvailableOnThisOSVersion:policy]) {
-        DLog(@"Policy not available on this OS version");
+        *reason = @"Policy not available on this OS version";
         return NO;
     }
     if ([myContext canEvaluatePolicy:policy error:&authError]) {
@@ -341,7 +342,7 @@ static BOOL sAuthenticated;
         [self authenticateWithPolicy:policy context:myContext];
         return YES;
     } else {
-        DLog(@"Can't authenticate with policy %@: %@", @(policy), authError);
+        *reason = [NSString stringWithFormat:@"Can't authenticate with policy %@: %@", @(policy), authError];
         return NO;
     }
 }
