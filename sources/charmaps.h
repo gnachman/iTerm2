@@ -38,7 +38,7 @@ typedef NS_ENUM(unichar, iTermBoxDrawingCode) {
     iTermBoxDrawingCodeDownLightAndRightHeavy = 0x250D,  // ┍
     iTermBoxDrawingCodeDownHeavyAndRightLight = 0x250E,  // ┎
     iTermBoxDrawingCodeHeavyDownAndRight = 0x250F,  // ┏
-    
+
     iTermBoxDrawingCodeLightDownAndLeft = 0x2510,  // ┐
     iTermBoxDrawingCodeDownLightAndLeftHeavy = 0x2511,  // ┑
     iTermBoxDrawingCodeDownHeavyAndLeftLight = 0x2512,  // ┒

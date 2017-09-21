@@ -18,7 +18,8 @@
     dispatch_once(&onceToken, ^{
         sBoxDrawingCharactersWithBezierPaths =
             [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
-              @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"] retain];
+              @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
+              @"╯╮╰╭╱╲╳"] retain];
     });
     return sBoxDrawingCharactersWithBezierPaths;
 }
@@ -38,7 +39,6 @@
     // vc+1     6
     //
     // b        7
-
     NSString *components = nil;
     switch (code) {
         case iTermBoxDrawingCodeLightHorizontal:  // ─
@@ -351,14 +351,26 @@
             components = @"a2b2 b2b1 f1f2 f2g2 g6f6 f6f7 b7b6 b6a6";
             break;
         case iTermBoxDrawingCodeLightArcDownAndRight:  // ╭
+            components = @"g4d7d4d4";
+            break;
         case iTermBoxDrawingCodeLightArcDownAndLeft:  // ╮
+            components = @"a4d7d4d4";
+            break;
         case iTermBoxDrawingCodeLightArcUpAndLeft:  // ╯
+            components = @"a4d1d4d4";
+            break;
         case iTermBoxDrawingCodeLightArcUpAndRight:  // ╰
+            components = @"d1g4d4d4";
+            break;
         case iTermBoxDrawingCodeLightDiagonalUpperRightToLowerLeft:  // ╱
+            components = @"a7g1";
+            break;
         case iTermBoxDrawingCodeLightDiagonalUpperLeftToLowerRight:  // ╲
+            components = @"a1g7";
+            break;
         case iTermBoxDrawingCodeLightDiagonalCross:  // ╳
-            return nil;
-            
+            components = @"a7g1 a1g7";
+            break;
         case iTermBoxDrawingCodeLightLeft:  // ╴
             components = @"a4d4";
             break;
@@ -417,12 +429,21 @@
         int y1 = bytes[i++] - '1';
         int x2 = bytes[i++] - 'a';
         int y2 = bytes[i++] - '1';
-        
-        assert(x1 == x2 || y1 == y2);
+
         if (x1 != lastX || y1 != lastY) {
             [path moveToPoint:NSMakePoint(xs[x1], ys[y1])];
         }
-        [path lineToPoint:NSMakePoint(xs[x2], ys[y2])];
+        if (i < length && isalpha(bytes[i])) {
+            int cx1 = bytes[i++] - 'a';
+            int cy1 = bytes[i++] - '1';
+            int cx2 = bytes[i++] - 'a';
+            int cy2 = bytes[i++] - '1';
+            [path curveToPoint:NSMakePoint(xs[x2], ys[y2])
+                 controlPoint1:NSMakePoint(xs[cx1], ys[cy1])
+                 controlPoint2:NSMakePoint(xs[cx2], ys[cy2])];
+        } else {
+            [path lineToPoint:NSMakePoint(xs[x2], ys[y2])];
+        }
         
         i++;
         
