@@ -39,7 +39,7 @@ extern CGFloat kShortcutPreferredHeight;
 // Takes a dictionary like the one produced by -[iTermShortcut dictionaryValue].
 + (instancetype)shortcutWithDictionary:(NSDictionary *)dictionary;
 
-// Returns all shortcuts for a profile.
+// Returns assigned shortcuts for a profile.
 + (NSArray<iTermShortcut *> *)shortcutsForProfile:(Profile *)profile;
 
 // Returns the shortcut for a keydown event.
