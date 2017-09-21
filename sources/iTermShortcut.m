@@ -94,7 +94,9 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
     [result addObjectsFromArray:[additional mapWithBlock:^id(NSDictionary *anObject) {
         return [self shortcutWithDictionary:anObject];
     }]];
-    return result;
+    return [result filteredArrayUsingBlock:^BOOL(iTermShortcut *anObject) {
+        return anObject.isAssigned;
+    }];
 }
 
 + (instancetype)shortcutWithDictionary:(NSDictionary *)dictionary {

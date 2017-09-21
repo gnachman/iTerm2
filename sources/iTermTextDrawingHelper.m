@@ -110,7 +110,6 @@ typedef struct iTermTextColorContext {
     NSColor *backgroundColor;
     NSColor *previousBackgroundColor;
     CGFloat minimumContrast;
-    BOOL haveUnderlinedHostname;
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
 
@@ -1555,7 +1554,7 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
         // Black-on-yellow search result.
         rawColor = [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
         context->havePreviousCharacterAttributes = NO;
-    } else if (inUnderlinedRange && !context->haveUnderlinedHostname) {
+    } else if (inUnderlinedRange) {
         // Blue link text.
         rawColor = [context->colorMap colorForKey:kColorMapLink];
         context->havePreviousCharacterAttributes = NO;
@@ -1865,7 +1864,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         .havePreviousCharacterAttributes = NO,
         .backgroundColor = backgroundColor,
         .minimumContrast = _minimumContrast,
-        .haveUnderlinedHostname = _haveUnderlinedHostname,
         .previousForegroundColor = nil,
     };
     NSDictionary *previousImageAttributes = nil;

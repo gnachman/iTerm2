@@ -159,9 +159,6 @@
 // TODO: This might be the same as textViewIsActiveSession.
 @property(nonatomic, assign) BOOL isFrontTextView;
 
-// Is there an underlined hostname?
-@property(nonatomic, assign) BOOL haveUnderlinedHostname;
-
 // Background transparency level. Should be 1 if transparency is off for this view.
 @property(nonatomic, assign) double transparencyAlpha;
 
