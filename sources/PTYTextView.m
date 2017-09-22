@@ -1488,6 +1488,7 @@ static const int kDragThreshold = 3;
 
         if (!eschewCocoaTextHandling) {
             _eventBeingHandled = event;
+            // TODO: Consider going straight to interpretKeyEvents: for repeats. See issue 6052.
             if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
               // This may cause -insertText:replacementRange: or -doCommandBySelector: to be called.
               // These methods have a side-effect of setting _keyPressHandled if they dispatched the event
