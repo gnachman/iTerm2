@@ -1507,10 +1507,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)closeCurrentTab:(id)sender {
-    NSTabViewItem *tabViewItem = [_contentView.tabView selectedTabViewItem];
     PTYTab *tab = self.currentTab;
+    [self closeTabIfConfirmed:tab];
+}
+
+- (void)closeTabIfConfirmed:(PTYTab *)tab {
     const BOOL shouldClose = [self tabView:_contentView.tabView
-                    shouldCloseTabViewItem:tabViewItem
+                    shouldCloseTabViewItem:tab.tabViewItem
                       suppressConfirmation:[self willShowTmuxWarningWhenClosingTab:tab]];
     if (shouldClose) {
         [self closeTab:tab];
@@ -1526,10 +1529,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)closeSessionWithConfirmation:(PTYSession *)aSession
-{
-    if ([[[self tabForSession:aSession] sessions] count] == 1) {
-        [self closeCurrentTab:self];
+- (void)closeSessionWithConfirmation:(PTYSession *)aSession {
+    PTYTab *tab = [self tabForSession:aSession];
+    if ([[tab sessions] count] == 1) {
+        [self closeTabIfConfirmed:tab];
         return;
     }
     BOOL okToClose = NO;
