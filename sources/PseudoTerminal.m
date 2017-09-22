@@ -621,6 +621,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     iTermTerminalWindow *myWindow;
     Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) ? [iTermPanel class] : [iTermWindow class];
+    // TODO: Some day when I have more appetite for risk, I think this should be
+    // myWindow = [[windowClass alloc] initWithContentRect:[NSWindow contentRectForFrameRect:initialFrame styleMask:styleMask]
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
                                               styleMask:styleMask
                                                 backing:NSBackingStoreBuffered
@@ -2275,6 +2277,16 @@ return NO;
     rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
     rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
     rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+
+    // TODO: The anchored screen isn't always respected, e.g., if the screen's origin/size changes
+    // then rect might not lie inside it.
+    if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        NSArray *screens = [NSScreen screens];
+        if (_anchoredScreenNumber >= 0 && _anchoredScreenNumber < screens.count) {
+            NSScreen *screen = screens[_anchoredScreenNumber];
+            rect = [self traditionalFullScreenFrameForScreen:screen];
+        }
+    }
 
     // 10.11 starts you off with a tiny little frame. I don't know why they do
     // that, but this fixes it.
