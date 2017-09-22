@@ -3396,7 +3396,7 @@ return NO;
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
 
-    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen] || [iTermPreferences boolForKey:kPreferenceKeyUIElement]) {
         // Menu bar can show in fullscreen...
         // There is a menu bar on all screens.
         menuBarIsVisible = YES;
