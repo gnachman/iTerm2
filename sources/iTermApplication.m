@@ -381,17 +381,18 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         });
-        
-        NSImage *image = [NSImage imageNamed:@"StatusItem"];
-        self.statusBarItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width] retain];
-        _statusBarItem.title = @"";
-        _statusBarItem.image = image;
-        _statusBarItem.alternateImage = [NSImage imageNamed:@"StatusItemAlt"];
-        _statusBarItem.highlightMode = YES;
-        
-        _statusBarItem.menu = [[self delegate] statusBarMenu];
-        
-    } else {
+
+        if ([iTermAdvancedSettingsModel statusBarIcon]) {
+            NSImage *image = [NSImage imageNamed:@"StatusItem"];
+            self.statusBarItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width] retain];
+            _statusBarItem.title = @"";
+            _statusBarItem.image = image;
+            _statusBarItem.alternateImage = [NSImage imageNamed:@"StatusItemAlt"];
+            _statusBarItem.highlightMode = YES;
+
+            _statusBarItem.menu = [[self delegate] statusBarMenu];
+        }
+    } else if (_statusBarItem != nil) {
         [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
         self.statusBarItem = nil;
     }

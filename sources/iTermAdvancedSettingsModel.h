@@ -192,5 +192,6 @@
 + (BOOL)dwcLineCache;
 + (BOOL)lowFiCombiningMarks;
 + (CGFloat)verticalBarCursorWidth;
++ (BOOL)statusBarIcon;
 
 @end
