@@ -44,6 +44,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -3239,7 +3240,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             } else {
                 [theSelectedText appendString:content];
             }
-            if (eol && ![content hasSuffix:@"\n"]) {
+            NSString *contentString = attributed ? [content string] : content;
+            if (eol && ![contentString hasSuffix:@"\n"]) {
                 if (attributed) {
                     [theSelectedText iterm_appendString:@"\n"];
                 } else {

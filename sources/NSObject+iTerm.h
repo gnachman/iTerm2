@@ -19,6 +19,7 @@
 @interface NSObject (iTerm)
 
 + (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b;
++ (instancetype)castFrom:(id)object;
 
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects;
 
