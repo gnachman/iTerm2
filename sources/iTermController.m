@@ -1453,9 +1453,10 @@ static iTermController *gSharedInstance;
 }
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command {
-    const BOOL background = [command hasSuffix:@"&"];
-    if (background) {
+    if ([command hasSuffix:@"&"] && command.length > 1) {
         command = [command substringToIndex:command.length - 1];
+        system(command.UTF8String);
+        return;
     }
     NSString *escapedCommand = [command stringWithEscapedShellCharactersIncludingNewlines:YES];
     command = [NSString stringWithFormat:@"sh -c \"%@\"", escapedCommand];
@@ -1468,17 +1469,15 @@ static iTermController *gSharedInstance;
               inTerminal:nil
                  withURL:nil
         hotkeyWindowType:iTermHotkeyWindowTypeNone
-                 makeKey:!background
-             canActivate:!background
+                 makeKey:YES
+             canActivate:YES
                  command:command
                    block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
                        profile = [profile dictionaryBySettingObject:@YES forKey:KEY_CLOSE_SESSIONS_ON_END];
+                       term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
                        PTYSession *session = [term createTabWithProfile:profile withCommand:command];
                        session.isSingleUseSession = YES;
-                       if (background) {
-                           [term.window orderOut:nil];
-                       }
                        return session;
                    }];
 }
