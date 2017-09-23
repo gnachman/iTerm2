@@ -1198,6 +1198,7 @@ typedef struct iTermTextColorContext {
     size_t length = numCodes;
     [self selectFont:font inContext:ctx];
     CGContextSetFillColorSpace(ctx, CGColorGetColorSpace(color));
+    CGContextSetBlendMode(ctx, kCGBlendModeSourceAtop);
     CGContextSetFillColor(ctx, components);
 
     double y = point.y + _cellSize.height + _baselineOffset;
