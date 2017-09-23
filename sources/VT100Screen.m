@@ -1,4 +1,4 @@
-﻿
+
 #import "VT100Screen.h"
 
 #import "CapturedOutput.h"
@@ -1900,6 +1900,9 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                                                             line + 1,
                                                                             0,
                                                                             line + 1)].location;
+    if (pos < 0) {
+        return nil;
+    }
     NSEnumerator *enumerator = [intervalTree_ reverseEnumeratorAt:pos];
     NSArray *objects;
     do {
