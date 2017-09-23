@@ -192,7 +192,7 @@ DEFINE_BOOL(logRestorableStateSize, NO, @"Debugging: Log restorable state size i
 #pragma mark - Session
 DEFINE_BOOL(runJobsInServers, YES, @"Session: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session: User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
-DEFINE_SETTABLE_BOOL(suppressRestartAnnouncement, SuppressRestartAnnouncement, NO, @"Session: Suppress the Restart Session offer.\nWhen a sessions terminates, it will offer to restart itself. Turn this on to suppress the offer permanently.");
+DEFINE_SETTABLE_BOOL(suppressRestartAnnouncement, SuppressRestartAnnouncement, NO, @"Session: Suppress the Restart Session offer.\nWhen a session terminates, it will offer to restart itself. Turn this on to suppress the offer permanently.");
 DEFINE_BOOL(showSessionRestoredBanner, YES, @"Session: When restoring a session without restoring a running job, draw a banner saying “Session Restored” below the restored contents.");
 DEFINE_STRING(autoLogFormat,
               @"\\(session.creationTimeString).\\(session.name).\\(session.termid).\\(iterm2.pid).\\(session.autoLogId).log",
