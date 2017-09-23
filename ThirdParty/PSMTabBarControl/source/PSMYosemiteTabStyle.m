@@ -584,7 +584,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
         NSColor *outerColor;
         NSColor *innerColor;
-        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 1 : 0.5;
+        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.7 : 0.5;
         if (brightness > 0.5) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];
             innerColor = [NSColor colorWithWhite:0 alpha:alpha];

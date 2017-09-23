@@ -92,7 +92,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         NSString *customDirectoryArgument = [NSString stringWithFormat:@"-c '%@'", escapedCustomDirectory];
         args = [args arrayByAddingObject:customDirectoryArgument];
     }
-    
     return [args componentsJoinedByString:@" "];
 }
 
