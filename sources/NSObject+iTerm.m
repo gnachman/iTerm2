@@ -20,6 +20,14 @@
     return [a isEqual:b];
 }
 
++ (instancetype)castFrom:(id)object {
+    if ([object isKindOfClass:[self class]]) {
+        return object;
+    } else {
+        return self;
+    }
+}
+
 - (void)performSelectorWithObjects:(NSArray *)tuple {
     SEL selector = NSSelectorFromString(tuple[0]);
     NSArray *objects = tuple[1];
