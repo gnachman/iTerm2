@@ -38,9 +38,14 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _events = [[SCEvents alloc] init];
-    _events.delegate = self;
-    [_events startWatchingPaths:@[ [self dynamicProfilesPath] ]];
+      NSString *path = [self dynamicProfilesPath];
+      if (path == nil) {
+          ELog(@"Dynamic profiles path is nil");
+          return nil;
+      }
+      _events = [[SCEvents alloc] init];
+      _events.delegate = self;
+      [_events startWatchingPaths:@[ path ]];
   }
   return self;
 }
