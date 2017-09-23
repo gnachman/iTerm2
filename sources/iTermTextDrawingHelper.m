@@ -387,7 +387,7 @@ typedef struct iTermTextColorContext {
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    if (self.minimumContrast > 0 || self.colorMap.mutingAmount > 0 || self.colorMap.dimmingAmount > 0) {
+    if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
                                                ctx:ctx];
     } else {
@@ -417,6 +417,25 @@ typedef struct iTermTextColorContext {
     if (self.copyMode) {
         [self drawCopyModeCursor];
     }
+}
+
+- (BOOL)textAppearanceDependsOnBackgroundColor {
+    if (self.minimumContrast > 0) {
+        return YES;
+    }
+    if (self.colorMap.mutingAmount > 0) {
+        return YES;
+    }
+    if (self.colorMap.dimmingAmount > 0) {
+        return YES;
+    }
+    if (self.thinStrokes == iTermThinStrokesSettingDarkBackgroundsOnly) {
+        return YES;
+    }
+    if (self.thinStrokes == iTermThinStrokesSettingRetinaDarkBackgroundsOnly && _isRetina) {
+        return YES;
+    }
+    return NO;
 }
 
 #pragma mark - Drawing: Background
