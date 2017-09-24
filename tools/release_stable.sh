@@ -104,7 +104,7 @@ git checkout -- version.txt
 
 git tag v${VERSION}
 git commit -am ${VERSION}
-git push origin master
+git push origin release_3.1.2
 git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
