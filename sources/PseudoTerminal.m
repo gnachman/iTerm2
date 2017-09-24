@@ -16,6 +16,7 @@
 #import "iTerm.h"
 #import "iTermAboutWindow.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAnnouncementView.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorPresets.h"
@@ -4792,6 +4793,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         self.window.appearance = nil;
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
 }
 
 
