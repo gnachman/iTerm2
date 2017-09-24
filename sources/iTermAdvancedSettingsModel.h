@@ -193,5 +193,6 @@
 + (BOOL)lowFiCombiningMarks;
 + (CGFloat)verticalBarCursorWidth;
 + (BOOL)statusBarIcon;
++ (BOOL)sensitiveScrollWheel;
 
 @end
