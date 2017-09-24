@@ -479,6 +479,12 @@ error:
         if (acceptNotifications_) [self parseSessionsChangedCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
         TmuxLog(@"tmux noop: %@", command);
+    } else if ([command hasPrefix:@"%window-pane-changed"] ||  // active pane changed
+               [command hasPrefix:@"%session-window-changed"] ||  // active window changed
+               [command hasPrefix:@"%client-session-changed"] ||  // client is now attached to a new session
+               [command hasPrefix:@"%pane-mode-changed"]) {  // copy mode, etc
+        // New in tmux 2.5. Don't care.
+        TmuxLog(@"Ignore %@", command);
     } else if ([command hasPrefix:@"%exit "] ||
                [command isEqualToString:@"%exit"]) {
         TmuxLog(@"tmux exit message: %@", command);
@@ -506,7 +512,7 @@ error:
             [self hostDisconnected];
         } else {
             // We'll be tolerant of unrecognized commands.
-            NSLog(@"Unrecognized command \"%@\"", command);
+            DLog(@"Unrecognized command \"%@\"", command);
             [strayMessages_ appendFormat:@"%@\n", command];
         }
     }
