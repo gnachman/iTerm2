@@ -174,13 +174,19 @@ static BOOL gShowingWarning;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = _heading ?: @"Warning";
     alert.informativeText = _title;
-    for (int i = 0; i < _warningActions.count; i++) {
-        [alert addButtonWithTitle:_warningActions[i].label];
-    }
     int numNonCancelActions = [_warningActions count];
-    for (iTermWarningAction *warningAction in _warningActions) {
+    for (int i = 0; i < _warningActions.count; i++) {
+        iTermWarningAction *warningAction = _warningActions[i];
+        NSButton *button = [alert addButtonWithTitle:_warningActions[i].label];
         if ([warningAction.label isEqualToString:_cancelLabel]) {
             --numNonCancelActions;
+            button.keyEquivalent = @"\033";
+        } else {
+            if (i == 0) {
+                button.keyEquivalent = @"\r";
+            } else if (i == 1) {
+                button.keyEquivalent = @" ";
+            }
         }
     }
     // If this is silenceable and at least one button is not "Cancel" then offer to remember the
