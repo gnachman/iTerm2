@@ -1206,6 +1206,9 @@ typedef struct iTermTextColorContext {
     size_t length = numCodes;
     [self selectFont:font inContext:ctx];
     CGContextSetFillColorSpace(ctx, CGColorGetColorSpace(color));
+    if (CGColorGetAlpha(color) < 1) {
+        CGContextSetBlendMode(ctx, kCGBlendModeSourceAtop);
+    }
     CGContextSetFillColor(ctx, components);
 
     double y = point.y + _cellSize.height + _baselineOffset;
@@ -1244,6 +1247,9 @@ typedef struct iTermTextColorContext {
 
     if (useThinStrokes) {
         CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
+    }
+    if (CGColorGetAlpha(color) < 1) {
+        CGContextSetBlendMode(ctx, kCGBlendModeNormal);
     }
 
     return length;
