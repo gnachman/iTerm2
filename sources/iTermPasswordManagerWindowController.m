@@ -303,13 +303,8 @@ static BOOL sAuthenticated;
         LAContext *myContext = [[[LAContext alloc] init] autorelease];
         NSString *reason = nil;
         if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext reason:&reason]) {
-            DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
-
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = @"Authentication Failed";
-            alert.informativeText = [NSString stringWithFormat:@"Device owner auth not available: %@", reason];
-            [alert addButtonWithTitle:@"OK"];
-            [alert runModal];
+            DLog(@"There are no auth policies that can succeed on this machine. Giving up. %@", reason);
+            sAuthenticated = YES;
         }
     }
 }
