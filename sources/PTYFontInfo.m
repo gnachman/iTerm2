@@ -52,16 +52,7 @@
     static NSSet *fontsWithDefaultLigatures;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        fontsWithDefaultLigatures = [[NSSet setWithArray:@[ @"FiraCode-Bold",
-                                                            @"FiraCode-Light",
-                                                            @"FiraCode-Medium",
-                                                            @"FiraCode-Regular",
-                                                            @"FiraCode-Retina",
-                                                            @"FuraCodeNerdFontCompleteMono---Bold",
-                                                            @"FuraCodeNerdFontCompleteMono---Light",
-                                                            @"FuraCodeNerdFontCompleteMono---Medium",
-                                                            @"FuraCodeNerdFontCompleteMono---Regular",
-                                                            @"FuraCodeNerdFontCompleteMono---Retina" ]] retain];
+        fontsWithDefaultLigatures = [[NSSet setWithArray:@[ ]] retain];
     });
     BOOL result = [fontsWithDefaultLigatures containsObject:self.fontName];
     DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
