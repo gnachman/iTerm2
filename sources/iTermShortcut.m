@@ -187,11 +187,16 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 - (NSString *)stringValue {
-    return self.charactersIgnoringModifiers.length > 0 ? [iTermKeyBindingMgr formatKeyCombination:self.identifier keyCode:self.keyCode] : @"";
+    // Dead keys can have characters without charactersIgnoringModifiers. For example, option+` on
+    // a German keyboard enters an apostrophe ('). The ` key is a dead key, so if you ignore modifiers
+    // it's nothing. So if there are either characters or characters ignoring modifiers, it's a
+    // formattable shortcut. If you press just the dead key then both characters and charactersIgnoringModifiers
+    // will be empty.
+    return (self.charactersIgnoringModifiers.length > 0 || self.characters.length > 0 || self.keyCode != 0) ? [iTermKeyBindingMgr formatKeyCombination:self.identifier keyCode:self.keyCode] : @"";
 }
 
 - (BOOL)isAssigned {
-    return self.charactersIgnoringModifiers.length > 0;
+    return self.charactersIgnoringModifiers.length > 0 || self.characters.length > 0 || self.keyCode != 0;
 }
 
 - (iTermHotKeyDescriptor *)descriptor {
