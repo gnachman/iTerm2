@@ -24,7 +24,7 @@
     if ([object isKindOfClass:[self class]]) {
         return object;
     } else {
-        return self;
+        return nil;
     }
 }
 
