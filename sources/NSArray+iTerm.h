@@ -31,6 +31,9 @@
 - (BOOL)allWithBlock:(BOOL (^)(ObjectType anObject))block;
 - (ObjectType)maxWithComparator:(NSComparisonResult (^)(ObjectType a, ObjectType b))comparator;
 
+// All objects equal to the minimum value.
+- (NSArray *)mininumsWithComparator:(NSComparisonResult (^)(id, id))comparator;
+
 // Does the array contain at least one object not equal to @c anObject?
 - (BOOL)containsObjectBesides:(ObjectType)anObject;
 - (BOOL)containsObjectBesidesObjectsInArray:(NSArray *)array;

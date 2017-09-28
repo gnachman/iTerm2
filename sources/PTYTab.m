@@ -1007,9 +1007,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                       verticalDir:(BOOL)verticalDir
                             after:(BOOL)after {
     NSArray<PTYSession *> *sessions = [self sessionsAdjacentToSession:session verticalDir:verticalDir after:after];
-    return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
-        return [a.activityCounter compare:b.activityCounter];
-    }];
+    if (sessions.count) {
+        return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+            return [a.activityCounter compare:b.activityCounter];
+        }];
+    } else {
+        sessions = [self sessionsInProjectionOfSession:session verticalDirection:verticalDir after:!after];
+        NSArray<PTYSession *> *wraparounds = [sessions mininumsWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+            NSRect aRect = [root_ convertRect:a.view.frame fromView:a.view.superview];
+            NSRect bRect = [root_ convertRect:b.view.frame fromView:b.view.superview];
+            if (verticalDir) {
+                SwapSize(&aRect.size);
+                SwapPoint(&aRect.origin);
+                SwapSize(&bRect.size);
+                SwapPoint(&bRect.origin);
+            }
+
+            const CGFloat bLeft = after ? NSMinX(bRect) : -NSMaxX(bRect);
+            const CGFloat aLeft = after ? NSMinX(aRect) : -NSMaxX(aRect);
+            return [@(aLeft) compare:@(bLeft)];
+        }];
+        return [wraparounds maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+            return [a.activityCounter compare:b.activityCounter];
+        }];
+    }
 }
 
 - (PTYSession*)sessionLeftOf:(PTYSession*)session {
