@@ -56,7 +56,7 @@
 
 - (BOOL)hotKeyAssigned {
     BOOL hasAlternate = [self.alternateShortcuts anyWithBlock:^BOOL(iTermShortcut *shortcut) {
-        return shortcut.charactersIgnoringModifiers.length > 0;
+        return shortcut.charactersIgnoringModifiers.length > 0 || shortcut.characters.length > 0 || shortcut.keyCode != 0;
     }];
     return (_primaryShortcut.isAssigned ||
             self.hasModifierActivation ||
