@@ -3204,14 +3204,18 @@ ITERM_WEAKLY_REFERENCEABLE
           NSStringFromSize(proposedFrameSize),
           NSStringFromSize(originalProposal),
           NSStringFromSize(NSMakeSize(charWidth, charHeight)));
-    if (snapWidth && proposedFrameSize.width + charWidth > screenFrame.size.width) {
+    if (snapWidth &&
+        proposedFrameSize.width + charWidth > screenFrame.size.width &&
+        proposedFrameSize.width < screenFrame.size.width) {
         CGFloat snappedMargin = screenFrame.size.width - proposedFrameSize.width;
         CGFloat desiredMargin = screenFrame.size.width - originalProposal.width;
         if (desiredMargin <= ceil(snappedMargin / 2.0)) {
             proposedFrameSize.width = screenFrame.size.width;
         }
     }
-    if (snapHeight && proposedFrameSize.height + charHeight > screenFrame.size.height) {
+    if (snapHeight &&
+        proposedFrameSize.height + charHeight > screenFrame.size.height &&
+        proposedFrameSize.height < screenFrame.size.height) {
         CGFloat snappedMargin = screenFrame.size.height - proposedFrameSize.height;
         CGFloat desiredMargin = screenFrame.size.height - originalProposal.height;
         if (desiredMargin <= ceil(snappedMargin / 2.0)) {
