@@ -1752,6 +1752,72 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return temp;
 }
 
+- (NSRect)it_boundingRectWithSize:(NSSize)bounds attributes:(NSDictionary *)attributes truncated:(BOOL *)truncated {
+    CGSize size = { 0, 0 };
+    *truncated = NO;
+    for (NSString *part in [self componentsSeparatedByString:@"\n"]) {
+        CFMutableAttributedStringRef string =
+            (CFMutableAttributedStringRef)[[[NSAttributedString alloc] initWithString:part
+                                                                           attributes:attributes] autorelease];
+
+        CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(string);
+        CFRange fitRange;
+
+        CFRange textRange = CFRangeMake(0, part.length);
+        CGSize frameSize = CTFramesetterSuggestFrameSizeWithConstraints(framesetter,
+                                                                        textRange,
+                                                                        NULL,
+                                                                        bounds,
+                                                                        &fitRange);
+        if (fitRange.length != part.length) {
+            *truncated = YES;
+        }
+        CFRelease(framesetter);
+        size.width = MAX(size.width, frameSize.width);
+        size.height += frameSize.height;
+    }
+
+    return NSMakeRect(0, 0, size.width, size.height);
+}
+
+- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes {
+    CGContextRef ctx = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextSaveGState(ctx);
+
+    for (NSString *part in [self componentsSeparatedByString:@"\n"]) {
+        CFMutableAttributedStringRef string =
+                (CFMutableAttributedStringRef)[[[NSAttributedString alloc] initWithString:part
+                                                                               attributes:attributes] autorelease];
+
+        CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(string);
+
+        CGMutablePathRef path = CGPathCreateMutable();
+        CGPathAddRect(path, NULL, rect);
+
+        CTFrameRef textFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0,0), path, NULL);
+
+        CTFrameDraw(textFrame, ctx);
+
+        CFRange fitRange;
+
+        // Get the height of the line and translate the context down by it
+        CFRange textRange = CFRangeMake(0, part.length);
+        CGSize frameSize = CTFramesetterSuggestFrameSizeWithConstraints(framesetter,
+                                                                        textRange,
+                                                                        NULL,
+                                                                        rect.size,
+                                                                        &fitRange);
+        CGContextTranslateCTM(ctx, 0, -frameSize.height);
+
+
+        CGPathRelease(path);
+        CFRelease(framesetter);
+
+    }
+
+    CGContextRestoreGState(ctx);
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
