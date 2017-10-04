@@ -13,7 +13,7 @@
 @property(nonatomic, strong) NSColor *selectedColor;
 
 /** Called before popover closes. */
-@property(nonatomic, copy) void (^willClose)();
+@property(nonatomic, copy) void (^willClose)(void);
 
 /**
  * Shows the color picker in a popover. Returns the semitransient popover.
@@ -39,6 +39,6 @@
                          initialColor:(NSColor *)color
                               options:(CPKMainViewControllerOptions)options
                    selectionDidChange:(void (^)(NSColor *))block
-                 useSystemColorPicker:(void (^)())useSystemColorPicker;
+                 useSystemColorPicker:(void (^)(void))useSystemColorPicker;
 
 @end
