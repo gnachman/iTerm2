@@ -10,6 +10,8 @@
 
 @class iTermSocketAddress;
 
+int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize);
+
 @interface iTermLSOF : NSObject
 
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress;

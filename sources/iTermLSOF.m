@@ -17,6 +17,12 @@
 #include <string.h>
 #include <sys/sysctl.h>
 
+int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) {
+    @synchronized([iTermLSOF class]) {
+        return proc_pidinfo(pid, flavor, arg, buffer, buffersize);
+    }
+}
+
 @implementation iTermLSOF {
     iTermSocketAddress *_socketAddress;
 }
@@ -206,7 +212,7 @@
 + (size_t)maximumNumberOfFileDescriptorsForProcess:(pid_t)pid {
     struct proc_taskallinfo tai;
     memset(&tai, 0, sizeof(tai));
-    int numBytes = proc_pidinfo(pid, PROC_PIDTASKALLINFO, 0, &tai, sizeof(tai));
+    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDTASKALLINFO, 0, &tai, sizeof(tai));
     if (numBytes <= 0) {
         return 0;
     }
@@ -214,7 +220,7 @@
 }
 
 + (int)numberOfFilePortsForProcess:(pid_t)pid {
-    int numBytes = proc_pidinfo(pid, PROC_PIDLISTFILEPORTS, 0, NULL, 0);
+    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFILEPORTS, 0, NULL, 0);
     if (numBytes <= 0) {
         return 0;
     }
@@ -227,7 +233,7 @@
         return NULL;
     }
     struct proc_fdinfo *fds = malloc(maxSize);
-    int numBytes = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds, maxSize);
+    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFDS, 0, fds, maxSize);
     if (numBytes <= 0) {
         free(fds);
         return NULL;
@@ -243,7 +249,7 @@
         return NULL;
     }
     struct proc_fileportinfo *filePortInfoArray = malloc(size);
-    int numBytes = proc_pidinfo(pid, PROC_PIDLISTFILEPORTS, 0, filePortInfoArray, size);
+    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFILEPORTS, 0, filePortInfoArray, size);
     if (numBytes <= 0) {
         free(filePortInfoArray);
         return NULL;
