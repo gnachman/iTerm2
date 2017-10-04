@@ -66,6 +66,7 @@
 
 #import "ProcessCache.h"
 #import "iTerm.h"
+#import "iTermLSOF.h"
 #import "iTermProcessCollection.h"
 #include <libproc.h>
 #include <sys/sysctl.h>
@@ -179,11 +180,11 @@ NSString *PID_INFO_NAME = @"name";
     struct proc_bsdshortinfo taskShortInfo;
     memset(&taskShortInfo, 0, sizeof(taskShortInfo));
     int rc;
-    rc = proc_pidinfo(thePid,
-                      PROC_PIDT_SHORTBSDINFO,
-                      0,
-                      &taskShortInfo,
-                      sizeof(taskShortInfo));
+    rc = iTermProcPidInfoWrapper(thePid,
+                                 PROC_PIDT_SHORTBSDINFO,
+                                 0,
+                                 &taskShortInfo,
+                                 sizeof(taskShortInfo));
     if (rc <= 0) {
       return 0;
     } else {
