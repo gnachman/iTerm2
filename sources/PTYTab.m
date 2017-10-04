@@ -2175,8 +2175,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (count > 0) {
         if (@available(macOS 10.13, *)) {
             // Issue 6115. It turns red for values over 26. When I drop 10.12 support I can adjust
-            // the slider to not go above 26.
-            return MIN(26, sum / count);
+            // the slider to not go above 26. But it's super slow before you get
+          // to 26, so let's limit it to 24. Issue 6138.
+            return MIN(24, sum / count);
         } else {
             return sum / count;
         }
