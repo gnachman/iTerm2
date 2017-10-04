@@ -39,6 +39,10 @@
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
          additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
 
+- (void)asyncFileExistsAtPathLocally:(NSString *)filename
+              additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
+                          completion:(void (^)(BOOL))completion;
+
 - (BOOL)fileHasForbiddenPrefix:(NSString *)filename
         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
 

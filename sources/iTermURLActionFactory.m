@@ -25,19 +25,21 @@
 
 @implementation iTermURLActionFactory
 
-+ (URLAction *)urlActionAtCoord:(VT100GridCoord)coord
-            respectHardNewlines:(BOOL)respectHardNewlines
-               workingDirectory:(NSString *)workingDirectory
-                     remoteHost:(VT100RemoteHost *)remoteHost
-                      selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
-                          rules:(NSArray *)rules
-                      extractor:(iTermTextExtractor *)extractor
-      semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
-                    pathFactory:(SCPPath *(^)(NSString *, int))pathFactory {
++ (void)asyncUrlActionAtCoord:(VT100GridCoord)coord
+          respectHardNewlines:(BOOL)respectHardNewlines
+             workingDirectory:(NSString *)workingDirectory
+                   remoteHost:(VT100RemoteHost *)remoteHost
+                    selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
+                        rules:(NSArray *)rules
+                    extractor:(iTermTextExtractor *)extractor
+    semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
+                  pathFactory:(SCPPath *(^)(NSString *, int))pathFactory
+                   completion:(void (^)(URLAction *))completion {
     URLAction *action;
     action = [self urlActionForHypertextLinkAt:coord extractor:extractor];
     if (action) {
-        return action;
+        completion(action);
+        return;
     }
 
     NSMutableIndexSet *continuationCharsCoords = [NSMutableIndexSet indexSet];
@@ -59,56 +61,63 @@
                               convertNullsToSpace:NO
                                            coords:suffixCoords];
 
-    action = [self urlActionForExistingFileAt:coord
-                                       prefix:prefix
-                                 prefixCoords:prefixCoords
-                                       suffix:suffix
-                                 suffixCoords:suffixCoords
-                             workingDirectory:workingDirectory
-                                    extractor:extractor
-                    semanticHistoryController:semanticHistoryController];
-    if (action) {
-        return action;
-    }
+    [self asyncUrlActionForExistingFileAt:coord
+                                   prefix:prefix
+                             prefixCoords:prefixCoords
+                                   suffix:suffix
+                             suffixCoords:suffixCoords
+                         workingDirectory:workingDirectory
+                                extractor:extractor
+                semanticHistoryController:semanticHistoryController
+                               completion:^(URLAction *action) {
+                                   if (action) {
+                                       completion(action);
+                                       return;
+                                   } else {
+                                       action = [self urlActionForSmartSelectionAt:coord
+                                                               respectHardNewlines:respectHardNewlines
+                                                                  workingDirectory:workingDirectory
+                                                                        remoteHost:remoteHost
+                                                                             rules:rules
+                                                                         selectors:selectors
+                                                                     textExtractor:extractor];
+                                       if (action) {
+                                           completion(action);
+                                           return;
+                                       }
 
-    action = [self urlActionForSmartSelectionAt:coord
-                            respectHardNewlines:respectHardNewlines
-                               workingDirectory:workingDirectory
-                                     remoteHost:remoteHost
-                                          rules:rules
-                                      selectors:selectors
-                                  textExtractor:extractor];
-    if (action) {
-        return action;
-    }
+                                       action = [self urlActionForAnyStringSemanticHistoryAt:coord
+                                                                            workingDirectory:workingDirectory
+                                                                                       rules:rules
+                                                                               textExtractor:extractor
+                                                                   semanticHistoryController:semanticHistoryController];
+                                       if (action) {
+                                           completion(action);
+                                           return;
+                                       }
 
-    action = [self urlActionForAnyStringSemanticHistoryAt:coord
-                                         workingDirectory:workingDirectory
-                                                    rules:rules
-                                            textExtractor:extractor
-                                semanticHistoryController:semanticHistoryController];
-    if (action) {
-        return action;
-    }
+                                       // No luck. Look for something vaguely URL-like.
+                                       action = [self urlActionForURLAt:coord
+                                                                 prefix:prefix
+                                                           prefixCoords:prefixCoords
+                                                                 suffix:suffix
+                                                           suffixCoords:suffixCoords
+                                                              extractor:extractor];
+                                       if (action) {
+                                           completion(action);
+                                           return;
+                                       }
 
-    // No luck. Look for something vaguely URL-like.
-    action = [self urlActionForURLAt:coord
-                              prefix:prefix
-                        prefixCoords:prefixCoords
-                              suffix:suffix
-                        suffixCoords:suffixCoords
-                           extractor:extractor];
-    if (action) {
-        return action;
-    }
-
-    // TODO: We usually don't get here because "foo.txt" looks enough like a URL that we do a DNS
-    // lookup and fail. It'd be nice to fallback to an SCP file path.
-    // See if we can conjure up a secure copy path.
-    return [self urlActionWithSecureCopyAt:coord
-                                     rules:rules
-                             textExtractor:extractor
-                               pathFactory:pathFactory];
+                                       // TODO: We usually don't get here because "foo.txt" looks enough like a URL that we do a DNS
+                                       // lookup and fail. It'd be nice to fallback to an SCP file path.
+                                       // See if we can conjure up a secure copy path.
+                                       action = [self urlActionWithSecureCopyAt:coord
+                                                                          rules:rules
+                                                                  textExtractor:extractor
+                                                                    pathFactory:pathFactory];
+                                       completion(action);
+                                   }
+                               }];
 }
 
 #pragma mark - Sub-factories
@@ -138,14 +147,15 @@
     }
 }
 
-+ (URLAction *)urlActionForExistingFileAt:(VT100GridCoord)coord
-                                   prefix:(NSString *)prefix
-                             prefixCoords:(NSArray *)prefixCoords
-                                   suffix:(NSString *)suffix
-                             suffixCoords:(NSArray *)suffixCoords
-                         workingDirectory:(NSString *)workingDirectory
-                                extractor:(iTermTextExtractor *)extractor
-                semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController {
++ (void)asyncUrlActionForExistingFileAt:(VT100GridCoord)coord
+                                 prefix:(NSString *)prefix
+                           prefixCoords:(NSArray *)prefixCoords
+                                 suffix:(NSString *)suffix
+                           suffixCoords:(NSArray *)suffixCoords
+                       workingDirectory:(NSString *)workingDirectory
+                              extractor:(iTermTextExtractor *)extractor
+              semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
+                             completion:(void (^)(URLAction *))completion {
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
                         fromCharacterSet:[NSCharacterSet filenameCharacterSet]
@@ -195,16 +205,17 @@
         range.coordRange.end = [extractor successorOfCoord:lastCoord];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
+        action.workingDirectory = workingDirectory
 
-        action.fullPath = [semanticHistoryController getFullPath:filename
-                                                workingDirectory:workingDirectory
-                                                      lineNumber:NULL
-                                                    columnNumber:NULL];
-        action.workingDirectory = workingDirectory;
-        return action;
+        [semanticHistoryController asyncGetFullPath:filename
+                                   workingDirectory:workingDirectory
+                                         completion:^(NSString *path, NSString *lineNumber, NSString *columnNumber) {
+                                             action.fullPath = path;
+                                             completion(action);
+                                         }];
     }
 
-    return nil;
+    completion(nil);
 }
 
 + (URLAction *)urlActionForSmartSelectionAt:(VT100GridCoord)coord

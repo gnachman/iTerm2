@@ -42,13 +42,11 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 @property (nonatomic, assign) id<iTermSemanticHistoryControllerDelegate> delegate;
 @property (nonatomic, readonly) BOOL activatesOnAnyString;  // Doesn't have to be a real file?
 
-// Given a possibly relative |path| and |workingDirectory|, returns the absolute path. If |path|
-// includes a line number then *lineNumber will be filled in with it. Files on network shares are
-// rejected.
-- (NSString *)getFullPath:(NSString *)path
-         workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber
-             columnNumber:(NSString **)columnNumber;
+// Given a possibly relative |path| and |workingDirectory|, returns the absolute path.
+// Files on network shares are rejected.
+- (void)asyncGetFullPath:(NSString *)path
+        workingDirectory:(NSString *)workingDirectory
+              completion:(void (^)(NSString *path, NSString *lineNumber, NSString *columnNumber))completion;
 
 // Opens the file at the relative |path| (which may include :lineNumber) in |workingDirectory|.
 // The |substitutions| dictionary is used to expand \references in the command to run (gotten from

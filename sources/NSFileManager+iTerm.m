@@ -226,6 +226,32 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return NO;
 }
 
+- (void)asyncFileExistsAtPathLocally:(NSString *)filename
+              additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
+                          completion:(void (^)(BOOL))completion {
+    if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {
+        return completion(NO);
+    }
+    static dispatch_once_t onceToken;
+    __block dispatch_queue_t statfsQueue;
+    dispatch_once(&onceToken, ^{
+        statfsQueue = dispatch_queue_create("com.iterm2.statfs", DISPATCH_QUEUE_SERIAL);
+    });
+    NSString *filenameCopy = [filename copy];
+    dispatch_async(statfsQueue, ^{
+        struct statfs buf;
+        int rc = statfs([filenameCopy UTF8String], &buf);
+        [filenameCopy release];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
+                completion([self fileExistsAtPath:filename]);
+            } else {
+                completion(NO);
+            }
+        });
+    });
+}
+
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
          additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
     if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {

@@ -1757,7 +1757,7 @@ static const int kDragThreshold = 3;
 }
 
 // Update range of underlined chars indicating cmd-clicakble url.
-- (URLAction *)updateUnderlinedURLs:(NSEvent *)event {
+- (void)asyncUpdateUnderlinedURLs:(NSEvent *)event completion:(void (^)(URLAction *))completion {
     URLAction *action = nil;
     if (([event modifierFlags] & NSCommandKeyMask) && (self.window.isKeyWindow ||
                                                        [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory])) {
@@ -1769,45 +1769,50 @@ static const int kDragThreshold = 3;
         NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
         if (!NSPointInRect(locationInTextView, [self bounds])) {
             [self removeUnderline];
-            return action;
+            completion(action);
+            return;
         }
         NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
         int x = viewPoint.x;
         int y = viewPoint.y;
         if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] || y < 0) {
             [self removeUnderline];
-            return action;
+            completion(action);
+            return;
         } else {
-            action = [self urlActionForClickAtX:x
-                                              y:y
-                         respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
-            if (action) {
-                _drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range, [_dataSource totalScrollbackOverflow]);
+            [self asyncUrlActionForClickAtX:x y:y respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs] completion:^(URLAction *action) {
+                if (action) {
+                    _drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range, [_dataSource totalScrollbackOverflow]);
 
-                if (action.actionType == kURLActionOpenURL) {
-                    NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
-                    if (url && url.host) {
-                        [self setNeedsDisplay:YES];
+                    if (action.actionType == kURLActionOpenURL) {
+                        NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
+                        if (url && url.host) {
+                            [self setNeedsDisplay:YES];
+                        }
                     }
+                    [self setNeedsDisplay:YES];
+                    completion(action);
+                } else {
+                    [self removeUnderline];
+                    completion(nil);
                 }
-            } else {
-                [self removeUnderline];
-                return action;
-            }
+            }];
         }
     } else {
         [self removeUnderline];
-        return action;
+        completion(action);
+        return;
     }
 
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
-    return action;
+    completion(nil);
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent {
-    URLAction *action = [self updateUnderlinedURLs:theEvent];
-    [self updateCursor:theEvent action:action];
     [super flagsChanged:theEvent];
+    [self asyncUpdateUnderlinedURLs:theEvent completion:^(URLAction *action) {
+        [self updateCursor:theEvent action:action];
+    }];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -1865,7 +1870,8 @@ static const int kDragThreshold = 3;
         [self setNeedsDisplay:YES];
     }
     [self resetMouseLocationToRefuseFirstResponderAt];
-    [self updateUnderlinedURLs:event];
+    [self asyncUpdateUnderlinedURLs:event
+                         completion:^(URLAction *action) { }];
     [_delegate textViewShowHoverURL:nil];
 }
 
@@ -1879,7 +1885,9 @@ static const int kDragThreshold = 3;
             [self setNeedsDisplay:YES];
         }
     }
-    [self updateCursor:event action:[self updateUnderlinedURLs:event]];
+    [self asyncUpdateUnderlinedURLs:event completion:^(URLAction *action) {
+        [self updateCursor:event action:action];
+    }];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
         [[self window] alphaValue] > 0 &&
         ![NSApp modalWindow]) {
@@ -2386,9 +2394,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseMoved:(NSEvent *)event {
     [self resetMouseLocationToRefuseFirstResponderAt];
-    URLAction *action = [self updateUnderlinedURLs:event];
+    [self asyncUpdateUnderlinedURLs:event completion:^(URLAction *action) {
+        [self updateCursor:event action:action];
+    }];
     [self reportMouseEvent:event];
-    [self updateCursor:event action:action];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -2479,40 +2488,39 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _semanticHistoryDragged = YES;
 
         // Drag a file handle (only possible when there is no selection).
-        URLAction *action = [self urlActionForClickAtX:x y:y];
-        NSString *path = action.fullPath;
-        if (path == nil) {
-            DLog(@"path is nil");
-            return;
-        }
+        [self asyncUrlActionForClickAtX:x y:y completion:^(URLAction *action) {
+            NSString *path = action.fullPath;
+            if (path == nil) {
+                DLog(@"path is nil");
+                return;
+            }
 
-        NSPoint dragPosition;
-        NSImage *dragImage;
+            NSPoint dragPosition;
+            NSImage *dragImage;
 
-        dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
-        dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-        dragPosition.x -= [dragImage size].width / 2;
+            dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
+            dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+            dragPosition.x -= [dragImage size].width / 2;
 
-        NSURL *url = [[[NSURL alloc] initWithScheme:@"file" host:nil path:path] autorelease];
+            NSURL *url = [[[NSURL alloc] initWithScheme:@"file" host:nil path:path] autorelease];
 
-        NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-        [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
-        NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
-        [dragItem setDraggingFrame:NSMakeRect(dragPosition.x, dragPosition.y, dragImage.size.width, dragImage.size.height)
-                          contents:dragImage];
-        NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
-                                                                           event:event
-                                                                          source:self];
+            NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+            [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
+            NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
+            [dragItem setDraggingFrame:NSMakeRect(dragPosition.x, dragPosition.y, dragImage.size.width, dragImage.size.height)
+                              contents:dragImage];
+            NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
+                                                                               event:event
+                                                                              source:self];
 
-        draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
-        draggingSession.draggingFormation = NSDraggingFormationNone;
+            draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+            draggingSession.draggingFormation = NSDraggingFormationNone;
 
-        // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
-        _semanticHistoryDragged = NO;
-        DLog(@"did semantic history drag");
-
+            // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
+            _semanticHistoryDragged = NO;
+            DLog(@"did semantic history drag");
+        }];
         return;
-
     }
 
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
@@ -2540,71 +2548,72 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
 
-    URLAction *action = [self urlActionForClickAtX:x y:y];
-    DLog(@"openTargetWithEvent has action=%@", action);
-    if (action) {
-        switch (action.actionType) {
-            case kURLActionOpenExistingFile: {
-                NSString *extendedPrefix = [extractor wrappedStringAt:coord
-                                                              forward:NO
-                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                                    continuationChars:nil
-                                                  convertNullsToSpace:YES
-                                                               coords:nil];
-                NSString *extendedSuffix = [extractor wrappedStringAt:coord
-                                                              forward:YES
-                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                                    continuationChars:nil
-                                                  convertNullsToSpace:YES
-                                                               coords:nil];
-                if (![self openSemanticHistoryPath:action.string
-                                  workingDirectory:action.workingDirectory
-                                            prefix:extendedPrefix
-                                            suffix:extendedSuffix]) {
-                    [self findUrlInString:action.string andOpenInBackground:openInBackground];
-                }
-                break;
-            }
-            case kURLActionOpenURL: {
-                NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
-                if ([url.scheme isEqualToString:@"file"] && url.host.length > 0 && ![url.host isEqualToString:[VT100RemoteHost localHostName]]) {
-                    SCPPath *path = [[[SCPPath alloc] init] autorelease];
-                    path.path = url.path;
-                    path.hostname = url.host;
-                    path.username = [PTYTextView usernameToDownloadFileOnHost:url.host];
-                    if (path.username == nil) {
-                        return;
+    [self asyncUrlActionForClickAtX:x y:y completion:^(URLAction *action) {
+        DLog(@"openTargetWithEvent has action=%@", action);
+        if (action) {
+            switch (action.actionType) {
+                case kURLActionOpenExistingFile: {
+                    NSString *extendedPrefix = [extractor wrappedStringAt:coord
+                                                                  forward:NO
+                                                      respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                                                 maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
+                                                        continuationChars:nil
+                                                      convertNullsToSpace:YES
+                                                                   coords:nil];
+                    NSString *extendedSuffix = [extractor wrappedStringAt:coord
+                                                                  forward:YES
+                                                      respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                                                 maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
+                                                        continuationChars:nil
+                                                      convertNullsToSpace:YES
+                                                                   coords:nil];
+                    if (![self openSemanticHistoryPath:action.string
+                                      workingDirectory:action.workingDirectory
+                                                prefix:extendedPrefix
+                                                suffix:extendedSuffix]) {
+                        [self findUrlInString:action.string andOpenInBackground:openInBackground];
                     }
-                    [self downloadFileAtSecureCopyPath:path
-                                           displayName:url.path.lastPathComponent
-                                        locationInView:action.range.coordRange];
-                } else {
-                    [self openURL:url inBackground:openInBackground];
+                    break;
                 }
-                break;
+                case kURLActionOpenURL: {
+                    NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
+                    if ([url.scheme isEqualToString:@"file"] && url.host.length > 0 && ![url.host isEqualToString:[VT100RemoteHost localHostName]]) {
+                        SCPPath *path = [[[SCPPath alloc] init] autorelease];
+                        path.path = url.path;
+                        path.hostname = url.host;
+                        path.username = [PTYTextView usernameToDownloadFileOnHost:url.host];
+                        if (path.username == nil) {
+                            return;
+                        }
+                        [self downloadFileAtSecureCopyPath:path
+                                               displayName:url.path.lastPathComponent
+                                            locationInView:action.range.coordRange];
+                    } else {
+                        [self openURL:url inBackground:openInBackground];
+                    }
+                    break;
+                }
+
+                case kURLActionSmartSelectionAction: {
+                    DLog(@"Run smart selection selector %@", NSStringFromSelector(action.selector));
+                    [self performSelector:action.selector withObject:action];
+                    break;
+                }
+
+                case kURLActionOpenImage:
+                    DLog(@"Open image");
+                    [[NSWorkspace sharedWorkspace] openFile:[(iTermImageInfo *)action.identifier nameForNewSavedTempFile]];
+                    break;
+
+                case kURLActionSecureCopyFile:
+                    DLog(@"Secure copy file.");
+                    [self downloadFileAtSecureCopyPath:action.identifier
+                                           displayName:action.string
+                                        locationInView:action.range.coordRange];
+                    break;
             }
-
-            case kURLActionSmartSelectionAction: {
-                DLog(@"Run smart selection selector %@", NSStringFromSelector(action.selector));
-                [self performSelector:action.selector withObject:action];
-                break;
-            }
-
-            case kURLActionOpenImage:
-                DLog(@"Open image");
-                [[NSWorkspace sharedWorkspace] openFile:[(iTermImageInfo *)action.identifier nameForNewSavedTempFile]];
-                break;
-
-            case kURLActionSecureCopyFile:
-                DLog(@"Secure copy file.");
-                [self downloadFileAtSecureCopyPath:action.identifier
-                                       displayName:action.string
-                                    locationInView:action.range.coordRange];
-                break;
         }
-    }
+    }];
 }
 
 - (BOOL)openSemanticHistoryPath:(NSString *)path
@@ -6107,20 +6116,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 
-- (URLAction *)urlActionForClickAtX:(int)x
-                                  y:(int)y
-             respectingHardNewlines:(BOOL)respectHardNewlines {
+- (void)asyncUrlActionForClickAtX:(int)x
+                                y:(int)y
+           respectingHardNewlines:(BOOL)respectHardNewlines
+                       completion:(void (^)(URLAction *))completion {
     DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
          @(x), @(y), @(respectHardNewlines));
 
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
     if (imageInfo) {
-        return [URLAction urlActionToOpenImage:imageInfo];
+        completion([URLAction urlActionToOpenImage:imageInfo]);
+        return;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     if ([extractor characterAt:coord].code == 0) {
-        return nil;
+        completion(nil);
+        return;
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
 
@@ -6133,17 +6145,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"It is %@", workingDirectory);
     }
 
-    return [iTermURLActionFactory urlActionAtCoord:VT100GridCoordMake(x, y)
-                               respectHardNewlines:respectHardNewlines
-                                  workingDirectory:workingDirectory ?: @""
-                                        remoteHost:[_dataSource remoteHostOnLine:y]
-                                         selectors:[self smartSelectionActionSelectorDictionary]
-                                             rules:_smartSelectionRules
-                                         extractor:extractor
-                         semanticHistoryController:self.semanticHistoryController
-                                       pathFactory:^SCPPath *(NSString *path, int line) {
-                                           return [_dataSource scpPathForFile:path onLine:line];
-                                       }];
+    [iTermURLActionFactory asyncUrlActionAtCoord:VT100GridCoordMake(x, y)
+                             respectHardNewlines:respectHardNewlines
+                                workingDirectory:workingDirectory ?: @""
+                                      remoteHost:[_dataSource remoteHostOnLine:y]
+                                       selectors:[self smartSelectionActionSelectorDictionary]
+                                           rules:_smartSelectionRules
+                                       extractor:extractor
+                       semanticHistoryController:self.semanticHistoryController
+                                     pathFactory:^SCPPath *(NSString *path, int line) {
+                                         return [_dataSource scpPathForFile:path onLine:line];
+                                     }
+                                      completion:completion];
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {
@@ -6170,12 +6183,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NO;
 }
 
-- (URLAction *)urlActionForClickAtX:(int)x y:(int)y {
+- (void)asyncUrlActionForClickAtX:(int)x y:(int)y completion:(void (^)(URLAction *action))completion {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    return [self urlActionForClickAtX:x
-                                    y:y
-               respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+    return [self asyncUrlActionForClickAtX:x
+                                         y:y
+                    respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                completion:completion];
 }
 
 - (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender {

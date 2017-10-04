@@ -53,16 +53,15 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                              additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
 }
 
-- (NSString *)getFullPath:(NSString *)path
-         workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber
-             columnNumber:(NSString **)columnNumber {
+- (void)asyncGetFullPath:(NSString *)path
+        workingDirectory:(NSString *)workingDirectory
+              completion:(void (^)(NSString *path, NSString *lineNumber, NSString *columnNumber))completion {
     DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
     NSString *origPath = path;
     // TODO(chendo): Move regex, define capture semantics in config file/prefs
     if (!path || [path length] == 0) {
         DLog(@"  no: it is empty");
-        return nil;
+        completion(nil, nil, nil);
     }
 
     // If it's in any form of bracketed delimiters, strip them
@@ -73,19 +72,15 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                           withString:@""];
     DLog(@" Strip trailing chars, leaving %@", path);
 
-    if (lineNumber != nil) {
-        *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
-    }
-    if (columnNumber != nil) {
-        *columnNumber = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
-    }
+    NSString *lineNumberResult = [path stringByMatching:@":(\\d+)" capture:1];
+    NSString *columnNumberResult = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
     path = [[path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
                                            withString:@""]
                stringByExpandingTildeInPath];
     DLog(@"  Strip line number suffix leaving %@", path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
-        return nil;
+        return completion(nil, lineNumberResult, columnNumberResult);
     }
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
         path = [workingDirectory stringByAppendingPathComponent:path];
@@ -103,38 +98,39 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // and respect for explicitly excluded paths. The latter category will now
     // be stat()ed, although they were always stat()ed because of unintentional
     // disk access in the old code.
+    [self.fileManager asyncFileExistsAtPathLocally:path
+                       additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]
+                                        completion:^(BOOL existsLocally) {
+                                            if (existsLocally) {
+                                                DLog(@"    YES: A file exists at %@", path);
+                                                NSURL *url = [NSURL fileURLWithPath:path];
 
-    if ([self fileExistsAtPathLocally:path]) {
-        DLog(@"    YES: A file exists at %@", path);
-        NSURL *url = [NSURL fileURLWithPath:path];
+                                                // Resolve path by removing ./ and ../ etc
+                                                NSString *path = [[url standardizedURL] path];
+                                                DLog(@"    Check standardized path for forbidden prefix %@", path);
 
-        // Resolve path by removing ./ and ../ etc
-        path = [[url standardizedURL] path];
-        DLog(@"    Check standardized path for forbidden prefix %@", path);
+                                                if ([self fileHasForbiddenPrefix:path]) {
+                                                    DLog(@"    NO: Standardized path has forbidden prefix.");
+                                                    completion(nil, lineNumberResult, columnNumberResult);
+                                                }
+                                                completion(path, lineNumberResult, columnNumberResult);
+                                            } else if ([origPath isMatchedByRegex:@"^[ab]/"]) {
+                                                // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
+                                                DLog(@"  Treating as diff path");
+                                                // strip the prefix off ...
+                                                NSString *pathWithoutDiffPrefix =
+                                                    [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
+                                                                                       withString:@""];
 
-        if ([self fileHasForbiddenPrefix:path]) {
-            DLog(@"    NO: Standardized path has forbidden prefix.");
-            return nil;
-        }
-        return path;
-    }
-
-    // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
-    if ([origPath isMatchedByRegex:@"^[ab]/"]) {
-        DLog(@"  Treating as diff path");
-        // strip the prefix off ...
-        origPath = [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
-                                                 withString:@""];
-
-        // ... and calculate the full path again
-        return [self getFullPath:origPath
-                workingDirectory:workingDirectory
-                      lineNumber:lineNumber
-                    columnNumber:columnNumber];
-    }
-
-    DLog(@"     NO: no valid path found");
-    return nil;
+                                                // ... and calculate the full path again
+                                                [self asyncGetFullPath:pathWithoutDiffPrefix
+                                                      workingDirectory:workingDirectory
+                                                            completion:completion];
+                                            } else {
+                                                DLog(@"     NO: no valid path found");
+                                                completion(nil, nil, nil);
+                                            }
+                                        }];
 }
 
 - (NSString *)preferredEditorIdentifier {
@@ -325,15 +321,24 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     workingDirectory:(NSString *)workingDirectory
        substitutions:(NSDictionary *)substitutions {
     DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@", path, workingDirectory, substitutions);
-    BOOL isDirectory;
-    NSString *lineNumber = @"";
-    NSString *columnNumber = @"";
 
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
     if (!isRawAction) {
-        path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber columnNumber:&columnNumber];
+        [self asyncGetFullPath:path workingDirectory:workingDirectory completion:^(NSString *fullPath, NSString *lineNumber, NSString *columnNumber) {
+            [self reallyOpenPath:fullPath workingDirectory:workingDirectory substitutions:substitutions];
+        }];
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
+
+    [self reallyOpenPath:path workingDirectory:workingDirectory substitutions:substitutions];
+}
+
+- (void)reallyOpenPath:(NSString *)path
+      workingDirectory:(NSString *)workingDirectory
+         substitutions:(NSDictionary *)substitutions {
+    BOOL isDirectory;
+    NSString *lineNumber = @"";
+    NSString *columnNumber = @"";
 
     NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
     NSMutableDictionary *augmentedSubs = [[substitutions mutableCopy] autorelease];
@@ -438,12 +443,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return [iTermSemanticHistoryPrefsController bundleIdIsEditor:[self bundleIdForDefaultAppForFile:file]];
 }
 
-- (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
-                                         suffix:(NSString *)afterStringIn
-                               workingDirectory:(NSString *)workingDirectory
-                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
-                           charsTakenFromSuffix:(int *)suffixChars
-                                 trimWhitespace:(BOOL)trimWhitespace {
+- (void)asyncPathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
+                                        suffix:(NSString *)afterStringIn
+                              workingDirectory:(NSString *)workingDirectory
+                                trimWhitespace:(BOOL)trimWhitespace
+                                    completion:(void (^)(NSString *path, int charsTakenFromPrefix, int suffixChars))completion {
     BOOL workingDirectoryIsOk = [self fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
         DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
@@ -504,41 +508,57 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             dispatch_once(&onceToken, ^{
                 questionableSuffixes = [@[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ] retain];
             });
-            for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
-                BOOL exists = NO;
-                if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
-                    exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL columnNumber:NULL] != nil);
-                }
-                if (exists) {
-                    if (charsTakenFromPrefixPtr) {
-                        if (trimWhitespace &&
-                            [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] == 0) {
-                            // trimmedPath is trim(left + right). If trim(right) is empty
-                            // then we don't want to count trailing whitespace from left in the chars
-                            // taken from prefix.
-                            *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
-                        } else {
-                            *charsTakenFromPrefixPtr = left.length;
-                        }
+            NSArray *possiblePaths = [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes];
+            if (possiblePath.count) {
+                dispatch_group_t group = dispatch_group_create();
+                dispatch_group_enter(group);
+                [self checkPaths:possiblePaths workingDirectoryIsOk:(BOOL)workingDirectoryIsOk completion:^(NSString *path, int charsTakenFromPrefix, int suffixChars) {
+                    if (path) {
+                        completion(path, charsTakenFromPrefix, suffixChars);
                     }
-                    if (suffixChars) {
-                        NSInteger lengthOfBadSuffix = trimmedPath.length - modifiedPossiblePath.length;
-                        if (trimWhitespace) {
-                            *suffixChars = [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix;
-                        } else {
-                            *suffixChars = right.length - lengthOfBadSuffix;
-                        }
-                    }
-                    DLog(@"Using path %@", modifiedPossiblePath);
-                    return modifiedPossiblePath;
-                }
+                    dispatch_group_leave(group);
+                }];
             }
             if (--iterationsBeforeQuitting == 0) {
-                return nil;
+                completion(nil);
+                return;
             }
         }
     }
-    return nil;
+    completion(nil);
+}
+
+- (void)checkPaths:(NSArray *)paths workingDirectoryIsOk:(BOOL)workingDirectoryIsOk completion:(void (^)(NSString *, int, int))completion {
+    NSString *modifiedPossiblePath = [paths firstObject];
+    paths = [paths subarrayWithRange:NSMakeRange(1, paths.count - 1)];
+    BOOL exists = NO;
+    if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
+        [self asyncGetFullPath:modifiedPossiblePath workingDirectory:workingDirectory completion:^(NSString *path, NSString *lineNumber, NSString *columnNumber) {
+            BOOL exists = (path != nil);
+            if (exists) {
+                int charsTakenFromPrefixPtr;
+                if (trimWhitespace &&
+                    [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] == 0) {
+                    // trimmedPath is trim(left + right). If trim(right) is empty
+                    // then we don't want to count trailing whitespace from left in the chars
+                    // taken from prefix.
+                    charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
+                } else {
+                    charsTakenFromPrefixPtr = left.length;
+                }
+                int suffixChars;
+                NSInteger lengthOfBadSuffix = trimmedPath.length - modifiedPossiblePath.length;
+                if (trimWhitespace) {
+                    suffixChars = [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix;
+                } else {
+                    suffixChars = right.length - lengthOfBadSuffix;
+                }
+                DLog(@"Using path %@", modifiedPossiblePath);
+                completion(modifiedPossiblePath, charsTakenFromPrefixPtr, suffixChars);
+            }
+        }];
+    }
+    completion(nil, 0, 0);
 }
 
 - (NSArray *)pathsFromPath:(NSString *)source byRemovingBadSuffixes:(NSArray *)badSuffixes {
