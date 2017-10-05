@@ -28,7 +28,7 @@
                          initialColor:(NSColor *)color
                          options:(CPKMainViewControllerOptions)options
                    selectionDidChange:(void (^)(NSColor *))block
-                 useSystemColorPicker:(void (^)())useSystemColorPicker {
+                 useSystemColorPicker:(void (^)(void))useSystemColorPicker {
     CPKPopover *popover = [[CPKPopover alloc] init];
     popover.mainViewController = [[CPKMainViewController alloc] initWithBlock:block
                                                          useSystemColorPicker:useSystemColorPicker

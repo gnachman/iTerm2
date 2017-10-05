@@ -4,8 +4,8 @@
 #import "NSObject+CPK.h"
 
 @protocol CPKColorWellViewDelegate
-@property(nonatomic, readonly) void (^willOpenPopover)();
-@property(nonatomic, readonly) void (^willClosePopover)();
+@property(nonatomic, readonly) void (^willOpenPopover)(void);
+@property(nonatomic, readonly) void (^willClosePopover)(void);
 
 - (NSRect)presentationRect;
 - (NSView *)presentingView;
