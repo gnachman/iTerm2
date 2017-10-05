@@ -40,7 +40,7 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (instancetype)initWithBlock:(void (^)(NSColor *))block
-         useSystemColorPicker:(void (^)())useSystemColorPickerBlock
+         useSystemColorPicker:(void (^)(void))useSystemColorPickerBlock
                         color:(NSColor *)color
                       options:(CPKMainViewControllerOptions)options {
     self = [super initWithNibName:nil bundle:nil];
