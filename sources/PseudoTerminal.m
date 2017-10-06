@@ -1175,6 +1175,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return (PTYTab *)session.delegate;
 }
 
+- (void)tabTitleDidChange:(PTYTab *)tab {
+    [self updateTouchBarIfNeeded];
+}
+
 // Allow frame to go off-screen while hotkey window is sliding in or out.
 - (BOOL)terminalWindowShouldConstrainFrameToScreen {
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];

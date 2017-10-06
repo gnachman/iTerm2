@@ -529,6 +529,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [tabViewItem_ setLabel:newName];
+        [self.realParentWindow tabTitleDidChange:self];
     }
 }
 
