@@ -227,17 +227,46 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
+                       timedOut:(BOOL *)timedOutPtr {
     if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {
         return NO;
     }
-    struct statfs buf;
-    int rc = statfs([filename UTF8String], &buf);
-    if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
-        return [self fileExistsAtPath:filename];
-    } else {
-        return NO;
+    static dispatch_queue_t statfsQueue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        statfsQueue = dispatch_queue_create("com.iterm2.statfs", NULL);
+    });
+
+    // Do statfs in a background thread because it can hang when you're using certain network file systems.
+    __block BOOL ok = NO;
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    [filename retain];
+    dispatch_async(statfsQueue, ^{
+        struct statfs buf;
+        int rc = statfs([filename UTF8String], &buf);
+        if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
+            ok = [self fileExistsAtPath:filename];
+        } else {
+            ok = NO;
+        }
+        [filename release];
+        dispatch_group_leave(group);
+    });
+
+    // Wait up to half a second for the statfs to finish.
+    long timedOut = dispatch_group_wait(group,
+                                        dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)));
+    dispatch_release(group);
+    if (timedOutPtr) {
+        *timedOutPtr = !!timedOut;
     }
+    if (timedOut) {
+        DLog(@"Timed out doing statfs on %@", filename);
+    }
+    return timedOut ? NO : ok;
 }
 
 @end
+
