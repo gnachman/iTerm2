@@ -6745,7 +6745,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"Open session with prefs: %@", tempPrefs);
     int rows = [[tempPrefs objectForKey:KEY_ROWS] intValue];
     int columns = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
-    if (desiredRows_ < 0) {
+    if (self.tabs.count == 0 && desiredRows_ < 0) {
         desiredRows_ = rows;
         desiredColumns_ = columns;
     }
