@@ -8,6 +8,7 @@
 
 #import "iTermLSOF.h"
 
+#import "iTermCallWithTimeout.h"
 #import "iTermSocketAddress.h"
 #import "ProcessCache.h"
 #include <arpa/inet.h>
@@ -18,9 +19,11 @@
 #include <sys/sysctl.h>
 
 int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) {
-    @synchronized([iTermLSOF class]) {
-        return proc_pidinfo(pid, flavor, arg, buffer, buffersize);
-    }
+    __block int result;
+    BOOL timeout = [[iTermCallWithTimeout instanceForIdentifier:@"pidinfo"] executeWithTimeout:0.5 block:^{
+        result = proc_pidinfo(pid, flavor, arg, buffer, buffersize);
+    }];
+    return timeout ? -1 : result;
 }
 
 @implementation iTermLSOF {
