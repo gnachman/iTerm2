@@ -2446,18 +2446,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 
     if (_passwordInput) {
-        NSString *key = @"🔑";
-        BOOL bold = NO;
-        BOOL italic = NO;
-        PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:' '
-                                                          isComplex:NO
-                                                         renderBold:&bold
-                                                       renderItalic:&italic];
-        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+        NSImage *keyImage = [NSImage imageNamed:@"key"];
         CGPoint point = rect.origin;
-        point.y += _baselineOffset;
-        [key drawAtPoint:point withAttributes:@{ NSBackgroundColorAttributeName: [NSColor clearColor],
-                                                 NSFontAttributeName: fontInfo.font }];
+        [keyImage drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
+                    fromRect:NSZeroRect
+                   operation:NSCompositeSourceOver
+                    fraction:1
+              respectFlipped:YES
+                       hints:nil];
         return rect;
     }
 
