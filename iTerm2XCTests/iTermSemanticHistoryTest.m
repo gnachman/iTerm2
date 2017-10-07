@@ -40,6 +40,13 @@
 }
 
 - (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory {
+    BOOL timedOut;
+    return [self fileExistsAtPath:path isDirectory:isDirectory timedOut:&timedOut];
+}
+
+- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory timedOut:(BOOL *)timedOut {
+    *timedOut = NO;
+
     if ([_files containsObject:path]) {
         if (isDirectory) {
             *isDirectory = NO;
@@ -57,7 +64,9 @@
     return NO;
 }
 
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename additionalNetworkPaths:(NSArray *)additionalNetworkPaths {
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
+                       timedOut:(BOOL *)timedOutPtr {
     NSMutableArray *networkPaths = [[_networkMountPoints mutableCopy] autorelease];
     [networkPaths addObjectsFromArray:additionalNetworkPaths];
     for (NSString *networkPath in networkPaths) {
@@ -70,7 +79,8 @@
 }
 
 - (BOOL)fileExistsAtPath:(NSString *)path {
-    return [self fileExistsAtPath:path isDirectory:NULL];
+    BOOL timedOut;
+    return [self fileExistsAtPath:path isDirectory:NULL timedOut:&timedOut];
 }
 
 @end
@@ -168,17 +178,21 @@
 #pragma mark - Get Full Path
 
 - (void)testGetFullPathFailsOnNil {
+    BOOL timedOut;
     XCTAssert([_semanticHistoryController getFullPath:nil
                                      workingDirectory:@"/"
                                            lineNumber:NULL
-                                         columnNumber:NULL] == nil);
+                                         columnNumber:NULL
+                                             timedOut:&timedOut] == nil);
 }
 
 - (void)testGetFullPathFailsOnEmpty {
+    BOOL timedOut;
     XCTAssert([_semanticHistoryController getFullPath:@""
                                      workingDirectory:@"/"
                                            lineNumber:NULL
-                                         columnNumber:NULL] == nil);
+                                         columnNumber:NULL
+                                             timedOut:&timedOut] == nil);
 }
 
 - (void)testGetFullPathFindsExistingFileAtAbsolutePath {
@@ -187,10 +201,12 @@
     static NSString *const kFilename = @"/path/to/file";
     static NSString *const kWorkingDirectory = @"/working/directory";
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kFilename
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.length == 0);
@@ -204,10 +220,12 @@
     NSString *kAbsoluteFilename =
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kRelativeFilename
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kAbsoluteFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.length == 0);
@@ -221,10 +239,12 @@
         NSString *kFilenameWithParens = [NSString stringWithFormat:@"%C%@%C", [delimiters characterAtIndex:0], kFilename, [delimiters characterAtIndex:1]];
         static NSString *const kWorkingDirectory = @"/working/directory";
         [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+        BOOL timedOut;
         NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithParens
                                                   workingDirectory:kWorkingDirectory
                                                         lineNumber:&lineNumber
-                                                      columnNumber:&columnNumber];
+                                                      columnNumber:&columnNumber
+                                                          timedOut:&timedOut];
         NSString *expected = kFilename;
         assert([expected isEqualToString:actual]);
         assert(lineNumber.length == 0);
@@ -239,10 +259,12 @@
         NSString *kFilenameWithParens = [kFilename stringByAppendingString:punctuation];
         static NSString *const kWorkingDirectory = @"/working/directory";
         [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+        BOOL timedOut;
         NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithParens
                                                   workingDirectory:kWorkingDirectory
                                                         lineNumber:&lineNumber
-                                                      columnNumber:&columnNumber];
+                                                      columnNumber:&columnNumber
+                                                          timedOut:&timedOut];
         NSString *expected = kFilename;
         XCTAssert([expected isEqualToString:actual]);
         XCTAssert(lineNumber.length == 0);
@@ -256,10 +278,12 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@":123"];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithLineNumber
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.integerValue == 123);
@@ -272,10 +296,12 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@":123:456"];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithLineNumber
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.integerValue == 123);
@@ -288,10 +314,12 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     NSString *kFilenameWithLineNumber = [NSString stringWithFormat:@"(%@:123.)", kFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithLineNumber
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.integerValue == 123);
@@ -302,10 +330,12 @@
     NSString *columnNumber = nil;
     static NSString *const kWorkingDirectory = @"/working/directory";
     static NSString *const kFilename = @"(:123.)";
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kFilename
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     XCTAssert(actual == nil);
 }
 
@@ -317,10 +347,12 @@
     NSString *kAbsoluteFilename = @"/working/directory/path/to/file";
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:@"/working/directory/./path/to/file"];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kRelativeFilename
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kAbsoluteFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.length == 0);
@@ -334,10 +366,12 @@
     NSString *kAbsoluteFilename = @"/working/directory/path/to/file";
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:@"/working/directory/blah/../path/to/file"];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kRelativeFilename
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kAbsoluteFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.length == 0);
@@ -351,10 +385,12 @@
     NSString *kAbsoluteFilename =
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:[@"a/" stringByAppendingString:kRelativeFilename]
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kAbsoluteFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.length == 0);
@@ -368,10 +404,12 @@
     NSString *kAbsoluteFilename =
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:[@"b/" stringByAppendingString:kRelativeFilename]
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kAbsoluteFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.length == 0);
@@ -385,10 +423,12 @@
     NSString *kAbsoluteFilename =
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    BOOL timedOut;
     NSString *actual = [_semanticHistoryController getFullPath:kRelativeFilename
                                               workingDirectory:kWorkingDirectory
                                                     lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+                                                  columnNumber:&columnNumber
+                                                      timedOut:&timedOut];
     NSString *expected = kAbsoluteFilename;
     XCTAssert([expected isEqualToString:actual]);
 
@@ -396,7 +436,8 @@
     actual = [_semanticHistoryController getFullPath:kRelativeFilename
                                     workingDirectory:kWorkingDirectory
                                           lineNumber:&lineNumber
-                                        columnNumber:&columnNumber];
+                                        columnNumber:&columnNumber
+                                            timedOut:&timedOut];
     XCTAssert(actual == nil);
 }
 

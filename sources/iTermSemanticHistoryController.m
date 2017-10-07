@@ -60,6 +60,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
              columnNumber:(NSString **)columnNumber
                  timedOut:(BOOL *)timedOut {
     DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
+    *timedOut = NO;
     NSString *origPath = path;
     // TODO(chendo): Move regex, define capture semantics in config file/prefs
     if (!path || [path length] == 0) {
