@@ -1984,7 +1984,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // beautiful here, but in that case we want to turn off the bell and scroll to the
             // bottom.
             [self setBell:NO];
-            PTYScroller *verticalScroller = [_view.scrollview verticalScroller];
+            PTYScroller *verticalScroller = [_view.scrollview ptyVerticalScroller];
             [verticalScroller setUserScroll:NO];
         }
         NSData *data = [string dataUsingEncoding:encoding allowLossyConversion:YES];
@@ -3912,6 +3912,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _shell.size = size;
         _shell.size = _screen.size;
     }
+    _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }
 
 - (void)clearScrollbackBuffer {
