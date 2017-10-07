@@ -674,7 +674,9 @@ const int kMaxResultContextWords = 4;
     [self reloadData:YES];
     if (!populateTimer_) {
         if (self.unfilteredModel.count == 0) {
-            [self closePopupWindow];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self closePopupWindow];
+            });
         } else {
             [self.delegate popupIsSearching:NO];
         }
