@@ -7,6 +7,8 @@
 //
 
 #import "iTermBoxDrawingBezierCurveFactory.h"
+
+#import "iTermAdvancedSettingsModel.h"
 #import "charmaps.h"
 #import "NSArray+iTerm.h"
 
@@ -16,10 +18,14 @@
     static NSCharacterSet *sBoxDrawingCharactersWithBezierPaths;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sBoxDrawingCharactersWithBezierPaths =
+        if ([iTermAdvancedSettingsModel disableCustomBoxDrawing]) {
+            sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@""] retain];
+        } else {
+            sBoxDrawingCharactersWithBezierPaths =
             [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
               @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
               @"╯╮╰╭╱╲╳"] retain];
+        };
     });
     return sBoxDrawingCharactersWithBezierPaths;
 }
