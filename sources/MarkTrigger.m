@@ -77,7 +77,7 @@ typedef enum {
                                     stop:(BOOL *)stop {
     [aSession.screen terminalSaveScrollPositionWithArgument:@"saveCursorLine"];
     if ([self shouldStopScrolling]) {
-        [[aSession.view.scrollview verticalScroller] setUserScroll:YES];
+        [[aSession.view.scrollview ptyVerticalScroller] setUserScroll:YES];
     }
     return YES;
 }

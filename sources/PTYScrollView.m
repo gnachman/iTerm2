@@ -134,7 +134,7 @@
                [NSValue valueWithRect:[self documentVisibleRect]]];
 }
 
-- (PTYScroller *)verticalScroller {
+- (PTYScroller *)ptyVerticalScroller {
     return (PTYScroller *)[super verticalScroller];
 }
 
