@@ -9,6 +9,6 @@
 @property(nonatomic) NSArray *colors;
 
 /** Called on click. */
-@property(nonatomic, copy) void (^click)();
+@property(nonatomic, copy) void (^click)(void);
 
 @end

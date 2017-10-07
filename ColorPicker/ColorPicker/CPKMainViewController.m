@@ -17,7 +17,7 @@ static const CGFloat kBottomMargin = 8;
 
 @interface CPKMainViewController ()<CPKSelectionViewDelegate>
 @property(nonatomic, copy) void (^block)(NSColor *);
-@property(nonatomic, copy) void (^useSystemColorPickerBlock)();
+@property(nonatomic, copy) void (^useSystemColorPickerBlock)(void);
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CGFloat desiredHeight;
 @property(nonatomic) CPKSelectionView *selectionView;
@@ -114,10 +114,11 @@ static const CGFloat kBottomMargin = 8;
         [weakSelf.favoritesView removeSelectedFavorites];
     };
     self.controlsView.startPickingBlock = ^() {
-        NSColor *color = [CPKEyedropperWindow pickColor];
-        if (color) {
-            weakSelf.selectionView.selectedColor = color;
-        }
+        [CPKEyedropperWindow pickColorWithCompletion:^(NSColor *color) {
+            if (color) {
+                weakSelf.selectionView.selectedColor = color;
+            }
+        }];
     };
     self.controlsView.useNativeColorPicker = ^() {
         if (weakSelf.useSystemColorPickerBlock) {
