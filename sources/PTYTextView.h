@@ -272,6 +272,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 @property(nonatomic, readonly) NSFont *font;
 @property(nonatomic, readonly) NSFont *nonAsciiFont;
 
+@property(nonatomic, readonly) PTYFontInfo *primaryFont;
+@property(nonatomic, readonly) PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
+
 // Returns the non-ascii font, even if it's not being used.
 @property(nonatomic, readonly) NSFont *nonAsciiFontEvenIfNotUsed;
 
@@ -323,6 +326,11 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Lines that are currently visible on the screen.
 @property(nonatomic, readonly) VT100GridRange rangeOfVisibleLines;
+
+// Helps drawing text and background.
+@property (nonatomic, readonly) iTermTextDrawingHelper *drawingHelper;
+
+@property (nonatomic, readonly) double transparencyAlpha;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -488,7 +496,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
                          suffix:(NSString *)suffix;
 
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
-                     isComplex:(BOOL)complex
+                     isComplex:(BOOL)isComplex
                     renderBold:(BOOL*)renderBold
                   renderItalic:(BOOL*)renderItalic;
 

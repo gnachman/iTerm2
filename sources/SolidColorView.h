@@ -12,7 +12,6 @@
 @property(nonatomic, retain) NSColor *color;
 
 - (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color;
-- (void)drawRect:(NSRect)dirtyRect;
 - (void)setFlipped:(BOOL)value;
 
 @end

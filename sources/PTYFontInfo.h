@@ -22,6 +22,15 @@
 
 + (PTYFontInfo *)fontInfoWithFont:(NSFont *)font;
 
++ (PTYFontInfo *)fontForAsciiCharacter:(BOOL)isAscii
+                             asciiFont:(PTYFontInfo *)asciiFont
+                          nonAsciiFont:(PTYFontInfo *)nonAsciiFont
+                           useBoldFont:(BOOL)useBoldFont
+                         useItalicFont:(BOOL)useItalicFont
+                      usesNonAsciiFont:(BOOL)useNonAsciiFont
+                            renderBold:(BOOL *)renderBold
+                          renderItalic:(BOOL *)renderItalic;
+
 // Returns a new autorelased PTYFontInfo with a bold version of this font (or
 // nil if none is available).
 - (PTYFontInfo *)computedBoldVersion;

@@ -46,6 +46,13 @@ static const int kBadgeMargin = 4;
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
+BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
+    int theIndex = index / 8;
+    int mask = 1 << (index & 7);
+    const char *matchBytes = findMatches.bytes;
+    return !!(theIndex < [findMatches length] && (matchBytes[theIndex] & mask));
+}
+
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
 
@@ -286,6 +293,37 @@ typedef struct iTermTextColorContext {
     _replacementLineRefCache = [[NSMutableDictionary alloc] init];
 
     DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+}
+
+- (NSImage *)imageForCoord:(VT100GridCoord)coord size:(CGSize)size {
+    NSData *rawMatches = [_delegate drawingHelperMatchesOnLine:coord.y];
+    screen_char_t *line = [_delegate drawingHelperLineAtIndex:coord.y];
+    iTermBackgroundColorRun backgroundRun = {
+        .range = { coord.x, 1 },
+        .bgColor = line[coord.x].backgroundColor,
+        .bgGreen = line[coord.x].bgGreen,
+        .bgBlue = line[coord.x].bgBlue,
+        .bgColorMode = line[coord.x].backgroundColorMode,
+        .selected = [[_selection selectedIndexesOnLine:coord.y] containsIndex:coord.x],
+        .isMatch = CheckFindMatchAtIndex(rawMatches, coord.x),
+    };
+    iTermBoxedBackgroundColorRun *boxedRun = [iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:backgroundRun];
+    NSColor *color = [self unprocessedColorForBackgroundRun:&backgroundRun];
+    // The unprocessed color is needed for minimum contrast computation for text color.
+    boxedRun.unprocessedBackgroundColor = color;
+    boxedRun.backgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+
+    [image lockFocus];
+    [[NSColor redColor] set];
+    NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+    [self drawForegroundForLineNumber:coord.y
+                                    y:0
+                       backgroundRuns:@[ boxedRun ]
+                              context:[[NSGraphicsContext currentContext] graphicsPort]];
+    [image unlockFocus];
+
+    return image;
 }
 
 - (NSInteger)numberOfEquivalentBackgroundColorLinesInRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
@@ -1229,7 +1267,6 @@ typedef struct iTermTextColorContext {
         CGContextSetBlendMode(ctx, kCGBlendModeSourceAtop);
     }
     CGContextSetFillColor(ctx, components);
-
     double y = point.y + _cellSize.height + _baselineOffset;
     int x = point.x + positions[0];
     // Flip vertically and translate to (x, y).
@@ -1240,6 +1277,7 @@ typedef struct iTermTextColorContext {
     CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                       m21, -1.0,
                                                       x, y));
+
     CGPoint points[length];
     for (int i = 0; i < length; i++) {
         points[i].x = positions[i] - positions[0];
@@ -1257,7 +1295,6 @@ typedef struct iTermTextColorContext {
 
         CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
     }
-
 #if 0
     // Indicates which regions were drawn with the fastpath
     [[NSColor yellowColor] set];
@@ -1562,10 +1599,10 @@ typedef struct iTermTextColorContext {
     return maskContext;
 }
 
-static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
-                                                   BOOL inUnderlinedRange,
-                                                   int index,
-                                                   iTermTextColorContext *context) {
+NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
+                                            BOOL inUnderlinedRange,
+                                            int index,
+                                            iTermTextColorContext *context) {
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
     const BOOL needsProcessing = context->backgroundColor && (context->minimumContrast > 0.001 ||
@@ -1765,16 +1802,16 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                                          textColorContext);
     }
 
-    const BOOL complex = c->complexChar;
+    const BOOL isComplex = c->complexChar;
     const unichar code = c->code;
 
-    attributes->boxDrawing = !complex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] characterIsMember:code];
+    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] characterIsMember:code];
     attributes->bold = c->bold;
 
     attributes->fakeBold = c->bold;  // default value
     attributes->fakeItalic = c->italic;  // default value
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
-                                                      isComplex:complex
+                                                      isComplex:isComplex
                                                      renderBold:&attributes->fakeBold
                                                    renderItalic:&attributes->fakeItalic];
 
@@ -1912,10 +1949,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
         unichar code = c.code;
-        BOOL complex = c.complexChar;
+        BOOL isComplex = c.complexChar;
 
         NSString *charAsString;
-        if (complex) {
+        if (isComplex) {
             charAsString = ComplexCharToStr(c.code);
         } else {
             charAsString = nil;

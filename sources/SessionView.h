@@ -33,6 +33,7 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
+@class iTermMetalDriver;
 @class PTYSession;
 @class SplitSelectionView;
 @class SessionTitleView;
@@ -113,6 +114,9 @@
 // Make the textview the first responder
 - (void)sessionViewBecomeFirstResponder;
 
+// Current window changed.
+- (void)sessionViewDidChangeWindow;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
@@ -125,6 +129,7 @@
 @property(nonatomic, assign) id<iTermSessionViewDelegate> delegate;
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, assign) BOOL useSubviewWithLayer;
+@property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;

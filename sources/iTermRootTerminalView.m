@@ -54,6 +54,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
+#warning This should be only for the metal code path
+        self.tabView.drawsBackground = NO;
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;

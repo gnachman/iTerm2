@@ -249,7 +249,7 @@ void UnblockTaskNotifier(void) {
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
-        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:_tasks.count];
+        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:256];
 
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");

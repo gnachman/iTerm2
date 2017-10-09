@@ -156,9 +156,6 @@ static const int kDragThreshold = 3;
 
     NSDictionary *_markedTextAttributes;
 
-    PTYFontInfo *_primaryFont;
-    PTYFontInfo *_secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
-
     BOOL _mouseDown;
     BOOL _mouseDragged;
     BOOL _mouseDownOnSelection;
@@ -306,7 +303,11 @@ static const int kDragThreshold = 3;
                                                  selector:@selector(imageDidLoad:)
                                                      name:iTermImageDidLoad
                                                    object:nil];
-        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(boundsDidChange:)
+                                                     name:NSViewBoundsDidChangeNotification
+                                                   object:nil];
+
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
         _semanticHistoryDragged = NO;
@@ -347,6 +348,24 @@ static const int kDragThreshold = 3;
         [self refuseFirstResponderAtCurrentMouseLocation];
     }
     return self;
+}
+
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [super setNeedsDisplay:needsDisplay];
+    if (needsDisplay) {
+        [_delegate textViewNeedsDisplayInRect:self.bounds];
+    }
+}
+
+- (void)setNeedsDisplayInRect:(NSRect)invalidRect {
+    [super setNeedsDisplayInRect:invalidRect];
+    [_delegate textViewNeedsDisplayInRect:invalidRect];
+}
+
+- (void)boundsDidChange:(NSNotification *)notification {
+    if (notification.object == self.enclosingScrollView.contentView) {
+        NSLog(@"Bounds changed %@", NSStringFromRect(self.enclosingScrollView.contentView.bounds));
+    }
 }
 
 - (void)removeAllTrackingAreas {
@@ -1049,6 +1068,56 @@ static const int kDragThreshold = 3;
     return _primaryFont.underlineOffset;
 }
 
+- (iTermTextDrawingHelper *)drawingHelper {
+    // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
+    // recently hidden and what we're drawing is how the screen looked just before the cursor was
+    // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
+    // value when we're done.
+    if ([_dataSource setUseSavedGridIfAvailable:YES]) {
+        _drawingHelper.cursorVisible = YES;
+    }
+
+    _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
+                                  [_delegate textViewSessionIsBroadcastingInput]);
+    _drawingHelper.cursorBlinking = [self isCursorBlinking];
+    _drawingHelper.excess = [self excess];
+    _drawingHelper.selection = _selection;
+    _drawingHelper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
+    _drawingHelper.normalization = [_delegate textViewUnicodeNormalizationForm];
+    _drawingHelper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
+    _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
+    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
+    _drawingHelper.numberOfLines = _dataSource.numberOfLines;
+    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
+                                                    _dataSource.cursorY - 1);
+    _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
+    _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
+    _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
+    _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
+    _drawingHelper.isInKeyWindow = [self isInKeyWindow];
+    // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
+    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
+    _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
+    _drawingHelper.transparencyAlpha = [self transparencyAlpha];
+    _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
+    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
+    _drawingHelper.thinStrokes = _thinStrokes;
+    _drawingHelper.showSearchingCursor = _showSearchingCursor;
+    _drawingHelper.baselineOffset = [self minimumBaselineOffset];
+    _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
+    _drawingHelper.boldAllowed = _useBoldFont;
+    _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
+    _drawingHelper.asciiLigatures = _primaryFont.hasDefaultLigatures || _asciiLigatures;
+    _drawingHelper.nonAsciiLigatures = _secondaryFont.hasDefaultLigatures || _nonAsciiLigatures;
+    _drawingHelper.copyMode = _delegate.textViewCopyMode;
+    _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
+    _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
+    _drawingHelper.passwordInput = _delegate.textViewPasswordInput;
+
+    return _drawingHelper;
+}
+
+/*
 - (void)drawRect:(NSRect)rect {
     if (_dataSource.width <= 0) {
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
@@ -1136,6 +1205,7 @@ static const int kDragThreshold = 3;
     [_dataSource setUseSavedGridIfAvailable:NO];
     _drawingHelper.cursorVisible = savedCursorVisible;
 }
+*/
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag {
     BOOL result = _drawingHelper.animated;
@@ -5794,47 +5864,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (PTYFontInfo *)getFontForChar:(UniChar)ch
-                      isComplex:(BOOL)complex
+                      isComplex:(BOOL)isComplex
                      renderBold:(BOOL *)renderBold
                    renderItalic:(BOOL *)renderItalic {
-    BOOL isBold = *renderBold && _useBoldFont;
-    BOOL isItalic = *renderItalic && _useItalicFont;
-    *renderBold = NO;
-    *renderItalic = NO;
-    PTYFontInfo* theFont;
-    BOOL usePrimary = !_useNonAsciiFont || (!complex && (ch < 128));
-
-    PTYFontInfo *rootFontInfo = usePrimary ? _primaryFont : _secondaryFont;
-    theFont = rootFontInfo;
-
-    if (isBold && isItalic) {
-        theFont = rootFontInfo.boldItalicVersion;
-        if (!theFont && rootFontInfo.boldVersion) {
-            theFont = rootFontInfo.boldVersion;
-            *renderItalic = YES;
-        } else if (!theFont && rootFontInfo.italicVersion) {
-            theFont = rootFontInfo.italicVersion;
-            *renderBold = YES;
-        } else if (!theFont) {
-            theFont = rootFontInfo;
-            *renderBold = YES;
-            *renderItalic = YES;
-        }
-    } else if (isBold) {
-        theFont = rootFontInfo.boldVersion;
-        if (!theFont) {
-            theFont = rootFontInfo;
-            *renderBold = YES;
-        }
-    } else if (isItalic) {
-        theFont = rootFontInfo.italicVersion;
-        if (!theFont) {
-            theFont = rootFontInfo;
-            *renderItalic = YES;
-        }
-    }
-
-    return theFont;
+    return [PTYFontInfo fontForAsciiCharacter:(!isComplex && (ch < 128))
+                                    asciiFont:_primaryFont
+                                 nonAsciiFont:_secondaryFont
+                                  useBoldFont:_useBoldFont
+                                useItalicFont:_useItalicFont
+                             usesNonAsciiFont:_useNonAsciiFont
+                                   renderBold:renderBold
+                                 renderItalic:renderItalic];
 }
 
 #pragma mark - Private methods
@@ -5989,10 +6029,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (PTYCharType)classifyChar:(unichar)ch
-                  isComplex:(BOOL)complex
+                  isComplex:(BOOL)isComplex
 {
-    NSString* aString = CharToStr(ch, complex);
-    UTF32Char longChar = CharToLongChar(ch, complex);
+    NSString* aString = CharToStr(ch, isComplex);
+    UTF32Char longChar = CharToLongChar(ch, isComplex);
 
     if (longChar == DWC_RIGHT || longChar == DWC_SKIP) {
         return CHARTYPE_DW_FILLER;
@@ -6011,10 +6051,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)shouldSelectCharForWord:(unichar)ch
-                      isComplex:(BOOL)complex
+                      isComplex:(BOOL)isComplex
                 selectWordChars:(BOOL)selectWordChars
 {
-    switch ([self classifyChar:ch isComplex:complex]) {
+    switch ([self classifyChar:ch isComplex:isComplex]) {
         case CHARTYPE_WHITESPACE:
             return !selectWordChars;
             break;
@@ -7074,11 +7114,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
-                                isComplex:(BOOL)complex
+                                isComplex:(BOOL)isComplex
                                renderBold:(BOOL *)renderBold
                              renderItalic:(BOOL *)renderItalic {
     return [self getFontForChar:ch
-                      isComplex:complex
+                      isComplex:isComplex
                      renderBold:renderBold
                    renderItalic:renderItalic];
 }

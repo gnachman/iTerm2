@@ -141,10 +141,10 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                iTermPreciseTimerStatsInit(&stats[i], NULL);
         }
         if (logToConsole) {
-            ELog(@"%@", log);
-        } else {
-            DLog(@"%@", log);
+            NSLog(@"%@", log);
         }
+        DLog(@"%@", log);
+
         iTermPreciseTimerStart(&gLastLog);
     }
 }
