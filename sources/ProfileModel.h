@@ -40,7 +40,7 @@ typedef struct {
     SEL alternateSelector;         // opt+click
     SEL openAllSelector;           // open all bookmarks
     SEL alternateOpenAllSelector;  // opt+open all bookmarks
-    id target;                     // receiver of selector
+    void *target;                  // receiver of selector (actually an __unsafe_unretained id)
 } JournalParams;
 
 @interface ProfileModel : NSObject {

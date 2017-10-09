@@ -23,6 +23,8 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermMetalGlue.h"
+#import "iTermMetalDriver.h"
 #import "iTermMenuOpener.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
@@ -462,6 +464,8 @@ static const NSUInteger kMaxHosts = 100;
     long long _statusChangedAbsLine;
 
     iTermUpdateCadenceController *_cadenceController;
+
+    iTermMetalGlue *_metalGlue;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -545,6 +549,8 @@ static const NSUInteger kMaxHosts = 100;
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
 
         _statusChangedAbsLine = -1;
+        _metalGlue = [[iTermMetalGlue alloc] init];
+        _metalGlue.screen = _screen;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -607,6 +613,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
     [_view release];
+    [_metalGlue release];
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
@@ -1300,6 +1307,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
     if (liveArrangement) {
         SessionView *liveView = [[[SessionView alloc] initWithFrame:sessionView.frame] autorelease];
+        if (@available(macOS 10.11, *)) {
+            liveView.driver.dataSource = aSession->_metalGlue;
+        }
         [delegate addHiddenLiveView:liveView];
         aSession.liveSession = [self sessionFromArrangement:liveArrangement
                                                      inView:liveView
@@ -1351,6 +1361,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // Allocate the root per-session view.
     if (!_view) {
         self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)] autorelease];
+        if (@available(macOS 10.11, *)) {
+            self.view.driver.dataSource = _metalGlue;
+        }
         [[_view findViewController] setDelegate:self];
     }
 
@@ -1362,6 +1375,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height)
                                           colorMap:_colorMap];
+    _metalGlue.textView = _textview;
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
@@ -1412,6 +1426,13 @@ ITERM_WEAKLY_REFERENCEABLE
     _newOutput = NO;
     [_view updateScrollViewFrame];
     [self useTransparencyDidChange];
+
+    if (@available(macOS 10.11, *)) {
+        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+                         gridSize:_screen.currentGrid.size
+                            scale:_view.window.screen.backingScaleFactor];
+    }
+
     return YES;
 }
 
@@ -1507,6 +1528,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_tailFindTimer &&
         [_delegate sessionBelongsToVisibleTab]) {
         [self beginTailFind];
+    }
+    if (@available(macOS 10.11, *)) {
+        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+                         gridSize:_screen.currentGrid.size
+                            scale:_view.window.screen.backingScaleFactor];
     }
 }
 
@@ -1914,6 +1940,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
+    _metalGlue.textView = nil;
 }
 
 - (void)jumpToLocationWhereCurrentStatusChanged {
@@ -3696,6 +3723,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view autorelease];
     _view = [newView retain];
     newView.delegate = self;
+    if (@available(macOS 10.11, *)) {
+        newView.driver.dataSource = _metalGlue;
+    }
     [newView updateTitleFrame];
     [[_view findViewController] setDelegate:self];
 }
@@ -6231,6 +6261,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [self notifyTmuxFontChange];
     }
     [_view updateScrollViewFrame];
+    if (@available(macOS 10.11, *)) {
+        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+                         gridSize:_screen.currentGrid.size
+                            scale:_view.window.screen.backingScaleFactor];
+}
 }
 
 - (BOOL)textViewHasBackgroundImage {
@@ -9006,6 +9041,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.textview.window makeFirstResponder:self.textview];
 }
 
+- (void)sessionViewDidChangeWindow {
+    if (@available(macOS 10.11, *)) {
+        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+                         gridSize:_screen.currentGrid.size
+                            scale:_view.window.screen.backingScaleFactor];
+    }
+}
+
 #pragma mark - iTermCoprocessDelegate
 
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {
@@ -9260,5 +9303,6 @@ ITERM_WEAKLY_REFERENCEABLE
     response.status = ITMSetProfilePropertyResponse_Status_Ok;
     return response;
 }
+
 
 @end

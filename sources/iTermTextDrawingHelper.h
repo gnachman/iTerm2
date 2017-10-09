@@ -19,6 +19,8 @@
 @class PTYFontInfo;
 @class VT100ScreenMark;
 
+BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
+
 @protocol iTermTextDrawingHelperDelegate <NSObject>
 
 - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
@@ -48,7 +50,7 @@
                           isBackground:(BOOL)isBackground;
 
 - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
-                                isComplex:(BOOL)complex
+                                isComplex:(BOOL)isComplex
                                renderBold:(BOOL *)renderBold
                              renderItalic:(BOOL *)renderItalic;
 
@@ -275,7 +277,11 @@
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount;
 
+- (NSImage *)imageForCoord:(VT100GridCoord)coord size:(CGSize)size;
+
 // Draw timestamps. Returns the width of the widest timestamp.
 - (CGFloat)drawTimestamps;
+
+- (VT100GridCoordRange)coordRangeForRect:(NSRect)rect;
 
 @end
