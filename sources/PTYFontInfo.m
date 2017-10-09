@@ -73,6 +73,54 @@
 @synthesize boldVersion = boldVersion_;
 @synthesize italicVersion = italicVersion_;
 
++ (PTYFontInfo *)fontForAsciiCharacter:(BOOL)isAscii
+                             asciiFont:(PTYFontInfo *)asciiFont
+                          nonAsciiFont:(PTYFontInfo *)nonAsciiFont
+                           useBoldFont:(BOOL)useBoldFont
+                         useItalicFont:(BOOL)useItalicFont
+                      usesNonAsciiFont:(BOOL)useNonAsciiFont
+                            renderBold:(BOOL *)renderBold
+                          renderItalic:(BOOL *)renderItalic {
+    BOOL isBold = *renderBold && useBoldFont;
+    BOOL isItalic = *renderItalic && useItalicFont;
+    *renderBold = NO;
+    *renderItalic = NO;
+    PTYFontInfo *theFont;
+    BOOL usePrimary = !useNonAsciiFont || isAscii;
+
+    PTYFontInfo *rootFontInfo = usePrimary ? asciiFont : nonAsciiFont;
+    theFont = rootFontInfo;
+
+    if (isBold && isItalic) {
+        theFont = rootFontInfo.boldItalicVersion;
+        if (!theFont && rootFontInfo.boldVersion) {
+            theFont = rootFontInfo.boldVersion;
+            *renderItalic = YES;
+        } else if (!theFont && rootFontInfo.italicVersion) {
+            theFont = rootFontInfo.italicVersion;
+            *renderBold = YES;
+        } else if (!theFont) {
+            theFont = rootFontInfo;
+            *renderBold = YES;
+            *renderItalic = YES;
+        }
+    } else if (isBold) {
+        theFont = rootFontInfo.boldVersion;
+        if (!theFont) {
+            theFont = rootFontInfo;
+            *renderBold = YES;
+        }
+    } else if (isItalic) {
+        theFont = rootFontInfo.italicVersion;
+        if (!theFont) {
+            theFont = rootFontInfo;
+            *renderItalic = YES;
+        }
+    }
+
+    return theFont;
+}
+
 + (PTYFontInfo *)fontInfoWithFont:(NSFont *)font {
     PTYFontInfo *fontInfo = [[[PTYFontInfo alloc] init] autorelease];
     fontInfo.font = font;

@@ -85,7 +85,7 @@
                                            rmlen:&rmlen
                                      incidentals:vector
                                            token:token
-                                        encoding:_encoding
+                                        encoding:self.encoding
                                       savedState:_savedStateForPartialParse
                                        dcsHooked:&_dcsHooked];
             if (token->type != VT100_WAIT) {

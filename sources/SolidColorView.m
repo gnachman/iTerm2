@@ -29,12 +29,13 @@
             [self class], self, NSStringFromRect(self.frame), @(self.isHidden), @(self.alphaValue)];
 }
 
+/*
 - (void)drawRect:(NSRect)dirtyRect {
     [_color setFill];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
 }
-
+*/
 - (void)setColor:(NSColor*)color {
     [_color autorelease];
     _color = [color retain];

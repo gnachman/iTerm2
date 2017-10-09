@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <simd/simd.h>
 
 // Keys of -dictionaryValue. Use -[NSDictionary colorVaue] to convert to color.
 extern NSString *const kEncodedColorDictionaryRedComponent;
@@ -18,6 +19,11 @@ extern NSString *const kEncodedColorDictionaryColorSpace;  // Optional, defaults
 // Values for kEncodedColorDictionaryColorSpace key
 extern NSString *const kEncodedColorDictionarySRGBColorSpace;
 extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
+
+static float SIMDPerceivedBrightness(vector_float4 x) {
+    static const vector_float4 y = (vector_float4){ 0.30, 0.59, 0.11, 0 };
+    return simd_dot(x, y);
+}
 
 @interface NSColor (iTerm)
 
