@@ -1120,6 +1120,7 @@ DQ
                 <outlet property="sendInputToAllPanes" destination="1266" id="1279"/>
                 <outlet property="sendInputToAllSessions" destination="1264" id="1278"/>
                 <outlet property="showFullScreenTabs" destination="1257" id="1260"/>
+                <outlet property="suUpdater" destination="879" id="FRj-mW-Vma"/>
                 <outlet property="toolbeltMenu" destination="1296" id="1299"/>
                 <outlet property="useTransparency" destination="1228" id="1230"/>
                 <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
