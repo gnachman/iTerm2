@@ -5867,9 +5867,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
             } else if (keystr != nil) {
-                NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
-                    [keystr dataUsingEncoding:NSUTF8StringEncoding] :
-                    [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
+                NSData *keydat = [keystr dataUsingEncoding:_terminal.encoding];
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
