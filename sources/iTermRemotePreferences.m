@@ -2,6 +2,7 @@
 // Created by George Nachman on 4/2/14.
 //
 
+#import "DebugLogging.h"
 #import "iTermRemotePreferences.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
@@ -86,13 +87,16 @@
 }
 
 - (NSDictionary *)freshCopyOfRemotePreferences {
+    DLog(@"Getting a fresh copy of the remote prefs");
     if (!self.shouldLoadRemotePrefs) {
+        DLog(@"remote prefs not turned on, returning nil");
         return nil;
     }
 
     NSString *filename = [self remotePrefsLocation];
     NSDictionary *remotePrefs;
     if ([filename stringIsUrlLike]) {
+        DLog(@"Filename %@ is a url", filename);
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithUserSuppliedString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
@@ -133,6 +137,7 @@
         [fileManager removeItemAtPath:tempFile error:nil];
         [fileManager removeItemAtPath:tempDir error:nil];
     } else {
+        DLog(@"Get dictionary from filename %@", filename);
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
     }
     return remotePrefs;
@@ -214,15 +219,21 @@
 }
 
 - (void)copyRemotePrefsToLocalUserDefaults {
+    DLog(@"copy remote prefs to local");
     if (_haveTriedToLoadRemotePrefs) {
+        DLog(@"have already tried, giving up");
         return;
     }
     _haveTriedToLoadRemotePrefs = YES;
 
     if (!self.shouldLoadRemotePrefs) {
+        DLog(@"remote prefs are not enabled");
         return;
     }
+
+    DLog(@"Go get a fresh copy of the remote prefs");
     NSDictionary *remotePrefs = [self freshCopyOfRemotePreferences];
+    DLog(@"Got:\n%@", remotePrefs);
     self.savedRemotePrefs = remotePrefs;
 
     if (remotePrefs && [remotePrefs count]) {
@@ -231,18 +242,21 @@
         // Empty out the current prefs
         for (NSString *key in localPrefs) {
             if ([self preferenceKeyIsSyncable:key]) {
+                DLog(@"Unset key: %@", key);
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
             }
         }
 
         for (NSString *key in remotePrefs) {
             if ([self preferenceKeyIsSyncable:key]) {
+                DLog(@"Set key: %@", key);
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
                                                           forKey:key];
             }
         }
         return;
     } else {
+        DLog(@"Failed to load remote prefs");
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
         alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
