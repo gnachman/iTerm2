@@ -29,7 +29,7 @@ function SparkleSign {
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
-# First arg is build directory name (e.g., Deployment)
+# First arg is build directory name (e.g., Beta)
 # Second arg is suffix for name that goes before .zip.
 # Third arg describes system requirements
 # Fourth arg is the default description for the build and can be longer.
@@ -90,7 +90,7 @@ echo "Build deployment release"
 make clean
 make release
 
-BUILDTYPE=Deployment
+BUILDTYPE=Beta
 
 Build $BUILDTYPE "" "OS 10.10+" "This is the recommended beta build for most users." "" "--deep"
 
