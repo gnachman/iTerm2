@@ -2423,16 +2423,15 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
     if (allNulls) {
         int i;
-        screen_char_t filler;
-        InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
-        filler.code = TAB_FILLER;
         for (i = currentGrid_.cursorX; i < nextTabStop - 1; i++) {
-            aLine[i] = filler;
+            aLine[i].image = NO;
+            aLine[i].complexChar = NO;
+            aLine[i].code = TAB_FILLER;
         }
 
-        screen_char_t tab = filler;
-        tab.code = '\t';
-        aLine[i] = tab;
+        aLine[i].image = NO;
+        aLine[i].complexChar = NO;
+        aLine[i].code = '\t';
     }
     currentGrid_.cursorX = nextTabStop;
 }
