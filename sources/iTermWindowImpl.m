@@ -381,6 +381,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [super makeFirstResponder:responder];
 }
 
+- (NSWindowTabbingMode)tabbingMode {
+    return NSWindowTabbingModeDisallowed;
+}
+
 NS_ASSUME_NONNULL_END
 
 @end
