@@ -557,8 +557,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
                inWindow:(int)window {
-    [self retainWindow:window withTab:[aSession.delegate.realParentWindow tabForSession:aSession]];
-    [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
+    PTYTab *tab = [aSession.delegate.realParentWindow tabForSession:aSession];
+    ITCriticalError(tab != nil, @"nil tab for session %@ with delegate %@ with realparentwindow %@",
+                    aSession, aSession.delegate, aSession.delegate.realParentWindow);
+    if (tab) {
+        [self retainWindow:window withTab:tab];
+        [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
+    }
 }
 
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane session:(id)session
@@ -1716,6 +1721,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab
 {
+    assert(tab);
     NSNumber *k = [NSNumber numberWithInt:window];
     NSMutableArray *entry = [windows_ objectForKey:k];
     BOOL notify = NO;
