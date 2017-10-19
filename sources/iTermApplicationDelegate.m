@@ -587,9 +587,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             if (filename) {
                 NSString *initialText = bookmark[KEY_INITIAL_TEXT];
                 if (initialText && ![iTermAdvancedSettingsModel openFileOverridesSendText]) {
-                    initialText = [initialText stringByAppendingFormat:@"\n%@; exit\n", filename];
+                    initialText = [initialText stringByAppendingFormat:@"\n%@; exit", filename];
                 } else {
-                    initialText = [NSString stringWithFormat:@"%@; exit\n", filename];
+                    initialText = [NSString stringWithFormat:@"%@; exit", filename];
                 }
                 bookmark[KEY_INITIAL_TEXT] = initialText;
             }
