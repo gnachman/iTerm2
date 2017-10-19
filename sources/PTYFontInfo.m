@@ -9,6 +9,8 @@
 #import "PTYFontInfo.h"
 
 #import "DebugLogging.h"
+#import "FontSizeEstimator.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @implementation NSFont(PTYFontInfo)
 
@@ -106,7 +108,15 @@
 }
 
 - (CGFloat)computedBaselineOffset {
-    return -(floorf(font_.leading) - floorf(self.descender));
+    if ([iTermAdvancedSettingsModel useExperimentalFontMetrics]) {
+        NSTextContainer *textContainer = [FontSizeEstimator newTextContainer];
+        NSLayoutManager *layoutManager = [FontSizeEstimator newLayoutManagerForFont:font_ textContainer:textContainer];
+        CGFloat lineHeight = [layoutManager usedRectForTextContainer:textContainer].size.height;
+        CGFloat baselineOffsetFromTop = [layoutManager defaultBaselineOffsetForFont:font_];
+        return -floorf(lineHeight - baselineOffsetFromTop);
+    } else {
+        return -(floorf(font_.leading) - floorf(self.descender));
+    }
 }
 
 // From https://github.com/DrawKit/DrawKit/blob/master/framework/Code/NSBezierPath%2BText.m#L648

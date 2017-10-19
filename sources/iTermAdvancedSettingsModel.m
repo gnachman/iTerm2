@@ -285,4 +285,6 @@ DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on 
 // This causes problems like issue 6052, where repeats cause the IME to swallow subsequent keypresses.
 DEFINE_BOOL(experimentalKeyHandling, NO, @"General: Improved support for input method editors like AquaSKK.");
 
+DEFINE_BOOL(useExperimentalFontMetrics, NO, @"Experimental Features: Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.");
+
 @end

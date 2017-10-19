@@ -653,21 +653,12 @@ static const int kDragThreshold = 3;
 
 + (NSSize)charSizeForFont:(NSFont *)aFont
         horizontalSpacing:(double)hspace
-          verticalSpacing:(double)vspace
-                 baseline:(double *)baseline {
+          verticalSpacing:(double)vspace {
     FontSizeEstimator* fse = [FontSizeEstimator fontSizeEstimatorForFont:aFont];
     NSSize size = [fse size];
     size.width = ceil(size.width * hspace);
     size.height = ceil(vspace * ceil(size.height + [aFont leading]));
-    if (baseline) {
-        *baseline = [fse baseline];
-    }
     return size;
-}
-
-+ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace
-{
-    return [PTYTextView charSizeForFont:aFont horizontalSpacing:hspace verticalSpacing:vspace baseline:nil];
 }
 
 - (void)setFont:(NSFont*)aFont
@@ -675,11 +666,9 @@ static const int kDragThreshold = 3;
     horizontalSpacing:(double)horizontalSpacing
     verticalSpacing:(double)verticalSpacing
 {
-    double baseline;
     NSSize sz = [PTYTextView charSizeForFont:aFont
                            horizontalSpacing:1.0
-                             verticalSpacing:1.0
-                                    baseline:&baseline];
+                             verticalSpacing:1.0];
 
     _charWidthWithoutSpacing = sz.width;
     _charHeightWithoutSpacing = sz.height;

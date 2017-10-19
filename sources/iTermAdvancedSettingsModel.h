@@ -195,5 +195,6 @@
 + (BOOL)statusBarIcon;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)disableCustomBoxDrawing;
++ (BOOL)useExperimentalFontMetrics;
 
 @end
