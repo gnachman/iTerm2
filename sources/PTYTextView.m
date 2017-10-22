@@ -2344,6 +2344,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [_findOnPageHelper setStartPoint:VT100GridAbsCoordMake(clickPoint.x,
                                                                    [_dataSource totalScrollbackOverflow] + clickPoint.y)];
         }
+        if (_delegate.textViewPasswordInput && !altPressed && !cmdPressed) {
+            NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
+            VT100GridCoord clickCoord = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+            VT100GridCoord cursorCoord = VT100GridCoordMake([_dataSource cursorX] - 1,
+                                                            [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1);
+            if (VT100GridCoordEquals(clickCoord, cursorCoord)) {
+                [_delegate textViewDidSelectPasswordPrompt];
+            }
+        }
     } else if (isShiftedSingleClick && _findOnPageHelper.haveFindCursor && ![_selection hasSelection]) {
         VT100GridAbsCoord absCursor = [_findOnPageHelper findCursorAbsCoord];
         VT100GridCoord cursor = VT100GridCoordMake(absCursor.x,

@@ -6741,6 +6741,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return _passwordInput;
 }
 
+- (void)textViewDidSelectPasswordPrompt {
+    iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
+    [delegate openPasswordManagerToAccountName:nil
+                                     inSession:self];
+}
+
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
     if (_copyMode) {
         _copyModeState.coord = range.start;
