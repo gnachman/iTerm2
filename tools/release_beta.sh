@@ -88,7 +88,7 @@ ORIG_DIR=`pwd`
 
 echo "Build deployment release"
 make clean
-make release
+make Beta
 
 BUILDTYPE=Beta
 
