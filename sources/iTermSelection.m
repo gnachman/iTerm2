@@ -644,6 +644,12 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 }
 
 - (VT100GridWindowedRange)rangeByExtendingRangePastNulls:(VT100GridWindowedRange)range {
+    if (range.coordRange.start.y < 0) {
+        range.coordRange.start.y = 0;
+    }
+    if (range.coordRange.end.y < 0) {
+        range.coordRange.end.y = 0;
+    }
     VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range mode:_selectionMode];
     VT100GridRange nulls =
         [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.start.y];
