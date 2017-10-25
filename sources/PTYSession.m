@@ -2868,14 +2868,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        text:&keyBindingText
                                                 keyMappings:[iTermKeyBindingMgr globalKeyMap]];
 
-
-    if (keyBindingAction == KEY_ACTION_SELECT_MENU_ITEM) {
-        DLog(@"Invoking keybinding action to select menu item %@", keyBindingText);
-        [PTYSession selectMenuItem:keyBindingText];
-        return YES;
-    } else {
-        return NO;
-    }
+    return [PTYSession performKeyBindingAction:keyBindingAction
+                                     parameter:keyBindingText
+                                         event:event];
 }
 
 + (void)selectMenuItemWithSelector:(SEL)theSelector {
@@ -5420,6 +5415,88 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return YES;
     }
+}
+
+// This is limited to the actions that don't need any existing session
++ (BOOL)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
+    switch (keyBindingAction) {
+        case -1:
+            // No action
+            return NO;
+
+        case KEY_ACTION_MOVE_TAB_LEFT:
+        case KEY_ACTION_MOVE_TAB_RIGHT:
+        case KEY_ACTION_NEXT_MRU_TAB:
+        case KEY_ACTION_PREVIOUS_MRU_TAB:
+        case KEY_ACTION_NEXT_PANE:
+        case KEY_ACTION_PREVIOUS_PANE:
+        case KEY_ACTION_NEXT_SESSION:
+        case KEY_ACTION_NEXT_WINDOW:
+        case KEY_ACTION_PREVIOUS_SESSION:
+        case KEY_ACTION_PREVIOUS_WINDOW:
+        case KEY_ACTION_SCROLL_END:
+        case KEY_ACTION_SCROLL_HOME:
+        case KEY_ACTION_SCROLL_LINE_DOWN:
+        case KEY_ACTION_SCROLL_LINE_UP:
+        case KEY_ACTION_SCROLL_PAGE_DOWN:
+        case KEY_ACTION_SCROLL_PAGE_UP:
+        case KEY_ACTION_ESCAPE_SEQUENCE:
+        case KEY_ACTION_HEX_CODE:
+        case KEY_ACTION_TEXT:
+        case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_RUN_COPROCESS:
+        case KEY_ACTION_SEND_C_H_BACKSPACE:
+        case KEY_ACTION_SEND_C_QM_BACKSPACE:
+        case KEY_ACTION_IGNORE:
+        case KEY_ACTION_IR_FORWARD:
+        case KEY_ACTION_IR_BACKWARD:
+        case KEY_ACTION_SELECT_PANE_LEFT:
+        case KEY_ACTION_SELECT_PANE_RIGHT:
+        case KEY_ACTION_SELECT_PANE_ABOVE:
+        case KEY_ACTION_SELECT_PANE_BELOW:
+        case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+        case KEY_ACTION_REMAP_LOCALLY:
+        case KEY_ACTION_TOGGLE_FULLSCREEN:
+        case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+        case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+        case KEY_ACTION_SET_PROFILE:
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+        case KEY_ACTION_FIND_REGEX:
+        case KEY_FIND_AGAIN_DOWN:
+        case KEY_FIND_AGAIN_UP:
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
+        case KEY_ACTION_PASTE_SPECIAL:
+        case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
+        case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
+        case KEY_ACTION_DECREASE_HEIGHT:
+        case KEY_ACTION_INCREASE_HEIGHT:
+        case KEY_ACTION_DECREASE_WIDTH:
+        case KEY_ACTION_INCREASE_WIDTH:
+        case KEY_ACTION_SWAP_PANE_LEFT:
+        case KEY_ACTION_SWAP_PANE_RIGHT:
+        case KEY_ACTION_SWAP_PANE_ABOVE:
+        case KEY_ACTION_SWAP_PANE_BELOW:
+            return NO;
+            break;
+
+        case KEY_ACTION_SELECT_MENU_ITEM:
+            [PTYSession selectMenuItem:keyBindingText];
+            return YES;
+        case KEY_ACTION_NEW_TAB_WITH_PROFILE:
+        case KEY_ACTION_NEW_WINDOW_WITH_PROFILE: {
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            [[iTermController sharedInstance] launchBookmark:profile inTerminal:nil];
+            return YES;
+        }
+        case KEY_ACTION_UNDO:
+            [PTYSession selectMenuItemWithSelector:@selector(undo:)];
+            return YES;
+    }
+    assert(false);
+    return NO;
 }
 
 - (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
