@@ -37,6 +37,7 @@ static BOOL sAuthenticated;
     NSArray *_accounts;
     NSString *_passwordBeingShown;
     NSInteger _rowForPasswordBeingShown;
+    NSString *_selectedAccountNameBeforeAuthenticated;
 }
 
 + (NSArray *)accountNamesWithFilter:(NSString *)filter {
@@ -190,6 +191,8 @@ static BOOL sAuthenticated;
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
+    } else if (!sAuthenticated) {
+        _selectedAccountNameBeforeAuthenticated = name;
     }
 }
 
@@ -351,7 +354,11 @@ static BOOL sAuthenticated;
 
         if (success) {
             [self reloadAccounts];
-            [[self window] makeFirstResponder:_searchField];
+            if (_selectedAccountNameBeforeAuthenticated) {
+                [self selectAccountName:_selectedAccountNameBeforeAuthenticated];
+            } else {
+                [[self window] makeFirstResponder:_searchField];
+            }
         } else {
             [self closeOrEndSheet];
         }
