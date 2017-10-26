@@ -217,11 +217,13 @@ typedef struct iTermTextColorContext {
     NSInteger yLimit = _numberOfLines;
 
     VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
+    NSRange visibleLines = [self rangeOfVisibleRows];
+
     // Start at 0 because ligatures can draw incorrectly otherwise. When a font has a ligature for
     // -> and >-, then a line like ->->-> needs to start at the beginning since drawing only a
     // suffix of it could draw a >- ligature at the start of the range being drawn. Issue 5030.
     boundingCoordRange.start.x = 0;
-    boundingCoordRange.start.y = MAX(0, boundingCoordRange.start.y - 1);
+    boundingCoordRange.start.y = MAX(MAX(0, boundingCoordRange.start.y - 1), visibleLines.location);
     boundingCoordRange.end.x = MIN(_gridSize.width, boundingCoordRange.end.x + haloWidth);
     boundingCoordRange.end.y = MIN(yLimit, boundingCoordRange.end.y + 1);
     
@@ -252,7 +254,10 @@ typedef struct iTermTextColorContext {
         }
     }
 
-    [self drawRanges:ranges count:numRowsInRect origin:boundingCoordRange.start boundingRect:[self rectForCoordRange:boundingCoordRange]];
+    [self drawRanges:ranges count:numRowsInRect
+              origin:boundingCoordRange.start
+        boundingRect:[self rectForCoordRange:boundingCoordRange]
+        visibleLines:visibleLines];
     
     if (_showDropTargets) {
         [self drawDropTargets];
@@ -296,7 +301,11 @@ typedef struct iTermTextColorContext {
     return count;
 }
 
-- (void)drawRanges:(NSRange *)ranges count:(NSInteger)numRanges origin:(VT100GridCoord)origin boundingRect:(NSRect)boundingRect {
+- (void)drawRanges:(NSRange *)ranges
+             count:(NSInteger)numRanges
+            origin:(VT100GridCoord)origin
+      boundingRect:(NSRect)boundingRect
+      visibleLines:(NSRange)visibleLines {
     // Configure graphics
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
 
@@ -304,7 +313,6 @@ typedef struct iTermTextColorContext {
     _blinkingFound = NO;
 
     NSMutableArray<iTermBackgroundColorRunsInLine *> *backgroundRunArrays = [NSMutableArray array];
-    NSRange visibleLines = [self rangeOfVisibleRows];
 
     for (NSInteger i = 0; i < numRanges; i++) {
         const int line = origin.y + i;
