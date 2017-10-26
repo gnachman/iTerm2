@@ -180,7 +180,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSTimeInterval time = [NSDate timeIntervalSinceReferenceDate];
     DLog(@"You pressed the modifier key. dt=%@", @(time - _lastModifierTapTime));
     const NSTimeInterval kMaxTimeBetweenTaps = [iTermAdvancedSettingsModel hotKeyDoubleTapMaxDelay];
-    BOOL result = (time - _lastModifierTapTime < kMaxTimeBetweenTaps);
+    const NSTimeInterval kMinTimeBetweenTabs = [iTermAdvancedSettingsModel hotKeyDoubleTapMinDelay];
+    const NSTimeInterval elapsedTime = time - _lastModifierTapTime;
+    BOOL result = (kMinTimeBetweenTabs <= elapsedTime && elapsedTime < kMaxTimeBetweenTaps);
     _lastModifierTapTime = time;
     return result;
 }

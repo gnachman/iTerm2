@@ -142,6 +142,7 @@ DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"Hotkey: If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
 DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, @"Hotkey: The hotkey window floats above other windows even when another application is active.\nYou must disable “Prefs > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
 DEFINE_FLOAT(hotKeyDoubleTapMaxDelay, 0.3, @"Hotkey: The maximum amount of time allowed between presses of a modifier key when performing a modifier double-tap.");
+DEFINE_FLOAT(hotKeyDoubleTapMinDelay, 0.01, @"Hotkey: The minimum amount of time required between presses of a modifier key when performing a modifier double-tap.");
 
 #pragma mark General
 DEFINE_STRING(searchCommand, @"https://google.com/search?q=%@", @"General: Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");

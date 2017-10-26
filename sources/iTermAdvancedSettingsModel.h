@@ -145,6 +145,7 @@
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)experimentalKeyHandling;
 + (double)hotKeyDoubleTapMaxDelay;
++ (double)hotKeyDoubleTapMinDelay;
 + (BOOL)hideStuckTooltips;
 + (BOOL)indicateBellsInDockBadgeLabel;
 + (double)tabFlashAnimationDuration;
