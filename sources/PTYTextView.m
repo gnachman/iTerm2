@@ -239,10 +239,6 @@ static const int kDragThreshold = 3;
 
     NSPoint _mouseLocationToRefuseFirstResponderAt;
 
-    // Number of times -setalKeyFocus has been called since the last time it
-    // was released with releaseKeyFocus.
-    int _keyFocusStolenCount;
-    
     iTermNSKeyBindingEmulator *_keyBindingEmulator;
     
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.

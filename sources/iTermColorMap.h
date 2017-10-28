@@ -94,6 +94,7 @@ extern const int kColorMap24bitBase;
 - (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)color;
 - (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor;
 - (NSColor *)colorByMutingColor:(NSColor *)color;
+- (vector_float4)fastColorByMutingColor:(vector_float4)color;
 - (NSColor *)colorByDimmingTextColor:(NSColor *)color;
 
 // Returns non-nil profile key name for valid logical colors, ANSI colors, and bright ANSI colors.

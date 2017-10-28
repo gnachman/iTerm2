@@ -253,6 +253,18 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
     CGSize cellSize = textState.cellSize;
     CGFloat scale = frameData.scale;
+
+    iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
+    if (cursorInfo.cursorVisible && cursorInfo.shouldDrawText) {
+        NSLog(@"Cursor on line %d of display", cursorInfo.coord.y);
+        iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
+        iTermMetalGlyphAttributes *glyphAttributes = (iTermMetalGlyphAttributes *)rowWithCursor.attributesData.mutableBytes;
+        glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
+        glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_make_float4(cursorInfo.cursorColor.redComponent,
+                                                                               cursorInfo.cursorColor.greenComponent,
+                                                                               cursorInfo.cursorColor.blueComponent,
+                                                                               1);
+    }
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         [textState setGlyphKeysData:rowData.keysData
@@ -272,6 +284,15 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     [textState willDraw];
 }
 
+- (void)drawCellRenderer:(id<iTermMetalCellRenderer>)renderer
+               frameData:(iTermMetalFrameData *)frameData
+           renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
+    NSString *className = NSStringFromClass([renderer class]);
+    iTermMetalCellRendererTransientState *state = frameData.transientStates[className];
+    assert(state);
+    [renderer drawWithRenderEncoder:renderEncoder transientState:state];
+}
+
 - (void)reallyDrawInView:(MTKView *)view
                frameData:(iTermMetalFrameData *)frameData
            commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
@@ -279,7 +300,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
     MTLRenderPassDescriptor *renderPassDescriptor = frameData.renderPassDescriptor;
     if (renderPassDescriptor != nil) {
-        id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+        id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"Render Terminal";
         frameData.drawable.texture.label = @"Drawable";
 
@@ -295,32 +316,42 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         [renderEncoder setViewport:viewport];
 
         //        [_backgroundImageRenderer drawWithRenderEncoder:renderEncoder];
-        //        [_backgroundColorRenderer drawWithRenderEncoder:renderEncoder];
+        [self drawCellRenderer:_backgroundColorRenderer
+                     frameData:frameData
+                 renderEncoder:renderEncoder];
         //        [_broadcastStripesRenderer drawWithRenderEncoder:renderEncoder];
         //        [_badgeRenderer drawWithRenderEncoder:renderEncoder];
         //        [_cursorGuideRenderer drawWithRenderEncoder:renderEncoder];
         //
-        //        if (context.cursorInfo.cursorVisible) {
-        //            switch (context.cursorInfo.type) {
-        //                case CURSOR_UNDERLINE:
-        //                    [_underlineCursorRenderer drawWithRenderEncoder:renderEncoder];
-        //                    break;
-        //                case CURSOR_BOX:
-        //                    [_blockCursorRenderer drawWithRenderEncoder:renderEncoder];
-        //                    break;
-        //                case CURSOR_VERTICAL:
-        //                    [_barCursorRenderer drawWithRenderEncoder:renderEncoder];
-        //                    break;
-        //                case CURSOR_DEFAULT:
-        //                    break;
-        //            }
-        //        }
+
+        iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
+        if (cursorInfo.cursorVisible) {
+            switch (cursorInfo.type) {
+                case CURSOR_UNDERLINE:
+                    [self drawCellRenderer:_underlineCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder];
+                    break;
+                case CURSOR_BOX:
+                    [self drawCellRenderer:_blockCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder];
+                    break;
+                case CURSOR_VERTICAL:
+                    [self drawCellRenderer:_barCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder];
+                    break;
+                case CURSOR_DEFAULT:
+                    break;
+            }
+        }
+
         //        [_copyModeCursorRenderer drawWithRenderEncoder:renderEncoder];
 
-        iTermTextRendererTransientState *textState = frameData.transientStates[NSStringFromClass([_textRenderer class])];
-        assert(textState);
-        [_textRenderer drawWithRenderEncoder:renderEncoder
-                              transientState:textState];
+        [self drawCellRenderer:_textRenderer
+                     frameData:frameData
+                 renderEncoder:renderEncoder];
 
         //        [_markRenderer drawWithRenderEncoder:renderEncoder];
 
