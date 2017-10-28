@@ -2458,6 +2458,8 @@
 		A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF23E1D21949D00806EEF /* iTermShortcut.m */; };
 		A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */; };
 		A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */; };
+		A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */; };
+		A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
 		A6F3E96F1D60E4F0000E97C4 /* iTermInitialDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
@@ -4040,6 +4042,8 @@
 		A6EFF23E1D21949D00806EEF /* iTermShortcut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcut.m; sourceTree = "<group>"; };
 		A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSessionHotkeyController.h; sourceTree = "<group>"; };
 		A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSessionHotkeyController.m; sourceTree = "<group>"; };
+		A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSmartCursorColor.h; sourceTree = "<group>"; };
+		A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSmartCursorColor.m; sourceTree = "<group>"; };
 		A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInitialDirectory.h; sourceTree = "<group>"; };
 		A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInitialDirectory.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
@@ -5374,6 +5378,8 @@
 				A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */,
 				A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */,
 				A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */,
+				A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */,
+				A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -7067,6 +7073,7 @@
 				A66719191DCE36C3000CE608 /* iTermShortcut.h in Headers */,
 				A667191A1DCE36C3000CE608 /* iTermWebSocketFrameBuilder.h in Headers */,
 				A667191B1DCE36C3000CE608 /* iTermDynamicProfileManager.h in Headers */,
+				A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */,
 				A667191C1DCE36C3000CE608 /* iTermAppHotKey.h in Headers */,
 				A667191D1DCE36C3000CE608 /* iTermHotKeyMigrationHelper.h in Headers */,
 				A667191E1DCE36C3000CE608 /* iTermCPS.h in Headers */,
@@ -8671,6 +8678,7 @@
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
+				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
 				A67960D31F81FCBB008A42BC /* iTermBroadcastStripesRenderer.m in Sources */,

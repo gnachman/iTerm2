@@ -333,6 +333,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 @property (nonatomic, readonly) double transparencyAlpha;
 
+// Number of times -stealKeyFocus has been called since the last time it
+// was released with releaseKeyFocus.
+@property (nonatomic, readonly) int keyFocusStolenCount;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont

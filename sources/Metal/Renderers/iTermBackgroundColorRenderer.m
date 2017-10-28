@@ -2,25 +2,22 @@
 
 @implementation iTermBackgroundColorRendererTransientState
 
-- (nonnull NSMutableData *)newPerInstanceUniformData  {
-    NSMutableData *data = [[NSMutableData alloc] initWithLength:sizeof(iTermBackgroundColorPIU) * self.gridSize.width * self.gridSize.height];
-    [self initializePIUData:data];
-    return data;
+- (NSUInteger)sizeOfNewPIUBuffer {
+    return sizeof(iTermBackgroundColorPIU) * self.gridSize.width * self.gridSize.height;
 }
 
-- (void)initializePIUData:(NSMutableData *)data {
-    void *bytes = data.mutableBytes;
+- (void)initializePIUBytes:(void *)bytes {
     NSInteger i = 0;
+    vector_float2 cellSize = simd_make_float2(self.cellSize.width, self.cellSize.height);
+    vector_float4 defaultColor = simd_make_float4(1, 0, 0, 1);
+    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)bytes;
     for (NSInteger y = 0; y < self.gridSize.height; y++) {
+        const float rowOffset = (self.gridSize.height - y - 1);
+        vector_float2 gridCoord = simd_make_float2(0, rowOffset);
         for (NSInteger x = 0; x < self.gridSize.width; x++) {
-            const iTermBackgroundColorPIU uniform = {
-                .offset = {
-                    x * self.cellSize.width,
-                    (self.gridSize.height - y - 1) * self.cellSize.height
-                },
-                .color = (vector_float4){ 1, 0, 0, 1 }
-            };
-            memcpy(bytes + i * sizeof(uniform), &uniform, sizeof(uniform));
+            gridCoord.x = x;
+            pius[i].offset = gridCoord * cellSize;
+            pius[i].color = defaultColor;
             i++;
         }
     }
@@ -73,10 +70,9 @@
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellSize];
 
-    NSMutableData *data = [tState newPerInstanceUniformData];
-    tState.pius = [_cellRenderer.device newBufferWithLength:data.length
+    tState.pius = [_cellRenderer.device newBufferWithLength:tState.sizeOfNewPIUBuffer
                                                     options:MTLResourceStorageModeShared];
-    memcpy(tState.pius.contents, data.bytes, data.length);
+    [tState initializePIUBytes:tState.pius.contents];
 }
 
 

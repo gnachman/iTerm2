@@ -40,7 +40,11 @@
 }
 
 - (id<MTLRenderPipelineState>)newPipelineState {
-    id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
+    static id<MTLLibrary> defaultLibrary;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        defaultLibrary = [_device newDefaultLibrary];
+    });
     id <MTLFunction> textVertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
     id <MTLFunction> textFragmentShader = [defaultLibrary newFunctionWithName:_fragmentFunctionName];
     return [self newPipelineWithBlending:_blending
