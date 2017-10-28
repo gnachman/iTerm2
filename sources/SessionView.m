@@ -136,6 +136,8 @@ static NSDate* lastResizeDate_;
             _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                                  device:MTLCreateSystemDefaultDevice()];
             [self addSubview:_metalView];
+            _metalView.paused = YES;
+            _metalView.enableSetNeedsDisplay = YES;
             _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
             [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
             _metalView.delegate = _driver;
@@ -172,6 +174,11 @@ static NSDate* lastResizeDate_;
         [self removeTrackingArea:self.trackingAreas[0]];
     }
     [super dealloc];
+}
+
+- (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11) {
+#warning TODO: Would be nice to only draw the part that needs to be drawn.
+    [_metalView setNeedsDisplay:YES];
 }
 
 - (void)setUseSubviewWithLayer:(BOOL)useSubviewWithLayer {

@@ -18,13 +18,11 @@
     }
     return self;
 }
-/*
+
 - (void)scrollToPoint:(NSPoint)newOrigin {
     [super scrollToPoint:newOrigin];
-    NSRect frame = _metalView.frame;
-    frame.origin.y = newOrigin.y;
-    _metalView.frame = frame;
+    [_metalView setNeedsDisplay:YES];
 }
-*/
+
 @end
 
