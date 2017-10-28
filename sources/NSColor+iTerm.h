@@ -20,7 +20,7 @@ extern NSString *const kEncodedColorDictionaryColorSpace;  // Optional, defaults
 extern NSString *const kEncodedColorDictionarySRGBColorSpace;
 extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 
-static float SIMDPerceivedBrightness(vector_float4 x) {
+static inline float SIMDPerceivedBrightness(vector_float4 x) {
     static const vector_float4 y = (vector_float4){ 0.30, 0.59, 0.11, 0 };
     return simd_dot(x, y);
 }

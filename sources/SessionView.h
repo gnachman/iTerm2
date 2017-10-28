@@ -135,6 +135,8 @@
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
 
+- (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11);
+
 - (void)setDimmed:(BOOL)isDimmed;
 - (FindViewController*)findViewController;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;

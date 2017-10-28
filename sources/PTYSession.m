@@ -6882,6 +6882,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)textViewNeedsDisplayInRect:(NSRect)rect {
+    if (@available(macOS 10.11, *)) {
+        NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
+        [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
+    }
+}
+
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
