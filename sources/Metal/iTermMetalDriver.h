@@ -12,6 +12,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) VT100GridCoord coord;
 @property (nonatomic) ITermCursorType type;
 @property (nonatomic, strong) NSColor *cursorColor;
+
+// Block cursors care about drawing the character overtop the cursor in a
+// different color than the character would normally be. If this is set, the
+// text color will be changed to that of the `textColor` property.
+@property (nonatomic) BOOL shouldDrawText;
+@property (nonatomic) vector_float4 textColor;
+
+// This is a "frame" cursor, as seen when the view does not have focus.
+@property (nonatomic) BOOL frameOnly;
 @end
 
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>

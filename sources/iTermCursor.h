@@ -1,4 +1,6 @@
 #import <Cocoa/Cocoa.h>
+
+#import "iTermSmartCursorColor.h"
 #import "ScreenChar.h"
 
 typedef NS_ENUM(NSInteger, ITermCursorType) {
@@ -9,28 +11,13 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
     CURSOR_DEFAULT = -1  // Use the default cursor type for a profile. Internally used for DECSTR.
 };
 
-typedef struct {
-    screen_char_t chars[3][3];
-    BOOL valid[3][3];
-} iTermCursorNeighbors;
-
-@protocol iTermCursorDelegate <NSObject>
-
-- (iTermCursorNeighbors)cursorNeighbors;
+@protocol iTermCursorDelegate <iTermSmartCursorColorDelegate>
 
 - (void)cursorDrawCharacterAt:(VT100GridCoord)coord
                   doubleWidth:(BOOL)doubleWidth
                 overrideColor:(NSColor*)overrideColor
                       context:(CGContextRef)ctx
               backgroundColor:(NSColor *)backgroundColor;
-
-- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
-                      wantBackground:(BOOL)wantBackgroundColor
-                               muted:(BOOL)muted;
-
-- (NSColor *)cursorWhiteColor;
-- (NSColor *)cursorBlackColor;
-- (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color;
 
 @end
 

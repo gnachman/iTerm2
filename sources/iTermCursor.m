@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermSmartCursorColor.h"
 
 @interface iTermUnderlineCursor : iTermCursor
 @end
@@ -160,7 +161,14 @@
 
 @end
 
-@implementation iTermBoxCursor
+@implementation iTermBoxCursor {
+    iTermSmartCursorColor *_smartCursorColor;
+}
+
+- (void)dealloc {
+    [_smartCursorColor release];
+    [super dealloc];
+}
 
 - (void)drawWithRect:(NSRect)rect
          doubleWidth:(BOOL)doubleWidth
@@ -175,9 +183,11 @@
 
     // Draw the colored box/frame
     if (smart) {
-        iTermCursorNeighbors neighbors = [self.delegate cursorNeighbors];
-        backgroundColor = [[self smartCursorColorForChar:screenChar
-                                               neighbors:neighbors] colorWithAlphaComponent:1.0];
+        if (_smartCursorColor == nil) {
+            _smartCursorColor = [[iTermSmartCursorColor alloc] init];
+        }
+        _smartCursorColor.delegate = self.delegate;
+        backgroundColor = [_smartCursorColor backgroundColorForCharacter:screenChar];
     }
     [backgroundColor set];
     const BOOL frameOnly = !focused;
@@ -213,13 +223,12 @@
                  backgroundColor:(NSColor *)backgroundColor
                              ctx:(CGContextRef)ctx
                            coord:(VT100GridCoord)coord {
-    NSColor *proposedForeground = [self.delegate cursorColorForCharacter:screenChar
-                                                          wantBackground:YES
-                                                                   muted:NO];
-    proposedForeground = [proposedForeground colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    NSColor *overrideColor = [self overrideColorForSmartCursorWithForegroundColor:proposedForeground
-                                                                  backgroundColor:backgroundColor];
-
+    NSColor *regularTextColor = [self.delegate cursorColorForCharacter:screenChar
+                                                        wantBackground:YES
+                                                                 muted:NO];
+    NSColor *overrideColor = [_smartCursorColor textColorForCharacter:screenChar
+                                                     regularTextColor:regularTextColor
+                                                 smartBackgroundColor:backgroundColor];
     [self.delegate cursorDrawCharacterAt:coord
                              doubleWidth:doubleWidth
                            overrideColor:overrideColor
@@ -227,106 +236,5 @@
                          backgroundColor:nil];
 
 }
-
-- (NSColor *)overrideColorForSmartCursorWithForegroundColor:(NSColor *)proposedForeground
-                                            backgroundColor:(NSColor *)backgroundColor {
-    CGFloat fgBrightness = [proposedForeground perceivedBrightness];
-    CGFloat bgBrightness = [backgroundColor perceivedBrightness];
-    const double threshold = [iTermAdvancedSettingsModel smartCursorColorFgThreshold];
-    if (fabs(fgBrightness - bgBrightness) < threshold) {
-        // Foreground and background are very similar. Just use black and
-        // white.
-        if (bgBrightness < 0.5) {
-            return [self.delegate cursorWhiteColor];
-        } else {
-            return [self.delegate cursorBlackColor];
-        }
-    } else {
-        return proposedForeground;
-    }
-}
-
-#pragma mark - Smart cursor color
-
-- (NSColor *)smartCursorColorForChar:(screen_char_t)screenChar
-                           neighbors:(iTermCursorNeighbors)neighbors {
-    NSColor *bgColor = [self.delegate cursorColorForCharacter:screenChar
-                                               wantBackground:NO
-                                                        muted:NO];
-
-    NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
-    for (int y = 0; y < 3; y++) {
-        for (int x = 0; x < 3; x++) {
-            if (neighbors.valid[y][x]) {
-                [constraints addObject:@([self brightnessOfCharBackground:neighbors.chars[y][x]])];
-            }
-        }
-    }
-    CGFloat bgBrightness = [bgColor perceivedBrightness];
-    if ([self minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] <
-        [iTermAdvancedSettingsModel smartCursorColorBgThreshold]) {
-        CGFloat b = [self farthestValueFromAnyValueIn:constraints];
-        bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
-    }
-    return [self.delegate cursorColorByDimmingSmartColor:bgColor];
-}
-
-// Return the value in 'values' closest to target.
-- (CGFloat)minimumDistanceOf:(CGFloat)target fromAnyValueIn:(NSArray*)values {
-    CGFloat md = 1;
-    for (NSNumber* n in values) {
-        CGFloat dist = fabs(target - [n doubleValue]);
-        if (dist < md) {
-            md = dist;
-        }
-    }
-    return md;
-}
-
-// Return the value between 0 and 1 that is farthest from any value in 'constraints'.
-- (CGFloat)farthestValueFromAnyValueIn:(NSArray*)constraints {
-    if ([constraints count] == 0) {
-        return 0;
-    }
-
-    NSArray* sortedConstraints = [constraints sortedArrayUsingSelector:@selector(compare:)];
-    double minVal = [[sortedConstraints objectAtIndex:0] doubleValue];
-    double maxVal = [[sortedConstraints lastObject] doubleValue];
-
-    CGFloat bestDistance = 0;
-    CGFloat bestValue = -1;
-    CGFloat prev = [[sortedConstraints objectAtIndex:0] doubleValue];
-    for (NSNumber* np in sortedConstraints) {
-        CGFloat n = [np doubleValue];
-        const CGFloat dist = fabs(n - prev) / 2;
-        if (dist > bestDistance) {
-            bestDistance = dist;
-            bestValue = (n + prev) / 2;
-        }
-        prev = n;
-    }
-    if (minVal > bestDistance) {
-        bestValue = 0;
-        bestDistance = minVal;
-    }
-    if (1 - maxVal > bestDistance) {
-        bestValue = 1;
-        bestDistance = 1 - maxVal;
-    }
-    DLog(@"Best distance is %f", (float)bestDistance);
-
-    return bestValue;
-}
-
-- (double)brightnessOfCharBackground:(screen_char_t)c {
-    return [[self backgroundColorForChar:c] perceivedBrightness];
-}
-
-- (NSColor *)backgroundColorForChar:(screen_char_t)c {
-    c.bold = NO;
-    c.faint = NO;
-    return [self.delegate cursorColorForCharacter:c wantBackground:YES muted:YES];
-}
-
 
 @end

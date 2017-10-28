@@ -10,8 +10,14 @@
 
 @interface iTermMetalRowData : NSObject
 @property (nonatomic) int y;
+
+// iTermMetalGlyphKey
 @property (nonatomic, strong) NSMutableData *keysData;
+
+// iTermMetalGlyphAttributes
 @property (nonatomic, strong) NSMutableData *attributesData;
+
+// vector_float4
 @property (nonatomic, strong) NSMutableData *backgroundColorData;
 @end
 

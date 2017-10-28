@@ -11,6 +11,7 @@
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermSelection.h"
+#import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
 #import "NSColor+iTerm.h"
 #import "PTYFontInfo.h"
@@ -51,7 +52,9 @@ static NSColor *ColorForVector(vector_float4 v) {
     return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
 }
 
-@interface iTermMetalPerFrameState : NSObject<iTermMetalDriverDataSourcePerFrameState> {
+@interface iTermMetalPerFrameState : NSObject<
+    iTermMetalDriverDataSourcePerFrameState,
+    iTermSmartCursorColorDelegate> {
     BOOL _havePreviousCharacterAttributes;
     screen_char_t _previousCharacterAttributes;
     vector_float4 _lastUnprocessedColor;
@@ -75,6 +78,12 @@ static NSColor *ColorForVector(vector_float4 v) {
     iTermMetalCursorInfo *_cursorInfo;
     iTermThinStrokesSetting _thinStrokes;
     BOOL _isRetina;
+    BOOL _isInKeyWindow;
+    BOOL _textViewIsActiveSession;
+    BOOL _shouldDrawFilledInCursor;
+    VT100GridSize _gridSize;
+    VT100GridCoordRange _visibleRange;
+    NSInteger _numberOfScrollbackLines;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -115,18 +124,20 @@ static NSColor *ColorForVector(vector_float4 v) {
         _lines = [NSMutableArray array];
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
-        VT100GridCoordRange coordRange = [textView.drawingHelper coordRangeForRect:textView.enclosingScrollView.documentVisibleRect];
-        const int width = coordRange.end.x - coordRange.start.x;
-        for (int i = coordRange.start.y; i < coordRange.end.y; i++) {
+        _visibleRange = [textView.drawingHelper coordRangeForRect:textView.enclosingScrollView.documentVisibleRect];
+        const int width = _visibleRange.end.x - _visibleRange.start.x;
+        for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
             screen_char_t *line = [screen getLineAtIndex:i];
             [_lines addObject:[NSData dataWithBytes:line length:sizeof(screen_char_t) * width]];
             [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
             NSData *findMatches = [textView.drawingHelper.delegate drawingHelperMatchesOnLine:i];
             if (findMatches) {
-                _matches[@(i - coordRange.start.y)] = findMatches;
+                _matches[@(i - _visibleRange.start.y)] = findMatches;
             }
         }
 
+        _gridSize = VT100GridSizeMake(textView.dataSource.width,
+                                      textView.dataSource.height);
         _colorMap = [textView.colorMap copy];
         _asciiFont = textView.primaryFont;
         _nonAsciiFont = textView.secondaryFont;
@@ -137,18 +148,61 @@ static NSColor *ColorForVector(vector_float4 v) {
         _useBrightBold = textView.useBrightBold;
         _thinStrokes = textView.thinStrokes;
         _isRetina = textView.drawingHelper.isRetina;
+        _isInKeyWindow = [textView isInKeyWindow];
+        _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
+        _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
+        _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
 
+        iTermSmartCursorColor *smartCursorColor = nil;
+        if (textView.drawingHelper.useSmartCursorColor) {
+            smartCursorColor = [[iTermSmartCursorColor alloc] init];
+            smartCursorColor.delegate = self;
+        }
         _cursorInfo = [[iTermMetalCursorInfo alloc] init];
 #warning TODO: blinking cursor
-        if (textView.cursorVisible && coordRange.end.y >= textView.dataSource.numberOfScrollbackLines) {
-            const int offset = coordRange.start.y - textView.dataSource.numberOfScrollbackLines;
+        NSLog(@"Visible range is [%d, %d), have %d lines of scrollback",
+              (int)_visibleRange.start.y,
+              (int)_visibleRange.end.y,
+              (int)_numberOfScrollbackLines);
+        NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
+        if (textView.cursorVisible && _visibleRange.start.y <= lineWithCursor && lineWithCursor + 1 < _visibleRange.end.y) {
+            const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
             _cursorInfo.cursorVisible = YES;
+            NSLog(@"Cursor is visible on line %d (%d of visible region)", (int)lineWithCursor, (int)(lineWithCursor - _visibleRange.start.y));
             _cursorInfo.type = textView.drawingHelper.cursorType;
             _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                    textView.dataSource.cursorY - 1 - offset);
 #warning handle frame cursor, text color, smart cursor color, and other fancy cursors of various kinds
             _cursorInfo.cursorColor = [self backgroundColorForCursor];
+            if (_cursorInfo.type == CURSOR_BOX) {
+                _cursorInfo.shouldDrawText = YES;
+                const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].bytes;
+                screen_char_t screenChar = line[_cursorInfo.coord.x];
+                const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
+                _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
+                                                           wantBackground:YES
+                                                                    muted:NO];
+                if (!focused) {
+                    _cursorInfo.frameOnly = YES;
+                } else if (smartCursorColor) {
+                    _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
+                    NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
+                                                                green:_cursorInfo.textColor.y
+                                                                 blue:_cursorInfo.textColor.z
+                                                                alpha:_cursorInfo.textColor.w];
+                    NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
+                                                                     regularTextColor:regularTextColor
+                                                                 smartBackgroundColor:_cursorInfo.cursorColor];
+                    CGFloat components[4];
+                    [smartTextColor getComponents:components];
+                    _cursorInfo.textColor = simd_make_float4(components[0],
+                                                             components[1],
+                                                             components[2],
+                                                             components[3]);
+                }
+            }
         } else {
+            NSLog(@"Cursor is not visible");
             _cursorInfo.cursorVisible = NO;
         }
     }
@@ -667,6 +721,111 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 #warning TODO: Lots of code was copied from PTYTextView. Make it shared.
 
+#pragma mark - iTermSmartCursorColorDelegate
+
+- (iTermCursorNeighbors)cursorNeighbors {
+    iTermCursorNeighbors neighbors;
+    memset(&neighbors, 0, sizeof(neighbors));
+    NSArray *coords = @[ @[ @0,    @(-1) ],     // Above
+                         @[ @(-1), @0    ],     // Left
+                         @[ @1,    @0    ],     // Right
+                         @[ @0,    @1    ] ];   // Below
+    int prevY = -2;
+    const screen_char_t *theLine = nil;
+
+    for (NSArray *tuple in coords) {
+        int dx = [tuple[0] intValue];
+        int dy = [tuple[1] intValue];
+        int x = _cursorInfo.coord.x + dx;
+        int y = _cursorInfo.coord.y + dy + _numberOfScrollbackLines;
+
+        if (y != prevY) {
+            if (y >= _visibleRange.start.y && y < _visibleRange.end.y) {
+                theLine = (const screen_char_t *)_lines[y - _visibleRange.start.y].bytes;
+            } else {
+                theLine = nil;
+            }
+        }
+        prevY = y;
+
+        int xi = dx + 1;
+        int yi = dy + 1;
+        if (theLine && x >= 0 && x < _gridSize.width) {
+            neighbors.chars[yi][xi] = theLine[x];
+            neighbors.valid[yi][xi] = YES;
+        }
+
+    }
+    return neighbors;
+}
+
+// TODO: This is copypasta
+- (vector_float4)fastCursorColorForCharacter:(screen_char_t)screenChar
+                              wantBackground:(BOOL)wantBackgroundColor
+                                       muted:(BOOL)muted {
+    BOOL isBackground = wantBackgroundColor;
+
+    if (_reverseVideo) {
+        if (wantBackgroundColor &&
+            screenChar.backgroundColorMode == ColorModeAlternate &&
+            screenChar.backgroundColor == ALTSEM_DEFAULT) {
+            isBackground = NO;
+        } else if (!wantBackgroundColor &&
+                   screenChar.foregroundColorMode == ColorModeAlternate &&
+                   screenChar.foregroundColor == ALTSEM_DEFAULT) {
+            isBackground = YES;
+        }
+    }
+    vector_float4 color;
+    if (wantBackgroundColor) {
+        color = [self colorForCode:screenChar.backgroundColor
+                             green:screenChar.bgGreen
+                              blue:screenChar.bgBlue
+                         colorMode:screenChar.backgroundColorMode
+                              bold:screenChar.bold
+                             faint:screenChar.faint
+                      isBackground:isBackground];
+    } else {
+        color = [self colorForCode:screenChar.foregroundColor
+                             green:screenChar.fgGreen
+                              blue:screenChar.fgBlue
+                         colorMode:screenChar.foregroundColorMode
+                              bold:screenChar.bold
+                             faint:screenChar.faint
+                      isBackground:isBackground];
+    }
+    if (muted) {
+        color = [_colorMap fastColorByMutingColor:color];
+    }
+    return color;
+}
+
+- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
+                      wantBackground:(BOOL)wantBackgroundColor
+                               muted:(BOOL)muted {
+    vector_float4 v = [self fastCursorColorForCharacter:screenChar wantBackground:wantBackgroundColor muted:muted];
+    return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
+}
+
+- (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color {
+    return [_colorMap colorByDimmingTextColor:color];
+}
+
+- (NSColor *)cursorWhiteColor {
+    NSColor *whiteColor = [NSColor colorWithCalibratedRed:1
+                                                    green:1
+                                                     blue:1
+                                                    alpha:1];
+    return [_colorMap colorByDimmingTextColor:whiteColor];
+}
+
+- (NSColor *)cursorBlackColor {
+    NSColor *blackColor = [NSColor colorWithCalibratedRed:0
+                                                    green:0
+                                                     blue:0
+                                                    alpha:1];
+    return [_colorMap colorByDimmingTextColor:blackColor];
+}
 
 @end
 

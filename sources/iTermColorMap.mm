@@ -10,6 +10,7 @@
 #import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
 #include <unordered_map>
+#import <simd/simd.h>
 
 const int kColorMapForeground = 0;
 const int kColorMapBackground = 1;
@@ -244,6 +245,28 @@ const int kColorMapAnsiBrightModifier = 8;
     CGFloat components[4];
     [color getComponents:components];
 
+    vector_float4 colorVector = simd_make_float4(components[0],
+                                                 components[1],
+                                                 components[2],
+                                                 components[3]);
+    vector_float4 v = [self commonColorByMutingColor:colorVector];
+
+    CGFloat mutedRgb[4] = { v.x, v.y, v.z, v.w };
+    return [NSColor colorWithColorSpace:color.colorSpace
+                             components:mutedRgb
+                                  count:4];
+}
+
+- (vector_float4)fastColorByMutingColor:(vector_float4)color {
+    if (_mutingAmount < 0.01) {
+        return color;
+    }
+
+    return [self commonColorByMutingColor:color];
+}
+
+- (vector_float4)commonColorByMutingColor:(vector_float4)color {
+    CGFloat components[4] = { color.x, color.y, color.z, color.w };
     CGFloat defaultBackgroundComponents[4];
     [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
 
@@ -254,9 +277,7 @@ const int kColorMapAnsiBrightModifier = 8;
                         alpha:_mutingAmount];
     mutedRgb[3] = components[3];
 
-    return [NSColor colorWithColorSpace:color.colorSpace
-                             components:mutedRgb
-                                  count:4];
+    return simd_make_float4(mutedRgb[0], mutedRgb[1], mutedRgb[2], components[3]);
 }
 
 // There is an issue where where the passed-in color can be in a different color space than the
