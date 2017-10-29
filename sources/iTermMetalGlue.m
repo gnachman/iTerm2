@@ -52,6 +52,14 @@ static NSColor *ColorForVector(vector_float4 v) {
     return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
 }
 
+@interface iTermMetalGlue()
+// Screen-relative cursor location on last frame
+@property (nonatomic) VT100GridCoord oldCursorScreenCoord;
+// Used to remember the last time the cursor moved to avoid drawing a blinked-out
+// cursor while it's moving.
+@property (nonatomic) NSTimeInterval lastTimeCursorMoved;
+@end
+
 @interface iTermMetalPerFrameState : NSObject<
     iTermMetalDriverDataSourcePerFrameState,
     iTermSmartCursorColorDelegate> {
@@ -84,10 +92,16 @@ static NSColor *ColorForVector(vector_float4 v) {
     VT100GridSize _gridSize;
     VT100GridCoordRange _visibleRange;
     NSInteger _numberOfScrollbackLines;
+    BOOL _cursorVisible;
+    BOOL _cursorBlinking;
+    BOOL _blinkingItemsVisible;
+    NSRange _inputMethodMarkedRange;
+    NSTimeInterval _timeSinceCursorMoved;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
-                          screen:(VT100Screen *)screen NS_DESIGNATED_INITIALIZER;
+                          screen:(VT100Screen *)screen
+                            glue:(iTermMetalGlue *)glue NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
@@ -100,7 +114,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     if (self.textView.drawingHelper.delegate == nil) {
         return nil;
     }
-    return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView screen:self.screen];
+    return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView screen:self.screen glue:self];
 }
 
 @end
@@ -108,7 +122,8 @@ static NSColor *ColorForVector(vector_float4 v) {
 @implementation iTermMetalPerFrameState
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
-                          screen:(VT100Screen *)screen {
+                          screen:(VT100Screen *)screen
+                            glue:(iTermMetalGlue *)glue {
     assert([NSThread isMainThread]);
     self = [super init];
     if (self) {
@@ -152,6 +167,19 @@ static NSColor *ColorForVector(vector_float4 v) {
         _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
         _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
         _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
+        _cursorVisible = textView.drawingHelper.cursorVisible;
+        _cursorBlinking = textView.isCursorBlinking;
+        _blinkingItemsVisible = textView.drawingHelper.blinkingItemsVisible;
+        _inputMethodMarkedRange = textView.drawingHelper.inputMethodMarkedRange;
+
+        VT100GridCoord cursorScreenCoord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
+                                                              textView.dataSource.cursorY - 1);
+        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+        if (!VT100GridCoordEquals(cursorScreenCoord, glue.oldCursorScreenCoord)) {
+            glue.lastTimeCursorMoved = now;
+        }
+        _timeSinceCursorMoved = now - glue.lastTimeCursorMoved;
+        glue.oldCursorScreenCoord = cursorScreenCoord;
 
         iTermSmartCursorColor *smartCursorColor = nil;
         if (textView.drawingHelper.useSmartCursorColor) {
@@ -165,7 +193,10 @@ static NSColor *ColorForVector(vector_float4 v) {
               (int)_visibleRange.end.y,
               (int)_numberOfScrollbackLines);
         NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
-        if (textView.cursorVisible && _visibleRange.start.y <= lineWithCursor && lineWithCursor + 1 < _visibleRange.end.y) {
+        if ([self shouldDrawCursor] &&
+            textView.cursorVisible &&
+            _visibleRange.start.y <= lineWithCursor &&
+            lineWithCursor + 1 < _visibleRange.end.y) {
             const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
             _cursorInfo.cursorVisible = YES;
             NSLog(@"Cursor is visible on line %d (%d of visible region)", (int)lineWithCursor, (int)(lineWithCursor - _visibleRange.start.y));
@@ -822,6 +853,42 @@ static NSColor *ColorForVector(vector_float4 v) {
                                                     alpha:1];
     return [_colorMap colorByDimmingTextColor:blackColor];
 }
+
+#pragma mark - Cursor Logic
+
+#warning TODO: This is copypasta
+
+- (BOOL)shouldDrawCursor {
+    BOOL shouldShowCursor = [self shouldShowCursor];
+
+    // Draw the regular cursor only if there's not an IME open as it draws its
+    // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
+    // the screen (which is just a sanity check, really).
+    BOOL result = (![self hasMarkedText] &&
+                   _cursorVisible &&
+                   shouldShowCursor);
+    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, result=%@",
+         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, @(result));
+    return result;
+}
+
+- (BOOL)shouldShowCursor {
+    if (_cursorBlinking &&
+        _isInKeyWindow &&
+        _textViewIsActiveSession &&
+        _timeSinceCursorMoved > 0.5) {
+        // Allow the cursor to blink if it is configured, the window is key, this session is active
+        // in the tab, and the cursor has not moved for half a second.
+        return _blinkingItemsVisible;
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)hasMarkedText {
+    return _inputMethodMarkedRange.length > 0;
+}
+
 
 @end
 

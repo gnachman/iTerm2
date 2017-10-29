@@ -337,6 +337,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // was released with releaseKeyFocus.
 @property (nonatomic, readonly) int keyFocusStolenCount;
 
+// Is the cursor eligible to blink?
+@property (nonatomic, readonly) BOOL isCursorBlinking;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont
