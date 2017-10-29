@@ -32,7 +32,7 @@ typedef struct {
     unsigned int fgBlue  : 8;
     unsigned int bold : 1;
     unsigned int faint : 1;
-    CGFloat backgroundColor[4];
+    vector_float4 background;
 } iTermTextColorKey;
 
 typedef struct {
@@ -271,9 +271,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         currentColorKey->fgBlue = line[x].fgBlue;
         currentColorKey->bold = line[x].bold;
         currentColorKey->faint = line[x].faint;
-        currentColorKey->backgroundColor[0] = background[x].x;
-        currentColorKey->backgroundColor[1] = background[x].y;
-        currentColorKey->backgroundColor[2] = background[x].z;
+        currentColorKey->background = background[x];
         if (x > 0 &&
             currentColorKey->isMatch == previousColorKey->isMatch &&
             currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
@@ -283,9 +281,7 @@ static NSColor *ColorForVector(vector_float4 v) {
             currentColorKey->fgBlue == previousColorKey->fgBlue &&
             currentColorKey->bold == previousColorKey->bold &&
             currentColorKey->faint == previousColorKey->faint &&
-            currentColorKey->backgroundColor[0] == previousColorKey->backgroundColor[0] &&
-            currentColorKey->backgroundColor[1] == previousColorKey->backgroundColor[1] &&
-            currentColorKey->backgroundColor[2] == previousColorKey->backgroundColor[2]) {
+            simd_equal(currentColorKey->background, previousColorKey->background)) {
             attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
         } else {
             vector_float4 textColor = [self textColorForCharacter:&line[x]
