@@ -271,9 +271,9 @@ static NSColor *ColorForVector(vector_float4 v) {
         currentColorKey->fgBlue = line[x].fgBlue;
         currentColorKey->bold = line[x].bold;
         currentColorKey->faint = line[x].faint;
-        currentColorKey->backgroundColor[0] = 0;  // TODO
-        currentColorKey->backgroundColor[1] = 0;  // TODO
-        currentColorKey->backgroundColor[2] = 0;  // TODO
+        currentColorKey->backgroundColor[0] = background[x].x;
+        currentColorKey->backgroundColor[1] = background[x].y;
+        currentColorKey->backgroundColor[2] = background[x].z;
         if (x > 0 &&
             currentColorKey->isMatch == previousColorKey->isMatch &&
             currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
