@@ -89,7 +89,7 @@
 #import "TmuxDashboardController.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
-
+#import "iTermSubpixelModelBuilder.h"
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
 

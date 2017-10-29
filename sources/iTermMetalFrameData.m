@@ -55,6 +55,8 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)loadFromView:(MTKView *)view {
+    self.device = view.device;
+
     iTermPreciseTimerStatsStartTimer(&_stats.getCurrentDrawableStats);
     self.drawable = view.currentDrawable;
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.getCurrentDrawableStats);

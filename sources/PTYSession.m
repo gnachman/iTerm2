@@ -6334,6 +6334,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSImage *)textViewBackgroundImage {
+    return _backgroundImage;
+}
+
 - (NSColor *)processedBackgroundColor {
     NSColor *unprocessedColor = [_colorMap colorForKey:kColorMapBackground];
     return [_colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];

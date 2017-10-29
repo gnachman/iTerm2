@@ -3,18 +3,18 @@
 @implementation iTermBackgroundColorRendererTransientState
 
 - (NSUInteger)sizeOfNewPIUBuffer {
-    return sizeof(iTermBackgroundColorPIU) * self.gridSize.width * self.gridSize.height;
+    return sizeof(iTermBackgroundColorPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
 }
 
 - (void)initializePIUBytes:(void *)bytes {
     NSInteger i = 0;
-    vector_float2 cellSize = simd_make_float2(self.cellSize.width, self.cellSize.height);
+    vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
     vector_float4 defaultColor = simd_make_float4(1, 0, 0, 1);
     iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)bytes;
-    for (NSInteger y = 0; y < self.gridSize.height; y++) {
-        const float rowOffset = (self.gridSize.height - y - 1);
+    for (NSInteger y = 0; y < self.cellConfiguration.gridSize.height; y++) {
+        const float rowOffset = (self.cellConfiguration.gridSize.height - y - 1);
         vector_float2 gridCoord = simd_make_float2(0, rowOffset);
-        for (NSInteger x = 0; x < self.gridSize.width; x++) {
+        for (NSInteger x = 0; x < self.cellConfiguration.gridSize.width; x++) {
             gridCoord.x = x;
             pius[i].offset = gridCoord * cellSize;
             pius[i].color = defaultColor;
@@ -52,23 +52,19 @@
     return self;
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForViewportSize:viewportSize
-                                              cellSize:cellSize
-                                              gridSize:gridSize
-                                         commandBuffer:commandBuffer
-                                            completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                [self initializeTransientState:transientState];
-                                                completion(transientState);
-                                            }];
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer
+                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
+                                                     [self initializeTransientState:transientState];
+                                                     completion(transientState);
+                                                 }];
 }
 
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellSize];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize];
 
     tState.pius = [_cellRenderer.device newBufferWithLength:tState.sizeOfNewPIUBuffer
                                                     options:MTLResourceStorageModeShared];
@@ -82,7 +78,7 @@
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.gridSize.width * tState.gridSize.height
+                             numberOfPIUs:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }

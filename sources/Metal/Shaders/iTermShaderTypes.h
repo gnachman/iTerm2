@@ -13,10 +13,13 @@ typedef enum iTermVertexInputIndex {
 
 typedef enum iTermTextureIndex {
     iTermTextureIndexPrimary = 0,
+
+    // A texture containing the background we're drawing over.
+    iTermTextureIndexBackground = 1
 } iTermTextureIndex;
 
 typedef enum {
-    iTermFragmentBufferIndexColorModels = 1 // Array of triples of 256-byte color tables in rgb order
+    iTermFragmentBufferIndexColorModels = 1 // Array of 256-byte color tables
 } iTermFragmentBufferIndex;
 
 typedef struct {
@@ -34,7 +37,9 @@ typedef struct {
     // Offset of source texture
     vector_float2 textureOffset;
 
-    int colorModelIndex;
+    // Values in 0-1. These will be composited over what's already rendered.
+    vector_float4 backgroundColor;
+    vector_float4 textColor;
 } iTermTextPIU;
 
 typedef struct {

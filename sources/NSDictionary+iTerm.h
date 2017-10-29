@@ -70,6 +70,4 @@ typedef NSDictionary iTermHotKeyDescriptor;
 // Compares pointers only
 - (BOOL)isExactlyEqualToDictionary:(NSDictionary *)other;
 
-- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key;
-
 @end

@@ -12,13 +12,13 @@
 @implementation iTermCursorGuideRendererTransientState
 
 - (nonnull NSData *)newCursorGuidePerInstanceUniforms {
-    NSMutableData *data = [[NSMutableData alloc] initWithLength:sizeof(iTermCursorGuidePIU) * self.gridSize.width];
+    NSMutableData *data = [[NSMutableData alloc] initWithLength:sizeof(iTermCursorGuidePIU) * self.cellConfiguration.gridSize.width];
     iTermCursorGuidePIU *pius = (iTermCursorGuidePIU *)data.mutableBytes;
-    for (size_t i = 0; i < self.gridSize.width; i++) {
+    for (size_t i = 0; i < self.cellConfiguration.gridSize.width; i++) {
         pius[i] = (iTermCursorGuidePIU) {
             .offset = {
-                i * self.cellSize.width,
-                (self.gridSize.height - _row - 1) * self.cellSize.height
+                i * self.cellConfiguration.cellSize.width,
+                (self.cellConfiguration.gridSize.height - _row - 1) * self.cellConfiguration.cellSize.height
             },
         };
     }
@@ -49,28 +49,24 @@
     return self;
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForViewportSize:viewportSize
-                                              cellSize:cellSize
-                                              gridSize:gridSize
-                                         commandBuffer:commandBuffer
-                                            completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                [self initializeTransientState:transientState];
-                                                completion(transientState);
-                                            }];
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer
+                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
+                                                     [self initializeTransientState:transientState];
+                                                     completion(transientState);
+                                                 }];
 }
 
 - (void)initializeTransientState:(iTermCursorGuideRendererTransientState *)tState {
     tState.color = _color;
     tState.row = _row;
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellSize];
-    if (!CGSizeEqualToSize(tState.cellSize, _lastCellSize)) {
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize];
+    if (!CGSizeEqualToSize(tState.cellConfiguration.cellSize, _lastCellSize)) {
         _texture = [self newCursorGuideTextureWithTransientState:tState];
-        _lastCellSize = tState.cellSize;
+        _lastCellSize = tState.cellConfiguration.cellSize;
     }
     tState.texture = _texture;
     [self updatePIUsInState:tState];
@@ -91,7 +87,7 @@
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.gridSize.width
+                             numberOfPIUs:tState.cellConfiguration.gridSize.width
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
@@ -108,21 +104,21 @@
 }
 
 - (id<MTLTexture>)newCursorGuideTextureWithTransientState:(iTermCursorGuideRendererTransientState *)tState {
-    NSImage *image = [[NSImage alloc] initWithSize:tState.cellSize];
+    NSImage *image = [[NSImage alloc] initWithSize:tState.cellConfiguration.cellSize];
 
     [image lockFocus];
     {
         [tState.color set];
         NSRect rect = NSMakeRect(0,
                                  0,
-                                 tState.cellSize.width,
-                                 tState.cellSize.height);
+                                 tState.cellConfiguration.cellSize.width,
+                                 tState.cellConfiguration.cellSize.height);
         NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
         rect.size.height = 1;
         NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
-        rect.origin.y += tState.cellSize.height - 1;
+        rect.origin.y += tState.cellConfiguration.cellSize.height - 1;
         NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
     }
     [image unlockFocus];

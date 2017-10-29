@@ -6,9 +6,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState : iTermMetalRendererTransientState
 @property (nonatomic, strong) id<MTLTexture> texture;
+#warning TODO: Add support for blending and tiled modes
+@property (nonatomic) CGFloat blending;
+@property (nonatomic) BOOL tiled;
 @end
 
 @implementation iTermBackgroundImageRendererTransientState
+
+- (BOOL)skipRenderer {
+    return _texture == nil;
+}
+
 @end
 
 @implementation iTermBackgroundImageRenderer {
@@ -17,6 +25,9 @@ NS_ASSUME_NONNULL_BEGIN
     // The texture is shared because it tends to get reused. The transient state holds a reference
     // to it, so when the image changes, this can be set to a new texture and it should just work.
     id<MTLTexture> _texture;
+
+    CGFloat _blending;
+    BOOL _tiled;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -27,10 +38,14 @@ NS_ASSUME_NONNULL_BEGIN
                                                fragmentFunctionName:@"iTermBackgroundImageFragmentShader"
                                                            blending:NO
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
-        NSImage *image = [NSImage imageNamed:@"background"];
-        _texture = [_metalRenderer textureFromImage:image];
     }
     return self;
+}
+
+- (void)setImage:(NSImage *)image blending:(CGFloat)blending tiled:(BOOL)tiled {
+    _texture = image ? [_metalRenderer textureFromImage:image] : nil;
+    _blending = blending;
+    _tiled = tiled;
 }
 
 - (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
@@ -45,21 +60,23 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_metalRenderer createTransientStateForViewportSize:viewportSize
-                                          commandBuffer:commandBuffer
-                                             completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                 [self initializeTransientState:transientState];
-                                                 completion(transientState);
-                                             }];
+- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                  completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_metalRenderer createTransientStateForConfiguration:configuration
+                                           commandBuffer:commandBuffer
+                                              completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
+                                                  [self initializeTransientState:transientState];
+                                                  completion(transientState);
+                                              }];
 }
 
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
-    tState.vertexBuffer = [_metalRenderer newQuadOfSize:CGSizeMake(tState.viewportSize.x,
-                                                                   tState.viewportSize.y)];
+    tState.blending = _blending;
+    tState.tiled = _tiled;
+    tState.vertexBuffer = [_metalRenderer newQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
+                                                                   tState.configuration.viewportSize.y)];
 }
 
 @end

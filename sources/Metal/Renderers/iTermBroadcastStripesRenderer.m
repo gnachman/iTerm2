@@ -43,22 +43,22 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_metalRenderer createTransientStateForViewportSize:viewportSize
-                                          commandBuffer:commandBuffer
-                                             completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                 [self initializeTransientState:transientState];
-                                                 completion(transientState);
-                                             }];
+- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                  completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_metalRenderer createTransientStateForConfiguration:configuration
+                                           commandBuffer:commandBuffer
+                                              completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
+                                                  [self initializeTransientState:transientState];
+                                                  completion(transientState);
+                                              }];
 }
 
 - (void)initializeTransientState:(iTermBroadcastStripesRendererTransientState *)tState {
     tState.texture = _texture;
     tState.size = _size;
 
-    const vector_uint2 viewportSize = tState.viewportSize;
+    const vector_uint2 viewportSize = tState.configuration.viewportSize;
     const float maxX = viewportSize.x / _size.width;
     const float maxY = viewportSize.y / _size.height;
     const iTermVertex vertices[] = {

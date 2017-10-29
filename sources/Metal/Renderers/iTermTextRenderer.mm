@@ -8,12 +8,12 @@ extern "C" {
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
 #import "iTermTextureMap.h"
+#import "NSDictionary+iTerm.h"
 #import <unordered_map>
 
 @interface iTermTextRendererTransientState ()
 
 @property (nonatomic, readonly) NSIndexSet *indexes;
-@property (nonatomic, strong) NSData *subpixelModelData;
 @property (nonatomic, weak) iTermTextureMap *textureMap;
 - (void)addIndex:(NSInteger)index;
 
@@ -22,8 +22,6 @@ extern "C" {
 @implementation iTermTextRendererTransientState {
     iTermTextureMapStage *_stage;
     NSMutableIndexSet *_indexes;
-    NSMutableArray<iTermSubpixelModel *> *_models;
-    std::unordered_map<NSUInteger, NSUInteger> *_modelMap;  // Maps a 48 bit fg/bg color to an index into _models.
     dispatch_group_t _group;
     id<MTLCommandBuffer> _commandBuffer;
 }
@@ -32,19 +30,12 @@ extern "C" {
     self = [super init];
     if (self) {
         _indexes = [NSMutableIndexSet indexSet];
-        _models = [NSMutableArray array];
-        _modelMap = new std::unordered_map<NSUInteger, NSUInteger>();
         _group = dispatch_group_create();
     }
     return self;
 }
 
-- (void)dealloc {
-    delete _modelMap;
-}
-
 - (void)willDraw {
-    self.subpixelModelData = [self newSubpixelModelData];
     [_stage blitNewTexturesFromStagingAreaWithCommandBuffer:_commandBuffer];
 }
 
@@ -57,17 +48,22 @@ extern "C" {
     }];
 }
 
+- (NSUInteger)sizeOfNewPIUBuffer {
+    return sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
+}
+
+
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
           attributesData:(NSData *)attributesData
                      row:(int)row
                 creation:(NSImage *(NS_NOESCAPE ^)(int x))creation {
-    const int width = self.gridSize.width;
+    const int width = self.cellConfiguration.gridSize.width;
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     const float w = 1.0 / _textureMap.array.atlasSize.width;
     const float h = 1.0 / _textureMap.array.atlasSize.height;
     iTermTextureArray *array = _textureMap.array;
-    iTermTextPIU *pius = [self textPIUs];
+    iTermTextPIU *pius = (iTermTextPIU *)self.pius.contents;
 
     NSInteger lastIndex = 0;
     for (int x = 0; x < width; x++) {
@@ -80,12 +76,12 @@ extern "C" {
                                                              creation:creation];
         }
         if (index >= 0) {
-            // Update the PIU with the session index. It may not be a legit value yet.
-            const size_t i = x + row * self.gridSize.width;
+            const size_t i = x + row * self.cellConfiguration.gridSize.width;
             iTermTextPIU *piu = &pius[i];
             MTLOrigin origin = [array offsetForIndex:index];
             piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
-            piu->colorModelIndex = [self colorModelIndexForAttributes:&attributes[x]];
+            piu->textColor = attributes[x].foregroundColor;
+            piu->backgroundColor = attributes[x].backgroundColor;
             [self addIndex:index];
         }
         lastIndex = index;
@@ -97,65 +93,28 @@ extern "C" {
     _stage = nil;
 }
 
-- (iTermTextPIU *)textPIUs {
-    return (iTermTextPIU *)self.modelData.mutableBytes;
-}
-
 - (nonnull NSMutableData *)modelData  {
     if (_modelData == nil) {
-        _modelData = [[NSMutableData alloc] initWithLength:sizeof(iTermTextPIU) * self.gridSize.width * self.gridSize.height];
+        _modelData = [[NSMutableData alloc] initWithLength:sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height];
     }
     return _modelData;
 }
 
-- (void)initializePIUData {
-    iTermTextPIU *pius = self.textPIUs;
+- (void)initializePIUBytes:(void *)bytes {
+    iTermTextPIU *pius = (iTermTextPIU *)bytes;
     NSInteger i = 0;
-    for (NSInteger y = 0; y < self.gridSize.height; y++) {
-        for (NSInteger x = 0; x < self.gridSize.width; x++) {
-            const iTermTextPIU uniform = {
-                .offset = {
-                    static_cast<float>(x * self.cellSize.width),
-                    static_cast<float>((self.gridSize.height - y - 1) * self.cellSize.height)
-                },
-                .textureOffset = { 0, 0 }
-            };
-            memcpy(&pius[i++], &uniform, sizeof(uniform));
+    #warning TODO: There is no reason to do this unless the grid size changes.
+    for (NSInteger y = 0; y < self.cellConfiguration.gridSize.height; y++) {
+        const float yOffset = (self.cellConfiguration.gridSize.height - y - 1) * self.cellConfiguration.cellSize.height;
+        for (NSInteger x = 0; x < self.cellConfiguration.gridSize.width; x++) {
+            pius[i++].offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
+                                                yOffset);
         }
     }
 }
 
 - (void)addIndex:(NSInteger)index {
     [_indexes addIndex:index];
-}
-
-- (NSData *)newSubpixelModelData {
-    const size_t tableSize = _models.firstObject.table.length;
-    NSMutableData *data = [NSMutableData dataWithLength:_models.count * tableSize];
-    unsigned char *output = (unsigned char *)data.mutableBytes;
-    [_models enumerateObjectsUsingBlock:^(iTermSubpixelModel * _Nonnull model, NSUInteger idx, BOOL * _Nonnull stop) {
-        const size_t offset = idx * tableSize;
-        memcpy(output + offset, model.table.bytes, tableSize);
-    }];
-    return data;
-}
-
-- (int)colorModelIndexForAttributes:(const iTermMetalGlyphAttributes *)attributes {
-    NSUInteger key = [iTermSubpixelModel keyForForegroundColor:attributes->foregroundColor
-                                               backgroundColor:attributes->backgroundColor];
-    auto it = _modelMap->find(key);
-    if (it == _modelMap->end()) {
-        // TODO: Expire old models
-        const NSUInteger index = _models.count;
-        iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:attributes->foregroundColor
-                                                                                       backgroundColor:attributes->backgroundColor];
-        [_models addObject:model];
-        (*_modelMap)[model.key] = index;
-        DLog(@"Assign model %@ to index %@", model, @(index));
-        return index;
-    } else {
-        return it->second;
-    }
 }
 
 #pragma mark - Debugging
@@ -173,6 +132,29 @@ extern "C" {
 @implementation iTermTextRenderer {
     iTermMetalCellRenderer *_cellRenderer;
     iTermTextureMap *_textureMap;
+    id<MTLBuffer> _models;
+}
+
+- (id<MTLBuffer>)subpixelModels {
+    if (_models == nil) {
+        NSMutableData *data = [NSMutableData data];
+        // The fragment function assumes we use the value 17 here. It's
+        // convenient that 17 evenly divides 255 (17 * 15 = 255).
+        float stride = 255.0/17.0;
+        int i = 0;
+        for (float textColor = 0; textColor < 256; textColor += stride) {
+            for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
+                iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
+                                                                                               backgroundColor:MIN(MAX(0, backgroundColor / 255.0), 1)];
+                [data appendData:model.table];
+            }
+        }
+#warning TODO: Only create one per device
+        _models = [_cellRenderer.device newBufferWithBytes:data.bytes
+                                                    length:data.length
+                                                   options:MTLResourceStorageModeShared];
+    }
+    return _models;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -192,31 +174,28 @@ extern "C" {
     return _textureMap.haveStageAvailable;
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForViewportSize:viewportSize
-                                              cellSize:cellSize
-                                              gridSize:gridSize
-                                         commandBuffer:commandBuffer
-                                            completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                [self initializeTransientState:transientState
-                                                                 commandBuffer:commandBuffer
-                                                                    completion:completion];
-                                            }];
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
+    [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer
+                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
+                                                     [self initializeTransientState:transientState
+                                                                      commandBuffer:commandBuffer
+                                                                         completion:completion];
+                                                 }];
 }
 
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer
                       completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    const NSInteger capacity = tState.gridSize.width * tState.gridSize.height * 2;
+    const NSInteger capacity = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * 2;
     if (_textureMap == nil ||
-        !CGSizeEqualToSize(_textureMap.cellSize, tState.cellSize) ||
+        !CGSizeEqualToSize(_textureMap.cellSize, tState.cellConfiguration.cellSize) ||
         _textureMap.capacity != capacity) {
         _textureMap = [[iTermTextureMap alloc] initWithDevice:_cellRenderer.device
-                                                     cellSize:tState.cellSize
+                                                     cellSize:tState.cellConfiguration.cellSize
                                                      capacity:capacity];
         _textureMap.label = [NSString stringWithFormat:@"[texture map for %p]", self];
         _textureMap.array.texture.label = @"Texture grid for session";
@@ -225,8 +204,10 @@ extern "C" {
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
-    tState.vertexBuffer = [self newQuadOfSize:tState.cellSize];
-    [tState initializePIUData];
+    tState.vertexBuffer = [self newQuadOfSize:tState.cellConfiguration.cellSize];
+    tState.pius = [_cellRenderer.device newBufferWithLength:tState.sizeOfNewPIUBuffer
+                                                    options:MTLResourceStorageModeShared];
+    [tState initializePIUBytes:tState.pius.contents];
 
     [tState prepareForDrawWithCommandBuffer:commandBuffer completion:^{
         completion(tState);
@@ -258,25 +239,23 @@ extern "C" {
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
-    tState.pius = [_cellRenderer.device newBufferWithBytes:tState.modelData.mutableBytes
-                                                           length:tState.modelData.length
-                                                          options:MTLResourceStorageModeShared];
     tState.vertexBuffer.label = @"text vertex buffer";
     tState.pius.label = @"text PIUs";
     tState.offsetBuffer.label = @"text offset";
 
-    id<MTLBuffer> subpixelModels = [_cellRenderer.device newBufferWithBytes:tState.subpixelModelData.bytes
-                                                                     length:tState.subpixelModelData.length
-                                                                     options:MTLResourceStorageModeShared];
+    NSDictionary *textures = @{ @(iTermTextureIndexPrimary): tState.textureMap.array.texture };
+    if (tState.cellConfiguration.usingIntermediatePass) {
+        textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
+    }
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.gridSize.width * tState.gridSize.height
+                             numberOfPIUs:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                          fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModels }
-                                 textures:@{ @(iTermTextureIndexPrimary): tState.textureMap.array.texture }];
+                          fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): self.subpixelModels }
+                                 textures:textures];
 }
 
 @end

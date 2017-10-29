@@ -7,6 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermTextRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) NSMutableData *modelData;
+@property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
           attributesData:(NSData *)attributesData

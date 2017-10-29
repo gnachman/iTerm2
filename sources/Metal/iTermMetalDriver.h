@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 
+@property (nonatomic, readonly) VT100GridSize gridSize;
+
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
                background:(vector_float4 *)backgrounds
@@ -36,6 +38,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSImage *)metalImageForGlyphKey:(iTermMetalGlyphKey *)glyphKey
                               size:(CGSize)size
                              scale:(CGFloat)scale;
+
+// Returns the background image or nil. If there's a background image, fill in blending and tiled.
+- (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled;
+
 @end
 
 @protocol iTermMetalDriverDataSource<NSObject>
