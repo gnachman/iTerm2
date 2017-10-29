@@ -9,22 +9,39 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @class iTermMetalCellRendererTransientState;
 
+@interface iTermCellRenderConfiguration : iTermRenderConfiguration
+@property (nonatomic, readonly) CGSize cellSize;
+@property (nonatomic, readonly) VT100GridSize gridSize;
+
+// This determines how subpixel antialiasing is done. It's unfortunate that one
+// renderer's needs affect the configuration for so many renderers. I need to
+// find a better way to pass this info around. The problem is that it's needed
+// early on--before the transient state is created--in order for the text
+// renderer to be able to set its fragment function.
+@property (nonatomic, readonly) BOOL usingIntermediatePass;
+
+- (instancetype)initWithViewportSize:(vector_uint2)viewportSize scale:(CGFloat)scale NS_UNAVAILABLE;
+- (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                               scale:(CGFloat)scale
+                            cellSize:(CGSize)cellSize
+                            gridSize:(VT100GridSize)gridSize
+               usingIntermediatePass:(BOOL)usingIntermediatePass NS_DESIGNATED_INITIALIZER;
+
+@end
+
 @protocol iTermMetalCellRenderer<NSObject>
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState;
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalCellRendererTransientState *transientState))completion;
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion;
 
 @end
 
 @interface iTermMetalCellRendererTransientState : iTermMetalRendererTransientState
-@property (nonatomic, readonly) VT100GridSize gridSize;
-@property (nonatomic, readonly) CGSize cellSize;
+@property (nonatomic, readonly) __kindof iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, readonly) id<MTLBuffer> offsetBuffer;
 @property (nonatomic, strong) id<MTLBuffer> pius;
 
@@ -33,7 +50,7 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @end
 
-@interface iTermMetalCellRenderer : iTermMetalRenderer<iTermMetalCellRenderer>
+@interface iTermMetalCellRenderer : iTermMetalRenderer
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_UNAVAILABLE;
 
@@ -50,9 +67,13 @@ extern const CGFloat BOTTOM_MARGIN;
                          piuElementSize:(size_t)piuElementSize
                     transientStateClass:(Class)transientStateClass NS_DESIGNATED_INITIALIZER;
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion NS_UNAVAILABLE;
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion;
+
+- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                  completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion NS_UNAVAILABLE;
 
 @end
 

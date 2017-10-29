@@ -97,6 +97,10 @@ static NSColor *ColorForVector(vector_float4 v) {
     BOOL _blinkingItemsVisible;
     NSRange _inputMethodMarkedRange;
     NSTimeInterval _timeSinceCursorMoved;
+
+    CGFloat _backgroundImageBlending;
+    BOOL _backgroundImageTiled;
+    NSImage *_backgroundImage;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -188,10 +192,6 @@ static NSColor *ColorForVector(vector_float4 v) {
         }
         _cursorInfo = [[iTermMetalCursorInfo alloc] init];
 #warning TODO: blinking cursor
-        NSLog(@"Visible range is [%d, %d), have %d lines of scrollback",
-              (int)_visibleRange.start.y,
-              (int)_visibleRange.end.y,
-              (int)_numberOfScrollbackLines);
         NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
         if ([self shouldDrawCursor] &&
             textView.cursorVisible &&
@@ -199,7 +199,6 @@ static NSColor *ColorForVector(vector_float4 v) {
             lineWithCursor + 1 < _visibleRange.end.y) {
             const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
             _cursorInfo.cursorVisible = YES;
-            NSLog(@"Cursor is visible on line %d (%d of visible region)", (int)lineWithCursor, (int)(lineWithCursor - _visibleRange.start.y));
             _cursorInfo.type = textView.drawingHelper.cursorType;
             _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                    textView.dataSource.cursorY - 1 - offset);
@@ -233,16 +232,30 @@ static NSColor *ColorForVector(vector_float4 v) {
                 }
             }
         } else {
-            NSLog(@"Cursor is not visible");
             _cursorInfo.cursorVisible = NO;
         }
+
+        _backgroundImageBlending = textView.blend;
+        _backgroundImageTiled = textView.delegate.backgroundImageTiled;
+        _backgroundImage = [textView.delegate textViewBackgroundImage];
     }
     return self;
+}
+
+- (VT100GridSize)gridSize {
+    return _gridSize;
 }
 
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;
+}
+
+// Private queue
+- (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled {
+    *blending = _backgroundImageBlending;
+    *tiled = _backgroundImageTiled;
+    return _backgroundImage;
 }
 
 // Private queue
@@ -287,6 +300,15 @@ static NSColor *ColorForVector(vector_float4 v) {
             vector_float4 unprocessed = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
             // The unprocessed color is needed for minimum contrast computation for text color.
             background[x] = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
+            if (_backgroundImage) {
+                // This is kind of ugly but it simplifies things a lot to do it
+                // here. The alpha value for background colors should be 1
+                // except when there's a background image, in which case the
+                // default background color gets a user-defined alpha value.
+                const BOOL isDefaultBackgroundColor = (backgroundKey.bgColorMode == ColorModeAlternate &&
+                                                       backgroundKey.bgColor == ALTSEM_DEFAULT);
+                background[x].w = isDefaultBackgroundColor ? (1 - _backgroundImageBlending) : 1;
+            }
         }
         lastBackgroundKey = backgroundKey;
         attributes[x].backgroundColor = background[x];

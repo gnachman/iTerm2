@@ -19,7 +19,7 @@
         pius[i] = (iTermMarkPIU) {
             .offset = {
                 2,
-                (self.gridSize.height - rowNumber.intValue - 1) * self.cellSize.height
+                (self.cellConfiguration.gridSize.height - rowNumber.intValue - 1) * self.cellConfiguration.cellSize.height
             },
             .textureOffset = { origin.x, origin.y }
         };
@@ -51,23 +51,19 @@
     return self;
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForViewportSize:viewportSize
-                                              cellSize:cellSize
-                                              gridSize:gridSize
-                                         commandBuffer:commandBuffer
-                                            completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                [self initializeTransientState:transientState];
-                                                completion(transientState);
-                                            }];
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer
+                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
+                                                     [self initializeTransientState:transientState];
+                                                     completion(transientState);
+                                                 }];
 }
 
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
-    CGSize markSize = CGSizeMake(MARGIN_WIDTH - 4, MIN(15, tState.cellSize.height - 2));
+    CGSize markSize = CGSizeMake(MARGIN_WIDTH - 4, MIN(15, tState.cellConfiguration.cellSize.height - 2));
     if (!CGSizeEqualToSize(markSize, _markSize)) {
         // Mark size has changed
         _markSize = markSize;

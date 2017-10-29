@@ -194,6 +194,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range;
 - (void)textViewNeedsDisplayInRect:(NSRect)rect;
 - (void)textViewDidSelectPasswordPrompt;
+- (NSImage *)textViewBackgroundImage;
+- (BOOL)backgroundImageTiled;
 
 @end
 

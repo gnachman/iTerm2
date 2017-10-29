@@ -28,22 +28,19 @@ static NSString *const iTermSubpixelModelString = @"O";
     NSMutableData *_table;
 }
 
-+ (NSUInteger)keyForColor:(vector_float4)color {
-    const NSUInteger r = color.x * 255;
-    const NSUInteger g = color.y * 255;
-    const NSUInteger b = color.z * 255;
-    return (r << 24) | (g << 16) | (b << 8);
++ (NSUInteger)keyForColor:(float)color {
+    return color * 255;
 }
 
-+ (NSUInteger)keyForForegroundColor:(vector_float4)foregroundColor
-                    backgroundColor:(vector_float4)backgroundColor {
-    return ([self keyForColor:foregroundColor] << 32) | [self keyForColor:backgroundColor];
++ (NSUInteger)keyForForegroundColor:(float)foregroundColor
+                    backgroundColor:(float)backgroundColor {
+    return ([self keyForColor:foregroundColor] << 8) | [self keyForColor:backgroundColor];
 }
 
-- (instancetype)initWithForegroundColor:(vector_float4)foregroundColor
-                        backgroundColor:(vector_float4)backgroundColor {
+- (instancetype)initWithForegroundColor:(float)foregroundColor
+                        backgroundColor:(float)backgroundColor {
     if (self) {
-        _table = [NSMutableData dataWithLength:3 * 256 * sizeof(unsigned char)];
+        _table = [NSMutableData dataWithLength:256 * sizeof(unsigned char)];
         _foregroundColor = foregroundColor;
         _backgroundColor = backgroundColor;
     }
@@ -51,14 +48,10 @@ static NSString *const iTermSubpixelModelString = @"O";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p fg=(%f, %f, %f) bg=(%f, %f, %f)>",
-                       NSStringFromClass(self.class), self,
-                       _foregroundColor.x,
-                       _foregroundColor.y,
-                       _foregroundColor.z,
-                       _backgroundColor.x,
-                       _backgroundColor.y,
-                       _backgroundColor.z];
+    return [NSString stringWithFormat:@"<%@: %p fg=%f bg=%f>",
+            NSStringFromClass(self.class), self,
+            _foregroundColor,
+            _backgroundColor];
 }
 
 - (NSUInteger)key {
@@ -69,8 +62,8 @@ static NSString *const iTermSubpixelModelString = @"O";
 - (NSString *)dump {
     NSMutableArray *array = [NSMutableArray array];
     const unsigned char *bytes = (const unsigned char *)_table.bytes;
-    for (int i = 0; i < 256 * 3; i += 3) {
-        NSString *s = [NSString stringWithFormat:@"%@ -> (%@, %@, %@)", @(i / 3), @(bytes[i]), @(bytes[i+1]), @(bytes[i+2])];
+    for (int i = 0; i < 256; i++) {
+        NSString *s = [NSString stringWithFormat:@"%@ -> (%@)", @(i / 3), @(bytes[i])];
         [array addObject:s];
     }
     return [array componentsJoinedByString:@"\n"];
@@ -83,11 +76,13 @@ static NSString *const iTermSubpixelModelString = @"O";
 @end
 
 @implementation iTermSubpixelModelBuilder {
-    // Maps the index of a color in the reference image to the color in the reference image.
-    // An index is 4 * (x + width * y).
-    // A color is ((r << 16) | (g << 8) | b).
+    // Maps the index of a color element (which may be red, green or blue) in
+    // the reference image to the value of that element in the reference image.
+    // For example, if the first pixel had a blue value of 128, this would contain
+    // 0->128. The values in this map are unique.
     std::unordered_map<int, int> *_indexToReferenceColor;
 
+#warning TODO: There's no reason to cache this any more.
     NSMutableDictionary<NSNumber *, iTermSubpixelModel *> *_models;
 }
 
@@ -197,69 +192,59 @@ static NSString *const iTermSubpixelModelString = @"O";
         int i = 0;
         for (int y = 0; y < iTermSubpixelModelSize.height; y++) {
             for (int x = 0; x < iTermSubpixelModelSize.width; x++) {
-                const int b = bytes[i];
-                const int g = bytes[i + 1];
-                const int r = bytes[i + 2];
-                const int c = ((b << 16) | (g << 8) | r);
-                if (referenceColors.insert(c).second) {
-                    // The color `c` has not been seen before. Remember it and its index.
-                    (*_indexToReferenceColor)[i] = c;
+                int value = bytes[i];
+                for (int j = 0; j < 3; j++) {
+                    if (referenceColors.insert(value).second) {
+                        (*_indexToReferenceColor)[i] = value;
+                    }
+                    i++;
                 }
-                i += 4;
+
+                // Skip over alpha
+                i++;
             }
         }
     }
     return self;
 }
 
-- (iTermSubpixelModel *)modelForForegoundColor:(vector_float4)foregroundColor
-                               backgroundColor:(vector_float4)backgroundColor {
-    NSUInteger key = [iTermSubpixelModel keyForForegroundColor:foregroundColor
-                                               backgroundColor:backgroundColor];
+- (iTermSubpixelModel *)modelForForegoundColor:(float)foregroundComponent
+                               backgroundColor:(float)backgroundComponent {
+    NSUInteger key = [iTermSubpixelModel keyForForegroundColor:foregroundComponent
+                                               backgroundColor:backgroundComponent];
     iTermSubpixelModel *cachedModel = _models[@(key)];
     if (cachedModel) {
         return cachedModel;
     }
 
-    assert(backgroundColor.w == 1);
-    NSData *imageData = [iTermSubpixelModelBuilder dataForImageWithForegroundColor:foregroundColor
-                                                                   backgroundColor:backgroundColor];
-
+    NSData *imageData = [iTermSubpixelModelBuilder dataForImageWithForegroundColor:simd_make_float4(foregroundComponent, foregroundComponent, foregroundComponent, 1)
+                                                                   backgroundColor:simd_make_float4(backgroundComponent, backgroundComponent, backgroundComponent, 1)];
     // Maps a reference color to a model color. We'll go back and fill in the gaps with linear
     // interpolations, which is why we use a sorted container. When translating a black-on-white
     // render to a color render, these mapping tables let us look up the proper color for a black
     // on white sample.
-    std::map<unsigned char, unsigned char> redMap;
-    std::map<unsigned char, unsigned char> greenMap;
-    std::map<unsigned char, unsigned char> blueMap;
+    std::map<unsigned char, unsigned char> map;
     const unsigned char *bytes = (const unsigned char *)imageData.bytes;
     for (auto kv : *_indexToReferenceColor) {
         auto index = kv.first;
         auto color = kv.second;
 
-        const unsigned char refRed = (color & 0xff);
-        const unsigned char refGreen = ((color >> 8) & 0xff);
-        const unsigned char refBlue = ((color >> 16) & 0xff);
+        const unsigned char ref = (color & 0xff);
+        const unsigned char model = bytes[index];
 
-        const unsigned char modelRed = bytes[index + 2];
-        const unsigned char modelGreen = bytes[index + 1];
-        const unsigned char modelBlue = bytes[index];
-
-        redMap[refRed] = modelRed;
-        greenMap[refGreen] = modelGreen;
-        blueMap[refBlue] = modelBlue;
+        map[ref] = model;
     }
 
-    iTermSubpixelModel *model = [[iTermSubpixelModel alloc] initWithForegroundColor:foregroundColor
-                                                                    backgroundColor:backgroundColor];
-    DLog(@"Interpolate red values");
-    [self interpolateValuesInMap:&redMap toByteArrayInData:model.mutableTable offset:0 stride:3];
-    DLog(@"Interpolate green values");
-    [self interpolateValuesInMap:&greenMap toByteArrayInData:model.mutableTable offset:1 stride:3];
-    DLog(@"Interpolate blue values");
-    [self interpolateValuesInMap:&blueMap toByteArrayInData:model.mutableTable offset:2 stride:3];
-    _models[@(key)] = model;
-    return model;
+    iTermSubpixelModel *subpixelModel = [[iTermSubpixelModel alloc] initWithForegroundColor:foregroundComponent
+                                                                    backgroundColor:backgroundComponent];
+    [self interpolateValuesInMap:&map toByteArrayInData:subpixelModel.mutableTable offset:0 stride:1];
+    if (backgroundComponent == 0) {
+        NSLog(@"Generated model for %f/%f", foregroundComponent, backgroundComponent);
+    }
+    //NSLog(@"Generated model for %f/%f\n%@", foregroundComponent, backgroundComponent, subpixelModel.table);
+    _models[@(key)] = subpixelModel;
+
+    return subpixelModel;
 }
 
 - (void)dealloc {
@@ -304,7 +289,7 @@ namespace iTerm2 {
     for (auto kv : *modelToReferenceMap) {
         const int referenceColor = kv.first;
         const int modelColor = kv.second;
-        DLog(@"Reference color %d -> model color %d", referenceColor, modelColor);
+//        NSLog(@"%d -> %d", referenceColor, modelColor);
 
         if (previousModelColor >= 0) {
             slope = static_cast<double>(modelColor - previousModelColor) / static_cast<double>(referenceColor - previousReferenceColor);

@@ -6,9 +6,25 @@ const CGFloat BOTTOM_MARGIN = 2;
 
 NS_ASSUME_NONNULL_BEGIN
 
+@implementation iTermCellRenderConfiguration
+
+- (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                               scale:(CGFloat)scale
+                            cellSize:(CGSize)cellSize
+                            gridSize:(VT100GridSize)gridSize
+               usingIntermediatePass:(BOOL)usingIntermediatePass {
+    self = [super initWithViewportSize:viewportSize scale:scale];
+    if (self) {
+        _cellSize = cellSize;
+        _gridSize = gridSize;
+        _usingIntermediatePass = usingIntermediatePass;
+    }
+    return self;
+}
+
+@end
+
 @interface iTermMetalCellRendererTransientState()
-@property (nonatomic, readwrite) VT100GridSize gridSize;
-@property (nonatomic, readwrite) CGSize cellSize;
 @property (nonatomic, readwrite) id<MTLBuffer> offsetBuffer;
 @property (nonatomic, readwrite) size_t piuElementSize;
 @end
@@ -16,13 +32,17 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermMetalCellRendererTransientState
 
 - (void)setPIUValue:(void *)valuePointer coord:(VT100GridCoord)coord {
-    const size_t index = coord.x + coord.y * self.gridSize.width;
+    const size_t index = coord.x + coord.y * self.cellConfiguration.gridSize.width;
     memcpy(self.pius.contents + index * _piuElementSize, valuePointer, _piuElementSize);
 }
 
 - (const void *)piuForCoord:(VT100GridCoord)coord {
-    const size_t index = coord.x + coord.y * self.gridSize.width;
+    const size_t index = coord.x + coord.y * self.cellConfiguration.gridSize.width;
     return self.pius.contents + index * _piuElementSize;
+}
+
+- (iTermCellRenderConfiguration *)cellConfiguration {
+    return (iTermCellRenderConfiguration *)self.configuration;
 }
 
 @end
@@ -54,22 +74,18 @@ NS_ASSUME_NONNULL_BEGIN
     return _transientStateClass;
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer completion:(nonnull void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    [super createTransientStateForViewportSize:viewportSize commandBuffer:commandBuffer completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion {
+    [super createTransientStateForConfiguration:configuration commandBuffer:commandBuffer completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
         iTermMetalCellRendererTransientState *tState = transientState;
         tState.piuElementSize = _piuElementSize;
-        tState.gridSize = gridSize;
-        tState.cellSize = cellSize;
 
-        CGSize usableSize = CGSizeMake(tState.viewportSize.x - MARGIN_WIDTH * 2,
-                                       tState.viewportSize.y - TOP_MARGIN - BOTTOM_MARGIN);
-
+        CGSize usableSize = CGSizeMake(tState.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2,
+                                       tState.cellConfiguration.viewportSize.y - TOP_MARGIN - BOTTOM_MARGIN);
         vector_float2 offset = {
             MARGIN_WIDTH,
-            fmod(usableSize.height, tState.cellSize.height) + BOTTOM_MARGIN
+            fmod(usableSize.height, tState.cellConfiguration.cellSize.height) + BOTTOM_MARGIN
         };
         tState.offsetBuffer = [self.device newBufferWithBytes:&offset
                                                        length:sizeof(offset)

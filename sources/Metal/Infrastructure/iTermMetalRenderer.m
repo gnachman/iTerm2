@@ -2,17 +2,43 @@
 
 #import "iTermShaderTypes.h"
 
+@implementation iTermRenderConfiguration
+
+- (instancetype)initWithViewportSize:(vector_uint2)viewportSize scale:(CGFloat)scale {
+    self = [super init];
+    if (self) {
+        _viewportSize = viewportSize;
+        _scale = scale;
+    }
+    return self;
+}
+
+@end
+
 @interface iTermMetalRendererTransientState()
 @property (nonatomic, readwrite, strong) id<MTLRenderPipelineState> pipelineState;
+@property (nonatomic, readwrite) CGFloat scale;
 @end
 
 @implementation iTermMetalRendererTransientState
+
+- (instancetype)initWithConfiguration:(iTermRenderConfiguration *)configuration {
+    self = [super init];
+    if (self) {
+        _configuration = configuration;
+    }
+    return self;
+}
+
+- (BOOL)skipRenderer {
+    return NO;
+}
+
 @end
 
 @implementation iTermMetalRenderer {
     BOOL _blending;
     NSString *_vertexFunctionName;
-    NSString *_fragmentFunctionName;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -45,21 +71,22 @@
     dispatch_once(&onceToken, ^{
         defaultLibrary = [_device newDefaultLibrary];
     });
-    id <MTLFunction> textVertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
-    id <MTLFunction> textFragmentShader = [defaultLibrary newFunctionWithName:_fragmentFunctionName];
+    id <MTLFunction> vertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
+    assert(vertexShader);
+    id <MTLFunction> fragmentShader = [defaultLibrary newFunctionWithName:_fragmentFunctionName];
+    assert(fragmentShader);
     return [self newPipelineWithBlending:_blending
-                          vertexFunction:textVertexShader
-                        fragmentFunction:textFragmentShader];
+                          vertexFunction:vertexShader
+                        fragmentFunction:fragmentShader];
 }
 
 #pragma mark - Protocol Methods
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    iTermMetalRendererTransientState *tState = [[self.transientStateClass alloc] init];
+- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                  completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    iTermMetalRendererTransientState *tState = [[self.transientStateClass alloc] initWithConfiguration:configuration];
     tState.pipelineState = [self newPipelineState];
-    tState.viewportSize = viewportSize;
     completion(tState);
 }
 
@@ -80,6 +107,20 @@
         { { size.width, 0 }, { 1.f, 0.f } },
         { { 0, size.height }, { 0.f, 1.f } },
         { { size.width, size.height }, { 1.f, 1.f } },
+    };
+    return [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
+}
+
+- (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size {
+    const iTermVertex vertices[] = {
+        // Pixel Positions, Texture Coordinates
+        { { size.width,           0 }, { 1.f, 1.f } },
+        { {          0,           0 }, { 0.f, 1.f } },
+        { {          0, size.height }, { 0.f, 0.f } },
+
+        { { size.width,           0 }, { 1.f, 1.f } },
+        { {          0, size.height }, { 0.f, 0.f } },
+        { { size.width, size.height }, { 1.f, 0.f } },
     };
     return [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
 }
@@ -181,7 +222,7 @@
                                  atIndex:[key unsignedIntegerValue]];
     }];
 
-    const vector_uint2 viewportSize = tState.viewportSize;
+    const vector_uint2 viewportSize = tState.configuration.viewportSize;
     [renderEncoder setVertexBytes:&viewportSize
                            length:sizeof(viewportSize)
                           atIndex:iTermVertexInputIndexViewportSize];
