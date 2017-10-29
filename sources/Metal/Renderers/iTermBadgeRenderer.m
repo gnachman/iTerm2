@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermBadgeRendererTransientState
 
 - (id<MTLBuffer>)newOffsetBufferWithDevice:(id<MTLDevice>)device {
-    CGSize viewport = CGSizeMake(self.viewportSize.x, self.viewportSize.y);
+    CGSize viewport = CGSizeMake(self.configuration.viewportSize.x, self.configuration.viewportSize.y);
     vector_float2 offset = {
         viewport.width - _size.width - 20,
         viewport.height - _size.height - 20
@@ -61,15 +61,15 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_metalRenderer createTransientStateForViewportSize:viewportSize
-                                          commandBuffer:commandBuffer
-                                             completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                 [self initializeTransientState:transientState];
-                                                 completion(transientState);
-                                             }];
+- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                  completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_metalRenderer createTransientStateForConfiguration:configuration
+                                           commandBuffer:commandBuffer
+                                              completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
+                                                  [self initializeTransientState:transientState];
+                                                  completion(transientState);
+                                              }];
 
 }
 

@@ -15,22 +15,26 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL selecting;
 @end
 
+@interface iTermFrameCursorRendererTransientState : iTermCursorRendererTransientState
+@property (nonatomic, strong) id<MTLTexture> texture;
+@end
+
 @implementation iTermCopyModeCursorRendererTransientState
 
 - (NSImage *)newImage {
-    NSImage *image = [[NSImage alloc] initWithSize:self.cellSize];
+    NSImage *image = [[NSImage alloc] initWithSize:self.cellConfiguration.cellSize];
 
     [image lockFocus];
     const CGFloat heightFraction = 1 / 3.0;
-    const CGFloat scale = 2;
+    const CGFloat scale = self.cellConfiguration.scale;
     NSRect rect = NSMakeRect(scale / 2,
                              scale / 2,
-                             self.cellSize.width,
-                             self.cellSize.height - scale / 2);
+                             self.cellConfiguration.cellSize.width,
+                             self.cellConfiguration.cellSize.height - scale / 2);
     NSRect cursorRect = NSMakeRect(scale / 2,
                                    rect.size.height * (1 - heightFraction) + scale / 2,
                                    rect.size.width,
-                                   self.cellSize.height * heightFraction - scale / 2);
+                                   self.cellConfiguration.cellSize.height * heightFraction - scale / 2);
     const CGFloat r = (self.selecting ? 2 : 1) * scale;
 
     NSBezierPath *path = [[NSBezierPath alloc] init];
@@ -47,6 +51,29 @@ NS_ASSUME_NONNULL_BEGIN
     [[NSColor blackColor] set];
     [path setLineWidth:scale];
     [path stroke];
+    [image unlockFocus];
+
+    return image;
+}
+
+@end
+
+@implementation iTermFrameCursorRendererTransientState
+
+- (NSImage *)newImage {
+    NSImage *image = [[NSImage alloc] initWithSize:self.cellConfiguration.cellSize];
+
+    [image lockFocus];
+    NSRect rect = NSMakeRect(0,
+                             0,
+                             self.cellConfiguration.cellSize.width,
+                             self.cellConfiguration.cellSize.height);
+    rect = NSInsetRect(rect, self.cellConfiguration.scale / 2, self.cellConfiguration.scale / 2);
+    NSBezierPath *path = [NSBezierPath bezierPathWithRect:rect];
+    [path setLineWidth:self.cellConfiguration.scale];
+    [self.color setStroke];
+    [path stroke];
+
     [image unlockFocus];
 
     return image;
@@ -88,6 +115,12 @@ NS_ASSUME_NONNULL_BEGIN
                                           fragmentFunctionName:@"iTermTextureCursorFragmentShader"];
 }
 
++ (instancetype)newFrameCursorRendererWithDevice:(id<MTLDevice>)device {
+    return [[iTermFrameCursorRenderer alloc] initWithDevice:device
+                                         vertexFunctionName:@"iTermTextureCursorVertexShader"
+                                       fragmentFunctionName:@"iTermTextureCursorFragmentShader"];
+}
+
 - (instancetype)initWithDevice:(id<MTLDevice>)device
             vertexFunctionName:(NSString *)vertexFunctionName
           fragmentFunctionName:(NSString *)fragmentFunctionName {
@@ -114,19 +147,15 @@ NS_ASSUME_NONNULL_BEGIN
            fragmentFunctionName:@"iTermCursorFragmentShader"];
 }
 
-- (void)createTransientStateForViewportSize:(vector_uint2)viewportSize
-                                   cellSize:(CGSize)cellSize
-                                   gridSize:(VT100GridSize)gridSize
-                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                 completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForViewportSize:viewportSize
-                                              cellSize:cellSize
-                                              gridSize:gridSize
-                                         commandBuffer:commandBuffer
-                                            completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                [self initializeTransientState:transientState];
-                                                completion(transientState);
-                                    }];
+- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer
+                                                 completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
+                                                     [self initializeTransientState:transientState];
+                                                     completion(transientState);
+                                                 }];
 }
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
@@ -147,8 +176,8 @@ NS_ASSUME_NONNULL_BEGIN
     iTermCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = {
         .origin = {
-            tState.cellSize.width * tState.coord.x,
-            tState.cellSize.height * (tState.gridSize.height - tState.coord.y - 1),
+            tState.cellConfiguration.cellSize.width * tState.coord.x,
+            tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
         },
         .color = {
             tState.color.redComponent,
@@ -163,7 +192,7 @@ NS_ASSUME_NONNULL_BEGIN
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.gridSize.width
+                             numberOfPIUs:tState.cellConfiguration.gridSize.width
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexCursorDescription): descriptionBuffer,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
@@ -177,7 +206,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellSize.width, 2)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, 2)];
 }
 
 @end
@@ -186,7 +215,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(2, tState.cellSize.height)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(2, tState.cellConfiguration.cellSize.height)];
 }
 
 @end
@@ -195,7 +224,53 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellSize.width, tState.cellSize.height)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, tState.cellConfiguration.cellSize.height)];
+}
+
+@end
+
+@implementation iTermFrameCursorRenderer {
+    id<MTLTexture> _texture;
+    CGSize _textureSize;
+}
+
+- (Class)transientStateClass {
+    return [iTermFrameCursorRendererTransientState class];
+}
+
+- (void)initializeTransientState:(iTermFrameCursorRendererTransientState *)tState {
+    [super initializeTransientState:tState];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
+                                                                  tState.cellConfiguration.cellSize.height)];
+    tState.color = _color;
+    if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
+        _texture = [_cellRenderer textureFromImage:[tState newImage]];
+        _textureSize = tState.cellConfiguration.cellSize;
+    }
+    tState.texture = _texture;
+}
+
+- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
+               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+    iTermFrameCursorRendererTransientState *tState = transientState;
+    iTermCursorDescription description = {
+        .origin = {
+            tState.cellConfiguration.cellSize.width * tState.coord.x,
+            tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
+        },
+    };
+    id<MTLBuffer> descriptionBuffer = [_cellRenderer.device newBufferWithBytes:&description
+                                                                        length:sizeof(description)
+                                                                       options:MTLResourceStorageModeShared];
+    [_cellRenderer drawWithTransientState:tState
+                            renderEncoder:renderEncoder
+                         numberOfVertices:6
+                             numberOfPIUs:tState.cellConfiguration.gridSize.width
+                            vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                             @(iTermVertexInputIndexCursorDescription): descriptionBuffer,
+                                             @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                          fragmentBuffers:@{}
+                                 textures:@{ @(iTermTextureIndexPrimary): tState.texture } ];
 }
 
 @end
@@ -211,13 +286,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCopyModeCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellSize.width,
-                                                                  tState.cellSize.height)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
+                                                                  tState.cellConfiguration.cellSize.height)];
     tState.selecting = _selecting;
     tState.color = _color;
-    if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellSize)) {
+    if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
         _texture = [_cellRenderer textureFromImage:[tState newImage]];
-        _textureSize = tState.cellSize;
+        _textureSize = tState.cellConfiguration.cellSize;
     }
     tState.texture = _texture;
 }
@@ -235,8 +310,8 @@ NS_ASSUME_NONNULL_BEGIN
     iTermCopyModeCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = {
         .origin = {
-            tState.cellSize.width * tState.coord.x - tState.cellSize.width / 2,
-            tState.cellSize.height * (tState.gridSize.height - tState.coord.y - 1),
+            tState.cellConfiguration.cellSize.width * tState.coord.x - tState.cellConfiguration.cellSize.width / 2,
+            tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
         },
     };
     id<MTLBuffer> descriptionBuffer = [_cellRenderer.device newBufferWithBytes:&description
@@ -245,7 +320,7 @@ NS_ASSUME_NONNULL_BEGIN
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.gridSize.width
+                             numberOfPIUs:tState.cellConfiguration.gridSize.width
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexCursorDescription): descriptionBuffer,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }

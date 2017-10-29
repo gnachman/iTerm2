@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-
+#import <Metal/Metal.h>
 #import "iTermPreciseTimer.h"
 #import "VT100GridTypes.h"
 
@@ -42,6 +42,11 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *de
 @property (atomic, strong) NSString *status;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
 @property (nonatomic, strong) id<CAMetalDrawable> drawable;
+@property (nonatomic, strong) id<MTLDevice> device;
+
+// If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
+// It will have a texture identical to the drawable's texture.
+@property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 
 - (void)loadFromView:(MTKView *)view;
 - (void)prepareWithBlock:(void (^)(void))block;

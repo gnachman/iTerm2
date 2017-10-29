@@ -319,10 +319,4 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return result;
 }
 
-- (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(NSString *)key {
-    NSMutableDictionary *mutableSelf = [[self mutableCopy] autorelease];
-    mutableSelf[key] = object;
-    return mutableSelf;
-}
-
 @end
