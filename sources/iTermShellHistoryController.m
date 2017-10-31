@@ -793,6 +793,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     for (iTermRecentDirectoryMO *directory in directories) {
         iTermHostRecordMO *hostRecord = directory.remoteHost;
         [hostRecord removeDirectoriesObject:directory];
+        [_managedObjectContext deleteObject:directory];
     }
 
     // Only save the most recent 1000 directories
@@ -813,6 +814,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         for (iTermRecentDirectoryMO *directory in [directories subarrayFromIndex:iTermMaxDirectoriesToSave]) {
             iTermHostRecordMO *hostRecord = directory.remoteHost;
             [hostRecord removeDirectoriesObject:directory];
+            [_managedObjectContext deleteObject:directory];
         }
     }
 
