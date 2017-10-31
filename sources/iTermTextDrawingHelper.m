@@ -203,6 +203,8 @@ typedef struct iTermTextColorContext {
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+    iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
+    
     if (_debug) {
         [[NSColor redColor] set];
         NSRectFill(rect);
