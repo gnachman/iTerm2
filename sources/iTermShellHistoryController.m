@@ -795,6 +795,27 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         [hostRecord removeDirectoriesObject:directory];
     }
 
+    // Only save the most recent 1000 directories
+    static const NSInteger iTermMaxDirectoriesToSave = 1000;
+
+    NSSortDescriptor *lastUseDescriptor = [[[NSSortDescriptor alloc] initWithKey:@"lastUse"
+                                                                       ascending:NO
+                                                                        selector:@selector(compare:)] autorelease];
+    fetchRequest = [[[NSFetchRequest alloc] init] autorelease];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:[iTermRecentDirectoryMO entityName]
+                                        inManagedObjectContext:_managedObjectContext]];
+    [fetchRequest setSortDescriptors:@[ lastUseDescriptor ]];
+    predicate = [NSPredicate predicateWithFormat:@"starred == 0"];
+    [fetchRequest setPredicate:predicate];
+    error = nil;
+    directories = [_managedObjectContext executeFetchRequest:fetchRequest error:&error];
+    if (directories.count > iTermMaxDirectoriesToSave) {
+        for (iTermRecentDirectoryMO *directory in [directories subarrayFromIndex:iTermMaxDirectoriesToSave]) {
+            iTermHostRecordMO *hostRecord = directory.remoteHost;
+            [hostRecord removeDirectoriesObject:directory];
+        }
+    }
+
     error = nil;
     [_managedObjectContext save:&error];
 
