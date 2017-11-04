@@ -198,7 +198,8 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         storeType = NSInMemoryStoreType;
     }
 
-    NSDictionary *options = @{};
+    NSDictionary *options = @{ NSInferMappingModelAutomaticallyOption: @YES,
+                               NSMigratePersistentStoresAutomaticallyOption: @YES };
     if (vacuum) {
         options = @{ NSSQLiteManualVacuumOption: @YES };
     }
