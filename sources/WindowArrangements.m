@@ -33,6 +33,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 
 - (void)awakeFromNib
 {
+    DLog(@"Window arrangements prefs panel awakeFromNib. User defaults has: %@", [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS]);
     [self updateActionsEnabled];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateTableView:)
@@ -55,6 +56,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
     int n = [WindowArrangements count];
+    DLog(@"Returning %@ rows in table view", @(n));
     return n;
 }
 
