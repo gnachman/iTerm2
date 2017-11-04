@@ -3370,7 +3370,6 @@ DQ
                 <button misplaced="YES" id="Wi4-0H-Bb4">
                     <rect key="frame" x="21" y="18" width="162" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">If Shell Integration is enabled, this prevents command prompts from starting in the middle of a line when the previous command did not end with a newline.</string>
                     <buttonCell key="cell" type="check" title="Show mark indicators" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="uCi-Qa-X8t">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
