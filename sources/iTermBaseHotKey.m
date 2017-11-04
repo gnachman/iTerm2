@@ -6,7 +6,7 @@
 #import "iTermEventTap.h"
 #import "NSArray+iTerm.h"
 
-static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskAlphaShift |
+static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskShift |
                                                         kCGEventFlagMaskAlternate |
                                                         kCGEventFlagMaskCommand |
                                                         kCGEventFlagMaskControl);
@@ -212,7 +212,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     switch (self.modifierActivation) {
         case iTermHotKeyModifierActivationShift:
-            return maskedFlags == kCGEventFlagMaskAlphaShift;
+            return maskedFlags == kCGEventFlagMaskShift;
             
         case iTermHotKeyModifierActivationOption:
             return maskedFlags == kCGEventFlagMaskAlternate;
