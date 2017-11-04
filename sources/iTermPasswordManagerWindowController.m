@@ -37,7 +37,7 @@ static BOOL sAuthenticated;
     NSArray *_accounts;
     NSString *_passwordBeingShown;
     NSInteger _rowForPasswordBeingShown;
-    NSString *_selectedAccountNameBeforeAuthenticated;
+    NSString *_accountNameToSelectAfterAuthentication;
 }
 
 + (NSArray *)accountNamesWithFilter:(NSString *)filter {
@@ -154,6 +154,7 @@ static BOOL sAuthenticated;
 
 - (void)dealloc {
     [_accounts release];
+    [_accountNameToSelectAfterAuthentication release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
@@ -192,7 +193,8 @@ static BOOL sAuthenticated;
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
     } else if (!sAuthenticated) {
-        _selectedAccountNameBeforeAuthenticated = name;
+        [_accountNameToSelectAfterAuthentication autorelease];
+        _accountNameToSelectAfterAuthentication = [name copy];
     }
 }
 
@@ -354,8 +356,10 @@ static BOOL sAuthenticated;
 
         if (success) {
             [self reloadAccounts];
-            if (_selectedAccountNameBeforeAuthenticated) {
-                [self selectAccountName:_selectedAccountNameBeforeAuthenticated];
+            if (_accountNameToSelectAfterAuthentication) {
+                [self selectAccountName:_accountNameToSelectAfterAuthentication];
+                [_accountNameToSelectAfterAuthentication release];
+                _accountNameToSelectAfterAuthentication = nil;
             } else {
                 [[self window] makeFirstResponder:_searchField];
             }
