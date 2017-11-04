@@ -912,7 +912,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // trailing empty lines. They all have the same position because they
         // are empty. We need to back up by the number of empty lines and then
         // use position.yOffset to disambiguate.
-        result.y = [self numLinesWithWidth:width] - 1 - [blocks.lastObject numberOfTrailingEmptyLines];
+        result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [blocks.lastObject numberOfTrailingEmptyLines]);
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
                                                        width:width
                                                 continuation:NULL];
