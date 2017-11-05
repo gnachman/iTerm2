@@ -95,7 +95,8 @@ typedef enum {
     VT100CSI_RESET_MODIFIERS,       // CSI > Ps n (Set all modifiers values to -1, disabled)
     VT100CSI_DECSLRM,               // Set left-right margin
     VT100CSI_DECRQCRA,              // Request Checksum of Rectangular Area
-
+    VT100CSI_REP,                   // Repeat
+    
     // some xterm extensions
     XTERMCC_WIN_TITLE,            // Set window title
     XTERMCC_ICON_TITLE,

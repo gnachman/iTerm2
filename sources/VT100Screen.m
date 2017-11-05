@@ -17,6 +17,7 @@
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
+#import "iTermTextExtractor.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -4111,6 +4112,26 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                            payload:(NSString *)payload {
     [delegate_ screenDidReceiveCustomEscapeSequenceWithParameters:parameters
                                                           payload:payload];
+}
+
+- (void)terminalRepeatPreviousCharacter:(int)times {
+    if (![iTermAdvancedSettingsModel supportREPCode]) {
+        return;
+    }
+    if (self.cursorX == 1 && self.cursorY == 1) {
+        return;
+    }
+    VT100GridCoord coord = currentGrid_.cursor;
+    coord.y += [self numberOfScrollbackLines];
+    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:self] autorelease];
+    VT100GridCoord pred = [extractor predecessorOfCoord:coord];
+    if (pred.x < 0 || pred.y < 0) {
+        return;
+    }
+    screen_char_t c = [extractor characterAt:pred];
+    for (int i = 0; i < times; i++) {
+        [self appendScreenCharArrayAtCursor:&c length:1 shouldFree:NO];
+    }
 }
 
 #pragma mark - Private

@@ -287,5 +287,6 @@ DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on 
 DEFINE_BOOL(experimentalKeyHandling, NO, @"General: Improved support for input method editors like AquaSKK.");
 
 DEFINE_BOOL(useExperimentalFontMetrics, NO, @"Experimental Features: Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.");
+DEFINE_BOOL(supportREPCode, NO, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
 
 @end

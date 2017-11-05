@@ -197,5 +197,6 @@
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)useExperimentalFontMetrics;
++ (BOOL)supportREPCode;
 
 @end

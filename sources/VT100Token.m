@@ -160,6 +160,7 @@ static iTermObjectPool *gPool;
                           @(VT100CSI_DECDSR):                 @"VT100CSI_DECDSR",
                           @(VT100CSI_SET_MODIFIERS):          @"VT100CSI_SET_MODIFIERS",
                           @(VT100CSI_RESET_MODIFIERS):        @"VT100CSI_RESET_MODIFIERS",
+                          @(VT100CSI_REP):                    @"VT100CSI_REP",
                           @(VT100CSI_DECSLRM):                @"VT100CSI_DECSLRM",
                           @(XTERMCC_WIN_TITLE):               @"XTERMCC_WIN_TITLE",
                           @(XTERMCC_ICON_TITLE):              @"XTERMCC_ICON_TITLE",

@@ -404,4 +404,6 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 - (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                            payload:(NSString *)payload;
 
+- (void)terminalRepeatPreviousCharacter:(int)times;
+
 @end

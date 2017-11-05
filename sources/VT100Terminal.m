@@ -1633,6 +1633,10 @@ static const int kMaxScreenRows = 4096;
             [self executeDecSetReset:token];
             break;
 
+        case VT100CSI_REP:
+            [delegate_ terminalRepeatPreviousCharacter:token.csi->p[0]];
+            break;
+
             // ANSI CSI
         case ANSICSI_CBT:
             [delegate_ terminalBackTab:token.csi->p[0]];
