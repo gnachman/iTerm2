@@ -43,10 +43,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
-- (BOOL)fileExistsAtPathLocally:(NSString *)path timedOut:(BOOL *)timedOut {
+- (BOOL)fileExistsAtPathLocally:(NSString *)path {
     return [self.fileManager fileExistsAtPathLocally:path
-                              additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]
-                                            timedOut:timedOut];
+                              additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
 }
 
 - (BOOL)fileHasForbiddenPrefix:(NSString *)path {
@@ -57,10 +56,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber
-             columnNumber:(NSString **)columnNumber
-                 timedOut:(BOOL *)timedOut {
+             columnNumber:(NSString **)columnNumber {
     DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
-    *timedOut = NO;
     NSString *origPath = path;
     // TODO(chendo): Move regex, define capture semantics in config file/prefs
     if (!path || [path length] == 0) {
@@ -107,7 +104,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // be stat()ed, although they were always stat()ed because of unintentional
     // disk access in the old code.
 
-    if ([self fileExistsAtPathLocally:path timedOut:timedOut]) {
+    if ([self fileExistsAtPathLocally:path]) {
         DLog(@"    YES: A file exists at %@", path);
         NSURL *url = [NSURL fileURLWithPath:path];
 
@@ -120,11 +117,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             return nil;
         }
         return path;
-    } else if (*timedOut) {
-        DLog(@"     NO: timed out");
-        return nil;
     }
-
     // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
     if ([origPath isMatchedByRegex:@"^[ab]/"]) {
         DLog(@"  Treating as diff path");
@@ -136,8 +129,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return [self getFullPath:origPath
                 workingDirectory:workingDirectory
                       lineNumber:lineNumber
-                    columnNumber:columnNumber
-                        timedOut:timedOut];
+                    columnNumber:columnNumber];
     }
 
     DLog(@"     NO: no valid path found");
@@ -338,11 +330,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
     if (!isRawAction) {
-        BOOL timedOut;
         path = [self getFullPath:path workingDirectory:workingDirectory
                       lineNumber:&lineNumber
-                    columnNumber:&columnNumber
-                        timedOut:&timedOut];
+                    columnNumber:&columnNumber];
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
@@ -455,8 +445,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
                            charsTakenFromSuffix:(int *)suffixChars
                                  trimWhitespace:(BOOL)trimWhitespace {
-    BOOL timedOut;
-    BOOL workingDirectoryIsOk = [self fileExistsAtPathLocally:workingDirectory timedOut:&timedOut];
+    BOOL workingDirectoryIsOk = [self fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
         DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
              workingDirectory);
@@ -519,16 +508,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
-                    BOOL timedOut = NO;
                     exists = ([self getFullPath:modifiedPossiblePath
                                workingDirectory:workingDirectory
                                      lineNumber:NULL
-                                   columnNumber:NULL
-                                       timedOut:&timedOut] != nil);
-                    if (timedOut) {
-                        DLog(@"Timed out checking path %@ in %@", modifiedPossiblePath, workingDirectory);
-                        return nil;
-                    }
+                                   columnNumber:NULL] != nil);
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {

@@ -25,7 +25,6 @@
 #import "NSFileManager+iTerm.h"
 
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermCallWithTimeout.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAutoMasterParser.h"
@@ -228,32 +227,20 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
-                       timedOut:(BOOL *)timedOutPtr {
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
     if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {
         return NO;
     }
 
-    __block BOOL ok = NO;
-    [filename retain];
-    BOOL timedOut =
-        [[iTermCallWithTimeout instanceForIdentifier:@"statfs"] executeWithTimeout:0.5 block:^{
-            struct statfs buf;
-            int rc = statfs([filename UTF8String], &buf);
-            if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
-                ok = [self fileExistsAtPath:filename];
-            } else {
-                ok = NO;
-            }
-            [filename release];
-        }];
-    if (timedOutPtr) {
-        *timedOutPtr = timedOut;
+    BOOL ok;
+    struct statfs buf;
+    int rc = statfs([filename UTF8String], &buf);
+    if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
+        ok = [self fileExistsAtPath:filename];
+    } else {
+        ok = NO;
     }
-    if (timedOut) {
-        DLog(@"Timed out doing statfs on %@", filename);
-    }
-    return timedOut ? NO : ok;
+    return ok;
 }
 
 @end

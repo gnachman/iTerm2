@@ -1267,8 +1267,6 @@
 		A61D16FC1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */; };
-		A623D9471F8972750011F8C3 /* iTermCallWithTimeout.h in Headers */ = {isa = PBXBuildFile; fileRef = A623D9451F8972750011F8C3 /* iTermCallWithTimeout.h */; };
-		A623D9481F8972750011F8C3 /* iTermCallWithTimeout.m in Sources */ = {isa = PBXBuildFile; fileRef = A623D9461F8972750011F8C3 /* iTermCallWithTimeout.m */; };
 		A623D94B1F8984690011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
 		A623D94C1F8984690011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
 		A623D94D1F89846A0011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
@@ -3251,8 +3249,6 @@
 		A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorRun.m; sourceTree = "<group>"; };
 		A61F8E2E1E62591800D315D0 /* iTermFakeUserDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFakeUserDefaults.h; sourceTree = "<group>"; };
 		A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFakeUserDefaults.m; sourceTree = "<group>"; };
-		A623D9451F8972750011F8C3 /* iTermCallWithTimeout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCallWithTimeout.h; sourceTree = "<group>"; };
-		A623D9461F8972750011F8C3 /* iTermCallWithTimeout.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCallWithTimeout.m; sourceTree = "<group>"; };
 		A623D9491F8983D70011F8C3 /* key.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = key.png; path = images/key.png; sourceTree = "<group>"; };
 		A623D94A1F8983D80011F8C3 /* key@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key@2x.png"; path = "images/key@2x.png"; sourceTree = "<group>"; };
 		A624230F19CF6B0C00182C08 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = ThirdParty/Sparkle.framework; sourceTree = "<group>"; };
@@ -5738,8 +5734,6 @@
 				A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */,
 				A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */,
 				A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */,
-				A623D9451F8972750011F8C3 /* iTermCallWithTimeout.h */,
-				A623D9461F8972750011F8C3 /* iTermCallWithTimeout.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6885,7 +6879,6 @@
 				A667193D1DCE36C3000CE608 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
-				A623D9471F8972750011F8C3 /* iTermCallWithTimeout.h in Headers */,
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
 				A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */,
 				A66719411DCE36C3000CE608 /* iTermSystemVersion.h in Headers */,
@@ -8428,7 +8421,6 @@
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
 				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,
-				A623D9481F8972750011F8C3 /* iTermCallWithTimeout.m in Sources */,
 				A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
