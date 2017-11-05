@@ -20,7 +20,7 @@
 
 int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) {
     __block int result;
-    BOOL timeout = [[iTermCallWithTimeout instanceForIdentifier:@"pidinfo"] executeWithTimeout:0.5 block:^{
+    BOOL timeout = [[iTermCallWithTimeout instanceForIdentifier:@"pidinfo"] executeWithTimeout:ITERM_CALL_TIMEOUT block:^{
         result = proc_pidinfo(pid, flavor, arg, buffer, buffersize);
     }];
     return timeout ? -1 : result;

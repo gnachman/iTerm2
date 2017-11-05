@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#define ITERM_CALL_TIMEOUT 1.5
+
 @class iTermSocketAddress;
 
 int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize);
