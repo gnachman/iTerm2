@@ -14,7 +14,7 @@ extern "C" {
 @interface iTermTextRendererTransientState ()
 
 @property (nonatomic, readonly) NSIndexSet *indexes;
-@property (nonatomic, weak) iTermTextureMap *textureMap;
+@property (nonatomic, strong) iTermTextureMap *textureMap;
 - (void)addIndex:(NSInteger)index;
 
 @end
