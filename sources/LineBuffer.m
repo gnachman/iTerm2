@@ -30,6 +30,7 @@
 #import "LineBuffer.h"
 
 #import "BackgroundThread.h"
+#import "DebugLogging.h"
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
@@ -421,11 +422,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                 lineNum:(int)lineNum
            continuation:(screen_char_t *)continuationPtr
 {
+    ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
     int line = lineNum;
     int i;
     for (i = 0; i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex: i];
         NSAssert(block, @"Null block");
+        ITBetaAssert(line >= 0, @"Negative lineNum BEFORE consuming block_lines");
 
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
@@ -435,6 +438,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             line -= block_lines;
             continue;
         }
+        ITBetaAssert(line >= 0, @"Negative lineNum after consuming block_lines");
 
         int length;
         int eol;
@@ -908,7 +912,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // trailing empty lines. They all have the same position because they
         // are empty. We need to back up by the number of empty lines and then
         // use position.yOffset to disambiguate.
-        result.y = [self numLinesWithWidth:width] - 1 - [blocks.lastObject numberOfTrailingEmptyLines];
+        result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [blocks.lastObject numberOfTrailingEmptyLines]);
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
                                                        width:width
                                                 continuation:NULL];

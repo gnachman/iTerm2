@@ -196,10 +196,12 @@
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
+        BOOL timedOut;
         action.fullPath = [semanticHistoryController getFullPath:filename
                                                 workingDirectory:workingDirectory
                                                       lineNumber:NULL
-                                                    columnNumber:NULL];
+                                                    columnNumber:NULL
+                                                        timedOut:&timedOut];
         action.workingDirectory = workingDirectory;
         return action;
     }

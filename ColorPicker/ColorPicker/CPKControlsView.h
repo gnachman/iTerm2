@@ -12,19 +12,19 @@ extern NSString *const kCPKUseSystemColorPicker;
 @property(nonatomic) BOOL removeEnabled;
 
 /** Block called when you clicks on "No Color". */
-@property(nonatomic, copy) void (^selectNoColorBlock)();
+@property(nonatomic, copy) void (^selectNoColorBlock)(void);
 
 /** Block called when user clicks on "Add Favorite". */
-@property(nonatomic, copy) void (^addFavoriteBlock)();
+@property(nonatomic, copy) void (^addFavoriteBlock)(void);
 
 /** Block called when user clicks on "Remove Favorite". */
-@property(nonatomic, copy) void (^removeFavoriteBlock)();
+@property(nonatomic, copy) void (^removeFavoriteBlock)(void);
 
 /** Block called when user clicks on the eyedropper. */
-@property(nonatomic, copy) void (^startPickingBlock)();
+@property(nonatomic, copy) void (^startPickingBlock)(void);
 
 /** Replace popover with native color picker. */
-@property(nonatomic, copy) void (^useNativeColorPicker)();
+@property(nonatomic, copy) void (^useNativeColorPicker)(void);
 
 /**
  * Use the system color picker? Setting this to YES opens the picker and adjusts the icon to

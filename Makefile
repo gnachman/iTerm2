@@ -31,6 +31,11 @@ Development:
 Dep:
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment
 
+Beta:
+	cp plists/release-iTerm2.plist plists/iTerm2.plist
+	xcodebuild -parallelizeTargets -target iTerm2 -configuration Beta && \
+	chmod -R go+rX build/Deployment
+
 Deployment:
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment && \
 	chmod -R go+rX build/Deployment

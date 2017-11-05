@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *const iTermWindowAppearanceDidChange;
+
 typedef NS_ENUM(NSInteger, iTermAnnouncementViewStyle) {
     kiTermAnnouncementViewStyleWarning,
     kiTermAnnouncementViewStyleQuestion

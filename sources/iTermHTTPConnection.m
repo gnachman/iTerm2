@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermSocketAddress.h"
 #include <sys/select.h>
+#include <sys/time.h>
 
 @implementation iTermHTTPConnection {
     int _fd;

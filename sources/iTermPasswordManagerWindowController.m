@@ -37,6 +37,7 @@ static BOOL sAuthenticated;
     NSArray *_accounts;
     NSString *_passwordBeingShown;
     NSInteger _rowForPasswordBeingShown;
+    NSString *_accountNameToSelectAfterAuthentication;
 }
 
 + (NSArray *)accountNamesWithFilter:(NSString *)filter {
@@ -153,6 +154,7 @@ static BOOL sAuthenticated;
 
 - (void)dealloc {
     [_accounts release];
+    [_accountNameToSelectAfterAuthentication release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
@@ -190,6 +192,9 @@ static BOOL sAuthenticated;
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
+    } else if (!sAuthenticated) {
+        [_accountNameToSelectAfterAuthentication autorelease];
+        _accountNameToSelectAfterAuthentication = [name copy];
     }
 }
 
@@ -301,14 +306,10 @@ static BOOL sAuthenticated;
 
     if (@available(macOS 10.11, *)) {
         LAContext *myContext = [[[LAContext alloc] init] autorelease];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics context:myContext]) {
-#pragma clang diagnostic pop
-            if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext]) {
-                DLog(@"There are no auth policies that can succeed on this machine. Giving up.");
-                sAuthenticated = YES;
-            }
+        NSString *reason = nil;
+        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext reason:&reason]) {
+            DLog(@"There are no auth policies that can succeed on this machine. Giving up. %@", reason);
+            sAuthenticated = YES;
         }
     }
 }
@@ -329,11 +330,11 @@ static BOOL sAuthenticated;
     }
 }
 
-- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext NS_AVAILABLE_MAC(10_11) {
+- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reason:(NSString **)reason NS_AVAILABLE_MAC(10_11) {
     DLog(@"Try to auth with %@", @(policy));
     NSError *authError = nil;
     if (![self policyAvailableOnThisOSVersion:policy]) {
-        DLog(@"Policy not available on this OS version");
+        *reason = @"Policy not available on this OS version";
         return NO;
     }
     if ([myContext canEvaluatePolicy:policy error:&authError]) {
@@ -341,7 +342,7 @@ static BOOL sAuthenticated;
         [self authenticateWithPolicy:policy context:myContext];
         return YES;
     } else {
-        DLog(@"Can't authenticate with policy %@: %@", @(policy), authError);
+        *reason = [NSString stringWithFormat:@"Can't authenticate with policy %@: %@", @(policy), authError];
         return NO;
     }
 }
@@ -355,7 +356,13 @@ static BOOL sAuthenticated;
 
         if (success) {
             [self reloadAccounts];
-            [[self window] makeFirstResponder:_searchField];
+            if (_accountNameToSelectAfterAuthentication) {
+                [self selectAccountName:_accountNameToSelectAfterAuthentication];
+                [_accountNameToSelectAfterAuthentication release];
+                _accountNameToSelectAfterAuthentication = nil;
+            } else {
+                [[self window] makeFirstResponder:_searchField];
+            }
         } else {
             [self closeOrEndSheet];
         }

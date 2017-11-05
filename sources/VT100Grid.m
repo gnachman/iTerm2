@@ -1657,6 +1657,10 @@ static NSString *const kGridSizeKey = @"Size";
     CopyForegroundColor(&c, fg);
     CopyBackgroundColor(&c, bg);
 
+    c.underline = NO;
+    c.urlCode = 0;
+    c.image = 0;
+
     return c;
 }
 

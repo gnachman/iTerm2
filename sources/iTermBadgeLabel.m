@@ -9,6 +9,7 @@
 #import "iTermBadgeLabel.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSStringITerm.h"
 
 @interface iTermBadgeLabel()
 @property(nonatomic, retain) NSImage *image;
@@ -113,16 +114,16 @@
     NSDictionary *attributes = [self attributesWithPointSize:pointSize];
     NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
     temp[NSStrokeColorAttributeName] = [_backgroundColor colorWithAlphaComponent:1];
-    NSSize sizeWithFont = [self sizeWithAttributes:temp];
+    BOOL truncated;
+    NSSize sizeWithFont = [self sizeWithAttributes:temp truncated:&truncated];
     if (sizeWithFont.width <= 0 || sizeWithFont.height <= 0) {
         return nil;
     }
 
     NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
     [image lockFocus];
-    [_stringValue drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
-                       options:NSStringDrawingUsesLineFragmentOrigin
-                    attributes:temp];
+    [_stringValue it_drawInRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
+                     attributes:temp];
     [image unlockFocus];
 
     NSImage *reducedAlphaImage = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
@@ -159,12 +160,12 @@
 }
 
 // Size of the image resulting from drawing an attributed string with |attributes|.
-- (NSSize)sizeWithAttributes:(NSDictionary *)attributes {
+- (NSSize)sizeWithAttributes:(NSDictionary *)attributes truncated:(BOOL *)truncated {
     NSSize size = self.maxSize;
     size.height = CGFLOAT_MAX;
-    NSRect bounds = [_stringValue boundingRectWithSize:self.maxSize
-                                               options:NSStringDrawingUsesLineFragmentOrigin
-                                            attributes:attributes];
+    NSRect bounds = [_stringValue it_boundingRectWithSize:self.maxSize
+                                               attributes:attributes
+                                                truncated:truncated];
     return bounds.size;
 }
 
@@ -189,9 +190,11 @@
     int prevPoints = -1;
     NSSize sizeWithFont = NSZeroSize;
     while (points != prevPoints) {
-        sizeWithFont = [self sizeWithAttributes:[self attributesWithPointSize:points]];
+        BOOL truncated;
+        sizeWithFont = [self sizeWithAttributes:[self attributesWithPointSize:points] truncated:&truncated];
         DLog(@"Point size of %@ gives label size of %@", @(points), NSStringFromSize(sizeWithFont));
-        if (sizeWithFont.width > maxSize.width ||
+        if (truncated ||
+            sizeWithFont.width > maxSize.width ||
             sizeWithFont.height > maxSize.height) {
             max = points;
         } else if (sizeWithFont.width < maxSize.width &&

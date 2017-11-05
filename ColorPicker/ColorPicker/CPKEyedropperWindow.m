@@ -25,7 +25,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     return origin;
 }
 
-+ (NSColor *)pickColor {
++ (void)pickColorWithCompletion:(void (^)(NSColor *color))completion {
     NSPoint origin = [CPKEyedropperWindow origin];
     NSRect frame = NSMakeRect(origin.x, origin.y, kSize, kSize);
     CPKEyedropperWindow *eyedropperWindow =
@@ -42,17 +42,26 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     eyedropperWindow.eyedropperView.click = ^() { [weakWindow stop]; };
     eyedropperWindow.contentView = eyedropperWindow.eyedropperView;
 
-    // Doesn't work if you do it immediately.
+    // It takes a spin of the mainloop for this to take effect
+    eyedropperWindow.level = NSMainMenuWindowLevel + 1;
+
     dispatch_async(dispatch_get_main_queue(), ^{
-        eyedropperWindow.level = NSMainMenuWindowLevel + 1;
+        [eyedropperWindow finishPickingColorWithCompletion:completion];
     });
+}
+
+- (void)finishPickingColorWithCompletion:(void (^)(NSColor *color))completion {
     [[NSCursor crosshairCursor] push];
-    [eyedropperWindow doPick];
+    [self doPick];
     [[NSCursor crosshairCursor] pop];
-    if (eyedropperWindow.selectedColor.alphaComponent == 0) {
-        return nil;
+    NSColor *selectedColor = [self selectedColor];
+    if (@available(macOS 10.13, *)) {
+        [self orderOut:nil];
+    }
+    if (selectedColor.alphaComponent == 0) {
+        completion(nil);
     } else {
-        return eyedropperWindow.selectedColor;
+        completion(selectedColor);
     }
 }
 

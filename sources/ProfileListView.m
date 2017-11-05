@@ -477,15 +477,22 @@ const CGFloat kDefaultTagsWidth = 80;
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex {
     NSAttributedString *attributedString = [self tableView:tableView objectValueForTableColumn:tableColumn_ row:rowIndex];
     // tableview is a mess. Add some points so it works. Who knows why.
-    CGFloat height = [attributedString heightForWidth:tableColumn_.width] + [self extraHeight];
+    Profile *profile = [dataSource_ profileAtIndex:rowIndex];
+    const BOOL hasTags = ([profile[KEY_TAGS] count] > 0);
+
+    CGFloat height = [attributedString heightForWidth:tableColumn_.width] + [self extraHeightWithTags:hasTags];
 
     _savedHeights[@(rowIndex)] = @(height);
     return height;
 }
 
-- (CGFloat)extraHeight {
+- (CGFloat)extraHeightWithTags:(BOOL)hasTags {
     if (self.mainFont.pointSize <= [NSFont smallSystemFontSize]) {
-        return 1;
+        if (hasTags) {
+            return 2;
+        } else {
+            return 1;
+        }
     } else {
         return 2;
     }
@@ -595,7 +602,7 @@ const CGFloat kDefaultTagsWidth = 80;
         DLog(@"Getting name of profile at row %d. The dictionary's address is %p. Its name is %@",
              (int)rowIndex, bookmark, bookmark[KEY_NAME]);
         Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
-        return [self attributedStringForName:bookmark[KEY_NAME]
+        return [self attributedStringForName:bookmark[KEY_NAME] ?: @""
                                         tags:bookmark[KEY_TAGS]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]

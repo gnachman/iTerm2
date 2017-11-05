@@ -529,6 +529,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [tabViewItem_ setLabel:newName];
+        [self.realParentWindow tabTitleDidChange:self];
     }
 }
 
@@ -1007,9 +1008,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                       verticalDir:(BOOL)verticalDir
                             after:(BOOL)after {
     NSArray<PTYSession *> *sessions = [self sessionsAdjacentToSession:session verticalDir:verticalDir after:after];
-    return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
-        return [a.activityCounter compare:b.activityCounter];
-    }];
+    if (sessions.count) {
+        return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+            return [a.activityCounter compare:b.activityCounter];
+        }];
+    } else {
+        sessions = [self sessionsInProjectionOfSession:session verticalDirection:verticalDir after:!after];
+        NSArray<PTYSession *> *wraparounds = [sessions mininumsWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+            NSRect aRect = [root_ convertRect:a.view.frame fromView:a.view.superview];
+            NSRect bRect = [root_ convertRect:b.view.frame fromView:b.view.superview];
+            if (verticalDir) {
+                SwapSize(&aRect.size);
+                SwapPoint(&aRect.origin);
+                SwapSize(&bRect.size);
+                SwapPoint(&bRect.origin);
+            }
+
+            const CGFloat bLeft = after ? NSMinX(bRect) : -NSMaxX(bRect);
+            const CGFloat aLeft = after ? NSMinX(aRect) : -NSMaxX(aRect);
+            return [@(aLeft) compare:@(bLeft)];
+        }];
+        return [wraparounds maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+            return [a.activityCounter compare:b.activityCounter];
+        }];
+    }
 }
 
 - (PTYSession*)sessionLeftOf:(PTYSession*)session {
@@ -2152,7 +2174,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
     if (count > 0) {
-        return sum / count;
+        if (@available(macOS 10.13, *)) {
+            // Issue 6115. It turns red for values over 26. When I drop 10.12 support I can adjust
+            // the slider to not go above 26. But it's super slow before you get
+          // to 26, so let's limit it to 24. Issue 6138.
+            return MIN(24, sum / count);
+        } else {
+            return sum / count;
+        }
     } else {
         // This shouldn't actually happen, but better safe than divide by zero.
         return 2.0;

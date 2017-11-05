@@ -12,6 +12,7 @@
 #import "NSStringITerm.h"
 
 static const CGFloat kMargin = 8;
+NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
 
 @interface iTermAnnouncementInternalView : NSView
 @end
@@ -108,11 +109,17 @@ static const CGFloat kMargin = 8;
 
         _actionButtons = [[NSMutableArray alloc] init];
         self.autoresizesSubviews = YES;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowAppearanceDidChange:)
+                                                     name:iTermWindowAppearanceDidChange
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_block release];
     [_textView release];
     [_icon release];
@@ -201,10 +208,20 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)viewDidMoveToWindow {
+    [self updateAppearance];
+}
+
+- (void)updateAppearance {
     if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
         for (NSButton *button in _actionButtons) {
             button.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
         }
+    }
+}
+
+- (void)windowAppearanceDidChange:(NSNotification *)notification {
+    if (notification.object == self.window) {
+        [self updateAppearance];
     }
 }
 

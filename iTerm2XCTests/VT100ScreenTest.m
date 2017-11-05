@@ -1908,33 +1908,37 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(line[0].backgroundColor == 6);
     XCTAssert(line[0].backgroundColorMode == ColorModeNormal);
 
-    NSString *a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    int i = 0;
+    NSString *a = [ScreenCharToStr(line + i++) decomposedStringWithCompatibilityMapping];
     NSString *e = [@"´" decomposedStringWithCompatibilityMapping];
     XCTAssert([a isEqualToString:e]);
 
-    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
+    a = [ScreenCharToStr(line + i++) decomposedStringWithCompatibilityMapping];
     e = [@"á" decomposedStringWithCompatibilityMapping];
     XCTAssert([a isEqualToString:e]);
 
-    a = [ScreenCharToStr(line + 2) decomposedStringWithCompatibilityMapping];
+    a = [ScreenCharToStr(line + i++) decomposedStringWithCompatibilityMapping];
     e = [@"á̧" decomposedStringWithCompatibilityMapping];
     XCTAssert([a isEqualToString:e]);
 
-    a = ScreenCharToStr(line + 3);
+    a = ScreenCharToStr(line + i++);
     e = @"𐅐";
     XCTAssert([a isEqualToString:e]);
 
-    XCTAssert([ScreenCharToStr(line + 4) isEqualToString:@"Ｅ"]);
-    XCTAssert(line[5].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 6) isEqualToString:@"�"]);
-    XCTAssert([ScreenCharToStr(line + 7) isEqualToString:@"\u200b"]);  // zero-width space advances cursor by default.
-    XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 9) isEqualToString:@"ł"]);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"Ｅ"]);
+    XCTAssert(line[i++].code == DWC_RIGHT);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"�"]);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"\u200b"]);  // zero-width space advances cursor by default.
+    if (@available(macOS 10.13, *)) {
+        XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"\u200c\u200d"]);  // Funny way macoS 10.13 works
+    }
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"ł"]);
 
-    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"🖕🏾"]);
-    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 12) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
-    XCTAssert(line[13].code == 0);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🖕🏾"]);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
+    XCTAssert(line[i++].code == 0);
 }
 
 - (void)testLinefeed {

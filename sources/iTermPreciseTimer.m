@@ -16,26 +16,47 @@
 #include <unistd.h>
 
 #if ENABLE_PRECISE_TIMERS
+static BOOL gPreciseTimersEnabled;
+
+void iTermPreciseTimerSetEnabled(BOOL enabled) {
+    gPreciseTimersEnabled = enabled;
+}
+
 void iTermPreciseTimerStart(iTermPreciseTimer *timer) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     timer->start = mach_absolute_time();
 }
 
 NSTimeInterval iTermPreciseTimerMeasureAndAccumulate(iTermPreciseTimer *timer) {
+    if (!gPreciseTimersEnabled) {
+        return 0;
+    }
     timer->total += iTermPreciseTimerMeasure(timer);
     timer->eventCount += 1;
     return timer->total;
 }
 
 NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer, NSTimeInterval value) {
+    if (!gPreciseTimersEnabled) {
+        return 0;
+    }
     return timer->total;
 }
 
 void iTermPreciseTimerReset(iTermPreciseTimer *timer) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     timer->total = 0;
     timer->eventCount = 0;
 }
 
 NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) {
+    if (!gPreciseTimersEnabled) {
+        return 0;
+    }
     uint64_t end;
     NSTimeInterval elapsed;
     
@@ -52,6 +73,9 @@ NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) {
 }
 
 void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, char *name) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     stats->n = 0;
     stats->totalEventCount = 0;
     stats->mean = 0;
@@ -63,14 +87,23 @@ void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, char *name) {
 }
 
 NSInteger iTermPreciseTimerStatsGetCount(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return 0;
+    }
     return stats->n;
 }
 
 void iTermPreciseTimerStatsStartTimer(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     iTermPreciseTimerStart(&stats->timer);
 }
 
 void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     if (stats->timer.start) {
         NSTimeInterval total = iTermPreciseTimerMeasureAndAccumulate(&stats->timer);
         int eventCount = stats->timer.eventCount;
@@ -80,19 +113,31 @@ void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) 
 }
 
 void iTermPreciseTimerStatsRecordTimer(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     iTermPreciseTimerStatsRecord(stats, stats->timer.total, stats->timer.eventCount);
     iTermPreciseTimerReset(&stats->timer);
 }
 
 void iTermPreciseTimerStatsMeasureAndAccumulate(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     iTermPreciseTimerMeasureAndAccumulate(&stats->timer);
 }
 
 void iTermPreciseTimerStatsAccumulate(iTermPreciseTimerStats *stats, NSTimeInterval value) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     iTermPreciseTimerAccumulate(&stats->timer, value);
 }
 
 void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval value, int eventCount) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     stats->totalEventCount += eventCount;
     
     // Welford's online variance algorithm, adopted from:
@@ -104,10 +149,16 @@ void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval 
 }
 
 NSTimeInterval iTermPreciseTimerStatsGetMean(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return 0;
+    }
     return stats->mean;
 }
 
 NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerStats *stats) {
+    if (!gPreciseTimersEnabled) {
+        return 0;
+    }
     if (stats->n < 2) {
         return NAN;
     } else {
@@ -119,6 +170,9 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                                   size_t count,
                                   NSTimeInterval interval,
                                   BOOL logToConsole) {
+    if (!gPreciseTimersEnabled) {
+        return;
+    }
     static iTermPreciseTimer gLastLog;
     if (!gLastLog.start) {
         iTermPreciseTimerStart(&gLastLog);

@@ -107,6 +107,27 @@ extern BOOL gDebugLogging;
     } \
   } while (0)
 
+#define IT_STRINGIFY(x) #x
+
+#if BETA
+#define ITBetaAssert(condition, args...) \
+  do { \
+    if (!(condition)) { \
+      DLog(@"Crashing because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      ELog(args); \
+      assert(NO); \
+    } \
+  } while (0)
+#else  // BETA
+#define ITBetaAssert(condition, args...) \
+  do { \
+    if (!(condition)) { \
+      ELog(@"BETA ASSERT: Failed beta assert because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      ELog(args); \
+    } \
+  } while (0)
+#endif
+
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 void LogForNextCrash(const char *file, int line, const char *function, NSString* value);

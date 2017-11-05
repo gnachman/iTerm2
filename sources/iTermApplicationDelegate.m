@@ -166,6 +166,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
+    IBOutlet SUUpdater * suUpdater;
     IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
@@ -587,9 +588,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             if (filename) {
                 NSString *initialText = bookmark[KEY_INITIAL_TEXT];
                 if (initialText && ![iTermAdvancedSettingsModel openFileOverridesSendText]) {
-                    initialText = [initialText stringByAppendingFormat:@"\n%@; exit\n", filename];
+                    initialText = [initialText stringByAppendingFormat:@"\n%@; exit", filename];
                 } else {
-                    initialText = [NSString stringWithFormat:@"%@; exit\n", filename];
+                    initialText = [NSString stringWithFormat:@"%@; exit", filename];
                 }
                 bookmark[KEY_INITIAL_TEXT] = initialText;
             }
@@ -1069,6 +1070,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 - (NSMenu *)statusBarMenu {
     NSMenu *menu = [[NSMenu alloc] init];
     NSMenuItem *item;
+
     item = [[[NSMenuItem alloc] initWithTitle:@"Preferences"
                                        action:@selector(showAndOrderFrontRegardlessPrefWindow:)
                                 keyEquivalent:@""] autorelease];
@@ -1076,6 +1078,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     
     item = [[[NSMenuItem alloc] initWithTitle:@"Bring All Windows to Front"
                                        action:@selector(arrangeInFront:)
+                                keyEquivalent:@""] autorelease];
+    [menu addItem:item];
+
+    item = [[[NSMenuItem alloc] initWithTitle:@"Check For Updates"
+                                       action:@selector(checkForUpdatesFromMenu:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
@@ -1478,6 +1485,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [alert addButtonWithTitle:@"OK"];
         [alert runModal];
     }
+}
+
+- (IBAction)checkForUpdatesFromMenu:(id)sender {
+    [suUpdater checkForUpdates:(sender)];
 }
 
 - (void)warnAboutChangeToDefaultPasteBehavior {

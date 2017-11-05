@@ -6,7 +6,7 @@
 #import "iTermEventTap.h"
 #import "NSArray+iTerm.h"
 
-static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskAlphaShift |
+static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskShift |
                                                         kCGEventFlagMaskAlternate |
                                                         kCGEventFlagMaskCommand |
                                                         kCGEventFlagMaskControl);
@@ -180,7 +180,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSTimeInterval time = [NSDate timeIntervalSinceReferenceDate];
     DLog(@"You pressed the modifier key. dt=%@", @(time - _lastModifierTapTime));
     const NSTimeInterval kMaxTimeBetweenTaps = [iTermAdvancedSettingsModel hotKeyDoubleTapMaxDelay];
-    BOOL result = (time - _lastModifierTapTime < kMaxTimeBetweenTaps);
+    const NSTimeInterval kMinTimeBetweenTabs = [iTermAdvancedSettingsModel hotKeyDoubleTapMinDelay];
+    const NSTimeInterval elapsedTime = time - _lastModifierTapTime;
+    BOOL result = (kMinTimeBetweenTabs <= elapsedTime && elapsedTime < kMaxTimeBetweenTaps);
     _lastModifierTapTime = time;
     return result;
 }
@@ -210,7 +212,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     switch (self.modifierActivation) {
         case iTermHotKeyModifierActivationShift:
-            return maskedFlags == kCGEventFlagMaskAlphaShift;
+            return maskedFlags == kCGEventFlagMaskShift;
             
         case iTermHotKeyModifierActivationOption:
             return maskedFlags == kCGEventFlagMaskAlternate;

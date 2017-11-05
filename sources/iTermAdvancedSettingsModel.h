@@ -145,6 +145,7 @@
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)experimentalKeyHandling;
 + (double)hotKeyDoubleTapMaxDelay;
++ (double)hotKeyDoubleTapMinDelay;
 + (BOOL)hideStuckTooltips;
 + (BOOL)indicateBellsInDockBadgeLabel;
 + (double)tabFlashAnimationDuration;
@@ -192,5 +193,9 @@
 + (BOOL)dwcLineCache;
 + (BOOL)lowFiCombiningMarks;
 + (CGFloat)verticalBarCursorWidth;
++ (BOOL)statusBarIcon;
++ (BOOL)sensitiveScrollWheel;
++ (BOOL)disableCustomBoxDrawing;
++ (BOOL)useExperimentalFontMetrics;
 
 @end

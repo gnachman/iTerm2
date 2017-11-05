@@ -136,7 +136,7 @@ NSString *const kCPKUseSystemColorPicker = @"kCPKUseSystemColorPicker";
                                     [self cpk_imageNamed:@"EscapeHatch"];
     if (_useNativeColorPicker) {
         __weak __typeof(self) weakSelf = self;
-        weakSelf.useNativeColorPicker(useSystemColorPicker);
+        weakSelf.useNativeColorPicker();
     }
 }
 

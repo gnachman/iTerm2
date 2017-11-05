@@ -297,7 +297,7 @@ do { \
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(8, 1)];
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(7, 1)];
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
@@ -315,7 +315,7 @@ do { \
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(3, 1) to:VT100GridCoordMake(8, 1)];
+    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(3, 1) to:VT100GridCoordMake(7, 1)];
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);

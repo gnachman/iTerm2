@@ -135,9 +135,22 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
         }
-        _divisionView.color = self.window.isKeyWindow
-                ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.49 alpha:1]
-                : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.65 alpha:1];
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                _divisionView.color = self.window.isKeyWindow
+                        ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.49 alpha:1]
+                        : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.65 alpha:1];
+                break;
+
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                _divisionView.color = self.window.isKeyWindow
+                        ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.2 alpha:1]
+                        : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.15 alpha:1];
+                break;
+        }
+
         _divisionView.frame = divisionViewFrame;
     } else if (_divisionView) {
         // Remove existing division

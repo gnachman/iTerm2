@@ -71,7 +71,7 @@ function Build {
   echo 'Options +FollowSymlinks' > ~/iterm2-website/downloads/stable/.htaccess
   echo 'Redirect 302 /downloads/stable/latest https://iterm2.com/downloads/stable/iTerm2-'${NAME}'.zip' >> ~/iterm2-website/downloads/stable/.htaccess
 
-  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/full_changes.txt downlaods/stable/.htaccess
+  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
   popd
 
   # Prepare the sparkle xml file

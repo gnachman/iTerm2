@@ -25,6 +25,7 @@
 #import "NSFileManager+iTerm.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCallWithTimeout.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAutoMasterParser.h"
@@ -111,7 +112,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                appendPathComponent:executableName
                                              error:&error];
     if (!result) {
-        NSLog(@"Unable to find or create application support directory:\n%@", error);
+        ELog(@"Unable to find or create application support directory:\n%@", error);
     }
     return result;
 }
@@ -123,7 +124,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                appendPathComponent:@"iTerm"
                                              error:&error];
     if (!result) {
-        NSLog(@"Unable to find or create application support directory:\n%@", error);
+        ELog(@"Unable to find or create application support directory:\n%@", error);
     }
     return result;
 }
@@ -227,17 +228,33 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
+                       timedOut:(BOOL *)timedOutPtr {
     if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {
         return NO;
     }
-    struct statfs buf;
-    int rc = statfs([filename UTF8String], &buf);
-    if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
-        return [self fileExistsAtPath:filename];
-    } else {
-        return NO;
+
+    __block BOOL ok = NO;
+    [filename retain];
+    BOOL timedOut =
+        [[iTermCallWithTimeout instanceForIdentifier:@"statfs"] executeWithTimeout:0.5 block:^{
+            struct statfs buf;
+            int rc = statfs([filename UTF8String], &buf);
+            if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
+                ok = [self fileExistsAtPath:filename];
+            } else {
+                ok = NO;
+            }
+            [filename release];
+        }];
+    if (timedOutPtr) {
+        *timedOutPtr = timedOut;
     }
+    if (timedOut) {
+        DLog(@"Timed out doing statfs on %@", filename);
+    }
+    return timedOut ? NO : ok;
 }
 
 @end
+

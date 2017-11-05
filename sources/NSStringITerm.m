@@ -1507,12 +1507,40 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     if (self.length == 0) {
         return;
     }
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *exceptions;
+    dispatch_once(&onceToken, ^{
+        // These characters are forced to be base characters.
+        exceptions = [[NSCharacterSet characterSetWithCharactersInString:@"\uff9e\uff9f"] retain];
+    });
     CFIndex index = 0;
+    NSInteger minimumLocation = 0;
     NSRange range;
     do {
         CFRange tempRange = CFStringGetRangeOfComposedCharactersAtIndex((CFStringRef)self, index);
+        if (tempRange.location < minimumLocation) {
+            NSInteger diff = minimumLocation - tempRange.location;
+            tempRange.location += diff;
+            if (diff > tempRange.length) {
+                tempRange.length = 0;
+            } else {
+                tempRange.length -= diff;
+            }
+        }
         range = NSMakeRange(tempRange.location, tempRange.length);
         if (range.length > 0) {
+            // CFStringGetRangeOfComposedCharactersAtIndex thinks that U+FF9E and U+FF9F are
+            // combining marks. Terminal.app and the person in issue 6048 disagree. Prevent them
+            // from combining.
+            NSRange rangeOfFirstException = [self rangeOfCharacterFromSet:exceptions
+                                                                  options:NSLiteralSearch
+                                                                    range:range];
+            if (rangeOfFirstException.location != NSNotFound &&
+                rangeOfFirstException.location > range.location) {
+                range.length = rangeOfFirstException.location - range.location;
+                minimumLocation = NSMaxRange(range);
+            }
+
             unichar simple = range.length == 1 ? [self characterAtIndex:range.location] : 0;
             NSString *complexString = range.length == 1 ? nil : [self substringWithRange:range];
             BOOL stop = NO;
@@ -1722,6 +1750,72 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         }
     }
     return temp;
+}
+
+- (NSRect)it_boundingRectWithSize:(NSSize)bounds attributes:(NSDictionary *)attributes truncated:(BOOL *)truncated {
+    CGSize size = { 0, 0 };
+    *truncated = NO;
+    for (NSString *part in [self componentsSeparatedByString:@"\n"]) {
+        CFMutableAttributedStringRef string =
+            (CFMutableAttributedStringRef)[[[NSAttributedString alloc] initWithString:part
+                                                                           attributes:attributes] autorelease];
+
+        CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(string);
+        CFRange fitRange;
+
+        CFRange textRange = CFRangeMake(0, part.length);
+        CGSize frameSize = CTFramesetterSuggestFrameSizeWithConstraints(framesetter,
+                                                                        textRange,
+                                                                        NULL,
+                                                                        bounds,
+                                                                        &fitRange);
+        if (fitRange.length != part.length) {
+            *truncated = YES;
+        }
+        CFRelease(framesetter);
+        size.width = MAX(size.width, frameSize.width);
+        size.height += frameSize.height;
+    }
+
+    return NSMakeRect(0, 0, size.width, size.height);
+}
+
+- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes {
+    CGContextRef ctx = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextSaveGState(ctx);
+
+    for (NSString *part in [self componentsSeparatedByString:@"\n"]) {
+        CFMutableAttributedStringRef string =
+                (CFMutableAttributedStringRef)[[[NSAttributedString alloc] initWithString:part
+                                                                               attributes:attributes] autorelease];
+
+        CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(string);
+
+        CGMutablePathRef path = CGPathCreateMutable();
+        CGPathAddRect(path, NULL, rect);
+
+        CTFrameRef textFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0,0), path, NULL);
+
+        CTFrameDraw(textFrame, ctx);
+
+        CFRange fitRange;
+
+        // Get the height of the line and translate the context down by it
+        CFRange textRange = CFRangeMake(0, part.length);
+        CGSize frameSize = CTFramesetterSuggestFrameSizeWithConstraints(framesetter,
+                                                                        textRange,
+                                                                        NULL,
+                                                                        rect.size,
+                                                                        &fitRange);
+        CGContextTranslateCTM(ctx, 0, -frameSize.height);
+
+
+        CGPathRelease(path);
+        CFRelease(framesetter);
+
+    }
+
+    CGContextRestoreGState(ctx);
 }
 
 @end

@@ -228,6 +228,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Returns the tab associated with a session.
 - (PTYTab *)tabForSession:(PTYSession *)session;
 
+- (void)tabTitleDidChange:(PTYTab *)tab;
+
 #pragma mark - Sessions
 
 // Set the session name. If theSessionName is nil then set it to the pathname

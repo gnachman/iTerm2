@@ -49,7 +49,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @implementation iTermInitialDirectory(Tmux)
 
-- (NSString *)tmuxNewWindowCommandInSession:(NSString *)session {
+- (NSString *)tmuxNewWindowCommandInSession:(NSString *)session
+                         recyclingSupported:(BOOL)recyclingSupported {
     NSArray *args = @[ @"new-window", @"-PF '#{window_id}'" ];
     
     if (session) {
@@ -59,40 +60,45 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          targetSessionArg ];
         args = [args arrayByAddingObjectsFromArray:insertionArguments];
     }
-    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args];
+    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args recyclingSupported:recyclingSupported];
 }
 
-- (NSString *)tmuxNewWindowCommand {
-    return [self tmuxNewWindowCommandInSession:nil];
+- (NSString *)tmuxNewWindowCommandRecyclingSupported:(BOOL)recyclingSupported {
+    return [self tmuxNewWindowCommandInSession:nil recyclingSupported:recyclingSupported];
 }
 
-- (NSString *)tmuxSplitWindowCommand:(int)wp vertically:(BOOL)splitVertically {
+- (NSString *)tmuxSplitWindowCommand:(int)wp vertically:(BOOL)splitVertically
+                  recyclingSupported:(BOOL)recyclingSupported {
     NSArray *args = @[ @"split-window",
                        splitVertically ? @"-h": @"-v",
                        @"-t",
                        [NSString stringWithFormat:@"%%%d", wp] ];
-    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args];
+    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args recyclingSupported:recyclingSupported];
 }
 
-- (NSString *)tmuxCustomDirectoryParameter {
+- (NSString *)tmuxCustomDirectoryParameterRecyclingSupported:(BOOL)recyclingSupported {
     switch (self.mode) {
         case iTermInitialDirectoryModeHome:
             return nil;
         case iTermInitialDirectoryModeCustom:
             return [self.customDirectory stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
         case iTermInitialDirectoryModeRecycle:
-            return @"#{pane_current_path}";
+            if (recyclingSupported) {
+                return @"#{pane_current_path}";
+            } else {
+                return nil;
+            }
     }
 }
 
-- (NSString *)tmuxCommandByAddingCustomDirectoryWithArgs:(NSArray *)args {
-    NSString *customDirectory = [self tmuxCustomDirectoryParameter];
+- (NSString *)tmuxCommandByAddingCustomDirectoryWithArgs:(NSArray *)args
+                                      recyclingSupported:(BOOL)recyclingSupported {
+    NSString *customDirectory = [self tmuxCustomDirectoryParameterRecyclingSupported:recyclingSupported];
     if (customDirectory) {
         NSString *escapedCustomDirectory= [customDirectory stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
         NSString *customDirectoryArgument = [NSString stringWithFormat:@"-c '%@'", escapedCustomDirectory];
         args = [args arrayByAddingObject:customDirectoryArgument];
     }
-    
     return [args componentsJoinedByString:@" "];
 }
 
@@ -551,8 +557,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
                inWindow:(int)window {
-    [self retainWindow:window withTab:[aSession.delegate.realParentWindow tabForSession:aSession]];
-    [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
+    PTYTab *tab = [aSession.delegate.realParentWindow tabForSession:aSession];
+    ITCriticalError(tab != nil, @"nil tab for session %@ with delegate %@ with realparentwindow %@",
+                    aSession, aSession.delegate, aSession.delegate.realParentWindow);
+    if (tab) {
+        [self retainWindow:window withTab:tab];
+        [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
+    }
 }
 
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane session:(id)session
@@ -715,6 +726,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                            responseTarget:self
                                          responseSelector:@selector(guessVersion21Response:)
                                            responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:@"list-clients -F \"#{client_cwd}\""  // client_cwd was deprecated in 1.9
+                                           responseTarget:self
+                                         responseSelector:@selector(guessVersion18Response:)
+                                           responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors]
                            ];
     for (NSDictionary *command in commands) {
@@ -768,6 +784,24 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [self decreaseMaximumServerVersionTo:@"2.0"];
     } else {
         [self increaseMinimumServerVersionTo:@"2.1"];
+    }
+}
+
+- (void)guessVersion18Response:(NSString *)response {
+    if (response.length == 0) {
+        [self increaseMinimumServerVersionTo:@"1.9"];
+    } else {
+        [self decreaseMaximumServerVersionTo:@"1.8"];
+    }
+}
+
+- (BOOL)recyclingSupported {
+    NSDecimalNumber *version1_9 = [NSDecimalNumber decimalNumberWithString:@"1.9"];
+    if (gateway_.minimumServerVersion != nil) {
+        return ([gateway_.minimumServerVersion compare:version1_9] != NSOrderedAscending);
+    } else {
+        // Assume 1.8
+        return NO;
     }
 }
 
@@ -861,7 +895,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
              vertically:(BOOL)splitVertically
        initialDirectory:(iTermInitialDirectory *)initialDirectory {
     // No need for a callback. We should get a layout-changed message and act on it.
-    [gateway_ sendCommand:[initialDirectory tmuxSplitWindowCommand:wp vertically:splitVertically]
+    [gateway_ sendCommand:[initialDirectory tmuxSplitWindowCommand:wp
+                                                        vertically:splitVertically
+                                                recyclingSupported:self.recyclingSupported]
            responseTarget:nil
          responseSelector:nil];
 }
@@ -875,7 +911,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)newWindowInSession:(NSString *)targetSession
           initialDirectory:(iTermInitialDirectory *)initialDirectory {
-    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandInSession:targetSession]
+    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandInSession:targetSession
+                                                       recyclingSupported:self.recyclingSupported]
            responseTarget:nil
          responseSelector:nil];
 }
@@ -883,7 +920,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)newWindowWithAffinity:(NSString *)windowIdString
              initialDirectory:(iTermInitialDirectory *)initialDirectory {
     _manualOpenRequested = (windowIdString != nil);
-    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommand]
+    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandRecyclingSupported:self.recyclingSupported]
            responseTarget:self
          responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
            responseObject:windowIdString
@@ -1684,6 +1721,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab
 {
+    assert(tab);
     NSNumber *k = [NSNumber numberWithInt:window];
     NSMutableArray *entry = [windows_ objectForKey:k];
     BOOL notify = NO;

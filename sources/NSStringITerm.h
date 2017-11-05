@@ -260,6 +260,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByMakingControlCharactersToPrintable;
 
+// These methods work on 10.13 with strings that include newlines, and are consistent with each other.
+// The built in NSString API ignores everything from the first newline on for computing bounds.
+- (NSRect)it_boundingRectWithSize:(NSSize)bounds attributes:(NSDictionary *)attributes truncated:(BOOL *)truncated;
+- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes;
+
 @end
 
 @interface NSMutableString (iTerm)

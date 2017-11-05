@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="8195" systemVersion="15A282b" minimumToolsVersion="Xcode 7.0">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="13240" systemVersion="" minimumToolsVersion="Xcode 7.0" sourceLanguage="Objective-C" userDefinedModelVersionIdentifier="">
     <entity name="CommandHistoryCommandUse" representedClassName="iTermCommandHistoryCommandUseMO" syncable="YES">
-        <attribute name="code" optional="YES" attributeType="Integer 32" syncable="YES"/>
+        <attribute name="code" optional="YES" attributeType="Integer 32" usesScalarValueType="NO" syncable="YES"/>
         <attribute name="command" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="directory" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="markGuid" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="time" optional="YES" attributeType="Double" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="time" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO" syncable="YES"/>
         <relationship name="entry" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CommandHistoryEntry" inverseName="uses" inverseEntity="CommandHistoryEntry" syncable="YES"/>
     </entity>
     <entity name="CommandHistoryEntry" representedClassName="iTermCommandHistoryEntryMO" syncable="YES">
         <attribute name="command" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="matchLocation" optional="YES" transient="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
-        <attribute name="numberOfUses" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
-        <attribute name="timeOfLastUse" optional="YES" attributeType="Double" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="matchLocation" optional="YES" transient="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="numberOfUses" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="timeOfLastUse" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO" syncable="YES"/>
         <relationship name="remoteHost" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="HostRecord" inverseName="entries" inverseEntity="HostRecord" syncable="YES"/>
         <relationship name="uses" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CommandHistoryCommandUse" inverseName="entry" inverseEntity="CommandHistoryCommandUse" syncable="YES"/>
     </entity>
@@ -22,17 +22,17 @@
         <relationship name="directories" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="RecentDirectory" inverseName="remoteHost" inverseEntity="RecentDirectory" syncable="YES"/>
         <relationship name="entries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CommandHistoryEntry" inverseName="remoteHost" inverseEntity="CommandHistoryEntry" syncable="YES"/>
     </entity>
-    <entity name="RecentDirectory" representedClassName="iTermRecentDirectoryMO" syncable="YES">
-        <attribute name="lastUse" attributeType="Double" defaultValueString="0.0" syncable="YES"/>
+    <entity name="RecentDirectory" representedClassName="iTermRecentDirectoryMO" versionHashModifier="1" syncable="YES">
+        <attribute name="lastUse" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO" indexed="YES" syncable="YES"/>
         <attribute name="path" attributeType="String" syncable="YES"/>
-        <attribute name="starred" attributeType="Boolean" defaultValueString="NO" syncable="YES"/>
-        <attribute name="useCount" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <attribute name="starred" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="useCount" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="NO" syncable="YES"/>
         <relationship name="remoteHost" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="HostRecord" inverseName="directories" inverseEntity="HostRecord" syncable="YES"/>
     </entity>
     <elements>
-        <element name="HostRecord" positionX="0" positionY="0" width="128" height="105"/>
         <element name="CommandHistoryCommandUse" positionX="0" positionY="0" width="128" height="135"/>
         <element name="CommandHistoryEntry" positionX="0" positionY="0" width="128" height="135"/>
+        <element name="HostRecord" positionX="0" positionY="0" width="128" height="105"/>
         <element name="RecentDirectory" positionX="18" positionY="63" width="128" height="120"/>
     </elements>
 </model>

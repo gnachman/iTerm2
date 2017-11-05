@@ -455,6 +455,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
                              width:(int)width
                           metadata:(LineBlockMetadata *)metadata {
     assert(gEnableDoubleWidthCharacterLineCache);
+    ITBetaAssert(n >= 0, @"Negative lines to offsetOfWrappedLineInBuffer");
     if (_mayHaveDoubleWidthCharacter) {
         if (!metadata->double_width_characters ||
             metadata->width_for_double_width_characters_cache != width) {
@@ -464,7 +465,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
         __block int lines = 0;
         __block int i = 0;
         __block NSUInteger lastIndex = 0;
-        [metadata->double_width_characters enumerateIndexesInRange:NSMakeRange(0, n + 1)
+        [metadata->double_width_characters enumerateIndexesInRange:NSMakeRange(0, MAX(0, n + 1))
                                                            options:0
                                                         usingBlock:^(NSUInteger indexOfLineThatWouldStartWithRightHalf, BOOL * _Nonnull stop) {
             int numberOfLines = indexOfLineThatWouldStartWithRightHalf - lastIndex;
@@ -550,6 +551,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
 {
+    ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     int prev = 0;
     int numEmptyLines = 0;
     for (int i = first_entry; i < cll_entries; ++i) {
@@ -586,6 +588,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
             *lineNum -= consume;
+            ITBetaAssert(*lineNum >= 0, @"Negative lines after consuming spans");
         } else {  // *lineNum <= spans
             // We found the raw line that inclues the wrapped line we're searching for.
             // eat up *lineNum many width-sized wrapped lines from this start of the current full line

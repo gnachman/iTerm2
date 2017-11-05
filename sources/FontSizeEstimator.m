@@ -29,11 +29,11 @@
 #import "FontSizeEstimator.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @implementation FontSizeEstimator
 
 @synthesize size;
-@synthesize baseline;
 
 - (instancetype)initWithSize:(NSSize)s baseline:(double)b {
     self = [super init];
@@ -42,6 +42,25 @@
         baseline = b;
     }
     return self;
+}
+
++ (NSLayoutManager *)newLayoutManagerForFont:(NSFont *)aFont textContainer:(NSTextContainer *)textContainer {
+    NSString *myString = @"W";
+
+    NSTextStorage *textStorage = [[[NSTextStorage alloc] initWithString:myString] autorelease];
+    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+    [layoutManager addTextContainer:textContainer];
+    [textStorage addLayoutManager:layoutManager];
+    [textStorage addAttribute:NSFontAttributeName
+                        value:aFont
+                        range:NSMakeRange(0, [textStorage length])];
+    [textContainer setLineFragmentPadding:0.0];
+    [layoutManager glyphRangeForTextContainer:textContainer];
+    return layoutManager;
+}
+
++ (NSTextContainer *)newTextContainer {
+    return [[[NSTextContainer alloc] initWithContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)] autorelease];
 }
 
 + (id)fontSizeEstimatorForFont:(NSFont *)aFont
@@ -82,10 +101,16 @@
         size.width = MAX(1, size.width);
         size.height = MAX(1, size.height);
 
-        double baseline = -(floorf([aFont leading]) - floorf([aFont descender]));
+        if ([iTermAdvancedSettingsModel useExperimentalFontMetrics]) {
+            NSTextContainer *textContainer = [self newTextContainer];
+            NSLayoutManager *layoutManager = [self newLayoutManagerForFont:aFont
+                                                             textContainer:textContainer];
+            NSRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
 
-        fse.size = size;
-        fse.baseline = baseline;
+            fse.size = usedRect.size;
+        } else {
+            fse.size = size;
+        }
     }
     return fse;
 }

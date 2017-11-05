@@ -25,6 +25,7 @@
 
 #import "iTerm.h"
 #import "FutureMethods.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "PreferencePanel.h"
 #import "PTYScrollView.h"
 #import "PTYTextView.h"
@@ -134,7 +135,7 @@
                [NSValue valueWithRect:[self documentVisibleRect]]];
 }
 
-- (PTYScroller *)verticalScroller {
+- (PTYScroller *)ptyVerticalScroller {
     return (PTYScroller *)[super verticalScroller];
 }
 
@@ -155,7 +156,15 @@ static CGFloat RoundTowardZero(CGFloat value) {
     if (theEvent.hasPreciseScrollingDeltas) {
         delta /= self.verticalLineScroll;
     }
-
+    if ([iTermAdvancedSettingsModel sensitiveScrollWheel]) {
+        if (delta > 0) {
+            return ceil(delta);
+        } else if (delta < 0) {
+            return floor(delta);
+        } else {
+            return 0;
+        }
+    }
     PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
     verticalScroller.accumulatedDeltaY += delta;
     CGFloat amount = 0;

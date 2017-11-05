@@ -203,6 +203,8 @@ typedef struct iTermTextColorContext {
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+    iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
+    
     if (_debug) {
         [[NSColor redColor] set];
         NSRectFill(rect);
@@ -217,11 +219,13 @@ typedef struct iTermTextColorContext {
     NSInteger yLimit = _numberOfLines;
 
     VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
+    NSRange visibleLines = [self rangeOfVisibleRows];
+
     // Start at 0 because ligatures can draw incorrectly otherwise. When a font has a ligature for
     // -> and >-, then a line like ->->-> needs to start at the beginning since drawing only a
     // suffix of it could draw a >- ligature at the start of the range being drawn. Issue 5030.
     boundingCoordRange.start.x = 0;
-    boundingCoordRange.start.y = MAX(0, boundingCoordRange.start.y - 1);
+    boundingCoordRange.start.y = MAX(MAX(0, boundingCoordRange.start.y - 1), visibleLines.location);
     boundingCoordRange.end.x = MIN(_gridSize.width, boundingCoordRange.end.x + haloWidth);
     boundingCoordRange.end.y = MIN(yLimit, boundingCoordRange.end.y + 1);
     
@@ -252,7 +256,10 @@ typedef struct iTermTextColorContext {
         }
     }
 
-    [self drawRanges:ranges count:numRowsInRect origin:boundingCoordRange.start boundingRect:[self rectForCoordRange:boundingCoordRange]];
+    [self drawRanges:ranges count:numRowsInRect
+              origin:boundingCoordRange.start
+        boundingRect:[self rectForCoordRange:boundingCoordRange]
+        visibleLines:visibleLines];
     
     if (_showDropTargets) {
         [self drawDropTargets];
@@ -296,7 +303,11 @@ typedef struct iTermTextColorContext {
     return count;
 }
 
-- (void)drawRanges:(NSRange *)ranges count:(NSInteger)numRanges origin:(VT100GridCoord)origin boundingRect:(NSRect)boundingRect {
+- (void)drawRanges:(NSRange *)ranges
+             count:(NSInteger)numRanges
+            origin:(VT100GridCoord)origin
+      boundingRect:(NSRect)boundingRect
+      visibleLines:(NSRange)visibleLines {
     // Configure graphics
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
 
@@ -304,7 +315,6 @@ typedef struct iTermTextColorContext {
     _blinkingFound = NO;
 
     NSMutableArray<iTermBackgroundColorRunsInLine *> *backgroundRunArrays = [NSMutableArray array];
-    NSRange visibleLines = [self rangeOfVisibleRows];
 
     for (NSInteger i = 0; i < numRanges; i++) {
         const int line = origin.y + i;
@@ -387,7 +397,7 @@ typedef struct iTermTextColorContext {
 
     // Now iterate over the lines and paint the characters.
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    if (self.minimumContrast > 0 || self.colorMap.mutingAmount > 0 || self.colorMap.dimmingAmount > 0) {
+    if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
                                                ctx:ctx];
     } else {
@@ -417,6 +427,25 @@ typedef struct iTermTextColorContext {
     if (self.copyMode) {
         [self drawCopyModeCursor];
     }
+}
+
+- (BOOL)textAppearanceDependsOnBackgroundColor {
+    if (self.minimumContrast > 0) {
+        return YES;
+    }
+    if (self.colorMap.mutingAmount > 0) {
+        return YES;
+    }
+    if (self.colorMap.dimmingAmount > 0) {
+        return YES;
+    }
+    if (self.thinStrokes == iTermThinStrokesSettingDarkBackgroundsOnly) {
+        return YES;
+    }
+    if (self.thinStrokes == iTermThinStrokesSettingRetinaDarkBackgroundsOnly && _isRetina) {
+        return YES;
+    }
+    return NO;
 }
 
 #pragma mark - Drawing: Background
@@ -1198,6 +1227,9 @@ typedef struct iTermTextColorContext {
     size_t length = numCodes;
     [self selectFont:font inContext:ctx];
     CGContextSetFillColorSpace(ctx, CGColorGetColorSpace(color));
+    if (CGColorGetAlpha(color) < 1) {
+        CGContextSetBlendMode(ctx, kCGBlendModeSourceAtop);
+    }
     CGContextSetFillColor(ctx, components);
 
     double y = point.y + _cellSize.height + _baselineOffset;
@@ -1236,6 +1268,9 @@ typedef struct iTermTextColorContext {
 
     if (useThinStrokes) {
         CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
+    }
+    if (CGColorGetAlpha(color) < 1) {
+        CGContextSetBlendMode(ctx, kCGBlendModeNormal);
     }
 
     return length;
@@ -2421,18 +2456,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 
     if (_passwordInput) {
-        NSString *key = @"🔑";
-        BOOL bold = NO;
-        BOOL italic = NO;
-        PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:' '
-                                                          isComplex:NO
-                                                         renderBold:&bold
-                                                       renderItalic:&italic];
-        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+        NSImage *keyImage = [NSImage imageNamed:@"key"];
         CGPoint point = rect.origin;
-        point.y += _baselineOffset;
-        [key drawAtPoint:point withAttributes:@{ NSBackgroundColorAttributeName: [NSColor clearColor],
-                                                 NSFontAttributeName: fontInfo.font }];
+        [keyImage drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
+                    fromRect:NSZeroRect
+                   operation:NSCompositeSourceOver
+                    fraction:1
+              respectFlipped:YES
+                       hints:nil];
         return rect;
     }
 

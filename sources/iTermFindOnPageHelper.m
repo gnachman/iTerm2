@@ -297,6 +297,9 @@
     int i = start;
     for (int j = 0; !found && j < [_searchResults count]; j++) {
         SearchResult* r = _searchResults[i];
+        if (r.absEndY <= overflowAdjustment) {
+            continue;
+        }
         NSInteger pos = r.startX + (long long)r.absStartY * width;
         if (!found) {
             if (NSLocationInRange(pos, range)) {
@@ -305,9 +308,9 @@
                 wrapAroundResultPosition = -1;
                 selectedRange =
                     VT100GridCoordRangeMake(r.startX,
-                                            r.absStartY - overflowAdjustment,
+                                            MAX(0, r.absStartY - overflowAdjustment),
                                             r.endX + 1,  // half-open
-                                            r.absEndY - overflowAdjustment);
+                                            MAX(0, r.absEndY - overflowAdjustment));
                 [_delegate findOnPageSelectRange:selectedRange wrapped:NO];
             } else if (!_haveRevealedSearchResult) {
                 if (forward) {
@@ -331,9 +334,9 @@
         found = YES;
         selectedRange =
             VT100GridCoordRangeMake(wrapAroundResult.startX,
-                                    wrapAroundResult.absStartY - overflowAdjustment,
+                                    MAX(0, wrapAroundResult.absStartY - overflowAdjustment),
                                     wrapAroundResult.endX + 1,  // half-open
-                                    wrapAroundResult.absEndY - overflowAdjustment);
+                                    MAX(0, wrapAroundResult.absEndY - overflowAdjustment));
         [_delegate findOnPageSelectRange:selectedRange wrapped:YES];
         [_delegate findOnPageDidWrapForwards:forward];
     }

@@ -163,7 +163,7 @@ static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Arr
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
-static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE = @"Last Directory Is Remote";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD = @"Last Directory Is Remote";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";  // Dictionary of APS state.
 
@@ -232,7 +232,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic) NSTimeInterval lastResize;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
-@property(nonatomic) BOOL lastDirectoryIsRemote;
+@property(nonatomic) BOOL lastDirectoryIsUnsuitableForOldPWD;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
@@ -1272,7 +1272,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
-            aSession->_lastDirectoryIsRemote = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE] boolValue];
+            aSession->_lastDirectoryIsUnsuitableForOldPWD = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] boolValue];
         }
     }
 
@@ -1984,7 +1984,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // beautiful here, but in that case we want to turn off the bell and scroll to the
             // bottom.
             [self setBell:NO];
-            PTYScroller *verticalScroller = [_view.scrollview verticalScroller];
+            PTYScroller *verticalScroller = [_view.scrollview ptyVerticalScroller];
             [verticalScroller setUserScroll:NO];
         }
         NSData *data = [string dataUsingEncoding:encoding allowLossyConversion:YES];
@@ -2854,14 +2854,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        text:&keyBindingText
                                                 keyMappings:[iTermKeyBindingMgr globalKeyMap]];
 
-
-    if (keyBindingAction == KEY_ACTION_SELECT_MENU_ITEM) {
-        DLog(@"Invoking keybinding action to select menu item %@", keyBindingText);
-        [PTYSession selectMenuItem:keyBindingText];
-        return YES;
-    } else {
-        return NO;
-    }
+    return [PTYSession performKeyBindingAction:keyBindingAction
+                                     parameter:keyBindingText
+                                         event:event];
 }
 
 + (void)selectMenuItemWithSelector:(SEL)theSelector {
@@ -3912,6 +3907,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _shell.size = size;
         _shell.size = _screen.size;
     }
+    _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }
 
 - (void)clearScrollbackBuffer {
@@ -4032,7 +4028,7 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
         if (self.lastDirectory) {
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
-            result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE] = @(self.lastDirectoryIsRemote);
+            result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] = @(self.lastDirectoryIsUnsuitableForOldPWD);
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
             [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
@@ -5408,6 +5404,88 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// This is limited to the actions that don't need any existing session
++ (BOOL)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
+    switch (keyBindingAction) {
+        case -1:
+            // No action
+            return NO;
+
+        case KEY_ACTION_MOVE_TAB_LEFT:
+        case KEY_ACTION_MOVE_TAB_RIGHT:
+        case KEY_ACTION_NEXT_MRU_TAB:
+        case KEY_ACTION_PREVIOUS_MRU_TAB:
+        case KEY_ACTION_NEXT_PANE:
+        case KEY_ACTION_PREVIOUS_PANE:
+        case KEY_ACTION_NEXT_SESSION:
+        case KEY_ACTION_NEXT_WINDOW:
+        case KEY_ACTION_PREVIOUS_SESSION:
+        case KEY_ACTION_PREVIOUS_WINDOW:
+        case KEY_ACTION_SCROLL_END:
+        case KEY_ACTION_SCROLL_HOME:
+        case KEY_ACTION_SCROLL_LINE_DOWN:
+        case KEY_ACTION_SCROLL_LINE_UP:
+        case KEY_ACTION_SCROLL_PAGE_DOWN:
+        case KEY_ACTION_SCROLL_PAGE_UP:
+        case KEY_ACTION_ESCAPE_SEQUENCE:
+        case KEY_ACTION_HEX_CODE:
+        case KEY_ACTION_TEXT:
+        case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_RUN_COPROCESS:
+        case KEY_ACTION_SEND_C_H_BACKSPACE:
+        case KEY_ACTION_SEND_C_QM_BACKSPACE:
+        case KEY_ACTION_IGNORE:
+        case KEY_ACTION_IR_FORWARD:
+        case KEY_ACTION_IR_BACKWARD:
+        case KEY_ACTION_SELECT_PANE_LEFT:
+        case KEY_ACTION_SELECT_PANE_RIGHT:
+        case KEY_ACTION_SELECT_PANE_ABOVE:
+        case KEY_ACTION_SELECT_PANE_BELOW:
+        case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+        case KEY_ACTION_REMAP_LOCALLY:
+        case KEY_ACTION_TOGGLE_FULLSCREEN:
+        case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+        case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+        case KEY_ACTION_SET_PROFILE:
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+        case KEY_ACTION_FIND_REGEX:
+        case KEY_FIND_AGAIN_DOWN:
+        case KEY_FIND_AGAIN_UP:
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
+        case KEY_ACTION_PASTE_SPECIAL:
+        case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
+        case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
+        case KEY_ACTION_DECREASE_HEIGHT:
+        case KEY_ACTION_INCREASE_HEIGHT:
+        case KEY_ACTION_DECREASE_WIDTH:
+        case KEY_ACTION_INCREASE_WIDTH:
+        case KEY_ACTION_SWAP_PANE_LEFT:
+        case KEY_ACTION_SWAP_PANE_RIGHT:
+        case KEY_ACTION_SWAP_PANE_ABOVE:
+        case KEY_ACTION_SWAP_PANE_BELOW:
+            return NO;
+            break;
+
+        case KEY_ACTION_SELECT_MENU_ITEM:
+            [PTYSession selectMenuItem:keyBindingText];
+            return YES;
+        case KEY_ACTION_NEW_TAB_WITH_PROFILE:
+        case KEY_ACTION_NEW_WINDOW_WITH_PROFILE: {
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            [[iTermController sharedInstance] launchBookmark:profile inTerminal:nil];
+            return YES;
+        }
+        case KEY_ACTION_UNDO:
+            [PTYSession selectMenuItemWithSelector:@selector(undo:)];
+            return YES;
+    }
+    assert(false);
+    return NO;
+}
+
 - (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
     BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
 
@@ -5866,9 +5944,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
             } else if (keystr != nil) {
-                NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
-                    [keystr dataUsingEncoding:NSUTF8StringEncoding] :
-                    [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
+                NSData *keydat = [keystr dataUsingEncoding:_terminal.encoding];
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
@@ -6740,6 +6816,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)textViewPasswordInput {
     return _passwordInput;
+}
+
+- (void)textViewDidSelectPasswordPrompt {
+    iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
+    [delegate openPasswordManagerToAccountName:nil
+                                     inSession:self];
 }
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
@@ -8358,7 +8440,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)setLastDirectory:(NSString *)lastDirectory isRemote:(BOOL)isRemote {
+// isRemote is a misnomer. It's really "is unsuitable for old PWD", since it would be YES for
+// when shell integration had never been used and the lastDirectory is not updated reliably.
+- (void)setLastDirectory:(NSString *)lastDirectory isUnsuitableForOldPWD:(BOOL)isUnsuitableForOldPWD {
     DLog(@"Set last directory to %@", lastDirectory);
     if (lastDirectory) {
         [_directories addObject:lastDirectory];
@@ -8366,12 +8450,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
-    _lastDirectoryIsRemote = isRemote;
+    _lastDirectoryIsUnsuitableForOldPWD = isUnsuitableForOldPWD;
     [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
 - (NSString *)currentLocalWorkingDirectory {
-    if (_lastDirectoryIsRemote || _lastDirectory == nil) {
+    if (_lastDirectoryIsUnsuitableForOldPWD || _lastDirectory == nil) {
         // Ask the kernel what the child's process's working directory is.
         return [_shell getWorkingDirectory];
     } else {
@@ -8401,7 +8485,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
                                                            onHost:[_screen remoteHostOnLine:line]
                                                          isChange:!isSame];
-    [self setLastDirectory:directory isRemote:!remoteHost.isLocalhost];
+    // Note that when remoteHost is nil, it's unsuitable for old PWD because
+    // that means shell integration hasn't been used and we have to keep
+    // pulling the pwd from the child process via the kernel.
+    [self setLastDirectory:directory isUnsuitableForOldPWD:!remoteHost.isLocalhost];
     self.lastRemoteHost = remoteHost;
 }
 
