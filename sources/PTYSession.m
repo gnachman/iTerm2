@@ -1490,6 +1490,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSize:(VT100GridSize)size {
+    ITBetaAssert(size.width > 0, @"Nonpositive width %d", size.width);
+    ITBetaAssert(size.height > 0, @"Nonpositive height %d", size.height);
+    if (size.width <= 0) {
+        size.width = 1;
+    }
+    if (size.height <= 0) {
+        size.height = 1;
+    }
     self.lastResize = [NSDate timeIntervalSinceReferenceDate];
     DLog(@"Set session %@ to %@", self, VT100GridSizeDescription(size));
     [_screen setSize:size];
