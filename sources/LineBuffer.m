@@ -1123,21 +1123,21 @@ static int RawNumLines(LineBuffer* buffer, int width) {
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-           timestamp:[NSDate timeIntervalSinceReferenceDate]
+           timestamp:nil // [NSDate timeIntervalSinceReferenceDate]
         continuation:defaultBg];
 
     [self appendLine:buffer
               length:len
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-           timestamp:[NSDate timeIntervalSinceReferenceDate]
+           timestamp:nil // [NSDate timeIntervalSinceReferenceDate]
         continuation:bg];
 
     [self appendLine:buffer
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-           timestamp:[NSDate timeIntervalSinceReferenceDate]
+           timestamp:nil // [NSDate timeIntervalSinceReferenceDate]
         continuation:defaultBg];
 }
 

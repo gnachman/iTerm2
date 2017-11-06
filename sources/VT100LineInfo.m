@@ -70,7 +70,7 @@
 }
 
 - (void)updateTimestamp {
-    self.timestamp = [NSDate timeIntervalSinceReferenceDate];
+    // self.timestamp = [NSDate timeIntervalSinceReferenceDate];
 }
 
 - (BOOL)isDirtyAtOffset:(int)x {
@@ -94,7 +94,7 @@
     VT100LineInfo *theCopy = [[VT100LineInfo alloc] initWithWidth:width_];
     theCopy->start_ = start_;
     theCopy->bound_ = bound_;
-    theCopy->timestamp_ = timestamp_;
+    // theCopy->timestamp_ = timestamp_;
     
     return theCopy;
 }
