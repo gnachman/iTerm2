@@ -185,6 +185,7 @@
         // ` not supported (Character Position Absolute [column] (default = [row,1]) (HPA))
         // a not supported (Character Position Relative [columns] (default = [row,col+1]) (HPR))
         // b not supported (Repeat the preceding graphic character P s times (REP))
+        { 0, 0, 'b', VT100CSI_REP, 1, -1, -1 },
         { 0, 0, 'c', VT100CSI_DA, 0, -1, -1 },
         { '>', 0, 'c', VT100CSI_DA2, 0, -1, -1 },
         { 0, 0, 'd', ANSICSI_VPA, 1, -1, -1 },
@@ -281,7 +282,6 @@
         "1;1;1;1;1T",
         "`",
         "a",
-        "1b",
         "?1i",
         ">0p",
         "1$p",
