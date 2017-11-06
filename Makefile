@@ -34,7 +34,7 @@ Dep:
 Beta:
 	cp plists/release-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Beta && \
-	chmod -R go+rX build/Deployment
+	chmod -R go+rX build/Beta
 
 Deployment:
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment && \

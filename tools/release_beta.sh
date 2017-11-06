@@ -86,7 +86,7 @@ SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
 
-echo "Build deployment release"
+echo "Build beta release"
 make clean
 make Beta
 
