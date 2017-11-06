@@ -912,7 +912,7 @@
 		1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
 		1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
 		1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
-		1D6ED99319AEA20D005A7799 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
+		1D6ED99319AEA20D005A7799 /* Therm.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* Therm.sdef */; };
 		1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
 		1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
 		1D6ED99719AEA20D005A7799 /* Warning.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577109CB93C2008F320C /* Warning.png */; };
@@ -1480,7 +1480,7 @@
 		A66719541DCE36C3000CE608 /* SetDirectoryTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE0C8471BF17E34008ACBA9 /* SetDirectoryTrigger.h */; };
 		A66719551DCE36C3000CE608 /* iTermAutomaticProfileSwitcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */; };
 		A66719561DCE36C3000CE608 /* iTermRecentDirectoryMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B211BCC24AB00B5629D /* iTermRecentDirectoryMO.h */; };
-		A667195F1DCE36F8000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
+		A667195F1DCE36F8000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
 		A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 53EBF29C1DCBFF7C00766613 /* iTermAPIServer.m */; };
 		A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */ = {isa = PBXBuildFile; fileRef = 53EBF2A01DCCF4AC00766613 /* iTermIPV4Address.m */; };
 		A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = 53EBF2A41DCCF4E500766613 /* iTermSocketAddress.m */; };
@@ -1490,11 +1490,11 @@
 		A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = 53EBF2B41DCCF63100766613 /* iTermWebSocketFrame.m */; };
 		A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 53EBF2B81DCCF66600766613 /* iTermWebSocketFrameBuilder.m */; };
 		A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 53EBF2BC1DCCF6A700766613 /* iTermWebSocketConnection.m */; };
-		A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
-		A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
-		A667196B1DCE3970000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
+		A66719691DCE3965000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
+		A667196A1DCE396A000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
+		A667196B1DCE3970000CE608 /* libThermSharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */; };
 		A667F3871B48615900705186 /* iTermToolbeltTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F3861B48615900705186 /* iTermToolbeltTest.m */; };
-		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
+		A667F3881B48671B00705186 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
 		A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F38D1B49FC2E00705186 /* iTermToolbeltSplitView.h */; };
 		A667F3901B49FC2E00705186 /* iTermToolbeltSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F38E1B49FC2E00705186 /* iTermToolbeltSplitView.m */; };
@@ -2213,9 +2213,9 @@
 		A6C763CD1B45C52B00E3C992 /* VT100XtermParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */; };
 		A6C763CE1B45C53A00E3C992 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
 		A6C763CF1B45C53B00E3C992 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
-		A6C763D21B45C5B200E3C992 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
-		A6C763D31B45C5B700E3C992 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
-		A6C763D81B45C5C800E3C992 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
+		A6C763D21B45C5B200E3C992 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
+		A6C763D31B45C5B700E3C992 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
+		A6C763D81B45C5C800E3C992 /* libThermShared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libThermShared.a */; };
 		A6C763D91B45C69900E3C992 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231319CF6B1600182C08 /* Growl.framework */; };
 		A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */; };
 		A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
@@ -2241,8 +2241,8 @@
 		A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
-		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
-		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
+		A6C7DE5919A459E9001E5C75 /* Therm.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* Therm.sdef */; };
+		A6C7DE5A19A459E9001E5C75 /* Therm.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* Therm.sdef */; };
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
@@ -2794,7 +2794,7 @@
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileListView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileListView.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2ForApplescriptTesting.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThermForApplescriptTesting.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D70BA331680158700824B72 /* PTYFontInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYFontInfo.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D70BA341680158700824B72 /* PTYFontInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYFontInfo.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2966,7 +2966,7 @@
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100GridTypes.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTypes.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DD39AD4180B8117004E56D5 /* iTerm2Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DD39AD4180B8117004E56D5 /* ThermTests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThermTests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DD39AD6180B8118004E56D5 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		1DD39AD9180B8118004E56D5 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		1DD39ADA180B8118004E56D5 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -3334,7 +3334,7 @@
 		A647E3B218C36D0300450FA1 /* VT100Token.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Token.m; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; tabWidth = 4; };
-		A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "iTerm2ForApplescriptTesting-Info.plist"; sourceTree = "<group>"; };
+		A64AB26219B97B670033DB9C /* ThermForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "ThermForApplescriptTesting-Info.plist"; sourceTree = "<group>"; };
 		A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "usr/lib/libaprutil-1.tbd"; sourceTree = SDKROOT; };
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
@@ -3372,7 +3372,7 @@
 		A663012719D0864C004AF81C /* SCEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvents.m; path = SCEvents/Source/SCEvents.m; sourceTree = "<group>"; };
 		A66444B81DEEA534000AC615 /* iTermDisclosableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDisclosableView.h; sourceTree = "<group>"; };
 		A66444B91DEEA534000AC615 /* iTermDisclosableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDisclosableView.m; sourceTree = "<group>"; };
-		A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2SharedARC.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A667195C1DCE36C3000CE608 /* libThermSharedARC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libThermSharedARC.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
 		A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSApplication+iTerm.m"; sourceTree = "<group>"; };
@@ -3754,14 +3754,14 @@
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2Shared.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6C760501B45C4CF00E3C992 /* libThermShared.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libThermShared.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTerm2XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641F1B45CB2800E3C992 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYWindow+Scripting.m"; sourceTree = "<group>"; };
 		A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYWindow+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNewWindowCommand.h; sourceTree = "<group>"; };
 		A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNewWindowCommand.m; sourceTree = "<group>"; };
-		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
+		A6C7DE5819A459E9001E5C75 /* Therm.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Therm.sdef; sourceTree = "<group>"; };
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
@@ -3974,7 +3974,7 @@
 		DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalPressed.png; sourceTree = "<group>"; };
 		DD02577009CB93C2008F320C /* TabNewMetalRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalRollover.png; sourceTree = "<group>"; };
 		DD02577109CB93C2008F320C /* Warning.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Warning.png; sourceTree = "<group>"; };
-		DD57633605653C5F00F1905E /* iTerm2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = iTerm2.plist; sourceTree = "<group>"; };
+		DD57633605653C5F00F1905E /* Therm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Therm.plist; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; tabWidth = 4; };
 		DDF0FD63062916F70080EF74 /* iTermApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplication.h; sourceTree = "<group>"; tabWidth = 4; };
 		DDF0FD64062916F70080EF74 /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplication.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
@@ -4028,7 +4028,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */,
+				A667196A1DCE396A000CE608 /* libThermSharedARC.a in Frameworks */,
 				A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */,
 				A624231919CF6DE000182C08 /* NMSSH.framework in Frameworks */,
 				A624231719CF6DD100182C08 /* Growl.framework in Frameworks */,
@@ -4040,7 +4040,7 @@
 				1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */,
 				1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */,
 				1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */,
-				A6C763D81B45C5C800E3C992 /* libiTerm2Shared.a in Frameworks */,
+				A6C763D81B45C5C800E3C992 /* libThermShared.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4048,7 +4048,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */,
+				A66719691DCE3965000CE608 /* libThermSharedARC.a in Frameworks */,
 				A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */,
 				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
 				A624231E19CF6E2400182C08 /* Growl.framework in Frameworks */,
@@ -4063,7 +4063,7 @@
 				1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */,
 				1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */,
 				1DD39AD7180B8118004E56D5 /* Cocoa.framework in Frameworks */,
-				A6C763D31B45C5B700E3C992 /* libiTerm2Shared.a in Frameworks */,
+				A6C763D31B45C5B700E3C992 /* libThermShared.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4090,8 +4090,8 @@
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				A624231019CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
-				A6C763D21B45C5B200E3C992 /* libiTerm2Shared.a in Frameworks */,
-				A667195F1DCE36F8000CE608 /* libiTerm2SharedARC.a in Frameworks */,
+				A6C763D21B45C5B200E3C992 /* libThermShared.a in Frameworks */,
+				A667195F1DCE36F8000CE608 /* libThermSharedARC.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4126,8 +4126,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A667196B1DCE3970000CE608 /* libiTerm2SharedARC.a in Frameworks */,
-				A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */,
+				A667196B1DCE3970000CE608 /* libThermSharedARC.a in Frameworks */,
+				A667F3881B48671B00705186 /* libThermShared.a in Frameworks */,
 				A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4548,7 +4548,7 @@
 			isa = PBXGroup;
 			children = (
 				A686C0D21ADA38CA00906FAE /* Golden Images for Tests */,
-				A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */,
+				A6C7DE5819A459E9001E5C75 /* Therm.sdef */,
 				1D03D42719144C3B0049EB8F /* Other Assets */,
 				1D03D42619144C140049EB8F /* Property Lists */,
 				1D093C131217412B0029F9AD /* Images */,
@@ -4571,13 +4571,13 @@
 			isa = PBXGroup;
 			children = (
 				8742065A0564169600CFC3F1 /* iTerm2.app */,
-				1DD39AD4180B8117004E56D5 /* iTerm2Tests.app */,
+				1DD39AD4180B8117004E56D5 /* ThermTests.app */,
 				1DFA7C671923E83500DF1410 /* libSSKeychain.a */,
-				1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */,
-				A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */,
+				1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */,
+				A6C760501B45C4CF00E3C992 /* libThermShared.a */,
 				A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */,
 				A6755F491D729A0500F3726C /* image_decoder */,
-				A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */,
+				A667195C1DCE36C3000CE608 /* libThermSharedARC.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -4619,8 +4619,8 @@
 				1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */,
 				5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */,
 				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
-				DD57633605653C5F00F1905E /* iTerm2.plist */,
-				A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */,
+				DD57633605653C5F00F1905E /* Therm.plist */,
+				A64AB26219B97B670033DB9C /* ThermForApplescriptTesting-Info.plist */,
 				1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */,
 				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
 				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
@@ -7032,9 +7032,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		1D6ED85219AEA20D005A7799 /* iTerm2ForApplescriptTesting */ = {
+		1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1D6EDB0519AEA20D005A7799 /* Build configuration list for PBXNativeTarget "iTerm2ForApplescriptTesting" */;
+			buildConfigurationList = 1D6EDB0519AEA20D005A7799 /* Build configuration list for PBXNativeTarget "ThermForApplescriptTesting" */;
 			buildPhases = (
 				1D6ED85519AEA20D005A7799 /* Headers */,
 				1D6ED97419AEA20D005A7799 /* Resources */,
@@ -7050,14 +7050,14 @@
 				A6C763D71B45C5C500E3C992 /* PBXTargetDependency */,
 				1D6ED85319AEA20D005A7799 /* PBXTargetDependency */,
 			);
-			name = iTerm2ForApplescriptTesting;
+			name = ThermForApplescriptTesting;
 			productName = "JTerminal (Application)";
-			productReference = 1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */;
+			productReference = 1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */;
 			productType = "com.apple.product-type.application";
 		};
-		1DD39AD3180B8117004E56D5 /* iTerm2Tests */ = {
+		1DD39AD3180B8117004E56D5 /* ThermTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTerm2Tests" */;
+			buildConfigurationList = 1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "ThermTests" */;
 			buildPhases = (
 				1DD39AD0180B8117004E56D5 /* Sources */,
 				1DD39AD1180B8117004E56D5 /* Frameworks */,
@@ -7070,9 +7070,9 @@
 				A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */,
 				1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */,
 			);
-			name = iTerm2Tests;
+			name = ThermTests;
 			productName = iTermTests;
-			productReference = 1DD39AD4180B8117004E56D5 /* iTerm2Tests.app */;
+			productReference = 1DD39AD4180B8117004E56D5 /* ThermTests.app */;
 			productType = "com.apple.product-type.application";
 		};
 		1DFA7C661923E83500DF1410 /* SSKeychain */ = {
@@ -7092,9 +7092,9 @@
 			productReference = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		874206460564169600CFC3F1 /* iTerm2 */ = {
+		874206460564169600CFC3F1 /* Therm */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */;
+			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "Therm" */;
 			buildPhases = (
 				874206480564169600CFC3F1 /* Headers */,
 				8742064A0564169600CFC3F1 /* Resources */,
@@ -7112,14 +7112,14 @@
 				A6C763D11B45C55200E3C992 /* PBXTargetDependency */,
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 			);
-			name = iTerm2;
+			name = Therm;
 			productName = "JTerminal (Application)";
 			productReference = 8742065A0564169600CFC3F1 /* iTerm2.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A66717851DCE36C3000CE608 /* iTerm2SharedARC */ = {
+		A66717851DCE36C3000CE608 /* ThermSharedARC */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A66719571DCE36C3000CE608 /* Build configuration list for PBXNativeTarget "iTerm2SharedARC" */;
+			buildConfigurationList = A66719571DCE36C3000CE608 /* Build configuration list for PBXNativeTarget "ThermSharedARC" */;
 			buildPhases = (
 				A66717861DCE36C3000CE608 /* Sources */,
 				A66719031DCE36C3000CE608 /* Frameworks */,
@@ -7129,9 +7129,9 @@
 			);
 			dependencies = (
 			);
-			name = iTerm2SharedARC;
+			name = ThermSharedARC;
 			productName = SSKeychain;
-			productReference = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */;
+			productReference = A667195C1DCE36C3000CE608 /* libThermSharedARC.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 		A6755F481D729A0500F3726C /* image_decoder */ = {
@@ -7151,9 +7151,9 @@
 			productReference = A6755F491D729A0500F3726C /* image_decoder */;
 			productType = "com.apple.product-type.tool";
 		};
-		A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */ = {
+		A6C7603F1B45C4CF00E3C992 /* ThermShared */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A6C7604B1B45C4CF00E3C992 /* Build configuration list for PBXNativeTarget "iTerm2Shared" */;
+			buildConfigurationList = A6C7604B1B45C4CF00E3C992 /* Build configuration list for PBXNativeTarget "ThermShared" */;
 			buildPhases = (
 				A6C760401B45C4CF00E3C992 /* Sources */,
 				A6C760441B45C4CF00E3C992 /* Frameworks */,
@@ -7163,14 +7163,14 @@
 			);
 			dependencies = (
 			);
-			name = iTerm2Shared;
+			name = ThermShared;
 			productName = SSKeychain;
-			productReference = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */;
+			productReference = A6C760501B45C4CF00E3C992 /* libThermShared.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		A6C7641B1B45CB2800E3C992 /* iTerm2XCTests */ = {
+		A6C7641B1B45CB2800E3C992 /* ThermXCTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A6C764241B45CB2800E3C992 /* Build configuration list for PBXNativeTarget "iTerm2XCTests" */;
+			buildConfigurationList = A6C764241B45CB2800E3C992 /* Build configuration list for PBXNativeTarget "ThermXCTests" */;
 			buildPhases = (
 				A6C764181B45CB2800E3C992 /* Sources */,
 				A6C764191B45CB2800E3C992 /* Frameworks */,
@@ -7181,7 +7181,7 @@
 			dependencies = (
 				A6C764231B45CB2800E3C992 /* PBXTargetDependency */,
 			);
-			name = iTerm2XCTests;
+			name = ThermXCTests;
 			productName = iTerm2XCTests;
 			productReference = A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -7204,6 +7204,7 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					874206460564169600CFC3F1 = {
+						DevelopmentTeam = J5PTVY8BHH;
 						ProvisioningStyle = Manual;
 					};
 					A66717851DCE36C3000CE608 = {
@@ -7220,7 +7221,7 @@
 					};
 				};
 			};
-			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm2" */;
+			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "Therm" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -7241,14 +7242,14 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				874206460564169600CFC3F1 /* iTerm2 */,
-				1DD39AD3180B8117004E56D5 /* iTerm2Tests */,
+				874206460564169600CFC3F1 /* Therm */,
+				1DD39AD3180B8117004E56D5 /* ThermTests */,
 				1DFA7C661923E83500DF1410 /* SSKeychain */,
-				1D6ED85219AEA20D005A7799 /* iTerm2ForApplescriptTesting */,
-				A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */,
-				A6C7641B1B45CB2800E3C992 /* iTerm2XCTests */,
+				1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */,
+				A6C7603F1B45C4CF00E3C992 /* ThermShared */,
+				A6C7641B1B45CB2800E3C992 /* ThermXCTests */,
 				A6755F481D729A0500F3726C /* image_decoder */,
-				A66717851DCE36C3000CE608 /* iTerm2SharedARC */,
+				A66717851DCE36C3000CE608 /* ThermSharedARC */,
 			);
 		};
 /* End PBXProject section */
@@ -7290,7 +7291,7 @@
 				1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */,
 				1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */,
 				A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */,
-				1D6ED99319AEA20D005A7799 /* iTerm2.sdef in Resources */,
+				1D6ED99319AEA20D005A7799 /* Therm.sdef in Resources */,
 				1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */,
 				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
 				A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
@@ -7457,7 +7458,7 @@
 				1D44CFFA1CC7F5A600BE5630 /* PTYTextViewTest-golden-testBlinkingTextVisible.png in Resources */,
 				1D44D08D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSelectedTabFillerWithoutTab.png in Resources */,
 				1D44D0751CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testFaintText.png in Resources */,
-				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
+				A6C7DE5A19A459E9001E5C75 /* Therm.sdef in Resources */,
 				1D44D02E1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png in Resources */,
 				1D44D02F1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png in Resources */,
 				A67D0D8D1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
@@ -7848,7 +7849,7 @@
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
-				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
+				A6C7DE5919A459E9001E5C75 /* Therm.sdef in Resources */,
 				1DE922EA1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
@@ -8883,12 +8884,12 @@
 		};
 		1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1D6ED85219AEA20D005A7799 /* iTerm2ForApplescriptTesting */;
+			target = 1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */;
 			targetProxy = 1D6EDB0C19AEA276005A7799 /* PBXContainerItemProxy */;
 		};
 		A667195E1DCE36EF000CE608 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A66717851DCE36C3000CE608 /* iTerm2SharedARC */;
+			target = A66717851DCE36C3000CE608 /* ThermSharedARC */;
 			targetProxy = A667195D1DCE36EF000CE608 /* PBXContainerItemProxy */;
 		};
 		A6755F561D739E3C00F3726C /* PBXTargetDependency */ = {
@@ -8903,22 +8904,22 @@
 		};
 		A6C763D11B45C55200E3C992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
+			target = A6C7603F1B45C4CF00E3C992 /* ThermShared */;
 			targetProxy = A6C763D01B45C55200E3C992 /* PBXContainerItemProxy */;
 		};
 		A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
+			target = A6C7603F1B45C4CF00E3C992 /* ThermShared */;
 			targetProxy = A6C763D41B45C5BE00E3C992 /* PBXContainerItemProxy */;
 		};
 		A6C763D71B45C5C500E3C992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
+			target = A6C7603F1B45C4CF00E3C992 /* ThermShared */;
 			targetProxy = A6C763D61B45C5C500E3C992 /* PBXContainerItemProxy */;
 		};
 		A6C764231B45CB2800E3C992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 874206460564169600CFC3F1 /* iTerm2 */;
+			target = 874206460564169600CFC3F1 /* Therm */;
 			targetProxy = A6C764221B45CB2800E3C992 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -8988,10 +8989,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -9019,7 +9020,7 @@
 					.,
 					ThirdParty,
 				);
-				INFOPLIST_FILE = plists/iTerm2.plist;
+				INFOPLIST_FILE = plists/Therm.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -9032,8 +9033,8 @@
 					"-licucore",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
-				PRODUCT_NAME = iTerm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pancake.therm;
+				PRODUCT_NAME = Therm;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
@@ -9086,7 +9087,7 @@
 					.,
 					ThirdParty,
 				);
-				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
+				INFOPLIST_FILE = "plists/ThermForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -9102,7 +9103,7 @@
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
-				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PRODUCT_NAME = ThermForApplescriptTesting;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = x86_64;
@@ -9152,7 +9153,7 @@
 					.,
 					ThirdParty,
 				);
-				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
+				INFOPLIST_FILE = "plists/ThermForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -9167,7 +9168,7 @@
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
-				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PRODUCT_NAME = ThermForApplescriptTesting;
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
@@ -9216,7 +9217,7 @@
 					.,
 					ThirdParty,
 				);
-				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
+				INFOPLIST_FILE = "plists/ThermForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -9230,7 +9231,7 @@
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
-				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PRODUCT_NAME = ThermForApplescriptTesting;
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
@@ -9873,7 +9874,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = sources/iTerm2.pch;
+				GCC_PREFIX_HEADER = sources/Therm.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -9889,7 +9890,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = iTerm2Shared;
+				PRODUCT_NAME = ThermShared;
 				SDKROOT = macosx;
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -9930,7 +9931,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = sources/iTerm2.pch;
+				GCC_PREFIX_HEADER = sources/Therm.pch;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -9940,7 +9941,7 @@
 				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = iTerm2Shared;
+				PRODUCT_NAME = ThermShared;
 				SDKROOT = macosx;
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -9980,7 +9981,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = sources/iTerm2.pch;
+				GCC_PREFIX_HEADER = sources/Therm.pch;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -9990,7 +9991,7 @@
 				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = iTerm2Shared;
+				PRODUCT_NAME = ThermShared;
 				SDKROOT = macosx;
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -10056,7 +10057,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Therm.app/Contents/MacOS/Therm";
 			};
 			name = Development;
 		};
@@ -10108,7 +10109,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Therm.app/Contents/MacOS/Therm";
 			};
 			name = Deployment;
 		};
@@ -10160,7 +10161,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Therm.app/Contents/MacOS/Therm";
 			};
 			name = Nightly;
 		};
@@ -10169,11 +10170,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -10201,7 +10202,7 @@
 					.,
 					ThirdParty,
 				);
-				INFOPLIST_FILE = plists/iTerm2.plist;
+				INFOPLIST_FILE = plists/Therm.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -10216,8 +10217,8 @@
 					"-licucore",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
-				PRODUCT_NAME = iTerm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pancake.therm;
+				PRODUCT_NAME = Therm;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
@@ -10240,10 +10241,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = J5PTVY8BHH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -10270,7 +10271,7 @@
 					.,
 					ThirdParty,
 				);
-				INFOPLIST_FILE = plists/iTerm2.plist;
+				INFOPLIST_FILE = plists/Therm.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -10284,8 +10285,8 @@
 					"-licucore",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
-				PRODUCT_NAME = iTerm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pancake.therm;
+				PRODUCT_NAME = Therm;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
@@ -10393,7 +10394,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1D6EDB0519AEA20D005A7799 /* Build configuration list for PBXNativeTarget "iTerm2ForApplescriptTesting" */ = {
+		1D6EDB0519AEA20D005A7799 /* Build configuration list for PBXNativeTarget "ThermForApplescriptTesting" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1D6EDB0619AEA20D005A7799 /* Development */,
@@ -10403,7 +10404,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTerm2Tests" */ = {
+		1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "ThermTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1DD39B03180B812D004E56D5 /* Development */,
@@ -10423,7 +10424,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		A66719571DCE36C3000CE608 /* Build configuration list for PBXNativeTarget "iTerm2SharedARC" */ = {
+		A66719571DCE36C3000CE608 /* Build configuration list for PBXNativeTarget "ThermSharedARC" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A66719581DCE36C3000CE608 /* Development */,
@@ -10443,7 +10444,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		A6C7604B1B45C4CF00E3C992 /* Build configuration list for PBXNativeTarget "iTerm2Shared" */ = {
+		A6C7604B1B45C4CF00E3C992 /* Build configuration list for PBXNativeTarget "ThermShared" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A6C7604C1B45C4CF00E3C992 /* Development */,
@@ -10453,7 +10454,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		A6C764241B45CB2800E3C992 /* Build configuration list for PBXNativeTarget "iTerm2XCTests" */ = {
+		A6C764241B45CB2800E3C992 /* Build configuration list for PBXNativeTarget "ThermXCTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A6C764251B45CB2800E3C992 /* Development */,
@@ -10463,7 +10464,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */ = {
+		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "Therm" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB024D36096EE4080021E793 /* Development */,
@@ -10473,7 +10474,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm2" */ = {
+		BB024D39096EE4080021E793 /* Build configuration list for PBXProject "Therm" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB024D3A096EE4080021E793 /* Development */,

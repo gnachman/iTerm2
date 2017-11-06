@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
-               BuildableName = "iTerm2Tests.app"
-               BlueprintName = "iTerm2Tests"
-               ReferencedContainer = "container:iTerm2.xcodeproj">
+               BlueprintIdentifier = "874206460564169600CFC3F1"
+               BuildableName = "iTerm2.app"
+               BlueprintName = "Therm"
+               ReferencedContainer = "container:Therm.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -26,6 +26,7 @@
       buildConfiguration = "Development"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      enableAddressSanitizer = "YES"
       language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
@@ -34,28 +35,34 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A6C7641B1B45CB2800E3C992"
-               BuildableName = "iTerm2XCTests.xctest"
-               BlueprintName = "iTerm2XCTests"
-               ReferencedContainer = "container:iTerm2.xcodeproj">
+               BuildableName = "ThermXCTests.xctest"
+               BlueprintName = "ThermXCTests"
+               ReferencedContainer = "container:Therm.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
-            BuildableName = "iTerm2Tests.app"
-            BlueprintName = "iTerm2Tests"
-            ReferencedContainer = "container:iTerm2.xcodeproj">
+            BlueprintIdentifier = "874206460564169600CFC3F1"
+            BuildableName = "iTerm2.app"
+            BlueprintName = "Therm"
+            ReferencedContainer = "container:Therm.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
+         <AdditionalOption
+            key = "NSZombieEnabled"
+            value = "YES"
+            isEnabled = "YES">
+         </AdditionalOption>
       </AdditionalOptions>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Development"
+      buildConfiguration = "Deployment"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      disableMainThreadChecker = "YES"
       language = ""
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
@@ -67,10 +74,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
-            BuildableName = "iTerm2Tests.app"
-            BlueprintName = "iTerm2Tests"
-            ReferencedContainer = "container:iTerm2.xcodeproj">
+            BlueprintIdentifier = "874206460564169600CFC3F1"
+            BuildableName = "iTerm2.app"
+            BlueprintName = "Therm"
+            ReferencedContainer = "container:Therm.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -86,10 +93,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1DD39AD3180B8117004E56D5"
-            BuildableName = "iTerm2Tests.app"
-            BlueprintName = "iTerm2Tests"
-            ReferencedContainer = "container:iTerm2.xcodeproj">
+            BlueprintIdentifier = "874206460564169600CFC3F1"
+            BuildableName = "iTerm2.app"
+            BlueprintName = "Therm"
+            ReferencedContainer = "container:Therm.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
