@@ -4898,7 +4898,7 @@ DQ
                 <button id="6051">
                     <rect key="frame" x="18" y="95" width="275" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
+                    <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="off" inset="2" id="6052">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
