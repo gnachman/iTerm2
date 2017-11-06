@@ -647,11 +647,13 @@ Gw
                                     <action selector="toggleCursorGuide:" target="-1" id="Vxk-ww-Ugb"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="Show Timestamps" keyEquivalent="E" identifier="Show Timestamps" id="TnF-kz-Lf0">
                                 <connections>
                                     <action selector="toggleShowTimestamps:" target="-1" id="oGg-h2-Ex7"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem title="Show Annotations" keyEquivalent="\" identifier="Show Annotations" id="pAu-j3-wEC">
                                 <connections>
                                     <action selector="showHideNotes:" target="-1" id="bWx-ZS-6aE"/>
