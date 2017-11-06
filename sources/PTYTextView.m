@@ -1154,8 +1154,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)drawIndicatorsWithRightMargin:(CGFloat)rightMargin {
+/*
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
+*/
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
                             visible:[_delegate textViewSessionIsBroadcastingInput]];
     [_indicatorsHelper setIndicator:kiTermIndicatorCoprocess
