@@ -901,6 +901,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermAnnouncementViewController *announcement = nil;
     NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
     DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
+#if 0
     if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
         NSString *notice;
         NSArray<NSString *> *actions = @[ @"Don't Warn Again" ];
@@ -936,6 +937,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         }];
         announcement.dismissOnKeyDown = YES;
     }
+#endif
     return announcement;
 }
 
@@ -1747,6 +1749,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.isSingleUseSession) {
         return;
     }
+#if 0
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString *guid = _profile[KEY_GUID];
@@ -1765,6 +1768,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                 identifier:theKey
                                silenceable:kiTermWarningTypePermanentlySilenceable];
     }
+#endif
 }
 
 - (iTermRestorableSession *)restorableSession {

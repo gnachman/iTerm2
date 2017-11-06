@@ -138,8 +138,9 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (NSColor *)dimmedBackgroundColor {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     CGFloat whiteLevel = 0;
+#if 0
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
             if (![delegate_ sessionTitleViewIsFirstResponder]) {
@@ -178,11 +179,12 @@ static const CGFloat kButtonSize = 17;
             }
             break;
     }
-
+#endif
     return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+return;
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
         CGFloat hue = tabColor.hueComponent;

@@ -3414,6 +3414,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)toggleFullScreenMode:(id)sender
 {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
+#if 0
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
@@ -3433,7 +3434,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // TODO(georgen): toggle enabled status of use transparency menu item
         return;
     }
-
+#endif
     [self toggleTraditionalFullScreenMode];
 }
 
@@ -6226,7 +6227,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setDimmingForSession:(PTYSession *)aSession
 {
-    BOOL canDim = [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
+    BOOL canDim = NO; // [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
     if (!canDim) {
         [[aSession view] setDimmed:NO];
     } else if (aSession == [[self tabForSession:aSession] activeSession]) {
@@ -6466,6 +6467,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)haveLeftBorder {
+	if ([self anyFullScreen]) {
+		return NO;
+	}
+	return YES;
+#if 0
     BOOL leftTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab);
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
@@ -6476,10 +6482,17 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return YES;
     }
+#endif
 }
 
 - (BOOL)haveBottomBorder
 {
+// TODO: 
+	if ([self anyFullScreen]) {
+		return NO;
+	}
+	return YES;
+#if 0
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL bottomTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
@@ -6500,6 +6513,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Visible bottom tab bar with light style. It's light enough so it doesn't need a border.
         return NO;
     }
+#endif
 }
 
 - (BOOL)haveTopBorder {
@@ -6515,6 +6529,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)haveRightBorder {
+	if ([self anyFullScreen]) {
+		return NO;
+	}
+	return YES;
+#if 0
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
@@ -6528,6 +6547,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // visible scrollbar
         return NO;
     }
+#endif
 }
 
 // Returns the size of the stuff outside the tabview.
