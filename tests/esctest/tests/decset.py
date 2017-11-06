@@ -358,7 +358,7 @@ class DECSETTests(object):
     escio.Write(BS)
     AssertEQ(GetCursorPosition().x(), 1)
 
-  def doAltBuftest(self, code, altGetsClearedBeforeToMain, cursorSaved):
+  def doAltBuftest(self, code, altGetsClearedBeforeToMain, cursorSaved, movesCursorOnEnter=False):
     """|code| is the code to test with, either 47 or 1047."""
     # Scribble in main screen
     escio.Write("abc" + CR + LF + "abc")
@@ -371,8 +371,10 @@ class DECSETTests(object):
     before = GetCursorPosition()
     esccmd.DECSET(code)
     after = GetCursorPosition()
-    AssertEQ(before.x(), after.x())
-    AssertEQ(before.y(), after.y())
+    if not movesCursorOnEnter:
+      # 1049 moves the cursor on enter
+      AssertEQ(before.x(), after.x())
+      AssertEQ(before.y(), after.y())
 
     # Scribble in alt screen, clearing it first since who knows what might have
     # been there.
@@ -401,8 +403,10 @@ class DECSETTests(object):
     before = GetCursorPosition()
     esccmd.DECSET(code)
     after = GetCursorPosition()
-    AssertEQ(before.x(), after.x())
-    AssertEQ(before.y(), after.y())
+    if not movesCursorOnEnter:
+      # 1049 moves the cursor on enter
+      AssertEQ(before.x(), after.x())
+      AssertEQ(before.y(), after.y())
 
     if altGetsClearedBeforeToMain:
       AssertScreenCharsInRectEqual(Rect(1, 1, 3, 3), [ NUL * 3, NUL * 3, NUL * 3 ])
@@ -429,7 +433,7 @@ class DECSETTests(object):
   def test_DECSET_OPT_ALTBUF_CURSOR(self):
     """DECSET 1049 is like 1047 but it also saves the cursor position before
     entering alt and restores it after returning to main."""
-    self.doAltBuftest(esccmd.OPT_ALTBUF_CURSOR, True, True)
+    self.doAltBuftest(esccmd.OPT_ALTBUF_CURSOR, True, True, True)
 
   # xterm doesn't implement auto-wrap mode when wide characters are disabled.
   @optionRejects(terminal="xterm", option=escargs.DISABLE_WIDE_CHARS)
