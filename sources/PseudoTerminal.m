@@ -4760,6 +4760,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
+#if 0
     if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_LIGHT:
@@ -4772,6 +4773,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
+#endif
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
     [self.window setBackgroundColor:backgroundColor];
     if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
         self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];

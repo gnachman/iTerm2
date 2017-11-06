@@ -205,7 +205,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (BOOL)scrollbarShouldBeVisible {
-    return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
+    return NO;
+    // return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
 - (BOOL)tabBarShouldBeVisible {
