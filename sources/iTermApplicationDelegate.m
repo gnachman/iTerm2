@@ -879,10 +879,13 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         DLog(@"Application becoming active. Enable secure input.");
         [self setSecureInput:YES];
     }
-
+#if 0
+    for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels]) {
+        [window setTitleVisibility:NSWindowTitleHidden];
+        [window setTitlebarAppearsTransparent:TRUE];
+    }
     // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
     // is under the cursor make it first responder.
-#if 0
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         NSRect mouseRect = {
             .origin = [NSEvent mouseLocation],

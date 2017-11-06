@@ -247,6 +247,8 @@ static NSString *const kDynamicToolURL = @"URL";
 #pragma mark - NSView
 
 - (void)drawRect:(NSRect)dirtyRect {
+    NSColor *color = [NSColor colorWithCalibratedWhite:0 alpha:1];
+#if 0
     NSColor *color = [NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_LIGHT:
@@ -260,7 +262,7 @@ static NSString *const kDynamicToolURL = @"URL";
             }
             break;
     }
-
+#endif
     [color set];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
