@@ -1330,6 +1330,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)showOrphanAnnouncement {
+#if 0
     NSString *notice = @"This already-running session was restored but its contents were not saved.";
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcementWithTitle:notice
@@ -1344,6 +1345,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     }];
     announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+#endif
 }
 
 // Session specific methods
