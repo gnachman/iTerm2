@@ -31,7 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
                attributes:(iTermMetalGlyphAttributes *)attributes
                background:(vector_float4 *)backgrounds
                       row:(int)row
-                    width:(int)width;
+                    width:(int)width
+           drawableGlyphs:(int *)drawableGlyphsPtr;
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 
