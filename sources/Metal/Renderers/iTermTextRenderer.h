@@ -10,6 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
+                   count:(int)count
           attributesData:(NSData *)attributesData
                      row:(int)row
                 creation:(NSImage *(NS_NOESCAPE ^)(int x))creation;

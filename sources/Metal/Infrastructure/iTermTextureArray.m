@@ -18,7 +18,9 @@
     if (self) {
         _width = width;
         _height = height;
-        _cellsPerRow = MAX(1, ceil(sqrt(length)));
+        CGFloat pixelsNeeded = (double)width * (double)height * (double)length;
+        CGFloat minimumEdgeLength = ceil(sqrt(pixelsNeeded));
+        _cellsPerRow = MAX(1, ceil(minimumEdgeLength / width));
 
         MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 

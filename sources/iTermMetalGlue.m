@@ -52,6 +52,39 @@ static NSColor *ColorForVector(vector_float4 v) {
     return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
 }
 
+#warning TODO: This is copied from drawing helper
+static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
+                                                      BOOL hasStringRepresentation,
+                                                      BOOL blinkingItemsVisible,
+                                                      BOOL blinkAllowed) {
+    const unichar code = c->code;
+    if ((code == DWC_RIGHT ||
+         code == DWC_SKIP ||
+         code == TAB_FILLER) && !c->complexChar) {
+        return NO;
+    }
+    if (blinkingItemsVisible || !(blinkAllowed && c->blink)) {
+        // This char is either not blinking or during the "on" cycle of the
+        // blink. It should be drawn.
+
+        if (c->complexChar) {
+            // TODO: Not all composed/surrogate pair grapheme clusters are drawable
+            return hasStringRepresentation;
+        } else {
+            // Non-complex char
+            // TODO: There are other spaces in unicode that should be supported.
+            return (code != 0 &&
+                    code != '\t' &&
+                    !(code >= ITERM2_PRIVATE_BEGIN && code <= ITERM2_PRIVATE_END));
+
+        }
+    } else {
+        // Chatacter hidden because of blinking.
+        return NO;
+    }
+}
+
+
 @interface iTermMetalGlue()
 // Screen-relative cursor location on last frame
 @property (nonatomic) VT100GridCoord oldCursorScreenCoord;
@@ -95,6 +128,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     BOOL _cursorVisible;
     BOOL _cursorBlinking;
     BOOL _blinkingItemsVisible;
+    BOOL _blinkAllowed;
     NSRange _inputMethodMarkedRange;
     NSTimeInterval _timeSinceCursorMoved;
 
@@ -173,6 +207,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
         _cursorVisible = textView.drawingHelper.cursorVisible;
         _cursorBlinking = textView.isCursorBlinking;
+        _blinkAllowed = textView.blinkAllowed;
         _blinkingItemsVisible = textView.drawingHelper.blinkingItemsVisible;
         _inputMethodMarkedRange = textView.drawingHelper.inputMethodMarkedRange;
 
@@ -263,7 +298,8 @@ static NSColor *ColorForVector(vector_float4 v) {
                attributes:(iTermMetalGlyphAttributes *)attributes
                background:(vector_float4 *)background
                       row:(int)row
-                    width:(int)width {
+                    width:(int)width
+           drawableGlyphs:(int *)drawableGlyphsPtr {
     screen_char_t *line = (screen_char_t *)_lines[row].bytes;
     NSIndexSet *selectedIndexes = _selectedIndexes[row];
     NSData *findMatches = _matches[@(row)];
@@ -272,6 +308,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     iTermTextColorKey *previousColorKey = &keys[1];
     iTermBackgroundColorKey lastBackgroundKey;
 
+    int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
         BOOL selected = [selectedIndexes containsIndex:x];
         BOOL findMatch = NO;
@@ -361,7 +398,16 @@ static NSColor *ColorForVector(vector_float4 v) {
         glyphKeys[x].image = line[x].image;
         glyphKeys[x].boxDrawing = NO;
         glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
+
+        if (iTermTextDrawingHelperIsCharacterDrawable(&line[x],
+                                                      ScreenCharToStr(&line[x]) != nil,
+                                                      _blinkingItemsVisible,
+                                                      _blinkAllowed)) {
+            lastDrawableGlyph = x;
+        }
     }
+
+    *drawableGlyphsPtr = lastDrawableGlyph + 1;
 
     // Tweak the text color for the cell that has a box cursor.
     if (_cursorInfo.cursorVisible &&
