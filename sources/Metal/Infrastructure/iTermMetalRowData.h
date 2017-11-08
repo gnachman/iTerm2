@@ -19,5 +19,9 @@
 
 // vector_float4
 @property (nonatomic, strong) NSMutableData *backgroundColorData;
+
+// Number of elements in preceding arrays to use.
+@property (nonatomic) int numberOfDrawableGlyphs;
+
 @end
 

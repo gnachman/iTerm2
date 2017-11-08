@@ -15,6 +15,8 @@ extern "C" {
 
 @property (nonatomic, readonly) NSIndexSet *indexes;
 @property (nonatomic, strong) iTermTextureMap *textureMap;
+@property (nonatomic, readonly) NSInteger numberOfInstances;
+
 - (void)addIndex:(NSInteger)index;
 
 @end
@@ -49,24 +51,30 @@ extern "C" {
 }
 
 - (NSUInteger)sizeOfNewPIUBuffer {
-    return sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
+    // Reserve enough space for each cell to take 9 spots (cell plus all 8 neighbors)
+    return sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height * 9;
 }
 
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
+                   count:(int)count
           attributesData:(NSData *)attributesData
                      row:(int)row
                 creation:(NSImage *(NS_NOESCAPE ^)(int x))creation {
     const int width = self.cellConfiguration.gridSize.width;
+    assert(count <= width);
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     const float w = 1.0 / _textureMap.array.atlasSize.width;
     const float h = 1.0 / _textureMap.array.atlasSize.height;
     iTermTextureArray *array = _textureMap.array;
     iTermTextPIU *pius = (iTermTextPIU *)self.pius.contents;
+    const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * self.cellConfiguration.cellSize.height;
 
     NSInteger lastIndex = 0;
-    for (int x = 0; x < width; x++) {
+    for (int x = 0; x < count; x++) {
+        pius[_numberOfInstances].offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
+                                                             yOffset);
         NSInteger index;
         if (x > 0 && !memcmp(&glyphKeys[x], &glyphKeys[x-1], sizeof(*glyphKeys))) {
             index = lastIndex;
@@ -76,8 +84,7 @@ extern "C" {
                                                              creation:creation];
         }
         if (index >= 0) {
-            const size_t i = x + row * self.cellConfiguration.gridSize.width;
-            iTermTextPIU *piu = &pius[i];
+            iTermTextPIU *piu = &pius[_numberOfInstances];
             MTLOrigin origin = [array offsetForIndex:index];
             piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
             piu->textColor = attributes[x].foregroundColor;
@@ -100,21 +107,9 @@ extern "C" {
     return _modelData;
 }
 
-- (void)initializePIUBytes:(void *)bytes {
-    iTermTextPIU *pius = (iTermTextPIU *)bytes;
-    NSInteger i = 0;
-    #warning TODO: There is no reason to do this unless the grid size changes.
-    for (NSInteger y = 0; y < self.cellConfiguration.gridSize.height; y++) {
-        const float yOffset = (self.cellConfiguration.gridSize.height - y - 1) * self.cellConfiguration.cellSize.height;
-        for (NSInteger x = 0; x < self.cellConfiguration.gridSize.width; x++) {
-            pius[i++].offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
-                                                yOffset);
-        }
-    }
-}
-
 - (void)addIndex:(NSInteger)index {
     [_indexes addIndex:index];
+    _numberOfInstances++;
 }
 
 #pragma mark - Debugging
@@ -190,7 +185,10 @@ extern "C" {
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer
                       completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    const NSInteger capacity = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * 2;
+    // Allocate enough space for every glyph to touch the cell plus eight adjacent cells.
+    // If I run out of texture memory this is the first place to cut.
+#warning It's easy for the texture to exceed Metal's limit of 16384*16384. I will need multiple textures to handle this case.
+    const NSInteger capacity = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * 9;
     if (_textureMap == nil ||
         !CGSizeEqualToSize(_textureMap.cellSize, tState.cellConfiguration.cellSize) ||
         _textureMap.capacity != capacity) {
@@ -207,7 +205,6 @@ extern "C" {
     tState.vertexBuffer = [self newQuadOfSize:tState.cellConfiguration.cellSize];
     tState.pius = [_cellRenderer.device newBufferWithLength:tState.sizeOfNewPIUBuffer
                                                     options:MTLResourceStorageModeShared];
-    [tState initializePIUBytes:tState.pius.contents];
 
     [tState prepareForDrawWithCommandBuffer:commandBuffer completion:^{
         completion(tState);
@@ -250,7 +247,7 @@ extern "C" {
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height
+                             numberOfPIUs:tState.numberOfInstances
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }

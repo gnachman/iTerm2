@@ -259,11 +259,14 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
             rowData.attributesData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
             rowData.backgroundColorData = [NSMutableData dataWithLength:sizeof(vector_float4) * _columns];
             iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
+            int drawableGlyphs = 0;
             [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                             attributes:rowData.attributesData.mutableBytes
                                             background:rowData.backgroundColorData.mutableBytes
                                                    row:y
-                                                 width:_columns];
+                                                 width:_columns
+                                        drawableGlyphs:&drawableGlyphs];
+            rowData.numberOfDrawableGlyphs = drawableGlyphs;
         }
     }];
 
@@ -312,6 +315,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         [textState setGlyphKeysData:rowData.keysData
+                              count:rowData.numberOfDrawableGlyphs
                      attributesData:rowData.attributesData
                                 row:rowData.y
                            creation:^NSImage *(int x) {
