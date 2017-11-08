@@ -1457,19 +1457,19 @@ typedef struct iTermTextColorContext {
                                 atPoint:(NSPoint)origin
                            positions:(CGFloat *)stringPositions
                      backgroundColor:(NSColor *)backgroundColor {
-    NSGraphicsContext *graphicsContet = [NSGraphicsContext currentContext];
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext currentContext];
     
     [self drawTextOnlyAttributedStringWithoutUnderline:attributedString
                                                atPoint:origin
                                              positions:stringPositions
                                        backgroundColor:backgroundColor
-                                       graphicsContext:graphicsContet
+                                       graphicsContext:graphicsContext
                                                  smear:NO];
 
     __block CGContextRef maskGraphicsContext = nil;
     __block CGImageRef alphaMask = nil;
     NSDictionary *maskingAttributes = @{ (NSString *)kCTForegroundColorAttributeName: (id)[[NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1] CGColor] };
-    CGContextRef cgContext = (CGContextRef) [graphicsContet graphicsPort];
+    CGContextRef cgContext = (CGContextRef) [graphicsContext graphicsPort];
 
     [attributedString enumerateAttribute:NSUnderlineStyleAttributeName
                                  inRange:NSMakeRange(0, attributedString.length)
