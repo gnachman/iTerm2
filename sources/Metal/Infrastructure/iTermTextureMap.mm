@@ -183,6 +183,11 @@ namespace std {
 }
 
 namespace iTerm2 {
+    struct TextureEntry {
+        int index;
+        BOOL emoji;
+    };
+
     class TextureMapStage {
     private:
         // Maps stage indexes that need blitting to their destination indices.
@@ -223,19 +228,19 @@ namespace iTerm2 {
         }
 
         // Looks up the key in the LRU, promoting it only if it hasn't been used before this frame.
-        const int *lookup(const GlyphKey &key, cache::lru_cache<GlyphKey, int> *lru) {
-            const int *valuePtr;
+        const TextureEntry *lookup(const GlyphKey &key, cache::lru_cache<GlyphKey, TextureEntry> *lru) {
+            const TextureEntry *valuePtr;
             if (_usedThisFrame.find(key) != _usedThisFrame.end()) {
                 // key was already used this frame. Don't promote it in the LRU.
                 valuePtr = lru->peek(key);
             } else {
                 // first use of key this frame. Promote it and record its use.
-                const int *value = lru->get(key);
+                const TextureEntry *value = lru->get(key);
                 _usedThisFrame.insert(key);
                 valuePtr = value;
             }
             if (valuePtr) {
-                _lockedIndexes.push_back(*valuePtr);
+                _lockedIndexes.push_back(valuePtr->index);
             }
             return valuePtr;
         }
@@ -249,7 +254,7 @@ namespace iTerm2 {
         // c -> 2  1    c
 
         // Maps a character description to its index in a texture sprite sheet.
-        cache::lru_cache<GlyphKey, int> _lru;
+        cache::lru_cache<GlyphKey, TextureEntry> _lru;
 
         // Tracks which glyph key is at which index.
         std::vector<GlyphKey *> _entries;
@@ -265,13 +270,15 @@ namespace iTerm2 {
     public:
         explicit TextureMap(const int capacity) : _lru(capacity), _locks(capacity), _capacity(capacity) { }
 
-        inline int get_index(const GlyphKey &key, TextureMapStage *textureMapStage, std::map<int, int> *related) {
-            const int *value;
-            value = textureMapStage->lookup(key, &_lru);
+        inline int get_index(const GlyphKey &key, TextureMapStage *textureMapStage, std::map<int, int> *related, BOOL *emoji) {
+            const TextureEntry *value = textureMapStage->lookup(key, &_lru);
             if (value == nullptr) {
                 return -1;
             } else {
-                const int index = *value;
+                const TextureEntry &entry = *value;
+                const int &index = entry.index;
+
+                *emoji = entry.emoji;
                 *related = _relatedIndexes[index];
                 if (related->size() == 1) {
                     _locks[index]++;
@@ -287,14 +294,15 @@ namespace iTerm2 {
             }
         }
 
-        inline std::pair<int, int> allocate_index(const GlyphKey &key, TextureMapStage *stage) {
+        inline std::pair<int, int> allocate_index(const GlyphKey &key, TextureMapStage *stage, const BOOL emoji) {
             const int index = produce();
             assert(_locks[index] == 0);
             remove_relations(index);
             _locks[index]++;
             DLogLock(@"Allocate %d sets lock to %d", index, _locks[index]);
             assert(index <= _capacity);
-            _lru.put(key, index);
+            const TextureEntry entry = { .index = index, .emoji = emoji };
+            _lru.put(key, entry);
 
             const int stageIndex = stage->will_blit(index);
             return std::make_pair(stageIndex, index);
@@ -322,7 +330,7 @@ namespace iTerm2 {
         inline int produce() {
             if (_lru.size() == _capacity) {
                 // Recycle the value of the least-recently used GlyphKey.
-                return _lru.get_lru().second;
+                return _lru.get_lru().second.index;
             } else {
                 return _lru.size();
             }
@@ -440,21 +448,22 @@ namespace iTerm2 {
                                        textureMapStage:(iTerm2::TextureMapStage *)textureMapStage
                                             stageArray:(iTermTextureArray *)stageArray
                                              relations:(std::map<int, int> *)relations
-                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation {
+                                                 emoji:(BOOL *)emoji
+                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     const iTerm2::GlyphKey glyphKey(key, 4);
-    int index = _textureMap->get_index(glyphKey, textureMapStage, relations);
+    int index = _textureMap->get_index(glyphKey, textureMapStage, relations, emoji);
     if (index >= 0) {
         DLog(@"%@: locked existing texture %@", self.label, @(index));
         return index;
     } else {
-        NSDictionary<NSNumber *, NSImage *> *images = creation(column);
+        NSDictionary<NSNumber *, NSImage *> *images = creation(column, emoji);
         if (images.count) {
             __block NSInteger result = -1;
             std::map<int, int> newRelations;
             for (NSNumber *part in images) {
                 NSImage *image = images[part];
                 const iTerm2::GlyphKey newGlyphKey(key, part.intValue);
-                auto stageAndGlobalIndex = _textureMap->allocate_index(newGlyphKey, textureMapStage);
+                auto stageAndGlobalIndex = _textureMap->allocate_index(newGlyphKey, textureMapStage, *emoji);
                 if (result < 0) {
                     result = stageAndGlobalIndex.second;
                 }
@@ -526,12 +535,14 @@ namespace iTerm2 {
 - (NSInteger)findOrAllocateIndexOfLockedTextureWithKey:(const iTermMetalGlyphKey *)key
                                                 column:(int)column
                                              relations:(std::map<int, int> *)relations
-                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation {
+                                                 emoji:(BOOL *)emoji
+                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     return [_textureMap findOrAllocateIndexOfLockedTextureWithKey:key
                                                            column:column
                                                   textureMapStage:_textureMapStage
                                                        stageArray:_stageArray
                                                         relations:relations
+                                                            emoji:emoji
                                                          creation:creation];
 }
 

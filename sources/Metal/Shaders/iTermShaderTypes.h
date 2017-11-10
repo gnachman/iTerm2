@@ -40,6 +40,9 @@ typedef struct {
     // Values in 0-1. These will be composited over what's already rendered.
     vector_float4 backgroundColor;
     vector_float4 textColor;
+
+    // This is true for text and false for emoji.
+    bool remapColors;
 } iTermTextPIU;
 
 typedef struct {

@@ -11,6 +11,7 @@ typedef struct {
     float2 backgroundTextureCoordinate;
     float4 textColor;
     float4 backgroundColor;
+    bool recolor;
 } iTermTextVertexFunctionOutput;
 
 vertex iTermTextVertexFunctionOutput
@@ -34,6 +35,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
     out.textColor = perInstanceUniforms[iid].textColor;
     out.backgroundColor = perInstanceUniforms[iid].backgroundColor;
+    out.recolor = perInstanceUniforms[iid].remapColors;
 
     return out;
 }
@@ -47,6 +49,9 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
 
     const half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
+    if (!in.recolor) {
+        return static_cast<float4>(bwColor);
+    }
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }
@@ -160,6 +165,9 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
 
     const half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
+    if (!in.recolor) {
+        return static_cast<float4>(bwColor);
+    }
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }

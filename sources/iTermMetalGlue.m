@@ -15,6 +15,7 @@
 #import "iTermTextDrawingHelper.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSStringITerm.h"
 #import "PTYFontInfo.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
@@ -610,7 +611,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
 - (NSDictionary<NSNumber *,NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
                                                           size:(CGSize)size
-                                                         scale:(CGFloat)scale {
+                                                         scale:(CGFloat)scale
+                                                         emoji:(nonnull BOOL *)emoji {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
     BOOL fakeBold = NO;
@@ -635,8 +637,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                       baselineOffset:fontInfo.baselineOffset
                                scale:scale
                       useThinStrokes:glyphKey->thinStrokes
-                   colorSpace:colorSpace
-                               image:&image];
+                          colorSpace:colorSpace
+                               image:&image
+                               emoji:emoji];
     CGColorSpaceRelease(colorSpace);
 
     if (image == nil) {
@@ -669,7 +672,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                              scale:scale
                     useThinStrokes:glyphKey->thinStrokes
                         colorSpace:colorSpace
-                             image:&image];
+                             image:&image
+                             emoji:emoji];
                 if (image) {
                     result[@(i)] = image;
                 }
@@ -688,7 +692,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                  scale:(CGFloat)scale
         useThinStrokes:(BOOL)useThinStrokes
             colorSpace:(CGColorSpaceRef)colorSpace
-                 image:(NSImage **)imagePtr {
+                 image:(NSImage **)imagePtr
+                 emoji:(BOOL *)emoji {
     CGContextRef ctx = CGBitmapContextCreate(NULL,
                                              size.width,
                                              size.height,
@@ -704,7 +709,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                  baselineOffset:baselineOffset
                                           scale:scale
                                  useThinStrokes:glyphKey->thinStrokes
-                                        context:ctx];
+                                        context:ctx
+                                          emoji:emoji];
 
     CGImageRef imageRef = CGBitmapContextCreateImage(ctx);
 
@@ -722,14 +728,34 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                    baselineOffset:(CGFloat)baselineOffset
                             scale:(CGFloat)scale
                    useThinStrokes:(BOOL)useThinStrokes
-                          context:(CGContextRef)cgContext {
-    // Fill the background with white.
-    CGContextSetRGBFillColor(cgContext, 1, 1, 1, 1);
-    CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
-
+                          context:(CGContextRef)cgContext
+                            emoji:(BOOL *)emoji {
     DLog(@"Draw %@ of size %@", string, NSStringFromSize(size));
     if (string.length == 0) {
+        if (emoji) {
+            *emoji = NO;
+        }
+        CGContextSetRGBFillColor(cgContext, 1, 1, 1, 1);
+        CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
         return CGRectZero;
+    }
+
+    BOOL fillBackground = YES;
+    if (emoji) {
+        *emoji = [string startsWithEmoji];
+        if (*emoji) {
+            fillBackground = NO;
+            CGContextSetRGBFillColor(cgContext, 1, 1, 1, 0);
+            CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
+        }
+    }
+    if (fillBackground) {
+        // Fill the background with white. This is necessary for subpixel antialiasing. The fragment
+        // function also discards all fragments that are all-white when remapping colors. We don't
+        // do this for emoji so we can preserve the alpha values (so it will blend with background
+        // images).
+        CGContextSetRGBFillColor(cgContext, 1, 1, 1, 1);
+        CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
     }
 
     static NSMutableParagraphStyle *paragraphStyle;
@@ -770,10 +796,13 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
 
     const CGFloat ty = offset.y - baselineOffset * scale;
-    CGAffineTransform textMatrix = CGAffineTransformMake(scale, 0.0,
-                                                         c, scale,
-                                                         offset.x, ty);
-    CGContextSetTextMatrix(cgContext, textMatrix);
+    if (!emoji || !*emoji) {
+        // Can't use this with emoji.
+        CGAffineTransform textMatrix = CGAffineTransformMake(scale, 0.0,
+                                                             c, scale,
+                                                             offset.x, ty);
+        CGContextSetTextMatrix(cgContext, textMatrix);
+    }
 
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -800,7 +829,20 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         }
 
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-        CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+
+        if (emoji && *emoji) {
+            // You have to use the CTM with emoji. CGContextSetTextMatrix doesn't work.
+            CGContextSaveGState(cgContext);
+            CGContextConcatCTM(cgContext, CTFontGetMatrix(runFont));
+            CGContextTranslateCTM(cgContext, offset.x, ty);
+            CGContextScaleCTM(cgContext, scale, scale);
+
+            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+
+            CGContextRestoreGState(cgContext);
+        } else {
+            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+        }
     }
 
     CGRect frame = CTLineGetImageBounds(lineRef, cgContext);
