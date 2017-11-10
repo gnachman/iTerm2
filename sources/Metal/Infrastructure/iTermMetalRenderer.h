@@ -33,6 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
 @property (nonatomic, readonly, strong) id<MTLRenderPipelineState> pipelineState;
 @property (nonatomic, readonly) BOOL skipRenderer;
+
+- (instancetype)initWithConfiguration:(iTermRenderConfiguration *)configuration;
+- (instancetype)init NS_UNAVAILABLE;
+
 @end
 
 @interface iTermMetalRenderer : NSObject

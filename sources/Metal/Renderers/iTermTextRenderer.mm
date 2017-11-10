@@ -8,36 +8,60 @@ extern "C" {
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
 #import "iTermTextureMap.h"
+#import "iTermTextureMap+CPP.h"
 #import "NSDictionary+iTerm.h"
 #import <unordered_map>
+#include <vector>
+
+typedef struct {
+    iTermTextPIU *piu;
+    int x;
+    int y;
+} iTermTextFixup;
 
 @interface iTermTextRendererTransientState ()
 
-@property (nonatomic, readonly) NSIndexSet *indexes;
 @property (nonatomic, strong) iTermTextureMap *textureMap;
 @property (nonatomic, readonly) NSInteger numberOfInstances;
-
-- (void)addIndex:(NSInteger)index;
 
 @end
 
 @implementation iTermTextRendererTransientState {
     iTermTextureMapStage *_stage;
-    NSMutableIndexSet *_indexes;
-    dispatch_group_t _group;
     id<MTLCommandBuffer> _commandBuffer;
+    std::vector<int> *_locks;
+    NSMutableArray<NSData *> *_backgroundColorDataArray;
+    std::vector<iTermTextFixup> *_fixups;
 }
 
-- (instancetype)init {
-    self = [super init];
+- (instancetype)initWithConfiguration:(iTermRenderConfiguration *)configuration {
+    self = [super initWithConfiguration:configuration];
     if (self) {
-        _indexes = [NSMutableIndexSet indexSet];
-        _group = dispatch_group_create();
+        _locks = new std::vector<int>();
+        _backgroundColorDataArray = [NSMutableArray array];
+        _fixups = new std::vector<iTermTextFixup>();
     }
     return self;
 }
 
-- (void)willDraw {
+- (void)dealloc {
+    delete _locks;
+    delete _fixups;
+}
+
+- (void)willDrawWithDefaultBackgroundColor:(vector_float4)defaultBackgroundColor {
+    // Fix up the background color of parts of glyphs that are drawn outside their cell.
+    const int numRows = _backgroundColorDataArray.count;
+    const int width = [_backgroundColorDataArray.firstObject length] / sizeof(iTermBackgroundColorPIU);
+    for (auto &fixup : *_fixups) {
+        if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
+            NSData *data = _backgroundColorDataArray[fixup.y];
+            const vector_float4 *backgroundColors = (vector_float4 *)data.bytes;
+            fixup.piu->backgroundColor = backgroundColors[fixup.x];
+        } else {
+            fixup.piu->backgroundColor = defaultBackgroundColor;
+        }
+    }
     [_stage blitNewTexturesFromStagingAreaWithCommandBuffer:_commandBuffer];
 }
 
@@ -60,7 +84,10 @@ extern "C" {
                    count:(int)count
           attributesData:(NSData *)attributesData
                      row:(int)row
-                creation:(NSImage *(NS_NOESCAPE ^)(int x))creation {
+     backgroundColorData:(nonnull NSData *)backgroundColorData
+                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation {
+    assert(row == _backgroundColorDataArray.count);
+    [_backgroundColorDataArray addObject:backgroundColorData];
     const int width = self.cellConfiguration.gridSize.width;
     assert(count <= width);
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
@@ -69,35 +96,80 @@ extern "C" {
     const float h = 1.0 / _textureMap.array.atlasSize.height;
     iTermTextureArray *array = _textureMap.array;
     iTermTextPIU *pius = (iTermTextPIU *)self.pius.contents;
-    const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * self.cellConfiguration.cellSize.height;
+    const float cellHeight = self.cellConfiguration.cellSize.height;
+    const float cellWidth = self.cellConfiguration.cellSize.width;
+    const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight;
 
     NSInteger lastIndex = 0;
+    std::map<int, int> lastRelations;
     for (int x = 0; x < count; x++) {
-        pius[_numberOfInstances].offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
-                                                             yOffset);
+        if (!glyphKeys[x].drawable) {
+            continue;
+        }
+        std::map<int, int> relations;
         NSInteger index;
+        BOOL retained;
         if (x > 0 && !memcmp(&glyphKeys[x], &glyphKeys[x-1], sizeof(*glyphKeys))) {
             index = lastIndex;
+            relations = lastRelations;
+            // When the glyphKey is repeated there's no need to acquire another lock.
+            // If we get here, both this and the preceding glyphKey are drawable.
+            retained = NO;
         } else {
             index = [_stage findOrAllocateIndexOfLockedTextureWithKey:&glyphKeys[x]
                                                                column:x
+                                                            relations:&relations
                                                              creation:creation];
+            retained = YES;
         }
-        if (index >= 0) {
+        static int dxs[] = { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
+        static int dys[] = { -1, -1, -1, 0, 0, 0, 1, 1, 1 };
+        if (relations.size() > 1) {
+            for (auto &kvp : relations) {
+                const int part = kvp.first;
+                const int index = kvp.second;
+                iTermTextPIU *piu = &pius[_numberOfInstances];
+                piu->offset = simd_make_float2((x + dxs[part]) * cellWidth,
+                                                dys[part] * cellHeight + yOffset);
+                MTLOrigin origin = [array offsetForIndex:index];
+                piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
+                piu->textColor = attributes[x].foregroundColor;
+                if (part == 4) {
+                    piu->backgroundColor = attributes[x].backgroundColor;
+                } else {
+                    iTermTextFixup fixup = {
+                        .piu = piu,
+                        .x = x + dxs[part],
+                        .y = row - dys[part]
+                    };
+                    _fixups->push_back(fixup);
+                }
+                [self addIndex:index retained:retained];
+            }
+        } else if (index >= 0) {
             iTermTextPIU *piu = &pius[_numberOfInstances];
+            piu->offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
+                                            yOffset);
             MTLOrigin origin = [array offsetForIndex:index];
             piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
             piu->textColor = attributes[x].foregroundColor;
             piu->backgroundColor = attributes[x].backgroundColor;
-            [self addIndex:index];
+            [self addIndex:index retained:retained];
         }
         lastIndex = index;
+        lastRelations = relations;
     }
 }
 
 - (void)didComplete {
+    assert(_locks);
+    assert(_stage);
+
     [_textureMap returnStage:_stage];
+    [_textureMap unlockIndexes:*_locks];
     _stage = nil;
+    delete _locks;
+    _locks = nil;
 }
 
 - (nonnull NSMutableData *)modelData  {
@@ -107,8 +179,10 @@ extern "C" {
     return _modelData;
 }
 
-- (void)addIndex:(NSInteger)index {
-    [_indexes addIndex:index];
+- (void)addIndex:(NSInteger)index retained:(BOOL)retained {
+    if (retained) {
+        _locks->push_back(index);
+    }
     _numberOfInstances++;
 }
 
@@ -136,7 +210,6 @@ extern "C" {
         // The fragment function assumes we use the value 17 here. It's
         // convenient that 17 evenly divides 255 (17 * 15 = 255).
         float stride = 255.0/17.0;
-        int i = 0;
         for (float textColor = 0; textColor < 256; textColor += stride) {
             for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
                 iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
@@ -172,6 +245,9 @@ extern "C" {
 - (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer
                                       completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
+    // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
+    // blends using the output of the preceding passes.
     _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
     [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer

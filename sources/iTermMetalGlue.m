@@ -14,6 +14,7 @@
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
 #import "NSColor+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "PTYFontInfo.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
@@ -281,6 +282,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return _gridSize;
 }
 
+- (vector_float4)defaultBackgroundColor {
+    NSColor *color = [_colorMap colorForKey:kColorMapBackground];
+    return simd_make_float4((float)color.redComponent,
+                            (float)color.greenComponent,
+                            (float)color.blueComponent,
+                            1);
+}
+
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;
@@ -404,6 +413,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                       _blinkingItemsVisible,
                                                       _blinkAllowed)) {
             lastDrawableGlyph = x;
+            glyphKeys[x].drawable = YES;
+        } else {
+            glyphKeys[x].drawable = NO;
         }
     }
 
@@ -596,21 +608,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return kColorMapInvalid;
 }
 
-- (NSImage *)metalImageForGlyphKey:(iTermMetalGlyphKey *)glyphKey
-                              size:(CGSize)size
-                             scale:(CGFloat)scale {
+- (NSDictionary<NSNumber *,NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                          size:(CGSize)size
+                                                         scale:(CGFloat)scale {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(NULL,
-                                             size.width,
-                                             size.height,
-                                             8,
-                                             size.width * 4,
-                                             colorSpace,
-                                             kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
-    CGColorSpaceRelease(colorSpace);
-
-    CGContextSetRGBFillColor(ctx, 0, 0, 0, 0);
-    CGContextFillRect(ctx, CGRectMake(0, 0, size.width, size.height));
 
     BOOL fakeBold = NO;
     BOOL fakeItalic = NO;
@@ -625,101 +626,199 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                   renderItalic:&fakeItalic];
     NSFont *font = fontInfo.font;
     assert(font);
-    [self drawString:CharToStr(glyphKey->code, glyphKey->isComplex)
-                font:font
-                size:size
-      baselineOffset:fontInfo.baselineOffset
-               scale:scale
-      useThinStrokes:glyphKey->thinStrokes
-             context:ctx];
+
+    NSImage *image;
+    CGRect rect = [self drawGlyphKey:glyphKey
+                                font:font
+                                size:size
+                              offset:CGPointZero
+                      baselineOffset:fontInfo.baselineOffset
+                               scale:scale
+                      useThinStrokes:glyphKey->thinStrokes
+                   colorSpace:colorSpace
+                               image:&image];
+    CGColorSpaceRelease(colorSpace);
+
+    if (image == nil) {
+        return nil;
+    }
+
+    NSMutableDictionary<NSNumber *, NSImage *> *result = [NSMutableDictionary dictionary];
+    result[@4] = image;
+
+    // Check the eight cells surrounding and see if the glyph spills into them and output additional images if so.
+    // The key identifies which neighboring cell.
+    // 0 1 2
+    // 3 4 5
+    // 6 7 8
+    int i = 0;
+    for (int y = 0; y < 3; y++) {
+        for (int x = 0; x < 3; x++) {
+            if (i == 4) {
+                i++;
+                continue;
+            }
+            CGRect quadrant = CGRectMake((x - 1) * size.width, (y - 1) * size.height, size.width, size.height);
+            if (CGRectIntersectsRect(quadrant, rect)) {
+                image = nil;
+                [self drawGlyphKey:glyphKey
+                              font:font
+                              size:size
+                            offset:CGPointMake(-quadrant.origin.x, -quadrant.origin.y)
+                    baselineOffset:fontInfo.baselineOffset
+                             scale:scale
+                    useThinStrokes:glyphKey->thinStrokes
+                        colorSpace:colorSpace
+                             image:&image];
+                if (image) {
+                    result[@(i)] = image;
+                }
+            }
+            i++;
+        }
+    }
+    return result;
+}
+
+- (CGRect)drawGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                  font:(NSFont *)font
+                  size:(CGSize)size
+                offset:(CGPoint)offset
+        baselineOffset:(CGFloat)baselineOffset
+                 scale:(CGFloat)scale
+        useThinStrokes:(BOOL)useThinStrokes
+            colorSpace:(CGColorSpaceRef)colorSpace
+                 image:(NSImage **)imagePtr {
+    CGContextRef ctx = CGBitmapContextCreate(NULL,
+                                             size.width,
+                                             size.height,
+                                             8,
+                                             size.width * 4,
+                                             colorSpace,
+                                             kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+
+    CGRect rect = [self drawStringUsingCoreText:CharToStr(glyphKey->code, glyphKey->isComplex)
+                                           font:font
+                                           size:size
+                                         offset:offset
+                                 baselineOffset:baselineOffset
+                                          scale:scale
+                                 useThinStrokes:glyphKey->thinStrokes
+                                        context:ctx];
 
     CGImageRef imageRef = CGBitmapContextCreateImage(ctx);
 
-    return [[NSImage alloc] initWithCGImage:imageRef size:size];
+    *imagePtr = [[NSImage alloc] initWithCGImage:imageRef size:size];
+
+    return rect;
 }
 
 #pragma mark - Letter Drawing
 
-- (void)drawString:(NSString *)string
-              font:(NSFont *)font
-              size:(CGSize)size
-    baselineOffset:(CGFloat)baselineOffset
-             scale:(CGFloat)scale
-    useThinStrokes:(BOOL)useThinStrokes
-           context:(CGContextRef)ctx {
+- (CGRect)drawStringUsingCoreText:(NSString *)string
+                             font:(NSFont *)font
+                             size:(CGSize)size
+                           offset:(CGPoint)offset
+                   baselineOffset:(CGFloat)baselineOffset
+                            scale:(CGFloat)scale
+                   useThinStrokes:(BOOL)useThinStrokes
+                          context:(CGContextRef)cgContext {
     // Fill the background with white.
-    CGContextSetRGBFillColor(ctx, 1, 1, 1, 1);
-    CGContextFillRect(ctx, CGRectMake(0, 0, size.width, size.height));
+    CGContextSetRGBFillColor(cgContext, 1, 1, 1, 1);
+    CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
 
     DLog(@"Draw %@ of size %@", string, NSStringFromSize(size));
     if (string.length == 0) {
-        return;
-    }
-    CGGlyph glyphs[string.length];
-    const NSUInteger numCodes = string.length;
-    unichar characters[numCodes];
-    [string getCharacters:characters];
-    BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
-                                           characters,
-                                           glyphs,
-                                           numCodes);
-    if (!ok) {
-        // TODO: fall back and use core text
-//        assert(NO);
-        return;
+        return CGRectZero;
     }
 
-    // TODO: fake italic, fake bold, optional anti-aliasing, thin strokes, faint
-    const BOOL antiAlias = YES;
-    CGContextSetShouldAntialias(ctx, antiAlias);
+    static NSMutableParagraphStyle *paragraphStyle;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.lineBreakMode = NSLineBreakByClipping;
+        paragraphStyle.tabStops = @[];
+        paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
+    });
 
-    // This is how the subpixel model builder sets up subpixel AA. Maybe it shouldn't? But these
-    // two functions need to do the same thing.
-    CGContextSetAllowsFontSubpixelQuantization(ctx, YES);
-    CGContextSetShouldSubpixelQuantizeFonts(ctx, YES);
-    CGContextSetAllowsFontSubpixelPositioning(ctx, YES);
-    CGContextSetShouldSubpixelPositionFonts(ctx, YES);
-    CGContextSetShouldSmoothFonts(ctx, YES);
+    // TODO: Figure out how to support ligatures.
+    NSDictionary *attributes = @{ (NSString *)kCTLigatureAttributeName: @0,
+                                  (NSString *)kCTForegroundColorAttributeName: (id)[[NSColor blackColor] CGColor],
+                                  NSFontAttributeName: font,
+                                  NSParagraphStyleAttributeName: paragraphStyle };
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:attributes];
+    CTLineRef lineRef;
+    lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
+    CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
 
-    size_t length = numCodes;
+    CGContextSetShouldAntialias(cgContext, YES);
+    CGContextSetFillColorWithColor(cgContext, [[NSColor blackColor] CGColor]);
+    CGContextSetStrokeColorWithColor(cgContext, [[NSColor blackColor] CGColor]);
 
-    // TODO: This is slow. Avoid doing it.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    CGContextSelectFont(ctx,
-                        [[font fontName] UTF8String],
-                        [font pointSize],
-                        kCGEncodingMacRoman);
-#pragma clang diagnostic pop
+    CGFloat c = 0.0;
+#warning Suport fake bold and fake italic
+    const BOOL fakeItalic = NO;
+    if (fakeItalic) {
+        c = 0.2;
+    }
 
-    int savedFontSmoothingStyle = 0;
     if (useThinStrokes) {
-        CGContextSetShouldSmoothFonts(ctx, YES);
+        CGContextSetShouldSmoothFonts(cgContext, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
-        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
-        CGContextSetFontSmoothingStyle(ctx, 16);
+        CGContextSetFontSmoothingStyle(cgContext, 16);
     }
 
-    // TODO: could use extended srgb on macOS 10.12+
-    CGContextSetFillColorSpace(ctx, CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
-    const CGFloat components[4] = { 0.0, 0.0, 0.0, 1.0 };
-    CGContextSetFillColor(ctx, components);
-    double y = -baselineOffset * scale;
-    // Flip vertically and translate to (x, y).
-    CGContextSetTextMatrix(ctx, CGAffineTransformMake(scale,  0.0,
-                                                      0, scale,
-                                                      0, y));
+    const CGFloat ty = offset.y - baselineOffset * scale;
+    CGAffineTransform textMatrix = CGAffineTransformMake(scale, 0.0,
+                                                         c, scale,
+                                                         offset.x, ty);
+    CGContextSetTextMatrix(cgContext, textMatrix);
 
-    CGPoint points[length];
-    for (int i = 0; i < length; i++) {
-        points[i].x = 0;
-        points[i].y = 0;
+    for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
+        CTRunRef run = CFArrayGetValueAtIndex(runs, j);
+        size_t length = CTRunGetGlyphCount(run);
+        const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+        if (!buffer) {
+            NSMutableData *tempBuffer =
+                [[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length];
+            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
+            buffer = tempBuffer.mutableBytes;
+        }
+
+        NSMutableData *positionsBuffer =
+            [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
+        CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
+        CGPoint *positions = positionsBuffer.mutableBytes;
+
+        const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
+        if (!glyphIndexToCharacterIndex) {
+            NSMutableData *tempBuffer =
+                [[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length];
+            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
+            glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
+        }
+
+        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+        CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
     }
-    CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
-    if (useThinStrokes) {
-        CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
-    }
+
+    CGRect frame = CTLineGetImageBounds(lineRef, cgContext);
+    frame.origin.y += baselineOffset;
+    frame.origin.x *= scale;
+    frame.origin.y *= scale;
+    frame.size.width *= scale;
+    frame.size.height *= scale;
+    // This is set to cut off subpixels that spill into neighbors as an optimization.
+    CGPoint min = CGPointMake(ceil(CGRectGetMinX(frame)),
+                              ceil(CGRectGetMinY(frame)));
+    CGPoint max = CGPointMake(floor(CGRectGetMaxX(frame)),
+                              floor(CGRectGetMaxY(frame)));
+    frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
+
+    CFRelease(lineRef);
+
+    return frame;
 }
 
 #pragma mark - Color

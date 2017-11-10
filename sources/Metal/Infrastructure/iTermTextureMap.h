@@ -44,10 +44,6 @@
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (NSInteger)findOrAllocateIndexOfLockedTextureWithKey:(const iTermMetalGlyphKey *)key
-                                                column:(int)column
-                                              creation:(NSImage *(^)(int))creation;
-
 - (void)blitNewTexturesFromStagingAreaWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
