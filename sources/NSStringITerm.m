@@ -1818,6 +1818,25 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     CGContextRestoreGState(ctx);
 }
 
+- (BOOL)startsWithEmoji {
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *emojiSet;
+    dispatch_once(&onceToken, ^{
+        emojiSet = [[NSMutableCharacterSet alloc] init];
+        void (^addRange)(NSUInteger, NSUInteger) = ^(NSUInteger first, NSUInteger last){
+            [emojiSet addCharactersInRange:NSMakeRange(first, last - first + 1)];
+        };
+        addRange(0x1F600, 0x1F64F);  // Emoticons
+        addRange(0x1F300, 0x1F5FF);  // Misc Symbols and Pictographs
+        addRange(0x1F680, 0x1F6FF);  // Transport and Map
+        addRange(0x2600, 0x26FF);    // Misc symbols
+        addRange(0x2700, 0x27BF);    // Dingbats
+        addRange(0xFE00, 0xFE0F);    // Variation Selectors
+        addRange(0x1F900, 0x1F9FF);  // Supplemental Symbols and Pictographs
+    });
+    return [emojiSet longCharacterIsMember:[self firstCharacter]];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

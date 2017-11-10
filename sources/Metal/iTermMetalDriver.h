@@ -39,7 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary<NSNumber *, NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
                                                            size:(CGSize)size
-                                                          scale:(CGFloat)scale;
+                                                          scale:(CGFloat)scale
+                                                          emoji:(BOOL *)emoji;
 
 // Returns the background image or nil. If there's a background image, fill in blending and tiled.
 - (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled;

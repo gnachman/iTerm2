@@ -85,7 +85,7 @@ typedef struct {
           attributesData:(NSData *)attributesData
                      row:(int)row
      backgroundColorData:(nonnull NSData *)backgroundColorData
-                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation {
+                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     assert(row == _backgroundColorDataArray.count);
     [_backgroundColorDataArray addObject:backgroundColorData];
     const int width = self.cellConfiguration.gridSize.width;
@@ -102,6 +102,7 @@ typedef struct {
 
     NSInteger lastIndex = 0;
     std::map<int, int> lastRelations;
+    BOOL lastEmoji = NO;
     for (int x = 0; x < count; x++) {
         if (!glyphKeys[x].drawable) {
             continue;
@@ -109,9 +110,11 @@ typedef struct {
         std::map<int, int> relations;
         NSInteger index;
         BOOL retained;
+        BOOL emoji;
         if (x > 0 && !memcmp(&glyphKeys[x], &glyphKeys[x-1], sizeof(*glyphKeys))) {
             index = lastIndex;
             relations = lastRelations;
+            emoji = lastEmoji;
             // When the glyphKey is repeated there's no need to acquire another lock.
             // If we get here, both this and the preceding glyphKey are drawable.
             retained = NO;
@@ -119,6 +122,7 @@ typedef struct {
             index = [_stage findOrAllocateIndexOfLockedTextureWithKey:&glyphKeys[x]
                                                                column:x
                                                             relations:&relations
+                                                                emoji:&emoji
                                                              creation:creation];
             retained = YES;
         }
@@ -134,6 +138,7 @@ typedef struct {
                 MTLOrigin origin = [array offsetForIndex:index];
                 piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
                 piu->textColor = attributes[x].foregroundColor;
+                piu->remapColors = !emoji;
                 if (part == 4) {
                     piu->backgroundColor = attributes[x].backgroundColor;
                 } else {
@@ -154,10 +159,12 @@ typedef struct {
             piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
             piu->textColor = attributes[x].foregroundColor;
             piu->backgroundColor = attributes[x].backgroundColor;
+            piu->remapColors = !emoji;
             [self addIndex:index retained:retained];
         }
         lastIndex = index;
         lastRelations = relations;
+        lastEmoji = emoji;
     }
 }
 
