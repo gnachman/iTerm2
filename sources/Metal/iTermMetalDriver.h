@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 
 @property (nonatomic, readonly) VT100GridSize gridSize;
+@property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
@@ -36,9 +37,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 
-- (NSImage *)metalImageForGlyphKey:(iTermMetalGlyphKey *)glyphKey
-                              size:(CGSize)size
-                             scale:(CGFloat)scale;
+- (NSDictionary<NSNumber *, NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                           size:(CGSize)size
+                                                          scale:(CGFloat)scale;
 
 // Returns the background image or nil. If there's a background image, fill in blending and tiled.
 - (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled;

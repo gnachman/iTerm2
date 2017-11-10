@@ -3305,6 +3305,7 @@
 		A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenDirectory.framework; path = System/Library/Frameworks/OpenDirectory.framework; sourceTree = SDKROOT; };
 		A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPasteboard+iTerm.h"; sourceTree = "<group>"; };
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
+		A60EBD1A1FB2EC19008C7F5B /* iTermTextureMap+CPP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermTextureMap+CPP.h"; sourceTree = "<group>"; };
 		A6184F881BAB3ED70088EF3C /* ColorPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ColorPicker.framework; path = ColorPicker/ColorPicker.framework; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
@@ -5530,6 +5531,7 @@
 				A6E5D20A1FA3C55700EDD002 /* iTermMetalRowData.m */,
 				A6E5D20D1FA3C57900EDD002 /* iTermMetalFrameData.h */,
 				A6E5D20E1FA3C57900EDD002 /* iTermMetalFrameData.m */,
+				A60EBD1A1FB2EC19008C7F5B /* iTermTextureMap+CPP.h */,
 			);
 			name = Infrastructure;
 			sourceTree = "<group>";

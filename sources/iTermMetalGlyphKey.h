@@ -13,6 +13,7 @@ typedef struct {
     BOOL image;
     BOOL boxDrawing;
     BOOL thinStrokes;
+    BOOL drawable;  // If this is NO it will be ignored
 } iTermMetalGlyphKey;
 
 typedef struct {

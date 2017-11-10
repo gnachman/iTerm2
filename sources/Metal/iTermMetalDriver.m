@@ -158,12 +158,15 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     }
 
     iTermMetalFrameData *frameData = [self newFrameData];
+    [frameData loadFromView:view];
+    if (!frameData.drawable) {
+        NSLog(@"  abort: no drawable available");
+        return;
+    }
 
     @synchronized(self) {
         [_currentFrames addObject:frameData];
     }
-
-    [frameData loadFromView:view];
 
     dispatch_async(_queue, ^{
         [self prepareRenderersWithFrameData:frameData view:view];
@@ -318,10 +321,11 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                               count:rowData.numberOfDrawableGlyphs
                      attributesData:rowData.attributesData
                                 row:rowData.y
-                           creation:^NSImage *(int x) {
-                               return [frameData.perFrameState metalImageForGlyphKey:&glyphKeys[x]
-                                                                                size:cellSize
-                                                                               scale:scale];
+                backgroundColorData:rowData.backgroundColorData
+                           creation:^NSDictionary<NSNumber *,NSImage *> * _Nonnull(int x) {
+                               return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
+                                                                                 size:cellSize
+                                                                                scale:scale];
                            }];
         [backgroundState setColorData:rowData.backgroundColorData
                                   row:rowData.y
@@ -329,7 +333,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     }];
 
     // Tell the text state that it's done getting row data.
-    [textState willDraw];
+    [textState willDrawWithDefaultBackgroundColor:frameData.perFrameState.defaultBackgroundColor];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer

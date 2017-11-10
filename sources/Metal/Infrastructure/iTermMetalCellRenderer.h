@@ -45,6 +45,8 @@ extern const CGFloat BOTTOM_MARGIN;
 @property (nonatomic, readonly) id<MTLBuffer> offsetBuffer;
 @property (nonatomic, strong) id<MTLBuffer> pius;
 
+- (instancetype)init NS_UNAVAILABLE;
+
 - (void)setPIUValue:(void *)c coord:(VT100GridCoord)coord;
 - (const void *)piuForCoord:(VT100GridCoord)coord;
 
