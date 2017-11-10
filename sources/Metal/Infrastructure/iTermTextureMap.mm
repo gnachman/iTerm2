@@ -6,10 +6,14 @@
 #define DLog(format, ...)
 
 #include <list>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+// Define as NSLog or DLog to debug locking issues
+#define DLogLock(args...)
 
 static const NSInteger iTermTextureMapNumberOfStages = 2;
 
@@ -72,6 +76,13 @@ namespace cache {
             }
         }
 
+        // Returns the key-value pair of the least-recently used key and its associated value.
+        key_value_pair_t get_lru(void) const {
+            auto last = _cache_items_list.end();
+            last--;
+            return *last;
+        }
+
         inline const value_t *get(const key_t& key) {
             auto it = _cache_items_map.find(key);
             if (it == _cache_items_map.end()) {
@@ -125,15 +136,18 @@ namespace iTerm2 {
     class GlyphKey {
     private:
         iTermMetalGlyphKey _repr;
+        // Glyphs larger than once cell are broken into multiple parts.
+        int _part;
 
         GlyphKey();
 
     public:
-        explicit GlyphKey(const iTermMetalGlyphKey *repr) : _repr(*repr) { }
+        GlyphKey(const iTermMetalGlyphKey *repr, int part) : _repr(*repr), _part(part) { }
 
         // Copy constructor
         GlyphKey(const GlyphKey &other) {
             _repr = other._repr;
+            _part = other._part;
         }
 
         inline bool operator==(const GlyphKey &other) const {
@@ -141,7 +155,8 @@ namespace iTerm2 {
                     _repr.isComplex == other._repr.isComplex &&
                     _repr.image == other._repr.image &&
                     _repr.boxDrawing == other._repr.boxDrawing &&
-                    _repr.thinStrokes == other._repr.thinStrokes);
+                    _repr.thinStrokes == other._repr.thinStrokes &&
+                    _part == other._part);
         }
 
         inline std::size_t get_hash() const {
@@ -152,6 +167,7 @@ namespace iTerm2 {
             hash_combine(seed, _repr.boxDrawing);
             hash_combine(seed, _repr.thinStrokes);
             hash_combine(seed, _repr.thinStrokes);
+            hash_combine(seed, _part);
             return seed;
         }
     };
@@ -202,10 +218,7 @@ namespace iTerm2 {
             _nextStageIndex = 0;
         }
 
-        void unlock_all(std::vector<int> *locks) {
-            for (auto it = _lockedIndexes.begin(); it != _lockedIndexes.end(); it++) {
-                (*locks)[*it]--;
-            }
+        void unlock_all() {
             _lockedIndexes.clear();
         }
 
@@ -244,34 +257,88 @@ namespace iTerm2 {
         // Maps an index to the lock count. Values > 0 are locked.
         std::vector<int> _locks;
 
+        // Maps an index to a map from part to related index.
+        std::unordered_map<int, std::map<int, int>> _relatedIndexes;
+
         // Maximum number of entries.
         const int _capacity;
     public:
         explicit TextureMap(const int capacity) : _lru(capacity), _locks(capacity), _capacity(capacity) { }
 
-        inline int get_index(const GlyphKey &key, TextureMapStage *textureMapStage) {
+        inline int get_index(const GlyphKey &key, TextureMapStage *textureMapStage, std::map<int, int> *related) {
             const int *value;
             value = textureMapStage->lookup(key, &_lru);
             if (value == nullptr) {
                 return -1;
             } else {
                 const int index = *value;
-                _locks[index]++;
+                *related = _relatedIndexes[index];
+                if (related->size() == 1) {
+                    _locks[index]++;
+                    DLogLock(@"Get %d sets lock to %d", index, _locks[index]);
+                } else {
+                    for (auto kvp : *related) {
+                        const int i = kvp.second;
+                        _locks[i]++;
+                        DLogLock(@"Lock related %d; lock is now %d", i, _locks[i]);
+                    }
+                }
                 return index;
             }
         }
 
         inline std::pair<int, int> allocate_index(const GlyphKey &key, TextureMapStage *stage) {
-            const int index = _lru.size() + 1;
+            const int index = produce();
+            assert(_locks[index] == 0);
+            remove_relations(index);
             _locks[index]++;
+            DLogLock(@"Allocate %d sets lock to %d", index, _locks[index]);
             assert(index <= _capacity);
             _lru.put(key, index);
+
             const int stageIndex = stage->will_blit(index);
             return std::make_pair(stageIndex, index);
         }
 
         void unlock_stage(TextureMapStage *stage) {
-            stage->unlock_all(&_locks);
+            stage->unlock_all();
+        }
+
+        inline void unlock(int index) {
+            _locks[index]--;
+            DLogLock(@"Unlock %d sets lock to %d", index, _locks[index]);
+            assert(_locks[index] >= 0);
+        }
+
+        void define_class(const std::map<int, int> &relation) {
+            for (auto kvp : relation) {
+                const int i = kvp.second;
+                _relatedIndexes[i] = relation;
+            }
+        }
+
+    private:
+        // Return the next index to use. Either a never-before used one or the least-recently used one.
+        inline int produce() {
+            if (_lru.size() == _capacity) {
+                // Recycle the value of the least-recently used GlyphKey.
+                return _lru.get_lru().second;
+            } else {
+                return _lru.size();
+            }
+        }
+
+        inline void remove_relations(const int index) {
+            // Remove all relations of the index that will be recycled.
+            auto it = _relatedIndexes.find(index);
+            if (it != _relatedIndexes.end()) {
+                auto temp = it->second;
+                for (auto kvp : temp) {
+                    const int i = kvp.second;
+                    assert(_locks[i] == 0);
+                    _relatedIndexes.erase(i);
+                }
+            }
         }
     };
 }
@@ -355,6 +422,12 @@ namespace iTerm2 {
     }
 }
 
+- (void)unlockIndexes:(const std::vector<int> &)indexes {
+    for (int i : indexes) {
+        _textureMap->unlock(i);
+    }
+}
+
 - (iTermTextureArray *)newTextureArrayForStageWithDevice:(id<MTLDevice>)device {
     return [[iTermTextureArray alloc] initWithTextureWidth:_cellSize.width
                                              textureHeight:_cellSize.height
@@ -366,21 +439,33 @@ namespace iTerm2 {
                                                 column:(int)column
                                        textureMapStage:(iTerm2::TextureMapStage *)textureMapStage
                                             stageArray:(iTermTextureArray *)stageArray
-                                              creation:(NSImage *(^)(int))creation {
-    const iTerm2::GlyphKey glyphKey(key);
-
-    int index = _textureMap->get_index(glyphKey, textureMapStage);
+                                             relations:(std::map<int, int> *)relations
+                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation {
+    const iTerm2::GlyphKey glyphKey(key, 4);
+    int index = _textureMap->get_index(glyphKey, textureMapStage, relations);
     if (index >= 0) {
         DLog(@"%@: locked existing texture %@", self.label, @(index));
         return index;
     } else {
-        NSImage *image = creation(column);
-        if (image != nil) {
-            auto stageAndGlobalIndex = _textureMap->allocate_index(glyphKey, textureMapStage);
-            DLog(@"%@: create and stage new texture %@", self.label, @(index));
-            DLog(@"Stage %@ at %@", key, @(index));
-            [stageArray setSlice:stageAndGlobalIndex.first withImage:image];
-            return stageAndGlobalIndex.second;
+        NSDictionary<NSNumber *, NSImage *> *images = creation(column);
+        if (images.count) {
+            __block NSInteger result = -1;
+            std::map<int, int> newRelations;
+            for (NSNumber *part in images) {
+                NSImage *image = images[part];
+                const iTerm2::GlyphKey newGlyphKey(key, part.intValue);
+                auto stageAndGlobalIndex = _textureMap->allocate_index(newGlyphKey, textureMapStage);
+                if (result < 0) {
+                    result = stageAndGlobalIndex.second;
+                }
+                newRelations[part.intValue] = stageAndGlobalIndex.second;
+                DLog(@"%@: create and stage new texture %@", self.label, @(index));
+                DLog(@"Stage %@ at %@", key, @(index));
+                [stageArray setSlice:stageAndGlobalIndex.first withImage:image];
+            }
+            _textureMap->define_class(newRelations);
+            *relations = newRelations;
+            return result;
         } else {
             return -1;
         }
@@ -440,11 +525,13 @@ namespace iTerm2 {
 
 - (NSInteger)findOrAllocateIndexOfLockedTextureWithKey:(const iTermMetalGlyphKey *)key
                                                 column:(int)column
-                                              creation:(NSImage *(^)(int))creation {
+                                             relations:(std::map<int, int> *)relations
+                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation {
     return [_textureMap findOrAllocateIndexOfLockedTextureWithKey:key
                                                            column:column
                                                   textureMapStage:_textureMapStage
                                                        stageArray:_stageArray
+                                                        relations:relations
                                                          creation:creation];
 }
 

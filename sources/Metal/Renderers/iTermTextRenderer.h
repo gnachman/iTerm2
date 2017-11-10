@@ -13,8 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
                    count:(int)count
           attributesData:(NSData *)attributesData
                      row:(int)row
-                creation:(NSImage *(NS_NOESCAPE ^)(int x))creation;
-- (void)willDraw;
+     backgroundColorData:(NSData *)backgroundColorData  // array of vector_float4 background colors.
+                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation;
+- (void)willDrawWithDefaultBackgroundColor:(vector_float4)defaultBackgroundColor;
 - (void)didComplete;
 
 @end
