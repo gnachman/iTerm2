@@ -322,10 +322,11 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                      attributesData:rowData.attributesData
                                 row:rowData.y
                 backgroundColorData:rowData.backgroundColorData
-                           creation:^NSDictionary<NSNumber *,NSImage *> * _Nonnull(int x) {
+                           creation:^NSDictionary<NSNumber *,NSImage *> * _Nonnull(int x, BOOL *emoji) {
                                return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
                                                                                  size:cellSize
-                                                                                scale:scale];
+                                                                                scale:scale
+                                                                                emoji:emoji];
                            }];
         [backgroundState setColorData:rowData.backgroundColorData
                                   row:rowData.y

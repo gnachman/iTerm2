@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
           attributesData:(NSData *)attributesData
                      row:(int)row
      backgroundColorData:(NSData *)backgroundColorData  // array of vector_float4 background colors.
-                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation;
+                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
 - (void)willDrawWithDefaultBackgroundColor:(vector_float4)defaultBackgroundColor;
 - (void)didComplete;
 

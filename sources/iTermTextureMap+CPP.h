@@ -19,6 +19,7 @@
 - (NSInteger)findOrAllocateIndexOfLockedTextureWithKey:(const iTermMetalGlyphKey *)key
                                                 column:(int)column
                                              relations:(std::map<int, int> *)relations
-                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x))creation;
+                                                 emoji:(BOOL *)emoji
+                                              creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
 
 @end

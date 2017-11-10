@@ -265,6 +265,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSRect)it_boundingRectWithSize:(NSSize)bounds attributes:(NSDictionary *)attributes truncated:(BOOL *)truncated;
 - (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes;
 
+- (BOOL)startsWithEmoji;
+
 @end
 
 @interface NSMutableString (iTerm)
