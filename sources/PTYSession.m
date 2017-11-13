@@ -3061,7 +3061,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (flag != _bell) {
         _bell = flag;
         [_delegate setBell:flag];
-        if (_bell) {
+        if (false && _bell) {
             if ([_textview keyIsARepeat] == NO &&
                 [self shouldPostGrowlNotification] &&
                 [iTermProfilePreferences boolForKey:KEY_SEND_BELL_ALERT inProfile:self.profile]) {
