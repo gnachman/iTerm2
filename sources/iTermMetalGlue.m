@@ -167,6 +167,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     assert([NSThread isMainThread]);
     self = [super init];
     if (self) {
+        textView.hidden = YES;
         _havePreviousCharacterAttributes = NO;
         _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
         _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0

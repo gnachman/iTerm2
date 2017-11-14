@@ -45,7 +45,7 @@
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermBackgroundColorVertexShader"
                                                   fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
-                                                              blending:YES
+                                                              blending:NO
                                                         piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
     }

@@ -37,9 +37,11 @@
 
 - (void)drawRect:(NSRect)rect
 {
-    [child_.delegate textViewDrawBackgroundImageInView:self
-                                              viewRect:rect
-                                blendDefaultBackground:YES];
+//    [child_.delegate textViewDrawBackgroundImageInView:self
+//                                              viewRect:rect
+//                                blendDefaultBackground:YES];
+    [[NSColor clearColor] set];
+    NSRectFill(rect);
 }
 
 - (void)addSubview:(NSView *)child

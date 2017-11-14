@@ -135,6 +135,7 @@ static NSDate* lastResizeDate_;
         if (@available(macOS 10.11, *)) {
             _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                                  device:MTLCreateSystemDefaultDevice()];
+            _metalView.layer.opaque = NO;
             [self addSubview:_metalView];
             _metalView.paused = YES;
             _metalView.enableSetNeedsDisplay = YES;
