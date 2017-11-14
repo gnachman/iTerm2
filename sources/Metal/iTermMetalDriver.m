@@ -8,6 +8,7 @@
 #import "iTermBackgroundColorRenderer.h"
 #import "iTermBadgeRenderer.h"
 #import "iTermBroadcastStripesRenderer.h"
+#import "iTermClearRenderer.h"
 #import "iTermCopyBackgroundRenderer.h"
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
@@ -32,6 +33,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 @end
 
 @implementation iTermMetalDriver {
+    iTermClearRenderer *_clearRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
     iTermTextRenderer *_textRenderer;
@@ -74,6 +76,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     self = [super init];
     if (self) {
         _startTime = [NSDate timeIntervalSinceReferenceDate];
+        _clearRenderer = [[iTermClearRenderer alloc] initWithDevice:mtkView.device];
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:mtkView.device];
         _textRenderer = [[iTermTextRenderer alloc] initWithDevice:mtkView.device];
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:mtkView.device];
@@ -382,6 +385,9 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         };
         [renderEncoder setViewport:viewport];
 
+        [self drawRenderer:_clearRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder];
         [self drawRenderer:_backgroundImageRenderer
                  frameData:frameData
              renderEncoder:renderEncoder];
@@ -534,7 +540,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     } else if (renderer == _backgroundColorRenderer ||
                renderer == _textRenderer ||
                renderer == _markRenderer ||
-               renderer == _broadcastStripesRenderer) {
+               renderer == _broadcastStripesRenderer ||
+               renderer == _clearRenderer) {
         // Nothing to do here
     } else if (renderer == _badgeRenderer) {
         [self updateBadgeRendererWithPerFrameState:perFrameState];
@@ -609,7 +616,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {
-    return @[ _backgroundImageRenderer,
+    return @[ _clearRenderer,
+              _backgroundImageRenderer,
               _badgeRenderer,
               _broadcastStripesRenderer,
               _copyBackgroundRenderer ];
