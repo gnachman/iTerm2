@@ -136,6 +136,8 @@ static NSDate* lastResizeDate_;
             _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                                  device:MTLCreateSystemDefaultDevice()];
             _metalView.layer.opaque = NO;
+            CAMetalLayer *metalLayer = _metalView.layer;
+            metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             [self addSubview:_metalView];
             _metalView.paused = YES;
             _metalView.enableSetNeedsDisplay = YES;

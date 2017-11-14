@@ -55,7 +55,6 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }
-
     // For a discussion of this code, see this document:
     // https://docs.google.com/document/d/1vfBq6vg409Zky-IQ7ne-Yy7olPtVCl0dq3PG20E8KDs
 
@@ -149,10 +148,25 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     float4 f_x_y2 = (x2 - x) / (x2 - x1) * fq12 + (x - x1) / (x2 - x1) * fq22;
     float4 f_x_y = (y2 - y) / (y2 - y1) * f_x_y1 + (y - y1) / (y2 - y1) * f_x_y2;
 
-    return float4(f_x_y.x,
-                  f_x_y.y,
-                  f_x_y.z,
-                  255) / 255.0;
+    float4 color = float4(f_x_y.x,
+                          f_x_y.y,
+                          f_x_y.z,
+                          255) / 255.0;
+
+#warning TODO: Only do this when transparency is present.
+    // In the face of transparency, we need to blend non-black colors toward the text color and transparent
+    float average = (bwColor.x + bwColor.y + bwColor.z) / 3;
+    // If importance is 1, don't touch it. If importance is 0, make it transparent gray.
+    float p = 2 * (1 - average);
+    float importance = pow((1 - average), p);
+    float unimportance = 1 - importance;
+
+    float4 muted = color * importance + in.textColor * unimportance;
+    float p2 = 0.5 + average;
+
+    muted.w = 1 - pow(average, p2);
+
+    return muted;
 }
 
 fragment float4
