@@ -219,7 +219,7 @@
 }
 
 + (instancetype)alwaysConfirmQuitPreferenceEnabled {
-    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"“Prefs > General > Confirm Quit iTerm2” is enabled." priority:100] autorelease];
+    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"“Prefs > General > Confirm Quit Therm” is enabled." priority:100] autorelease];
 }
 
 + (instancetype)closingMultipleSessionsPreferenceEnabled {

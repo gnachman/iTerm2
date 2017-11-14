@@ -51,13 +51,13 @@
                                     <action selector="debugLogging:" target="-1" id="951"/>
                                 </connections>
                             </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="143">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                             <menuItem title="Services" id="131">
                                 <menu key="submenu" title="Services" systemMenu="services" id="130"/>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -726,6 +726,7 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
+<!--
                 <menuItem title="Session" id="ZGW-Bo-6S6">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Session" id="3Ow-tu-l1x">
@@ -851,7 +852,6 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
-<!--
                 <menuItem title="Toolbelt" id="1295">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Toolbelt" id="1296">
