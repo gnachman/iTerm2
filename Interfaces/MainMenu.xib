@@ -13,36 +13,17 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <menu title="MainMenu" systemMenu="main" id="29" userLabel="MainMenu">
             <items>
-                <menuItem title="iTerm2" id="56">
-                    <menu key="submenu" title="iTerm2" systemMenu="apple" id="57">
+                <menuItem title="Therm" id="56">
+                    <menu key="submenu" title="Therm" systemMenu="apple" id="57">
                         <items>
-                            <menuItem title="About iTerm2" identifier="About iTerm2" id="233">
+                            <menuItem title="About Therm" identifier="About Therm" id="233">
                                 <connections>
                                     <action selector="showAbout:" target="201" id="509"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Show Tip of the Day" identifier="Show Tip of the Day" id="ft3-BP-igZ">
-                                <connections>
-                                    <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Check for Incompatible Software" identifier="Check for Incompatible Software" id="SsR-0r-ksL">
-                                <connections>
-                                    <action selector="checkForIncompatibleSoftware:" target="201" id="0ur-zZ-jKd"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="Dxk-DH-qzi">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
                             <menuItem title="Check For Updates…" identifier="Check For Updates…" id="880">
                                 <connections>
                                     <action selector="checkForUpdates:" target="879" id="881"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Toggle Debug Logging" enabled="NO" identifier="Toggle Debug Logging" id="950">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="debugLogging:" target="-1" id="951"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="199">
@@ -53,6 +34,24 @@
                                     <action selector="showPrefWindow:" target="201" id="574"/>
                                 </connections>
                             </menuItem>
+<!--
+                            <menuItem title="Show Tip of the Day" identifier="Show Tip of the Day" id="ft3-BP-igZ">
+                                <connections>
+                                    <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Check for Incompatible Software" identifier="Check for Incompatible Software" id="SsR-0r-ksL">
+                                <connections>
+                                    <action selector="checkForIncompatibleSoftware:" target="201" id="0ur-zZ-jKd"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Toggle Debug Logging" enabled="NO" identifier="Toggle Debug Logging" id="950">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="debugLogging:" target="-1" id="951"/>
+                                </connections>
+                            </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="143">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -62,7 +61,7 @@
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Hide iTerm2" keyEquivalent="h" identifier="Hide iTerm2" id="134">
+                            <menuItem title="Hide Therm" keyEquivalent="h" identifier="Hide Therm" id="134">
                                 <connections>
                                     <action selector="hide:" target="-2" id="152"/>
                                 </connections>
@@ -88,7 +87,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1176"/>
-                            <menuItem title="Make iTerm2 Default Term" keyEquivalent="\" identifier="Make iTerm2 Default Term" id="1470">
+                            <menuItem title="Make Therm Default Term" keyEquivalent="\" identifier="Make Therm Default Term" id="1470">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" command="YES"/>
                                 <connections>
                                     <action selector="makeDefaultTerminal:" target="201" id="1472"/>
@@ -107,7 +106,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1469"/>
-                            <menuItem title="Quit iTerm2" keyEquivalent="q" identifier="Quit iTerm2" id="136">
+                            <menuItem title="Quit Therm" keyEquivalent="q" identifier="Quit Therm" id="136">
                                 <connections>
                                     <action selector="terminate:" target="-1" id="532"/>
                                 </connections>
@@ -128,13 +127,16 @@
                                     <action selector="newSession:" target="201" id="871"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="New Tab with Current Profile" keyEquivalent="T" identifier="New Tab with Current Profile" id="1302">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="newSessionWithSameProfile:" target="201" id="1304"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="1199"/>
+<!--
                             <menuItem title="Duplicate Tab" identifier="Duplicate Tab" id="Heo-Xb-RKN">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -142,6 +144,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="w1g-nK-kOV"/>
+-->
                             <menuItem title="Split Vertically with Current Profile" keyEquivalent="d" identifier="Split Vertically with Current Profile" id="1200">
                                 <connections>
                                     <action selector="splitVertically:" target="-1" id="1202"/>
@@ -194,6 +197,7 @@
                             <menuItem isSeparatorItem="YES" id="224">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+<!--
                             <menuItem title="Broadcast Input" id="1261">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Broadcast Input" id="1262">
@@ -234,6 +238,7 @@
                             <menuItem isSeparatorItem="YES" id="1307">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+-->
                             <menuItem title="tmux" id="1448">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="tmux" id="1449">
@@ -846,6 +851,7 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
+<!--
                 <menuItem title="Toolbelt" id="1295">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Toolbelt" id="1296">
@@ -865,6 +871,7 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
+-->
                 <menuItem title="Window" id="19">
                     <menu key="submenu" title="Window" systemMenu="window" id="24">
                         <items>
@@ -1090,7 +1097,7 @@ DQ
                 <menuItem title="Help" id="103">
                     <menu key="submenu" title="Help" id="106">
                         <items>
-                            <menuItem title="iTerm2 Help" keyEquivalent="?" identifier="iTerm2 Help" id="111">
+                            <menuItem title="Therm Help" keyEquivalent="?" identifier="Therm Help" id="111">
                                 <connections>
                                     <action selector="showHelp:" target="201" id="hFO-6H-VeJ"/>
                                 </connections>

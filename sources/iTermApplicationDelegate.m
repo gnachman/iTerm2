@@ -688,7 +688,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         }
         [NSApp activateIgnoringOtherApps:YES];
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = @"Quit iTerm2?";
+        alert.messageText = @"Quit Therm?";
         alert.informativeText = message;
         [alert addButtonWithTitle:@"OK"];
         [alert addButtonWithTitle:@"Cancel"];
@@ -1082,7 +1082,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
+    item = [[[NSMenuItem alloc] initWithTitle:@"Quit Therm"
                                        action:@selector(terminate:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];

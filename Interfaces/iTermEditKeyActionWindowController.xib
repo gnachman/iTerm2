@@ -69,7 +69,7 @@
                                             <menuItem title="Ignore" tag="13" id="1LJ-xG-847"/>
                                             <menuItem isSeparatorItem="YES" id="VuU-ME-pRd"/>
                                             <menuItem title="Do Not Remap Modifiers" tag="22" id="1Ky-4L-4JV"/>
-                                            <menuItem title="Remap Modifiers in iTerm2 Only" tag="24" id="bek-yf-XvE"/>
+                                            <menuItem title="Remap Modifiers in Therm Only" tag="24" id="bek-yf-XvE"/>
                                             <menuItem isSeparatorItem="YES" id="9wX-9R-Bay"/>
                                             <menuItem title="New Window with Profile" tag="26" id="rhK-QX-5hc">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
