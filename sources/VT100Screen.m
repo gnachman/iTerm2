@@ -160,6 +160,10 @@ static const double kInterBellQuietPeriod = 0.1;
     // Valid while at the command prompt only. GIves the range of the current prompt. Meaningful
     // only if the end is not equal to the start.
     VT100GridAbsCoordRange _currentPromptRange;
+
+    // For REP
+    screen_char_t _lastCharacter;
+    BOOL _lastCharacterIsDoubleWidth;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -1091,6 +1095,18 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                length:(int)len
                            shouldFree:(BOOL)shouldFree {
     if (len >= 1) {
+        screen_char_t lastCharacter = buffer[len - 1];
+        if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
+            // Last character is the right half of a double-width character. Use the penultimate character instead.
+            if (len >= 2) {
+                _lastCharacter = buffer[len - 2];
+                _lastCharacterIsDoubleWidth = YES;
+            }
+        } else {
+            // Record the last character.
+            _lastCharacter = buffer[len - 1];
+            _lastCharacterIsDoubleWidth = NO;
+        }
         LineBuffer *lineBuffer = nil;
         if (currentGrid_ != altGrid_ || saveToScrollbackInAlternateScreen_) {
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
@@ -4118,19 +4134,20 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (![iTermAdvancedSettingsModel supportREPCode]) {
         return;
     }
-    if (self.cursorX == 1 && self.cursorY == 1) {
-        return;
-    }
-    VT100GridCoord coord = currentGrid_.cursor;
-    coord.y += [self numberOfScrollbackLines];
-    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:self] autorelease];
-    VT100GridCoord pred = [extractor predecessorOfCoord:coord];
-    if (pred.x < 0 || pred.y < 0) {
-        return;
-    }
-    screen_char_t c = [extractor characterAt:pred];
-    for (int i = 0; i < times; i++) {
-        [self appendScreenCharArrayAtCursor:&c length:1 shouldFree:NO];
+    if (_lastCharacter.code) {
+        int length = 1;
+        screen_char_t chars[2];
+        chars[0] = _lastCharacter;
+        if (_lastCharacterIsDoubleWidth) {
+            length++;
+            chars[1] = _lastCharacter;
+            chars[1].code = DWC_RIGHT;
+            chars[1].complexChar = NO;
+        }
+
+        for (int i = 0; i < times; i++) {
+            [self appendScreenCharArrayAtCursor:chars length:length shouldFree:NO];
+        }
     }
 }
 
