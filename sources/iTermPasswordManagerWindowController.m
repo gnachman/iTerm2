@@ -231,6 +231,7 @@ static BOOL sAuthenticated;
     if (sAuthenticated) {
         NSInteger selectedRow = [_tableView selectedRow];
         NSString *selectedAccountName = [self accountNameForRow:selectedRow];
+        [_tableView reloadData];
         [[self keychain] deletePasswordForService:kServiceName account:selectedAccountName];
         [self reloadAccounts];
         [self passwordsDidChange];
@@ -461,6 +462,9 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
     if (!sAuthenticated) {
         return;
+    }
+    if (rowIndex < 0 || rowIndex >= _accounts.count) {
+        ITCriticalError(NO, @"Row index %@ out of bounds [0, %@)", @(rowIndex), @(_accounts.count));
     }
     NSString *accountName = [self accountNameForRow:rowIndex];
     if (aTableColumn == _accountNameColumn) {
