@@ -368,16 +368,24 @@ static iTermController *gSharedInstance;
     NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     if (allWindows) {
         for (PseudoTerminal *terminal in _terminalWindows) {
-            [terminalArrangements addObject:[terminal arrangement]];
+            NSDictionary *arrangement = [terminal arrangement];
+            if (arrangement) {
+                [terminalArrangements addObject:arrangement];
+            }
         }
     } else {
         PseudoTerminal *currentTerminal = [self currentTerminal];
         if (!currentTerminal) {
             return;
         }
-        [terminalArrangements addObject:[currentTerminal arrangement]];
+        NSDictionary *arrangement = [currentTerminal arrangement];
+        if (arrangement) {
+            [terminalArrangements addObject:arrangement];
+        }
     }
-    [WindowArrangements setArrangement:terminalArrangements withName:name];
+    if (terminalArrangements.count) {
+        [WindowArrangements setArrangement:terminalArrangements withName:name];
+    }
 }
 
 - (void)tryOpenArrangement:(NSDictionary *)terminalArrangement {
