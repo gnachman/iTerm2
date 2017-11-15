@@ -145,16 +145,17 @@
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="w1g-nK-kOV"/>
 -->
-                            <menuItem title="Split Vertically with Current Profile" keyEquivalent="d" identifier="Split Vertically with Current Profile" id="1200">
+                            <menuItem title="Split Vertically" keyEquivalent="d" identifier="Split Vertically" id="1200">
                                 <connections>
                                     <action selector="splitVertically:" target="-1" id="1202"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Split Horizontally with Current Profile" keyEquivalent="D" identifier="Split Horizontally with Current Profile" id="1201">
+                            <menuItem title="Split Horizontally" keyEquivalent="D" identifier="Split Horizontally" id="1201">
                                 <connections>
                                     <action selector="splitHorizontally:" target="-1" id="1203"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="Split Horizontally…" keyEquivalent="H" identifier="Split Horizontally…" id="1289">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
@@ -167,6 +168,7 @@
                                     <action selector="openSplitVerticallySheet:" target="-1" id="1294"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="632">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -670,6 +672,7 @@ Gw
                                     <action selector="toggleAutoCommandHistory:" target="-1" id="asy-Rr-9Eu"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem isSeparatorItem="YES" id="gzL-UV-S2y">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -681,6 +684,7 @@ Gw
                             <menuItem isSeparatorItem="YES" id="VKC-UO-5Cj">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+-->
                             <menuItem title="Maximize Active Pane" identifier="Maximize Active Pane" id="1233">
                                 <string key="keyEquivalent" base64-UTF8="YES">
 DQ

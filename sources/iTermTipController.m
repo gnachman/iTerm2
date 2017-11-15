@@ -155,6 +155,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 }
 
 - (void)showTip {
+return;
     if (_showingTip) {
         return;
     }
@@ -211,6 +212,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 }
 
 - (void)showTipForKey:(NSString *)tipKey {
+return;
     NSDictionary *tipDictionary = _tips[tipKey];
     [self willShowTipWithIdentifier:tipKey];
     iTermTip *tip = [[[iTermTip alloc] initWithDictionary:tipDictionary
