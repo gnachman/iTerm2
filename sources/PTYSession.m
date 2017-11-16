@@ -1494,8 +1494,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSize:(VT100GridSize)size {
-    ITBetaAssert(size.width > 0, @"Nonpositive width %d", size.width);
-    ITBetaAssert(size.height > 0, @"Nonpositive height %d", size.height);
+    if (size.width < 1|| size.height < 1) {
+        return;
+    }
     if (size.width <= 0) {
         size.width = 1;
     }
