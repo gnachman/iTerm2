@@ -2153,7 +2153,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
     if (count > 0) {
-        return sum / count;
+        return MIN(24, sum / count);
     } else {
         // This shouldn't actually happen, but better safe than divide by zero.
         return 2.0;
