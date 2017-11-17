@@ -162,14 +162,17 @@ enum {
     while (rootMenu.supermenu) {
         rootMenu = rootMenu.supermenu;
     }
-    if (rootMenu == [NSApp mainMenu] &&
-        [[[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"] isEqualToString:@"Dark"]) {
+    if ([self darkTheme]) {
         attributes[NSForegroundColorAttributeName] = [NSColor whiteColor];
     }
 
     NSString *labelTitle = @"Tab Color:";
     [labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];
+}
+
+- (BOOL)darkTheme {
+    return [self.window.appearance.name isEqual:NSAppearanceNameVibrantDark];
 }
 
 - (void)mouseUp:(NSEvent*) event {
