@@ -8464,6 +8464,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)currentLocalWorkingDirectory {
     if (_lastDirectoryIsUnsuitableForOldPWD || _lastDirectory == nil) {
+        DLog(@"Last directory is unsuitable or nil");
         // Ask the kernel what the child's process's working directory is.
         return [_shell getWorkingDirectory];
     } else {
@@ -8473,6 +8474,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // to expand symlinks on _lastDirectory and use it if it matches what the kernel reports.
         // That was a bad idea because expanding symlinks is slow on network file systems (Issue 4901).
         // Instead, we'll use _lastDirectory if we believe it's on localhost.
+        DLog(@"Using last directory from shell integration: %@", _lastDirectory);
         return _lastDirectory;
     }
 }

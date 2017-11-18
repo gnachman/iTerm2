@@ -5063,7 +5063,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermSubSelection *sub = [selection.allSubSelections lastObject];
     if (sub) {
         [self showRangeOfLines:NSMakeRange(sub.range.coordRange.start.y,
-                                           sub.range.coordRange.end.y - sub.range.coordRange.start.y)
+                                           sub.range.coordRange.end.y - sub.range.coordRange.start.y + 1)
                      inSession:session];
     }
 }
@@ -7594,6 +7594,7 @@ ITERM_WEAKLY_REFERENCEABLE
         currentSession = currentSession.tmuxGatewaySession;
     }
     if (currentSession) {
+        DLog(@"Getting current local working directory");
         previousDirectory = [currentSession currentLocalWorkingDirectory];
     }
 
