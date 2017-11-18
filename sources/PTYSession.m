@@ -2161,7 +2161,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 self.copyMode = NO;
                 break;
             case '/':
-                [self showFindPanel];
+                [self toggleFindPanel];
                 break;
             case '[':
                 moved = [_copyModeState previousMark];
@@ -4565,13 +4565,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)showFindPanel
+- (void)toggleFindPanel
 {
     if ([[[_view findViewController] view] isHidden]) {
         [[_view findViewController] makeVisible];
     } else {
         [[_view findViewController] close];
     }
+}
+
+- (void)showFindPanel
+{
+    [[_view findViewController] makeVisible];
 }
 
 - (void)searchNext

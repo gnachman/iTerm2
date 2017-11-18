@@ -636,6 +636,7 @@ typedef enum {
 
 // Show the find view
 - (void)showFindPanel;
+- (void)toggleFindPanel;
 
 // Find next/previous occurrence of find string.
 - (void)searchNext;

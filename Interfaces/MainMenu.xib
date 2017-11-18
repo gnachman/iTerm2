@@ -463,7 +463,7 @@ DQ
                                     <items>
                                         <menuItem title="Find..." keyEquivalent="f" identifier="Find.Find..." id="762">
                                             <connections>
-                                                <action selector="showFindPanel:" target="-1" id="766"/>
+                                                <action selector="toggleFindPanel:" target="-1" id="766"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Find Next" keyEquivalent="g" identifier="Find.Find Next" id="761">

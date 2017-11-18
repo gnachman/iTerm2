@@ -41,7 +41,7 @@ static iTermFindMode gFindMode;
 static NSString *gSearchString;
 static NSSize kFocusRingInset = { 2, 3 };
 
-const CGFloat kEdgeWidth = 3;
+const CGFloat kEdgeWidth = 1;
 
 @interface iTermSearchFieldCell : NSSearchFieldCell
 @property(nonatomic, assign) CGFloat fraction;
@@ -107,7 +107,8 @@ const CGFloat kEdgeWidth = 3;
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
 {
     NSRect originalFrame = cellFrame;
-    [[NSColor whiteColor] set];
+    // [[NSColor whiteColor] set];
+    [[NSColor blackColor] set];
 
     BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
                     [(NSControl *)controlView currentEditor]);
@@ -135,8 +136,8 @@ const CGFloat kEdgeWidth = 3;
 
         cellFrame = NSInsetRect(cellFrame, 0.25, 0.25);
         path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
-                                               xRadius:4
-                                               yRadius:4];
+                                               xRadius:2
+                                               yRadius:2];
         [path setLineWidth:0.25];
         [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
         [path stroke];

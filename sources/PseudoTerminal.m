@@ -7881,6 +7881,10 @@ return NO;
     [[self currentSession] showFindPanel];
 }
 
+- (IBAction)toggleFindPanel:(id)sender {
+    [[self currentSession] toggleFindPanel];
+}
+
 // findNext and findPrevious are reversed here because in the search UI next
 // goes backwards and previous goes forwards.
 // Internally, next=forward and prev=backwards.
