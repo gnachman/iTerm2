@@ -4567,7 +4567,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)showFindPanel
 {
-    [[_view findViewController] makeVisible];
+    if ([[[_view findViewController] view] isHidden]) {
+        [[_view findViewController] makeVisible];
+    } else {
+        [[_view findViewController] close];
+    }
 }
 
 - (void)searchNext
