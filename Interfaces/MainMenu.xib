@@ -718,6 +718,7 @@ DQ
                                     <action selector="smallerFont:" target="201" id="809"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem isSeparatorItem="YES" id="915">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -727,6 +728,7 @@ DQ
                                     <action selector="irPrev:" target="-1" id="982"/>
                                 </connections>
                             </menuItem>
+-->
                         </items>
                     </menu>
                 </menuItem>

@@ -1211,6 +1211,10 @@ static const int kMaxScreenRows = 4096;
 
     // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.
     if (receivingFile_) {
+            receivingFile_ = NO;
+    }
+#if 0
+    {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [delegate_ terminalDidReceiveBase64FileData:token.string ?: @""];
             return;
@@ -1241,6 +1245,7 @@ static const int kMaxScreenRows = 4096;
             _copyingToPasteboard = NO;
         }
     }
+#endif
     if (token->savingData &&
         token->type != VT100_SKIP &&
         [delegate_ terminalIsAppendingToPasteboard]) {  // This is the old code that echoes to the screen. Its use is discouraged.
@@ -2008,6 +2013,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeFileCommandWithValue:(NSString *)value {
+return;
     // Takes semicolon-delimited arguments.
     // File=<arg>;<arg>;...;<arg>
     // <arg> is one of:
@@ -2145,6 +2151,7 @@ static const int kMaxScreenRows = 4096;
     if (!token.string) {
         return;
     }
+return;
     NSArray *kvp = [self keyValuePairInToken:token];
     NSString *key = kvp[0];
     NSString *value = kvp[1];
@@ -2190,6 +2197,7 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetPasteboard:value];
         }
     } else if ([key isEqualToString:@"File"]) {
+#if 0
         if ([delegate_ terminalIsTrusted]) {
             [self executeFileCommandWithValue:value];
         } else {
@@ -2197,6 +2205,7 @@ static const int kMaxScreenRows = 4096;
             receivingFile_ = YES;
             [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
+#endif
     } else if ([key isEqualToString:@"Copy"]) {
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalBeginCopyToPasteboard];

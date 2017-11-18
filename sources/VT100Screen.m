@@ -3408,6 +3408,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                               inset:(NSEdgeInsets)inset
                               image:(NSImage *)nativeImage
                                data:(NSData *)data {
+#if 0
     iTermImage *image;
     if (nativeImage) {
         image = [iTermImage imageWithNativeImage:nativeImage];
@@ -3529,6 +3530,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                                        ofClass:[iTermImageMark class]];
     mark.imageCode = @(c.code);
     [delegate_ screenNeedsRedraw];
+#endif
 }
 
 - (void)addURLMarkAtLineAfterCursorWithCode:(unsigned short)code {
