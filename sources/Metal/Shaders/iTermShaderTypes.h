@@ -43,6 +43,9 @@ typedef struct {
 
     // This is true for text and false for emoji.
     bool remapColors;
+
+    // Passed through to the solid background color fragment shader.
+    vector_int3 colorModelIndex;
 } iTermTextPIU;
 
 typedef struct {

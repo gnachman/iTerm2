@@ -23,23 +23,48 @@ typedef struct {
 
 @property (nonatomic, strong) iTermTextureMap *textureMap;
 @property (nonatomic, readonly) NSInteger numberOfInstances;
-
+@property (nonatomic, readonly) NSData *colorModels;
+@property (nonatomic, readonly) NSData *piuData;
 @end
+
+// text color component, background color component
+typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
 @implementation iTermTextRendererTransientState {
     iTermTextureMapStage *_stage;
     id<MTLCommandBuffer> _commandBuffer;
     std::vector<int> *_locks;
+
+    // Data's bytes contains a C array of vector_float4 with background colors.
     NSMutableArray<NSData *> *_backgroundColorDataArray;
+
+    // PIUs that need their background colors set. They belong to parts of glyphs that spilled out
+    // of their bounds.
     std::vector<iTermTextFixup> *_fixups;
+
+    // Color models for this frame. Only used when there's no intermediate texture.
+    NSMutableData *_colorModels;
+
+    // Key is text, background color component. Value is color model number (0 is 1st, 1 is 2nd, etc)
+    // and you can multiply the color model number by 256 to get its starting point in _colorModels.
+    // Only used when there's no intermediate texture.
+    std::map<iTermColorComponentPair, int> *_colorModelIndexes;
+
+    NSMutableData *_piuData;
 }
 
-- (instancetype)initWithConfiguration:(iTermRenderConfiguration *)configuration {
+- (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
     self = [super initWithConfiguration:configuration];
     if (self) {
         _locks = new std::vector<int>();
         _backgroundColorDataArray = [NSMutableArray array];
         _fixups = new std::vector<iTermTextFixup>();
+
+        iTermCellRenderConfiguration *cellConfiguration = configuration;
+        if (!cellConfiguration.usingIntermediatePass) {
+            _colorModels = [NSMutableData data];
+            _colorModelIndexes = new std::map<iTermColorComponentPair, int>();
+        }
     }
     return self;
 }
@@ -47,6 +72,9 @@ typedef struct {
 - (void)dealloc {
     delete _locks;
     delete _fixups;
+    if (_colorModelIndexes) {
+        delete _colorModelIndexes;
+    }
 }
 
 - (void)willDrawWithDefaultBackgroundColor:(vector_float4)defaultBackgroundColor {
@@ -58,7 +86,11 @@ typedef struct {
             NSData *data = _backgroundColorDataArray[fixup.y];
             const vector_float4 *backgroundColors = (vector_float4 *)data.bytes;
             fixup.piu->backgroundColor = backgroundColors[fixup.x];
+            if (_colorModels) {
+                fixup.piu->colorModelIndex = [self colorModelIndexForPIU:fixup.piu];
+            }
         } else {
+            // Offscreen
             fixup.piu->backgroundColor = defaultBackgroundColor;
         }
     }
@@ -79,6 +111,12 @@ typedef struct {
     return sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height * 9;
 }
 
+- (iTermTextPIU *)piuDataBytes {
+    if (_piuData == nil) {
+        _piuData = [NSMutableData dataWithLength:self.sizeOfNewPIUBuffer];
+    }
+    return (iTermTextPIU *)_piuData.mutableBytes;
+}
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
                    count:(int)count
@@ -95,7 +133,7 @@ typedef struct {
     const float w = 1.0 / _textureMap.array.atlasSize.width;
     const float h = 1.0 / _textureMap.array.atlasSize.height;
     iTermTextureArray *array = _textureMap.array;
-    iTermTextPIU *pius = (iTermTextPIU *)self.pius.contents;
+    iTermTextPIU *pius = (iTermTextPIU *)self.piuDataBytes;
     const float cellHeight = self.cellConfiguration.cellSize.height;
     const float cellWidth = self.cellConfiguration.cellSize.width;
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight;
@@ -141,6 +179,9 @@ typedef struct {
                 piu->remapColors = !emoji;
                 if (part == 4) {
                     piu->backgroundColor = attributes[x].backgroundColor;
+                    if (_colorModels) {
+                        piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+                    }
                 } else {
                     iTermTextFixup fixup = {
                         .piu = piu,
@@ -160,12 +201,53 @@ typedef struct {
             piu->textColor = attributes[x].foregroundColor;
             piu->backgroundColor = attributes[x].backgroundColor;
             piu->remapColors = !emoji;
+            if (_colorModels) {
+                piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+            }
             [self addIndex:index retained:retained];
         }
         lastIndex = index;
         lastRelations = relations;
         lastEmoji = emoji;
     }
+}
+
+- (vector_int3)colorModelIndexForPIU:(iTermTextPIU *)piu {
+    iTermColorComponentPair redPair = std::make_pair(piu->textColor.x * 255,
+                                                     piu->backgroundColor.x * 255);
+    iTermColorComponentPair greenPair = std::make_pair(piu->textColor.y * 255,
+                                                       piu->backgroundColor.y * 255);
+    iTermColorComponentPair bluePair = std::make_pair(piu->textColor.z * 255,
+                                                      piu->backgroundColor.z * 255);
+    vector_int3 result;
+    auto it = _colorModelIndexes->find(redPair);
+    if (it == _colorModelIndexes->end()) {
+        result.x = [self allocateColorModelForColorPair:redPair];
+    } else {
+        result.x = it->second;
+    }
+    it = _colorModelIndexes->find(greenPair);
+    if (it == _colorModelIndexes->end()) {
+        result.y = [self allocateColorModelForColorPair:greenPair];
+    } else {
+        result.y = it->second;
+    }
+    it = _colorModelIndexes->find(bluePair);
+    if (it == _colorModelIndexes->end()) {
+        result.z = [self allocateColorModelForColorPair:bluePair];
+    } else {
+        result.z = it->second;
+    }
+    return result;
+}
+
+- (int)allocateColorModelForColorPair:(iTermColorComponentPair)colorPair {
+    int i = _colorModelIndexes->size();
+    iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:colorPair.first / 255.0
+                                                                                   backgroundColor:colorPair.second / 255.0];
+    [_colorModels appendData:model.table];
+    (*_colorModelIndexes)[colorPair] = i;
+    return i;
 }
 
 - (void)didComplete {
@@ -193,16 +275,6 @@ typedef struct {
     _numberOfInstances++;
 }
 
-#pragma mark - Debugging
-
-- (iTermTextPIU *)piuArray {
-    return (iTermTextPIU *)self.pius.contents;
-}
-
-- (iTermVertex *)vertexArray {
-    return (iTermVertex *)self.vertexBuffer.contents;
-}
-
 @end
 
 @implementation iTermTextRenderer {
@@ -211,7 +283,19 @@ typedef struct {
     id<MTLBuffer> _models;
 }
 
-- (id<MTLBuffer>)subpixelModels {
+- (id<MTLBuffer>)subpixelModelsForState:(iTermTextRendererTransientState *)tState {
+    if (tState.colorModels) {
+        if (tState.colorModels.length == 0) {
+            // Blank screen, emoji-only screen, etc. The buffer won't get accessed but it can't be nil.
+            return [_cellRenderer.device newBufferWithBytes:""
+                                                     length:1
+                                                    options:MTLResourceStorageModeShared];
+        }
+        return [_cellRenderer.device newBufferWithBytes:tState.colorModels.bytes
+                                                 length:tState.colorModels.length
+                                                options:MTLResourceStorageModeShared];
+    }
+
     if (_models == nil) {
         NSMutableData *data = [NSMutableData data];
         // The fragment function assumes we use the value 17 here. It's
@@ -286,8 +370,6 @@ typedef struct {
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
     tState.vertexBuffer = [self newQuadOfSize:tState.cellConfiguration.cellSize];
-    tState.pius = [_cellRenderer.device newBufferWithLength:tState.sizeOfNewPIUBuffer
-                                                    options:MTLResourceStorageModeShared];
 
     [tState prepareForDrawWithCommandBuffer:commandBuffer completion:^{
         completion(tState);
@@ -320,6 +402,9 @@ typedef struct {
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
     tState.vertexBuffer.label = @"text vertex buffer";
+    tState.pius = [_cellRenderer.device newBufferWithBytes:tState.piuData.bytes
+                                                    length:tState.piuData.length
+                                                   options:MTLResourceStorageModeShared];
     tState.pius.label = @"text PIUs";
     tState.offsetBuffer.label = @"text offset";
 
@@ -334,7 +419,7 @@ typedef struct {
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                          fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): self.subpixelModels }
+                          fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState] }
                                  textures:textures];
 }
 
