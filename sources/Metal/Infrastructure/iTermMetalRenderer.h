@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, strong) id<MTLRenderPipelineState> pipelineState;
 @property (nonatomic, readonly) BOOL skipRenderer;
 
-- (instancetype)initWithConfiguration:(iTermRenderConfiguration *)configuration;
+- (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
