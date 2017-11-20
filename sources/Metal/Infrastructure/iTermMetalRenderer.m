@@ -1,5 +1,6 @@
 #import "iTermMetalRenderer.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermShaderTypes.h"
 
 @implementation iTermRenderConfiguration

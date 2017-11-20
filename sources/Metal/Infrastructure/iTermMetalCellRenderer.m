@@ -1,8 +1,5 @@
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalCellRenderer.h"
-
-const CGFloat MARGIN_WIDTH = 10;
-const CGFloat TOP_MARGIN = 2;
-const CGFloat BOTTOM_MARGIN = 2;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -45,6 +42,18 @@ NS_ASSUME_NONNULL_BEGIN
     return (iTermCellRenderConfiguration *)self.configuration;
 }
 
+- (NSEdgeInsets)margins {
+    const CGFloat MARGIN_WIDTH = [iTermAdvancedSettingsModel terminalMargin] * self.configuration.scale;
+    const CGFloat MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * self.configuration.scale;
+
+    CGSize usableSize = CGSizeMake(self.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2,
+                                   self.cellConfiguration.viewportSize.y - MARGIN_HEIGHT * 2);
+    return NSEdgeInsetsMake(fmod(usableSize.height, self.cellConfiguration.cellSize.height) + MARGIN_HEIGHT,
+                            MARGIN_WIDTH,
+                            MARGIN_HEIGHT,
+                            fmod(usableSize.width, self.cellConfiguration.cellSize.width) + MARGIN_WIDTH);
+}
+
 @end
 
 @implementation iTermMetalCellRenderer {
@@ -81,11 +90,10 @@ NS_ASSUME_NONNULL_BEGIN
         iTermMetalCellRendererTransientState *tState = transientState;
         tState.piuElementSize = _piuElementSize;
 
-        CGSize usableSize = CGSizeMake(tState.cellConfiguration.viewportSize.x - configuration.scale * MARGIN_WIDTH * 2,
-                                       tState.cellConfiguration.viewportSize.y - configuration.scale * (TOP_MARGIN + BOTTOM_MARGIN));
-        vector_float2 offset = {
-            MARGIN_WIDTH,
-            fmod(usableSize.height, tState.cellConfiguration.cellSize.height) + BOTTOM_MARGIN
+        const NSEdgeInsets margins = tState.margins;
+        const vector_float2 offset = {
+            margins.left,
+            margins.top
         };
         tState.offsetBuffer = [self.device newBufferWithBytes:&offset
                                                        length:sizeof(offset)

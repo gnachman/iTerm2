@@ -19,6 +19,7 @@ typedef enum iTermTextureIndex {
 } iTermTextureIndex;
 
 typedef enum {
+    iTermFragmentBufferIndexMarginColor = 0,  // Points at a single float4
     iTermFragmentBufferIndexColorModels = 1 // Array of 256-byte color tables
 } iTermFragmentBufferIndex;
 
