@@ -2045,6 +2045,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [[TmuxDashboardController sharedInstance] showWindow:nil];
 }
 
+- (IBAction)openSourceLicenses:(id)sender {
+    NSURL *url = [[NSBundle mainBundle] URLForResource:@"Licenses" withExtension:@"txt"];
+    [[NSWorkspace sharedWorkspace] openURL:url];
+}
+
 #pragma mark - Private
 
 - (void)updateProcessType {
