@@ -2,9 +2,14 @@
 
 #import "iTermTextureArray.h"
 #import "iTermMetalGlyphKey.h"
-#include "lrucache.hpp"
 
-#define DLog(format, ...)
+#include "lrucache.hpp"
+extern "C" {
+#import "DebugLogging.h"
+}
+#import "GlyphKey.h"
+#import "TextureMap.h"
+#import "TextureMapStage.h"
 
 #include <list>
 #include <map>
@@ -13,267 +18,8 @@
 #include <unordered_set>
 #include <vector>
 
-// Define as NSLog or DLog to debug locking issues
-#define DLogLock(args...)
-
 static const NSInteger iTermTextureMapNumberOfStages = 2;
 
-/*
- Copyright (c) 2014, lamerman
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
- list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
- this list of conditions and the following disclaimer in the documentation
- and/or other materials provided with the distribution.
-
- * Neither the name of lamerman nor the names of its
- contributors may be used to endorse or promote products derived from
- this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-#warning TODO: Add this to the documentation
-// https://github.com/lamerman/cpp-lru-cache
-
-namespace iTerm2 {
-    template <class T>
-    inline void hash_combine(std::size_t& seed, const T& v) {
-        std::hash<T> hasher;
-        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
-
-    class GlyphKey {
-    private:
-        iTermMetalGlyphKey _repr;
-        // Glyphs larger than once cell are broken into multiple parts.
-        int _part;
-
-        GlyphKey();
-
-    public:
-        GlyphKey(const iTermMetalGlyphKey *repr, int part) : _repr(*repr), _part(part) { }
-
-        // Copy constructor
-        GlyphKey(const GlyphKey &other) {
-            _repr = other._repr;
-            _part = other._part;
-        }
-
-        inline bool operator==(const GlyphKey &other) const {
-            return (_repr.code == other._repr.code &&
-                    _repr.isComplex == other._repr.isComplex &&
-                    _repr.image == other._repr.image &&
-                    _repr.boxDrawing == other._repr.boxDrawing &&
-                    _repr.thinStrokes == other._repr.thinStrokes &&
-                    _part == other._part);
-        }
-
-        inline std::size_t get_hash() const {
-            std::size_t seed = 0;
-            hash_combine(seed, _repr.code);
-            hash_combine(seed, _repr.isComplex);
-            hash_combine(seed, _repr.image);
-            hash_combine(seed, _repr.boxDrawing);
-            hash_combine(seed, _repr.thinStrokes);
-            hash_combine(seed, _repr.thinStrokes);
-            hash_combine(seed, _part);
-            return seed;
-        }
-    };
-}
-
-namespace std {
-    template <>
-    struct hash<iTerm2::GlyphKey> {
-        std::size_t operator()(const iTerm2::GlyphKey& glyphKey) const {
-            return glyphKey.get_hash();
-        }
-    };
-}
-
-namespace iTerm2 {
-    struct TextureEntry {
-        int index;
-        BOOL emoji;
-    };
-
-    class TextureMapStage {
-    private:
-        // Maps stage indexes that need blitting to their destination indices.
-        std::unordered_map<int, int> _indexesToBlit;
-
-        // Glyph keys accessed this frame. Stored so we don't waste time promoting more than once
-        // in the LRU cache.
-        std::unordered_set<iTerm2::GlyphKey> _usedThisFrame;
-
-        // Held locks
-        std::vector<int> _lockedIndexes;
-
-        int _nextStageIndex;
-    public:
-        int will_blit(const int index) {
-            const int stageIndex = _nextStageIndex++;
-            _indexesToBlit[stageIndex] = index;
-            return stageIndex;
-        }
-
-        const bool have_indexes_to_blit() const {
-            return !_indexesToBlit.empty();
-        }
-
-        void blit(iTermTextureArray *source, iTermTextureArray *destination, id <MTLBlitCommandEncoder> blitter) {
-            for (auto it = _indexesToBlit.begin(); it != _indexesToBlit.end(); it++) {
-                [source copyTextureAtIndex:it->first
-                                   toArray:destination
-                                     index:it->second
-                                   blitter:blitter];
-            }
-            _indexesToBlit.clear();
-            _nextStageIndex = 0;
-        }
-
-        void unlock_all() {
-            _lockedIndexes.clear();
-        }
-
-        // Looks up the key in the LRU, promoting it only if it hasn't been used before this frame.
-        const TextureEntry *lookup(const GlyphKey &key, cache::lru_cache<GlyphKey, TextureEntry> *lru) {
-            const TextureEntry *valuePtr;
-            if (_usedThisFrame.find(key) != _usedThisFrame.end()) {
-                // key was already used this frame. Don't promote it in the LRU.
-                valuePtr = lru->peek(key);
-            } else {
-                // first use of key this frame. Promote it and record its use.
-                const TextureEntry *value = lru->get(key);
-                _usedThisFrame.insert(key);
-                valuePtr = value;
-            }
-            if (valuePtr) {
-                _lockedIndexes.push_back(valuePtr->index);
-            }
-            return valuePtr;
-        }
-    };
-
-    class TextureMap {
-    private:
-        // map     lru  entries
-        // a -> 0  0    a
-        // b -> 1  2    b
-        // c -> 2  1    c
-
-        // Maps a character description to its index in a texture sprite sheet.
-        cache::lru_cache<GlyphKey, TextureEntry> _lru;
-
-        // Tracks which glyph key is at which index.
-        std::vector<GlyphKey *> _entries;
-
-        // Maps an index to the lock count. Values > 0 are locked.
-        std::vector<int> _locks;
-
-        // Maps an index to a map from part to related index.
-        std::unordered_map<int, std::map<int, int>> _relatedIndexes;
-
-        // Maximum number of entries.
-        const int _capacity;
-    public:
-        explicit TextureMap(const int capacity) : _lru(capacity), _locks(capacity), _capacity(capacity) { }
-
-        inline int get_index(const GlyphKey &key, TextureMapStage *textureMapStage, std::map<int, int> *related, BOOL *emoji) {
-            const TextureEntry *value = textureMapStage->lookup(key, &_lru);
-            if (value == nullptr) {
-                return -1;
-            } else {
-                const TextureEntry &entry = *value;
-                const int &index = entry.index;
-
-                *emoji = entry.emoji;
-                *related = _relatedIndexes[index];
-                if (related->size() == 1) {
-                    _locks[index]++;
-                    DLogLock(@"Get %d sets lock to %d", index, _locks[index]);
-                } else {
-                    for (auto kvp : *related) {
-                        const int i = kvp.second;
-                        _locks[i]++;
-                        DLogLock(@"Lock related %d; lock is now %d", i, _locks[i]);
-                    }
-                }
-                return index;
-            }
-        }
-
-        inline std::pair<int, int> allocate_index(const GlyphKey &key, TextureMapStage *stage, const BOOL emoji) {
-            const int index = produce();
-            assert(_locks[index] == 0);
-            remove_relations(index);
-            _locks[index]++;
-            DLogLock(@"Allocate %d sets lock to %d", index, _locks[index]);
-            assert(index <= _capacity);
-            const TextureEntry entry = { .index = index, .emoji = emoji };
-            _lru.put(key, entry);
-
-            const int stageIndex = stage->will_blit(index);
-            return std::make_pair(stageIndex, index);
-        }
-
-        void unlock_stage(TextureMapStage *stage) {
-            stage->unlock_all();
-        }
-
-        inline void unlock(int index) {
-            _locks[index]--;
-            DLogLock(@"Unlock %d sets lock to %d", index, _locks[index]);
-            assert(_locks[index] >= 0);
-        }
-
-        void define_class(const std::map<int, int> &relation) {
-            for (auto kvp : relation) {
-                const int i = kvp.second;
-                _relatedIndexes[i] = relation;
-            }
-        }
-
-    private:
-        // Return the next index to use. Either a never-before used one or the least-recently used one.
-        inline int produce() {
-            if (_lru.size() == _capacity) {
-                // Recycle the value of the least-recently used GlyphKey.
-                return _lru.get_lru().second.index;
-            } else {
-                return _lru.size();
-            }
-        }
-
-        inline void remove_relations(const int index) {
-            // Remove all relations of the index that will be recycled.
-            auto it = _relatedIndexes.find(index);
-            if (it != _relatedIndexes.end()) {
-                auto temp = it->second;
-                for (auto kvp : temp) {
-                    const int i = kvp.second;
-                    assert(_locks[i] == 0);
-                    _relatedIndexes.erase(i);
-                }
-            }
-        }
-    };
-}
 
 @interface iTermTextureMapStage()
 - (instancetype)initWithTextureMap:(iTermTextureMap *)textureMap
@@ -471,7 +217,7 @@ namespace iTerm2 {
 }
 
 - (void)blitNewTexturesFromStagingAreaWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    DLog(@"%@: blit from staging to completion: %@", self.label, _indexesToBlit);
+    DLog(@"%@: blit from staging to completion", self);
     if (!_textureMapStage->have_indexes_to_blit()) {
         // Uncomment to make the stage appear in the GPU debugger
         // [self doNoOpBlitWithStage:];
