@@ -10,6 +10,8 @@ Therm is a fork of iTerm2 that aims to:
 * No Lion-style fullscreen, standard one is faster and handier
 * Fixes application switch issue when follow mouse is enabled
 * Non-fullscreen windows have a thin border
+* No tabs, they are still there, but not visible
+* Disabled proprietary escape codes
 
 This fork has been done by pancake <pancake@nopcode.org>
 
