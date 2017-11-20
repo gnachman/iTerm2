@@ -1,0 +1,107 @@
+//
+//  iTermMarginRenderer.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 11/19/17.
+//
+
+#import "iTermMarginRenderer.h"
+
+#import "iTermShaderTypes.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@implementation iTermMarginRendererTransientState
+@end
+
+@implementation iTermMarginRenderer {
+    iTermMetalCellRenderer *_cellRenderer;
+}
+
+- (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
+    self = [super init];
+    if (self) {
+        _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                    vertexFunctionName:@"iTermMarginVertexShader"
+                                                  fragmentFunctionName:@"iTermMarginFragmentShader"
+                                                              blending:YES
+                                                        piuElementSize:0
+                                                   transientStateClass:[iTermMarginRendererTransientState class]];
+    }
+    return self;
+}
+
+- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
+               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+    iTermMarginRendererTransientState *tState = transientState;
+    vector_float4 color = tState.color;
+    id<MTLBuffer> colorBuffer = [_cellRenderer.device newBufferWithBytes:&color length:sizeof(color) options:MTLResourceStorageModeShared];
+    [_cellRenderer drawWithTransientState:tState
+                             renderEncoder:renderEncoder
+                          numberOfVertices:6 * 4
+                              numberOfPIUs:0
+                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
+                           fragmentBuffers:@{ @(iTermFragmentBufferIndexMarginColor): colorBuffer }
+                                  textures:@{}];
+}
+
+- (void)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer
+                                      completion:(nonnull void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+    [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer
+                                                 completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
+                                                     [self initializeTransientState:transientState];
+                                                     completion(transientState);
+                                                 }];
+}
+
+- (vector_float2 *)appendVerticesForQuad:(CGRect)quad vertices:(vector_float2 *)v {
+    *(v++) = simd_make_float2(CGRectGetMaxX(quad), CGRectGetMinY(quad));
+    *(v++) = simd_make_float2(CGRectGetMinX(quad), CGRectGetMinY(quad));
+    *(v++) = simd_make_float2(CGRectGetMinX(quad), CGRectGetMaxY(quad));
+
+    *(v++) = simd_make_float2(CGRectGetMaxX(quad), CGRectGetMinY(quad));
+    *(v++) = simd_make_float2(CGRectGetMinX(quad), CGRectGetMaxY(quad));
+    *(v++) = simd_make_float2(CGRectGetMaxX(quad), CGRectGetMaxY(quad));
+
+    return v;
+}
+
+- (void)initializeTransientState:(iTermMarginRendererTransientState *)tState {
+    CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
+                             tState.configuration.viewportSize.y);
+    const NSEdgeInsets margins = tState.margins;
+    vector_float2 vertices[6 * 4];
+    vector_float2 *v = &vertices[0];
+    v = [self appendVerticesForQuad:CGRectMake(0,
+                                               0,
+                                               size.width,
+                                               margins.top)
+                           vertices:v];
+    v = [self appendVerticesForQuad:CGRectMake(0,
+                                               size.height - margins.bottom,
+                                               size.width,
+                                               margins.bottom)
+                           vertices:v];
+
+    const CGFloat innerHeight = size.height - margins.bottom - margins.top;
+    v = [self appendVerticesForQuad:CGRectMake(0,
+                                               margins.top,
+                                               margins.left,
+                                               innerHeight)
+                           vertices:v];
+    v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right,
+                                               margins.top,
+                                               margins.right,
+                                               innerHeight)
+                           vertices:v];
+
+    tState.vertexBuffer = [_cellRenderer.device newBufferWithBytes:vertices
+                                                            length:sizeof(vertices)
+                                                           options:MTLResourceStorageModeShared];
+}
+
+@end
+
+NS_ASSUME_NONNULL_END

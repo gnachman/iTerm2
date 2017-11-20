@@ -11,6 +11,7 @@
 #import "iTermCopyBackgroundRenderer.h"
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
+#import "iTermMarginRenderer.h"
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
@@ -32,6 +33,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 @end
 
 @implementation iTermMetalDriver {
+    iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
     iTermTextRenderer *_textRenderer;
@@ -74,6 +76,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     self = [super init];
     if (self) {
         _startTime = [NSDate timeIntervalSinceReferenceDate];
+        _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:mtkView.device];
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:mtkView.device];
         _textRenderer = [[iTermTextRenderer alloc] initWithDevice:mtkView.device];
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:mtkView.device];
@@ -287,6 +290,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 // Called when all renderers have transient state
 - (void)finalizeRenderersWithFrameData:(iTermMetalFrameData *)frameData {
     // TODO: call setMarkStyle:row: for each mark
+
     // Copy state
     iTermCopyBackgroundRendererTransientState *copyState =
         frameData.transientStates[NSStringFromClass([_copyBackgroundRenderer class])];
@@ -382,6 +386,10 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
             1.0
         };
         [renderEncoder setViewport:viewport];
+
+        [self drawCellRenderer:_marginRenderer
+                     frameData:frameData
+                 renderEncoder:renderEncoder];
 
         [self drawRenderer:_backgroundImageRenderer
                  frameData:frameData
@@ -537,6 +545,9 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                renderer == _markRenderer ||
                renderer == _broadcastStripesRenderer) {
         // Nothing to do here
+    } else if (renderer == _marginRenderer) {
+        [self updateMarginRendererWithTransientState:tState
+                                       perFrameState:perFrameState];
     } else if (renderer == _badgeRenderer) {
         [self updateBadgeRendererWithPerFrameState:perFrameState];
     } else if (renderer == _cursorGuideRenderer) {
@@ -550,6 +561,11 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     } else if (renderer == _copyModeCursorRenderer) {
         [self updateCopyModeCursorRendererWithPerFrameState:perFrameState];
     }
+}
+
+- (void)updateMarginRendererWithTransientState:(iTermMarginRendererTransientState *)marginState
+                                 perFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+    [marginState setColor:perFrameState.defaultBackgroundColor];
 }
 
 - (void)updateBackgroundImageRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
@@ -567,6 +583,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 - (void)updateCursorRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+#warning TODO: I think it's a bug to modify a renderer here. Only the transient state should be changed.
     iTermMetalCursorInfo *cursorInfo = [perFrameState metalDriverCursorInfo];
     if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
@@ -598,7 +615,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 #pragma mark - Helpers
 
 - (NSArray<id<iTermMetalCellRenderer>> *)cellRenderers {
-    return @[ _textRenderer,
+    return @[ _marginRenderer,
+              _textRenderer,
               _backgroundColorRenderer,
               _markRenderer,
               _cursorGuideRenderer,

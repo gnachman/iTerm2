@@ -44,6 +44,7 @@ extern const CGFloat BOTTOM_MARGIN;
 @property (nonatomic, readonly) __kindof iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, readonly) id<MTLBuffer> offsetBuffer;
 @property (nonatomic, strong) id<MTLBuffer> pius;
+@property (nonatomic, readonly) NSEdgeInsets margins;
 
 - (instancetype)init NS_UNAVAILABLE;
 
