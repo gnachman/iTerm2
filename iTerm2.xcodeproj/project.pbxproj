@@ -1982,8 +1982,8 @@
 		A6BDB0BC1B470CBE00F511E6 /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
 		A6C1207A1E39C3A4004021BB /* iTermBuriedSessions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */; };
 		A6C1207B1E39C3A4004021BB /* iTermBuriedSessions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */; };
-		A6C1FD4E1FC2A65E006B9A69 /* Licenses.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */; };
 		A6C1FD4C1FC2A187006B9A69 /* iTermCppLruCacheTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD4B1FC2A187006B9A69 /* iTermCppLruCacheTest.mm */; };
+		A6C1FD4E1FC2A65E006B9A69 /* Licenses.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -3872,9 +3872,9 @@
 		A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRootTerminalView.m; sourceTree = "<group>"; };
 		A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBuriedSessions.h; sourceTree = "<group>"; };
 		A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBuriedSessions.m; sourceTree = "<group>"; };
-		A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.txt; sourceTree = "<group>"; };
 		A6C1FD491FC2A0B0006B9A69 /* lrucache.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lrucache.hpp; path = "cpp-lru-cache/include/lrucache.hpp"; sourceTree = "<group>"; };
 		A6C1FD4B1FC2A187006B9A69 /* iTermCppLruCacheTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermCppLruCacheTest.mm; sourceTree = "<group>"; };
+		A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.txt; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -7142,7 +7142,6 @@
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
 				A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */,
-				A623D9471F8972750011F8C3 /* iTermCallWithTimeout.h in Headers */,
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
 				A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */,
 				A66719411DCE36C3000CE608 /* iTermSystemVersion.h in Headers */,
