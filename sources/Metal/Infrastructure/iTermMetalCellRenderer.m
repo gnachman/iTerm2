@@ -81,8 +81,8 @@ NS_ASSUME_NONNULL_BEGIN
         iTermMetalCellRendererTransientState *tState = transientState;
         tState.piuElementSize = _piuElementSize;
 
-        CGSize usableSize = CGSizeMake(tState.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2,
-                                       tState.cellConfiguration.viewportSize.y - TOP_MARGIN - BOTTOM_MARGIN);
+        CGSize usableSize = CGSizeMake(tState.cellConfiguration.viewportSize.x - configuration.scale * MARGIN_WIDTH * 2,
+                                       tState.cellConfiguration.viewportSize.y - configuration.scale * (TOP_MARGIN + BOTTOM_MARGIN));
         vector_float2 offset = {
             MARGIN_WIDTH,
             fmod(usableSize.height, tState.cellConfiguration.cellSize.height) + BOTTOM_MARGIN
