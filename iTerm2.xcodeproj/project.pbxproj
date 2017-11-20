@@ -3872,6 +3872,7 @@
 		A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBuriedSessions.h; sourceTree = "<group>"; };
 		A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBuriedSessions.m; sourceTree = "<group>"; };
 		A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.txt; sourceTree = "<group>"; };
+		A6C1FD491FC2A0B0006B9A69 /* lrucache.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lrucache.hpp; path = "cpp-lru-cache/include/lrucache.hpp"; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4727,6 +4728,7 @@
 			isa = PBXGroup;
 			children = (
 				A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */,
+				A6C1FD481FC29EB5006B9A69 /* cpp-lru-cache */,
 				A65871661D85E6660061CEEE /* LetsMove */,
 				1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */,
 				F6441F610E748404000EC682 /* CGSInternal */,
@@ -6055,6 +6057,14 @@
 				A62C3B341BCC265F00B5629D /* iTermHostRecordMO+Additions.m */,
 			);
 			name = "Shell Integration";
+			sourceTree = "<group>";
+		};
+		A6C1FD481FC29EB5006B9A69 /* cpp-lru-cache */ = {
+			isa = PBXGroup;
+			children = (
+				A6C1FD491FC2A0B0006B9A69 /* lrucache.hpp */,
+			);
+			name = "cpp-lru-cache";
 			sourceTree = "<group>";
 		};
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
