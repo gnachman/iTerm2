@@ -21,7 +21,9 @@
 
 - (void)scrollToPoint:(NSPoint)newOrigin {
     [super scrollToPoint:newOrigin];
-    [_metalView setNeedsDisplay:YES];
+    if (_useMetal) {
+        [_metalView setNeedsDisplay:YES];
+    }
 }
 
 @end

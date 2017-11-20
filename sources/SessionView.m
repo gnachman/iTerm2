@@ -16,7 +16,6 @@
 #import "PTYTextView.h"
 #import "SessionTitleView.h"
 #import "SplitSelectionView.h"
-#import "iTermMetalDriver.h"
 
 #import <MetalKit/MetalKit.h>
 
@@ -89,6 +88,8 @@ static NSDate* lastResizeDate_;
 
     iTermMetalDriver *_driver NS_AVAILABLE_MAC(10_11);
     MTKView *_metalView NS_AVAILABLE_MAC(10_11);
+    BOOL _useMetal;
+    iTermMetalClipView *_metalClipView;
 }
 
 + (double)titleHeight {
@@ -125,31 +126,18 @@ static NSDate* lastResizeDate_;
         // Assign a globally unique view ID.
         _viewId = nextViewId++;
 
+        // Allocate a scrollview
         _scrollview = [[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
                                                                       0,
                                                                       aRect.size.width,
                                                                       aRect.size.height)
                                        hasVerticalScroller:NO];
-
-        // Add a metal view
-        if (@available(macOS 10.11, *)) {
-            _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                                 device:MTLCreateSystemDefaultDevice()];
-            [self addSubview:_metalView];
-            _metalView.paused = YES;
-            _metalView.enableSetNeedsDisplay = YES;
-            _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
-            [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
-            _metalView.delegate = _driver;
-        }
-
-        // Allocate a scrollview
         [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
 
         if (@available(macOS 10.11, *)) {
-            iTermMetalClipView *metalClipView = [[[iTermMetalClipView alloc] initWithFrame:_scrollview.contentView.frame] autorelease];
-            metalClipView.metalView = _metalView;
-            _scrollview.contentView = metalClipView;
+            _metalClipView = [[iTermMetalClipView alloc] initWithFrame:_scrollview.contentView.frame];
+            _metalClipView.metalView = _metalView;
+            _scrollview.contentView = _metalClipView;
             _scrollview.drawsBackground = NO;
         }
 
@@ -173,12 +161,68 @@ static NSDate* lastResizeDate_;
     while (self.trackingAreas.count) {
         [self removeTrackingArea:self.trackingAreas[0]];
     }
+    _metalView.delegate = nil;
+    [_metalView release];
+    [_driver release];
+    [_metalClipView release];
     [super dealloc];
+}
+
+- (BOOL)useMetal {
+    return _useMetal;
+}
+
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+    if (useMetal != _useMetal) {
+        _useMetal = useMetal;
+        DLog(@"setUseMetal:%@ dataSource:%@", @(useMetal), dataSource);
+        if (useMetal) {
+            [self installMetalViewWithDataSource:dataSource];
+        } else {
+            [self removeMetalView];
+        }
+
+        iTermMetalClipView *metalClipView = (iTermMetalClipView *)_scrollview.contentView;
+        metalClipView.useMetal = useMetal;
+
+        [self updateLayout];
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+    _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                         device:MTLCreateSystemDefaultDevice()];
+    _metalClipView.metalView = _metalView;
+    NSView *scrollViewSuperview = _useSubviewWithLayer ? _subviewWithLayer : self;
+    NSUInteger scrollViewIndex = [scrollViewSuperview.subviews indexOfObject:_scrollview];
+    assert(scrollViewIndex != NSNotFound);
+    [self insertSubview:_metalView atIndex:scrollViewIndex];
+    _metalView.paused = NO;
+    _metalView.hidden = NO;
+    _metalView.enableSetNeedsDisplay = YES;
+    _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
+    _driver.dataSource = dataSource;
+    [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+    _metalView.delegate = _driver;
+}
+
+- (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
+    _metalView.delegate = nil;
+    [_metalView removeFromSuperview];
+    [_metalView autorelease];
+    _metalView = nil;
+    [_driver autorelease];
+    _driver = nil;
+    _metalClipView.useMetal = NO;
+    _metalClipView.metalView = nil;
 }
 
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11) {
 #warning TODO: Would be nice to only draw the part that needs to be drawn.
-    [_metalView setNeedsDisplay:YES];
+    if (_useMetal) {
+        [_metalView setNeedsDisplay:YES];
+    }
 }
 
 - (void)setUseSubviewWithLayer:(BOOL)useSubviewWithLayer {
@@ -186,7 +230,6 @@ static NSDate* lastResizeDate_;
         return;
     }
     _useSubviewWithLayer = useSubviewWithLayer;
-
     if (!_subviewWithLayer && _useSubviewWithLayer) {
         _subviewWithLayer = [[NSView alloc] initWithFrame:self.bounds];
         _subviewWithLayer.wantsLayer = YES;
@@ -269,7 +312,13 @@ static NSDate* lastResizeDate_;
         _hoverURLTextField.frame = frame;
     }
 
-    _metalView.frame = _scrollview.contentView.frame;
+    if (_useMetal) {
+        [self updateMetalViewFrame];
+    }
+}
+
+- (void)updateMetalViewFrame {
+    _metalView.frame = _scrollview.frame;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
@@ -468,7 +517,7 @@ static NSDate* lastResizeDate_;
                                                                session:session
                                                               delegate:[MovePaneController sharedInstance]
                                                                   move:move];
-    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useLayers];
+    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useMetal];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     [self addSubview:_splitSelectionView];
@@ -504,6 +553,7 @@ static NSDate* lastResizeDate_;
 - (void)drawRect:(NSRect)dirtyRect {
     // Fill in background color in the area around a scrollview if it's smaller
     // than the session view.
+    // TODO(metal): This will be a performance issue. Use another view with a layer and background color.
     [super drawRect:dirtyRect];
     PTYScrollView *scrollView = [self scrollview];
     NSRect svFrame = [scrollView frame];
@@ -540,7 +590,7 @@ static NSDate* lastResizeDate_;
                                                                                0,
                                                                                frame.size.width,
                                                                                frame.size.height)];
-    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useLayers];
+    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useMetal];
     [self addSubview:_splitSelectionView];
     [_splitSelectionView release];
     [[self window] orderFront:nil];
@@ -760,6 +810,9 @@ static NSDate* lastResizeDate_;
     rect.size.width = _scrollview.contentSize.width;
     rect.size.height = [_delegate sessionViewDesiredHeightOfDocumentView];
     [_scrollview.documentView setFrame:rect];
+    if (_useMetal) {
+        [self updateMetalViewFrame];
+    }
 }
 
 - (void)setTitle:(NSString *)title {

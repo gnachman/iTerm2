@@ -122,6 +122,16 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [super dealloc];
 }
 
+- (void)setUseMetal:(BOOL)useMetal {
+    _useMetal = useMetal;
+
+    [_divisionView removeFromSuperview];
+    [_divisionView release];
+    _divisionView = nil;
+
+    [self updateDivisionView];
+}
+
 #pragma mark - Division View
 
 - (void)updateDivisionView {
@@ -133,7 +143,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                               self.bounds.size.width,
                                               kDivisionViewHeight);
         if (!_divisionView) {
-            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame];
+            Class theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
+            _divisionView = [[theClass alloc] initWithFrame:divisionViewFrame];
             _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
         }

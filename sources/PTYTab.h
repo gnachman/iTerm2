@@ -209,4 +209,7 @@ extern NSString *const iTermTabDidChangeWindowNotification;
 
 - (void)checkInvariants:(NSString *)when;
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName;
+
+- (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
+
 @end

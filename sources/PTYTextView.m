@@ -299,10 +299,6 @@ static const int kDragThreshold = 3;
                                                  selector:@selector(imageDidLoad:)
                                                      name:iTermImageDidLoad
                                                    object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(boundsDidChange:)
-                                                     name:NSViewBoundsDidChangeNotification
-                                                   object:nil];
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
@@ -346,6 +342,7 @@ static const int kDragThreshold = 3;
     return self;
 }
 
+// For Metal
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
     [super setNeedsDisplay:needsDisplay];
     if (needsDisplay) {
@@ -353,15 +350,10 @@ static const int kDragThreshold = 3;
     }
 }
 
+// For Metal
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect {
     [super setNeedsDisplayInRect:invalidRect];
     [_delegate textViewNeedsDisplayInRect:invalidRect];
-}
-
-- (void)boundsDidChange:(NSNotification *)notification {
-    if (notification.object == self.enclosingScrollView.contentView) {
-        NSLog(@"Bounds changed %@", NSStringFromRect(self.enclosingScrollView.contentView.bounds));
-    }
 }
 
 - (void)removeAllTrackingAreas {
@@ -1113,58 +1105,16 @@ static const int kDragThreshold = 3;
     return _drawingHelper;
 }
 
-/*
 - (void)drawRect:(NSRect)rect {
+    if (![_delegate textViewShouldDrawRect]) {
+        return;
+    }
     if (_dataSource.width <= 0) {
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
     }
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
-    // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
-    // recently hidden and what we're drawing is how the screen looked just before the cursor was
-    // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
-    // value when we're done.
-    if ([_dataSource setUseSavedGridIfAvailable:YES]) {
-        _drawingHelper.cursorVisible = YES;
-    }
-
-    _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
-                                  [_delegate textViewSessionIsBroadcastingInput]);
-    _drawingHelper.cursorBlinking = [self isCursorBlinking];
-    _drawingHelper.excess = [self excess];
-    _drawingHelper.selection = _selection;
-    _drawingHelper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
-    _drawingHelper.normalization = [_delegate textViewUnicodeNormalizationForm];
-    _drawingHelper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
-    _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
-    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
-    _drawingHelper.numberOfLines = _dataSource.numberOfLines;
-    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
-                                                    _dataSource.cursorY - 1);
-    _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
-    _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
-    _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
-    _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
-    _drawingHelper.isInKeyWindow = [self isInKeyWindow];
-    // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
-    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
-    _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
-    _drawingHelper.transparencyAlpha = [self transparencyAlpha];
-    _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
-    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
-    _drawingHelper.thinStrokes = _thinStrokes;
-    _drawingHelper.showSearchingCursor = _showSearchingCursor;
-    _drawingHelper.baselineOffset = [self minimumBaselineOffset];
-    _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
-    _drawingHelper.boldAllowed = _useBoldFont;
-    _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
-    _drawingHelper.asciiLigatures = _primaryFont.hasDefaultLigatures || _asciiLigatures;
-    _drawingHelper.nonAsciiLigatures = _secondaryFont.hasDefaultLigatures || _nonAsciiLigatures;
-    _drawingHelper.copyMode = _delegate.textViewCopyMode;
-    _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
-    _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
-    _drawingHelper.passwordInput = _delegate.textViewPasswordInput;
 
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
     
@@ -1177,7 +1127,7 @@ static const int kDragThreshold = 3;
         _drawingHook(_drawingHelper);
     }
 
-    [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
+    [self.drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
@@ -1201,7 +1151,6 @@ static const int kDragThreshold = 3;
     [_dataSource setUseSavedGridIfAvailable:NO];
     _drawingHelper.cursorVisible = savedCursorVisible;
 }
-*/
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag {
     BOOL result = _drawingHelper.animated;

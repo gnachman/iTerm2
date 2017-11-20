@@ -156,7 +156,6 @@
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;
 + (BOOL)openFileOverridesSendText;
-+ (BOOL)useLayers;
 + (int)terminalMargin;
 + (int)terminalVMargin;
 + (BOOL)useColorfgbgFallback;
@@ -198,5 +197,6 @@
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)supportREPCode;
++ (BOOL)useMetal;
 
 @end

@@ -35,8 +35,10 @@
     PTYTextView *child_;
 }
 
-- (void)drawRect:(NSRect)rect
-{
+- (void)drawRect:(NSRect)rect {
+    if (_useMetal) {
+        return;
+    }
     [child_.delegate textViewDrawBackgroundImageInView:self
                                               viewRect:rect
                                 blendDefaultBackground:YES];

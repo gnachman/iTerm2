@@ -4695,6 +4695,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
+    const BOOL allowed = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+        return anObject.metalAllowed;
+    }];
+    const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
+    const BOOL foregroundTab = [self isForegroundTab];
+    const BOOL useMetal = allowed && isKey && foregroundTab;
+    [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        obj.useMetal = useMetal;
+    }];
+    [_delegate tab:self didSetMetalEnabled:useMetal];
+}
+
 #pragma mark - PTYSessionDelegate
 // TODO: Move the rest of the delegate methods here.
 
@@ -4809,6 +4822,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
         return VT100GridSizeMake((contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width,
                                  (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height);
+    }
+}
+
+- (void)sessionUpdateMetalAllowed {
+    if (@available(macOS 10.11, *)) {
+        [self updateUseMetal];
     }
 }
 

@@ -257,7 +257,7 @@ const CGFloat kEdgeWidth = 3;
                                                      name:@"iTermLoadFindStringFromSharedPasteboard"
                                                    object:nil];
         [self loadView];
-        self.view.wantsLayer = [iTermAdvancedSettingsModel useLayers];
+        self.view.wantsLayer = [iTermAdvancedSettingsModel useMetal];
         [[self view] setHidden:YES];
     }
     return self;

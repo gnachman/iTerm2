@@ -194,6 +194,9 @@ typedef enum {
 // Returns the size of the tab in rows x cols. Initial tmux client size.
 - (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile;
 
+// Whether metal is allowed has changed
+- (void)sessionUpdateMetalAllowed;
+
 @end
 
 @class SessionView;
@@ -344,6 +347,12 @@ typedef enum {
 
 @property(nonatomic, readonly) int columns;
 @property(nonatomic, readonly) int rows;
+
+// Returns whether this session considers itself eligible to use the Metal renderer.
+@property(nonatomic, readonly) BOOL metalAllowed;
+
+// Controls whether this session uses the Metal renderer.
+@property(nonatomic) BOOL useMetal;
 
 // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
 // in this bookmark may happen indepentendly of the persistent bookmark.
