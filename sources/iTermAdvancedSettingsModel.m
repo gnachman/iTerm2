@@ -278,8 +278,6 @@ DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin for the badge\nHow much space
 
 #pragma mark - Experimental Features
 
-// This is half implemented and should not be turned on by default.
-DEFINE_BOOL(useLayers, NO, @"Experimental Features: Use Core Animation layers for opaque terminal views");
 DEFINE_BOOL(enableAPIServer, NO, @"Experimental Features: Enable websocket API server.\nYou must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on logout.\nA possible fix for issue 4147.");
 
@@ -294,5 +292,6 @@ DEFINE_BOOL(supportREPCode, NO, @"Experimental Features: Enable support for REP 
 #endif
 
 DEFINE_BOOL(showBlockBoundaries, NO, @"Debugging: Show line buffer block boundaries (issue 6207)");
+DEFINE_BOOL(useMetal, NO, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
 
 @end

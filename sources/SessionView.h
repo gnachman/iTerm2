@@ -27,6 +27,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FindViewController.h"
+#import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionTitleView.h"
@@ -130,6 +131,9 @@
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, assign) BOOL useSubviewWithLayer;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
+
+@property(nonatomic, readonly) BOOL useMetal NS_AVAILABLE_MAC(10_11);
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource;
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;

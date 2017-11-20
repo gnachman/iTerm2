@@ -11,6 +11,7 @@
 
 @interface iTermMetalClipView : NSClipView
 
-@property (nonatomic, weak) MTKView *metalView;
+@property (nonatomic, weak) MTKView *metalView NS_AVAILABLE_MAC(10_11);
+@property (nonatomic) BOOL useMetal;
 
 @end

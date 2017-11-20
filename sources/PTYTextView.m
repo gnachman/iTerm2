@@ -299,10 +299,13 @@ static const int kDragThreshold = 3;
                                                  selector:@selector(imageDidLoad:)
                                                      name:iTermImageDidLoad
                                                    object:nil];
+<<<<<<< HEAD
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
+=======
+>>>>>>> Make the use of metal renderer contingint on the window being key, the session belonging to the active tab, and there being no transparency
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
@@ -346,6 +349,7 @@ static const int kDragThreshold = 3;
     return self;
 }
 
+// For Metal
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
     [super setNeedsDisplay:needsDisplay];
     if (needsDisplay) {
@@ -353,6 +357,7 @@ static const int kDragThreshold = 3;
     }
 }
 
+// For Metal
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect {
     [super setNeedsDisplayInRect:invalidRect];
     [_delegate textViewNeedsDisplayInRect:invalidRect];
@@ -1109,14 +1114,17 @@ static const int kDragThreshold = 3;
     return _drawingHelper;
 }
 
-/*
 - (void)drawRect:(NSRect)rect {
+    if (![_delegate textViewShouldDrawRect]) {
+        return;
+    }
     if (_dataSource.width <= 0) {
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
     }
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
+<<<<<<< HEAD
     // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
     // recently hidden and what we're drawing is how the screen looked just before the cursor was
     // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
@@ -1163,6 +1171,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.passwordInput = ([self isInKeyWindow] &&
                                     [_delegate textViewIsActiveSession] &&
                                     _delegate.textViewPasswordInput);
+=======
+>>>>>>> Make the use of metal renderer contingint on the window being key, the session belonging to the active tab, and there being no transparency
 
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
     
@@ -1175,7 +1185,7 @@ static const int kDragThreshold = 3;
         _drawingHook(_drawingHelper);
     }
 
-    [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
+    [self.drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
@@ -1199,7 +1209,6 @@ static const int kDragThreshold = 3;
     [_dataSource setUseSavedGridIfAvailable:NO];
     _drawingHelper.cursorVisible = savedCursorVisible;
 }
-*/
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag {
     BOOL result = _drawingHelper.animated;

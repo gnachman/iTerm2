@@ -2718,6 +2718,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self notifyTmuxOfTabChange];
 
+    [self updateUseMetalInAllTabs];
     [_contentView updateDivisionView];
 }
 
@@ -3046,6 +3047,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession setFocused:NO];
     }
 
+    [self updateUseMetalInAllTabs];
     [_contentView updateDivisionView];
 }
 
@@ -3376,6 +3378,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
 }
 
+// This takes care of updating the metal state
 - (void)updateUseTransparency {
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateUseTransparencyMenuItem];
@@ -3687,6 +3690,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self saveTmuxWindowOrigins];
 
     [self updateTouchBarIfNeeded:NO];
+    [self updateUseMetalInAllTabs];
 }
 
 - (BOOL)fullScreen
@@ -4173,6 +4177,15 @@ ITERM_WEAKLY_REFERENCEABLE
         _contentView.color = [NSColor windowBackgroundColor];
     }
     [self updateCurrentLocation];
+    [self updateUseMetalInAllTabs];
+}
+
+- (void)updateUseMetalInAllTabs {
+    if (@available(macOS 10.11, *)) {
+        for (PTYTab *aTab in self.tabs) {
+            [aTab updateUseMetal];
+        }
+    }
 }
 
 - (void)updateCurrentLocation {
@@ -7997,6 +8010,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.numberOfTabs == 1) {
         [self setWindowTitle];
     }
+}
+
+- (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal {
+    _contentView.useMetal = useMetal;
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {

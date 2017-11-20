@@ -35,5 +35,6 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabRemoveTab:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState;
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab;
+- (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal;
 
 @end

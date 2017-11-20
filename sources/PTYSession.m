@@ -1434,9 +1434,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self useTransparencyDidChange];
 
     if (@available(macOS 10.11, *)) {
-        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
-                         gridSize:_screen.currentGrid.size
-                            scale:_view.window.screen.backingScaleFactor];
+        [self updateMetalDriver];
     }
 
     return YES;
@@ -1536,9 +1534,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self beginTailFind];
     }
     if (@available(macOS 10.11, *)) {
-        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
-                         gridSize:_screen.currentGrid.size
-                            scale:_view.window.screen.backingScaleFactor];
+        [self updateMetalDriver];
     }
 }
 
@@ -3789,7 +3785,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)viewShouldWantLayer {
-    if (![iTermAdvancedSettingsModel useLayers]) {
+    if (![iTermAdvancedSettingsModel useMetal]) {
         return NO;
     }
     if (!_delegate.realParentWindow || !_textview) {
@@ -3803,8 +3799,11 @@ ITERM_WEAKLY_REFERENCEABLE
     // The view does not like getting replaced during the spin of the runloop during which it is created.
     if (_view.window && _delegate.realParentWindow && _textview && self.viewShouldWantLayer != _view.useSubviewWithLayer) {
         dispatch_async(dispatch_get_main_queue(), ^{
+            BOOL useLayer = self.viewShouldWantLayer;
             if (_view.window && _delegate.realParentWindow && _textview && self.viewShouldWantLayer != _view.useSubviewWithLayer) {
-                _view.useSubviewWithLayer = self.viewShouldWantLayer;
+                DLog(@"useSubviewWithLayer:%@", @(useLayer));
+                _view.useSubviewWithLayer = useLayer;
+                [_delegate sessionUpdateMetalAllowed];
             }
         });
     }
@@ -4708,6 +4707,38 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     }
                                                 }];
     [self queueAnnouncement:announcement identifier:@"AbortUploadOnKeyPressAnnouncement"];
+}
+
+#pragma mark - Metal Support
+
+- (BOOL)metalAllowed {
+    return _textview.transparencyAlpha == 1;
+}
+
+- (void)setUseMetal:(BOOL)useMetal {
+    if (@available(macOS 10.11, *)) {
+        if (useMetal == _useMetal) {
+            return;
+        }
+        DLog(@"setUseMetal:%@ %@", @(useMetal), self);
+        _useMetal = useMetal;
+        [self setUseMetal:useMetal dataSource:_metalGlue];
+        _wrapper.useMetal = useMetal;
+        if (useMetal) {
+            [self updateMetalDriver];
+        }
+    }
+}
+
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+    [_view setUseMetal:useMetal dataSource:dataSource];
+    _textview.alphaValue = useMetal ? 0 : 1;
+}
+
+- (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
+    [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+                     gridSize:_screen.currentGrid.size
+                        scale:_view.window.screen.backingScaleFactor];
 }
 
 #pragma mark - Captured Output
@@ -6269,10 +6300,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_view updateScrollViewFrame];
     if (@available(macOS 10.11, *)) {
-        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
-                         gridSize:_screen.currentGrid.size
-                            scale:_view.window.screen.backingScaleFactor];
-}
+        [self updateMetalDriver];
+    }
 }
 
 - (BOOL)textViewHasBackgroundImage {
@@ -6846,6 +6875,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewBackgroundColorDidChange {
     [_delegate sessionBackgroundColorDidChange:self];
+    [_delegate sessionUpdateMetalAllowed];
 }
 
 - (void)textViewBurySession {
@@ -6890,6 +6920,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.11, *)) {
         NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
         [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
+    }
+}
+
+- (BOOL)textViewShouldDrawRect {
+    if (@available(macOS 10.11, *)) {
+        return !_view.useMetal;
+    } else {
+        return YES;
     }
 }
 
@@ -9068,9 +9106,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewDidChangeWindow {
     if (@available(macOS 10.11, *)) {
-        [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
-                         gridSize:_screen.currentGrid.size
-                            scale:_view.window.screen.backingScaleFactor];
+        [self updateMetalDriver];
     }
 }
 
@@ -9328,6 +9364,5 @@ ITERM_WEAKLY_REFERENCEABLE
     response.status = ITMSetProfilePropertyResponse_Status_Ok;
     return response;
 }
-
 
 @end
