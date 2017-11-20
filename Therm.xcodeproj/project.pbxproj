@@ -28,7 +28,6 @@
 		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
 		1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0EA59F1CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h */; };
 		1D0EA5A21CA5DAA2005FCF8B /* PSMLightHighContrastTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0EA5A01CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.m */; };
-		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
 		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
 		1D1F8C1A1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */; };
@@ -972,7 +971,6 @@
 		1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
-		1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1D6EDB0219AEA20D005A7799 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -1021,7 +1019,6 @@
 		1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA911B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
-		1D8BBA921B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		1D8BBA931B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
 		1D8CDF521958F31700FE1BEE /* iTermSizeRememberingView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */; };
@@ -1049,7 +1046,6 @@
 		1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD9180B8118004E56D5 /* AppKit.framework */; };
-		1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D94EAC712D641D3008225A9 /* AddressBook.framework */; };
 		1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCBFC142D7BA60016228A /* Trigger.h */; };
 		1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* GrowlTrigger.h */; };
@@ -1065,7 +1061,6 @@
 		1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
 		1DA1C1F21A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
-		1DA1C1F31A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
 		1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
 		1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA26ABE15007507004B5792 /* BackgroundThread.h */; };
 		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
@@ -1178,15 +1173,13 @@
 		1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */; };
 		1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
 		1DF8FEF318F3217100722B35 /* KeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */; };
-		1DFA7C681923E83500DF1410 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
-		1DFA7C8D1923E86400DF1410 /* SSKeychainQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */; };
-		1DFA7C911923E89100DF1410 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
 		1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */; };
 		1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1DFA9D5E18F36DC3008ADC98 /* iTermKeyMappingViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */; };
 		1DFA9D6418F37160008ADC98 /* iTermEditKeyActionWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */; };
 		1DFA9D7018F3A30F008ADC98 /* PointerPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */; };
+		2F8A16C41FC333F800DFBE8F /* libncurses.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F8A16C31FC333F800DFBE8F /* libncurses.tbd */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690231C94FE8000B7E4E9 /* overflowImage.png */; };
 		534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690271C94FF0000B7E4E9 /* overflowImagePressed.png */; };
@@ -1408,7 +1401,6 @@
 		A667190C1DCE36C3000CE608 /* iTermWeakReference.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCB60C1C6714C70019184E /* iTermWeakReference.h */; };
 		A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B171BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.h */; };
 		A667190E1DCE36C3000CE608 /* iTermMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B381BD40D2400B5629D /* iTermMark.h */; };
-		A667190F1DCE36C3000CE608 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
 		A66719101DCE36C3000CE608 /* iTermCapturedOutputMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B3C1BD40DC900B5629D /* iTermCapturedOutputMark.h */; };
 		A66719111DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B1D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h */; };
 		A66719121DCE36C3000CE608 /* iTermAltScreenMouseScrollInferer.h in Headers */ = {isa = PBXBuildFile; fileRef = A66DB8381C9142C900233E88 /* iTermAltScreenMouseScrollInferer.h */; };
@@ -1441,7 +1433,6 @@
 		A667192D1DCE36C3000CE608 /* iTermBadgeLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3911B4CC8BA00705186 /* iTermBadgeLabel.h */; };
 		A667192E1DCE36C3000CE608 /* PSMLightHighContrastTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0EA59F1CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h */; };
 		A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 53EBF29B1DCBFF7C00766613 /* iTermAPIServer.h */; };
-		A66719301DCE36C3000CE608 /* SSKeychainQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */; };
 		A66719311DCE36C3000CE608 /* iTermHostRecordMO+Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B331BCC265F00B5629D /* iTermHostRecordMO+Additions.h */; };
 		A66719321DCE36C3000CE608 /* iTermAdditionalHotKeyObjectValue.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B4F1D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h */; };
 		A66719331DCE36C3000CE608 /* iTermWebSocketFrame.h in Headers */ = {isa = PBXBuildFile; fileRef = 53EBF2B31DCCF63100766613 /* iTermWebSocketFrame.h */; };
@@ -1919,8 +1910,6 @@
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
 		A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
-		A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
-		A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */; };
 		A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
 		A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
@@ -2230,15 +2219,11 @@
 		A6C763E41B45C6F100E3C992 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
 		A6C763E51B45C70100E3C992 /* SCEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012419D0864C004AF81C /* SCEvent.m */; };
 		A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
-		A6C763E71B45C70E00E3C992 /* SSKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C901923E89100DF1410 /* SSKeychain.m */; };
-		A6C763E81B45C70E00E3C992 /* SSKeychainQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */; };
 		A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAA612D64022008225A9 /* UKCrashReporter.m */; };
 		A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAA12D64022008225A9 /* UKNibOwner.m */; };
 		A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAC12D64022008225A9 /* UKSystemInfo.m */; };
 		A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5521180FA46100B42CE9 /* iTermTests.m */; };
-		A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
-		A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
 		A6C7DE5919A459E9001E5C75 /* Therm.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* Therm.sdef */; };
@@ -2430,13 +2415,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		1D6ED85419AEA20D005A7799 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 1DFA7C661923E83500DF1410;
-			remoteInfo = SSKeychain;
-		};
 		1D6EDB0C19AEA276005A7799 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -2457,13 +2435,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = A6755F481D729A0500F3726C;
 			remoteInfo = image_decoder;
-		};
-		A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 1DFA7C661923E83500DF1410;
-			remoteInfo = SSKeychain;
 		};
 		A6C763D01B45C55200E3C992 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -2585,7 +2556,6 @@
 		1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowsTable.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D0EA59F1CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMLightHighContrastTabStyle.h; sourceTree = "<group>"; };
 		1D0EA5A01CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMLightHighContrastTabStyle.m; sourceTree = "<group>"; };
-		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D19C71214171F1D00617E08 /* ToolJobs.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolJobs.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3030,12 +3000,6 @@
 		1DF8AF5713FD781700C8A435 /* SplitPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SplitPanel.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = KeysPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = KeysPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DFA7C671923E83500DF1410 /* libSSKeychain.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSKeychain.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SSKeychain-Prefix.pch"; path = "SSKeychain/SSKeychain-Prefix.pch"; sourceTree = "<group>"; };
-		1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychainQuery.h; path = SSKeychain/SSKeychainQuery.h; sourceTree = "<group>"; };
-		1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychainQuery.m; path = SSKeychain/SSKeychainQuery.m; sourceTree = "<group>"; };
-		1DFA7C8F1923E89100DF1410 /* SSKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychain.h; path = SSKeychain/SSKeychain.h; sourceTree = "<group>"; };
-		1DFA7C901923E89100DF1410 /* SSKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychain.m; path = SSKeychain/SSKeychain.m; sourceTree = "<group>"; };
 		1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasswordManagerWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasswordManagerWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA7C9D1923F77100DF1410 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -3050,6 +3014,7 @@
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; tabWidth = 4; };
 		2F69A0B11FBC96580038C57B /* Therm.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Therm.entitlements; sourceTree = "<group>"; };
+		2F8A16C31FC333F800DFBE8F /* libncurses.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libncurses.tbd; path = usr/lib/libncurses.tbd; sourceTree = SDKROOT; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
 		534690271C94FF0000B7E4E9 /* overflowImagePressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImagePressed.png; sourceTree = "<group>"; };
@@ -4038,7 +4003,6 @@
 				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
 				A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
-				1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */,
 				1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */,
 				1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */,
 				A6C763D81B45C5C800E3C992 /* libThermShared.a in Frameworks */,
@@ -4057,7 +4021,6 @@
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
-				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
 				1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */,
 				A624231119CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */,
@@ -4068,18 +4031,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1DFA7C641923E83500DF1410 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1DFA7C681923E83500DF1410 /* Cocoa.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		874206510564169600CFC3F1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2F8A16C41FC333F800DFBE8F /* libncurses.tbd in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
@@ -4087,7 +4043,6 @@
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				A624231419CF6B1600182C08 /* Growl.framework in Frameworks */,
 				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
-				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				A624231019CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
@@ -4116,7 +4071,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6184F8F1BAB458B0088EF3C /* ColorPicker.framework in Frameworks */,
-				A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */,
 				A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */,
 				A6C763D91B45C69900E3C992 /* Growl.framework in Frameworks */,
 				A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */,
@@ -4129,7 +4083,6 @@
 			files = (
 				A667196B1DCE3970000CE608 /* libThermSharedARC.a in Frameworks */,
 				A667F3881B48671B00705186 /* libThermShared.a in Frameworks */,
-				A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4574,7 +4527,6 @@
 			children = (
 				8742065A0564169600CFC3F1 /* iTerm2.app */,
 				1DD39AD4180B8117004E56D5 /* ThermTests.app */,
-				1DFA7C671923E83500DF1410 /* libSSKeychain.a */,
 				1D6EDB0A19AEA20D005A7799 /* ThermForApplescriptTesting.app */,
 				A6C760501B45C4CF00E3C992 /* libThermShared.a */,
 				A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */,
@@ -4600,11 +4552,9 @@
 				1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */,
 				F6441F610E748404000EC682 /* CGSInternal */,
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
-				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				DD02571D09CB9363008F320C /* PSMTabBarControl */,
 				1D85D1C41306687700A3E998 /* RegexKitLite */,
 				A663012119D08638004AF81C /* SCEvents */,
-				1DFA7C621923E77900DF1410 /* SSKeychain */,
 				1D94EAA312D64022008225A9 /* UKCrashReporter */,
 			);
 			name = ThirdParty;
@@ -5091,6 +5041,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2F8A16C31FC333F800DFBE8F /* libncurses.tbd */,
 				A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */,
 				A6184F881BAB3ED70088EF3C /* ColorPicker.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
@@ -5139,18 +5090,6 @@
 				1DD39AE5180B8118004E56D5 /* Credits.rtf */,
 			);
 			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		1DFA7C621923E77900DF1410 /* SSKeychain */ = {
-			isa = PBXGroup;
-			children = (
-				1DFA7C8F1923E89100DF1410 /* SSKeychain.h */,
-				1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */,
-				1DFA7C901923E89100DF1410 /* SSKeychain.m */,
-				1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */,
-				1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */,
-			);
-			name = SSKeychain;
 			sourceTree = "<group>";
 		};
 		53EBF29A1DCBFF6D00766613 /* API */ = {
@@ -6456,17 +6395,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1DFA7C651923E83500DF1410 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1DFA7C911923E89100DF1410 /* SSKeychain.h in Headers */,
-				1DFA7C8D1923E86400DF1410 /* SSKeychainQuery.h in Headers */,
-				1D8BBA921B33529E0005A852 /* iTermTip.h in Headers */,
-				1DA1C1F31A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		874206480564169600CFC3F1 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -6819,7 +6747,6 @@
 				A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
 				A62A1F711E6E724B00363EE9 /* iTermMenuOpener.h in Headers */,
 				A667190E1DCE36C3000CE608 /* iTermMark.h in Headers */,
-				A667190F1DCE36C3000CE608 /* SSKeychain.h in Headers */,
 				A66719101DCE36C3000CE608 /* iTermCapturedOutputMark.h in Headers */,
 				A66719111DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				A66719121DCE36C3000CE608 /* iTermAltScreenMouseScrollInferer.h in Headers */,
@@ -6853,7 +6780,6 @@
 				A667192D1DCE36C3000CE608 /* iTermBadgeLabel.h in Headers */,
 				A667192E1DCE36C3000CE608 /* PSMLightHighContrastTabStyle.h in Headers */,
 				A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */,
-				A66719301DCE36C3000CE608 /* SSKeychainQuery.h in Headers */,
 				A66719311DCE36C3000CE608 /* iTermHostRecordMO+Additions.h in Headers */,
 				A66719321DCE36C3000CE608 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */,
@@ -6917,7 +6843,6 @@
 				A62C3B3A1BD40D2400B5629D /* iTermMark.h in Headers */,
 				A6CEC1281DCE8146009F4FD2 /* GPBRuntimeTypes.h in Headers */,
 				A6CEC0741DCE80C9009F4FD2 /* Duration.pbobjc.h in Headers */,
-				A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */,
 				A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */,
 				A62C3B2D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				A6CEC1241DCE8146009F4FD2 /* GPBProtocolBuffers_RuntimeSupport.h in Headers */,
@@ -6969,7 +6894,6 @@
 				A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */,
 				1D0EA5A11CA5DAA1005FCF8B /* PSMLightHighContrastTabStyle.h in Headers */,
 				A6CEC11D1DCE8146009F4FD2 /* GPBDescriptor.h in Headers */,
-				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
 				A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */,
@@ -7076,23 +7000,6 @@
 			productName = iTermTests;
 			productReference = 1DD39AD4180B8117004E56D5 /* ThermTests.app */;
 			productType = "com.apple.product-type.application";
-		};
-		1DFA7C661923E83500DF1410 /* SSKeychain */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 1DFA7C811923E83700DF1410 /* Build configuration list for PBXNativeTarget "SSKeychain" */;
-			buildPhases = (
-				1DFA7C631923E83500DF1410 /* Sources */,
-				1DFA7C641923E83500DF1410 /* Frameworks */,
-				1DFA7C651923E83500DF1410 /* Headers */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SSKeychain;
-			productName = SSKeychain;
-			productReference = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */;
-			productType = "com.apple.product-type.library.static";
 		};
 		874206460564169600CFC3F1 /* Therm */ = {
 			isa = PBXNativeTarget;
@@ -7202,9 +7109,6 @@
 					1DD39AD3180B8117004E56D5 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
-					1DFA7C661923E83500DF1410 = {
-						DevelopmentTeam = H7V7XYVQ7D;
-					};
 					874206460564169600CFC3F1 = {
 						DevelopmentTeam = J5PTVY8BHH;
 						ProvisioningStyle = Automatic;
@@ -7251,7 +7155,6 @@
 			targets = (
 				874206460564169600CFC3F1 /* Therm */,
 				1DD39AD3180B8117004E56D5 /* ThermTests */,
-				1DFA7C661923E83500DF1410 /* SSKeychain */,
 				1D6ED85219AEA20D005A7799 /* ThermForApplescriptTesting */,
 				A6C7603F1B45C4CF00E3C992 /* ThermShared */,
 				A6C7641B1B45CB2800E3C992 /* ThermXCTests */,
@@ -8377,15 +8280,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1DFA7C631923E83500DF1410 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A6C763E81B45C70E00E3C992 /* SSKeychainQuery.m in Sources */,
-				A6C763E71B45C70E00E3C992 /* SSKeychain.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		8742064E0564169600CFC3F1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -8886,8 +8780,6 @@
 /* Begin PBXTargetDependency section */
 		1D6ED85319AEA20D005A7799 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1DFA7C661923E83500DF1410 /* SSKeychain */;
-			targetProxy = 1D6ED85419AEA20D005A7799 /* PBXContainerItemProxy */;
 		};
 		1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -8906,8 +8798,6 @@
 		};
 		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1DFA7C661923E83500DF1410 /* SSKeychain */;
-			targetProxy = A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */;
 		};
 		A6C763D11B45C55200E3C992 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -9463,126 +9353,6 @@
 			};
 			name = Nightly;
 		};
-		1DFA7C821923E83700DF1410 /* Development */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-			};
-			name = Development;
-		};
-		1DFA7C831923E83700DF1410 /* Deployment */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
-				ENABLE_NS_ASSERTIONS = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-			};
-			name = Deployment;
-		};
-		1DFA7C841923E83700DF1410 /* Nightly */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
-				ENABLE_NS_ASSERTIONS = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-			};
-			name = Nightly;
-		};
 		A66719581DCE36C3000CE608 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -9674,6 +9444,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -9721,6 +9492,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -10423,16 +10195,6 @@
 				1DD39B03180B812D004E56D5 /* Development */,
 				1DD39B04180B812D004E56D5 /* Deployment */,
 				1DD39B06180B812D004E56D5 /* Nightly */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
-		};
-		1DFA7C811923E83700DF1410 /* Build configuration list for PBXNativeTarget "SSKeychain" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				1DFA7C821923E83700DF1410 /* Development */,
-				1DFA7C831923E83700DF1410 /* Deployment */,
-				1DFA7C841923E83700DF1410 /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;

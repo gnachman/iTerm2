@@ -13,7 +13,7 @@
 #import "iTermSearchField.h"
 #import "iTermSystemVersion.h"
 #import <LocalAuthentication/LocalAuthentication.h>
-#import <SSKeychain.h>
+// #import <SSKeychain.h>
 #import <Security/Security.h>
 
 static NSString *const kServiceName = @"iTerm2";
@@ -40,114 +40,17 @@ static BOOL sAuthenticated;
 }
 
 + (NSArray *)accountNamesWithFilter:(NSString *)filter {
-    if (!sAuthenticated) {
-        return @[ ];
-    }
-
-    NSMutableArray *array = [NSMutableArray array];
-    if (!filter.length) {
-        filter = nil;
-    }
-    for (NSDictionary *account in [SSKeychain accountsForService:kServiceName]) {
-        NSString *accountName = account[(NSString *)kSecAttrAccount];
-        if (!accountName) {
-            continue;
-        }
-        if (!filter ||
-            [accountName rangeOfString:filter
-                               options:NSCaseInsensitiveSearch].location != NSNotFound) {
-                [array addObject:accountName];
-            }
-    }
-    return [[array sortedArrayUsingSelector:@selector(compare:)] retain];
+    return nil;
 }
 
 + (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reply:(void(^)(BOOL success, NSError * __nullable error))reply NS_AVAILABLE_MAC(10_11) {
-    DLog(@"Requesting authentication with policy %@", @(policy));
-
-    NSString *myLocalizedReasonString = @"open the password manager";
-    // You're supposed to hold a reference to the context until it's done doing its thing.
-    [myContext retain];
-    if (policy == LAPolicyDeviceOwnerAuthentication) {
-        [[iTermApplication sharedApplication] setLocalAuthenticationDialogOpen:YES];
-    }
-    [myContext evaluatePolicy:policy
-              localizedReason:myLocalizedReasonString
-                        reply:^(BOOL success, NSError *error) {
-                            if (policy == LAPolicyDeviceOwnerAuthentication) {
-                                [[iTermApplication sharedApplication] setLocalAuthenticationDialogOpen:NO];
-                            }
-                            if (success) {
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    sAuthenticated = YES;
-                                    reply(success, error);
-                                });
-                            } else {
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    sAuthenticated = NO;
-                                    if (error.code != LAErrorSystemCancel &&
-                                        error.code != LAErrorAppCancel) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-                                        BOOL isTouchID = (policy == LAPolicyDeviceOwnerAuthenticationWithBiometrics);
-#pragma clang diagnostic pop
-                                        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                                        alert.messageText = @"Authentication Failed";
-                                        alert.informativeText = [NSString stringWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]];
-                                        [alert addButtonWithTitle:@"OK"];
-                                        [alert runModal];
-                                    }
-                                    reply(success, error);
-                                });
-                            }
-                            [myContext release];
-                        }];
 }
 
 + (NSString *)reasonForAuthenticationError:(NSError *)error touchID:(BOOL)touchID NS_AVAILABLE_MAC(10_11) {
-    switch (error.code) {
-        case LAErrorAuthenticationFailed:
-            return @"valid credentials weren't supplied.";
-
-        case LAErrorUserCancel:
-            return touchID ? @"touch ID was cancelled." : @"password entry was cancelled.";
-
-        case LAErrorUserFallback:
-            return @"password authentication was requested.";
-
-        case LAErrorSystemCancel:
-            return touchID ? @"the system cancelled the Touch ID request." : @"the system cancelled the authentication request.";
-
-        case LAErrorPasscodeNotSet:
-            return @"no passcode is set.";
-
-        case kLAErrorTouchIDNotAvailable:
-            return @"touch ID is not available.";
-
-        case LAErrorTouchIDNotEnrolled:
-            return @"touch ID doesn't have any fingers enrolled.";
-
-        case LAErrorTouchIDLockout:
-            return @"there were too many failed Touch ID attempts.";
-
-        case LAErrorAppCancel:
-            return touchID ? @"touch ID was cancelled by iTerm2." : @"authentication was cancelled by iTerm2.";
-
-        case LAErrorInvalidContext:
-            return @"the context is invalid. This is a bug in iTerm2. Please report it.";
-    }
-    return [error localizedDescription];
+    return nil;
 }
 
 - (instancetype)init {
-    self = [self initWithWindowNibName:@"iTermPasswordManager"];
-    if (self) {
-        [self requestAuthenticationIfPossible];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(reloadAccounts)
-                                                     name:kPasswordManagersShouldReloadData
-                                                   object:nil];
-    }
     return self;
 }
 
@@ -281,11 +184,7 @@ static BOOL sAuthenticated;
 #pragma mark - Private
 
 - (Class)keychain {
-    if (sAuthenticated) {
-        return [SSKeychain class];
-    } else {
-        return nil;
-    }
+    return nil;
 }
 
 - (void)requestAuthenticationIfPossible {
