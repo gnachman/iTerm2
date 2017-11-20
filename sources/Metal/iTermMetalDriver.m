@@ -294,7 +294,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
     // Update glyph attributes for block cursor if needed.
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
-    if (!cursorInfo.frameOnly && cursorInfo.cursorVisible && cursorInfo.shouldDrawText) {
+#warning TODO Why is the cursor sometimes equal to grid height?
+    if (!cursorInfo.frameOnly && cursorInfo.cursorVisible && cursorInfo.shouldDrawText && cursorInfo.coord.y >= 0 && cursorInfo.coord.y < frameData.gridSize.height) {
         iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
         iTermMetalGlyphAttributes *glyphAttributes = (iTermMetalGlyphAttributes *)rowWithCursor.attributesData.mutableBytes;
         glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
