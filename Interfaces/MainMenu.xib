@@ -1100,7 +1100,7 @@ DQ
                                     <action selector="copyModeShortcuts:" target="-1" id="fOs-EL-nnE"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Open Source Licenses" identifier="Copy Mode Shortcuts" id="dV2-dF-UB1">
+                            <menuItem title="Open Source Licenses" identifier="Open Source Licenses" id="dV2-dF-UB1">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="openSourceLicenses:" target="201" id="kij-nS-KMI"/>
