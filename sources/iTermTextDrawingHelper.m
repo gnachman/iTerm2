@@ -2444,7 +2444,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                        renderItalic:&italic];
         [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
         CGPoint point = rect.origin;
-        point.y += _baselineOffset;
+        // point.y += _baselineOffset;
         [key drawAtPoint:point withAttributes:@{ NSBackgroundColorAttributeName: [NSColor clearColor],
                                                  NSFontAttributeName: fontInfo.font }];
         return rect;
