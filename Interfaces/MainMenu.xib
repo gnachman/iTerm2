@@ -1088,12 +1088,14 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+<!--
                             <menuItem title="Password Manager" keyEquivalent="f" identifier="Password Manager" id="5">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openPasswordManager:" target="201" id="wbL-5o-kEN"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
