@@ -61,6 +61,7 @@
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+<!--
                             <menuItem title="Hide Therm" keyEquivalent="h" identifier="Hide Therm" id="134">
                                 <connections>
                                     <action selector="hide:" target="-2" id="152"/>
@@ -77,6 +78,7 @@
                                     <action selector="unhideAllApplications:" target="-2" id="153"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="149">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -93,18 +95,20 @@
                                     <action selector="makeDefaultTerminal:" target="201" id="1472"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Make Terminal Default Term" alternate="YES" keyEquivalent="\" identifier="Make Terminal Default Term" id="1473">
+                            <menuItem title="Set As Default Terminal" alternate="YES" keyEquivalent="\" identifier="Make Terminal Default Term" id="1473">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="unmakeDefaultTerminal:" target="201" id="1475"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="Install Shell Integration" alternate="YES" identifier="Install Shell Integration" id="rHN-nq-xah">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="installShellIntegration:" target="-1" id="QBH-7C-wWV"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="1469"/>
                             <menuItem title="Quit Therm" keyEquivalent="q" identifier="Quit Therm" id="136">
                                 <connections>
@@ -481,11 +485,13 @@ DQ
                                                 <action selector="findWithSelection:" target="-1" id="769"/>
                                             </connections>
                                         </menuItem>
+<!--
                                         <menuItem title="Jump to Selection" keyEquivalent="j" identifier="Find.Jump to Selection" id="764">
                                             <connections>
                                                 <action selector="jumpToSelection:" target="-1" id="770"/>
                                             </connections>
                                         </menuItem>
+-->
                                         <menuItem isSeparatorItem="YES" id="PJB-Pw-4PO">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
@@ -518,11 +524,13 @@ DQ
                                         <menuItem isSeparatorItem="YES" id="Pvx-sU-bPM">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
+<!--
                                         <menuItem title="Jump to Mark" keyEquivalent="J" identifier="Marks and Annotations.Jump to Mark" id="1245">
                                             <connections>
                                                 <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
                                             </connections>
                                         </menuItem>
+-->
                                         <menuItem title="Previous Mark/Annotation" keyEquivalent="" identifier="Marks and Annotations.Previous Mark or Annotation" id="sZa-7I-YDa">
                                             <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                             <connections>
@@ -585,12 +593,14 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+<!--
                             <menuItem title="Clear Buffer" keyEquivalent="k" identifier="Clear Buffer" id="217">
                                 <connections>
                                     <action selector="clearBuffer:" target="-1" id="220"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Clear Scrollback Buffer" keyEquivalent="K" identifier="Clear Scrollback Buffer" id="755">
+-->
+                            <menuItem title="Clear Scrollback Buffer" keyEquivalent="l" identifier="Clear Scrollback Buffer" id="755">
                                 <connections>
                                     <action selector="clearScrollbackBuffer:" target="-1" id="756"/>
                                 </connections>
@@ -968,12 +978,12 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="1249"/>
-                                        <menuItem title="Next Pane" keyEquivalent="]" identifier="Select Split Pane.Next Pane" id="1250">
+                                        <menuItem title="Next Pane" keyEquivalent="j" identifier="Select Split Pane.Next Pane" id="1250">
                                             <connections>
                                                 <action selector="nextPane:" target="-1" id="1255"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Previous Pane" keyEquivalent="[" identifier="Select Split Pane.Previous Pane" id="1251">
+                                        <menuItem title="Previous Pane" keyEquivalent="k" identifier="Select Split Pane.Previous Pane" id="1251">
                                             <connections>
                                                 <action selector="previousPane:" target="-1" id="1254"/>
                                             </connections>
@@ -985,26 +995,26 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Resize Split Pane" id="nnc-o3-t2j">
                                     <items>
-                                        <menuItem title="Move Divider Up" keyEquivalent="" identifier="Resize Split Pane.Move Divider Up" id="2Jk-GR-zCt">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                        <menuItem title="Move Divider Up" keyEquivalent="K" identifier="Resize Split Pane.Move Divider Up" id="2Jk-GR-zCt">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerUp:" target="-1" id="smA-wj-JIK"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Move Divider Down" keyEquivalent="" identifier="Resize Split Pane.Move Divider Down" id="Qpv-Ie-1sh">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                        <menuItem title="Move Divider Down" keyEquivalent="J" identifier="Resize Split Pane.Move Divider Down" id="Qpv-Ie-1sh">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerDown:" target="-1" id="NVB-Pj-Xdg"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Move Divider Left" keyEquivalent="" identifier="Resize Split Pane.Move Divider Left" id="avG-JI-rjO">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                        <menuItem title="Move Divider Left" keyEquivalent="H" identifier="Resize Split Pane.Move Divider Left" id="avG-JI-rjO">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerLeft:" target="-1" id="0Jq-7S-KVC"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Move Divider Right" keyEquivalent="" identifier="Resize Split Pane.Move Divider Right" id="t6w-8j-r4m">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                        <menuItem title="Move Divider Right" keyEquivalent="L" identifier="Resize Split Pane.Move Divider Right" id="t6w-8j-r4m">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerRight:" target="-1" id="0Bz-xh-KL2"/>
                                             </connections>

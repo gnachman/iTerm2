@@ -5897,28 +5897,28 @@ return NO;
 
 - (IBAction)movePaneDividerRight:(id)sender
 {
-    int width = [[[self currentSession] textview] charWidth];
+    int width = [[[self currentSession] textview] charWidth] * 4;
     [[self currentTab] moveCurrentSessionDividerBy:width
                                       horizontally:YES];
 }
 
 - (IBAction)movePaneDividerLeft:(id)sender
 {
-    int width = [[[self currentSession] textview] charWidth];
+    int width = [[[self currentSession] textview] charWidth] * 4;
     [[self currentTab] moveCurrentSessionDividerBy:-width
                                       horizontally:YES];
 }
 
 - (IBAction)movePaneDividerDown:(id)sender
 {
-    int height = [[[self currentSession] textview] lineHeight];
+    int height = [[[self currentSession] textview] lineHeight] * 2;
     [[self currentTab] moveCurrentSessionDividerBy:height
                                       horizontally:NO];
 }
 
 - (IBAction)movePaneDividerUp:(id)sender
 {
-    int height = [[[self currentSession] textview] lineHeight];
+    int height = [[[self currentSession] textview] lineHeight] * 2;
     [[self currentTab] moveCurrentSessionDividerBy:-height
                                       horizontally:NO];
 }
@@ -7032,6 +7032,7 @@ return NO;
 // Erase the scrollback buffer of the current session.
 - (void)clearScrollbackBuffer:(id)sender
 {
+    [[self currentSession] clearBuffer];
     [[self currentSession] clearScrollbackBuffer];
 }
 
