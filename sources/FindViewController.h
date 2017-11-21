@@ -88,6 +88,7 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 @interface FindViewController : NSViewController <NSTextFieldDelegate>
 
 - (void)close;
+- (void)hide;
 - (void)open;
 - (void)makeVisible;
 - (void)setFrameOrigin:(NSPoint)p;

@@ -4567,11 +4567,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)toggleFindPanel
 {
-    if ([[[_view findViewController] view] isHidden]) {
-        [[_view findViewController] makeVisible];
-    } else {
-        [[_view findViewController] close];
-    }
+	BOOL isHidden = [[[_view findViewController] view] isHidden];
+	for (PTYSession *aSession in [[_delegate realParentWindow] allSessions]) {
+		if (![[[aSession->_view findViewController] view] isHidden]) {
+			[[aSession->_view findViewController] hide];
+		}
+	}
+	if (isHidden) {
+		[[_view findViewController] makeVisible];
+	} else {
+         	[[_view findViewController] close];
+        }
 }
 
 - (void)showFindPanel
@@ -4826,7 +4832,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setFocused:(BOOL)focused {
-    if (focused != _focused) {
+    // if (focused != _focused) {
         _focused = focused;
         if ([_terminal reportFocus]) {
             [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
@@ -4834,7 +4840,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (focused && [self isTmuxClient]) {
             [_tmuxController selectPane:_tmuxPane];
         }
-    }
+    // }
 }
 
 - (BOOL)wantsContentChangedNotification
@@ -6802,7 +6808,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSInteger)textViewUnicodeVersion {
-    return _unicodeVersion;
+    return _unicodeVersion; // @10
 }
 
 - (void)textViewDidRefresh {
@@ -8580,7 +8586,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSInteger)screenUnicodeVersion {
-    return _unicodeVersion;
+    return _unicodeVersion; // should be always 10
 }
 
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion {

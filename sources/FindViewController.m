@@ -327,7 +327,7 @@ const CGFloat kEdgeWidth = 1;
                       fullFrame_.size.height);
 }
 
-- (void)close {
+- (void)hide {
     [self updateDelayState];
     BOOL wasHidden = [[self view] isHidden];
     if (!wasHidden && timer_) {
@@ -344,7 +344,10 @@ const CGFloat kEdgeWidth = 1;
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     [[[self view] animator] setFrame:[self collapsedFrame]];
     [NSAnimationContext endGrouping];
+}
 
+- (void)close {
+    [self hide];
     [delegate_ findViewControllerClearSearch];
     [delegate_ findViewControllerMakeDocumentFirstResponder];
 }
