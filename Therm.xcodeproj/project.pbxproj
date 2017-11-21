@@ -1531,9 +1531,6 @@
 		A673BFED1E1A13E600FA2386 /* iTermSetTitleTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
 		A6755F441D728FFA00F3726C /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
-		A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F4B1D729A0500F3726C /* image_decoder.m */; };
-		A6755F541D73836B00F3726C /* iTermSerializableImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F531D73836B00F3726C /* iTermSerializableImage.m */; };
-		A6755F571D739E4F00F3726C /* image_decoder in Resources */ = {isa = PBXBuildFile; fileRef = A6755F491D729A0500F3726C /* image_decoder */; };
 		A67778B41CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h in Headers */ = {isa = PBXBuildFile; fileRef = A67778B21CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h */; };
 		A67778B51CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m in Sources */ = {isa = PBXBuildFile; fileRef = A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */; };
 		A67778B71CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */; };
@@ -2351,7 +2348,6 @@
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
-		A6ECA5931D7535E700D19511 /* image_decoder.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6ECA5921D7535E700D19511 /* image_decoder.sb */; };
 		A6ECA59A1D76907400D19511 /* iTermImageDecoderDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */; };
 		A6ECA59B1D76907400D19511 /* iTermImageDecoderDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */; };
 		A6EEA6681C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */; };
@@ -2428,13 +2424,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = A66717851DCE36C3000CE608;
 			remoteInfo = iTerm2SharedARC;
-		};
-		A6755F551D739E3C00F3726C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A6755F481D729A0500F3726C;
-			remoteInfo = image_decoder;
 		};
 		A6C763D01B45C55200E3C992 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -3379,9 +3368,6 @@
 		A6755F411D728FFA00F3726C /* iTermImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImage.h; sourceTree = "<group>"; };
 		A6755F421D728FFA00F3726C /* iTermImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImage.m; sourceTree = "<group>"; };
 		A6755F491D729A0500F3726C /* image_decoder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = image_decoder; sourceTree = BUILT_PRODUCTS_DIR; };
-		A6755F4B1D729A0500F3726C /* image_decoder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = image_decoder.m; sourceTree = "<group>"; };
-		A6755F521D73836B00F3726C /* iTermSerializableImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSerializableImage.h; sourceTree = "<group>"; };
-		A6755F531D73836B00F3726C /* iTermSerializableImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSerializableImage.m; sourceTree = "<group>"; };
 		A67778B21CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotKeyProfileBindingController.h; sourceTree = "<group>"; };
 		A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotKeyProfileBindingController.m; sourceTree = "<group>"; };
 		A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSArrayCategoryTest.m; sourceTree = "<group>"; };
@@ -4100,7 +4086,6 @@
 				1D5FD9AD11F61CA900C46BA3 /* Applescript Tests */,
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
 				A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */,
-				A6755F4A1D729A0500F3726C /* image_decoder */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -5230,16 +5215,6 @@
 				A663012719D0864C004AF81C /* SCEvents.m */,
 			);
 			name = SCEvents;
-			sourceTree = "<group>";
-		};
-		A6755F4A1D729A0500F3726C /* image_decoder */ = {
-			isa = PBXGroup;
-			children = (
-				A6755F4B1D729A0500F3726C /* image_decoder.m */,
-				A6755F521D73836B00F3726C /* iTermSerializableImage.h */,
-				A6755F531D73836B00F3726C /* iTermSerializableImage.m */,
-			);
-			path = image_decoder;
 			sourceTree = "<group>";
 		};
 		A67F57C31B0930AD00B4F135 /* Shell Launcher/FD Client/Server */ = {
@@ -7016,7 +6991,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				A6755F561D739E3C00F3726C /* PBXTargetDependency */,
 				A667195E1DCE36EF000CE608 /* PBXTargetDependency */,
 				A6C763D11B45C55200E3C992 /* PBXTargetDependency */,
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
@@ -7715,7 +7689,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A6755F571D739E4F00F3726C /* image_decoder in Resources */,
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
 				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
@@ -7884,7 +7857,6 @@
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */,
 				A6057C171883D12E004A60AF /* broken_image.png in Resources */,
-				A6ECA5931D7535E700D19511 /* image_decoder.sb in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */,
@@ -8319,8 +8291,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A6755F541D73836B00F3726C /* iTermSerializableImage.m in Sources */,
-				A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8790,11 +8760,6 @@
 			isa = PBXTargetDependency;
 			target = A66717851DCE36C3000CE608 /* ThermSharedARC */;
 			targetProxy = A667195D1DCE36EF000CE608 /* PBXContainerItemProxy */;
-		};
-		A6755F561D739E3C00F3726C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A6755F481D729A0500F3726C /* image_decoder */;
-			targetProxy = A6755F551D739E3C00F3726C /* PBXContainerItemProxy */;
 		};
 		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
