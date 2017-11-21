@@ -32,7 +32,7 @@
         NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n",
                                    myDict[(NSString *)kCFBundleVersionKey]];
 #endif
-        NSString *versionString = [NSString stringWithFormat: @"Build 0.0.5\n"];
+        NSString *versionString = [NSString stringWithFormat: @"Version 0.0.5\niTerm2 fork by pancake\n\n"];
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm"
                                                                        title:@"Home Page\n"];
