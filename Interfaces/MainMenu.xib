@@ -601,11 +601,13 @@ DQ
                 <menuItem title="View" id="802">
                     <menu key="submenu" title="View" id="803">
                         <items>
+<!--
                             <menuItem title="Show Tabs in Fullscreen" keyEquivalent="T" identifier="Show Tabs in Fullscreen" id="1257">
                                 <connections>
                                     <action selector="toggleFullScreenTabBar:" target="-1" id="1259"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem title="Toggle Full Screen" identifier="Toggle Full Screen" id="914">
                                 <string key="keyEquivalent" base64-UTF8="YES">
 DQ
@@ -614,11 +616,13 @@ DQ
                                     <action selector="toggleFullScreenMode:" target="-1" id="1256"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="Use Transparency" keyEquivalent="u" identifier="Use Transparency" id="1228">
                                 <connections>
                                     <action selector="toggleUseTransparency:" target="201" id="1229"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="806">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
