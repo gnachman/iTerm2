@@ -196,6 +196,10 @@ static NSString *const kVariableKeySessionCreationTimeString = @"session.creatio
 static NSString *const kVariableKeySessionPID = @"iterm2.pid";
 static NSString *const kVariableKeySessionAutoLogID = @"session.autoLogId";
 
+// Value for SESSION_ARRANGEMENT_TMUX_TAB_COLOR that means "don't use the
+// default color from the tmux profile; this tab should have no color."
+static NSString *const iTermTmuxTabColorNone = @"none";
+
 // Maps Session GUID to saved contents. Only live between window restoration
 // and the end of startup activities.
 static NSMutableDictionary *gRegisteredSessionContents;
@@ -963,7 +967,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if ([arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE]) {
         // This is a tmux arrangement.
-        NSDictionary *tabColorDict = [ITAddressBookMgr encodeColor:[NSColor colorFromHexString:arrangement[SESSION_ARRANGEMENT_TMUX_TAB_COLOR]]];
+        NSString *colorString = arrangement[SESSION_ARRANGEMENT_TMUX_TAB_COLOR];
+        NSDictionary *tabColorDict = [ITAddressBookMgr encodeColor:[NSColor colorFromHexString:colorString]];
         if (tabColorDict) {
             // We're restoring a tmux arrangement that specifies a tab color.
             if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark] ||
@@ -973,7 +978,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 theBookmark = [theBookmark dictionaryBySettingObject:@YES forKey:KEY_USE_TAB_COLOR];
                 needDivorce = YES;
             }
-        } else if ([iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark]) {
+        } else if ([colorString isEqualToString:iTermTmuxTabColorNone] &&
+                   [iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark]) {
             // There was no tab color but the tmux profile specifies one. Disable it and divorce.
             theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:KEY_USE_TAB_COLOR];
             needDivorce = YES;
@@ -3444,7 +3450,8 @@ ITERM_WEAKLY_REFERENCEABLE
             tabColorDict = nil;
         }
         NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
-        [self.tmuxController setTabColorString:[tabColor hexString] forWindowPane:_tmuxPane];
+        [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
+                                 forWindowPane:_tmuxPane];
     }
 }
 
