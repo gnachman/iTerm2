@@ -2687,6 +2687,7 @@ DQ
 <!--
 
 unicode 10 is hardcoded now
+-->
 
                 <button misplaced="YES" id="jlZ-SF-XtE">
                     <rect key="frame" x="324" y="234" width="207" height="18"/>
@@ -2701,7 +2702,6 @@ unicode 10 is hardcoded now
                         <outlet property="nextKeyView" destination="4765" id="uIt-qC-lLY"/>
                     </connections>
                 </button>
--->
             </subviews>
             <point key="canvasLocation" x="-37.5" y="658.5"/>
         </customView>
