@@ -355,6 +355,7 @@ static const int kMaxScreenRows = 4096;
     if (userInitiated) {
         [_parser reset];
     }
+    [delegate_ terminalShowPrimaryBuffer];
     [delegate_ terminalResetPreservingPrompt:userInitiated];
 }
 
