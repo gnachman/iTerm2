@@ -883,6 +883,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
     // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
     // is under the cursor make it first responder.
+#if 0
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         NSRect mouseRect = {
             .origin = [NSEvent mouseLocation],
@@ -906,6 +907,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             }
         }
     }
+#endif
     
     [self hideStuckToolTips];
 }
