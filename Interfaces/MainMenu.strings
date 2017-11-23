@@ -1,8 +1,8 @@
 ﻿/* NSMenuItem : <title: > (oid:349) */
 " " = " ";
 
-/* NSPanel (About iTerm) : <title:About iTerm> (oid:498) */
-"About iTerm" = "About iTerm";
+/* NSPanel (About Therm) : <title:About Therm> (oid:498) */
+"About Therm" = "About Therm";
 
 /* NSMenuItem : <title:Bigger Font> (oid:804) */
 "Bigger Font" = "Bigger Font";
@@ -53,7 +53,7 @@
 "Hide Others" = "Hide Others";
 
 /* NSMenuItem : <title:Hide iTerm> (oid:134) */
-"Hide iTerm" = "Hide iTerm";
+"Hide Therm" = "Hide Therm";
 
 /* NSTextField (JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp) : <title:JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp> (oid:634) */
 "JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp" = "JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp";
@@ -107,7 +107,7 @@
 "Print..." = "Print...";
 
 /* NSMenuItem : <title:Quit iTerm> (oid:136) */
-"Quit iTerm" = "Quit iTerm";
+"Quit Therm" = "Quit Therm";
 
 /* NSMenuItem : <title:Save Display Profile> (oid:818) */
 "Save Display Profile" = "Save Display Profile";
@@ -166,9 +166,9 @@
 /* NSMenu : <title:Window> (oid:24) */
 "Window" = "Window";
 
-/* NSTextField (iTerm) : <title:iTerm> (oid:510) */
-"iTerm" = "iTerm";
+/* NSTextField (Therm) : <title:Therm> (oid:510) */
+"Therm" = "Therm";
 
 /* NSMenuItem : <title:iTerm Help> (oid:111) */
-"iTerm Help" = "iTerm Help";
+"Therm Help" = "Therm Help";
 

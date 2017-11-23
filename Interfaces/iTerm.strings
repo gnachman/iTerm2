@@ -23,7 +23,7 @@
 
 /* Close window */
 "Close Window?" = "Close Window?";
-"Quit iTerm?" = "Quit iTerm?";
+"Quit Therm?" = "Quit Therm?";
 
 /* Close Session */
 "This session will be closed."="This session will be closed.";
@@ -115,7 +115,7 @@
 "Configuration saved"="Configuration saved";
 
 /* OS Version */
-"Minimum_OS"="iTerm requires OS X version 10.2 or higher to run. This application will now terminate.";
+"Minimum_OS"="Therm requires macOS 10.2 or higher to run. This application will now terminate.";
 
 /* Sorry */
 "Sorry"="Sorry";
@@ -228,5 +228,5 @@
 
 /* Fork Error*/
 "Unable to Fork!"="Unable to Fork!";
-"iTerm cannot launch the program for this session."="iTerm cannot launch the program for this session.";
+"Therm cannot launch the program for this session."="Therm cannot launch the program for this session.";
 "Close Session"="Close Session";
