@@ -3930,6 +3930,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Contextual menu
+- (void)editSession:(NSMenuItem *)item {
+    NSTabViewItem *tabViewItem = item.representedObject;
+    PTYTab *tab = tabViewItem.identifier;
+    PTYSession *session = tab.activeSession;
+    if (session) {
+        [self editSession:session makeKey:NO];
+    }
+}
+
 - (void)editCurrentSession:(id)sender
 {
     PTYSession* session = [self currentSession];
@@ -4501,6 +4510,12 @@ ITERM_WEAKLY_REFERENCEABLE
    }
 
     // add tasks
+    item = [[[NSMenuItem alloc] initWithTitle:@"Edit Session…"
+                                       action:@selector(editSession:)
+                                keyEquivalent:@""] autorelease];
+    [item setRepresentedObject:tabViewItem];
+    [rootMenu addItem:item];
+
     item = [[[NSMenuItem alloc] initWithTitle:@"Close Tab"
                                        action:@selector(closeTabContextualMenuAction:)
                                 keyEquivalent:@""] autorelease];
