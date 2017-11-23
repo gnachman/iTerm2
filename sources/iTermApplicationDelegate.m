@@ -648,6 +648,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
     DLog(@"applicationShouldTerminate:");
+    DLog(@"user defaults value of PromptOnQuit: %@", [[NSUserDefaults standardUserDefaults] objectForKey:@"PromptOnQuit"]);
+    DLog(@"[iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]: %@", @([iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]));
+
     NSArray *terminals;
 
     terminals = [[iTermController sharedInstance] terminals];
