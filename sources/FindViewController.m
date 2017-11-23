@@ -363,6 +363,12 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)open {
+    if ([findBarTextField_.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
+        findBarTextField_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
+    } else {
+        findBarTextField_.appearance = nil;
+    }
+
     if (savedState_) {
         [self restoreState];
         findBarTextField_.stringValue = state_.string;
