@@ -14,8 +14,9 @@
     NSScrubberDelegate,
     NSScrubberDataSource>
 
-- (void)updateTouchBarIfNeeded;
+- (void)updateTouchBarIfNeeded:(BOOL)force;
 - (void)updateTouchBarFunctionKeyLabels;
 - (void)updateTouchBarWithWordAtCursor:(NSString *)word;
+- (void)updateColorPresets;
 
 @end

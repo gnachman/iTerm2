@@ -56,6 +56,11 @@ ITERM_IGNORE_PARTIAL_BEGIN
     [self updateStatus];
 }
 
+- (void)updateColorPresets {
+    if (IsTouchBarAvailable() && [self respondsToSelector:@selector(touchBar)]) {
+        [self updateTouchBarIfNeeded:YES];
+    }
+}
 - (void)updateTouchBarWithWordAtCursor:(NSString *)word {
     if (IsTouchBarAvailable() && [self respondsToSelector:@selector(touchBar)]) {
         NSTouchBarItem *item = [self.touchBar itemForIdentifier:iTermTouchBarIdentifierManPage];
@@ -117,14 +122,14 @@ ITERM_IGNORE_PARTIAL_BEGIN
     return touchBar;
 }
 
-- (void)updateTouchBarIfNeeded {
+- (void)updateTouchBarIfNeeded:(BOOL)force {
     if (!self.wellFormed) {
         DLog(@"Not updating touch bar in %@ because not well formed", self);
         return;
     }
     if (IsTouchBarAvailable()) {
         NSTouchBar *replacement = [self amendTouchBar:[self makeGenericTouchBar]];
-        if (![replacement.customizationIdentifier isEqualToString:self.touchBar.customizationIdentifier]) {
+        if (force || ![replacement.customizationIdentifier isEqualToString:self.touchBar.customizationIdentifier]) {
             self.touchBar = replacement;
         } else {
             NSScrubber *scrubber = (NSScrubber *)self.tabsTouchBarItem.view;
@@ -262,16 +267,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
                                                               constant:0]];
 }
 
-- (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
-    if (!IsTouchBarAvailable()) {
-        return nil;
-    }
-    NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
-    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
-    item.view = scrollView;
-    NSView *documentView = [[NSView alloc] init];
-    documentView.translatesAutoresizingMaskIntoConstraints = NO;
-    scrollView.documentView = documentView;
+- (void)addButtonsToColorPresetsDocumentView:(NSView *)documentView {
     NSButton *previous = nil;
     for (NSDictionary *dict in @[ [iTermColorPresets builtInColorPresets] ?: @{},
                                   [iTermColorPresets customColorPresets] ?: @{} ]) {
@@ -289,7 +285,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
                                                                          attributes:attributes] autorelease];
             button = [iTermTouchBarButton buttonWithTitle:@""
                                                    target:self
-                                                       action:@selector(colorPresetTouchBarItemSelected:)];
+                                                   action:@selector(colorPresetTouchBarItemSelected:)];
             [button sizeToFit];
             button.attributedTitle = title;
             button.bezelColor = backgroundColor;
@@ -303,6 +299,19 @@ ITERM_IGNORE_PARTIAL_BEGIN
     if (previous) {
         [self constrainButton:previous toRightOfSuperview:documentView];
     }
+}
+
+- (NSTouchBarItem *)colorPresetsScrollViewTouchBarItem {
+    if (!IsTouchBarAvailable()) {
+        return nil;
+    }
+    NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
+    NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
+    item.view = scrollView;
+    NSView *documentView = [[NSView alloc] init];
+    documentView.translatesAutoresizingMaskIntoConstraints = NO;
+    scrollView.documentView = documentView;
+    [self addButtonsToColorPresetsDocumentView:documentView];
     return item;
 }
 
