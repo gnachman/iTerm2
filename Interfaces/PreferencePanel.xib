@@ -5230,21 +5230,21 @@ DQ
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4118">
                     <rect key="frame" x="184" y="176" width="161" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="⌥⌘" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4137" id="4129">
+                    <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4137" id="4129">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4130">
                             <items>
-                                <menuItem tag="9" id="4132">
+                                <menuItem title="No Shortcut" tag="9" id="4132">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥" tag="5" id="kEx-j4-xkm">
+                                <menuItem title="⌥ Number" tag="5" id="kEx-j4-xkm">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌘" tag="4" id="4133">
+                                <menuItem title="⌘ Number" tag="4" id="4133">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥⌘" state="on" tag="6" id="4137">
+                                <menuItem title="⌥⌘ Number" state="on" tag="6" id="4137">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                             </items>
@@ -5258,21 +5258,21 @@ DQ
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4269">
                     <rect key="frame" x="184" y="146" width="161" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="⌥⌘" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4273" id="4270">
+                    <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4273" id="4270">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4271">
                             <items>
-                                <menuItem tag="9" id="4274">
+                                <menuItem title="No Shortcut" tag="9" id="4274">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥" tag="5" id="XvI-gy-pDy">
+                                <menuItem title="⌥ Number" tag="5" id="XvI-gy-pDy">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌘" tag="4" id="4272">
+                                <menuItem title="⌘ Number" tag="4" id="4272">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥⌘" state="on" tag="6" id="4273">
+                                <menuItem title="⌥⌘ Number" state="on" tag="6" id="4273">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                             </items>
