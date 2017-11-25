@@ -3729,6 +3729,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return [iTermAdvancedSettingsModel focusReportingEnabled];
 }
 
+- (NSColor *)terminalForegroundColor {
+    return [[delegate_ screenColorMap] colorForKey:kColorMapForeground];
+}
+
+- (NSColor *)terminalBackgroundColor {
+    return [[delegate_ screenColorMap] colorForKey:kColorMapBackground];
+}
+
 - (NSColor *)terminalColorForIndex:(int)index {
     if (index < 0 || index > 255) {
         return nil;

@@ -1916,6 +1916,11 @@ static const int kMaxScreenRows = 4096;
             [self executeXtermSetRgb:token];
             break;
 
+        case XTERMCC_SET_FG:
+        case XTERMCC_SET_BG:
+            [self executeXtermSetDynamicColor:token];
+            break;
+
         case DCS_TMUX_CODE_WRAP:
             // This is a no-op and it shouldn't happen.
             break;
@@ -1964,6 +1969,40 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+// Parse rgb:<redhex>/<greenhex>/<bluehex>
+static NSColor *parseColor(NSString *colorSpec) {
+    NSScanner *scanner = [NSScanner scannerWithString:colorSpec];
+    CGFloat colors[3];
+
+    // Match "rgb:"
+    if (![scanner scanString:@"rgb:" intoString:NULL])
+        return nil;
+
+    for (int i = 0; i < 3; ++i) {
+        if (i > 0) {
+            if (![scanner scanString:@"/" intoString:NULL])
+                return nil;
+        }
+        NSUInteger len = scanner.scanLocation;
+        unsigned int val;
+        if (![scanner scanHexInt:&val] || val == UINT_MAX)
+            return nil;
+        len = scanner.scanLocation - len;
+        // Only support the options supported by XParseColor
+        if (len > 4)
+            return nil;
+        unsigned int limit = (1u << (4*len)) - 1;
+        colors[i] = (CGFloat)val / (CGFloat)limit;
+    }
+    if (!scanner.atEnd)
+        return nil;
+    NSColor *color = [NSColor colorWithSRGBRed:colors[0] green:colors[1] blue:colors[2] alpha:1];
+    // Changing the color space prevents round tripping the colors.
+    // color = [color colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    return color;
+}
+
+// The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
 - (void)executeXtermSetRgb:(VT100Token *)token {
     NSArray *parts = [token.string componentsSeparatedByString:@";"];
     int theIndex = 0;
@@ -1972,43 +2011,76 @@ static const int kMaxScreenRows = 4096;
         if ((i % 2) == 0 ) {
             theIndex = [part intValue];
         } else {
-            if ([part hasPrefix:@"rgb:"]) {
-                // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
-                NSString *componentsString = [part substringFromIndex:4];
-                NSArray *components = [componentsString componentsSeparatedByString:@"/"];
-                if (components.count == 3) {
-                    CGFloat colors[3];
-                    BOOL ok = YES;
-                    for (int j = 0; j < 3; j++) {
-                        NSScanner *scanner = [NSScanner scannerWithString:components[j]];
-                        unsigned int intValue;
-                        if (![scanner scanHexInt:&intValue]) {
-                            ok = NO;
-                        } else {
-                            ok = (intValue <= 255);
-                        }
-                        if (ok) {
-                            int limit = (1 << (4 * [components[j] length])) - 1;
-                            colors[j] = (CGFloat)intValue / (CGFloat)limit;
-                        } else {
-                            break;
-                        }
-                    }
-                    if (ok) {
-                        NSColor *srgb = [NSColor colorWithSRGBRed:colors[0]
-                                                            green:colors[1]
-                                                             blue:colors[2]
-                                                            alpha:1];
-                        NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                        [delegate_ terminalSetColorTableEntryAtIndex:theIndex
-                                                               color:theColor];
-                    }
-                }
-            } else if ([part isEqualToString:@"?"]) {
-                NSColor *theColor = [delegate_ terminalColorForIndex:theIndex];
+            NSColor *theColor;
+            if ([part isEqualToString:@"?"]) {
+                theColor = [delegate_ terminalColorForIndex:theIndex];
                 [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:theIndex]];
+            } else if ((theColor = parseColor(part))) {
+                [delegate_ terminalSetColorTableEntryAtIndex:theIndex
+                                                       color:theColor];
             }
         }
+    }
+}
+
+// http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Operating-System-Commands
+enum {
+    TEXT_FG = 10,
+    TEXT_BG,
+    TEXT_CURSOR,
+    MOUSE_FG,
+    MOUSE_BG,
+    TEKTRONIX_FG,
+    TEKTRONIX_BG,
+    HIGHLIGHT_BG,
+    TEKTRONGIX_CURSOR,
+    HIGHLIGHT_FG,
+};
+
+static int XtermDynamicColorForToken(VT100Token *token) {
+    switch (token->type) {
+        case XTERMCC_SET_FG:
+            return TEXT_FG;
+        case XTERMCC_SET_BG:
+            return TEXT_BG;
+        // If other dynamic colors are supported, this should be changed.
+        default:
+            return -1;
+    }
+}
+
+- (void)executeXtermSetDynamicColor:(VT100Token *)token {
+    int dynamic_color = XtermDynamicColorForToken(token);
+    if (dynamic_color == -1)
+        return;
+
+    NSArray *colorSpecs = [token.string componentsSeparatedByString:@";"];
+    for (NSString *colorSpec in colorSpecs) {
+        NSColor *theColor = nil;
+        if ([colorSpec isEqualToString:@"?"]) {
+            switch (dynamic_color) {
+                case TEXT_FG:
+                    theColor = [delegate_ terminalForegroundColor];
+                    break;
+                case TEXT_BG:
+                    theColor = [delegate_ terminalBackgroundColor];
+                    break;
+            }
+            [delegate_ terminalSendReport:[self.output reportColor:theColor forDynamicColor:dynamic_color]];
+        } else if ((theColor = parseColor(colorSpec))) {
+            switch (dynamic_color) {
+                case TEXT_FG:
+                    [delegate_ terminalSetForegroundColor:theColor];
+                    break;
+                case TEXT_BG:
+                    [delegate_ terminalSetBackgroundColor:theColor];
+                    break;
+            }
+        }
+
+        // If other dynamic colors are supported, this should be changed.
+        if (++dynamic_color > TEXT_BG)
+            break;
     }
 }
 

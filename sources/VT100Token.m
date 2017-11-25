@@ -198,6 +198,8 @@ static iTermObjectPool *gPool;
                           @(XTERMCC_PASTE64):                 @"XTERMCC_PASTE64",
                           @(XTERMCC_FINAL_TERM):              @"XTERMCC_FINAL_TERM",
                           @(XTERMCC_LINK):                    @"XTERMCC_LINK",
+                          @(XTERMCC_SET_FG):                  @"XTERMCC_SET_FG",
+                          @(XTERMCC_SET_BG):                  @"XTERMCC_SET_BG",
                           @(ANSICSI_CHA):                     @"ANSICSI_CHA",
                           @(ANSICSI_VPA):                     @"ANSICSI_VPA",
                           @(ANSICSI_VPR):                     @"ANSICSI_VPR",

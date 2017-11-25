@@ -340,6 +340,8 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color;
 
+- (NSColor *)terminalForegroundColor;
+- (NSColor *)terminalBackgroundColor;
 - (NSColor *)terminalColorForIndex:(int)index;
 
 // Returns the current cursor position.

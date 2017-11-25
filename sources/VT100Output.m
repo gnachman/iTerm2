@@ -576,6 +576,16 @@ typedef enum {
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportColor:(NSColor *)color forDynamicColor:(int)index {
+    NSString *string = [NSString stringWithFormat:@"%c]%d;rgb:%02x/%02x/%02x%c",
+                            ESC, index,
+                            (int) ([color redComponent] * 255.0),
+                            (int) ([color greenComponent] * 255.0),
+                            (int) ([color blueComponent] * 255.0),
+                        7];
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 - (NSData *)reportChecksum:(int)checksum withIdentifier:(int)identifier {
     // DCS Pid ! ~ D..D ST
     NSString *string =
