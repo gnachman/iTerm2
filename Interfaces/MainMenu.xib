@@ -21,18 +21,23 @@
                                     <action selector="showAbout:" target="201" id="509"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="Check For Updates…" identifier="Check For Updates…" id="880">
                                 <connections>
                                     <action selector="checkForUpdates:" target="879" id="881"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="199">
+-->
+                            <menuItem isSeparatorItem="YES" id="198">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                             <menuItem title="Preferences..." keyEquivalent="," identifier="Preferences..." id="129">
                                 <connections>
                                     <action selector="showPrefWindow:" target="201" id="574"/>
                                 </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="199">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
 <!--
                             <menuItem title="Show Tip of the Day" identifier="Show Tip of the Day" id="ft3-BP-igZ">
@@ -57,11 +62,9 @@
                             <menuItem title="Services" id="131">
                                 <menu key="submenu" title="Services" systemMenu="services" id="130"/>
                             </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-<!--
                             <menuItem title="Hide Therm" keyEquivalent="h" identifier="Hide Therm" id="134">
                                 <connections>
                                     <action selector="hide:" target="-2" id="152"/>
@@ -78,17 +81,19 @@
                                     <action selector="unhideAllApplications:" target="-2" id="153"/>
                                 </connections>
                             </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="149">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+-->
                             <menuItem title="Secure Keyboard Entry" keyEquivalent="s" identifier="Secure Keyboard Entry" id="1174">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="toggleSecureInput:" target="201" id="1175"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem isSeparatorItem="YES" id="1176"/>
+-->
                             <menuItem title="Make Therm Default Term" keyEquivalent="\" identifier="Make Therm Default Term" id="1470">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" command="YES"/>
                                 <connections>

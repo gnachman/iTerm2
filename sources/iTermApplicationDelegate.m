@@ -98,8 +98,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-@import Sparkle;
-
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
@@ -1036,10 +1034,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                            selector:@selector(workspaceSessionDidResignActive:)
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
+#if 0
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(sparkleWillRestartApp:)
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
+#endif
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(processTypeDidChange:)
@@ -1412,9 +1412,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (BOOL)version:(NSString *)version newerThan:(NSString *)otherVersion {
+#if 0
     id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
     NSInteger result = [comparator compareVersion:version toVersion:otherVersion];
     return result == NSOrderedDescending;
+#endif
+    return NO;
 }
 
 - (void)notifyAboutIncompatibleVersionOf:(NSString *)name url:(NSString *)urlString upgradeAvailable:(BOOL)upgradeAvailable {
