@@ -8,6 +8,7 @@
 #import "iTermMetalGlue.h"
 
 #import "DebugLogging.h"
+#import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermSelection.h"
@@ -613,8 +614,6 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                           size:(CGSize)size
                                                          scale:(CGFloat)scale
                                                          emoji:(nonnull BOOL *)emoji {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-
     BOOL fakeBold = NO;
     BOOL fakeItalic = NO;
     const BOOL isAscii = !glyphKey->isComplex && (glyphKey->code < 128);
@@ -629,238 +628,28 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSFont *font = fontInfo.font;
     assert(font);
 
-    NSImage *image;
-    CGRect rect = [self drawGlyphKey:glyphKey
-                                font:font
-                                size:size
-                              offset:CGPointZero
-                      baselineOffset:fontInfo.baselineOffset
-                               scale:scale
-                      useThinStrokes:glyphKey->thinStrokes
-                          colorSpace:colorSpace
-                               image:&image
-                               emoji:emoji];
-    CGColorSpaceRelease(colorSpace);
-
-    if (image == nil) {
+    iTermCharacterSource *characterSource =
+        [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
+                                                   font:font
+                                                   size:size
+                                         baselineOffset:fontInfo.baselineOffset
+                                                  scale:scale
+                                         useThinStrokes:glyphKey->thinStrokes
+                                               fakeBold:fakeBold
+                                             fakeItalic:fakeItalic];
+    if (characterSource == nil) {
         return nil;
     }
 
     NSMutableDictionary<NSNumber *, NSImage *> *result = [NSMutableDictionary dictionary];
-    result[@4] = image;
-
-    // Check the eight cells surrounding and see if the glyph spills into them and output additional images if so.
-    // The key identifies which neighboring cell.
-    // 0 1 2
-    // 3 4 5
-    // 6 7 8
-    int i = 0;
-    for (int y = 0; y < 3; y++) {
-        for (int x = 0; x < 3; x++) {
-            if (i == 4) {
-                i++;
-                continue;
-            }
-            CGRect quadrant = CGRectMake((x - 1) * size.width, (y - 1) * size.height, size.width, size.height);
-            if (CGRectIntersectsRect(quadrant, rect)) {
-                image = nil;
-                [self drawGlyphKey:glyphKey
-                              font:font
-                              size:size
-                            offset:CGPointMake(-quadrant.origin.x, -quadrant.origin.y)
-                    baselineOffset:fontInfo.baselineOffset
-                             scale:scale
-                    useThinStrokes:glyphKey->thinStrokes
-                        colorSpace:colorSpace
-                             image:&image
-                             emoji:emoji];
-                if (image) {
-                    result[@(i)] = image;
-                }
-            }
-            i++;
-        }
+    [characterSource.parts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull partNumber, NSUInteger idx, BOOL * _Nonnull stop) {
+        int part = partNumber.intValue;
+        result[partNumber] = [characterSource imageAtPart:part];
+    }];
+    if (emoji) {
+        *emoji = characterSource.emoji;
     }
     return result;
-}
-
-- (CGRect)drawGlyphKey:(iTermMetalGlyphKey *)glyphKey
-                  font:(NSFont *)font
-                  size:(CGSize)size
-                offset:(CGPoint)offset
-        baselineOffset:(CGFloat)baselineOffset
-                 scale:(CGFloat)scale
-        useThinStrokes:(BOOL)useThinStrokes
-            colorSpace:(CGColorSpaceRef)colorSpace
-                 image:(NSImage **)imagePtr
-                 emoji:(BOOL *)emoji {
-    CGContextRef ctx = CGBitmapContextCreate(NULL,
-                                             size.width,
-                                             size.height,
-                                             8,
-                                             size.width * 4,
-                                             colorSpace,
-                                             kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
-
-    CGRect rect = [self drawStringUsingCoreText:CharToStr(glyphKey->code, glyphKey->isComplex)
-                                           font:font
-                                           size:size
-                                         offset:offset
-                                 baselineOffset:baselineOffset
-                                          scale:scale
-                                 useThinStrokes:glyphKey->thinStrokes
-                                        context:ctx
-                                          emoji:emoji];
-
-    CGImageRef imageRef = CGBitmapContextCreateImage(ctx);
-
-    *imagePtr = [[NSImage alloc] initWithCGImage:imageRef size:size];
-
-    return rect;
-}
-
-#pragma mark - Letter Drawing
-
-- (CGRect)drawStringUsingCoreText:(NSString *)string
-                             font:(NSFont *)font
-                             size:(CGSize)size
-                           offset:(CGPoint)offset
-                   baselineOffset:(CGFloat)baselineOffset
-                            scale:(CGFloat)scale
-                   useThinStrokes:(BOOL)useThinStrokes
-                          context:(CGContextRef)cgContext
-                            emoji:(BOOL *)emoji {
-    NSLog(@"Draw %@ of size %@", string, NSStringFromSize(size));
-    if (string.length == 0) {
-        if (emoji) {
-            *emoji = NO;
-        }
-        CGContextSetRGBFillColor(cgContext, 1, 1, 1, 1);
-        CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
-        return CGRectZero;
-    }
-
-    BOOL fillBackground = YES;
-    if (emoji) {
-        *emoji = [string startsWithEmoji];
-        if (*emoji) {
-            fillBackground = NO;
-            CGContextSetRGBFillColor(cgContext, 1, 1, 1, 0);
-            CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
-        }
-    }
-    if (fillBackground) {
-        // Fill the background with white. This is necessary for subpixel antialiasing. The fragment
-        // function also discards all fragments that are all-white when remapping colors. We don't
-        // do this for emoji so we can preserve the alpha values (so it will blend with background
-        // images).
-        CGContextSetRGBFillColor(cgContext, 1, 1, 1, 1);
-        CGContextFillRect(cgContext, CGRectMake(0, 0, size.width, size.height));
-    }
-
-    static NSMutableParagraphStyle *paragraphStyle;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-        paragraphStyle.lineBreakMode = NSLineBreakByClipping;
-        paragraphStyle.tabStops = @[];
-        paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
-    });
-
-    // TODO: Figure out how to support ligatures.
-    NSDictionary *attributes = @{ (NSString *)kCTLigatureAttributeName: @0,
-                                  (NSString *)kCTForegroundColorAttributeName: (id)[[NSColor blackColor] CGColor],
-                                  NSFontAttributeName: font,
-                                  NSParagraphStyleAttributeName: paragraphStyle };
-    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:attributes];
-    CTLineRef lineRef;
-    lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
-    CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
-
-    CGContextSetShouldAntialias(cgContext, YES);
-    CGContextSetFillColorWithColor(cgContext, [[NSColor blackColor] CGColor]);
-    CGContextSetStrokeColorWithColor(cgContext, [[NSColor blackColor] CGColor]);
-
-    CGFloat c = 0.0;
-#warning Suport fake bold and fake italic
-    const BOOL fakeItalic = NO;
-    if (fakeItalic) {
-        c = 0.2;
-    }
-
-    if (useThinStrokes) {
-        CGContextSetShouldSmoothFonts(cgContext, YES);
-        // This seems to be available at least on 10.8 and later. The only reference to it is in
-        // WebKit. This causes text to render just a little lighter, which looks nicer.
-        CGContextSetFontSmoothingStyle(cgContext, 16);
-    }
-
-    const CGFloat ty = offset.y - baselineOffset * scale;
-    if (!emoji || !*emoji) {
-        // Can't use this with emoji.
-        CGAffineTransform textMatrix = CGAffineTransformMake(scale, 0.0,
-                                                             c, scale,
-                                                             offset.x, ty);
-        CGContextSetTextMatrix(cgContext, textMatrix);
-    }
-
-    for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
-        CTRunRef run = CFArrayGetValueAtIndex(runs, j);
-        size_t length = CTRunGetGlyphCount(run);
-        const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
-        if (!buffer) {
-            NSMutableData *tempBuffer =
-                [[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length];
-            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
-            buffer = tempBuffer.mutableBytes;
-        }
-
-        NSMutableData *positionsBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
-        CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
-        CGPoint *positions = positionsBuffer.mutableBytes;
-
-        const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
-        if (!glyphIndexToCharacterIndex) {
-            NSMutableData *tempBuffer =
-                [[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length];
-            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
-            glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
-        }
-
-        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-
-        if (emoji && *emoji) {
-            // You have to use the CTM with emoji. CGContextSetTextMatrix doesn't work.
-            CGContextSaveGState(cgContext);
-            CGContextConcatCTM(cgContext, CTFontGetMatrix(runFont));
-            CGContextTranslateCTM(cgContext, offset.x, ty);
-            CGContextScaleCTM(cgContext, scale, scale);
-
-            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-
-            CGContextRestoreGState(cgContext);
-        } else {
-            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-        }
-    }
-
-    CGRect frame = CTLineGetImageBounds(lineRef, cgContext);
-    frame.origin.y += baselineOffset;
-    frame.origin.x *= scale;
-    frame.origin.y *= scale;
-    frame.size.width *= scale;
-    frame.size.height *= scale;
-    // This is set to cut off subpixels that spill into neighbors as an optimization.
-    CGPoint min = CGPointMake(ceil(CGRectGetMinX(frame)),
-                              ceil(CGRectGetMinY(frame)));
-    CGPoint max = CGPointMake(floor(CGRectGetMaxX(frame)),
-                              floor(CGRectGetMaxY(frame)));
-    frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
-
-    CFRelease(lineRef);
-
-    return frame;
 }
 
 #pragma mark - Color

@@ -19,6 +19,25 @@ extern "C" {
 #include <unordered_set>
 #include <vector>
 
+extern "C" {
+
+const int iTermTextureMapMaxCharacterParts = 5;
+const int iTermTextureMapMiddleCharacterPart = (iTermTextureMapMaxCharacterParts / 2) * iTermTextureMapMaxCharacterParts + (iTermTextureMapMaxCharacterParts / 2);
+
+int ImagePartDX(int part) {
+    return (part % iTermTextureMapMaxCharacterParts) - (iTermTextureMapMaxCharacterParts / 2);
+}
+
+int ImagePartDY(int part) {
+    return (part / iTermTextureMapMaxCharacterParts) - (iTermTextureMapMaxCharacterParts / 2);
+}
+
+int ImagePartFromDeltas(int dx, int dy) {
+    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    return (dx + radius) + (dy + radius) * iTermTextureMapMaxCharacterParts;
+}
+
+}
 
 @interface iTermTextureMapStage()
 - (instancetype)initWithTextureMap:(iTermTextureMap *)textureMap
@@ -134,7 +153,7 @@ extern "C" {
                                              relations:(std::map<int, int> *)relations
                                                  emoji:(BOOL *)emoji
                                               creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
-    const iTerm2::GlyphKey glyphKey(key, 4);
+    const iTerm2::GlyphKey glyphKey(key, iTermTextureMapMiddleCharacterPart);
     int index = _textureMap->get_index(glyphKey, textureMapStage, relations, emoji);
     if (index >= 0) {
         // Normal code path: there is already a glyph with this key. Return its index.
@@ -185,7 +204,8 @@ extern "C" {
             *relations = newRelations;
             return result;
         } else {
-            // The creation method failed to draw the glyph.
+            // The creation method failed to draw the glyph. Happens with undrawable characters like
+            // space.
             return iTermTextureMapStatusGlyphNotRenderable;
         }
     }
