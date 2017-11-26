@@ -35,7 +35,7 @@
 }
 
 - (void)loadView {
-  self.view = [[[iTermFlippedView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)] autorelease];
+  self.view = [[[iTermFlippedView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)] autorelease];
   self.view.autoresizesSubviews = YES;
 
   NSButton *button = [[[NSButton alloc] init] autorelease];
@@ -112,7 +112,7 @@
 
     ITERM_IGNORE_PARTIAL_BEGIN
     if (IsElCapitanOrLater()) {
-        configuration.applicationNameForUserAgent = @"iTerm2";
+        configuration.applicationNameForUserAgent = @"Therm";
     }
     ITERM_IGNORE_PARTIAL_END
     

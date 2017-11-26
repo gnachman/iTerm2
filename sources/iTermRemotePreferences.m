@@ -165,7 +165,7 @@
 {
     if ([self remotePrefsHaveChanged]) {
         NSString *theTitle =
-            [NSString stringWithFormat:@"Preferences at %@ changed since iTerm2 started. "
+            [NSString stringWithFormat:@"Preferences at %@ changed since Therm started. "
                                        @"Overwrite it?",
                                        [self customFolderOrURL]];
         if ([iTermWarning showWarningWithTitle:theTitle actions:@[ @"Overwrite",
@@ -181,7 +181,7 @@
     NSString *folder = [self expandedCustomFolderOrURL];
     if ([folder stringIsUrlLike]) {
         NSString *informativeText =
-            @"To make it available, first quit iTerm2 and then manually "
+            @"To make it available, first quit Therm and then manually "
             @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
             @"your hosting provider.";
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
@@ -299,7 +299,7 @@
         if (self.remoteLocationIsURL) {
             // If the setting is always copy, then ask. Copying isn't an option.
             NSString *theTitle = [NSString stringWithFormat:
-                                  @"Changes made to preferences will be lost when iTerm2 is restarted "
+                                  @"Changes made to preferences will be lost when Therm is restarted "
                                   @"because they are loaded from a URL at startup."];
             [iTermWarning showWarningWithTitle:theTitle
                                        actions:@[ @"OK" ]

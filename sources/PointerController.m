@@ -82,8 +82,10 @@
         [delegate_ selectPreviousPaneWithEvent:event];
     } else if ([action isEqualToString:kExtendSelectionPointerAction]) {
         [delegate_ extendSelectionWithEvent:event];
+#if 0
     } else if ([action isEqualToString:kQuickLookAction]) {
         [delegate_ quickLookWithEvent:event];
+#endif
     }
 }
 
@@ -201,7 +203,8 @@
                 [self performAction:action forEvent:event withArgument:argument];
                 return YES;
             } else {
-                [self performAction:kQuickLookAction forEvent:event withArgument:nil];
+		// no previews (webkit)
+                // [self performAction:kQuickLookAction forEvent:event withArgument:nil];
             }
         }
     }
