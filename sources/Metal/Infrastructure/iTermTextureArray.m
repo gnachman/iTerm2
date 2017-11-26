@@ -8,6 +8,7 @@
     uint32_t _height;
     NSUInteger _count;
     NSInteger _cellsPerRow;
+    NSUInteger _arrayLength;
 }
 
 - (instancetype)initWithTextureWidth:(uint32_t)width
@@ -18,6 +19,7 @@
     if (self) {
         _width = width;
         _height = height;
+        _arrayLength = length;
         CGFloat pixelsNeeded = (double)width * (double)height * (double)length;
         CGFloat minimumEdgeLength = ceil(sqrt(pixelsNeeded));
         _cellsPerRow = MAX(1, ceil(minimumEdgeLength / width));
@@ -80,11 +82,12 @@
 }
 
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage {
+    assert(slice < _arrayLength);
     NSBitmapImageRep *bitmapRepresentation = [[NSBitmapImageRep alloc] initWithData:[nsimage TIFFRepresentation]];
     if (!bitmapRepresentation) {
         return NO;
     }
-
+#warning Is this right? Really should be SRGB shouldn't it?
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     if (!colorSpace) {
         return NO;

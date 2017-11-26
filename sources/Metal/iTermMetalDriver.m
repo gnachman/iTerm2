@@ -276,11 +276,15 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         }
     }];
 
+    __block NSUInteger numberOfRows = 0;
+    __block NSRange range = NSMakeRange(0, frameData.rows.count);
     [frameData waitForUpdatesToFinishOnGroup:group
                                      onQueue:_queue
                                     finalize:^{
                                         // All transient states are initialized
-                                        [self finalizeRenderersWithFrameData:frameData];
+                                        numberOfRows = [self finalizeRenderersWithFrameData:frameData range:range];
+                                        range.location += numberOfRows;
+                                        range.length -= numberOfRows;
                                     }
                                       render:^{
                                           [self reallyDrawInView:view frameData:frameData commandBuffer:commandBuffer];
@@ -288,7 +292,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 // Called when all renderers have transient state
-- (void)finalizeRenderersWithFrameData:(iTermMetalFrameData *)frameData {
+- (NSUInteger)finalizeRenderersWithFrameData:(iTermMetalFrameData *)frameData
+                                       range:(NSRange)range {
     // TODO: call setMarkStyle:row: for each mark
 
     // Copy state
@@ -320,6 +325,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState =
         frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
+    __block NSUInteger numberOfRows = 0;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         [textState setGlyphKeysData:rowData.keysData
@@ -336,10 +342,12 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         [backgroundState setColorData:rowData.backgroundColorData
                                   row:rowData.y
                                 width:frameData.gridSize.width];
+        numberOfRows++;
     }];
 
     // Tell the text state that it's done getting row data.
     [textState willDrawWithDefaultBackgroundColor:frameData.perFrameState.defaultBackgroundColor];
+    return numberOfRows;
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer

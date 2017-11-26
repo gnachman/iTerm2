@@ -94,9 +94,8 @@ static NSInteger gNextFrameDataNumber;
         render();
         self.status = @"waiting for render to complete";
         iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.metalSetupStats);
-        
-        iTermPreciseTimerStatsStartTimer(&_stats.renderingStats);
 
+        iTermPreciseTimerStatsStartTimer(&_stats.renderingStats);
     });
 }
 

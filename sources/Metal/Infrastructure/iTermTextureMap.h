@@ -32,18 +32,30 @@
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
                       cellSize:(CGSize)cellSize
-                      capacity:(NSInteger)capacity NS_DESIGNATED_INITIALIZER;
+                      capacity:(NSInteger)capacity
+                numberOfStages:(NSInteger)numberOfStages NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 - (void)requestStage:(void (^)(iTermTextureMapStage *stage))completion;
 - (void)returnStage:(iTermTextureMapStage *)stage;
 
 @end
 
+@interface iTermFallbackTextureMap : iTermTextureMap
+@property (nonatomic, readonly) iTermTextureMapStage *onlyStage;
+@end
+
 @interface iTermTextureMapStage : NSObject
+@property (nonatomic, weak) iTermTextureMap *textureMap;
 @property (nonatomic, readonly) iTermTextureArray *stageArray;
+@property (nonatomic, readonly) NSMutableData *piuData;
+@property (nonatomic) NSInteger numberOfInstances;
 
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)blitNewTexturesFromStagingAreaWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer;
+- (void)incrementInstances;
 
+@end
+
+@interface iTermFallbackTextureMapStage : iTermTextureMapStage
 @end

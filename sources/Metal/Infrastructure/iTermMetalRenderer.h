@@ -31,7 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermMetalRendererTransientState : NSObject
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
-@property (nonatomic, readonly, strong) id<MTLRenderPipelineState> pipelineState;
+
+// You don't generally need to assign to this unless you plan to make more than one draw call.
+@property (nonatomic, strong) id<MTLRenderPipelineState> pipelineState;
 @property (nonatomic, readonly) BOOL skipRenderer;
 
 - (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration;
@@ -54,6 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
                     transientStateClass:(Class)transientStateClass;
 
 - (instancetype)init NS_UNAVAILABLE;
+
+- (id<MTLRenderPipelineState>)newPipelineState;
 
 #pragma mark - For subclasses
 
