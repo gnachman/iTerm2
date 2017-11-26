@@ -6251,7 +6251,7 @@ return NO;
 
 - (void)setDimmingForSession:(PTYSession *)aSession
 {
-    BOOL canDim = NO; // [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
+    BOOL canDim = [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
     if (!canDim) {
         [[aSession view] setDimmed:NO];
     } else if (aSession == [[self tabForSession:aSession] activeSession]) {
