@@ -21,6 +21,21 @@
 @class iTermTextureArray;
 @class iTermTextureMapStage;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int ImagePartDX(int part);
+extern int ImagePartDY(int part);
+extern int ImagePartFromDeltas(int dx, int dy);
+
+extern const int iTermTextureMapMaxCharacterParts;
+extern const int iTermTextureMapMiddleCharacterPart;
+
+#ifdef __cplusplus
+}
+#endif
+
 @interface iTermTextureMap : NSObject
 
 // Given in number of cells

@@ -222,20 +222,20 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
             }
             retained = YES;
         }
-        static int dxs[] = { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
-        static int dys[] = { -1, -1, -1, 0, 0, 0, 1, 1, 1 };
         if (relations.size() > 1) {
             for (auto &kvp : relations) {
                 const int part = kvp.first;
                 const int index = kvp.second;
                 iTermTextPIU *piu = [self piuDataBytesInStage:stage] + stage.numberOfInstances;
-                piu->offset = simd_make_float2((x + dxs[part]) * cellWidth,
-                                                dys[part] * cellHeight + yOffset);
+                const int dx = ImagePartDX(part);
+                const int dy = ImagePartDY(part);
+                piu->offset = simd_make_float2((x + dx) * cellWidth,
+                                                -dy * cellHeight + yOffset);
                 MTLOrigin origin = [array offsetForIndex:index];
                 piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
                 piu->textColor = attributes[x].foregroundColor;
                 piu->remapColors = !emoji;
-                if (part == 4) {
+                if (part == iTermTextureMapMiddleCharacterPart) {
                     piu->backgroundColor = attributes[x].backgroundColor;
                     if (_colorModels) {
                         piu->colorModelIndex = [self colorModelIndexForPIU:piu];
@@ -243,8 +243,8 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
                 } else {
                     iTermTextFixup fixup = {
                         .piu = piu,
-                        .x = x + dxs[part],
-                        .y = row - dys[part]
+                        .x = x + dx,
+                        .y = row + dy
                     };
                     _fixups->push_back(fixup);
                 }

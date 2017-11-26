@@ -7,6 +7,7 @@
 
 #include <simd/simd.h>
 
+#warning TODO: Add fakeBold and fakeItalic
 typedef struct {
     unichar code;
     BOOL isComplex;

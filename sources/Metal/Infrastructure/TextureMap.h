@@ -141,6 +141,7 @@ public:
         assert(index >= 0);
         assert(index <= _capacity);
         assert(_lru.peek(key) == nullptr);
+        assert(_inuse.find(key) == _inuse.end());
 
         // Remove relationships related to index.
         remove_relations(index);
