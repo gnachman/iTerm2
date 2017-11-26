@@ -730,7 +730,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                    useThinStrokes:(BOOL)useThinStrokes
                           context:(CGContextRef)cgContext
                             emoji:(BOOL *)emoji {
-    DLog(@"Draw %@ of size %@", string, NSStringFromSize(size));
+    NSLog(@"Draw %@ of size %@", string, NSStringFromSize(size));
     if (string.length == 0) {
         if (emoji) {
             *emoji = NO;

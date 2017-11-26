@@ -17,7 +17,6 @@
 @end
 
 @interface iTermMetalRendererTransientState()
-@property (nonatomic, readwrite, strong) id<MTLRenderPipelineState> pipelineState;
 @property (nonatomic, readwrite) CGFloat scale;
 @end
 

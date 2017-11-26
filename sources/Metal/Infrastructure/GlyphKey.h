@@ -20,10 +20,9 @@ namespace iTerm2 {
         // Glyphs larger than once cell are broken into multiple parts.
         int _part;
 
-        GlyphKey();
-
     public:
         GlyphKey(const iTermMetalGlyphKey *repr, int part) : _repr(*repr), _part(part) { }
+        GlyphKey() : _part(-1) { }
 
         // Copy constructor
         GlyphKey(const GlyphKey &other) {

@@ -19,15 +19,18 @@ private:
     // Maps stage indexes that need blitting to their destination indices.
     std::unordered_map<int, int> _indexesToBlit;
 
-    // Glyph keys accessed this frame. Stored so we don't waste time promoting more than once
-    // in the LRU cache.
-    std::unordered_set<iTerm2::GlyphKey> _usedThisFrame;
-
     // Held locks
     std::vector<int> _lockedIndexes;
 
     int _nextStageIndex;
 public:
+    // Prepare for the next frame
+    void reset() {
+        _indexesToBlit.clear();
+        _lockedIndexes.clear();
+        _nextStageIndex = 0;
+    }
+
     int will_blit(const int index) {
         const int stageIndex = _nextStageIndex++;
         _indexesToBlit[stageIndex] = index;
@@ -53,22 +56,5 @@ public:
         _lockedIndexes.clear();
     }
 
-    // Looks up the key in the LRU, promoting it only if it hasn't been used before this frame.
-    const TextureEntry *lookup(const GlyphKey &key, cache::lru_cache<GlyphKey, TextureEntry> *lru) {
-        const TextureEntry *valuePtr;
-        if (_usedThisFrame.find(key) != _usedThisFrame.end()) {
-            // key was already used this frame. Don't promote it in the LRU.
-            valuePtr = lru->peek(key);
-        } else {
-            // first use of key this frame. Promote it and record its use.
-            const TextureEntry *value = lru->get(key);
-            _usedThisFrame.insert(key);
-            valuePtr = value;
-        }
-        if (valuePtr) {
-            _lockedIndexes.push_back(valuePtr->index);
-        }
-        return valuePtr;
-    }
 };
 }

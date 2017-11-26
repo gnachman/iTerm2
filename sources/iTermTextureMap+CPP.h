@@ -10,12 +10,15 @@
 
 #import "iTermTextureMap.h"
 
-@interface iTermTextureMap (CPP)
-- (void)unlockIndexes:(const std::vector<int> &)indexes;
-@end
+enum {
+    iTermTextureMapStatusGlyphNotRenderable = -1,
+    iTermTextureMapStatusOutOfMemory = -2
+};
 
 @interface iTermTextureMapStage (CPP)
+@property (nonatomic, readonly) std::vector<int> *locks;
 
+// Returns a nonnegative value or one of the statuses declared above.
 - (NSInteger)findOrAllocateIndexOfLockedTextureWithKey:(const iTermMetalGlyphKey *)key
                                                 column:(int)column
                                              relations:(std::map<int, int> *)relations

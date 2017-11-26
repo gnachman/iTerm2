@@ -59,7 +59,7 @@ public:
         }
     }
 
-    inline const value_t *peek(const key_t& key) {
+    inline const value_t *peek(const key_t& key) const {
         auto it = _cache_items_map.find(key);
         if (it == _cache_items_map.end()) {
             return nullptr;
