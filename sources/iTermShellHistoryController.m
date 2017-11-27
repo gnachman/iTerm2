@@ -33,6 +33,7 @@ static const int kMaxResults = 200;
 static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
+#if 0
 @interface VT100RemoteHost (CommandHistory)
 
 - (NSString *)key;
@@ -46,6 +47,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 @end
+#endif
 
 @implementation iTermShellHistoryController {
     NSMutableDictionary<NSString *, iTermHostRecordMO *> *_records;
@@ -581,7 +583,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     commandUse.command = theEntry.command;
     [theEntry addUsesObject:commandUse];
     
-    NSString *key = host.key ?: @"";
+    NSString *key = @""; // host.key ?: @"";
     if (_expandedCache[key]) {
         [_expandedCache[key] addObject:commandUse];
     }
@@ -643,7 +645,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
-    return [[[self recordForHost:host] entries] count] > 0;
+    return NO;
 }
 
 - (iTermCommandHistoryCommandUseMO *)commandUseWithMarkGuid:(NSString *)markGuid
@@ -664,11 +666,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUsesForHost:(VT100RemoteHost *)host {
-    NSString *key = host.key ?: @"";
-    if (!_expandedCache[key]) {
-        [self loadExpandedCacheForHost:host];
-    }
-    return _expandedCache[key];
+    return nil;
 }
 
 #pragma mark - Recent Directories
@@ -737,13 +735,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 #pragma mark - Testing
 
 - (void)eraseCommandHistoryForHost:(VT100RemoteHost *)host {
-    NSString *key = host.key ?: @"";
-    iTermHostRecordMO *hostRecord = [self recordForHost:host];
-    if (hostRecord) {
-        [hostRecord removeEntries:hostRecord.entries];
-        [_expandedCache removeObjectForKey:key];
-        [self saveCommandHistory];
-    }
+ 
 }
 
 - (void)eraseDirectoriesForHost:(VT100RemoteHost *)host {
@@ -820,11 +812,11 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (iTermHostRecordMO *)recordForHost:(VT100RemoteHost *)host {
-    return _records[host.key ?: @""];
+    return nil; // _records[host.key ?: @""];
 }
 
 - (void)setRecord:(iTermHostRecordMO *)record forHost:(VT100RemoteHost *)host {
-    _records[host.key ?: @""] = record;
+    // _records[host.key ?: @""] = record;
 }
 
 #pragma mark Private Command History
@@ -849,6 +841,8 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (void)loadExpandedCacheForHost:(VT100RemoteHost *)host {
+    return;
+#if 0
     NSString *key = host.key ?: @"";
 
     NSArray<iTermCommandHistoryEntryMO *> *temp =
@@ -857,6 +851,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         [self commandUsesByExpandingEntries:temp];
 
     _expandedCache[key] = expanded;
+#endif
 
 }
 

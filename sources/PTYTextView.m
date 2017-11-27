@@ -1,7 +1,7 @@
 #import "PTYTextView.h"
 
 #import "charmaps.h"
-#import "FileTransferManager.h"
+// #import "FileTransferManager.h"
 #import "FontSizeEstimator.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
@@ -59,7 +59,7 @@
 #import "PTYTab.h"
 #import "PTYTask.h"
 #import "RegexKitLite.h"
-#import "SCPPath.h"
+// #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SmartMatch.h"
 #import "SmartSelectionController.h"
@@ -2570,6 +2570,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             case kURLActionOpenURL: {
                 NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
+#if 0
                 if ([url.scheme isEqualToString:@"file"] && url.host.length > 0 && ![url.host isEqualToString:[VT100RemoteHost localHostName]]) {
                     SCPPath *path = [[[SCPPath alloc] init] autorelease];
                     path.path = url.path;
@@ -2582,8 +2583,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                            displayName:url.path.lastPathComponent
                                         locationInView:action.range.coordRange];
                 } else {
+#endif
                     [self openURL:url inBackground:openInBackground];
-                }
+     //           }
                 break;
             }
 
@@ -3348,6 +3350,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)downloadWithSCP:(id)sender
 {
+#if 0
     if (![_selection hasSelection]) {
         return;
     }
@@ -3361,11 +3364,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     VT100GridCoordRange range = _selection.lastRange.coordRange;
 
     [self downloadFileAtSecureCopyPath:scpPath displayName:selectedText locationInView:range];
+#endif
 }
 
 - (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
                          displayName:(NSString *)name
                       locationInView:(VT100GridCoordRange)range {
+return;
+#if 0
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
@@ -3389,6 +3395,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[FileTransferManager sharedInstance] animateImage:image
                             intoDownloadsMenuFromPoint:point
                                               onScreen:[[self window] screen]];
+#endif
 }
 
 - (void)showNotes:(id)sender
@@ -3674,10 +3681,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [_delegate textViewCanSelectCurrentCommand];
     }
     if ([item action] == @selector(downloadWithSCP:)) {
+#if 0
         return ([self _haveShortSelection] &&
                 [_selection hasSelection] &&
                 [_dataSource scpPathForFile:[self selectedText]
                                      onLine:_selection.lastRange.coordRange.start.y] != nil);
+#endif
     }
     if ([item action]==@selector(showNotes:)) {
         return _validationClickPoint.x >= 0 &&
@@ -3767,7 +3776,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         [ContextMenuActionPrefsController titleForActionDict:action
                                                        withCaptureComponents:components
                                                             workingDirectory:[_dataSource workingDirectoryOnLine:line]
-                                                                  remoteHost:[_dataSource remoteHostOnLine:line]];
+                                                                  remoteHost:nil]; // [_dataSource remoteHostOnLine:line]];
 
                     NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:theTitle
                                                                       action:mySelector
@@ -3776,7 +3785,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         [ContextMenuActionPrefsController parameterForActionDict:action
                                                            withCaptureComponents:components
                                                                 workingDirectory:[_dataSource workingDirectoryOnLine:line]
-                                                                      remoteHost:[_dataSource remoteHostOnLine:line]];
+                                                                      remoteHost:nil]; // [_dataSource remoteHostOnLine:line]];
                     [theItem setRepresentedObject:parameter];
                     [theItem setTarget:self];
                     [theMenu addItem:theItem];
@@ -4635,6 +4644,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // Menu items for acting on text selections
+#if 0
     NSString *scpTitle = @"Download with scp";
     if ([self _haveShortSelection]) {
         SCPPath *scpPath = [_dataSource scpPathForFile:[self selectedText]
@@ -4647,6 +4657,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItemWithTitle:scpTitle
                        action:@selector(downloadWithSCP:)
                 keyEquivalent:@""];
+#endif
     [theMenu addItemWithTitle:@"Open Selection as URL"
                      action:@selector(browse:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
@@ -4863,6 +4874,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+#if 0
 - (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
     NSString *text;
     if (files.count == 0) {
@@ -4884,9 +4896,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [alert layout];
     NSInteger button = [alert runModal];
     return (button == NSAlertFirstButtonReturn);
+    return NO;
 }
+#endif
 
 - (void)maybeUpload:(NSArray *)tuple {
+#if 0
     NSArray *propertyList = tuple[0];
     SCPPath *dropScpPath = tuple[1];
     DLog(@"Confirm upload to %@", dropScpPath);
@@ -4894,9 +4909,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"initiating upload");
         [self.delegate uploadFiles:propertyList toPath:dropScpPath];
     }
+#endif
 }
 
 - (BOOL)uploadFilenamesOnPasteboard:(NSPasteboard *)pasteboard location:(NSPoint)windowDropPoint {
+    return NO;
+#if 0
     // Upload a file.
     NSArray *types = [pasteboard types];
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
@@ -4917,6 +4935,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
     return NO;
+#endif
 }
 
 - (BOOL)pasteValuesOnPasteboard:(NSPasteboard *)pasteboard cdToDirectory:(BOOL)cdToDirectory {
@@ -4974,6 +4993,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Perform drag operation");
     if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric)) {
         DLog(@"Drag operation is acceptable");
+            return [self pasteValuesOnPasteboard:draggingPasteboard
+                                   cdToDirectory:(dragOperation == NSDragOperationGeneric)];
+#if 0
         if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
             DLog(@"Holding option so doing an upload");
             NSPoint windowDropPoint = [sender draggingLocation];
@@ -4983,6 +5005,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return [self pasteValuesOnPasteboard:draggingPasteboard
                                    cdToDirectory:(dragOperation == NSDragOperationGeneric)];
         }
+#endif
     }
     DLog(@"Drag/drop Failing");
     return NO;
@@ -6137,14 +6160,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [iTermURLActionFactory urlActionAtCoord:VT100GridCoordMake(x, y)
                                respectHardNewlines:respectHardNewlines
                                   workingDirectory:workingDirectory ?: @""
-                                        remoteHost:[_dataSource remoteHostOnLine:y]
+                                        remoteHost:nil // [_dataSource remoteHostOnLine:y]
                                          selectors:[self smartSelectionActionSelectorDictionary]
                                              rules:_smartSelectionRules
                                          extractor:extractor
                          semanticHistoryController:self.semanticHistoryController
-                                       pathFactory:^SCPPath *(NSString *path, int line) {
+                                       pathFactory:nil]; /*^SCPPath *(NSString *path, int line) {
                                            return [_dataSource scpPathForFile:path onLine:line];
-                                       }];
+                                       }]; */
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {
@@ -6193,10 +6216,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint windowDropPoint = [sender draggingLocation];
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
     int dropLine = dropPoint.y / _lineHeight;
+#if 0
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
 
     // It's ok to upload if a file is being dragged in and the drop location has a remote host path.
     BOOL uploadOK = ([types containsObject:NSFilenamesPboardType] && dropScpPath);
+#else
+    BOOL uploadOK = NO;
+#endif
 
     // It's ok to paste if the the drag obejct is either a file or a string.
     BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSFilenamesPboardType, NSStringPboardType ]];

@@ -363,6 +363,8 @@
                                    rules:(NSArray *)rules
                            textExtractor:(iTermTextExtractor *)textExtractor
                              pathFactory:(SCPPath *(^)(NSString *, int))pathFactory {
+    return nil;
+#if 0
     VT100GridWindowedRange smartRange;
     SmartMatch *smartMatch = [textExtractor smartSelectionAt:coord
                                                    withRules:rules
@@ -379,6 +381,7 @@
     }
 
     return nil;
+#endif
 }
 
 #pragma mark - Helpers

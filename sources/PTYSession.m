@@ -3,7 +3,7 @@
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
-#import "FileTransferManager.h"
+// #import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -80,7 +80,7 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
-#import "VT100RemoteHost.h"
+// #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
@@ -250,7 +250,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
-@property(nonatomic, retain) VT100RemoteHost *currentHost;
+// @property(nonatomic, retain) VT100RemoteHost *currentHost;
 @end
 
 @implementation PTYSession {
@@ -439,7 +439,7 @@ static const NSUInteger kMaxHosts = 100;
     // during live resize (unlike the default runloops).
     BOOL _inLiveResize;
 
-    VT100RemoteHost *_currentHost;
+    // VT100RemoteHost *_currentHost;
 
     NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
@@ -558,10 +558,12 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(synchronizeTmuxFonts:)
                                                      name:kTmuxFontChanged
                                                    object:nil];
+#if 0
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(terminalFileShouldStop:)
                                                      name:kTerminalFileShouldStopNotification
                                                    object:nil];
+#endif
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(profileSessionNameDidEndEditing:)
                                                      name:kProfileSessionNameDidEndEditing
@@ -818,6 +820,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     _variables[kVariableKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
     _variables[kVariableKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+#if 0
     VT100RemoteHost *remoteHost = [self currentHost];
     if (remoteHost.hostname) {
         _variables[kVariableKeySessionHostname] = remoteHost.hostname;
@@ -829,6 +832,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [_variables removeObjectForKey:kVariableKeySessionUsername];
     }
+#endif
     NSString *path = [_screen workingDirectoryOnLine:_screen.numberOfScrollbackLines + _screen.cursorY - 1];
     if (path) {
         _variables[kVariableKeySessionPath] = path;
@@ -1059,10 +1063,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // This must be done before setContentsFromLineBufferDictionary:includeRestorationBanner:reattached:
     // because it will show an announcement if mouse reporting is on.
+#if 0
     VT100RemoteHost *lastRemoteHost = aSession.screen.lastRemoteHost;
     if (lastRemoteHost) {
         [aSession screenCurrentHostDidChange:lastRemoteHost];
     }
+#endif
 
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
@@ -1235,6 +1241,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
         [aSession trimDirectoriesIfNeeded];
     }
+#if 0
     if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
         for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
             VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
@@ -1244,6 +1251,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
+#endif
 
     if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
@@ -4077,9 +4085,11 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
+#if 0
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
+#endif
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
@@ -4290,6 +4300,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Window frame: %@", window);
 }
 
+#if 0
 - (void)terminalFileShouldStop:(NSNotification *)notification {
     if ([notification object] == _download) {
         [_screen.terminal stopReceivingFile];
@@ -4304,6 +4315,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self writeLatin1EncodedData:data broadcastAllowed:NO];
     }
 }
+#endif
 
 - (void)profileSessionNameDidEndEditing:(NSNotification *)notification {
     NSString *theGuid = [notification object];
@@ -4858,12 +4870,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)preferredTmuxClientName {
+    return _name;
+#if 0
     VT100RemoteHost *remoteHost = [self currentHost];
     if (remoteHost) {
         return [NSString stringWithFormat:@"%@@%@", remoteHost.username, remoteHost.hostname];
     } else {
         return _name;
     }
+#endif
 }
 
 - (void)startTmuxMode:(NSString *)dcsID {
@@ -5111,6 +5126,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+#if 0
 - (void)setCurrentHost:(VT100RemoteHost *)remoteHost {
     [_currentHost autorelease];
     _currentHost = [remoteHost retain];
@@ -5126,6 +5142,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     return _currentHost;
 }
+#endif
 
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
@@ -6381,11 +6398,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSURL *)textViewCurrentLocation {
-    VT100RemoteHost *host = [self currentHost];
+    // VT100RemoteHost *host = nil; //[self currentHost];
     NSString *path = _lastDirectory ?: [_shell getWorkingDirectory];
     NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
-    components.host = host.hostname;
-    components.user = host.username;
+    ///components.host = host.hostname;
+    /// components.user = host.username;
     components.path = path;
     components.scheme = @"file";
     return [components URL];
@@ -6920,6 +6937,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self launchCoprocessWithCommand:command mute:NO];
 }
 
+#if 0
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
     SCPFile *previous = nil;
@@ -6939,13 +6957,16 @@ ITERM_WEAKLY_REFERENCEABLE
         [scpFile upload];
     }
 }
+#endif
 
+#if 0
 - (void)startDownloadOverSCP:(SCPPath *)path
 {
     SCPFile *file = [[[SCPFile alloc] init] autorelease];
     file.path = path;
     [file download];
 }
+#endif
 
 - (NSString*)_getLocale
 {
@@ -7648,10 +7669,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size {
+#if 0
     [self.download stop];
     [self.download endOfData];
     self.download = [[[TerminalFile alloc] initWithName:filename size:size] autorelease];
     [self.download download];
+#endif
 }
 
 - (void)screenDidFinishReceivingFile {
@@ -7674,6 +7697,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenRequestUpload:(NSString *)args {
+return;
+#if 0
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = YES;
@@ -7748,6 +7773,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
         }
     }];
+#endif
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
@@ -7937,6 +7963,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_delegate parentWindow] updateTabColors];
 }
 
+#if 0
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
     if (host.hostname) {
         _variables[kVariableKeySessionHostname] = host.hostname;
@@ -8000,6 +8027,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
 }
+#endif
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
     return [[iTermShellHistoryController sharedInstance] commandUsesForHost:self.currentHost];
@@ -8115,6 +8143,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+    return;
+#if 0
     if (newPath) {
         _variables[kVariableKeySessionPath] = newPath;
     } else {
@@ -8135,6 +8165,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
+#endif
 }
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
@@ -8507,7 +8538,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
                                                            onHost:[_screen remoteHostOnLine:line]
                                                          isChange:!isSame];
-    [self setLastDirectory:directory isRemote:!remoteHost.isLocalhost];
+    [self setLastDirectory:directory isRemote:NO]; // !remoteHost.isLocalhost];
     self.lastRemoteHost = remoteHost;
 }
 
@@ -8522,7 +8553,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
     return [NSString stringWithFormat:@"SuppressShellIntegrationUpgradeAnnouncementForHost_%@@%@",
-            host.username, host.hostname];
+            "nobody", "nowhere"]; // host.username, host.hostname];
 }
 
 - (void)tryToRunShellIntegrationInstallerWithPromptCheck:(BOOL)promptCheck {

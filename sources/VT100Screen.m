@@ -30,7 +30,7 @@
 #import "TmuxStateParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
-#import "VT100WorkingDirectory.h"
+// #import "VT100WorkingDirectory.h"
 #import "VT100DCSParser.h"
 #import "VT100Token.h"
 
@@ -284,8 +284,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     // although they nominally refer to an entire line, sometimes
     // that line is blank such as just before the prompt is
     // printed. See issue 4261.
-    return ([note isKindOfClass:[VT100RemoteHost class]] ||
-            [note isKindOfClass:[VT100WorkingDirectory class]] ||
+    return (// [note isKindOfClass:[VT100RemoteHost class]] ||
+            // [note isKindOfClass:[VT100WorkingDirectory class]] ||
             [note isKindOfClass:[iTermImageMark class]]);
 }
 
@@ -1843,6 +1843,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line {
+return;
+#if 0
     DLog(@"setWorkingDirectory:%@ onLine:%d", workingDirectory, line);
     VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
     if (!workingDirectory) {
@@ -1883,8 +1885,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         }
     }
     [delegate_ screenLogWorkingDirectoryAtLine:line withDirectory:workingDirectory];
+#endif
 }
 
+#if 0
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
     VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHostObj.hostname = host;
@@ -1894,6 +1898,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                 withInterval:[self intervalForGridCoordRange:range]];
     return remoteHostObj;
 }
+#endif
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
@@ -1917,45 +1922,19 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 }
 
+#if 0
 - (VT100RemoteHost *)remoteHostOnLine:(int)line {
     return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
 }
-
-- (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
-    DLog(@"Figuring out path for %@ on line %d", filename, line);
-    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
-    if (!remoteHost.username || !remoteHost.hostname) {
-        DLog(@"nil username or hostname; return nil");
-        return nil;
-    }
-    if (remoteHost.isLocalhost) {
-        DLog(@"Is localhost; return nil");
-        return nil;
-    }
-    NSString *workingDirectory = [self workingDirectoryOnLine:line];
-    if (!workingDirectory) {
-        DLog(@"No working directory; return nil");
-        return nil;
-    }
-    NSString *path;
-    if ([filename hasPrefix:@"/"]) {
-        DLog(@"Filename is absolute path, so that's easy");
-        path = filename;
-    } else {
-        DLog(@"Use working directory of %@", workingDirectory);
-        path = [workingDirectory stringByAppendingPathComponent:filename];
-    }
-    SCPPath *scpPath = [[[SCPPath alloc] init] autorelease];
-    scpPath.path = path;
-    scpPath.hostname = remoteHost.hostname;
-    scpPath.username = remoteHost.username;
-    return scpPath;
-}
+#endif
 
 - (NSString *)workingDirectoryOnLine:(int)line {
+#if 0
     VT100WorkingDirectory *workingDirectory =
         [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
     return workingDirectory.workingDirectory;
+#endif
+    return nil;
 }
 
 - (void)addNote:(PTYNoteViewController *)note
@@ -2073,7 +2052,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (VT100RemoteHost *)lastRemoteHost {
-    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+    return nil; // [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
 }
 
 - (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
@@ -2804,6 +2783,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
+#if 0
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
         DLog(@"Don't have a remote host, so changing working directory");
         // TODO: There's a bug here where remote host can scroll off the end of history, causing the
@@ -2812,6 +2792,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     } else {
         DLog(@"Already have a remote host so not updating working directory because of title change");
     }
+#endif
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
@@ -3211,6 +3192,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
+ // do nothing
+#if 0
     NSRange atRange = [remoteHost rangeOfString:@"@"];
     NSString *user = nil;
     NSString *host = nil;
@@ -3225,8 +3208,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 
     [self setHost:host user:user];
+#endif
 }
 
+#if 0
 - (void)setHost:(NSString *)host user:(NSString *)user {
     VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
     if (!host || !user) {
@@ -3249,6 +3234,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [delegate_ screenCurrentHostDidChange:remoteHostObj];
     }
 }
+#endif
 
 - (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
     if (![iTermAdvancedSettingsModel acceptOSC7]) {
@@ -3870,11 +3856,13 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         mark.code = returnCode;
+#if 0
         VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
         [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
                                                                         onHost:remoteHost
                                                                             to:returnCode];
         [delegate_ screenNeedsRedraw];
+#endif
     } else {
         DLog(@"No last command mark found.");
     }
@@ -4922,6 +4910,7 @@ static void SwapInt(int *a, int *b) {
                         knownTriggers:(NSArray *)triggers
                               visible:(BOOL)visible
                 guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
+#if 0
     VT100RemoteHost *lastRemoteHost = nil;
     NSMutableDictionary *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
     for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
@@ -4965,6 +4954,7 @@ static void SwapInt(int *a, int *b) {
             }
         }
     }
+#endif
 }
 
 - (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {

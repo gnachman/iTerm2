@@ -29,7 +29,7 @@
 
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
-#import "FileTransferManager.h"
+// #import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIServer.h"
 #import "iTermAboutWindowController.h"
@@ -1936,11 +1936,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)clearAllDownloads:(id)sender {
-    [[FileTransferManager sharedInstance] removeAllDownloads];
+    // [[FileTransferManager sharedInstance] removeAllDownloads];
 }
 
 - (void)clearAllUploads:(id)sender{
-    [[FileTransferManager sharedInstance] removeAllUploads];
+    // [[FileTransferManager sharedInstance] removeAllUploads];
 }
 
 - (IBAction)showHelp:(id)sender {

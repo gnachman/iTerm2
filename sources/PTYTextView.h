@@ -97,8 +97,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)insertText:(NSString *)string;
 - (PTYTask *)shell;
 - (BOOL)alertOnNextMark;
-- (void)startDownloadOverSCP:(SCPPath *)path;
-- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;
+// - (void)startDownloadOverSCP:(SCPPath *)path;
+// - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;
 - (void)launchProfileInCurrentTerminal:(Profile *)profile
                                withURL:(NSString *)url;
 - (void)selectPaneLeftInCurrentTerminal;

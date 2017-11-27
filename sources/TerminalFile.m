@@ -84,7 +84,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 - (void)stop {
     self.status = kTransferrableFileStatusCancelling;
-    [[FileTransferManager sharedInstance] transferrableFileWillStop:self];
+    // [[FileTransferManager sharedInstance] transferrableFileWillStop:self];
     self.data = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalFileShouldStopNotification
                                                         object:self];
