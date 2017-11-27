@@ -9,6 +9,7 @@
 #import "iTermAboutWindowController.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
+#include "../config.h"
 
 @implementation iTermAboutWindowController {
     IBOutlet NSTextView *_dynamicText;
@@ -32,7 +33,7 @@
         NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n",
                                    myDict[(NSString *)kCFBundleVersionKey]];
 #endif
-        NSString *versionString = [NSString stringWithFormat: @"Version 0.0.6\niTerm2 fork by pancake\n\n"];
+        NSString *versionString = [NSString stringWithFormat: @"Version " THERM_VERSION "\niTerm2 fork by pancake\n\n"];
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm"
                                                                        title:@"Home Page\n"];
