@@ -8270,6 +8270,8 @@ return;
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+return;
+#if 0
     _shellIntegrationEverUsed = YES;
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
@@ -8298,6 +8300,7 @@ return;
     _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
     [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
+#endif
 }
 
 - (BOOL)screenShouldPlacePromptAtFirstColumn {
