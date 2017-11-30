@@ -198,5 +198,6 @@
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)supportREPCode;
++ (BOOL)showBlockBoundaries;
 
 @end

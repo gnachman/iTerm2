@@ -292,4 +292,7 @@ DEFINE_BOOL(supportREPCode, YES, @"Experimental Features: Enable support for REP
 #else
 DEFINE_BOOL(supportREPCode, NO, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
 #endif
+
+DEFINE_BOOL(showBlockBoundaries, NO, @"Debugging: Show line buffer block boundaries (issue 6207)");
+
 @end

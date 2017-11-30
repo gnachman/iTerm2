@@ -31,6 +31,7 @@
 
 #import "BackgroundThread.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
@@ -443,6 +444,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         int length;
         int eol;
         screen_char_t continuation;
+        const int requestedLine = line;
         screen_char_t* p = [block getWrappedLineWithWrapWidth:width
                                                       lineNum:&line
                                                    lineLength:&length
@@ -455,6 +457,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             NSAssert(length <= width, @"Length too long");
             memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
             [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
+
+            if (requestedLine == 0 && [iTermAdvancedSettingsModel showBlockBoundaries]) {
+                for (int i = 0; i < width; i++) {
+                    buffer[i].code = 'X';
+                    buffer[i].complexChar = NO;
+                    buffer[i].image = NO;
+                    buffer[i].urlCode = 0;
+                }
+            }
             return eol;
         }
     }
