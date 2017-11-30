@@ -7,6 +7,7 @@
 //
 
 #import "iTermQuickLookController.h"
+#import "DebugLogging.h"
 #import "QLPreviewPanel+iTerm.h"
 
 @interface iTermQuickLookController() <QLPreviewPanelDataSource, QLPreviewPanelDelegate>
@@ -22,12 +23,14 @@
 @implementation iTermQuickLookController
 
 + (void)dismissSharedPanel {
+    DLog(@"dismiss from %@", [NSThread callStackSymbols]);
   if ([[QLPreviewPanel sharedPreviewPanelIfExists] isVisible]) {
     [[QLPreviewPanel sharedPreviewPanel] orderOut:nil];
   }
 }
 
 - (void)dealloc {
+    DLog(@"dealloc from %@", [NSThread callStackSymbols]);
     [_files release];
     [super dealloc];
 }
@@ -40,6 +43,7 @@
 }
 
 - (void)showWithSourceRect:(NSRect)sourceRect controller:(id)controller {
+    DLog(@"show from %@", [NSThread callStackSymbols]);
     self.sourceRect = sourceRect;
     QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
     if (panel.currentController == controller) {
@@ -60,6 +64,7 @@
 }
 
 - (void)close {
+    DLog(@"close from %@", [NSThread callStackSymbols]);
     QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanelIfExists];
     if ([panel isVisible] &&
         [panel delegate] == self) {
@@ -68,6 +73,7 @@
 }
 
 - (void)takeControl {
+    DLog(@"takeControl from %@", [NSThread callStackSymbols]);
   QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
   if (panel.delegate != self || panel.dataSource != self) {
     panel.delegate = self;
@@ -90,6 +96,7 @@
 #pragma mark - QLPreviewPanelDelegate
 
 - (BOOL)previewPanel:(QLPreviewPanel *)panel handleEvent:(NSEvent *)event {
+    DLog(@"handle event %@ from %@", event, [NSThread callStackSymbols]);
   if ([event type] == NSKeyDown &&
       event.charactersIgnoringModifiers.length == 1 &&
       [event.charactersIgnoringModifiers characterAtIndex:0] == 27) {
@@ -115,12 +122,14 @@
 }
 
 - (void)beginPreviewPanelControl:(QLPreviewPanel *)panel {
+    DLog(@"begin preview panel control from %@", [NSThread callStackSymbols]);
   panel.delegate = self;
   panel.dataSource = self;
   [panel reloadData];
 }
 
 - (void)endPreviewPanelControl:(QLPreviewPanel *)panel {
+    DLog(@"end preview panel control from %@", [NSThread callStackSymbols]);
 }
 
 @end
