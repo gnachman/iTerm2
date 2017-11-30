@@ -1105,7 +1105,9 @@ static const int kDragThreshold = 3;
     _drawingHelper.copyMode = _delegate.textViewCopyMode;
     _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
     _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
-    _drawingHelper.passwordInput = _delegate.textViewPasswordInput;
+    _drawingHelper.passwordInput = ([self isInKeyWindow] &&
+                                    [_delegate textViewIsActiveSession] &&
+                                    _delegate.textViewPasswordInput);
 
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
     
