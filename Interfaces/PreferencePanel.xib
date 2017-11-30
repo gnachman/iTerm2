@@ -1944,12 +1944,12 @@ DQ
                     <rect key="frame" x="102" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2277" customClass="CPKColorWell">
-                    <rect key="frame" x="284" y="228" width="32" height="21"/>
+                <customView misplaced="YES" id="2277" customClass="CPKColorWell">
+                    <rect key="frame" x="304" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2275">
-                    <rect key="frame" x="159" y="256" width="119" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="2275">
+                    <rect key="frame" x="179" y="256" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Selection" id="2321">
                         <font key="font" metaFont="system"/>
@@ -1974,8 +1974,8 @@ DQ
                     <rect key="frame" x="102" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="Pyw-da-Q1y">
-                    <rect key="frame" x="159" y="204" width="119" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="Pyw-da-Q1y">
+                    <rect key="frame" x="179" y="204" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Badge" id="iUy-lI-rM5">
                         <font key="font" metaFont="system"/>
@@ -1983,8 +1983,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="A9a-sA-67D" customClass="CPKColorWell">
-                    <rect key="frame" x="284" y="202" width="32" height="21"/>
+                <customView misplaced="YES" id="A9a-sA-67D" customClass="CPKColorWell">
+                    <rect key="frame" x="304" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
@@ -1994,8 +1994,8 @@ DQ
                     <rect key="frame" x="102" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2274">
-                    <rect key="frame" x="159" y="230" width="119" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="2274">
+                    <rect key="frame" x="179" y="230" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Selected Text" id="2322">
                         <font key="font" metaFont="system"/>
@@ -2003,8 +2003,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="Wzz-9B-zqB" customClass="CPKColorWell">
-                    <rect key="frame" x="284" y="176" width="32" height="21"/>
+                <customView misplaced="YES" id="Wzz-9B-zqB" customClass="CPKColorWell">
+                    <rect key="frame" x="304" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2281">
@@ -2016,12 +2016,12 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="2282" customClass="CPKColorWell">
-                    <rect key="frame" x="284" y="254" width="32" height="21"/>
+                <customView misplaced="YES" id="2282" customClass="CPKColorWell">
+                    <rect key="frame" x="304" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <button id="j7F-r8-oes">
-                    <rect key="frame" x="195" y="177" width="83" height="18"/>
+                <button misplaced="YES" id="j7F-r8-oes">
+                    <rect key="frame" x="215" y="177" width="83" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Tab Color" bezelStyle="regularSquare" imagePosition="left" alignment="right" state="on" inset="2" id="k6J-9z-fqf">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2032,12 +2032,12 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="WKO-8m-Sev"/>
                     </connections>
                 </button>
-                <customView id="rSL-fL-hpc" customClass="CPKColorWell">
-                    <rect key="frame" x="284" y="149" width="32" height="21"/>
+                <customView misplaced="YES" id="rSL-fL-hpc" customClass="CPKColorWell">
+                    <rect key="frame" x="304" y="149" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <button id="Cqf-RZ-UnO">
-                    <rect key="frame" x="161" y="150" width="117" height="18"/>
+                <button misplaced="YES" id="Cqf-RZ-UnO">
+                    <rect key="frame" x="181" y="150" width="117" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Underline Color" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="FlU-a8-6X7">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2048,8 +2048,8 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="acz-bU-TQP"/>
                     </connections>
                 </button>
-                <slider verticalHuggingPriority="750" id="4896">
-                    <rect key="frame" x="141" y="125" width="179" height="20"/>
+                <slider verticalHuggingPriority="750" misplaced="YES" id="4896">
+                    <rect key="frame" x="141" y="125" width="197" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or white.</string>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
@@ -2080,15 +2080,15 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="Yny-j0-8Wk" customClass="CPKColorWell">
-                    <rect key="frame" x="284" y="73" width="32" height="21"/>
+                <customView misplaced="YES" id="Yny-j0-8Wk" customClass="CPKColorWell">
+                    <rect key="frame" x="304" y="73" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
                     </userDefinedRuntimeAttributes>
                 </customView>
-                <slider verticalHuggingPriority="750" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
-                    <rect key="frame" x="139" y="18" width="179" height="20"/>
+                <slider verticalHuggingPriority="750" misplaced="YES" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
+                    <rect key="frame" x="139" y="18" width="199" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">This dims all colors except that of the cursor. A pure white cursor with Smart Cursor Color off is recommended when using cursor boost.</string>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
@@ -2098,9 +2098,9 @@ DQ
                     </connections>
                 </slider>
                 <button id="4889">
-                    <rect key="frame" x="173" y="45" width="151" height="18"/>
+                    <rect key="frame" x="173" y="45" width="165" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Smart Cursor Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4890">
+                    <buttonCell key="cell" type="check" title="Smart Box Cursor Color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4890">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -2131,8 +2131,8 @@ DQ
                     <rect key="frame" x="102" y="73" width="32" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <button id="Rpk-o3-4ec">
-                    <rect key="frame" x="173" y="74" width="105" height="18"/>
+                <button misplaced="YES" id="Rpk-o3-4ec">
+                    <rect key="frame" x="193" y="74" width="105" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Cursor Guide" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Ai2-im-FjJ">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2350,6 +2350,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
+            <point key="canvasLocation" x="-39.5" y="234.5"/>
         </customView>
         <customView misplaced="YES" id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="411"/>
@@ -5230,21 +5231,21 @@ DQ
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4118">
                     <rect key="frame" x="184" y="176" width="161" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4137" id="4129">
+                    <popUpButtonCell key="cell" type="push" title="⌥⌘" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4137" id="4129">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4130">
                             <items>
-                                <menuItem title="No Shortcut" tag="9" id="4132">
+                                <menuItem tag="9" id="4132">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥ Number" tag="5" id="kEx-j4-xkm">
+                                <menuItem title="⌥" tag="5" id="kEx-j4-xkm">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌘ Number" tag="4" id="4133">
+                                <menuItem title="⌘" tag="4" id="4133">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥⌘ Number" state="on" tag="6" id="4137">
+                                <menuItem title="⌥⌘" state="on" tag="6" id="4137">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                             </items>
@@ -5258,21 +5259,21 @@ DQ
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4269">
                     <rect key="frame" x="184" y="146" width="161" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4273" id="4270">
+                    <popUpButtonCell key="cell" type="push" title="⌥⌘" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4273" id="4270">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4271">
                             <items>
-                                <menuItem title="No Shortcut" tag="9" id="4274">
+                                <menuItem tag="9" id="4274">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥ Number" tag="5" id="XvI-gy-pDy">
+                                <menuItem title="⌥" tag="5" id="XvI-gy-pDy">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌘ Number" tag="4" id="4272">
+                                <menuItem title="⌘" tag="4" id="4272">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
-                                <menuItem title="⌥⌘ Number" state="on" tag="6" id="4273">
+                                <menuItem title="⌥⌘" state="on" tag="6" id="4273">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                             </items>

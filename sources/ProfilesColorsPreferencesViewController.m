@@ -174,10 +174,17 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)updateColorControlsEnabled {
     _tabColor.enabled = [self boolForKey:KEY_USE_TAB_COLOR];
     _underlineColor.enabled = [self boolForKey:KEY_USE_UNDERLINE_COLOR];
-    _cursorColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
-    _cursorTextColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
-    _cursorColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
-    _cursorTextColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
+
+    const BOOL smartCursorColorSelected = [self boolForKey:KEY_SMART_CURSOR_COLOR];
+    const BOOL shouldEnableSmartCursorColor = ([self intForKey:KEY_CURSOR_TYPE] == CURSOR_BOX);
+    const BOOL shouldEnableCursorColor = !(smartCursorColorSelected && shouldEnableSmartCursorColor);
+
+    _cursorColor.enabled = shouldEnableCursorColor;
+    _cursorTextColor.enabled = shouldEnableCursorColor;
+    _cursorColorLabel.labelEnabled = shouldEnableCursorColor;
+    _cursorTextColorLabel.labelEnabled = shouldEnableCursorColor;
+
+    _useSmartCursorColor.enabled = shouldEnableSmartCursorColor;
 }
 
 - (NSDictionary *)colorWellDictionary {
