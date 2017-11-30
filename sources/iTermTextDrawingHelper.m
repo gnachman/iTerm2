@@ -1739,7 +1739,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     if (![previousImageAttributes[iTermImageLineAttribute] isEqual:imageAttributes[iTermImageLineAttribute]]) {
         return NO;
     }
-    if ([previousImageAttributes[iTermImageColumnAttribute] integerValue] + 1 != [imageAttributes[iTermImageColumnAttribute] integerValue]) {
+    if ((([previousImageAttributes[iTermImageColumnAttribute] integerValue] + 1) & 0xff) != ([imageAttributes[iTermImageColumnAttribute] integerValue] & 0xff)) {
         return NO;
     }
     
