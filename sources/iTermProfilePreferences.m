@@ -382,7 +382,12 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     static NSDictionary *dict;
     if (!dict) {
         dict = @{ KEY_IDLE_PERIOD: PROFILE_BLOCK(antiIdlePeriodWithLegacyDefaultInProfile),
-                  KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm) };
+                  KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm),
+#if BETA
+                  // TODO: If beta users don't complain too much turn this on for everyone.
+                  KEY_UNICODE_VERSION: PROFILE_BLOCK(unicodeVersion),
+#endif
+                };
         [dict retain];
     }
     return dict;
@@ -441,6 +446,25 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
     // Fall back to the default from the dictionary.
     return [self defaultObjectForKey:key];
+}
+
++ (id)unicodeVersion:(Profile *)profile {
+    NSString *const key = KEY_UNICODE_VERSION;
+
+    // If the profile has a value.
+    NSNumber *value = profile[key];
+    if (value) {
+        return value;
+    }
+
+    if (@available(macOS 10.13, *)) {
+        // macOS 10.13 has switched to unicode 9 widths. If you're sshing somewhere then you're
+        // going to have a bad time. My hope is that this makes people happier on balance.
+        return @9;
+    } else {
+        // Fall back to the default from the dictionary.
+        return [self defaultObjectForKey:key];
+    }
 }
 
 @end
