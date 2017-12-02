@@ -408,5 +408,26 @@
     return [panels arrayByAddingObjectsFromArray:[self orderedWindows]];
 }
 
+- (void)activateAppWithCompletion:(void (^)(void))completion {
+    DLog(@"Activate with completion...");
+    if ([self isActive]) {
+        DLog(@"Application already active. Run completion block synchronously");
+        completion();
+    } else {
+        __block id observer;
+        DLog(@"Register an observer");
+        observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
+                                                                     object:nil
+                                                                      queue:NULL
+                                                                 usingBlock:^(NSNotification * _Nonnull note) {
+                                                                     DLog(@"Application did become active. Invoke completion block");
+                                                                     completion();
+                                                                     DLog(@"Application did become active completion block finished. Removing observer.");
+                                                                     [[NSNotificationCenter defaultCenter] removeObserver:observer];
+                                                                 }];
+        [self activateIgnoringOtherApps:YES];
+    }
+}
+
 @end
 

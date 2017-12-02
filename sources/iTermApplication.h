@@ -57,4 +57,6 @@
 // Like orderedWindows, but only iTermWindow/iTermPanel objects wrapped in iTermScriptingWindow*s are returned.
 - (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows;
 
+- (void)activateAppWithCompletion:(void (^)(void))completion;
+
 @end
