@@ -194,7 +194,10 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     BOOL anyWindowRollingOut = [[self profileHotKeys] anyWithBlock:^BOOL(iTermProfileHotKey *anObject) {
         return [anObject rollingOut];
     }];
-    if (!anyWindowRollingOut) {
+    BOOL anyWindowRollingIn = [[self profileHotKeys] anyWithBlock:^BOOL(iTermProfileHotKey *anObject) {
+        return [anObject rollingIn];
+    }];
+    if (!anyWindowRollingOut && !anyWindowRollingIn) {
         // If there is previous state:
         // Going from hotkey window to non-hotkey window. Forget the previous state because
         // there's no need to ever return to it now. This happens when navigating explicitly from

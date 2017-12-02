@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
@@ -371,8 +372,16 @@ static NSString *const kArrangement = @"Arrangement";
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
         DLog(@"Activate iTerm2 prior to animating hotkey window in");
         _activationPending = YES;
-        [NSApp activateIgnoringOtherApps:YES];
+        [[iTermApplication sharedApplication] activateAppWithCompletion:^{
+            [self reallyRollInAnimated:animated];
+        }];
+    } else {
+        [self reallyRollInAnimated:animated];
     }
+}
+
+- (void)reallyRollInAnimated:(BOOL)animated {
+    DLog(@"Consummating roll in");
     [self.windowController.window makeKeyAndOrderFront:nil];
     if (animated) {
         switch (self.windowController.windowType) {
