@@ -11,10 +11,12 @@
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
     vector_float4 defaultColor = simd_make_float4(1, 0, 0, 1);
     iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)bytes;
-    for (NSInteger y = 0; y < self.cellConfiguration.gridSize.height; y++) {
-        const float rowOffset = (self.cellConfiguration.gridSize.height - y - 1);
+    const int height = self.cellConfiguration.gridSize.height;
+    const int width = self.cellConfiguration.gridSize.width;
+    for (NSInteger y = 0; y < height; y++) {
+        const float rowOffset = (height - y - 1);
         vector_float2 gridCoord = simd_make_float2(0, rowOffset);
-        for (NSInteger x = 0; x < self.cellConfiguration.gridSize.width; x++) {
+        for (NSInteger x = 0; x < width; x++) {
             gridCoord.x = x;
             pius[i].offset = gridCoord * cellSize;
             pius[i].color = defaultColor;
