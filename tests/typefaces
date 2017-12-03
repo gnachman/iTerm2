@@ -1,0 +1,18 @@
+Bold Faint Italic Underlined  [0m
+                              ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4m
+                  UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[3m
+           ITALIC             ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;3m
+           ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[2m
+     FAINT                    ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;2m
+     FAINT        UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[3;2m
+     FAINT ITALIC             ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;3;2m
+     FAINT ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[1m
+BOLD                          ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;1m
+BOLD              UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[3;1m
+BOLD       ITALIC             ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;3;1m
+BOLD       ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[2;1m
+BOLD FAINT                    ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;2;1m
+BOLD FAINT        UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[3;2;1m
+BOLD FAINT ITALIC             ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;3;2;1m
+BOLD FAINT ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[
+

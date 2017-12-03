@@ -21,7 +21,8 @@
                             scale:(CGFloat)scale
                    useThinStrokes:(BOOL)useThinStrokes
                          fakeBold:(BOOL)fakeBold
-                       fakeItalic:(BOOL)fakeItalic;
+                       fakeItalic:(BOOL)fakeItalic
+                      antialiased:(BOOL)antialiased;
 
 - (NSImage *)imageAtPart:(int)part;
 

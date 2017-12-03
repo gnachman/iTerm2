@@ -142,6 +142,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     BOOL _backgroundImageTiled;
     NSImage *_backgroundImage;
     BOOL _asciiAntialias;
+    BOOL _nonasciiAntialias;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -218,6 +219,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _blinkAllowed = textView.blinkAllowed;
         _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
         _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
+        _asciiAntialias = drawingHelper.asciiAntiAlias;
+        _nonasciiAntialias = drawingHelper.nonAsciiAntiAlias;
 
         VT100GridCoord cursorScreenCoord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                               textView.dataSource.cursorY - 1);
@@ -626,15 +629,16 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
               @"boldItalicFont": _asciiFont.boldItalicVersion ?: [NSNull null],
               @"useBold": @(_useBoldFont),
               @"useItalic": @(_useItalicFont),
-              @"antialiased": @(_asciiAntialias) };
+              @"asciiAntialiased": @(_asciiAntialias),
+              @"nonasciiAntialiased": @(_nonasciiAntialias) };
 }
 
 - (NSDictionary<NSNumber *,NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
                                                           size:(CGSize)size
                                                          scale:(CGFloat)scale
                                                          emoji:(nonnull BOOL *)emoji {
-    BOOL fakeBold = NO;
-    BOOL fakeItalic = NO;
+    BOOL fakeBold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
+    BOOL fakeItalic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
     const BOOL isAscii = !glyphKey->isComplex && (glyphKey->code < 128);
     PTYFontInfo *fontInfo = [PTYFontInfo fontForAsciiCharacter:isAscii
                                                      asciiFont:_asciiFont
@@ -655,7 +659,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                   scale:scale
                                          useThinStrokes:glyphKey->thinStrokes
                                                fakeBold:fakeBold
-                                             fakeItalic:fakeItalic];
+                                             fakeItalic:fakeItalic
+                                            antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias];
     if (characterSource == nil) {
         return nil;
     }

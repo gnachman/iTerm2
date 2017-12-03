@@ -24,6 +24,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     BOOL _useThinStrokes;
     BOOL _fakeBold;
     BOOL _fakeItalic;
+    BOOL _antialiased;
 
     CGSize _partSize;
     CTLineRef _lineRef;
@@ -73,7 +74,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                             scale:(CGFloat)scale
                    useThinStrokes:(BOOL)useThinStrokes
                          fakeBold:(BOOL)fakeBold
-                       fakeItalic:(BOOL)fakeItalic {
+                       fakeItalic:(BOOL)fakeItalic
+                      antialiased:(BOOL)antialiased {
     ITDebugAssert(font);
     ITDebugAssert(size.width > 0 && size.height > 0);
     ITDebugAssert(scale > 0);
@@ -99,6 +101,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         _lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedString);
         _cgContext = [iTermCharacterSource newBitmapContextOfSize:_size];
         _emoji = [string startsWithEmoji];
+        _antialiased = antialiased;
     }
     return self;
 }
@@ -209,7 +212,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     [self fillBackground];
 
     CFArrayRef runs = CTLineGetGlyphRuns(_lineRef);
-    CGContextSetShouldAntialias(_cgContext, YES);
+    CGContextSetShouldAntialias(_cgContext, _antialiased);
     CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
     CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
 
@@ -225,6 +228,11 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     const CGFloat ty = offset.y - _baselineOffset * _scale;
 
     [self drawRuns:runs atOffset:CGPointMake(offset.x, ty) skew:skew];
+    if (_fakeBold) {
+#warning TODO: This will cause characters to overrun their cells in a big way :(
+        CGFloat fakeBoldShift = 1;
+        [self drawRuns:runs atOffset:CGPointMake(offset.x + fakeBoldShift, ty) skew:skew];
+    }
 }
 
 - (void)fillBackground {
