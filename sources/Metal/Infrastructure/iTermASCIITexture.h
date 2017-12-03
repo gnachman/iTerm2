@@ -65,8 +65,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // Convert a drawable ASCII character into an index into the texture array. Note that control
 // character, SPACE, and DEL (127) are not accepted.
 NS_INLINE int iTermASCIITextureIndexOfCode(char code) {
-    ITDebugAssert(code >= iTermASCIITextureMinimumCharacter, @"Code out of range");
-    ITDebugAssert(code <= iTermASCIITextureMaximumCharacter, @"Code out of range");
+    ITDebugAssert(code >= iTermASCIITextureMinimumCharacter);
+    ITDebugAssert(code <= iTermASCIITextureMaximumCharacter);
     return code - iTermASCIITextureMinimumCharacter;
 }
 

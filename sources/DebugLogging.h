@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#include <assert.h>
 
 extern BOOL gDebugLogging;
 
