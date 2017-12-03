@@ -26,6 +26,7 @@ typedef struct {
 #define ENABLE_PRECISE_TIMERS 1
 
 #if ENABLE_PRECISE_TIMERS
+
 void iTermPreciseTimerSetEnabled(BOOL enabled);
 void iTermPreciseTimerStart(iTermPreciseTimer *timer);
 NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer, NSTimeInterval value);
@@ -49,7 +50,13 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                                   size_t count,
                                   NSTimeInterval interval,
                                   BOOL logToConsole);
+
+void iTermPreciseTimerLog(iTermPreciseTimerStats stats[],
+                          size_t count,
+                          BOOL logToConsole);
+
 #else
+
 void iTermPreciseTimerSetEnabled(BOOL enabled) { }
 static inline void iTermPreciseTimerStart(iTermPreciseTimer *timer) { }
 static inline NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer) { return 0; }
@@ -73,4 +80,8 @@ static inline void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
                                                 size_t count,
                                                 NSTimeInterval interval,
                                                 BOOL logToConsole) { }
+void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
+                                  size_t count,
+                                  BOOL logToConsole) { }
+
 #endif
