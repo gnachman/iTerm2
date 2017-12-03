@@ -128,7 +128,7 @@ static NSInteger gNextFrameDataNumber;
 
     int numStats;
     iTermPreciseTimerStats *array = [self statsArrayFromBundle:&_stats count:&numStats];
-#define ENABLE_PER_FRAME_METAL_STATS 1
+#define ENABLE_PER_FRAME_METAL_STATS 0
 #if ENABLE_PER_FRAME_METAL_STATS
     iTermPreciseTimerLog(array, numStats, YES);
 #endif
