@@ -1,9 +1,10 @@
 @import simd;
 @import MetalKit;
 
-#import "DebugLogging.h"
-#import "iTermTextureArray.h"
 #import "iTermMetalDriver.h"
+
+#import "DebugLogging.h"
+#import "iTermASCIITexture.h"
 #import "iTermBackgroundImageRenderer.h"
 #import "iTermBackgroundColorRenderer.h"
 #import "iTermBadgeRenderer.h"
@@ -17,6 +18,7 @@
 #import "iTermMetalRowData.h"
 #import "iTermPreciseTimer.h"
 #import "iTermTextRenderer.h"
+#import "iTermTextureArray.h"
 #import "iTermTextureMap.h"
 
 #import "iTermShaderTypes.h"
@@ -181,7 +183,11 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 // Called on the main queue
 - (iTermMetalFrameData *)newFrameData {
     iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] init];
+
+    iTermPreciseTimerStatsStartTimer(&_stats.mtWillBeginDrawing);
     frameData.perFrameState = [_dataSource metalDriverWillBeginDrawingFrame];
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.mtWillBeginDrawing);
+
     frameData.transientStates = [NSMutableDictionary dictionary];
     frameData.rows = [NSMutableArray array];
     frameData.gridSize = frameData.perFrameState.gridSize;
@@ -194,7 +200,34 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     dispatch_group_t group = dispatch_group_create();
     id <MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     iTermRenderConfiguration *configuration = [[iTermRenderConfiguration alloc] initWithViewportSize:_viewportSize scale:frameData.scale];
-
+    __weak __typeof(self) weakSelf = self;
+    CGSize cellSize = _cellSize;
+    CGFloat scale = _scale;
+    [_textRenderer setASCIICellSize:_cellSize
+                 creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
+                           creation:^NSImage * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
+                               __typeof(self) strongSelf = weakSelf;
+                               if (strongSelf) {
+                                   static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
+                                   iTermMetalGlyphKey glyphKey = {
+                                       .code = c,
+                                       .isComplex = NO,
+                                       .image = NO,
+                                       .boxDrawing = NO,
+                                       .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
+                                       .drawable = YES,
+                                       .typeface = (attributes & typefaceMask),
+                                   };
+                                   BOOL emoji = NO;
+                                   NSDictionary<NSNumber *, NSImage *> *partToImageMap = [frameData.perFrameState metalImagesForGlyphKey:&glyphKey
+                                                                                                                                    size:cellSize
+                                                                                                                                   scale:scale
+                                                                                                                                   emoji:&emoji];
+                                   return partToImageMap[@(ImagePartFromDeltas(0, 0))];
+                               } else {
+                                   return nil;
+                               }
+                           }];
     CGFloat blending;
     BOOL tiled;
     NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
@@ -355,7 +388,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
        renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
     NSString *className = NSStringFromClass([renderer class]);
     iTermMetalRendererTransientState *state = frameData.transientStates[className];
-    assert(state);
+    ITDebugAssert(state);
     if (!state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }
@@ -366,7 +399,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
            renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
     NSString *className = NSStringFromClass([renderer class]);
     iTermMetalCellRendererTransientState *state = frameData.transientStates[className];
-    assert(state);
+    ITDebugAssert(state);
     if (!state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }
@@ -522,6 +555,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         _stats.mainThreadStats,
         _stats.getCurrentDrawableStats,
         _stats.getCurrentRenderPassDescriptorStats,
+        _stats.mtWillBeginDrawing,
         _stats.dispatchStats,
         _stats.prepareStats,
         _stats.waitForGroup,

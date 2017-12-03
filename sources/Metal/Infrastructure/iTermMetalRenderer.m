@@ -1,5 +1,6 @@
 #import "iTermMetalRenderer.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermShaderTypes.h"
 
@@ -72,9 +73,9 @@
         defaultLibrary = [_device newDefaultLibrary];
     });
     id <MTLFunction> vertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
-    assert(vertexShader);
+    ITDebugAssert(vertexShader);
     id <MTLFunction> fragmentShader = [defaultLibrary newFunctionWithName:_fragmentFunctionName];
-    assert(fragmentShader);
+    ITDebugAssert(fragmentShader);
     return [self newPipelineWithBlending:_blending
                           vertexFunction:vertexShader
                         fragmentFunction:fragmentShader];
@@ -151,7 +152,7 @@
     NSError *error = NULL;
     id<MTLRenderPipelineState> pipeline = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                                                   error:&error];
-    assert(pipeline);
+    ITDebugAssert(pipeline);
     return pipeline;
 }
 

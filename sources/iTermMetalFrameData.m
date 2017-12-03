@@ -13,6 +13,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermMetalFrameDataStatsBundle *bu
     iTermPreciseTimerStatsInit(&bundle->mainThreadStats, "main thread");
     iTermPreciseTimerStatsInit(&bundle->getCurrentDrawableStats, "mt.currentDrawable");
     iTermPreciseTimerStatsInit(&bundle->getCurrentRenderPassDescriptorStats, "mt.renderPassDescr");
+    iTermPreciseTimerStatsInit(&bundle->mtWillBeginDrawing, "mt.willBeginDrawing");
     iTermPreciseTimerStatsInit(&bundle->dispatchStats, "dispatch");
     iTermPreciseTimerStatsInit(&bundle->prepareStats, "prepare");
     iTermPreciseTimerStatsInit(&bundle->waitForGroup, "wait for group");

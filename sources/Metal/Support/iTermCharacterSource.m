@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "DebugLogging.h"
 #import "iTermCharacterSource.h"
 #import "iTermTextureMap.h"
 #import "NSStringITerm.h"
@@ -73,9 +74,9 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                    useThinStrokes:(BOOL)useThinStrokes
                          fakeBold:(BOOL)fakeBold
                        fakeItalic:(BOOL)fakeItalic {
-    assert(font);
-    assert(size.width > 0 && size.height > 0);
-    assert(scale > 0);
+    ITDebugAssert(font);
+    ITDebugAssert(size.width > 0 && size.height > 0);
+    ITDebugAssert(scale > 0);
 
     if (string.length == 0 || [string isEqualToString:@" "]) {
         return nil;

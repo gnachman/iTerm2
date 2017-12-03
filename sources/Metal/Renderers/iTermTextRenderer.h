@@ -1,3 +1,4 @@
+#import "iTermASCIITexture.h"
 #import "iTermMetalCellRenderer.h"
 #import "iTermMetalGlyphKey.h"
 
@@ -26,6 +27,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
+
+- (void)setASCIICellSize:(CGSize)cellSize
+      creationIdentifier:(id)creationIdentifier
+                creation:(nullable NSImage *(^)(char, iTermASCIITextureAttributes))creation;
 
 @end
 
