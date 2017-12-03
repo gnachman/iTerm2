@@ -1,5 +1,6 @@
 #import "VT100GridTypes.h"
 
+#import "iTermASCIITexture.h"
 #import "iTermCursor.h"
 #include "iTermMetalGlyphKey.h"
 
@@ -7,6 +8,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCursorInfo : NSObject
 @property (nonatomic) BOOL cursorVisible;
 @property (nonatomic) VT100GridCoord coord;
@@ -23,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL frameOnly;
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 
 @property (nonatomic, readonly) VT100GridSize gridSize;
@@ -45,8 +48,13 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns the background image or nil. If there's a background image, fill in blending and tiled.
 - (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled;
 
+// An object that compares as equal if ascii characters produced by metalImagesForGlyph would
+// produce the same bitmap.
+- (id)metalASCIICreationIdentifier;
+
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSource<NSObject>
 
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame;

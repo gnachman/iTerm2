@@ -54,7 +54,7 @@ private:
     void move_from_lru_to_inuse(const int &i) {
         const GlyphKey &key = _entries[i];
         const TextureEntry *textureEntry = _lru.peek(key);
-        assert(textureEntry);
+        ITDebugAssert(textureEntry);
         _inuse[key] = *textureEntry;
         _lru.erase(key);
     }
@@ -62,7 +62,7 @@ private:
     void move_from_inuse_to_lru(const int &i) {
         const GlyphKey &key = _entries[i];
         auto it = _inuse.find(key);
-        assert(it != _inuse.end());
+        ITDebugAssert(it != _inuse.end());
         _lru.put(it->first, it->second);
         _inuse.erase(it);
     }
@@ -72,7 +72,7 @@ private:
         if (lock == 0) {
             move_from_lru_to_inuse(i);
             _freeCount--;
-            assert(_freeCount >= 0);
+            ITDebugAssert(_freeCount >= 0);
         }
         lock++;
     }
@@ -84,7 +84,7 @@ private:
             move_from_inuse_to_lru(i);
 
             _freeCount++;
-            assert(_freeCount <= _capacity);
+            ITDebugAssert(_freeCount <= _capacity);
         }
     }
 
@@ -93,12 +93,12 @@ private:
         auto it = _inuse.find(key);
         if (it != _inuse.end()) {
             const TextureEntry &value = it->second;
-            assert(_locks[value.index] > 0);
+            ITDebugAssert(_locks[value.index] > 0);
             return &value;
         } else {
             const TextureEntry *value = _lru.peek(key);
             if (value) {
-                assert(_locks[value->index] == 0);
+                ITDebugAssert(_locks[value->index] == 0);
             }
             return value;
         }
@@ -138,10 +138,10 @@ public:
             return std::make_pair(-1, -1);
         }
         const int index = produce();
-        assert(index >= 0);
-        assert(index <= _capacity);
-        assert(_lru.peek(key) == nullptr);
-        assert(_inuse.find(key) == _inuse.end());
+        ITDebugAssert(index >= 0);
+        ITDebugAssert(index <= _capacity);
+        ITDebugAssert(_lru.peek(key) == nullptr);
+        ITDebugAssert(_inuse.find(key) == _inuse.end());
 
         // Remove relationships related to index.
         remove_relations(index);
@@ -153,7 +153,7 @@ public:
 
         // Lock it. This moves it from LRU to inuse.
         lock(index);
-        assert(_inuse.find(key) != _inuse.end());
+        ITDebugAssert(_inuse.find(key) != _inuse.end());
 
         DLogLock(@"Allocate index %d sets lock to %d", index, _locks[index]);
 
@@ -172,7 +172,7 @@ public:
     inline void unlock(int index) {
         unlock_internal(index);
         DLogLock(@"Unlock index %d sets lock to %d", index, _locks[index]);
-        assert(_locks[index] >= 0);
+        ITDebugAssert(_locks[index] >= 0);
     }
 
     void define_class(const std::map<int, int> &relation) {
@@ -203,7 +203,7 @@ private:
 
             // Sanity check and return index
             const int &indexToRecycle = entry.second.index;
-            assert(_locks[indexToRecycle] == 0);
+            ITDebugAssert(_locks[indexToRecycle] == 0);
             return indexToRecycle;
         } else {
             return size;
@@ -217,7 +217,7 @@ private:
             auto temp = it->second;
             for (auto kvp : temp) {
                 const int i = kvp.second;
-                assert(_locks[i] == 0);
+                ITDebugAssert(_locks[i] == 0);
                 _relatedIndexes.erase(i);
             }
         }

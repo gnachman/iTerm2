@@ -1,5 +1,6 @@
 #import <AppKit/AppKit.h>
 
+#import "DebugLogging.h"
 #import "iTermTextureArray.h"
 #import <CoreImage/CoreImage.h>
 
@@ -11,6 +12,17 @@
     NSUInteger _arrayLength;
 }
 
++ (CGSize)atlasSizeForUnitSize:(CGSize)unitSize arrayLength:(NSUInteger)length cellsPerRow:(out NSInteger *)cellsPerRowOut {
+    CGFloat pixelsNeeded = unitSize.width * unitSize.height * (double)length;
+    CGFloat minimumEdgeLength = ceil(sqrt(pixelsNeeded));
+    NSInteger cellsPerRow = MAX(1, ceil(minimumEdgeLength / unitSize.width));
+    if (cellsPerRowOut) {
+        *cellsPerRowOut = cellsPerRow;
+    }
+    return CGSizeMake(unitSize.width * cellsPerRow,
+                      unitSize.height * ceil((double)length / (double)cellsPerRow));
+}
+
 - (instancetype)initWithTextureWidth:(uint32_t)width
                        textureHeight:(uint32_t)height
                          arrayLength:(NSUInteger)length
@@ -20,16 +32,16 @@
         _width = width;
         _height = height;
         _arrayLength = length;
-        CGFloat pixelsNeeded = (double)width * (double)height * (double)length;
-        CGFloat minimumEdgeLength = ceil(sqrt(pixelsNeeded));
-        _cellsPerRow = MAX(1, ceil(minimumEdgeLength / width));
+        CGSize atlasSize = [iTermTextureArray atlasSizeForUnitSize:CGSizeMake(width, height)
+                                                       arrayLength:length
+                                                       cellsPerRow:&_cellsPerRow];
 
         MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
         textureDescriptor.textureType = MTLTextureType2D;
         textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-        textureDescriptor.width = _width * _cellsPerRow;
-        textureDescriptor.height = _height * ceil((double)length / (double)_cellsPerRow);
+        textureDescriptor.width = atlasSize.width;
+        textureDescriptor.height = atlasSize.height;
         textureDescriptor.arrayLength = 1;
 
         _atlasSize = CGSizeMake(textureDescriptor.width, textureDescriptor.height);
@@ -82,7 +94,7 @@
 }
 
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage {
-    assert(slice < _arrayLength);
+    ITDebugAssert(slice < _arrayLength);
     NSBitmapImageRep *bitmapRepresentation = [[NSBitmapImageRep alloc] initWithData:[nsimage TIFFRepresentation]];
     if (!bitmapRepresentation) {
         return NO;

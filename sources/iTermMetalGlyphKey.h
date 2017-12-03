@@ -7,7 +7,17 @@
 
 #include <simd/simd.h>
 
-#warning TODO: Add fakeBold and fakeItalic
+// Gives number of bits needed to contain a typeface flag.
+#define iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded 2
+
+// This must be kept in sync with iTermASCIITextureAttributes
+typedef NS_OPTIONS(int, iTermMetalGlyphKeyTypeface) {
+    iTermMetalGlyphKeyTypefaceRegular = 0,
+    iTermMetalGlyphKeyTypefaceBold = (1 << 0),
+    iTermMetalGlyphKeyTypefaceItalic = (1 << 1),
+    iTermMetalGlyphKeyTypefaceBoldItalic = (iTermMetalGlyphKeyTypefaceBold | iTermMetalGlyphKeyTypefaceItalic)
+};
+
 typedef struct {
     unichar code;
     BOOL isComplex;
@@ -15,6 +25,7 @@ typedef struct {
     BOOL boxDrawing;
     BOOL thinStrokes;
     BOOL drawable;  // If this is NO it will be ignored
+    iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
 } iTermMetalGlyphKey;
 
 typedef struct {

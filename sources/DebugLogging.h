@@ -12,6 +12,12 @@ extern BOOL gDebugLogging;
 
 #define USE_STOPWATCH 0
 
+#if ITERM_DEBUG
+#define ITDebugAssert assert
+#else
+#define ITDebugAssert(condition)
+#endif
+
 #if !ITERM_DEBUG && USE_STOPWATCH
 #define STOPWATCH_START(name) \
   NSTimeInterval start_##name = [NSDate timeIntervalSinceReferenceDate]; \

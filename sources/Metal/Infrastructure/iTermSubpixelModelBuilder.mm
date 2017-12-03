@@ -136,7 +136,7 @@ static NSString *const iTermSubpixelModelString = @"O";
                                            characters,
                                            glyphs,
                                            numCodes);
-    assert(ok);
+    ITDebugAssert(ok);
 
     size_t length = numCodes;
 

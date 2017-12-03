@@ -182,7 +182,7 @@ int ImagePartFromDeltas(int dx, int dy) {
                 auto stageAndGlobalIndex = _textureMap->allocate_index(newGlyphKey, textureMapStage, *emoji);
                 const int &stageIndex = stageAndGlobalIndex.first;
                 const int &globalIndex = stageAndGlobalIndex.second;
-                assert(stageIndex >= 0);
+                ITDebugAssert(stageIndex >= 0);
 
                 // Record the global index of the first image, which we will return to the caller and
                 // can be used to find all the other parts of this glyph.
@@ -243,7 +243,7 @@ int ImagePartFromDeltas(int dx, int dy) {
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device cellSize:(CGSize)cellSize capacity:(NSInteger)capacity numberOfStages:(NSInteger)numberOfStages {
-    assert(numberOfStages == 1);
+    ITDebugAssert(numberOfStages == 1);
     return [super initWithDevice:device cellSize:cellSize capacity:capacity numberOfStages:1];
 }
 

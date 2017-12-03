@@ -55,16 +55,19 @@ static NSColor *ColorForVector(vector_float4 v) {
     return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
 }
 
-#warning TODO: This is copied from drawing helper
+#warning TODO: This is copied from drawing helper (except it calls space nondrawable)
 static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                       BOOL hasStringRepresentation,
                                                       BOOL blinkingItemsVisible,
                                                       BOOL blinkAllowed) {
     const unichar code = c->code;
-    if ((code == DWC_RIGHT ||
-         code == DWC_SKIP ||
-         code == TAB_FILLER) && !c->complexChar) {
-        return NO;
+    if (!c->complexChar) {
+        if (code == DWC_RIGHT ||
+            code == DWC_SKIP ||
+            code == TAB_FILLER ||
+            code <= ' ') {
+            return NO;
+        }
     }
     if (blinkingItemsVisible || !(blinkAllowed && c->blink)) {
         // This char is either not blinking or during the "on" cycle of the
@@ -138,6 +141,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     CGFloat _backgroundImageBlending;
     BOOL _backgroundImageTiled;
     NSImage *_backgroundImage;
+    BOOL _asciiAntialias;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -173,20 +177,21 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                            towardsGrayLevel:0.5]);
         _transparencyAlpha = textView.transparencyAlpha;
-        _transparencyAffectsOnlyDefaultBackgroundColor = textView.drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
+        iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
+        _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
 
         // Copy lines from model. Always use these for consistency. I should also copy the color map
         // and any other data dependencies.
         _lines = [NSMutableArray array];
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
-        _visibleRange = [textView.drawingHelper coordRangeForRect:textView.enclosingScrollView.documentVisibleRect];
+        _visibleRange = [drawingHelper coordRangeForRect:textView.enclosingScrollView.documentVisibleRect];
         const int width = _visibleRange.end.x - _visibleRange.start.x;
         for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
             screen_char_t *line = [screen getLineAtIndex:i];
             [_lines addObject:[NSData dataWithBytes:line length:sizeof(screen_char_t) * width]];
             [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
-            NSData *findMatches = [textView.drawingHelper.delegate drawingHelperMatchesOnLine:i];
+            NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
             if (findMatches) {
                 _matches[@(i - _visibleRange.start.y)] = findMatches;
             }
@@ -203,16 +208,16 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _reverseVideo = textView.dataSource.terminal.reverseVideo;
         _useBrightBold = textView.useBrightBold;
         _thinStrokes = textView.thinStrokes;
-        _isRetina = textView.drawingHelper.isRetina;
+        _isRetina = drawingHelper.isRetina;
         _isInKeyWindow = [textView isInKeyWindow];
         _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
         _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
         _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
-        _cursorVisible = textView.drawingHelper.cursorVisible;
+        _cursorVisible = drawingHelper.cursorVisible;
         _cursorBlinking = textView.isCursorBlinking;
         _blinkAllowed = textView.blinkAllowed;
-        _blinkingItemsVisible = textView.drawingHelper.blinkingItemsVisible;
-        _inputMethodMarkedRange = textView.drawingHelper.inputMethodMarkedRange;
+        _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
+        _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
 
         VT100GridCoord cursorScreenCoord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                               textView.dataSource.cursorY - 1);
@@ -224,7 +229,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         glue.oldCursorScreenCoord = cursorScreenCoord;
 
         iTermSmartCursorColor *smartCursorColor = nil;
-        if (textView.drawingHelper.useSmartCursorColor) {
+        if (drawingHelper.useSmartCursorColor) {
             smartCursorColor = [[iTermSmartCursorColor alloc] init];
             smartCursorColor.delegate = self;
         }
@@ -237,7 +242,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             lineWithCursor + 1 < _visibleRange.end.y) {
             const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
             _cursorInfo.cursorVisible = YES;
-            _cursorInfo.type = textView.drawingHelper.cursorType;
+            _cursorInfo.type = drawingHelper.cursorType;
             _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                    textView.dataSource.cursorY - 1 - offset);
 #warning handle frame cursor, text color, smart cursor color, and other fancy cursors of various kinds
@@ -276,6 +281,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _backgroundImageBlending = textView.blend;
         _backgroundImageTiled = textView.delegate.backgroundImageTiled;
         _backgroundImage = [textView.delegate textViewBackgroundImage];
+#warning TODO: antialised on/off for ascii/nonascii
     }
     return self;
 }
@@ -409,6 +415,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         glyphKeys[x].image = line[x].image;
         glyphKeys[x].boxDrawing = NO;
         glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
+
+        const int boldBit = line[x].bold ? (1 << 0) : 0;
+        const int italicBit = line[x].italic ? (1 << 1) : 0;
+        glyphKeys[x].typeface = (boldBit | italicBit);
 
         if (iTermTextDrawingHelperIsCharacterDrawable(&line[x],
                                                       ScreenCharToStr(&line[x]) != nil,
@@ -608,6 +618,15 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     }
     NSAssert(ok, @"Bogus color mode %d", (int)theMode);
     return kColorMapInvalid;
+}
+
+- (id)metalASCIICreationIdentifier {
+    return @{ @"font": _asciiFont.font ?: [NSNull null],
+              @"boldFont": _asciiFont.boldVersion ?: [NSNull null],
+              @"boldItalicFont": _asciiFont.boldItalicVersion ?: [NSNull null],
+              @"useBold": @(_useBoldFont),
+              @"useItalic": @(_useItalicFont),
+              @"antialiased": @(_asciiAntialias) };
 }
 
 - (NSDictionary<NSNumber *,NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey

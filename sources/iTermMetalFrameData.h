@@ -14,6 +14,7 @@ typedef struct {
     iTermPreciseTimerStats mainThreadStats;
     iTermPreciseTimerStats getCurrentDrawableStats;
     iTermPreciseTimerStats getCurrentRenderPassDescriptorStats;
+    iTermPreciseTimerStats mtWillBeginDrawing;
     iTermPreciseTimerStats dispatchStats;
     iTermPreciseTimerStats prepareStats;
     iTermPreciseTimerStats waitForGroup;
