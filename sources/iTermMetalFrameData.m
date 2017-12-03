@@ -7,6 +7,7 @@
 
 #import "iTermMetalFrameData.h"
 
+#import "DebugLogging.h"
 #import <MetalKit/MetalKit.h>
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermMetalFrameDataStatsBundle *bundle) {
@@ -100,10 +101,42 @@ static NSInteger gNextFrameDataNumber;
     });
 }
 
-- (void)didComplete {
+- (iTermPreciseTimerStats *)statsArrayFromBundle:(iTermMetalFrameDataStatsBundle *)bundle count:(int *)countOut {
+    iTermPreciseTimerStats stats[] = {
+        bundle->mainThreadStats,
+        bundle->getCurrentDrawableStats,
+        bundle->getCurrentRenderPassDescriptorStats,
+        bundle->mtWillBeginDrawing,
+        bundle->dispatchStats,
+        bundle->prepareStats,
+        bundle->waitForGroup,
+        bundle->finalizeStats,
+        bundle->metalSetupStats,
+        bundle->renderingStats,
+        bundle->endToEnd
+    };
+
+    *countOut = sizeof(stats) / sizeof(*stats);
+    NSMutableData *data = [NSMutableData dataWithBytes:stats length:sizeof(stats)];
+    return (iTermPreciseTimerStats *)data.mutableBytes;
+}
+
+- (void)didCompleteWithAggregateStats:(iTermMetalFrameDataStatsBundle *)aggregateStats {
     self.status = @"complete";
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.renderingStats);
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.endToEnd);
+
+    int numStats;
+    iTermPreciseTimerStats *array = [self statsArrayFromBundle:&_stats count:&numStats];
+#define ENABLE_PER_FRAME_METAL_STATS 1
+#if ENABLE_PER_FRAME_METAL_STATS
+    iTermPreciseTimerLog(array, numStats, YES);
+#endif
+
+    [self addStatsTo:aggregateStats];
+
+    array = [self statsArrayFromBundle:aggregateStats count:&numStats];
+    iTermPreciseTimerPeriodicLog(array, numStats, 1, YES);
 }
 
 - (void)addStatsTo:(iTermMetalFrameDataStatsBundle *)dest {

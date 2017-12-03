@@ -541,8 +541,6 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 - (void)complete:(iTermMetalFrameData *)frameData {
-    [frameData didComplete];
-
     DLog(@"  Completed");
 
     // Unlock indices and free up the stage texture.
@@ -550,21 +548,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         frameData.transientStates[NSStringFromClass([_textRenderer class])];
     [textState didComplete];
 
-    [frameData addStatsTo:&_stats];
-    iTermPreciseTimerStats stats[] = {
-        _stats.mainThreadStats,
-        _stats.getCurrentDrawableStats,
-        _stats.getCurrentRenderPassDescriptorStats,
-        _stats.mtWillBeginDrawing,
-        _stats.dispatchStats,
-        _stats.prepareStats,
-        _stats.waitForGroup,
-        _stats.finalizeStats,
-        _stats.metalSetupStats,
-        _stats.renderingStats,
-        _stats.endToEnd
-    };
-    iTermPreciseTimerPeriodicLog(stats, sizeof(stats) / sizeof(*stats), 1, YES);
+    DLog(@"  Recording final stats");
+    [frameData didCompleteWithAggregateStats:&_stats];
 
     @synchronized(self) {
         _framesInFlight--;

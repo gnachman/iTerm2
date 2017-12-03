@@ -179,27 +179,32 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
     }
 
     if (iTermPreciseTimerMeasure(&gLastLog) >= interval) {
-        NSMutableString *log = [[@"-- Precise Timers --\n" mutableCopy] autorelease];
-        for (size_t i = 0; i < count; i++) {
-            NSTimeInterval mean = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
-            NSTimeInterval stddev = iTermPreciseTimerStatsGetStddev(&stats[i]) * 1000.0;
-            [log appendFormat:@"%20s: µ=%0.3fms σ=%.03fms (95%% CI ≅ %0.3fms–%0.3fms) 𝚺=%.2fms N=%@ avg. events=%01.f\n",
-                stats[i].name,
-                mean,
-                stddev,
-                MAX(0, mean - stddev),
-                mean + stddev,
-                stats[i].n * mean,
-                @(stats[i].n),
-                (double)stats[i].totalEventCount / (double)stats[i].n];
-               iTermPreciseTimerStatsInit(&stats[i], NULL);
-        }
-        if (logToConsole) {
-            NSLog(@"%@", log);
-        }
-        DLog(@"%@", log);
-
+        iTermPreciseTimerLog(stats, count, logToConsole);
         iTermPreciseTimerStart(&gLastLog);
     }
+}
+
+void iTermPreciseTimerLog(iTermPreciseTimerStats stats[],
+                          size_t count,
+                          BOOL logToConsole) {
+    NSMutableString *log = [[@"-- Precise Timers --\n" mutableCopy] autorelease];
+    for (size_t i = 0; i < count; i++) {
+        NSTimeInterval mean = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
+        NSTimeInterval stddev = iTermPreciseTimerStatsGetStddev(&stats[i]) * 1000.0;
+        [log appendFormat:@"%20s: µ=%0.3fms σ=%.03fms (95%% CI ≅ %0.3fms–%0.3fms) 𝚺=%.2fms N=%@ avg. events=%01.f\n",
+         stats[i].name,
+         mean,
+         stddev,
+         MAX(0, mean - stddev),
+         mean + stddev,
+         stats[i].n * mean,
+         @(stats[i].n),
+         (double)stats[i].totalEventCount / (double)stats[i].n];
+        iTermPreciseTimerStatsInit(&stats[i], NULL);
+    }
+    if (logToConsole) {
+        NSLog(@"%@", log);
+    }
+    DLog(@"%@", log);
 }
 #endif

@@ -55,8 +55,7 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *de
                               onQueue:(dispatch_queue_t)queue
                              finalize:(void (^)(void))finalize
                                render:(void (^)(void))render;
-- (void)didComplete;
-- (void)addStatsTo:(iTermMetalFrameDataStatsBundle *)dest;
+- (void)didCompleteWithAggregateStats:(iTermMetalFrameDataStatsBundle *)aggregateStats;
 
 @end
 
