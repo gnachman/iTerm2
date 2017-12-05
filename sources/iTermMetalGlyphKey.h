@@ -6,6 +6,7 @@
 //
 
 #include <simd/simd.h>
+#import "iTermShaderTypes.h"
 
 // Gives number of bits needed to contain a typeface flag.
 #define iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded 2
@@ -32,6 +33,6 @@ typedef struct {
 typedef struct {
     vector_float4 foregroundColor;
     vector_float4 backgroundColor;
-    bool underline;
+    iTermMetalGlyphAttributesUnderline underlineStyle : 2;
 } iTermMetalGlyphAttributes;
 

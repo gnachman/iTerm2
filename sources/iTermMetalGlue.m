@@ -110,6 +110,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSMutableArray<NSData *> *_lines;
     NSMutableArray<NSIndexSet *> *_selectedIndexes;
     NSMutableDictionary<NSNumber *, NSData *> *_matches;
+    NSMutableDictionary<NSNumber *, NSValue *> *_underlinedRanges;
     iTermColorMap *_colorMap;
     PTYFontInfo *_asciiFont;
     PTYFontInfo *_nonAsciiFont;
@@ -188,7 +189,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _lines = [NSMutableArray array];
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
+        _underlinedRanges = [NSMutableDictionary dictionary];
         _visibleRange = [drawingHelper coordRangeForRect:textView.enclosingScrollView.documentVisibleRect];
+        long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
         const int width = _visibleRange.end.x - _visibleRange.start.x;
         for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
             screen_char_t *line = [screen getLineAtIndex:i];
@@ -198,6 +201,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             if (findMatches) {
                 _matches[@(i - _visibleRange.start.y)] = findMatches;
             }
+
+            const long long absoluteLine = totalScrollbackOverflow + i;
+            _underlinedRanges[@(i - _visibleRange.start.y)] = [NSValue valueWithRange:[drawingHelper underlinedRangeOnLine:absoluteLine]];
         }
 
         _gridSize = VT100GridSizeMake(textView.dataSource.width,
@@ -336,6 +342,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
     iTermBackgroundColorKey lastBackgroundKey;
+    NSRange underlinedRange = [_underlinedRanges[@(row)] rangeValue];
 
     int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
@@ -344,6 +351,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, x);
         }
+        const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange);
 
         // Background colors
         iTermBackgroundColorKey backgroundKey = {
@@ -383,7 +391,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
         currentColorKey->isMatch = findMatch;
-        currentColorKey->inUnderlinedRange = NO;  // TODO
+        currentColorKey->inUnderlinedRange = inUnderlinedRange;
         currentColorKey->selected = selected;
         currentColorKey->foregroundColor = line[x].foregroundColor;
         currentColorKey->fgGreen = line[x].fgGreen;
@@ -408,12 +416,22 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                   backgroundColor:background[x]
                                                          selected:selected
                                                         findMatch:findMatch
-                                                inUnderlinedRange:NO  // TODO
+                                                inUnderlinedRange:inUnderlinedRange
                                                             index:x];
             attributes[x].foregroundColor = textColor;
             attributes[x].foregroundColor.w = 1;
         }
-        attributes[x].underline = line[x].underline;
+        if (line[x].underline || inUnderlinedRange) {
+            if (line[x].urlCode) {
+                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
+            } else {
+                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+            }
+        } else if (line[x].urlCode) {
+            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
+        } else {
+            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
 
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;

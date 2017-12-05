@@ -193,7 +193,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
             piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
             piu->textColor = attributes[x].foregroundColor;
             piu->remapColors = !emoji;
-            piu->underline = attributes[x].underline;
+            piu->underlineStyle = attributes[x].underlineStyle;
             piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
             if (part == iTermTextureMapMiddleCharacterPart) {
                 piu->backgroundColor = attributes[x].backgroundColor;
@@ -219,7 +219,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
         piu->textColor = attributes[x].foregroundColor;
         piu->backgroundColor = attributes[x].backgroundColor;
         piu->remapColors = !emoji;
-        piu->underline = attributes[x].underline;
+        piu->underlineStyle = attributes[x].underlineStyle;
         piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
         if (_colorModels) {
             piu->colorModelIndex = [self colorModelIndexForPIU:piu];
@@ -298,7 +298,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
                                 w:(float)w
                                 h:(float)h
                        attributes:(iTermASCIITextureAttributes)attributes
-                        underline:(BOOL)underline
+                   underlineStyle:(iTermMetalGlyphAttributesUnderline)underlineStyle
                   foregroundColor:(vector_float4)foregroundColor
                   backgroundColor:(vector_float4)backgroundColor {
     iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:attributes];
@@ -316,7 +316,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     piu->textColor = foregroundColor;
     piu->backgroundColor = backgroundColor;
     piu->remapColors = YES;
-    piu->underline = underline;
+    piu->underlineStyle = underlineStyle;
     piu->underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : foregroundColor;
     if (_colorModels) {
         piu->colorModelIndex = [self colorModelIndexForPIU:piu];
@@ -369,7 +369,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                           w:asciiCellSize.x
                                           h:asciiCellSize.y
                                  attributes:asciiAttrs
-                                  underline:attributes[x].underline
+                             underlineStyle:attributes[x].underlineStyle
                             foregroundColor:attributes[x].foregroundColor
                             backgroundColor:attributes[x].backgroundColor];
             havePrevious = NO;
@@ -662,6 +662,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                     .cellSize = cellSize,
                     .underlineOffset = cellSize.y - (tState.nonAsciiUnderlineDescriptor.offset * scale),
                     .underlineThickness = tState.nonAsciiUnderlineDescriptor.thickness * scale,
+                    .scale = scale
                 };
                 id<MTLBuffer> textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions length:sizeof(textureDimensions) options:MTLResourceStorageModeShared];
                 textureDimensionsBuffer.label = @"Texture dimensions (non-ASCII)";
@@ -701,6 +702,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             .cellSize = cellSize,
             .underlineOffset = cellSize.y - (tState.asciiUnderlineDescriptor.offset * scale),
             .underlineThickness = tState.asciiUnderlineDescriptor.thickness * scale,
+            .scale = scale
         };
         id<MTLBuffer> textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions length:sizeof(textureDimensions) options:MTLResourceStorageModeShared];
         textureDimensionsBuffer.label = @"Texture dimensions (ASCII)";
