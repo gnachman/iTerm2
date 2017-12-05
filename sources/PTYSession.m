@@ -219,6 +219,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermAutomaticProfileSwitcherDelegate,
     iTermCoprocessDelegate,
     iTermHotKeyNavigableSession,
+    iTermMetalGlueDelegate,
     iTermPasteHelperDelegate,
     iTermSessionViewDelegate,
     iTermUpdateCadenceControllerDelegate>
@@ -465,7 +466,7 @@ static const NSUInteger kMaxHosts = 100;
 
     iTermUpdateCadenceController *_cadenceController;
 
-    iTermMetalGlue *_metalGlue;
+    iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -549,8 +550,11 @@ static const NSUInteger kMaxHosts = 100;
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
 
         _statusChangedAbsLine = -1;
-        _metalGlue = [[iTermMetalGlue alloc] init];
-        _metalGlue.screen = _screen;
+        if (@available(macOS 10.11, *)) {
+            _metalGlue = [[iTermMetalGlue alloc] init];
+            _metalGlue.delegate = self;
+            _metalGlue.screen = _screen;
+        }
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -613,7 +617,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
     [_view release];
-    [_metalGlue release];
+    if (@available(macOS 10.11, *)) {
+        [_metalGlue release];
+    }
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
@@ -1375,7 +1381,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height)
                                           colorMap:_colorMap];
-    _metalGlue.textView = _textview;
+    if (@available(macOS 10.11, *)) {
+        _metalGlue.textView = _textview;
+    }
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
@@ -1936,7 +1944,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
-    _metalGlue.textView = nil;
+    if (@available(macOS 10.11, *)) {
+        _metalGlue.textView = nil;
+    }
 }
 
 - (void)jumpToLocationWhereCurrentStatusChanged {
@@ -4704,8 +4714,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Metal Support
 
+- (void)metalGlueDidDrawFrame NS_AVAILABLE_MAC(10_11) {
+    if (_view.useMetal) {
+        // If the text view had been visible, hide it. Hiding it before the
+        // first frame is drawn causes a flash of gray.
+        _textview.alphaValue = 0;
+        _view.metalView.alphaValue = 1;
+    }
+}
+
 - (BOOL)metalAllowed {
-    return _textview.transparencyAlpha == 1;
+    return [iTermAdvancedSettingsModel useMetal] && _textview.transparencyAlpha == 1;
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
@@ -4715,6 +4734,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         DLog(@"setUseMetal:%@ %@", @(useMetal), self);
         _useMetal = useMetal;
+        // The metalview's alpha will initially be 0. Once it has drawn a frame we'll swap what is visible.
         [self setUseMetal:useMetal dataSource:_metalGlue];
         _wrapper.useMetal = useMetal;
         if (useMetal) {
@@ -4725,7 +4745,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     [_view setUseMetal:useMetal dataSource:dataSource];
-    _textview.alphaValue = useMetal ? 0 : 1;
+    if (!useMetal) {
+        _textview.alphaValue = 1;
+    }
+    _view.useSubviewWithLayer = [self viewShouldWantLayer];
 }
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
@@ -6918,7 +6941,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)textViewShouldDrawRect {
     if (@available(macOS 10.11, *)) {
-        return !_view.useMetal;
+        return _view.alphaValue > 0;
     } else {
         return YES;
     }

@@ -166,6 +166,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView screen:self.screen glue:self];
 }
 
+- (void)metalDriverDidDrawFrame {
+    [self.delegate metalGlueDidDrawFrame];
+}
+
 @end
 
 @implementation iTermMetalPerFrameState

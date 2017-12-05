@@ -14,10 +14,17 @@ NS_ASSUME_NONNULL_BEGIN
 @class VT100Screen;
 @class PTYTextView;
 
+NS_CLASS_AVAILABLE(10_11, NA)
+@protocol iTermMetalGlueDelegate<NSObject>
+- (void)metalGlueDidDrawFrame;
+@end
+
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalGlue : NSObject<iTermMetalDriverDataSource>
 
 @property (nullable, nonatomic, strong) PTYTextView *textView;
 @property (nonatomic, strong) VT100Screen *screen;
+@property (nonatomic, weak) id<iTermMetalGlueDelegate> delegate;
 
 @end
 
