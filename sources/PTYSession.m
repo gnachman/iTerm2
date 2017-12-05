@@ -4725,6 +4725,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_view.useMetal) {
         // If the text view had been visible, hide it. Hiding it before the
         // first frame is drawn causes a flash of gray.
+        DLog(@"metalGlueDidDrawFrame");
         _textview.alphaValue = 0;
         _view.metalView.alphaValue = 1;
     }
@@ -6948,7 +6949,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)textViewShouldDrawRect {
     if (@available(macOS 10.11, *)) {
-        return _view.alphaValue > 0;
+        return _textview.alphaValue > 0;
     } else {
         return YES;
     }
