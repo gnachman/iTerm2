@@ -24,6 +24,13 @@ typedef enum {
     iTermFragmentInputIndexTextureDimensions = 2,  // Points at iTermTextureDimensions
 } iTermFragmentBufferIndex;
 
+typedef enum {
+    iTermMetalGlyphAttributesUnderlineNone = 0,
+    iTermMetalGlyphAttributesUnderlineSingle = 1,
+    iTermMetalGlyphAttributesUnderlineDouble = 2,
+    iTermMetalGlyphAttributesUnderlineDashedSingle = 3
+} iTermMetalGlyphAttributesUnderline;
+
 typedef struct {
     // Distance in pixel space from origin
     vector_float2 position;
@@ -49,8 +56,10 @@ typedef struct {
     // Passed through to the solid background color fragment shader.
     vector_int3 colorModelIndex;
 
-    // Draw an underline. The offset is provided in iTermTextureDimensions.
-    bool underline;
+    // What kind of underline to draw. The offset is provided in iTermTextureDimensions.
+    iTermMetalGlyphAttributesUnderline underlineStyle;
+
+    // Color for underline, if one is to be drawn
     vector_float4 underlineColor;
 } iTermTextPIU;
 
@@ -85,6 +94,7 @@ typedef struct {
     vector_float2 cellSize;  // Size of a cell within the atlas in pixels
     float underlineOffset;  // Distance from bottom of cell to underline in pixels
     float underlineThickness;  // Thickness of underline in pixels
+    float scale;  // 2 for retina, 1 for non retina
 } iTermTextureDimensions;
 
 #endif

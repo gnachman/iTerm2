@@ -286,5 +286,6 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (CGFloat)yOriginForUnderlineGivenFontXHeight:(CGFloat)xHeight yOffset:(CGFloat)yOffset;
 - (CGFloat)underlineThicknessForFont:(NSFont *)font;
+- (NSRange)underlinedRangeOnLine:(long long)row;
 
 @end

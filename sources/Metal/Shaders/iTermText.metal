@@ -16,8 +16,9 @@ typedef struct {
     int3 colorModelIndex;
     float2 textureOffset;  // Normalized offset in texture.
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
-    bool underline;  // should draw an underline? TODO: Support double and dashed underlines
+    int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
     float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
+    float scale;  // 2 for retina, 1 for non-retina
 } iTermTextVertexFunctionOutput;
 
 vertex iTermTextVertexFunctionOutput
@@ -47,7 +48,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.viewportSize = viewportSize;
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
-    out.underline = perInstanceUniforms[iid].underline;
+    out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = perInstanceUniforms[iid].underlineColor;
 
     return out;
@@ -154,10 +155,48 @@ float FractionOfPixelThatIntersectsUnderline(float2 clipSpacePosition,
     return intersection;
 }
 
+float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+                                                     float2 clipSpacePosition,
+                                                     float2 viewportSize,
+                                                     float2 cellOffset,
+                                                     float underlineOffset,
+                                                     float underlineThickness,
+                                                     float scale) {
+    if (underlineStyle == iTermMetalGlyphAttributesUnderlineDouble) {
+        // We can't draw the underline lower than the bottom of the cell, so
+        // move the lower underline down by one thickness, if possible, and
+        // the second underline will draw above it. This is different than
+        // the non-metal codepath which will draw an underline lower than the
+        // bottom of the cell. Double underlines are rare enough that I doubt
+        // anyone will notice.
+        underlineOffset = max(0.0, underlineOffset - underlineThickness);
+    }
+    float weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
+                                                          viewportSize,
+                                                          cellOffset,
+                                                          underlineOffset,
+                                                          underlineThickness);
+    if (weight == 0 && underlineStyle == iTermMetalGlyphAttributesUnderlineDouble) {
+        // Check if this pixel is in the second underline.
+        weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
+                                                        viewportSize,
+                                                        cellOffset,
+                                                        underlineOffset + underlineThickness * 2,
+                                                        underlineThickness);
+    } else if (weight > 0 &&
+               underlineStyle == iTermMetalGlyphAttributesUnderlineDashedSingle &&
+               fmod(clipSpacePosition.x - 0.5, 7 * scale) >= 4 * scale) {
+        // 4 on 3 off. This is the off.
+        return 0;
+    }
+    return weight;
+}
+
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.
 // This ignores the alpha channel of the texture and assumes white pixels are
 // background.
-float ComputeWeightOfUnderline(float2 clipSpacePosition,
+float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+                               float2 clipSpacePosition,
                                float2 viewportSize,
                                float2 cellOffset,
                                float underlineOffset,
@@ -167,12 +206,15 @@ float ComputeWeightOfUnderline(float2 clipSpacePosition,
                                float2 textureCoordinate,
                                float2 cellSize,
                                texture2d<half> texture,
-                               sampler textureSampler) {
-    float weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
-                                                          viewportSize,
-                                                          cellOffset,
-                                                          underlineOffset,
-                                                          underlineThickness);
+                               sampler textureSampler,
+                               float scale) {
+    float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
+                                                                  clipSpacePosition,
+                                                                  viewportSize,
+                                                                  cellOffset,
+                                                                  underlineOffset,
+                                                                  underlineThickness,
+                                                                  scale);
     if (weight == 0) {
         return 0;
     }
@@ -192,7 +234,8 @@ float ComputeWeightOfUnderline(float2 clipSpacePosition,
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`
 // when drawing underlined emoji. This respects the alpha channel of the texture.
-float ComputeWeightOfUnderlineForEmoji(float2 clipSpacePosition,
+float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+                                       float2 clipSpacePosition,
                                        float2 viewportSize,
                                        float2 cellOffset,
                                        float underlineOffset,
@@ -202,12 +245,15 @@ float ComputeWeightOfUnderlineForEmoji(float2 clipSpacePosition,
                                        float2 textureCoordinate,
                                        float2 cellSize,
                                        texture2d<half> texture,
-                                       sampler textureSampler) {
-    const float weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
-                                                                viewportSize,
-                                                                cellOffset,
-                                                                underlineOffset,
-                                                                underlineThickness);
+                                       sampler textureSampler,
+                                       float scale) {
+    float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
+                                                                  clipSpacePosition,
+                                                                  viewportSize,
+                                                                  cellOffset,
+                                                                  underlineOffset,
+                                                                  underlineThickness,
+                                                                  scale);
     if (weight == 0) {
         return 0;
     }
@@ -241,8 +287,9 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
 
     if (!in.recolor) {
         // Emoji code path
-        if (in.underline) {
-            const float weight = ComputeWeightOfUnderlineForEmoji(in.clipSpacePosition.xy,
+        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+            const float weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+                                                                  in.clipSpacePosition.xy,
                                                                   in.viewportSize,
                                                                   in.cellOffset,
                                                                   dimensions->underlineOffset,
@@ -252,7 +299,8 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                                                   in.textureCoordinate,
                                                                   dimensions->cellSize,
                                                                   texture,
-                                                                  textureSampler);
+                                                                  textureSampler,
+                                                                  dimensions->scale);
             return mix(static_cast<float4>(bwColor),
                        in.underlineColor,
                        weight);
@@ -261,8 +309,9 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
         }
     } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // Background shows through completely. Not emoji.
-        if (in.underline) {
-            const float weight = ComputeWeightOfUnderline(in.clipSpacePosition.xy,
+        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
+                                                          in.clipSpacePosition.xy,
                                                           in.viewportSize,
                                                           in.cellOffset,
                                                           dimensions->underlineOffset,
@@ -272,7 +321,8 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                                           in.textureCoordinate,
                                                           dimensions->cellSize,
                                                           texture,
-                                                          textureSampler);
+                                                          textureSampler,
+                                                          dimensions->scale);
             if (weight > 0) {
                 return mix(in.backgroundColor,
                            in.underlineColor,
@@ -313,8 +363,9 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
 
     if (!in.recolor) {
         // Emoji code path
-        if (in.underline) {
-            const float weight = ComputeWeightOfUnderlineForEmoji(in.clipSpacePosition.xy,
+        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+            const float weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+                                                                  in.clipSpacePosition.xy,
                                                                   in.viewportSize,
                                                                   in.cellOffset,
                                                                   dimensions->underlineOffset,
@@ -324,7 +375,8 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                                   in.textureCoordinate,
                                                                   dimensions->cellSize,
                                                                   texture,
-                                                                  textureSampler);
+                                                                  textureSampler,
+                                                                  dimensions->scale);
             return mix(static_cast<float4>(bwColor),
                        in.underlineColor,
                        weight);
@@ -333,8 +385,9 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         }
     } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // Background shows through completely. Not emoji.
-        if (in.underline) {
-            const float weight = ComputeWeightOfUnderline(in.clipSpacePosition.xy,
+        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
+                                                          in.clipSpacePosition.xy,
                                                           in.viewportSize,
                                                           in.cellOffset,
                                                           dimensions->underlineOffset,
@@ -344,7 +397,8 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                           in.textureCoordinate,
                                                           dimensions->cellSize,
                                                           texture,
-                                                          textureSampler);
+                                                          textureSampler,
+                                                          dimensions->scale);
             if (weight > 0) {
                 return mix(backgroundColor,
                            in.underlineColor,
