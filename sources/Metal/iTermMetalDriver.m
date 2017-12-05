@@ -324,16 +324,14 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                       }];
 }
 
-// Called when all renderers have transient state
-- (NSUInteger)finalizeRenderersWithFrameData:(iTermMetalFrameData *)frameData
-                                       range:(NSRange)range {
-    // TODO: call setMarkStyle:row: for each mark
-
+- (void)finalizeCopyBackgroundRendererWithFrameData:(iTermMetalFrameData *)frameData {
     // Copy state
     iTermCopyBackgroundRendererTransientState *copyState =
         frameData.transientStates[NSStringFromClass([_copyBackgroundRenderer class])];
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+}
 
+- (void)finalizeCursorRendererWithFrameData:(iTermMetalFrameData *)frameData {
     // Update glyph attributes for block cursor if needed.
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
 #warning TODO Why is the cursor sometimes equal to grid height?
@@ -346,11 +344,13 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                                                                cursorInfo.cursorColor.blueComponent,
                                                                                1);
     }
+}
 
+- (NSInteger)finalizeTextRendererWithFrameData:(iTermMetalFrameData *)frameData {
     // Update the text renderer's transient state with current glyphs and colors.
     CGFloat scale = frameData.scale;
     iTermTextRendererTransientState *textState =
-        frameData.transientStates[NSStringFromClass([_textRenderer class])];
+    frameData.transientStates[NSStringFromClass([_textRenderer class])];
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
@@ -365,7 +365,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState =
-        frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
+    frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
     __block NSUInteger numberOfRows = 0;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
@@ -388,6 +388,27 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
     // Tell the text state that it's done getting row data.
     [textState willDrawWithDefaultBackgroundColor:frameData.perFrameState.defaultBackgroundColor];
+    return numberOfRows;
+}
+
+// Called when all renderers have transient state
+- (NSUInteger)finalizeRenderersWithFrameData:(iTermMetalFrameData *)frameData
+                                       range:(NSRange)range {
+    // TODO: call setMarkStyle:row: for each mark
+
+    [frameData finalizeCopyBackgroundRendererWithBlock:^{
+        [self finalizeCopyBackgroundRendererWithFrameData:frameData];
+    }];
+
+    [frameData finalizeCursorRendererWithBlock:^{
+        [self finalizeCursorRendererWithFrameData:frameData];
+    }];
+
+    __block NSInteger numberOfRows = 0;
+    [frameData finalizeTextRendererWithBlock:^{
+        numberOfRows = [self finalizeTextRendererWithFrameData:frameData];
+    }];
+
     return numberOfRows;
 }
 

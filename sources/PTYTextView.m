@@ -1105,6 +1105,11 @@ static const int kDragThreshold = 3;
     return _drawingHelper;
 }
 
+- (void)setAlphaValue:(CGFloat)alphaValue {
+    DLog(@"Set textview alpha to %@", @(alphaValue));
+    [super setAlphaValue:alphaValue];
+}
+
 - (void)drawRect:(NSRect)rect {
     if (![_delegate textViewShouldDrawRect]) {
         return;
