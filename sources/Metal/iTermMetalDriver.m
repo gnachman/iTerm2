@@ -536,6 +536,11 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                     completed = YES;
                     [self complete:frameData];
                     [self scheduleDrawIfNeededInView:view];
+
+                    __weak __typeof(self) weakSelf = self;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [weakSelf.dataSource metalDriverDidDrawFrame];
+                    });
                 }
             });
         }];

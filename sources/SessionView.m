@@ -87,7 +87,6 @@ static NSDate* lastResizeDate_;
     NSTextField *_hoverURLTextField;
 
     iTermMetalDriver *_driver NS_AVAILABLE_MAC(10_11);
-    MTKView *_metalView NS_AVAILABLE_MAC(10_11);
     BOOL _useMetal;
     iTermMetalClipView *_metalClipView;
 }
@@ -200,6 +199,7 @@ static NSDate* lastResizeDate_;
     [self insertSubview:_metalView atIndex:scrollViewIndex];
     _metalView.paused = NO;
     _metalView.hidden = NO;
+    _metalView.alphaValue = 0;
     _metalView.enableSetNeedsDisplay = YES;
     _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
     _driver.dataSource = dataSource;
