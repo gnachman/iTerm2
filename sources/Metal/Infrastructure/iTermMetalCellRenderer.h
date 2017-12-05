@@ -9,6 +9,7 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @class iTermMetalCellRendererTransientState;
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermCellRenderConfiguration : iTermRenderConfiguration
 @property (nonatomic, readonly) CGSize cellSize;
 @property (nonatomic, readonly) VT100GridSize gridSize;
@@ -29,6 +30,7 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalCellRenderer<NSObject>
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -40,6 +42,7 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCellRendererTransientState : iTermMetalRendererTransientState
 @property (nonatomic, readonly) __kindof iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, readonly) id<MTLBuffer> offsetBuffer;
@@ -53,6 +56,7 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCellRenderer : iTermMetalRenderer
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_UNAVAILABLE;

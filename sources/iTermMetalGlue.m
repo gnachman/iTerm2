@@ -143,6 +143,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     NSImage *_backgroundImage;
     BOOL _asciiAntialias;
     BOOL _nonasciiAntialias;
+    iTermMetalUnderlineDescriptor _asciiUnderlineDescriptor;
+    iTermMetalUnderlineDescriptor _nonAsciiUnderlineDescriptor;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -284,7 +286,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _backgroundImageBlending = textView.blend;
         _backgroundImageTiled = textView.delegate.backgroundImageTiled;
         _backgroundImage = [textView.delegate textViewBackgroundImage];
-#warning TODO: antialised on/off for ascii/nonascii
+
+        _asciiUnderlineDescriptor.color = VectorForColor([_colorMap colorForKey:kColorMapUnderline]);
+        _asciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_asciiFont.font.xHeight yOffset:0];
+        _asciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_asciiFont.font];
+
+        _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
+        _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_nonAsciiFont.font.xHeight yOffset:0];
+        _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
     }
     return self;
 }
@@ -404,6 +413,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             attributes[x].foregroundColor = textColor;
             attributes[x].foregroundColor.w = 1;
         }
+        attributes[x].underline = line[x].underline;
 
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;
@@ -674,6 +684,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         *emoji = characterSource.emoji;
     }
     return result;
+}
+
+- (void)metalGetUnderlineDescriptorsForASCII:(out iTermMetalUnderlineDescriptor *)ascii
+                                    nonASCII:(out iTermMetalUnderlineDescriptor *)nonAscii {
+    *ascii = _asciiUnderlineDescriptor;
+    *nonAscii = _nonAsciiUnderlineDescriptor;
 }
 
 #pragma mark - Color

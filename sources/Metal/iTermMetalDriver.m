@@ -355,6 +355,14 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
 
+    // Configure underlines
+    iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
+    iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
+    [frameData.perFrameState metalGetUnderlineDescriptorsForASCII:&asciiUnderlineDescriptor
+                                                         nonASCII:&nonAsciiUnderlineDescriptor];
+    textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
+    textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
+
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState =
         frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];

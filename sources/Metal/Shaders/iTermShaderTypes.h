@@ -20,7 +20,8 @@ typedef enum iTermTextureIndex {
 
 typedef enum {
     iTermFragmentBufferIndexMarginColor = 0,  // Points at a single float4
-    iTermFragmentBufferIndexColorModels = 1 // Array of 256-byte color tables
+    iTermFragmentBufferIndexColorModels = 1, // Array of 256-byte color tables
+    iTermFragmentInputIndexTextureDimensions = 2,  // Points at iTermTextureDimensions
 } iTermFragmentBufferIndex;
 
 typedef struct {
@@ -32,7 +33,7 @@ typedef struct {
 } iTermVertex;
 
 typedef struct {
-    // Offset from vertex
+    // Offset from vertex in pixels.
     vector_float2 offset;
 
     // Offset of source texture
@@ -47,10 +48,14 @@ typedef struct {
 
     // Passed through to the solid background color fragment shader.
     vector_int3 colorModelIndex;
+
+    // Draw an underline. The offset is provided in iTermTextureDimensions.
+    bool underline;
+    vector_float4 underlineColor;
 } iTermTextPIU;
 
 typedef struct {
-    // Offset from vertex
+    // Offset from vertex in pixels.
     vector_float2 offset;
 
     // Offset of source texture
@@ -74,5 +79,12 @@ typedef struct {
     vector_float4 color;
     vector_float2 origin;
 } iTermCursorDescription;
+
+typedef struct {
+    vector_float2 textureSize;  // Size of texture atlas in pixels
+    vector_float2 cellSize;  // Size of a cell within the atlas in pixels
+    float underlineOffset;  // Distance from bottom of cell to underline in pixels
+    float underlineThickness;  // Thickness of underline in pixels
+} iTermTextureDimensions;
 
 #endif
