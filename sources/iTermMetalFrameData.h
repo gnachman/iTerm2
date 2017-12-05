@@ -19,6 +19,12 @@ typedef struct {
     iTermPreciseTimerStats prepareStats;
     iTermPreciseTimerStats waitForGroup;
     iTermPreciseTimerStats finalizeStats;
+
+    // Finalize stats
+    iTermPreciseTimerStats fzCopyBackgroundRenderer;
+    iTermPreciseTimerStats fzCursor;
+    iTermPreciseTimerStats fzText;
+
     iTermPreciseTimerStats metalSetupStats;
     iTermPreciseTimerStats renderingStats;
     iTermPreciseTimerStats endToEnd;
@@ -56,6 +62,10 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *de
                              finalize:(void (^)(void))finalize
                                render:(void (^)(void))render;
 - (void)didCompleteWithAggregateStats:(iTermMetalFrameDataStatsBundle *)aggregateStats;
+
+- (void)finalizeCopyBackgroundRendererWithBlock:(void (^)(void))block;
+- (void)finalizeCursorRendererWithBlock:(void (^)(void))block;
+- (void)finalizeTextRendererWithBlock:(void (^)(void))block;
 
 @end
 

@@ -8,9 +8,12 @@
 #import "iTermMetalFrameData.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
+
 #import <MetalKit/MetalKit.h>
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermMetalFrameDataStatsBundle *bundle) {
+    iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
     iTermPreciseTimerStatsInit(&bundle->mainThreadStats, "main thread");
     iTermPreciseTimerStatsInit(&bundle->getCurrentDrawableStats, "mt.currentDrawable");
     iTermPreciseTimerStatsInit(&bundle->getCurrentRenderPassDescriptorStats, "mt.renderPassDescr");
@@ -19,6 +22,11 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermMetalFrameDataStatsBundle *bu
     iTermPreciseTimerStatsInit(&bundle->prepareStats, "prepare");
     iTermPreciseTimerStatsInit(&bundle->waitForGroup, "wait for group");
     iTermPreciseTimerStatsInit(&bundle->finalizeStats, "finalize");
+
+    iTermPreciseTimerStatsInit(&bundle->fzCopyBackgroundRenderer, "fin cp bg<");
+    iTermPreciseTimerStatsInit(&bundle->fzCursor, "fin cursor<");
+    iTermPreciseTimerStatsInit(&bundle->fzText, "fin text<");
+
     iTermPreciseTimerStatsInit(&bundle->metalSetupStats, "metal setup");
     iTermPreciseTimerStatsInit(&bundle->renderingStats, "rendering");
     iTermPreciseTimerStatsInit(&bundle->endToEnd, "end to end");
@@ -111,6 +119,9 @@ static NSInteger gNextFrameDataNumber;
         bundle->prepareStats,
         bundle->waitForGroup,
         bundle->finalizeStats,
+        bundle->fzCopyBackgroundRenderer,
+        bundle->fzCursor,
+        bundle->fzText,
         bundle->metalSetupStats,
         bundle->renderingStats,
         bundle->endToEnd
@@ -119,6 +130,24 @@ static NSInteger gNextFrameDataNumber;
     *countOut = sizeof(stats) / sizeof(*stats);
     NSMutableData *data = [NSMutableData dataWithBytes:stats length:sizeof(stats)];
     return (iTermPreciseTimerStats *)data.mutableBytes;
+}
+
+- (void)finalizeTextRendererWithBlock:(void (^)(void))block {
+    iTermPreciseTimerStatsStartTimer(&_stats.fzText);
+    block();
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.fzText);
+}
+
+- (void)finalizeCursorRendererWithBlock:(void (^)(void))block {
+    iTermPreciseTimerStatsStartTimer(&_stats.fzCursor);
+    block();
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.fzCursor);
+}
+
+- (void)finalizeCopyBackgroundRendererWithBlock:(void (^)(void))block {
+    iTermPreciseTimerStatsStartTimer(&_stats.fzCopyBackgroundRenderer);
+    block();
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.fzCopyBackgroundRenderer);
 }
 
 - (void)didCompleteWithAggregateStats:(iTermMetalFrameDataStatsBundle *)aggregateStats {
@@ -147,6 +176,11 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsRecord(&dest->prepareStats, _stats.prepareStats.mean * _stats.prepareStats.n, _stats.prepareStats.n);
     iTermPreciseTimerStatsRecord(&dest->waitForGroup, _stats.waitForGroup.mean * _stats.waitForGroup.n, _stats.waitForGroup.n);
     iTermPreciseTimerStatsRecord(&dest->finalizeStats, _stats.finalizeStats.mean * _stats.finalizeStats.n, _stats.finalizeStats.n);
+
+    iTermPreciseTimerStatsRecord(&dest->fzCopyBackgroundRenderer, _stats.fzCopyBackgroundRenderer.mean * _stats.fzCopyBackgroundRenderer.n, _stats.fzCopyBackgroundRenderer.n);
+    iTermPreciseTimerStatsRecord(&dest->fzCursor, _stats.fzCursor.mean * _stats.fzCursor.n, _stats.fzCursor.n);
+    iTermPreciseTimerStatsRecord(&dest->fzText, _stats.fzText.mean * _stats.fzText.n, _stats.fzText.n);
+
     iTermPreciseTimerStatsRecord(&dest->metalSetupStats, _stats.metalSetupStats.mean * _stats.metalSetupStats.n, _stats.metalSetupStats.n);
     iTermPreciseTimerStatsRecord(&dest->renderingStats, _stats.renderingStats.mean * _stats.renderingStats.n, _stats.renderingStats.n);
     iTermPreciseTimerStatsRecord(&dest->endToEnd, _stats.endToEnd.mean * _stats.endToEnd.n, _stats.endToEnd.n);
