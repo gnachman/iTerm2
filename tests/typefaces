@@ -14,5 +14,7 @@ BOLD       ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwy
 BOLD FAINT                    ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;2;1m
 BOLD FAINT        UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[3;2;1m
 BOLD FAINT ITALIC             ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[4;3;2;1m
-BOLD FAINT ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m[
+BOLD FAINT ITALIC UNDERLINED  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz[0m
 
+Underlined emoji:
+[4m😁[m

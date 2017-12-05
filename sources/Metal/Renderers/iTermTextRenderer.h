@@ -4,11 +4,27 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Describes how underlines should be drawn.
+typedef struct {
+    // Offset from the top of the cell, in points.
+    float offset;
+
+    // Line thickness, in points.
+    float thickness;
+
+    // Color to draw line in.
+    vector_float4 color;
+} iTermMetalUnderlineDescriptor;
+
 @class iTermTextureMap;
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) NSMutableData *modelData;
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
+@property (nonatomic) iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
+@property (nonatomic) iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
+
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
                    count:(int)count
@@ -21,6 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRenderer : NSObject<iTermMetalCellRenderer>
 
 @property (nonatomic, readonly) BOOL canRenderImmediately;

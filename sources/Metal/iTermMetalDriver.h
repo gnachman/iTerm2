@@ -2,7 +2,8 @@
 
 #import "iTermASCIITexture.h"
 #import "iTermCursor.h"
-#include "iTermMetalGlyphKey.h"
+#import "iTermMetalGlyphKey.h"
+#import "iTermTextRenderer.h"
 
 @import MetalKit;
 
@@ -51,6 +52,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // An object that compares as equal if ascii characters produced by metalImagesForGlyph would
 // produce the same bitmap.
 - (id)metalASCIICreationIdentifier;
+
+// Returns metrics and optional color for underlines.
+- (void)metalGetUnderlineDescriptorsForASCII:(out iTermMetalUnderlineDescriptor *)ascii
+                                    nonASCII:(out iTermMetalUnderlineDescriptor *)nonAscii;
 
 @end
 

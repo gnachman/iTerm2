@@ -28,8 +28,10 @@ typedef struct {
     iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
 } iTermMetalGlyphKey;
 
+// Features of a cell that do not affect which texture is selected as source material.
 typedef struct {
     vector_float4 foregroundColor;
     vector_float4 backgroundColor;
+    bool underline;
 } iTermMetalGlyphAttributes;
 

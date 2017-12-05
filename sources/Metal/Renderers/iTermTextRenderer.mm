@@ -22,6 +22,10 @@ typedef struct {
     int y;
 } iTermTextFixup;
 
+static vector_float2 VectorFromCGSize(CGSize size) {
+    return simd_make_float2(size.width, size.height);
+}
+
 @interface iTermTextRendererTransientState ()
 
 @property (nonatomic, strong) iTermTextureMap *textureMap;
@@ -189,6 +193,8 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
             piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
             piu->textColor = attributes[x].foregroundColor;
             piu->remapColors = !emoji;
+            piu->underline = attributes[x].underline;
+            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
             if (part == iTermTextureMapMiddleCharacterPart) {
                 piu->backgroundColor = attributes[x].backgroundColor;
                 if (_colorModels) {
@@ -213,6 +219,8 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
         piu->textColor = attributes[x].foregroundColor;
         piu->backgroundColor = attributes[x].backgroundColor;
         piu->remapColors = !emoji;
+        piu->underline = attributes[x].underline;
+        piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
         if (_colorModels) {
             piu->colorModelIndex = [self colorModelIndexForPIU:piu];
         }
@@ -290,6 +298,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
                                 w:(float)w
                                 h:(float)h
                        attributes:(iTermASCIITextureAttributes)attributes
+                        underline:(BOOL)underline
                   foregroundColor:(vector_float4)foregroundColor
                   backgroundColor:(vector_float4)backgroundColor {
     iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:attributes];
@@ -307,6 +316,8 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     piu->textColor = foregroundColor;
     piu->backgroundColor = backgroundColor;
     piu->remapColors = YES;
+    piu->underline = underline;
+    piu->underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : foregroundColor;
     if (_colorModels) {
         piu->colorModelIndex = [self colorModelIndexForPIU:piu];
     }
@@ -329,8 +340,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     DLog(@"BEGIN setGlyphKeysData for %@", self);
     ITDebugAssert(row == _backgroundColorDataArray.count);
     [_backgroundColorDataArray addObject:backgroundColorData];
-    const int width = self.cellConfiguration.gridSize.width;
-    ITDebugAssert(count <= width);
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     const float w = 1.0 / _textureMap.array.atlasSize.width;
@@ -360,6 +369,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                           w:asciiCellSize.x
                                           h:asciiCellSize.y
                                  attributes:asciiAttrs
+                                  underline:attributes[x].underline
                             foregroundColor:attributes[x].foregroundColor
                             backgroundColor:attributes[x].backgroundColor];
             havePrevious = NO;
@@ -600,15 +610,23 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
 - (NSDictionary *)texturesForTransientState:(iTermTextRendererTransientState *)tState
                                       stage:(iTermTextureMapStage *)stage
-                                      ascii:(id<MTLTexture>)ascii {
+                                      ascii:(id<MTLTexture>)ascii
+                                       size:(vector_float2 *)sizeOut
+                                   cellSize:(vector_float2 *)cellSizeOut {
     id<MTLTexture> texture;
     if (ascii) {
         texture = ascii;
+        *sizeOut = tState.asciiTextureGroup.atlasSize;
+        *cellSizeOut = VectorFromCGSize(tState.asciiTextureGroup.cellSize);
     } else if ([stage isKindOfClass:[iTermFallbackTextureMapStage class]]) {
         texture = stage.textureMap.array.texture;
+        *sizeOut = VectorFromCGSize(stage.textureMap.array.atlasSize);
+        *cellSizeOut = simd_make_float2(stage.textureMap.array.width, stage.textureMap.array.height);
         ITDebugAssert(texture);
     } else {
         texture = tState.textureMap.array.texture;
+        *sizeOut = VectorFromCGSize(tState.textureMap.array.atlasSize);
+        *cellSizeOut = simd_make_float2(tState.textureMap.array.width, tState.textureMap.array.height);
         ITDebugAssert(texture);
     }
     NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture };
@@ -623,6 +641,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     iTermTextRendererTransientState *tState = transientState;
     tState.vertexBuffer.label = @"Text vertex buffer";
     tState.offsetBuffer.label = @"Offset";
+    const float scale = tState.cellConfiguration.scale;
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
@@ -634,6 +653,19 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             if (stage.numberOfInstances) {
                 id<MTLBuffer> piuBuffer = [tState newPIUBufferForStage:stage];
                 ITDebugAssert(piuBuffer);
+
+                vector_float2 textureSize;
+                vector_float2 cellSize;
+                NSDictionary *textures = [self texturesForTransientState:tState stage:stage ascii:nil size:&textureSize cellSize:&cellSize];
+                iTermTextureDimensions textureDimensions = {
+                    .textureSize = textureSize,
+                    .cellSize = cellSize,
+                    .underlineOffset = cellSize.y - (tState.nonAsciiUnderlineDescriptor.offset * scale),
+                    .underlineThickness = tState.nonAsciiUnderlineDescriptor.thickness * scale,
+                };
+                id<MTLBuffer> textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions length:sizeof(textureDimensions) options:MTLResourceStorageModeShared];
+                textureDimensionsBuffer.label = @"Texture dimensions (non-ASCII)";
+
                 [_cellRenderer drawWithTransientState:tState
                                         renderEncoder:renderEncoder
                                      numberOfVertices:6
@@ -641,8 +673,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                         vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                                          @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
                                                          @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                                      fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState] }
-                                             textures:[self texturesForTransientState:tState stage:stage ascii:nil]];
+                                      fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState],
+                                                         @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                                             textures:textures];
             }
         }];
     }
@@ -659,6 +692,19 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                                    options:MTLResourceStorageModeShared];
         ITDebugAssert(piuBuffer);
         piuBuffer.label = @"ASCII Text PIUs";
+
+        vector_float2 textureSize;
+        vector_float2 cellSize;
+        NSDictionary *textures = [self texturesForTransientState:tState stage:nil ascii:texture size:&textureSize cellSize:&cellSize];
+        iTermTextureDimensions textureDimensions = {
+            .textureSize = textureSize,
+            .cellSize = cellSize,
+            .underlineOffset = cellSize.y - (tState.asciiUnderlineDescriptor.offset * scale),
+            .underlineThickness = tState.asciiUnderlineDescriptor.thickness * scale,
+        };
+        id<MTLBuffer> textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions length:sizeof(textureDimensions) options:MTLResourceStorageModeShared];
+        textureDimensionsBuffer.label = @"Texture dimensions (ASCII)";
+
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:renderEncoder
                              numberOfVertices:6
@@ -666,8 +712,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                                  @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
                                                  @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                              fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState] }
-                                     textures:[self texturesForTransientState:tState stage:nil ascii:texture]];
+                              fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState],
+                                                 @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                                     textures:textures];
     }];
 }
 

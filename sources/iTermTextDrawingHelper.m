@@ -2139,6 +2139,24 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     return [backgroundColor brightnessComponent] < PerceivedBrightness(components[0], components[1], components[2]);
 }
 
+- (CGFloat)yOriginForUnderlineGivenFontXHeight:(CGFloat)xHeight yOffset:(CGFloat)yOffset {
+    // Keep the underline a reasonable distance from the baseline.
+    CGFloat underlineOffset = _underlineOffset;
+    CGFloat distanceFromBaseline = underlineOffset - _baselineOffset;
+    const CGFloat minimumDistance = [self retinaRound:xHeight * 0.4];
+    if (distanceFromBaseline < minimumDistance) {
+        underlineOffset = _baselineOffset + minimumDistance;
+    } else if (distanceFromBaseline > xHeight / 2) {
+        underlineOffset = _baselineOffset + xHeight / 2;
+    }
+    CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
+    return [self retinaRound:yOffset + _cellSize.height + underlineOffset] - 1.0 / (2 * scaleFactor);
+}
+
+- (CGFloat)underlineThicknessForFont:(NSFont *)font {
+    return MAX(0.75, [self retinaRound:font.underlineThickness]);
+}
+
 - (void)drawUnderlineOfColor:(NSColor *)color
                        style:(NSUnderlineStyle)underlineStyle
                 atCellOrigin:(NSPoint)startPoint
@@ -2147,23 +2165,12 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     [color set];
     NSBezierPath *path = [NSBezierPath bezierPath];
 
-    // Keep the underline a reasonable distance from the baseline.
-    CGFloat underlineOffset = _underlineOffset;
-    CGFloat distanceFromBaseline = underlineOffset - _baselineOffset;
-    const CGFloat minimumDistance = [self retinaRound:font.xHeight * 0.4];
-    if (distanceFromBaseline < minimumDistance) {
-        underlineOffset = _baselineOffset + minimumDistance;
-    } else if (distanceFromBaseline > font.xHeight / 2) {
-        underlineOffset = _baselineOffset + font.xHeight / 2;
-    }
-
-    CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
     NSPoint origin = NSMakePoint(startPoint.x,
-                                 [self retinaRound:startPoint.y + _cellSize.height + underlineOffset] - 1.0 / (2 * scaleFactor));
+                                 [self yOriginForUnderlineGivenFontXHeight:font.xHeight yOffset:startPoint.y]);
     CGFloat dashPattern[] = { 4, 3 };
     CGFloat phase = fmod(startPoint.x, dashPattern[0] + dashPattern[1]);
 
-    const CGFloat lineWidth = MAX(0.75, [self retinaRound:font.underlineThickness]);
+    const CGFloat lineWidth = [self underlineThicknessForFont:font];
     switch (underlineStyle) {
         case NSUnderlineStyleSingle:
             [path moveToPoint:origin];

@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermMetalRendererTransientState;
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermRenderConfiguration : NSObject
 @property (nonatomic, readonly) vector_uint2 viewportSize;
 @property (nonatomic, readonly) CGFloat scale;
@@ -17,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
                                scale:(CGFloat)scale NS_DESIGNATED_INITIALIZER;
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalRenderer<NSObject>
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -28,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRendererTransientState : NSObject
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
@@ -41,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRenderer : NSObject
 
 @property (nonatomic, readonly) id<MTLDevice> device;
