@@ -384,7 +384,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                 // except when there's a background image, in which case the
                 // default background color gets a user-defined alpha value.
                 const BOOL isDefaultBackgroundColor = (backgroundKey.bgColorMode == ColorModeAlternate &&
-                                                       backgroundKey.bgColor == ALTSEM_DEFAULT);
+                                                       backgroundKey.bgColor == ALTSEM_DEFAULT &&
+                                                       !selected &&
+                                                       !findMatch);
                 background[x].w = isDefaultBackgroundColor ? (1 - _backgroundImageBlending) : 1;
             }
         }
