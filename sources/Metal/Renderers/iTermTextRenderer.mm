@@ -121,7 +121,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     return buffer;
 }
 
-- (void)willDrawWithDefaultBackgroundColor:(vector_float4)defaultBackgroundColor {
+- (void)willDraw {
     DLog(@"WILL DRAW %@", self);
     // Fix up the background color of parts of glyphs that are drawn outside their cell.
     const int numRows = _backgroundColorDataArray.count;
@@ -136,7 +136,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
             }
         } else {
             // Offscreen
-            fixup.piu->backgroundColor = defaultBackgroundColor;
+            fixup.piu->backgroundColor = _defaultBackgroundColor;
         }
     }
     [_stage blitNewTexturesFromStagingAreaWithCommandBuffer:_commandBuffer];
@@ -292,34 +292,153 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     return stage;
 }
 
+static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *piuArray,
+                                                                 int i,
+                                                                 char code,
+                                                                 float w,
+                                                                 float h,
+                                                                 iTermASCIITexture *texture,
+                                                                 float cellWidth,
+                                                                 int x,
+                                                                 float yOffset,
+                                                                 iTermASCIITextureOffset offset,
+                                                                 vector_float4 textColor,
+                                                                 vector_float4 backgroundColor,
+                                                                 iTermMetalGlyphAttributesUnderline underlineStyle,
+                                                                 vector_float4 underlineColor) {
+    iTermTextPIU *piu = &piuArray[i];
+    piu->offset = simd_make_float2(x * cellWidth,
+                                   yOffset);
+    MTLOrigin origin = [texture.textureArray offsetForIndex:iTermASCIITextureIndexOfCode(code, offset)];
+    piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
+    piu->textColor = textColor;
+    piu->backgroundColor = backgroundColor;
+    piu->remapColors = YES;
+    piu->underlineStyle = underlineStyle;
+    piu->underlineColor = underlineColor;
+    return piu;
+}
+
 - (void)addASCIICellToPIUsForCode:(char)code
                                 x:(int)x
                           yOffset:(float)yOffset
                                 w:(float)w
                                 h:(float)h
-                       attributes:(iTermASCIITextureAttributes)attributes
-                   underlineStyle:(iTermMetalGlyphAttributesUnderline)underlineStyle
-                  foregroundColor:(vector_float4)foregroundColor
-                  backgroundColor:(vector_float4)backgroundColor {
-    iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:attributes];
-    NSMutableData *data = _asciiPIUs[attributes];
+                        cellWidth:(float)cellWidth
+                       asciiAttrs:(iTermASCIITextureAttributes)asciiAttrs
+                       attributes:(const iTermMetalGlyphAttributes *)attributes {
+    iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
+    NSMutableData *data = _asciiPIUs[asciiAttrs];
     if (!data) {
-        data = [NSMutableData dataWithCapacity:_textureMap.capacity * sizeof(iTermTextPIU)];
-        _asciiPIUs[attributes] = data;
+        data = [NSMutableData dataWithCapacity:_textureMap.capacity * sizeof(iTermTextPIU) * iTermASCIITextureOffsetCount];
+        _asciiPIUs[asciiAttrs] = data;
     }
-    int i = _asciiInstances[attributes]++;
-    iTermTextPIU *piu = &((iTermTextPIU *)data.mutableBytes)[i];
-    piu->offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
-                                   yOffset);
-    MTLOrigin origin = [texture.textureArray offsetForIndex:iTermASCIITextureIndexOfCode(code)];
-    piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
-    piu->textColor = foregroundColor;
-    piu->backgroundColor = backgroundColor;
-    piu->remapColors = YES;
-    piu->underlineStyle = underlineStyle;
-    piu->underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : foregroundColor;
+
+    iTermTextPIU *piuArray = (iTermTextPIU *)data.mutableBytes;
+    iTermASCIITextureParts parts = texture.parts[(size_t)code];
+    vector_float4 underlineColor = { 0, 0, 0, 0 };
+    if (attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+        underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[x].foregroundColor;
+    }
+    // Add PIU for left overflow
+    iTermTextPIU *piu;
+    if (parts & iTermASCIITexturePartsLeft) {
+        if (x > 0) {
+            // Normal case
+            piu = iTermTextRendererTransientStateAddASCIIPart(piuArray,
+                                                              _asciiInstances[asciiAttrs]++,
+                                                              code,
+                                                              w,
+                                                              h,
+                                                              texture,
+                                                              cellWidth,
+                                                              x - 1,
+                                                              yOffset,
+                                                              iTermASCIITextureOffsetLeft,
+                                                              attributes[x].foregroundColor,
+                                                              attributes[x - 1].backgroundColor,
+                                                              iTermMetalGlyphAttributesUnderlineNone,
+                                                              underlineColor);
+        } else {
+            // Intrusion into left margin
+            piu = iTermTextRendererTransientStateAddASCIIPart(piuArray,
+                                                              _asciiInstances[asciiAttrs]++,
+                                                              code,
+                                                              w,
+                                                              h,
+                                                              texture,
+                                                              cellWidth,
+                                                              x - 1,
+                                                              yOffset,
+                                                              iTermASCIITextureOffsetLeft,
+                                                              attributes[x].foregroundColor,
+                                                              _defaultBackgroundColor,
+                                                              iTermMetalGlyphAttributesUnderlineNone,
+                                                              underlineColor);
+        }
+        if (_colorModels) {
+            piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+        }
+    }
+
+    // Add PIU for center part, which is always present
+    piu = iTermTextRendererTransientStateAddASCIIPart(piuArray,
+                                                      _asciiInstances[asciiAttrs]++,
+                                                      code,
+                                                      w,
+                                                      h,
+                                                      texture,
+                                                      cellWidth,
+                                                      x,
+                                                      yOffset,
+                                                      iTermASCIITextureOffsetCenter,
+                                                      attributes[x].foregroundColor,
+                                                      attributes[x].backgroundColor,
+                                                      attributes[x].underlineStyle,
+                                                      underlineColor);
     if (_colorModels) {
         piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+    }
+
+    // Add PIU for right overflow
+    if (parts & iTermASCIITexturePartsRight) {
+        const int lastColumn = self.cellConfiguration.gridSize.width - 1;
+        if (x < lastColumn) {
+            // Normal case
+            piu = iTermTextRendererTransientStateAddASCIIPart(piuArray,
+                                                              _asciiInstances[asciiAttrs]++,
+                                                              code,
+                                                              w,
+                                                              h,
+                                                              texture,
+                                                              cellWidth,
+                                                              x + 1,
+                                                              yOffset,
+                                                              iTermASCIITextureOffsetRight,
+                                                              attributes[x].foregroundColor,
+                                                              attributes[x + 1].backgroundColor,
+                                                              iTermMetalGlyphAttributesUnderlineNone,
+                                                              underlineColor);
+        } else {
+            // Intrusion into right margin
+            piu = iTermTextRendererTransientStateAddASCIIPart(piuArray,
+                                                              _asciiInstances[asciiAttrs]++,
+                                                              code,
+                                                              w,
+                                                              h,
+                                                              texture,
+                                                              cellWidth,
+                                                              x + 1,
+                                                              yOffset,
+                                                              iTermASCIITextureOffsetRight,
+                                                              attributes[x].foregroundColor,
+                                                              _defaultBackgroundColor,
+                                                              iTermMetalGlyphAttributesUnderlineNone,
+                                                              underlineColor);
+        }
+        if (_colorModels) {
+            piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+        }
     }
 }
 
@@ -368,10 +487,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                     yOffset:yOffset
                                           w:asciiCellSize.x
                                           h:asciiCellSize.y
-                                 attributes:asciiAttrs
-                             underlineStyle:attributes[x].underlineStyle
-                            foregroundColor:attributes[x].foregroundColor
-                            backgroundColor:attributes[x].backgroundColor];
+                                  cellWidth:cellWidth
+                                 asciiAttrs:asciiAttrs
+                                 attributes:attributes];
             havePrevious = NO;
         } else {
             // Non-ASCII slower path
@@ -722,7 +840,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
 - (void)setASCIICellSize:(CGSize)cellSize
       creationIdentifier:(id)creationIdentifier
-                creation:(NSImage *(^)(char, iTermASCIITextureAttributes))creation {
+                creation:(NSDictionary<NSNumber *, NSImage *> *(^)(char, iTermASCIITextureAttributes))creation {
     iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithCellSize:cellSize
                                                                                     device:_cellRenderer.device
                                                                         creationIdentifier:(id)creationIdentifier

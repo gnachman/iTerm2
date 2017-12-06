@@ -36,6 +36,7 @@ extern const int iTermTextureMapMiddleCharacterPart;
 }
 #endif
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextureMap : NSObject
 
 // Given in number of cells
@@ -55,10 +56,12 @@ extern const int iTermTextureMapMiddleCharacterPart;
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermFallbackTextureMap : iTermTextureMap
 @property (nonatomic, readonly) iTermTextureMapStage *onlyStage;
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextureMapStage : NSObject
 @property (nonatomic, weak) iTermTextureMap *textureMap;
 @property (nonatomic, readonly) iTermTextureArray *stageArray;
@@ -72,5 +75,6 @@ extern const int iTermTextureMapMiddleCharacterPart;
 
 @end
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermFallbackTextureMapStage : iTermTextureMapStage
 @end

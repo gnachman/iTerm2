@@ -24,6 +24,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 @property (nonatomic) iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
 @property (nonatomic) iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
+@property (nonatomic) vector_float4 defaultBackgroundColor;
 
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData
@@ -32,7 +33,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      row:(int)row
      backgroundColorData:(NSData *)backgroundColorData  // array of vector_float4 background colors.
                 creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
-- (void)willDrawWithDefaultBackgroundColor:(vector_float4)defaultBackgroundColor;
+- (void)willDraw;
 - (void)didComplete;
 
 @end
@@ -47,7 +48,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setASCIICellSize:(CGSize)cellSize
       creationIdentifier:(id)creationIdentifier
-                creation:(nullable NSImage *(^)(char, iTermASCIITextureAttributes))creation;
+                creation:(NSDictionary<NSNumber *, NSImage *> *(^)(char, iTermASCIITextureAttributes))creation;
 
 @end
 
