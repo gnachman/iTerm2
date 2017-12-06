@@ -11,7 +11,12 @@
 @implementation iTermKeyboardNavigatableTableView
 
 - (void)keyDown:(NSEvent *)theEvent {
-  [self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
+  if (([theEvent modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask
+	&& [theEvent keyCode] == 8) {
+    [super keyDown:theEvent];
+  } else {
+    [self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
+  }
 }
 
 @end
