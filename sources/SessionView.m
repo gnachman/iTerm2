@@ -190,17 +190,27 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+    // Allocate a new metal view
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:MTLCreateSystemDefaultDevice()];
+
+    // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
-    NSView *scrollViewSuperview = _useSubviewWithLayer ? _subviewWithLayer : self;
-    NSUInteger scrollViewIndex = [scrollViewSuperview.subviews indexOfObject:_scrollview];
-    assert(scrollViewIndex != NSNotFound);
-    [self insertSubview:_metalView atIndex:scrollViewIndex];
+
+    // Add the metal view to the view hierarchy. It needs a superview with layers so the scrollview
+    // can overlap it as a sibling.
+    assert(_useSubviewWithLayer);
+    [_subviewWithLayer insertSubview:_metalView atIndex:0];
+
+    // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
+    // first frame. Until then it's just a solid gray rectangle.
     _metalView.paused = NO;
     _metalView.hidden = NO;
     _metalView.alphaValue = 0;
     _metalView.enableSetNeedsDisplay = YES;
+
+    // Start the metal driver going. It will receive delegate calls from MTKView that kick off
+    // frame rendering.
     _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
     _driver.dataSource = dataSource;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];

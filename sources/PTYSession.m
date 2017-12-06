@@ -4752,11 +4752,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+    _view.useSubviewWithLayer = [self viewShouldWantLayer];
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.alphaValue = 1;
     }
-    _view.useSubviewWithLayer = [self viewShouldWantLayer];
 }
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
