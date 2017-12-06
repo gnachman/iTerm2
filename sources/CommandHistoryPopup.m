@@ -99,4 +99,15 @@
     }
 }
 
+- (void)insertNewline:(id)sender
+{
+    [self insertText:@"\n"];
+    [self closePopupWindow];
+}
+
+- (void)insertLineBreak:(id)sender
+{
+    [self rowSelected:self];
+}
+
 @end
