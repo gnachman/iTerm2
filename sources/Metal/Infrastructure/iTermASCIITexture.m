@@ -13,26 +13,40 @@
 const unsigned char iTermASCIITextureMinimumCharacter = 33; // !
 const unsigned char iTermASCIITextureMaximumCharacter = 126; // ~
 
-static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureMaximumCharacter - iTermASCIITextureMinimumCharacter + 1;
+static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount * (iTermASCIITextureMaximumCharacter - iTermASCIITextureMinimumCharacter + 1);
 
 @implementation iTermASCIITexture
 
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
                           cellSize:(CGSize)cellSize
                             device:(id<MTLDevice>)device
-                          creation:(NSImage * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
+                          creation:(NSDictionary<NSNumber *, NSImage *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
     self = [super init];
     if (self) {
+        _parts = (iTermASCIITextureParts *)calloc(128, sizeof(iTermASCIITextureParts));
         _attributes = attributes;
         _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:cellSize.width
                                                           textureHeight:cellSize.height
                                                             arrayLength:iTermASCIITextureCapacity
                                                                  device:device];
         for (int i = iTermASCIITextureMinimumCharacter; i <= iTermASCIITextureMaximumCharacter; i++) {
-            NSImage *image = creation(i, attributes);
-            if (image) {
-                [_textureArray setSlice:iTermASCIITextureIndexOfCode(i)
-                              withImage:creation(i, attributes)];
+            NSDictionary<NSNumber *, NSImage *> *dict = creation(i, attributes);
+            NSImage *left = dict[@(ImagePartFromDeltas(-1, 0))];
+            NSImage *center = dict[@(ImagePartFromDeltas(0, 0))];
+            NSImage *right = dict[@(ImagePartFromDeltas(1, 0))];
+            if (left) {
+                _parts[i] |= iTermASCIITexturePartsLeft;
+                [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetLeft)
+                              withImage:left];
+            }
+            if (right) {
+                _parts[i] |= iTermASCIITexturePartsRight;
+                [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetRight)
+                              withImage:right];
+            }
+            if (center) {
+                [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetCenter)
+                              withImage:center];
             } else {
                 ELog(@"Couldn't produce image for ascii %d", i);
             }
@@ -50,7 +64,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureMaximumChara
 - (instancetype)initWithCellSize:(CGSize)cellSize
                           device:(id<MTLDevice>)device
               creationIdentifier:(id)creationIdentifier
-                        creation:(NSImage * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
+                        creation:(NSDictionary<NSNumber *, NSImage *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
     self = [super init];
     if (self) {
         _cellSize = cellSize;

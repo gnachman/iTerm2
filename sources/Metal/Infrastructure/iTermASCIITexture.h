@@ -17,6 +17,7 @@ extern "C" {
 
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextureArray.h"
+#import "iTermTextureMap.h"
 
 #import <simd/simd.h>
 
@@ -48,26 +49,42 @@ extern const unsigned char iTermASCIITextureMaximumCharacter;
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_OPTIONS(int, iTermASCIITextureParts) {
+    iTermASCIITexturePartsLeft = (1 << 0),
+    iTermASCIITexturePartsCenter = (1 << 1),
+    iTermASCIITexturePartsRight = (1 << 2)
+};
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITexture : NSObject
 
 @property (nonatomic, readonly) iTermTextureArray *textureArray;
 @property (nonatomic, readonly) iTermASCIITextureAttributes attributes;
+// C array that maps an ASCII code to which parts are present
+@property (nonatomic, readonly) iTermASCIITextureParts *parts;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
                           cellSize:(CGSize)cellSize
                             device:(id<MTLDevice>)device
-                          creation:(NSImage * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+                          creation:(NSDictionary<NSNumber *, NSImage *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 
 @end
 
+typedef NS_ENUM(int, iTermASCIITextureOffset) {
+    iTermASCIITextureOffsetLeft = 0,
+    iTermASCIITextureOffsetCenter = 1,
+    iTermASCIITextureOffsetRight = 2,
+
+    iTermASCIITextureOffsetCount = 3
+};
+
 // Convert a drawable ASCII character into an index into the texture array. Note that control
 // character, SPACE, and DEL (127) are not accepted.
-NS_INLINE int iTermASCIITextureIndexOfCode(char code) {
+NS_INLINE int iTermASCIITextureIndexOfCode(char code, iTermASCIITextureOffset offset) {
     ITDebugAssert(code >= iTermASCIITextureMinimumCharacter);
     ITDebugAssert(code <= iTermASCIITextureMaximumCharacter);
-    return code - iTermASCIITextureMinimumCharacter;
+    return offset + iTermASCIITextureOffsetCount * (code - iTermASCIITextureMinimumCharacter);
 }
 
 // Implements isEqual:
@@ -76,14 +93,14 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic, readonly) CGSize cellSize;
 @property (nonatomic, strong, readonly) id<MTLDevice> device;
-@property (nonatomic, copy, readonly) NSImage *(^creation)(char, iTermASCIITextureAttributes);
+@property (nonatomic, copy, readonly) NSDictionary<NSNumber *, NSImage *> *(^creation)(char, iTermASCIITextureAttributes);
 @property (nonatomic, readonly) id creationIdentifier;
 @property (nonatomic, readonly) vector_float2 atlasSize;
 
 - (instancetype)initWithCellSize:(CGSize)cellSize
                           device:(id<MTLDevice>)device
               creationIdentifier:(id)creationIdentifier
-                        creation:(NSImage *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+                        creation:(NSDictionary<NSNumber *, NSImage *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (iTermASCIITexture *)asciiTextureForAttributes:(iTermASCIITextureAttributes)attributes;

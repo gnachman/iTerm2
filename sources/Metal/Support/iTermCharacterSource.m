@@ -15,6 +15,9 @@
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
+static const CGFloat iTermFakeItalicSkew = 0.4;
+static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
+
 @implementation iTermCharacterSource {
     NSString *_string;
     NSFont *_font;
@@ -185,6 +188,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         return CGRectZero;
     }
     CGContextRef cgContext = [iTermCharacterSource onePixelContext];
+
     CGRect frame = CTLineGetImageBounds(_lineRef, cgContext);
     const int radius = iTermTextureMapMaxCharacterParts / 2;
     frame.origin.y -= _baselineOffset;
@@ -192,15 +196,29 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     frame.origin.y *= _scale;
     frame.size.width *= _scale;
     frame.size.height *= _scale;
+
+    if (_fakeItalic) {
+        // Unfortunately it looks like CTLineGetImageBounds ignores the context's text matrix so we
+        // have to guess what the frame's width would be when skewing it.
+        frame.size.width += CGRectGetMaxY(frame) * iTermFakeItalicSkew;
+        CGFloat minY = CGRectGetMinY(frame);
+        if (minY < 0) {
+            frame.size.width -= minY * iTermFakeItalicSkew;
+            frame.origin.x += minY * iTermFakeItalicSkew;
+        }
+    }
+    if (_fakeBold) {
+        frame.size.width += iTermCharacterSourceFakeBoldShiftPoints * _scale;
+    }
+
     frame.origin.x += radius * _partSize.width;
     frame.origin.y += radius * _partSize.height;
     frame.origin.y = _size.height - frame.origin.y - frame.size.height;
 
-    // This is set to cut off subpixels that spill into neighbors as an optimization.
-    CGPoint min = CGPointMake(ceil(CGRectGetMinX(frame)),
-                              ceil(CGRectGetMinY(frame)));
-    CGPoint max = CGPointMake(floor(CGRectGetMaxX(frame)),
-                              floor(CGRectGetMaxY(frame)));
+    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)),
+                              floor(CGRectGetMinY(frame)));
+    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)),
+                              ceil(CGRectGetMaxY(frame)));
     frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
 
     return frame;
@@ -216,7 +234,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
     CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
 
-    const CGFloat skew = _fakeItalic ? 0.2 : 0;
+    const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
 
     if (_useThinStrokes) {
         CGContextSetShouldSmoothFonts(_cgContext, YES);
@@ -229,9 +247,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     [self drawRuns:runs atOffset:CGPointMake(offset.x, ty) skew:skew];
     if (_fakeBold) {
-#warning TODO: This will cause characters to overrun their cells in a big way :(
-        CGFloat fakeBoldShift = 1;
-        [self drawRuns:runs atOffset:CGPointMake(offset.x + fakeBoldShift, ty) skew:skew];
+        [self drawRuns:runs atOffset:CGPointMake(offset.x + iTermCharacterSourceFakeBoldShiftPoints, ty) skew:skew];
     }
 }
 
@@ -245,7 +261,9 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 }
 
 - (void)drawRuns:(CFArrayRef)runs atOffset:(CGPoint)offset skew:(CGFloat)skew {
-    [self initializeTextMatrixWithSkew:skew offset:offset];
+    [self initializeTextMatrixInContext:_cgContext
+                               withSkew:skew
+                                 offset:offset];
 
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -296,13 +314,15 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 }
 
-- (void)initializeTextMatrixWithSkew:(CGFloat)skew offset:(CGPoint)offset {
+- (void)initializeTextMatrixInContext:(CGContextRef)cgContext
+                             withSkew:(CGFloat)skew
+                               offset:(CGPoint)offset {
     if (!_emoji) {
         // Can't use this with emoji.
         CGAffineTransform textMatrix = CGAffineTransformMake(_scale, 0.0,
                                                              skew, _scale,
                                                              offset.x, offset.y);
-        CGContextSetTextMatrix(_cgContext, textMatrix);
+        CGContextSetTextMatrix(cgContext, textMatrix);
     }
 }
 

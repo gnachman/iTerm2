@@ -205,7 +205,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     CGFloat scale = _scale;
     [_textRenderer setASCIICellSize:_cellSize
                  creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
-                           creation:^NSImage * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
+                           creation:^NSDictionary<NSNumber *, NSImage *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
                                if (strongSelf) {
                                    static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
@@ -219,11 +219,10 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                        .typeface = (attributes & typefaceMask),
                                    };
                                    BOOL emoji = NO;
-                                   NSDictionary<NSNumber *, NSImage *> *partToImageMap = [frameData.perFrameState metalImagesForGlyphKey:&glyphKey
-                                                                                                                                    size:cellSize
-                                                                                                                                   scale:scale
-                                                                                                                                   emoji:&emoji];
-                                   return partToImageMap[@(ImagePartFromDeltas(0, 0))];
+                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKey
+                                                                                     size:cellSize
+                                                                                    scale:scale
+                                                                                    emoji:&emoji];
                                } else {
                                    return nil;
                                }
@@ -362,7 +361,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                                          nonASCII:&nonAsciiUnderlineDescriptor];
     textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
     textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
-
+    textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
+    
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState =
     frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
@@ -387,7 +387,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     }];
 
     // Tell the text state that it's done getting row data.
-    [textState willDrawWithDefaultBackgroundColor:frameData.perFrameState.defaultBackgroundColor];
+    [textState willDraw];
     return numberOfRows;
 }
 
