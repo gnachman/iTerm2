@@ -608,6 +608,26 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     iTermASCIITextureGroup *_asciiTextureGroup;
 }
 
++ (NSData *)subpixelModelData {
+    static NSData *subpixelModelData;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableData *data = [NSMutableData data];
+        // The fragment function assumes we use the value 17 here. It's
+        // convenient that 17 evenly divides 255 (17 * 15 = 255).
+        float stride = 255.0/17.0;
+        for (float textColor = 0; textColor < 256; textColor += stride) {
+            for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
+                iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
+                                                                                               backgroundColor:MIN(MAX(0, backgroundColor / 255.0), 1)];
+                [data appendData:model.table];
+            }
+        }
+        subpixelModelData = data;
+    });
+    return subpixelModelData;
+}
+
 - (id<MTLBuffer>)subpixelModelsForState:(iTermTextRendererTransientState *)tState {
     if (tState.colorModels) {
         if (tState.colorModels.length == 0) {
@@ -622,21 +642,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     }
 
     if (_models == nil) {
-        NSMutableData *data = [NSMutableData data];
-        // The fragment function assumes we use the value 17 here. It's
-        // convenient that 17 evenly divides 255 (17 * 15 = 255).
-        float stride = 255.0/17.0;
-        for (float textColor = 0; textColor < 256; textColor += stride) {
-            for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
-                iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
-                                                                                               backgroundColor:MIN(MAX(0, backgroundColor / 255.0), 1)];
-                [data appendData:model.table];
-            }
-        }
-#warning TODO: Only create one per device
-        _models = [_cellRenderer.device newBufferWithBytes:data.bytes
-                                                    length:data.length
-                                                   options:MTLResourceStorageModeShared];
+        NSData *subpixelModelData = [iTermTextRenderer subpixelModelData];
+        _models = [_cellRenderer.device newBufferWithBytes:subpixelModelData.bytes
+                                                    length:subpixelModelData.length
+                                                   options:MTLResourceStorageModeManaged];
         _models.label = @"Subpixel models";
     }
     return _models;
