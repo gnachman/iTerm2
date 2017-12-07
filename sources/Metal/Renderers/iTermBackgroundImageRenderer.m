@@ -4,11 +4,52 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermBackgroundImageRendererTransientState : iTermMetalRendererTransientState
+@interface iTermTexturePool : NSObject
+- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
+- (void)returnTexture:(id<MTLTexture>)texture;
+@end
+
+@implementation iTermTexturePool {
+    NSMutableArray<id<MTLTexture>> *_textures;
+    vector_uint2 _size;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _textures = [NSMutableArray array];
+    }
+    return self;
+}
+
+- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size {
+    _size = size;
+    [_textures removeObjectsAtIndexes:[_textures indexesOfObjectsPassingTest:^BOOL(id<MTLTexture>  _Nonnull texture, NSUInteger idx, BOOL * _Nonnull stop) {
+        return (texture.width != _size.x || texture.height != _size.y);
+    }]];
+    if (_textures.count) {
+        id<MTLTexture> result = _textures.firstObject;
+        [_textures removeObjectAtIndex:0];
+        return result;
+    } else {
+        return nil;
+    }
+}
+
+- (void)returnTexture:(id<MTLTexture>)texture {
+    if (texture.width == _size.x && texture.height == _size.y) {
+        [_textures addObject:texture];
+    }
+}
+
+@end
+
+@interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
 #warning TODO: Add support for blending and tiled modes
 @property (nonatomic) CGFloat blending;
 @property (nonatomic) BOOL tiled;
+@property (nonatomic) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 @end
 
 @implementation iTermBackgroundImageRendererTransientState
@@ -22,17 +63,17 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermBackgroundImageRenderer {
     iTermMetalRenderer *_metalRenderer;
 
-    // The texture is shared because it tends to get reused. The transient state holds a reference
-    // to it, so when the image changes, this can be set to a new texture and it should just work.
-    id<MTLTexture> _texture;
-
     CGFloat _blending;
     BOOL _tiled;
+    NSImage *_image;
+    iTermTexturePool *_texturePool;
+    id<MTLTexture> _texture;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
+        _texturePool = [[iTermTexturePool alloc] init];
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBackgroundImageVertexShader"
                                                fragmentFunctionName:@"iTermBackgroundImageFragmentShader"
@@ -43,7 +84,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setImage:(NSImage *)image blending:(CGFloat)blending tiled:(BOOL)tiled {
-    _texture = image ? [_metalRenderer textureFromImage:image] : nil;
+    if (image != _image) {
+        _texture = image ? [_metalRenderer textureFromImage:image] : nil;
+    }
+    _image = image;
     _blending = blending;
     _tiled = tiled;
 }
@@ -67,8 +111,39 @@ NS_ASSUME_NONNULL_BEGIN
                                            commandBuffer:commandBuffer
                                               completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
                                                   [self initializeTransientState:transientState];
+
+                                                  iTermBackgroundImageRendererTransientState *tState = transientState;
+                                                  tState.texture = _texture;
+
+                                                  tState.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+                                                  [self initializeColorAttachmentOfSize:configuration.viewportSize
+                                                                 inRenderPassDescriptor:tState.intermediateRenderPassDescriptor];
+
                                                   completion(transientState);
                                               }];
+}
+
+- (void)didFinishWithTransientState:(iTermBackgroundImageRendererTransientState *)tState {
+    [_texturePool returnTexture:tState.intermediateRenderPassDescriptor.colorAttachments[0].texture];
+}
+
+- (void)initializeColorAttachmentOfSize:(vector_uint2)size inRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
+    MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
+    colorAttachment.storeAction = MTLStoreActionStore;
+    colorAttachment.texture = [_texturePool requestTextureOfSize:size];
+    if (!colorAttachment.texture) {
+        // Allocate a new texture.
+        MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+                                                                                                     width:size.x
+                                                                                                    height:size.y
+                                                                                                 mipmapped:NO];
+        textureDescriptor.usage = (MTLTextureUsageShaderRead |
+                                   MTLTextureUsageShaderWrite |
+                                   MTLTextureUsageRenderTarget |
+                                   MTLTextureUsagePixelFormatView);
+        colorAttachment.texture = [_metalRenderer.device newTextureWithDescriptor:textureDescriptor];
+        colorAttachment.texture.label = @"Intermediate Texture";
+    }
 }
 
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {

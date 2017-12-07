@@ -6,16 +6,20 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
+
 #import "iTermPreciseTimer.h"
 #import "VT100GridTypes.h"
 
+#import <Metal/Metal.h>
+#import <simd/simd.h>
+
 typedef struct {
     iTermPreciseTimerStats mainThreadStats;
+    iTermPreciseTimerStats getScarceResources;
     iTermPreciseTimerStats getCurrentDrawableStats;
     iTermPreciseTimerStats getCurrentRenderPassDescriptorStats;
-    iTermPreciseTimerStats mtWillBeginDrawing;
-    iTermPreciseTimerStats dispatchStats;
+    iTermPreciseTimerStats extractFromApp;
+    iTermPreciseTimerStats dispatchForPrepareStats;
     iTermPreciseTimerStats prepareStats;
     iTermPreciseTimerStats waitForGroup;
     iTermPreciseTimerStats finalizeStats;
@@ -25,7 +29,14 @@ typedef struct {
     iTermPreciseTimerStats fzCursor;
     iTermPreciseTimerStats fzText;
 
-    iTermPreciseTimerStats metalSetupStats;
+    iTermPreciseTimerStats drawStats;
+    iTermPreciseTimerStats drawMargins;
+    iTermPreciseTimerStats drawBGImage;
+    iTermPreciseTimerStats drawBGColor;
+    iTermPreciseTimerStats drawCursor;
+    iTermPreciseTimerStats drawCopyBG;
+    iTermPreciseTimerStats drawText;
+
     iTermPreciseTimerStats renderingStats;
     iTermPreciseTimerStats endToEnd;
 } iTermMetalFrameDataStatsBundle;
@@ -41,21 +52,25 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *de
 @protocol CAMetalDrawable;
 
 @interface iTermMetalFrameData : NSObject
-@property (nonatomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
-@property (nonatomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
-@property (nonatomic) VT100GridSize gridSize;
-@property (nonatomic) CGFloat scale;
+@property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
+@property (atomic, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
+@property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
+@property (atomic) vector_uint2 viewportSize;
+@property (atomic) VT100GridSize gridSize;
+@property (atomic) CGFloat scale;
 @property (atomic, strong) NSString *status;
-@property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
-@property (nonatomic, strong) id<CAMetalDrawable> drawable;
-@property (nonatomic, strong) id<MTLDevice> device;
+@property (atomic, strong) id<MTLDevice> device;
+@property (atomic, strong, readonly) MTKView *view;
+@property (nonatomic, readonly) NSInteger frameNumber;
+@property (nonatomic, readonly) iTermMetalFrameDataStatsBundle *stats;
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture.
 @property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 
 - (void)loadFromView:(MTKView *)view;
+- (void)extractStateFromAppInBlock:(void (^)(void))block;
+- (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 - (void)prepareWithBlock:(void (^)(void))block;
 - (void)waitForUpdatesToFinishOnGroup:(dispatch_group_t)group
                               onQueue:(dispatch_queue_t)queue
@@ -66,6 +81,9 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *de
 - (void)finalizeCopyBackgroundRendererWithBlock:(void (^)(void))block;
 - (void)finalizeCursorRendererWithBlock:(void (^)(void))block;
 - (void)finalizeTextRendererWithBlock:(void (^)(void))block;
+
+- (void)performBlockWithScarceResources:(void (^)(MTLRenderPassDescriptor *renderPassDescriptor,
+                                                  id<CAMetalDrawable> drawable))block;
 
 @end
 
