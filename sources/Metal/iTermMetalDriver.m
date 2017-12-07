@@ -16,6 +16,7 @@
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
+#import "MovingAverage.h"
 #import "iTermPreciseTimer.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextureArray.h"
@@ -23,7 +24,53 @@
 
 #import "iTermShaderTypes.h"
 
-static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
+// Maybe I could increase this in the future but it's easier to reason about issues during development when it's 1.
+static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
+
+// Here's the order of things and how to interpret the stats we record.
+// [main queue]                              - end-to-end  
+// drawInMTKView                             |              
+//   newFrameData                            | - main thread               
+//                                           | | - extract from app
+//     Build per-frame state                 | | |                     
+//                                           | | -
+//    loadFromView                           | |              
+//                                           | |
+// [private queue]                           | |              
+//                                           | - prepare
+// prepareRenderers                          | |            
+//   create transient state                  | |                       
+//   request text stage                      | |                   
+//                                           | -
+//                                           | - waitForGroup
+// [dispatch_group_notify on private queue]  | |                                       
+//                                           | -
+//                                           | - finalize
+// finalize renderers                        | |                 
+//   build PIUs                              | |           
+//                                           | -           
+//                                           | - draw           
+//   reallyDrawInView                        | |                  
+//                                           | | - get scarce resources
+//                                           | | | - get current drawable 
+//     get current drawable                  | | | |                   
+//                                           | | | -                   
+//                                           | | | - get render pass descriptor                   
+//     get current render pass descriptor    | | | |                                 
+//                                           | | | -                   
+//     drawWithDrawable                      | | -                 
+//                                           | | - individual draw calls (many stats) 
+//       many draw calls                     | | |                  
+//                                           | - -
+// [GPU completes]                           |                
+// completedHandler                          |                 
+//   dispatch async to private queue         |                 
+//                                           |
+// [private queue]                           |                
+// complete:                                 |          
+//   unlock glyphs                           |                
+//   return intermediate texture             |                              
+//                                           -
 
 @implementation iTermMetalCursorInfo
 @end
@@ -72,6 +119,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     int _framesInFlight;
     NSMutableArray *_currentFrames;
     NSTimeInterval _startTime;
+    MovingAverage *_fpsMovingAverage;
+    NSTimeInterval _lastFrameTime;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
@@ -96,7 +145,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         _commandQueue = [mtkView.device newCommandQueue];
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
         _currentFrames = [NSMutableArray array];
-
+        _fpsMovingAverage = [[MovingAverage alloc] init];
         iTermMetalFrameDataStatsBundleInitialize(&_stats);
     }
 
@@ -164,18 +213,21 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
     iTermMetalFrameData *frameData = [self newFrameData];
     [frameData loadFromView:view];
-    if (!frameData.drawable) {
-        NSLog(@"  abort: no drawable available");
-        return;
-    }
+    frameData.viewportSize = _viewportSize;
 
     @synchronized(self) {
         [_currentFrames addObject:frameData];
     }
 
-    dispatch_async(_queue, ^{
+    [frameData dispatchToPrivateQueue:_queue forPreparation:^{
+        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+        if (_lastFrameTime) {
+            [_fpsMovingAverage addValue:now - _lastFrameTime];
+        }
+        _lastFrameTime = now;
+
         [self prepareRenderersWithFrameData:frameData view:view];
-    });
+    }];
 }
 
 #pragma mark - Drawing
@@ -184,9 +236,9 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 - (iTermMetalFrameData *)newFrameData {
     iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] init];
 
-    iTermPreciseTimerStatsStartTimer(&_stats.mtWillBeginDrawing);
-    frameData.perFrameState = [_dataSource metalDriverWillBeginDrawingFrame];
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.mtWillBeginDrawing);
+    [frameData extractStateFromAppInBlock:^{
+        frameData.perFrameState = [_dataSource metalDriverWillBeginDrawingFrame];
+    }];
 
     frameData.transientStates = [NSMutableDictionary dictionary];
     frameData.rows = [NSMutableArray array];
@@ -231,23 +283,6 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     BOOL tiled;
     NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
     [_backgroundImageRenderer setImage:backgroundImage blending:blending tiled:tiled];
-    if (backgroundImage) {
-        frameData.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-        MTLRenderPassColorAttachmentDescriptor *colorAttachment = frameData.intermediateRenderPassDescriptor.colorAttachments[0];
-        colorAttachment.storeAction = MTLStoreActionStore;
-        MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:frameData.drawable.texture.pixelFormat
-                                                                                                     width:frameData.drawable.texture.width
-                                                                                                    height:frameData.drawable.texture.height
-                                                                                                 mipmapped:NO];
-        textureDescriptor.usage = (MTLTextureUsageShaderRead |
-                                   MTLTextureUsageShaderWrite |
-                                   MTLTextureUsageRenderTarget |
-                                   MTLTextureUsagePixelFormatView);
-        colorAttachment.texture = [frameData.device newTextureWithDescriptor:textureDescriptor];
-        colorAttachment.texture.label = @"Intermediate Texture";
-    } else {
-        frameData.intermediateRenderPassDescriptor = nil;
-    }
 
     [frameData prepareWithBlock:^{
         [commandBuffer enqueue];
@@ -261,12 +296,17 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                                         frameData.transientStates[NSStringFromClass(renderer.class)] = tState;
                                                         [self updateRenderer:renderer
                                                                        state:tState
-                                                               perFrameState:frameData.perFrameState];
+                                                                   frameData:frameData];
                                                     }
                                                     dispatch_group_leave(group);
                                                 }];
         }];
         VT100GridSize gridSize = frameData.gridSize;
+
+        // We need frameData's intermediateRenderPassDescriptor to be initialized before creating
+        // tstate's for subsequent objects. This assertion is there to make sure the tState exists,
+        // with the assumption its IRPD is set prior to creation if it should exist.
+        assert(frameData.transientStates[NSStringFromClass(_backgroundImageRenderer.class)]);
 
         iTermCellRenderConfiguration *cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:_viewportSize
                                                                                                                scale:frameData.scale
@@ -282,7 +322,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                                             frameData.transientStates[NSStringFromClass([renderer class])] = tState;
                                                             [self updateRenderer:renderer
                                                                            state:tState
-                                                                   perFrameState:frameData.perFrameState];
+                                                                       frameData:frameData];
                                                         }
                                                         dispatch_group_leave(group);
                                                     }];
@@ -369,6 +409,25 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     __block NSUInteger numberOfRows = 0;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
+#if ENABLE_ONSCREEN_STATS
+        if (idx == 0) {
+            iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)rowData.attributesData.bytes;
+            char frame[80];
+            sprintf(frame, sizeof(frame) - 1, "Frame %d, %d fps", (int)frameData.frameNumber, (int)(1.0 / [_fpsMovingAverage value]));
+            for (int i = 0; frame[i]; i++) {
+                glyphKeys[i].code = frame[i];
+                glyphKeys[i].isComplex = NO;
+                glyphKeys[i].image = NO;
+                glyphKeys[i].drawable = YES;
+                glyphKeys[i].typeface = iTermMetalGlyphKeyTypefaceRegular;
+
+                attributes[i].backgroundColor = simd_make_float4(1.0, 0.0, 0.0, 1.0);
+                attributes[i].foregroundColor = simd_make_float4(1.0, 1.0, 1.0, 1.0);
+                attributes[i].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+            }
+        }
+#endif
+
         [textState setGlyphKeysData:rowData.keysData
                               count:rowData.numberOfDrawableGlyphs
                      attributesData:rowData.attributesData
@@ -414,24 +473,34 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
            frameData:(iTermMetalFrameData *)frameData
-       renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
+       renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
+                stat:(iTermPreciseTimerStats *)stat {
+    iTermPreciseTimerStatsStartTimer(stat);
+
     NSString *className = NSStringFromClass([renderer class]);
     iTermMetalRendererTransientState *state = frameData.transientStates[className];
     ITDebugAssert(state);
     if (!state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }
+
+    iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
 }
 
 - (void)drawCellRenderer:(id<iTermMetalCellRenderer>)renderer
                frameData:(iTermMetalFrameData *)frameData
-           renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
+           renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
+                    stat:(iTermPreciseTimerStats *)stat {
+    iTermPreciseTimerStatsStartTimer(stat);
+
     NSString *className = NSStringFromClass([renderer class]);
     iTermMetalCellRendererTransientState *state = frameData.transientStates[className];
     ITDebugAssert(state);
     if (!state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }
+
+    iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
 }
 
 - (void)reallyDrawInView:(MTKView *)view
@@ -439,19 +508,43 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
            commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  Really drawing");
 
-    MTLRenderPassDescriptor *renderPassDescriptor = frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor;
+    [frameData performBlockWithScarceResources:^(MTLRenderPassDescriptor *renderPassDescriptor, id<CAMetalDrawable> drawable) {
+        BOOL ok = YES;
+        if (drawable == nil) {
+            frameData.status = @"nil currentDrawable";
+            ok = NO;
+        }
+        if (renderPassDescriptor == nil) {
+            frameData.status = @"nil renderPassDescriptor";
+            ok = NO;
+        }
+        if (!ok) {
+            [commandBuffer commit];
+            [self complete:frameData];
+            NSLog(@"** DRAW FAILED: %@", frameData);
+            return;
+        }
+        drawable.texture.label = @"Drawable";
+        [self drawWithDrawable:drawable renderPassDescriptor:renderPassDescriptor frameData:frameData commandBuffer:commandBuffer];
+    }];
+}
+
+- (void)drawWithDrawable:(id<CAMetalDrawable>)drawable
+    renderPassDescriptor:(MTLRenderPassDescriptor *)viewRenderPassDescriptor
+               frameData:(iTermMetalFrameData *)frameData
+           commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    MTLRenderPassDescriptor *renderPassDescriptor = frameData.intermediateRenderPassDescriptor ?: viewRenderPassDescriptor;
     id<MTLRenderCommandEncoder> renderEncoder;
     if (renderPassDescriptor != nil) {
         renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = frameData.intermediateRenderPassDescriptor ? @"Render background to intermediate" : @"Render All Layers of Terminal";
-        frameData.drawable.texture.label = @"Drawable";
 
         // Set the region of the drawable to which we'll draw.
         MTLViewport viewport = {
-            -(double)_viewportSize.x,
+            -(double)frameData.viewportSize.x,
             0.0,
-            _viewportSize.x * 2,
-            _viewportSize.y * 2,
+            frameData.viewportSize.x * 2,
+            frameData.viewportSize.y * 2,
             -1.0,
             1.0
         };
@@ -459,15 +552,18 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
         [self drawCellRenderer:_marginRenderer
                      frameData:frameData
-                 renderEncoder:renderEncoder];
+                 renderEncoder:renderEncoder
+                          stat:&frameData.stats->drawMargins];
 
         [self drawRenderer:_backgroundImageRenderer
                  frameData:frameData
-             renderEncoder:renderEncoder];
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats->drawBGImage];
 
         [self drawCellRenderer:_backgroundColorRenderer
                      frameData:frameData
-                 renderEncoder:renderEncoder];
+                 renderEncoder:renderEncoder
+                          stat:&frameData.stats->drawBGColor];
 
         //        [_broadcastStripesRenderer drawWithRenderEncoder:renderEncoder];
         //        [_badgeRenderer drawWithRenderEncoder:renderEncoder];
@@ -480,23 +576,27 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                 case CURSOR_UNDERLINE:
                     [self drawCellRenderer:_underlineCursorRenderer
                                  frameData:frameData
-                             renderEncoder:renderEncoder];
+                             renderEncoder:renderEncoder
+                                      stat:&frameData.stats->drawCursor];
                     break;
                 case CURSOR_BOX:
                     if (cursorInfo.frameOnly) {
                         [self drawCellRenderer:_frameCursorRenderer
                                      frameData:frameData
-                                 renderEncoder:renderEncoder];
+                                 renderEncoder:renderEncoder
+                                          stat:&frameData.stats->drawCursor];
                     } else {
                         [self drawCellRenderer:_blockCursorRenderer
                                      frameData:frameData
-                                 renderEncoder:renderEncoder];
+                                 renderEncoder:renderEncoder
+                                          stat:&frameData.stats->drawCursor];
                     }
                     break;
                 case CURSOR_VERTICAL:
                     [self drawCellRenderer:_barCursorRenderer
                                  frameData:frameData
-                             renderEncoder:renderEncoder];
+                             renderEncoder:renderEncoder
+                                      stat:&frameData.stats->drawCursor];
                     break;
                 case CURSOR_DEFAULT:
                     break;
@@ -510,10 +610,10 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         }
     }
 
-    renderPassDescriptor = frameData.renderPassDescriptor;
+    renderPassDescriptor = viewRenderPassDescriptor;
     if (renderPassDescriptor) {
         if (frameData.intermediateRenderPassDescriptor) {
-            renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:frameData.renderPassDescriptor];
+            renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:viewRenderPassDescriptor];
             renderEncoder.label = @"Copy bg and render text";
             // Set the region of the drawable to which we'll draw.
             MTLViewport viewport = {
@@ -525,30 +625,25 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                 1.0
             };
             [renderEncoder setViewport:viewport];
-            [self drawRenderer:_copyBackgroundRenderer frameData:frameData renderEncoder:renderEncoder];
+            [self drawRenderer:_copyBackgroundRenderer
+                     frameData:frameData
+                 renderEncoder:renderEncoder
+                          stat:&frameData.stats->drawCopyBG];
         }
         [self drawCellRenderer:_textRenderer
                      frameData:frameData
-                 renderEncoder:renderEncoder];
+                 renderEncoder:renderEncoder
+                          stat:&frameData.stats->drawText];
 
         //        [_markRenderer drawWithRenderEncoder:renderEncoder];
 
         [renderEncoder endEncoding];
-        [commandBuffer presentDrawable:frameData.drawable];
+        [commandBuffer presentDrawable:drawable];
 
         int counter;
         static int nextCounter;
         counter = nextCounter++;
         __block BOOL completed = NO;
-
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), _queue, ^{
-            if (!completed) {
-                frameData.status = @"wedge detected";
-                NSLog(@"WEDGED STATE DETECTED! %@", frameData);
-                completed = YES;
-                [self complete:frameData];
-            }
-         });
 
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
             frameData.status = @"completion handler, waiting for dispatch";
@@ -556,7 +651,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                 if (!completed) {
                     completed = YES;
                     [self complete:frameData];
-                    [self scheduleDrawIfNeededInView:view];
+                    [self scheduleDrawIfNeededInView:frameData.view];
 
                     __weak __typeof(self) weakSelf = self;
                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -582,6 +677,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         frameData.transientStates[NSStringFromClass([_textRenderer class])];
     [textState didComplete];
 
+    [_backgroundImageRenderer didFinishWithTransientState:frameData.transientStates[NSStringFromClass([_backgroundImageRenderer class])]];
+
     DLog(@"  Recording final stats");
     [frameData didCompleteWithAggregateStats:&_stats];
 
@@ -592,15 +689,20 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
             [_currentFrames removeObject:frameData];
         }
     }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self scheduleDrawIfNeededInView:frameData.view];
+    });
 }
 
 #pragma mark - Updating
 
 - (void)updateRenderer:(id)renderer
                  state:(__kindof iTermMetalRendererTransientState *)tState
-         perFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+             frameData:(iTermMetalFrameData *)frameData {
+    id<iTermMetalDriverDataSourcePerFrameState> perFrameState = frameData.perFrameState;
+    
     if (renderer == _backgroundImageRenderer) {
-        [self updateBackgroundImageRendererWithPerFrameState:perFrameState];
+        [self updateBackgroundImageRendererWithTransientState:tState withFrameData:frameData];
     } else if (renderer == _backgroundColorRenderer ||
                renderer == _textRenderer ||
                renderer == _markRenderer ||
@@ -629,8 +731,10 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     [marginState setColor:perFrameState.defaultBackgroundColor];
 }
 
-- (void)updateBackgroundImageRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+- (void)updateBackgroundImageRendererWithTransientState:(iTermBackgroundImageRendererTransientState *)tState
+                                          withFrameData:(iTermMetalFrameData *)frameData {
     // TODO: Change the image if needed
+    frameData.intermediateRenderPassDescriptor = tState.intermediateRenderPassDescriptor;
 }
 
 - (void)updateBadgeRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {

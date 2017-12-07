@@ -11,6 +11,7 @@
 @implementation MovingAverage {
     NSTimeInterval _time;  // Time when -startTimer was called, or 0 if stopped.
     NSTimeInterval _timePaused;  // Time at which -pauseTimer was called.
+    BOOL _initialized;
 }
 
 - (instancetype)init {
@@ -39,7 +40,12 @@
 }
 
 - (void)addValue:(double)value {
-    _value = _alpha * _value + (1.0 - _alpha) * value;
+    if (_initialized) {
+        _value = _alpha * _value + (1.0 - _alpha) * value;
+    } else {
+        _initialized = YES;
+        _value = value;
+    }
 }
 
 - (BOOL)haveStartedTimer {
