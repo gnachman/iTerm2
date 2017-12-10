@@ -71,6 +71,7 @@ extern NSString *const kProfileWasDeletedNotification;
 @property(nonatomic, readonly) NSString *selectedGuid;
 
 - (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
+- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource font:(NSFont *)font;
 - (ProfileModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource;
 - (void)focusSearchField;
