@@ -1673,6 +1673,9 @@ static const int kMaxScreenRows = 4096;
             }
             break;
 
+#if 0
+// XXX THERM exploit: printf "\033]0;" ; cat /etc/services ; printf "\007"
+// -long lines take forever to be processed and putting that in a loop causes a DoS and memleak
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
             [delegate_ terminalSetWindowTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
@@ -1681,6 +1684,10 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetWindowTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
+        case XTERMCC_ICON_TITLE:
+            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
+            break;
+#endif
         case XTERMCC_PASTE64: {
             if (token.string) {
                 NSString *decoded = [self decodedBase64PasteCommand:token.string];
@@ -1692,9 +1699,6 @@ static const int kMaxScreenRows = 4096;
         }
         case XTERMCC_FINAL_TERM:
             [self executeFinalTermToken:token];
-            break;
-        case XTERMCC_ICON_TITLE:
-            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
         case VT100CSI_ICH:
             [delegate_ terminalInsertEmptyCharsAtCursor:token.csi->p[0]];

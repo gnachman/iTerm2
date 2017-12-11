@@ -8546,12 +8546,16 @@ return;
 }
 
 - (BOOL)screenAllowTitleSetting {
+return NO;
+// may cause problems
+#if 0
     NSNumber *n = _profile[KEY_ALLOW_TITLE_SETTING];
     if (!n) {
         return YES;
     } else {
         return [n boolValue];
     }
+#endif
 }
 
 - (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
