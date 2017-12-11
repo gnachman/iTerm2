@@ -989,6 +989,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     // Set up overflow menu.
     NSMenu *overflowMenu = [self _setupCells:newValues];
 
+return;
     if (overflowMenu) {
         [self _setupOverflowMenu:overflowMenu];
     }

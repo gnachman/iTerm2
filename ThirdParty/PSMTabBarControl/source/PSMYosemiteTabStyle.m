@@ -426,12 +426,6 @@
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (selected) {
-        if (_tabBar.window.backgroundColor) {
-            return _tabBar.window.backgroundColor;
-        } else {
-            return [NSColor windowBackgroundColor];
-        }
-    } else {
         CGFloat value;
         if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
             value = 190/255.0 - highlightAmount * 0.048;
@@ -440,6 +434,12 @@
             value = 236/255.0 - highlightAmount * 0.048;
         }
         return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+    } else {
+        if (_tabBar.window.backgroundColor) {
+            return _tabBar.window.backgroundColor;
+        } else {
+            return [NSColor windowBackgroundColor];
+        }
     }
 }
 

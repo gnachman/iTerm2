@@ -26,14 +26,14 @@
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (selected) {
+        CGFloat value = 180 / 255.0 - highlightAmount * 0.1;
+        return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+    } else {
         if (self.tabBar.window.backgroundColor) {
             return self.tabBar.window.backgroundColor;
         } else {
             return [NSColor windowBackgroundColor];
         }
-    } else {
-        CGFloat value = 180 / 255.0 - highlightAmount * 0.1;
-        return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }
 }
 
