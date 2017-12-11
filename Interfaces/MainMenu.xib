@@ -485,12 +485,13 @@ DQ
                                                 <action selector="toggleFindPanel:" target="-1" id="766"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Find Next" keyEquivalent="g" identifier="Find.Find Next" id="761">
+<!-- this was before g and G -->
+                                        <menuItem title="Find Next" keyEquivalent="P" identifier="Find.Find Next" id="761">
                                             <connections>
                                                 <action selector="findNext:" target="-1" id="767"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Find Previous" keyEquivalent="G" identifier="Find.Find Previous" id="763">
+                                        <menuItem title="Find Previous" keyEquivalent="p" identifier="Find.Find Previous" id="763">
                                             <connections>
                                                 <action selector="findPrevious:" target="-1" id="768"/>
                                             </connections>
