@@ -245,6 +245,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     if ([_delegate haveRightBorder]) {
         --width;
     }
+// Adjust tabbar width to cover the [+] "button"
+width += 24;
     return width;
 }
 
@@ -442,7 +444,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     } else {
         [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
     }
-    [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];// FORCE TO FALSE?
+    [self.tabBarControl setSizeCellsToFit:NO]; // [iTermAdvancedSettingsModel useUnevenTabs]];// FORCE TO FALSE?
     // [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
 	// THERMFIX always fit tabs.. at least in minitabs mode :? do we really need to have this configurable?
     [self.tabBarControl setStretchCellsToFit:TRUE];
