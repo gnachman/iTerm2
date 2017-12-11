@@ -1,7 +1,7 @@
 Therm
 =====
 
-Therm is a fork of iTerm2 that aims to:
+Therm is a fork of iTerm2 done by pancake <pancake@nopcode.org> that aims to:
 
 * Support old Macs (PPC and x86-32 are still alive)
 * Better defaults for power-users (no tabs, dark theme, follow mouse, ...)
@@ -13,7 +13,7 @@ Therm is a fork of iTerm2 that aims to:
 * No tabs, they are still there, but not visible
 * Disabled proprietary escape codes
 
-This fork has been done by pancake <pancake@nopcode.org>
+![Therm Screenshot](therm.png)
 
 Future
 ------
