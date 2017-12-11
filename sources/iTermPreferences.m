@@ -237,7 +237,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyShowJobName: @YES,
                   kPreferenceKeyShowProfileName: @NO,
                   kPreferenceKeyDimOnlyText: @NO,
-                  kPreferenceKeyDimmingAmount: @0.4,
+                  kPreferenceKeyDimmingAmount: @0.1,
                   kPreferenceKeyDimInactiveSplitPanes: @YES,
                   kPreferenceKeyShowWindowBorder: @NO,
                   kPreferenceKeyHideScrollbar: @NO,
