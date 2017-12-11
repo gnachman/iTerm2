@@ -283,7 +283,10 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1439"/>
+<!--
                             <menuItem title="Page Setup..." keyEquivalent="P" identifier="Page Setup..." id="685">
+-->
+                            <menuItem title="Page Setup..." identifier="Page Setup..." id="685">
                                 <connections>
                                     <action selector="runPageLayout:" target="-1" id="691"/>
                                 </connections>
@@ -291,18 +294,27 @@ DQ
                             <menuItem title="Print" id="822">
                                 <menu key="submenu" title="Print" id="824">
                                     <items>
+<!--
                                         <menuItem title="Screen" keyEquivalent="p" identifier="Print.Screen" id="823">
+-->
+                                        <menuItem title="Screen" identifier="Print.Screen" id="823">
                                             <connections>
                                                 <action selector="print:" target="-1" id="827"/>
                                             </connections>
                                         </menuItem>
+<!--
                                         <menuItem title="Selection" tag="1" keyEquivalent="p" identifier="Print.Selection" id="825">
+-->
+                                        <menuItem title="Selection" tag="1" identifier="Print.Selection" id="825">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="print:" target="-1" id="828"/>
                                             </connections>
                                         </menuItem>
+<!--
                                         <menuItem title="Buffer" tag="2" keyEquivalent="P" identifier="Print.Buffer" id="826">
+-->
+                                        <menuItem title="Buffer" tag="2" identifier="Print.Buffer" id="826">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="print:" target="-1" id="829"/>
