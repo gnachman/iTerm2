@@ -220,8 +220,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
 
-                  kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
-                  kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
+                  kPreferenceKeyTabStyle: @(TAB_STYLE_DARK_HIGH_CONTRAST),
+                  kPreferenceKeyTabPosition: @(TAB_POSITION_BOTTOM),
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,
