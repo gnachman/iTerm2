@@ -210,7 +210,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (BOOL)tabBarShouldBeVisible {
-return NO;
+// return NO;
     if (self.tabBarControl.flashing) {
         return YES;
     } else {
@@ -235,7 +235,7 @@ return NO;
 
     CGFloat width;
     if (self.shouldShowToolbelt && !_delegate.exitingLionFullscreen) {
-        width = _delegate.window.frame.size.width - floor(self.toolbeltWidth);
+        width = _delegate.window.frame.size.width; // - floor(self.toolbeltWidth);
     } else {
         width = _delegate.window.frame.size.width;
     }
@@ -287,6 +287,8 @@ return NO;
         DLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
         self.tabBarControl.hidden = NO;
         [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
+	// TODO: make it configurable
+	bool minitabs = true;
 
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab: {
@@ -305,6 +307,9 @@ return NO;
                     heightAdjustment += kDivisionViewHeight;
                 }
 
+		if (minitabs) {
+			heightAdjustment -= 18;
+		}
                 NSRect tabViewFrame =
                     NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
                                yOrigin,
@@ -314,10 +319,15 @@ return NO;
                 [self.tabView setFrame:tabViewFrame];
 
                 heightAdjustment = self.tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
+/*
+		if (minitabs) {
+			heightAdjustment = -18;
+		}
+*/
                 NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
                                                 NSMaxY(tabViewFrame) - heightAdjustment,
                                                 tabViewFrame.size.width,
-                                                kHorizontalTabBarHeight);
+                                                kHorizontalTabBarHeight + heightAdjustment);
 
                 [self updateDivisionView];
                 self.tabBarControl.frame = tabBarFrame;
@@ -329,10 +339,14 @@ return NO;
                 DLog(@"repositionWidgets - putting tabs at bottom");
                 [self removeLeftTabBarDragHandle];
                 // setup aRect to make room for the tabs at the bottom.
+		int tabsdelta = 0;
+		if (minitabs) {
+			tabsdelta = 18;
+		}
                 NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
                                                 _delegate.haveBottomBorder ? 1 : 0,
                                                 [self tabviewWidth],
-                                                kHorizontalTabBarHeight);
+                                                kHorizontalTabBarHeight - tabsdelta);
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
 
@@ -347,6 +361,8 @@ return NO;
                 if (!self.tabBarControl.flashing) {
                     y += kHorizontalTabBarHeight;
                 }
+		y-=tabsdelta;
+		heightAdjustment -= tabsdelta;
                 NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
                                                  y,
                                                  tabBarFrame.size.width,
@@ -426,8 +442,11 @@ return NO;
     } else {
         [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
     }
-    [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
-    [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
+    [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];// FORCE TO FALSE?
+    // [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
+	// THERMFIX always fit tabs.. at least in minitabs mode :? do we really need to have this configurable?
+    [self.tabBarControl setStretchCellsToFit:TRUE];
+    [self.tabBarControl setShowAddTabButton:FALSE];
     [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
     self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
     
