@@ -32,6 +32,13 @@ This is the app where I spent more time in my daily workflow, so it make
 sense to not over-engineer or make it fully configurable with features
 that <10% of users use.
 
+Settings
+--------
+
+To remove your settings and start over, kill Therm, open system Terminal
+and type the following command:
+
+	$ rm ~/Library/Preferences/com.pancake.therm.plist
 
 Contributions
 -------------
