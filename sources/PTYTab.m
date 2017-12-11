@@ -2874,7 +2874,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          zoomed:(BOOL)zoomed
                         profile:(Profile *)profile {
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
-    BOOL haveMultipleSessions = ([theChildren count] > 1);
+  //  BOOL haveMultipleSessions = ([theChildren count] > 1);
     BOOL showTitles = NO;
         // [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && (zoomed || haveMultipleSessions);
     // Begin by decorating the tree with pixel sizes.

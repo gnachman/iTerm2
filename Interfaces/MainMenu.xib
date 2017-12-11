@@ -1161,6 +1161,8 @@ DQ
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
+<!--
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
+-->
     </objects>
 </document>

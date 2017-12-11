@@ -61,9 +61,11 @@
 	<key>CFBundleHelpBookFolder</key>
 	<string>iTerm2 Help</string>
 	<key>CFBundleHelpBookName</key>
-	<string>iTerm2 Help</string>
+	<string>Therm Help</string>
 	<key>CFBundleIconFile</key>
 	<string>iTerm2.icns</string>
+        <key>ATSApplicationFontsPath</key>
+        <string>fonts</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
