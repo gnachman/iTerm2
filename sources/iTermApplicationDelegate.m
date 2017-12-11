@@ -960,10 +960,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         ITERM_IGNORE_PARTIAL_END
     }
 
+#if 0
     if ([iTermAdvancedSettingsModel enableAPIServer]) {
         _apiServer = [[iTermAPIServer alloc] init];
         _apiServer.delegate = self;
     }
+#endif
 
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
