@@ -934,6 +934,14 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1466">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Toggle Foreground" keyEquivalent="F" identifier="Toggle ForeGround" id="12312">
+<!--
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-->
+                                <connections>
+                                    <action selector="toggleForeground:" target="201" id="12323"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Exposé all Tabs" keyEquivalent="e" identifier="Exposé all Tabs" id="1231">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>

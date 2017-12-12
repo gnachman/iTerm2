@@ -1937,6 +1937,19 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [iTermExpose toggle];
 }
 
+- (IBAction)toggleForeground:(id)sender {
+    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
+    if (!pty) {
+        return;
+    }
+    if ([pty.window level] == NSNormalWindowLevel) {
+	    [pty.window setLevel: NSModalPanelWindowLevel];
+    } else {
+	    [pty.window setLevel: NSNormalWindowLevel];
+    }
+}
+
+
 - (void)clearAllDownloads:(id)sender {
     // [[FileTransferManager sharedInstance] removeAllDownloads];
 }
