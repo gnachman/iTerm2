@@ -3,7 +3,7 @@ Therm
 
 Therm is a fork of iTerm2 done by pancake <pancake@nopcode.org> that aims to:
 
-* Better defaults for power-users (no tabs, dark theme, follow mouse, ...)
+* Better defaults for power-users (distraction-less tabs, dark theme, follow mouse, ...)
 * Remove clutchy stuff like maximized indicators, scrollbars or title tabs
 * No timestamps (removed buggy feature and get some speed)
 * No Lion-style fullscreen, standard one is faster and handier
@@ -11,10 +11,12 @@ Therm is a fork of iTerm2 done by pancake <pancake@nopcode.org> that aims to:
 * Non-fullscreen windows have a thin border
 * Tabs are small, dark and non-intrussive
 * Remove the AutoUpdates (Sparkle framework)
-* Search entry is now dark and toggleable with CMD+F
+* Search entry is now dark and toggleable with CMD+f
 * Removed the integrated SSH client functionality (buggy)
-* Avoid blurry effects (leaky and slow)
-* Disabled proprietary escape codes
+* Avoid blurry and transparency effects (leaky and slow)
+* Added more fonts as default (Agave, Profont, Firacode, ...)
+* Support CMD+F to toggle foreground (always-on-top)
+* Disabled proprietary escape codes, as well as others with bugs (set-title, ..)
 * Disable force-touch actions that preview URLs (better use a real browser)
 
 ![Therm Screenshot](therm.png)
