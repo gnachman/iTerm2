@@ -17,7 +17,6 @@ extern "C" {
 
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextureArray.h"
-#import "iTermTextureMap.h"
 
 #import <simd/simd.h>
 

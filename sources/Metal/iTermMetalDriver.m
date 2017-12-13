@@ -20,7 +20,6 @@
 #import "iTermPreciseTimer.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextureArray.h"
-#import "iTermTextureMap.h"
 
 #import "iTermShaderTypes.h"
 
@@ -197,6 +196,13 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
             NSLog(@"%@", _currentFrames);
         }
     }
+
+    iTermMetalFrameData *frameData = [self newFrameData];
+    if (VT100GridSizeEquals(frameData.gridSize, VT100GridSizeMake(0, 0))) {
+        NSLog(@"  abort: 0x0");
+        return;
+    }
+
     BOOL shouldDrop;
     @synchronized(self) {
         shouldDrop = (_framesInFlight == iTermMetalDriverMaximumNumberOfFramesInFlight);
@@ -211,7 +217,6 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
         return;
     }
 
-    iTermMetalFrameData *frameData = [self newFrameData];
     [frameData loadFromView:view];
     frameData.viewportSize = _viewportSize;
 

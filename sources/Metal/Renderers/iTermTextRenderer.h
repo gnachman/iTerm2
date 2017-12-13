@@ -16,8 +16,6 @@ typedef struct {
     vector_float4 color;
 } iTermMetalUnderlineDescriptor;
 
-@class iTermTextureMap;
-
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) NSMutableData *modelData;
@@ -40,8 +38,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRenderer : NSObject<iTermMetalCellRenderer>
-
-@property (nonatomic, readonly) BOOL canRenderImmediately;
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

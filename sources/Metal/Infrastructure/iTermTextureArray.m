@@ -4,6 +4,22 @@
 #import "iTermTextureArray.h"
 #import <CoreImage/CoreImage.h>
 
+const int iTermTextureMapMaxCharacterParts = 5;
+const int iTermTextureMapMiddleCharacterPart = (iTermTextureMapMaxCharacterParts / 2) * iTermTextureMapMaxCharacterParts + (iTermTextureMapMaxCharacterParts / 2);
+
+int ImagePartDX(int part) {
+    return (part % iTermTextureMapMaxCharacterParts) - (iTermTextureMapMaxCharacterParts / 2);
+}
+
+int ImagePartDY(int part) {
+    return (part / iTermTextureMapMaxCharacterParts) - (iTermTextureMapMaxCharacterParts / 2);
+}
+
+int ImagePartFromDeltas(int dx, int dy) {
+    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    return (dx + radius) + (dy + radius) * iTermTextureMapMaxCharacterParts;
+}
+
 @implementation iTermTextureArray {
     uint32_t _width;
     uint32_t _height;
