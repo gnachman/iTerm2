@@ -9,7 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermCharacterSource.h"
-#import "iTermTextureMap.h"
+#import "iTermTextureArray.h"
 #import "NSStringITerm.h"
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);

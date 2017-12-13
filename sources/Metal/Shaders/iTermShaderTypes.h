@@ -39,7 +39,10 @@ typedef struct {
     vector_float2 textureCoordinate;
 } iTermVertex;
 
-typedef struct {
+typedef struct iTermTextPIU {
+#ifdef __cplusplus
+    iTermTextPIU() {}
+#endif
     // Offset from vertex in pixels.
     vector_float2 offset;
 

@@ -6,38 +6,388 @@ extern "C" {
 
 #import "iTermMetalCellRenderer.h"
 
+#import "GlyphKey.h"
 #import "iTermASCIITexture.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
-#import "iTermTextureMap.h"
-#import "iTermTextureMap+CPP.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
+#import <map>
+#import <set>
 #import <unordered_map>
-#include <vector>
+#import <vector>
+
+namespace iTerm2 {
+class TexturePage;
+}
 
 typedef struct {
-    iTermTextPIU *piu;
+    size_t piu_index;
     int x;
     int y;
 } iTermTextFixup;
 
-static vector_float2 VectorFromCGSize(CGSize size) {
-    return simd_make_float2(size.width, size.height);
+static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
+    return simd_make_uint2(size.width, size.height);
+}
+
+static const NSInteger iTermTextAtlasCapacity = 16;
+
+namespace iTerm2 {
+    // A PIUArray is an array of arrays of iTermTextPIU structs. This avoids giant allocations.
+    // It is append-only.
+    class PIUArray {
+    public:
+        PIUArray() : _capacity(1024), _size(0) {
+            _arrays.resize(1);
+            _arrays.back().reserve(_capacity);
+        }
+
+        explicit PIUArray(size_t capacity) : _capacity(capacity), _size(0) {
+            _arrays.resize(1);
+            _arrays.back().reserve(_capacity);
+        }
+
+        iTermTextPIU *get_next() {
+            if (_arrays.back().size() == _capacity) {
+                _arrays.resize(_arrays.size() + 1);
+                _arrays.back().reserve(_capacity);
+            }
+
+            std::vector<iTermTextPIU> &array = _arrays.back();
+            array.resize(array.size() + 1);
+            _size++;
+            return &array.back();
+        }
+
+        iTermTextPIU &get(const size_t &segment, const size_t &index) {
+            return _arrays[segment][index];
+        }
+
+        iTermTextPIU &get(const size_t &index) {
+            return _arrays[index / _capacity][index % _capacity];
+        }
+
+        void push_back(const iTermTextPIU &piu) {
+            memmove(get_next(), &piu, sizeof(piu));
+        }
+
+        size_t get_number_of_segments() const {
+            return _arrays.size();
+        }
+
+        const iTermTextPIU *start_of_segment(const size_t segment) const {
+            return &_arrays[segment][0];
+        }
+
+        size_t size_of_segment(const size_t segment) const {
+            return _arrays[segment].size();
+        }
+
+        const size_t &size() const {
+            return _size;
+        }
+
+    private:
+        const size_t _capacity;
+        size_t _size;
+        std::vector<std::vector<iTermTextPIU>> _arrays;
+    };
+
+    class TexturePage;
+
+    class TexturePageOwner {
+    public:
+        virtual bool texture_page_owner_is_glyph_entry() {
+            return false;
+        }
+    };
+
+    class TexturePage {
+    public:
+        TexturePage(TexturePageOwner *owner,
+                    id<MTLDevice> device,
+                    int capacity,
+                    vector_uint2 cellSize) :
+        _capacity(capacity),
+        _cell_size(cellSize),
+        _count(0),
+        _emoji(capacity) {
+            retain(owner);
+            _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:cellSize.x
+                                                              textureHeight:cellSize.y
+                                                                arrayLength:capacity
+                                                                     device:device];
+            _atlas_size = simd_make_uint2(_textureArray.atlasSize.width,
+                                          _textureArray.atlasSize.height);
+            _reciprocal_atlas_size = 1.0f / simd_make_float2(_atlas_size.x, _atlas_size.y);
+        }
+
+        virtual ~TexturePage() {
+        }
+
+        int get_available_count() const {
+            return _capacity - _count;
+        }
+
+        int add_image(NSImage *image, bool is_emoji) {
+            assert(_count < _capacity);
+            [_textureArray setSlice:_count withImage:image];
+            _emoji[_count] = is_emoji;
+            return _count++;
+        }
+
+        id<MTLTexture> get_texture() const {
+            return _textureArray.texture;
+        }
+
+        iTermTextureArray *get_texture_array() const {
+            return _textureArray;
+        }
+
+        bool get_is_emoji(const int index) const {
+            return _emoji[index];
+        }
+
+        const vector_uint2 &get_cell_size() const {
+            return _cell_size;
+        }
+
+        const vector_uint2 &get_atlas_size() const {
+            return _atlas_size;
+        }
+
+        const vector_float2 &get_reciprocal_atlas_size() const {
+            return _reciprocal_atlas_size;
+        }
+
+        void retain(TexturePageOwner *owner) {
+            _owners[owner]++;
+        }
+
+        void release(TexturePageOwner *owner) {
+            auto it = _owners.find(owner);
+            assert(it != _owners.end());
+            it->second--;
+            if (it->second == 0) {
+                _owners.erase(it);
+                if (_owners.empty()) {
+                    delete this;
+                }
+            }
+        }
+
+        void record_use() {
+            static long long use_count;
+            _last_used = use_count++;
+        }
+
+        long long get_last_used() const {
+            return _last_used;
+        }
+
+        std::map<TexturePageOwner *, int> get_owners() const {
+            return _owners;
+        }
+
+    private:
+        TexturePage();
+        TexturePage &operator=(const TexturePage &);
+        TexturePage(const TexturePage &);
+
+        iTermTextureArray *_textureArray;
+        int _capacity;
+        vector_uint2 _cell_size;
+        vector_uint2 _atlas_size;
+        int _count;
+        std::vector<bool> _emoji;
+        vector_float2 _reciprocal_atlas_size;
+        std::map<TexturePageOwner *, int> _owners;
+        long long _last_used;
+    };
+
+    struct GlyphEntry : TexturePageOwner {
+        GlyphEntry(int part,
+                   GlyphKey key,
+                   TexturePage *page,
+                   int index,
+                   bool is_emoji) :
+        _part(part),
+        _key(key),
+        _page(page),
+        _index(index),
+        _is_emoji(is_emoji),
+        _origin([_page->get_texture_array() offsetForIndex:_index]) {
+            page->retain(this);
+        }
+
+        virtual ~GlyphEntry() {
+            _page->release(this);
+        }
+
+        const MTLOrigin &get_origin() const {
+            return _origin;
+        }
+
+        virtual bool texture_page_owner_is_glyph_entry() {
+            return true;
+        }
+
+        int _part;
+        GlyphKey _key;
+        TexturePage *_page;
+        int _index;
+        bool _is_emoji;
+
+    private:
+        MTLOrigin _origin;
+    };
+
+    class TexturePageCollection : TexturePageOwner {
+    private:
+        const GlyphEntry *internal_add(int part, const GlyphKey &key, NSImage *image, bool is_emoji) {
+            if (!_openPage) {
+                _openPage = new TexturePage(this, _device, _pageCapacity, _cellSize);
+
+                _allPages.insert(_openPage);
+                _openPage->retain(this);
+            }
+
+            TexturePage *openPage = _openPage;
+            assert(_openPage->get_available_count() > 0);
+            const GlyphEntry *result = new GlyphEntry(part,
+                                                      key,
+                                                      openPage,
+                                                      openPage->add_image(image, is_emoji),
+                                                      is_emoji);
+            if (openPage->get_available_count() == 0) {
+                openPage->release(this);
+                _openPage = NULL;
+            }
+            return result;
+        }
+
+        static bool LRUComparison(TexturePage *a, TexturePage *b) {
+            return a->get_last_used() < b->get_last_used();
+        }
+
+    public:
+        TexturePageCollection(id<MTLDevice> device,
+                              const vector_uint2 cellSize,
+                              const int pageCapacity,
+                              const int maximumSize) :
+        _device(device),
+        _cellSize(cellSize),
+        _pageCapacity(pageCapacity),
+        _maximumSize(maximumSize),
+        _openPage(NULL)
+        { }
+
+        virtual ~TexturePageCollection() {
+            if (_openPage) {
+                _openPage->release(this);
+                _openPage = NULL;
+            }
+            for (auto it = _pages.begin(); it != _pages.end(); it++) {
+                std::vector<const GlyphEntry *> *vector = it->second;
+                for (auto glyph_entry : *vector) {
+                    delete glyph_entry;
+                }
+                delete vector;
+            }
+        }
+
+        std::vector<const GlyphEntry *> *find(const GlyphKey &glyphKey) const {
+            auto const it = _pages.find(glyphKey);
+            if (it == _pages.end()) {
+                return NULL;
+            } else {
+                return it->second;
+            }
+        }
+
+        std::vector<const GlyphEntry *> *add(int column,
+                                             const GlyphKey &glyphKey,
+                                             NSDictionary<NSNumber *, NSImage *> *(^creator)(int, BOOL *)) {
+            BOOL emoji;
+            NSDictionary<NSNumber *, NSImage *> *images = creator(column, &emoji);
+            std::vector<const GlyphEntry *> *result = new std::vector<const GlyphEntry *>();
+            _pages[glyphKey] = result;
+            for (NSNumber *partNumber in images) {
+                NSImage *image = images[partNumber];
+                const GlyphEntry *entry = internal_add(partNumber.intValue, glyphKey, image, emoji);
+                result->push_back(entry);
+            }
+            return result;
+        }
+
+        const vector_uint2 &get_cell_size() const {
+            return _cellSize;
+        }
+
+        void set_maximum_size(int maximumSize) {
+            _maximumSize = maximumSize;
+        }
+
+        void prune_if_needed() {
+            if (is_over_maximum_size()) {
+#warning Test this code path
+                DLog(@"Pruning");
+                std::vector<TexturePage *> pages;
+                std::copy(_allPages.begin(), _allPages.end(), std::back_inserter(pages));
+                std::sort(pages.begin(), pages.end(), TexturePageCollection::LRUComparison);
+
+                for (int i = 0; is_over_maximum_size() && i < pages.size(); i++) {
+                    _allPages.erase(pages[i]);
+                    pages[i]->release(this);
+
+                    // Make all glyph entries remove their references to the page. Remove our
+                    // references to the glyph entries.
+                    auto owners = pages[i]->get_owners();
+                    for (auto pair : owners) {
+                        auto owner = pair.first;
+                        auto count = pair.second;
+                        for (int i = 0; i < count; i++) {
+                            if (owner->texture_page_owner_is_glyph_entry()) {
+                                GlyphEntry *glyph_entry = static_cast<GlyphEntry *>(owner);
+                                pages[i]->release(glyph_entry);
+                                _pages.erase(glyph_entry->_key);
+                            }
+                        }
+                    }
+                }
+            } else {
+                DLog(@"Not pruning");
+            }
+        }
+
+    private:
+        bool is_over_maximum_size() const {
+            return _allPages.size() * _pageCapacity > _maximumSize;
+        }
+
+        TexturePageCollection &operator=(const TexturePageCollection &);
+        TexturePageCollection(const TexturePageCollection &);
+
+        id<MTLDevice> _device;
+        const vector_uint2 _cellSize;
+        const int _pageCapacity;
+        int _maximumSize;
+        std::unordered_map<GlyphKey, std::vector<const GlyphEntry *> *> _pages;
+        std::set<TexturePage *> _allPages;
+        TexturePage *_openPage;
+    };
 }
 
 @interface iTermTextRendererTransientState ()
 
-@property (nonatomic, strong) iTermTextureMap *textureMap;
 @property (nonatomic, readonly) NSData *colorModels;
 @property (nonatomic, readonly) NSData *piuData;
 @property (nonatomic, strong) id<MTLDevice> device;
-@property (nonatomic, readonly) NSArray<iTermTextureMapStage *> *allStages;
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;
-
-// Invokes block for each combination of PIU array and texture. For example,
-// when bold and regular text are both present it would be called twice.
-- (void)enumerateASCIIDraws:(void (^)(iTermTextPIU *pius, NSInteger numberOfInstances, id<MTLTexture> texture))block;
+@property (nonatomic) iTerm2::TexturePageCollection *texturePageCollection;
+@property (nonatomic) NSInteger numberOfCells;
 
 @end
 
@@ -45,17 +395,13 @@ static vector_float2 VectorFromCGSize(CGSize size) {
 typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
 @implementation iTermTextRendererTransientState {
-    iTermTextureMapStage *_stage;
-    NSMutableArray<iTermFallbackTextureMap *> *_fallbackTextureMaps;
-
-    id<MTLCommandBuffer> _commandBuffer;
-
     // Data's bytes contains a C array of vector_float4 with background colors.
     NSMutableArray<NSData *> *_backgroundColorDataArray;
 
-    // PIUs that need their background colors set. They belong to parts of glyphs that spilled out
-    // of their bounds.
-    std::vector<iTermTextFixup> *_fixups;
+    // Info about PIUs that need their background colors set. They belong to
+    // parts of glyphs that spilled out of their bounds. The actual PIUs
+    // belong to _pius, but are missing some fields.
+    std::map<iTerm2::TexturePage *, std::vector<iTermTextFixup> *> _fixups;
 
     // Color models for this frame. Only used when there's no intermediate texture.
     NSMutableData *_colorModels;
@@ -67,15 +413,15 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
     NSMutableData *_asciiPIUs[iTermASCIITextureAttributesMax * 2];
     NSInteger _asciiInstances[iTermASCIITextureAttributesMax * 2];
+
+    // Array of PIUs for each texture page.
+    std::map<iTerm2::TexturePage *, iTerm2::PIUArray *> _pius;
 }
 
 - (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
     self = [super initWithConfiguration:configuration];
     if (self) {
         _backgroundColorDataArray = [NSMutableArray array];
-        _fixups = new std::vector<iTermTextFixup>();
-        _fallbackTextureMaps = [NSMutableArray array];
-
         iTermCellRenderConfiguration *cellConfiguration = configuration;
         if (!cellConfiguration.usingIntermediatePass) {
             _colorModels = [NSMutableData data];
@@ -86,210 +432,91 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 }
 
 - (void)dealloc {
-    delete _fixups;
+#warning TODO: Look for memory leaks in the C++ objects
+    for (auto pair : _fixups) {
+        delete pair.second;
+    }
     if (_colorModelIndexes) {
         delete _colorModelIndexes;
     }
+    for (auto it = _pius.begin(); it != _pius.end(); it++) {
+        delete it->second;
+    }
 }
 
-- (void)enumerateASCIIDraws:(void (^)(iTermTextPIU *, NSInteger, id<MTLTexture>))block {
+- (void)enumerateASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
     for (int i = 0; i < iTermASCIITextureAttributesMax * 2; i++) {
         if (_asciiInstances[i]) {
             iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
             ITBetaAssert(asciiTexture, @"nil ascii texture for attributes %d", i);
             block((iTermTextPIU *)_asciiPIUs[i].mutableBytes,
                   _asciiInstances[i],
-                  asciiTexture.textureArray.texture);
+                  asciiTexture.textureArray.texture,
+                  CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
+                  CGSizeToVectorUInt2(_asciiTextureGroup.cellSize));
         }
     }
 }
-- (NSArray<iTermTextureMapStage *> *)allStages {
-    NSArray<iTermTextureMapStage *> *fallbackStages = [_fallbackTextureMaps mapWithBlock:^id(iTermFallbackTextureMap *anObject) {
-        return anObject.onlyStage;
-    }];
-    return [@[ _stage ] arrayByAddingObjectsFromArray:fallbackStages];
+
+- (void)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
+    for (auto const &mapPair : _pius) {
+        const iTerm2::TexturePage *const &texturePage = mapPair.first;
+        const iTerm2::PIUArray *const &piuArray = mapPair.second;
+
+        for (size_t i = 0; i < piuArray->get_number_of_segments(); i++) {
+            const size_t count = piuArray->size_of_segment(i);
+            if (count > 0) {
+                block(piuArray->start_of_segment(i),
+                      count,
+                      texturePage->get_texture(),
+                      texturePage->get_atlas_size(),
+                      texturePage->get_cell_size());
+            }
+        }
+    }
 }
 
-- (id<MTLBuffer>)newPIUBufferForStage:(iTermTextureMapStage *)stage {
-    if (stage.piuData.length == 0) {
-        return nil;
-    }
-    id<MTLBuffer> buffer = [_device newBufferWithBytes:stage.piuData.bytes
-                                                length:sizeof(iTermTextPIU) * stage.numberOfInstances
-                                               options:MTLResourceStorageModeShared];
-    buffer.label = @"Text PIUs";
-    return buffer;
+- (void)enumerateDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
+    [self enumerateNonASCIIDraws:block];
+    [self enumerateASCIIDraws:block];
 }
 
 - (void)willDraw {
     DLog(@"WILL DRAW %@", self);
-    // Fix up the background color of parts of glyphs that are drawn outside their cell.
+    // Fix up the background color of parts of glyphs that are drawn outside their cell. Add to the
+    // correct page's PIUs.
     const int numRows = _backgroundColorDataArray.count;
     const int width = [_backgroundColorDataArray.firstObject length] / sizeof(iTermBackgroundColorPIU);
-    for (auto &fixup : *_fixups) {
-        if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
-            NSData *data = _backgroundColorDataArray[fixup.y];
-            const vector_float4 *backgroundColors = (vector_float4 *)data.bytes;
-            fixup.piu->backgroundColor = backgroundColors[fixup.x];
-            if (_colorModels) {
-                fixup.piu->colorModelIndex = [self colorModelIndexForPIU:fixup.piu];
-            }
-        } else {
-            // Offscreen
-            fixup.piu->backgroundColor = _defaultBackgroundColor;
-        }
-    }
-    [_stage blitNewTexturesFromStagingAreaWithCommandBuffer:_commandBuffer];
-    DLog(@"END WILL DRAW");
-}
+    for (auto pair : _fixups) {
+        iTerm2::TexturePage *page = pair.first;
+        std::vector<iTermTextFixup> *fixups = pair.second;
+        for (auto fixup : *fixups) {
+            iTerm2::PIUArray &piuArray = *_pius[page];
+            iTermTextPIU &piu = piuArray.get(fixup.piu_index);
 
-- (void)prepareForDrawWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                             completion:(void (^)(void))completion {
-    DLog(@"PREPARE FOR DRAW %@", self);
-    _commandBuffer = commandBuffer;
-    [_textureMap requestStage:^(iTermTextureMapStage *stage) {
-        _stage = stage;
-        completion();
-    }];
-    DLog(@"END PREPARE FOR DRAW");
-}
-
-- (NSUInteger)sizeOfNewPIUBuffer {
-    // Reserve enough space for each cell to take 9 spots (cell plus all 8 neighbors)
-    return sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height * 9;
-}
-
-- (iTermTextPIU *)piuDataBytesInStage:(iTermTextureMapStage *)stage {
-    if (!stage.piuData.length) {
-        stage.piuData.length = self.sizeOfNewPIUBuffer;
-    }
-    return (iTermTextPIU *)stage.piuData.mutableBytes;
-}
-
-- (void)addGlyphToPIUsFromTextureArray:(iTermTextureArray *)array
-                            attributes:(const iTermMetalGlyphAttributes *)attributes
-                            cellHeight:(float)cellHeight
-                             cellWidth:(float)cellWidth
-                                 emoji:(BOOL)emoji
-                                     h:(float)h
-                                 index:(NSInteger)index
-                             relations:(const std::map<int, int> &)relations
-                              retained:(BOOL)retained
-                                   row:(int)row
-                                 stage:(iTermTextureMapStage *)stage
-                                     w:(float)w
-                                     x:(int)x
-                               yOffset:(float)yOffset {
-    if (relations.size() > 1) {
-        for (auto &kvp : relations) {
-            const int part = kvp.first;
-            const int index = kvp.second;
-            iTermTextPIU *piu = [self piuDataBytesInStage:stage] + stage.numberOfInstances;
-            const int dx = ImagePartDX(part);
-            const int dy = ImagePartDY(part);
-            piu->offset = simd_make_float2((x + dx) * cellWidth,
-                                           -dy * cellHeight + yOffset);
-            MTLOrigin origin = [array offsetForIndex:index];
-            piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
-            piu->textColor = attributes[x].foregroundColor;
-            piu->remapColors = !emoji;
-            piu->underlineStyle = attributes[x].underlineStyle;
-            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
-            if (part == iTermTextureMapMiddleCharacterPart) {
-                piu->backgroundColor = attributes[x].backgroundColor;
+            // Set fields in piu
+            if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
+                NSData *data = _backgroundColorDataArray[fixup.y];
+                const vector_float4 *backgroundColors = (vector_float4 *)data.bytes;
+                piu.backgroundColor = backgroundColors[fixup.x];
                 if (_colorModels) {
-                    piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+                    piu.colorModelIndex = [self colorModelIndexForPIU:&piu];
                 }
             } else {
-                iTermTextFixup fixup = {
-                    .piu = piu,
-                    .x = x + dx,
-                    .y = row + dy
-                };
-                _fixups->push_back(fixup);
+                // Offscreen
+                piu.backgroundColor = _defaultBackgroundColor;
             }
-            [self addIndex:index stage:stage retained:retained];
         }
-    } else if (index >= 0) {
-        iTermTextPIU *piu = [self piuDataBytesInStage:stage] + stage.numberOfInstances;
-        piu->offset = simd_make_float2(x * self.cellConfiguration.cellSize.width,
-                                       yOffset);
-        MTLOrigin origin = [array offsetForIndex:index];
-        piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
-        piu->textColor = attributes[x].foregroundColor;
-        piu->backgroundColor = attributes[x].backgroundColor;
-        piu->remapColors = !emoji;
-        piu->underlineStyle = attributes[x].underlineStyle;
-        piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
-        if (_colorModels) {
-            piu->colorModelIndex = [self colorModelIndexForPIU:piu];
-        }
-        [self addIndex:index stage:stage retained:retained];
+        delete fixups;
     }
-}
 
-- (iTermTextureMapStage *)findOrAllocateIndexForGlyphWithCreation:(NSDictionary<NSNumber *,NSImage *> *(^ _Nonnull)(int, BOOL *))creation
-                                                            emoji:(BOOL &)emoji
-                                                        glyphKeys:(const iTermMetalGlyphKey *)glyphKeys
-                                                            index:(NSInteger &)index
-                                                        lastEmoji:(BOOL)lastEmoji
-                                                        lastIndex:(NSInteger)lastIndex
-                                                    lastRelations:(const std::map<int, int> &)lastRelations
-                                                        relations:(std::map<int, int> &)relations
-                                                         retained:(BOOL &)retained
-                                                            stage:(iTermTextureMapStage *)previousStage
-                                                                x:(int)x
-                                                     havePrevious:(BOOL)havePrevious {
-    iTermTextureMapStage *stage = previousStage;
-    if (havePrevious && !memcmp(&glyphKeys[x], &glyphKeys[x-1], sizeof(*glyphKeys))) {
-        index = lastIndex;
-        relations = lastRelations;
-        emoji = lastEmoji;
-        // When the glyphKey is repeated there's no need to acquire another lock.
-        // If we get here, both this and the preceding glyphKey are drawable.
-        retained = NO;
-    } else {
-        stage = _stage;
-        index = [_stage findOrAllocateIndexOfLockedTextureWithKey:&glyphKeys[x]
-                                                           column:x
-                                                        relations:&relations
-                                                            emoji:&emoji
-                                                         creation:creation];
-        if (index == iTermTextureMapStatusOutOfMemory) {
-            for (iTermFallbackTextureMap *fallbackMap in _fallbackTextureMaps) {
-                stage = fallbackMap.onlyStage;
-                DLog(@"<fallback>");
-                index = [stage findOrAllocateIndexOfLockedTextureWithKey:&glyphKeys[x]
-                                                                  column:x
-                                                               relations:&relations
-                                                                   emoji:&emoji
-                                                                creation:creation];
-                DLog(@"</fallback>");
-                if (index != iTermTextureMapStatusOutOfMemory) {
-                    break;
-                }
-            }
-            if (index == iTermTextureMapStatusOutOfMemory) {
-                // It's important to use the same capacity for the fallback texture map as the
-                // main texture map because that's how PIU texture coordinates are computed.
-                iTermFallbackTextureMap *newFallbackMap = [[iTermFallbackTextureMap alloc] initWithDevice:_device
-                                                                                                 cellSize:self.cellConfiguration.cellSize
-                                                                                                 capacity:_textureMap.capacity
-                                                                                           numberOfStages:1];
-                [_fallbackTextureMaps addObject:newFallbackMap];
-                stage = newFallbackMap.onlyStage;
-                DLog(@"<fallback>");
-                index = [stage findOrAllocateIndexOfLockedTextureWithKey:&glyphKeys[x]
-                                                                  column:x
-                                                               relations:&relations
-                                                                   emoji:&emoji
-                                                                creation:creation];
-                DLog(@"</fallback>");
-            }
-        }
-        retained = YES;
+    _fixups.clear();
+
+    for (auto pair : _pius) {
+        iTerm2::TexturePage *page = pair.first;
+        page->record_use();
     }
-    return stage;
+    DLog(@"END WILL DRAW");
 }
 
 static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *piuArray,
@@ -330,7 +557,7 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
     iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
     NSMutableData *data = _asciiPIUs[asciiAttrs];
     if (!data) {
-        data = [NSMutableData dataWithCapacity:_textureMap.capacity * sizeof(iTermTextPIU) * iTermASCIITextureOffsetCount];
+        data = [NSMutableData dataWithCapacity:_numberOfCells * sizeof(iTermTextPIU) * iTermASCIITextureOffsetCount];
         _asciiPIUs[asciiAttrs] = data;
     }
 
@@ -461,18 +688,12 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     [_backgroundColorDataArray addObject:backgroundColorData];
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
-    const float w = 1.0 / _textureMap.array.atlasSize.width;
-    const float h = 1.0 / _textureMap.array.atlasSize.height;
     vector_float2 asciiCellSize = 1.0 / _asciiTextureGroup.atlasSize;
-    iTermTextureArray *array = _textureMap.array;
     const float cellHeight = self.cellConfiguration.cellSize.height;
     const float cellWidth = self.cellConfiguration.cellSize.width;
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight;
 
-    NSInteger lastIndex = 0;
     std::map<int, int> lastRelations;
-    BOOL lastEmoji = NO;
-    iTermTextureMapStage *stage;
     BOOL havePrevious = NO;
     for (int x = 0; x < count; x++) {
         if (!glyphKeys[x].drawable) {
@@ -493,40 +714,58 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             havePrevious = NO;
         } else {
             // Non-ASCII slower path
-            std::map<int, int> relations;
-            NSInteger index;
-            BOOL retained;
-            BOOL emoji;
-            stage = [self findOrAllocateIndexForGlyphWithCreation:creation
-                                                            emoji:emoji
-                                                        glyphKeys:glyphKeys
-                                                            index:index
-                                                        lastEmoji:lastEmoji
-                                                        lastIndex:lastIndex
-                                                    lastRelations:lastRelations
-                                                        relations:relations
-                                                         retained:retained
-                                                            stage:stage
-                                                                x:x
-                                                     havePrevious:havePrevious];
-            havePrevious = YES;
-            [self addGlyphToPIUsFromTextureArray:array
-                         attributes:attributes
-                         cellHeight:cellHeight
-                          cellWidth:cellWidth
-                              emoji:emoji
-                                  h:h
-                              index:index
-                          relations:relations
-                           retained:retained
-                                row:row
-                              stage:stage
-                                  w:w
-                                  x:x
-                            yOffset:yOffset];
-            lastIndex = index;
-            lastRelations = relations;
-            lastEmoji = emoji;
+            const iTerm2::GlyphKey glyphKey(&glyphKeys[x]);
+            std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollection->find(glyphKey);
+            if (!entries) {
+                entries = _texturePageCollection->add(x, glyphKey, creation);
+                if (!entries) {
+                    continue;
+                }
+            }
+            for (auto entry : *entries) {
+                auto it = _pius.find(entry->_page);
+                iTerm2::PIUArray *array;
+                if (it == _pius.end()) {
+                    array = _pius[entry->_page] = new iTerm2::PIUArray(_numberOfCells);
+                } else {
+                    array = it->second;
+                }
+                iTermTextPIU *piu = array->get_next();
+                // Build the PIU
+                const int &part = entry->_part;
+                const int dx = ImagePartDX(part);
+                const int dy = ImagePartDY(part);
+                piu->offset = simd_make_float2((x + dx) * cellWidth,
+                                               -dy * cellHeight + yOffset);
+                MTLOrigin origin = entry->get_origin();
+                vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
+                piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
+                                                      origin.y * reciprocal_atlas_size.y);
+                piu->textColor = attributes[x].foregroundColor;
+                piu->remapColors = !entry->_is_emoji;
+                piu->underlineStyle = attributes[x].underlineStyle;
+                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+
+                // Set color info or queue for fixup since color info may not exist yet.
+                if (entry->_part == iTermTextureMapMiddleCharacterPart) {
+                    piu->backgroundColor = attributes[x].backgroundColor;
+                    if (_colorModels) {
+                        piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+                    }
+                } else {
+                    iTermTextFixup fixup = {
+                        .piu_index = array->size() - 1,
+                        .x = x + dx,
+                        .y = row + dy,
+                    };
+                    std::vector<iTermTextFixup> *fixups = _fixups[entry->_page];
+                    if (fixups == nullptr) {
+                        fixups = new std::vector<iTermTextFixup>();
+                        _fixups[entry->_page] = fixups;
+                    }
+                    fixups->push_back(fixup);
+                }
+            }
         }
     }
     DLog(@"END setGlyphKeysData for %@", self);
@@ -571,14 +810,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 }
 
 - (void)didComplete {
-    ITDebugAssert(_stage);
     DLog(@"BEGIN didComplete for %@", self);
-    [_textureMap returnStage:_stage];
-    [_fallbackTextureMaps enumerateObjectsUsingBlock:^(iTermFallbackTextureMap * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj returnStage:obj.onlyStage];
-    }];
-    _stage = nil;
-    _fallbackTextureMaps = nil;
+    _texturePageCollection->prune_if_needed();
     DLog(@"END didComplete");
 }
 
@@ -589,23 +822,35 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     return _modelData;
 }
 
-- (void)addIndex:(NSInteger)index stage:(iTermTextureMapStage *)stage retained:(BOOL)retained {
-    if (retained) {
-        DLog(@"Record index %@ locked for %@", @(index), self);
-        stage.locks->push_back(index);
-    } else {
-        DLog(@"Not retaining reference to index %@ for %@", @(index), self);
+@end
+
+@interface iTermTextRendererCachedQuad : NSObject
+@property (nonatomic, strong) id<MTLBuffer> quad;
+@property (nonatomic) CGSize textureSize;
+@property (nonatomic) CGSize cellSize;
+@end
+
+@implementation iTermTextRendererCachedQuad
+
+- (BOOL)isEqual:(id)object {
+    iTermTextRendererCachedQuad *other = [iTermTextRendererCachedQuad castFrom:object];
+    if (!other) {
+        return NO;
     }
-    [stage incrementInstances];
+
+    return (CGSizeEqualToSize(_textureSize, other->_textureSize) &&
+            CGSizeEqualToSize(_cellSize, other->_cellSize));
 }
 
 @end
 
 @implementation iTermTextRenderer {
     iTermMetalCellRenderer *_cellRenderer;
-    iTermTextureMap *_textureMap;
     id<MTLBuffer> _models;
     iTermASCIITextureGroup *_asciiTextureGroup;
+
+    iTerm2::TexturePageCollection *_texturePageCollection;
+    NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
 }
 
 + (NSData *)subpixelModelData {
@@ -660,12 +905,13 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                               blending:YES
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
+        _quadCache = [NSMutableArray array];
     }
     return self;
 }
 
-- (BOOL)canRenderImmediately {
-    return _textureMap.haveStageAvailable;
+- (void)dealloc {
+    delete _texturePageCollection;
 }
 
 - (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
@@ -687,33 +933,42 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer
                       completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
-    // This capacity gives the size of the glyph cache. If there are more glyphs than fit here we'll
-    // create temporary fallback textures which have no caching and are *very* slow. This is limited
-    // by Metal's 16384x16384 texture size limit. If a glyph is larger than one cell (e.g., emoji)
-    // then it will use more than one entry in the texture map. It's possible for a single frame
-    // to need more than first in the texture map. In that case we create temporary texture maps
-    // as needed. There is no caching in these and it is terribly slow.
-    const NSInteger capacity = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * 2;
-    if (_textureMap == nil ||
-        !CGSizeEqualToSize(_textureMap.cellSize, tState.cellConfiguration.cellSize) ||
-        _textureMap.capacity != capacity) {
-        _textureMap = [[iTermTextureMap alloc] initWithDevice:_cellRenderer.device
-                                                     cellSize:tState.cellConfiguration.cellSize
-                                                     capacity:capacity
-                                               numberOfStages:2];
-        _textureMap.label = [NSString stringWithFormat:@"[texture map for %p]", self];
-        _textureMap.array.texture.label = @"Texture grid for session";
+    if (_texturePageCollection != NULL) {
+#warning TODO: Freeing the texture page collection without using reference counting will leave transient states with dangling pointers if we ever have more than one frame in flight.
+        const vector_uint2 &oldSize = _texturePageCollection->get_cell_size();
+        CGSize newSize = tState.cellConfiguration.cellSize;
+        if (oldSize.x != newSize.width || oldSize.y != newSize.height) {
+            delete _texturePageCollection;
+            _texturePageCollection = NULL;
+        }
     }
-    tState.textureMap = _textureMap;
+    int maximumSize = MAX(1024, tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height);
+    if (!_texturePageCollection) {
+        _texturePageCollection = new iTerm2::TexturePageCollection(_cellRenderer.device,
+                                                                   simd_make_uint2(tState.cellConfiguration.cellSize.width,
+                                                                                   tState.cellConfiguration.cellSize.height),
+                                                                   iTermTextAtlasCapacity,
+                                                                   maximumSize);
+    } else {
+        _texturePageCollection->set_maximum_size(maximumSize);
+    }
+
     tState.device = _cellRenderer.device;
     tState.asciiTextureGroup = _asciiTextureGroup;
-
-    [tState prepareForDrawWithCommandBuffer:commandBuffer completion:^{
-        completion(tState);
-    }];
+    tState.texturePageCollection = _texturePageCollection;
+    tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
+    completion(tState);
 }
 
-- (id<MTLBuffer>)newQuadOfSize:(CGSize)size textureSize:(CGSize)textureSize {
+- (id<MTLBuffer>)quadOfSize:(CGSize)size textureSize:(CGSize)textureSize {
+    iTermTextRendererCachedQuad *entry = [[iTermTextRendererCachedQuad alloc] init];
+    entry.cellSize = size;
+    entry.textureSize = textureSize;
+    NSInteger index = [_quadCache indexOfObject:entry];
+    if (index != NSNotFound) {
+        return _quadCache[index].quad;
+    }
+
     const float vw = static_cast<float>(size.width);
     const float vh = static_cast<float>(size.height);
 
@@ -730,37 +985,16 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         { { 0,  vh }, { 0, h } },
         { { vw, vh }, { w, h } },
     };
-    return [_cellRenderer.device newBufferWithBytes:vertices
-                                             length:sizeof(vertices)
-                                            options:MTLResourceStorageModeShared];
-}
+    entry.quad = [_cellRenderer.device newBufferWithBytes:vertices
+                                                   length:sizeof(vertices)
+                                                  options:MTLResourceStorageModeShared];
+    [_quadCache addObject:entry];
+    // It's useful to hold a quad for ascii and one for non-ascii.
+    if (_quadCache.count > 2) {
+        [_quadCache removeObjectAtIndex:0];
+    }
 
-- (NSDictionary *)texturesForTransientState:(iTermTextRendererTransientState *)tState
-                                      stage:(iTermTextureMapStage *)stage
-                                      ascii:(id<MTLTexture>)ascii
-                                       size:(vector_float2 *)sizeOut
-                                   cellSize:(vector_float2 *)cellSizeOut {
-    id<MTLTexture> texture;
-    if (ascii) {
-        texture = ascii;
-        *sizeOut = tState.asciiTextureGroup.atlasSize;
-        *cellSizeOut = VectorFromCGSize(tState.asciiTextureGroup.cellSize);
-    } else if ([stage isKindOfClass:[iTermFallbackTextureMapStage class]]) {
-        texture = stage.textureMap.array.texture;
-        *sizeOut = VectorFromCGSize(stage.textureMap.array.atlasSize);
-        *cellSizeOut = simd_make_float2(stage.textureMap.array.width, stage.textureMap.array.height);
-        ITDebugAssert(texture);
-    } else {
-        texture = tState.textureMap.array.texture;
-        *sizeOut = VectorFromCGSize(tState.textureMap.array.atlasSize);
-        *cellSizeOut = simd_make_float2(tState.textureMap.array.width, tState.textureMap.array.height);
-        ITDebugAssert(texture);
-    }
-    NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture };
-    if (tState.cellConfiguration.usingIntermediatePass) {
-        textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
-    }
-    return textures;
+    return entry.quad;
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -772,67 +1006,43 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
-    if (tState.allStages.count > 0) {
-        tState.vertexBuffer = [self newQuadOfSize:tState.cellConfiguration.cellSize
-                                      textureSize:tState.textureMap.array.atlasSize];
+    __block NSInteger totalInstances = 0;
+    iTermTextureDimensions previousTextureDimensions;
+    id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
-        [tState.allStages enumerateObjectsUsingBlock:^(iTermTextureMapStage * _Nonnull stage, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (stage.numberOfInstances) {
-                id<MTLBuffer> piuBuffer = [tState newPIUBufferForStage:stage];
-                ITDebugAssert(piuBuffer);
-
-                vector_float2 textureSize;
-                vector_float2 cellSize;
-                NSDictionary *textures = [self texturesForTransientState:tState stage:stage ascii:nil size:&textureSize cellSize:&cellSize];
-                iTermTextureDimensions textureDimensions = {
-                    .textureSize = textureSize,
-                    .cellSize = cellSize,
-                    .underlineOffset = cellSize.y - (tState.nonAsciiUnderlineDescriptor.offset * scale),
-                    .underlineThickness = tState.nonAsciiUnderlineDescriptor.thickness * scale,
-                    .scale = scale
-                };
-                id<MTLBuffer> textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions length:sizeof(textureDimensions) options:MTLResourceStorageModeShared];
-                textureDimensionsBuffer.label = @"Texture dimensions (non-ASCII)";
-
-                [_cellRenderer drawWithTransientState:tState
-                                        renderEncoder:renderEncoder
-                                     numberOfVertices:6
-                                         numberOfPIUs:stage.numberOfInstances
-                                        vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-                                                         @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
-                                                         @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                                      fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState],
-                                                         @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
-                                             textures:textures];
-            }
-        }];
-    }
-
-    __block BOOL vertexBufferNeedsUpdate = YES;
-    [tState enumerateASCIIDraws:^(iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture) {
-        if (vertexBufferNeedsUpdate) {
-            tState.vertexBuffer = [self newQuadOfSize:tState.cellConfiguration.cellSize
-                                          textureSize:CGSizeMake(texture.width, texture.height)];
-            vertexBufferNeedsUpdate = NO;
-        }
+    [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize) {
+        totalInstances += instances;
+        tState.vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
+                                   textureSize:CGSizeMake(textureSize.x, textureSize.y)];
         id<MTLBuffer> piuBuffer = [_cellRenderer.device newBufferWithBytes:pius
                                                                     length:sizeof(iTermTextPIU) * instances
                                                                    options:MTLResourceStorageModeShared];
         ITDebugAssert(piuBuffer);
-        piuBuffer.label = @"ASCII Text PIUs";
+        piuBuffer.label = @"Text PIUs";
 
-        vector_float2 textureSize;
-        vector_float2 cellSize;
-        NSDictionary *textures = [self texturesForTransientState:tState stage:nil ascii:texture size:&textureSize cellSize:&cellSize];
+        NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture };
+        if (tState.cellConfiguration.usingIntermediatePass) {
+            textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
+        }
         iTermTextureDimensions textureDimensions = {
-            .textureSize = textureSize,
-            .cellSize = cellSize,
+            .textureSize = simd_make_float2(textureSize.x, textureSize.y),
+            .cellSize = simd_make_float2(cellSize.x, cellSize.y),
             .underlineOffset = cellSize.y - (tState.asciiUnderlineDescriptor.offset * scale),
             .underlineThickness = tState.asciiUnderlineDescriptor.thickness * scale,
             .scale = scale
         };
-        id<MTLBuffer> textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions length:sizeof(textureDimensions) options:MTLResourceStorageModeShared];
-        textureDimensionsBuffer.label = @"Texture dimensions (ASCII)";
+
+        // Try to reuse these buffers because they're very slow to create.
+        id<MTLBuffer> textureDimensionsBuffer = nil;
+        if (previousTextureDimensionsBuffer != nil &&
+            !memcmp(&textureDimensions, &previousTextureDimensions, sizeof(textureDimensions))) {
+            textureDimensionsBuffer = previousTextureDimensionsBuffer;
+        } else {
+            textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions
+                                                                        length:sizeof(textureDimensions)
+                                                                       options:MTLResourceStorageModeShared];
+            textureDimensionsBuffer.label = @"Texture dimensions";
+        }
 
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:renderEncoder
