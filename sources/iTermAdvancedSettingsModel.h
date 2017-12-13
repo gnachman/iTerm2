@@ -188,6 +188,7 @@
 + (BOOL)detectPasswordInput;
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
++ (BOOL)suppressRestartSessionConfirmationAlert;
 + (NSString *)viewManPageCommand;
 + (BOOL)preventEscapeSequenceFromClearingHistory;
 + (BOOL)dwcLineCache;

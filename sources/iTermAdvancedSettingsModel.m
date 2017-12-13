@@ -201,6 +201,7 @@ DEFINE_STRING(autoLogFormat,
               @"\\(session.creationTimeString).\\(session.name).\\(session.termid).\\(iterm2.pid).\\(session.autoLogId).log",
               @"Session: Format for automatic session log filenames.\nSee the Badges documentation for supported substitutions.");
 DEFINE_BOOL(focusNewSplitPaneWithFocusFollowsMouse, YES, @"Session: When focus follows mouse is enabled, should new split panes automatically be focused?");
+DEFINE_BOOL(suppressRestartSessionConfirmationAlert, NO, @"Session: Suppress restart session confirmation alert.\nDon't ask for a confirmation when manually restarting a session.");
 
 
 #pragma mark - Window
