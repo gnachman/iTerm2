@@ -1567,13 +1567,24 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession {
     assert(aSession.isRestartable);
     [[self retain] autorelease];
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"Restart session?";
-    alert.informativeText = @"Running jobs will be killed.";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
-    if (aSession.exited || [alert runModal] == NSAlertFirstButtonReturn) {
+    if (aSession.exited) {
         [aSession restartSession];
+    } else {
+        iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:@"Cancel" block:nil];
+        iTermWarningAction *ok =
+            [iTermWarningAction warningActionWithLabel:@"OK"
+                                                 block:^(iTermWarningSelection selection) {
+                                                     if (selection == kiTermWarningSelection0) {
+                                                         [aSession restartSession];
+                                                     }
+                                                 }];
+        iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+        warning.heading = @"Restart session?";
+        warning.title = @"Running jobs will be killed.";
+        warning.warningActions = @[ ok, cancel ];
+        warning.identifier = @"NoSyncSuppressRestartSessionConfirmationAlert";
+        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        [warning runModal];
     }
 }
 
