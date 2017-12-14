@@ -34,7 +34,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
-               background:(vector_float4 *)backgrounds
+               background:(iTermMetalBackgroundColorRLE *)backgrounds
+                 rleCount:(int *)rleCount
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr;

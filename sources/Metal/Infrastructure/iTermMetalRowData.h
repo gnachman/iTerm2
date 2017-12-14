@@ -17,8 +17,10 @@
 // iTermMetalGlyphAttributes
 @property (nonatomic, strong) NSMutableData *attributesData;
 
-// vector_float4
-@property (nonatomic, strong) NSMutableData *backgroundColorData;
+// iTermMetalBackgroundColorRLE
+@property (nonatomic, strong) NSMutableData *backgroundColorRLEData;
+
+@property (nonatomic) int numberOfBackgroundRLEs;
 
 // Number of elements in preceding arrays to use.
 @property (nonatomic) int numberOfDrawableGlyphs;

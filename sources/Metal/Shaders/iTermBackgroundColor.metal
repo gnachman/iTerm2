@@ -18,8 +18,13 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  constant iTermBackgroundColorPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                  unsigned int iid [[instance_id]]) {
     iTermBackgroundColorVertexFunctionOutput out;
-    
-    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy + offset[0];
+
+    // Stretch it horizontally by a factor of runLength. This works because vertex x coordinates are
+    // either 0 or the width of a cell.
+    const float runLength = perInstanceUniforms[iid].runLength;
+    float2 pixelSpacePosition = (vertexArray[vertexID].position.xy * float2(runLength, 1) +
+                                 perInstanceUniforms[iid].offset.xy +
+                                 offset[0]);
     float2 viewportSize = float2(*viewportSizePointer);
     
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;

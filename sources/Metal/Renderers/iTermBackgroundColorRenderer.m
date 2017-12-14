@@ -1,38 +1,31 @@
 #import "iTermBackgroundColorRenderer.h"
 
+#import "iTermTextRenderer.h"
+
+@interface iTermBackgroundColorRendererTransientState()
+@property (nonatomic, readonly) NSInteger numberOfPIUs;
+@end
+
 @implementation iTermBackgroundColorRendererTransientState
 
 - (NSUInteger)sizeOfNewPIUBuffer {
     return sizeof(iTermBackgroundColorPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
 }
 
-- (void)initializePIUBytes:(void *)bytes {
-    NSInteger i = 0;
-    vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
-    vector_float4 defaultColor = simd_make_float4(1, 0, 0, 1);
-    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)bytes;
-    const int height = self.cellConfiguration.gridSize.height;
-    const int width = self.cellConfiguration.gridSize.width;
-    for (NSInteger y = 0; y < height; y++) {
-        const float rowOffset = (height - y - 1);
-        vector_float2 gridCoord = simd_make_float2(0, rowOffset);
-        for (NSInteger x = 0; x < width; x++) {
-            gridCoord.x = x;
-            pius[i].offset = gridCoord * cellSize;
-            pius[i].color = defaultColor;
-            i++;
-        }
-    }
-}
-
-- (void)setColorData:(NSData *)colorData
+- (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
+               count:(size_t)count
                  row:(int)row
                width:(int)width {
-    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)[self piuForCoord:VT100GridCoordMake(0, row)];
-    const vector_float4 *colors = (const vector_float4 *)colorData.bytes;
-    for (int x = 0; x < width; x++) {
-        pius[x].color = colors[x];
+    vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
+    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)self.pius.contents + sizeof(iTermBackgroundColorPIU) * _numberOfPIUs;
+    const int height = self.cellConfiguration.gridSize.height;
+    for (int i = 0; i < count; i++) {
+        pius[i].color = rles[i].color;
+        pius[i].runLength = rles[i].count;
+        pius[i].offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
+                                          cellSize.y * (height - row - 1));
     }
+    _numberOfPIUs += count;
 }
 
 @end
@@ -68,9 +61,11 @@
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize];
 
-    tState.pius = [_cellRenderer.device newBufferWithLength:tState.sizeOfNewPIUBuffer
+    // TODO: This is kinda big since it holds the worst case of every cell having a different
+    // background color than its neighbors. See if it's a performance bottleneck and consider using
+    // one draw call per line and a number of small PIU buffers.
+    tState.pius = [_cellRenderer.device newBufferWithLength:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * sizeof(iTermBackgroundColorPIU)
                                                     options:MTLResourceStorageModeShared];
-    [tState initializePIUBytes:tState.pius.contents];
 }
 
 
@@ -80,7 +75,7 @@
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height
+                             numberOfPIUs:tState.numberOfPIUs
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }

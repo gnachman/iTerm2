@@ -16,6 +16,22 @@ typedef struct {
     vector_float4 color;
 } iTermMetalUnderlineDescriptor;
 
+struct iTermMetalBackgroundColorRLE {
+    vector_float4 color;
+    unsigned short origin;  // Not strictly needed but this is needed to binary search the RLEs
+    unsigned short count;
+#if __cplusplus
+    bool operator<(const iTermMetalBackgroundColorRLE &other) const {
+        return origin < other.origin;
+    }
+    bool operator<(const int &other) const {
+        return origin < other;
+    }
+#endif
+};
+
+typedef struct iTermMetalBackgroundColorRLE iTermMetalBackgroundColorRLE;
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) NSMutableData *modelData;
@@ -29,7 +45,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                    count:(int)count
           attributesData:(NSData *)attributesData
                      row:(int)row
-     backgroundColorData:(NSData *)backgroundColorData  // array of vector_float4 background colors.
+  backgroundColorRLEData:(NSData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
                 creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
 - (void)willDraw;
 - (void)didComplete;

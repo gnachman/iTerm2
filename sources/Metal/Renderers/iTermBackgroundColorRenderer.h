@@ -1,10 +1,13 @@
 #import "iTermMetalCellRenderer.h"
 
+#import "iTermTextRenderer.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundColorRendererTransientState : iTermMetalCellRendererTransientState
 
-- (void)setColorData:(NSData *)colorData
+- (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
+               count:(size_t)count
                  row:(int)row
                width:(int)width;
 

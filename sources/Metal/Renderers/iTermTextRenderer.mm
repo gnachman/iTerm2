@@ -395,8 +395,8 @@ namespace iTerm2 {
 typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
 @implementation iTermTextRendererTransientState {
-    // Data's bytes contains a C array of vector_float4 with background colors.
-    NSMutableArray<NSData *> *_backgroundColorDataArray;
+    // Data's bytes contains a C array of iTermMetalBackgroundColorRLE with background colors.
+    NSMutableArray<NSData *> *_backgroundColorRLEDataArray;
 
     // Info about PIUs that need their background colors set. They belong to
     // parts of glyphs that spilled out of their bounds. The actual PIUs
@@ -421,7 +421,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 - (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
     self = [super initWithConfiguration:configuration];
     if (self) {
-        _backgroundColorDataArray = [NSMutableArray array];
+        _backgroundColorRLEDataArray = [NSMutableArray array];
         iTermCellRenderConfiguration *cellConfiguration = configuration;
         if (!cellConfiguration.usingIntermediatePass) {
             _colorModels = [NSMutableData data];
@@ -485,8 +485,8 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     DLog(@"WILL DRAW %@", self);
     // Fix up the background color of parts of glyphs that are drawn outside their cell. Add to the
     // correct page's PIUs.
-    const int numRows = _backgroundColorDataArray.count;
-    const int width = [_backgroundColorDataArray.firstObject length] / sizeof(iTermBackgroundColorPIU);
+    const int numRows = _backgroundColorRLEDataArray.count;
+    const int width = self.cellConfiguration.gridSize.width;
     for (auto pair : _fixups) {
         iTerm2::TexturePage *page = pair.first;
         std::vector<iTermTextFixup> *fixups = pair.second;
@@ -496,9 +496,14 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
             // Set fields in piu
             if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
-                NSData *data = _backgroundColorDataArray[fixup.y];
-                const vector_float4 *backgroundColors = (vector_float4 *)data.bytes;
-                piu.backgroundColor = backgroundColors[fixup.x];
+                NSData *data = _backgroundColorRLEDataArray[fixup.y];
+                const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.bytes;
+                // find RLE for index fixup.x
+                const int rleCount = data.length / sizeof(iTermMetalBackgroundColorRLE);
+                const iTermMetalBackgroundColorRLE &rle = *std::lower_bound(backgroundRLEs,
+                                                                            backgroundRLEs + rleCount,
+                                                                            static_cast<unsigned short>(fixup.x));
+                piu.backgroundColor = rle.color;
                 if (_colorModels) {
                     piu.colorModelIndex = [self colorModelIndexForPIU:&piu];
                 }
@@ -681,11 +686,11 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                    count:(int)count
           attributesData:(NSData *)attributesData
                      row:(int)row
-     backgroundColorData:(nonnull NSData *)backgroundColorData
+  backgroundColorRLEData:(nonnull NSData *)backgroundColorRLEData
                 creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     DLog(@"BEGIN setGlyphKeysData for %@", self);
-    ITDebugAssert(row == _backgroundColorDataArray.count);
-    [_backgroundColorDataArray addObject:backgroundColorData];
+    ITDebugAssert(row == _backgroundColorRLEDataArray.count);
+    [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     vector_float2 asciiCellSize = 1.0 / _asciiTextureGroup.atlasSize;

@@ -11,7 +11,7 @@ extern "C" {
     extern const int iTermTextureMapMaxCharacterParts;
     extern const int iTermTextureMapMiddleCharacterPart;
 
-#ifdef __cplusplus
+#if __cplusplus
 }
 #endif
 
