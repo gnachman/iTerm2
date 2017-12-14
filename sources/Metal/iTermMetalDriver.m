@@ -682,7 +682,10 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
         frameData.transientStates[NSStringFromClass([_textRenderer class])];
     [textState didComplete];
 
-    [_backgroundImageRenderer didFinishWithTransientState:frameData.transientStates[NSStringFromClass([_backgroundImageRenderer class])]];
+    iTermBackgroundImageRendererTransientState *backgroundImageState = frameData.transientStates[NSStringFromClass([_backgroundImageRenderer class])];
+    if (!backgroundImageState.skipRenderer) {
+        [_backgroundImageRenderer didFinishWithTransientState:backgroundImageState];
+    }
 
     DLog(@"  Recording final stats");
     [frameData didCompleteWithAggregateStats:&_stats];
