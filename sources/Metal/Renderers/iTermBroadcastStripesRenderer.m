@@ -1,5 +1,7 @@
 #import "iTermBroadcastStripesRenderer.h"
 
+#import "iTermMetalBufferPool.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBroadcastStripesRendererTransientState : iTermMetalRendererTransientState
@@ -14,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMetalRenderer *_metalRenderer;
     id<MTLTexture> _texture;
     CGSize _size;
+    iTermMetalBufferPool *_verticesPool;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -27,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
         NSImage *image = [NSImage imageNamed:@"BackgroundStripes"];
         _size = image.size;
         _texture = [_metalRenderer textureFromImage:image];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;
 }
@@ -76,9 +80,9 @@ NS_ASSUME_NONNULL_BEGIN
         { { 0,              viewportSize.y }, { 0,    maxY } },
         { { viewportSize.x, viewportSize.y }, { maxX, maxY } },
     };
-    tState.vertexBuffer = [_metalRenderer.device newBufferWithBytes:vertices
-                                                             length:sizeof(vertices)
-                                                            options:MTLResourceStorageModeShared];
+    tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext
+                                                        withBytes:vertices
+                                                   checkIfChanged:YES];
 }
 
 @end

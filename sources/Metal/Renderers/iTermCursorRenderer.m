@@ -1,5 +1,7 @@
 #import "iTermCursorRenderer.h"
 
+#import "iTermMetalBufferPool.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermCursorRendererTransientState : iTermMetalCellRendererTransientState
@@ -95,6 +97,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMetalCellRenderer *_cellRenderer;
     NSColor *_color;
     VT100GridCoord _coord;
+    iTermMetalBufferPool *_descriptionPool;
 }
 
 + (instancetype)newUnderlineCursorRendererWithDevice:(id<MTLDevice>)device {
@@ -133,6 +136,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                               blending:YES
                                                         piuElementSize:0
                                                    transientStateClass:self.transientStateClass];
+        _descriptionPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                             bufferSize:sizeof(iTermCursorDescription)];
     }
     return self;
 }
@@ -188,9 +193,9 @@ NS_ASSUME_NONNULL_BEGIN
             1
         }
     };
-    id<MTLBuffer> descriptionBuffer = [_cellRenderer.device newBufferWithBytes:&description
-                                                                        length:sizeof(description)
-                                                                       options:MTLResourceStorageModeShared];
+    id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
+                                                                       withBytes:&description
+                                                                  checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
@@ -208,7 +213,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, 2)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, 2)
+                                           poolContext:tState.poolContext];
 }
 
 @end
@@ -217,7 +223,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(2, tState.cellConfiguration.cellSize.height)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(2, tState.cellConfiguration.cellSize.height)
+                                           poolContext:tState.poolContext];
 }
 
 @end
@@ -226,7 +233,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, tState.cellConfiguration.cellSize.height)];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
+                                                                  tState.cellConfiguration.cellSize.height)
+                                           poolContext:tState.poolContext];
 }
 
 @end
@@ -243,7 +252,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeTransientState:(iTermFrameCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
-                                                                  tState.cellConfiguration.cellSize.height)];
+                                                                  tState.cellConfiguration.cellSize.height)
+                                           poolContext:tState.poolContext];
     tState.color = _color;
     if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
         _texture = [_cellRenderer textureFromImage:[tState newImage]];
@@ -260,10 +270,16 @@ NS_ASSUME_NONNULL_BEGIN
             tState.cellConfiguration.cellSize.width * tState.coord.x,
             tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
         },
+        .color = {
+            tState.color.redComponent,
+            tState.color.greenComponent,
+            tState.color.blueComponent,
+            1
+        }
     };
-    id<MTLBuffer> descriptionBuffer = [_cellRenderer.device newBufferWithBytes:&description
-                                                                        length:sizeof(description)
-                                                                       options:MTLResourceStorageModeShared];
+    id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
+                                                                       withBytes:&description
+                                                                  checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
@@ -289,7 +305,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeTransientState:(iTermCopyModeCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
-                                                                  tState.cellConfiguration.cellSize.height)];
+                                                                  tState.cellConfiguration.cellSize.height)
+                                           poolContext:tState.poolContext];
     tState.selecting = _selecting;
     tState.color = _color;
     if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
@@ -315,10 +332,11 @@ NS_ASSUME_NONNULL_BEGIN
             tState.cellConfiguration.cellSize.width * tState.coord.x - tState.cellConfiguration.cellSize.width / 2,
             tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
         },
+        .color = { 0, 0, 0, 0 }
     };
-    id<MTLBuffer> descriptionBuffer = [_cellRenderer.device newBufferWithBytes:&description
-                                                                        length:sizeof(description)
-                                                                       options:MTLResourceStorageModeShared];
+    id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
+                                                                       withBytes:&description
+                                                                  checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6

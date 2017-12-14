@@ -7,6 +7,7 @@
 
 #import "iTermMarginRenderer.h"
 
+#import "iTermMetalBufferPool.h"
 #import "iTermShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -16,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermMarginRenderer {
     iTermMetalCellRenderer *_cellRenderer;
+    iTermMetalBufferPool *_colorPool;
+    iTermMetalBufferPool *_verticesPool;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -27,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                               blending:YES
                                                         piuElementSize:0
                                                    transientStateClass:[iTermMarginRendererTransientState class]];
+        _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 6 * 4];
     }
     return self;
 }
@@ -39,7 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
     vector_float4 color = tState.color;
-    id<MTLBuffer> colorBuffer = [_cellRenderer.device newBufferWithBytes:&color length:sizeof(color) options:MTLResourceStorageModeShared];
+    id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
+                                                           withBytes:&color
+                                                      checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
                              renderEncoder:renderEncoder
                           numberOfVertices:6 * 4
@@ -99,9 +106,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                innerHeight)
                            vertices:v];
 
-    tState.vertexBuffer = [_cellRenderer.device newBufferWithBytes:vertices
-                                                            length:sizeof(vertices)
-                                                           options:MTLResourceStorageModeShared];
+    tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext
+                                                        withBytes:vertices
+                                                   checkIfChanged:YES];
 }
 
 @end

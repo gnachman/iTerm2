@@ -1,5 +1,7 @@
 #import "iTermAdvancedSettingsModel.h"
+
 #import "iTermMetalCellRenderer.h"
+#import "iTermMetalBufferPool.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -59,6 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermMetalCellRenderer {
     Class _transientStateClass;
     size_t _piuElementSize;
+    iTermMetalBufferPool *_offsetBuffers;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
@@ -75,6 +78,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _piuElementSize = piuElementSize;
         _transientStateClass = transientStateClass;
+        _offsetBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2)];
     }
     return self;
 }
@@ -96,9 +100,9 @@ NS_ASSUME_NONNULL_BEGIN
         margins.left,
         margins.top
     };
-    tState.offsetBuffer = [self.device newBufferWithBytes:&offset
-                                                   length:sizeof(offset)
-                                                  options:MTLResourceStorageModeShared];
+    tState.offsetBuffer = [_offsetBuffers requestBufferFromContext:tState.poolContext
+                                                         withBytes:&offset
+                                                    checkIfChanged:YES];
     return tState;
 }
 

@@ -61,7 +61,8 @@
 }
 
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize
+                                           poolContext:tState.poolContext];
 
     // TODO: This is kinda big since it holds the worst case of every cell having a different
     // background color than its neighbors. See if it's a performance bottleneck and consider using

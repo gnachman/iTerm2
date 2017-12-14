@@ -8,6 +8,7 @@ extern "C" {
 
 #import "GlyphKey.h"
 #import "iTermASCIITexture.h"
+#import "iTermMetalBufferPool.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
 #import "NSArray+iTerm.h"
@@ -856,6 +857,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
     iTerm2::TexturePageCollection *_texturePageCollection;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
+
+    iTermMetalBufferPool *_emptyBuffers;
+    iTermMetalBufferPool *_verticesPool;
+    iTermMetalBufferPool *_dimensionsPool;
 }
 
 + (NSData *)subpixelModelData {
@@ -886,10 +891,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     if (tState.colorModels) {
         if (tState.colorModels.length == 0) {
             // Blank screen, emoji-only screen, etc. The buffer won't get accessed but it can't be nil.
-            return [_cellRenderer.device newBufferWithBytes:""
-                                                     length:1
-                                                    options:MTLResourceStorageModeShared];
+            return [_emptyBuffers requestBufferFromContext:tState.poolContext];
         }
+        // TODO: Need a buffer pool that stores a few different sizes.
         return [_cellRenderer.device newBufferWithBytes:tState.colorModels.bytes
                                                  length:tState.colorModels.length
                                                 options:MTLResourceStorageModeShared];
@@ -915,6 +919,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
         _quadCache = [NSMutableArray array];
+        _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
     }
     return self;
 }
@@ -966,7 +973,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
 }
 
-- (id<MTLBuffer>)quadOfSize:(CGSize)size textureSize:(CGSize)textureSize {
+- (id<MTLBuffer>)quadOfSize:(CGSize)size
+                textureSize:(CGSize)textureSize
+                poolContext:(iTermMetalBufferPoolContext *)poolContext {
     iTermTextRendererCachedQuad *entry = [[iTermTextRendererCachedQuad alloc] init];
     entry.cellSize = size;
     entry.textureSize = textureSize;
@@ -991,9 +1000,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         { { 0,  vh }, { 0, h } },
         { { vw, vh }, { w, h } },
     };
-    entry.quad = [_cellRenderer.device newBufferWithBytes:vertices
-                                                   length:sizeof(vertices)
-                                                  options:MTLResourceStorageModeShared];
+    entry.quad = [_verticesPool requestBufferFromContext:poolContext
+                                               withBytes:vertices
+                                          checkIfChanged:YES];
     [_quadCache addObject:entry];
     // It's useful to hold a quad for ascii and one for non-ascii.
     if (_quadCache.count > 2) {
@@ -1019,7 +1028,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize) {
         totalInstances += instances;
         tState.vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
-                                   textureSize:CGSizeMake(textureSize.x, textureSize.y)];
+                                   textureSize:CGSizeMake(textureSize.x, textureSize.y)
+                                   poolContext:tState.poolContext];
+        // TODO: Need heterogeneous size buffer pool
         id<MTLBuffer> piuBuffer = [_cellRenderer.device newBufferWithBytes:pius
                                                                     length:sizeof(iTermTextPIU) * instances
                                                                    options:MTLResourceStorageModeShared];
@@ -1038,15 +1049,15 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             .scale = scale
         };
 
-        // Try to reuse these buffers because they're very slow to create.
-        id<MTLBuffer> textureDimensionsBuffer = nil;
+        // These tend to get reused so avoid changing the buffer if it is the same as the last one.
+        id<MTLBuffer> textureDimensionsBuffer;
         if (previousTextureDimensionsBuffer != nil &&
             !memcmp(&textureDimensions, &previousTextureDimensions, sizeof(textureDimensions))) {
             textureDimensionsBuffer = previousTextureDimensionsBuffer;
         } else {
-            textureDimensionsBuffer = [_cellRenderer.device newBufferWithBytes:&textureDimensions
-                                                                        length:sizeof(textureDimensions)
-                                                                       options:MTLResourceStorageModeShared];
+            textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
+                                                                      withBytes:&textureDimensions
+                                                                 checkIfChanged:YES];
             textureDimensionsBuffer.label = @"Texture dimensions";
         }
 

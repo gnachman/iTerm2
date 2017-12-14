@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 
+#import "iTermMetalBufferPool.h"
 #import "iTermMetalFrameData.h"
 #import "iTermShaderTypes.h"
 #import <MetalKit/MetalKit.h>
@@ -35,6 +36,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRendererTransientState : NSObject
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
+@property (nonatomic, readonly) iTermMetalBufferPoolContext *poolContext;
 
 // You don't generally need to assign to this unless you plan to make more than one draw call.
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineState;
@@ -66,10 +68,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 #pragma mark - For subclasses
 
-- (id<MTLBuffer>)newQuadOfSize:(CGSize)size;
+- (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext;
 
 // Things in Metal are randomly upside down for no good reason. So make it easy to flip them back.
-- (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size;
+- (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext;
 
 - (void)drawWithTransientState:(iTermMetalRendererTransientState *)tState
                  renderEncoder:(id <MTLRenderCommandEncoder>)renderEncoder

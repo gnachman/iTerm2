@@ -150,7 +150,8 @@ NS_ASSUME_NONNULL_BEGIN
     tState.blending = _blending;
     tState.tiled = _tiled;
     tState.vertexBuffer = [_metalRenderer newQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
-                                                                   tState.configuration.viewportSize.y)];
+                                                                   tState.configuration.viewportSize.y)
+                                            poolContext:tState.poolContext];
     tState.texture = _texture;
 
     if (!tState.skipRenderer) {
