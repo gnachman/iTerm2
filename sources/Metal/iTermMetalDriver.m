@@ -338,6 +338,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
             iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
             [frameData.rows addObject:rowData];
             rowData.y = y;
+#warning TODO: Use malloc instead of NSMutableData. A lot of time is spent in bzero.
             rowData.keysData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
             rowData.attributesData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
             rowData.backgroundColorRLEData = [NSMutableData dataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
