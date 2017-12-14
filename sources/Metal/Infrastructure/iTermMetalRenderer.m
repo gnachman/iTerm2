@@ -100,13 +100,13 @@
 
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size {
     const iTermVertex vertices[] = {
-        // Pixel Positions, Texture Coordinates
-        { { size.width, 0 }, { 1.f, 0.f } },
-        { { 0, 0 }, { 0.f, 0.f } },
-        { { 0, size.height }, { 0.f, 1.f } },
+        // Pixel Positions             Texture Coordinates
+        { { size.width,           0 }, { 1.f, 0.f } },
+        { {          0,           0 }, { 0.f, 0.f } },
+        { {          0, size.height }, { 0.f, 1.f } },
 
-        { { size.width, 0 }, { 1.f, 0.f } },
-        { { 0, size.height }, { 0.f, 1.f } },
+        { { size.width,           0 }, { 1.f, 0.f } },
+        { {          0, size.height }, { 0.f, 1.f } },
         { { size.width, size.height }, { 1.f, 1.f } },
     };
     return [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];

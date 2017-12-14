@@ -335,7 +335,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 // Private queue
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
-               background:(vector_float4 *)background
+               background:(iTermMetalBackgroundColorRLE *)backgroundRLE
+                 rleCount:(int *)rleCount
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr {
@@ -347,6 +348,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     iTermTextColorKey *previousColorKey = &keys[1];
     iTermBackgroundColorKey lastBackgroundKey;
     NSRange underlinedRange = [_underlinedRanges[@(row)] rangeValue];
+    int rles = 0;
 
     int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
@@ -366,18 +368,25 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             .selected = selected,
             .isMatch = findMatch,
         };
-        if (x > 1 &&
+
+        vector_float4 backgroundColor;
+        if (x > 0 &&
             backgroundKey.bgColor == lastBackgroundKey.bgColor &&
             backgroundKey.bgGreen == lastBackgroundKey.bgGreen &&
             backgroundKey.bgBlue == lastBackgroundKey.bgBlue &&
             backgroundKey.bgColorMode == lastBackgroundKey.bgColorMode &&
             backgroundKey.selected == lastBackgroundKey.selected &&
             backgroundKey.isMatch == lastBackgroundKey.isMatch) {
-            background[x] = background[x - 1];
+
+            const int previousRLE = rles - 1;
+            backgroundColor = backgroundRLE[previousRLE].color;
+            backgroundRLE[previousRLE].count++;
         } else {
             vector_float4 unprocessed = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
             // The unprocessed color is needed for minimum contrast computation for text color.
-            background[x] = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
+            backgroundRLE[rles].color = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
+            backgroundRLE[rles].origin = x;
+            backgroundRLE[rles].count = 1;
             if (_backgroundImage) {
                 // This is kind of ugly but it simplifies things a lot to do it
                 // here. The alpha value for background colors should be 1
@@ -387,11 +396,13 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                        backgroundKey.bgColor == ALTSEM_DEFAULT &&
                                                        !selected &&
                                                        !findMatch);
-                background[x].w = isDefaultBackgroundColor ? (1 - _backgroundImageBlending) : 1;
+                backgroundRLE[rles].color.w = isDefaultBackgroundColor ? (1 - _backgroundImageBlending) : 1;
             }
+            backgroundColor = backgroundRLE[rles].color;
+            rles++;
         }
         lastBackgroundKey = backgroundKey;
-        attributes[x].backgroundColor = background[x];
+        attributes[x].backgroundColor = backgroundColor;
         attributes[x].backgroundColor.w = 1;
 
         // Foreground colors
@@ -404,7 +415,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         currentColorKey->fgBlue = line[x].fgBlue;
         currentColorKey->bold = line[x].bold;
         currentColorKey->faint = line[x].faint;
-        currentColorKey->background = background[x];
+        currentColorKey->background = backgroundColor;
         if (x > 0 &&
             currentColorKey->isMatch == previousColorKey->isMatch &&
             currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
@@ -419,7 +430,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         } else {
             vector_float4 textColor = [self textColorForCharacter:&line[x]
                                                              line:row
-                                                  backgroundColor:background[x]
+                                                  backgroundColor:backgroundColor
                                                          selected:selected
                                                         findMatch:findMatch
                                                 inUnderlinedRange:inUnderlinedRange
@@ -467,7 +478,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             glyphKeys[x].drawable = NO;
         }
     }
-
+    *rleCount = rles;
     *drawableGlyphsPtr = lastDrawableGlyph + 1;
 
     // Tweak the text color for the cell that has a box cursor.

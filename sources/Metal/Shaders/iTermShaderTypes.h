@@ -78,6 +78,9 @@ typedef struct {
     // Offset from vertex
     vector_float2 offset;
 
+    // Number of cells occupied
+    unsigned short runLength;
+
     // Background color
     vector_float4 color;
 } iTermBackgroundColorPIU;

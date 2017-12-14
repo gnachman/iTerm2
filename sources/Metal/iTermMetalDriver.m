@@ -340,15 +340,18 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
             rowData.y = y;
             rowData.keysData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
             rowData.attributesData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
-            rowData.backgroundColorData = [NSMutableData dataWithLength:sizeof(vector_float4) * _columns];
+            rowData.backgroundColorRLEData = [NSMutableData dataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
             iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
             int drawableGlyphs = 0;
+            int rles = 0;
             [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                             attributes:rowData.attributesData.mutableBytes
-                                            background:rowData.backgroundColorData.mutableBytes
+                                            background:rowData.backgroundColorRLEData.mutableBytes
+                                              rleCount:&rles
                                                    row:y
                                                  width:_columns
                                         drawableGlyphs:&drawableGlyphs];
+            rowData.numberOfBackgroundRLEs = rles;
             rowData.numberOfDrawableGlyphs = drawableGlyphs;
         }
     }];
@@ -437,14 +440,15 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
                               count:rowData.numberOfDrawableGlyphs
                      attributesData:rowData.attributesData
                                 row:rowData.y
-                backgroundColorData:rowData.backgroundColorData
+             backgroundColorRLEData:rowData.backgroundColorRLEData
                            creation:^NSDictionary<NSNumber *,NSImage *> * _Nonnull(int x, BOOL *emoji) {
                                return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
                                                                                  size:cellSize
                                                                                 scale:scale
                                                                                 emoji:emoji];
                            }];
-        [backgroundState setColorData:rowData.backgroundColorData
+        [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes
+                                count:rowData.numberOfBackgroundRLEs
                                   row:rowData.y
                                 width:frameData.gridSize.width];
         numberOfRows++;
