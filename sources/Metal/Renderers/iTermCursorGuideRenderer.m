@@ -49,8 +49,15 @@
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateCursorGuideTS;
+}
+
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    if (_color == nil) {
+        return nil;
+    }
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                                   commandBuffer:commandBuffer];

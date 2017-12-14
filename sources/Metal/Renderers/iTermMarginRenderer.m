@@ -31,6 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateMarginTS;
+}
+
 - (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;

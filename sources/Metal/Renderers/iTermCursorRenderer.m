@@ -137,6 +137,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateCursorTS;
+}
+
 - (Class)transientStateClass {
     return [iTermCursorRendererTransientState class];
 }

@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 
+#import "iTermMetalFrameData.h"
 #import "iTermShaderTypes.h"
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
@@ -21,6 +22,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalRenderer<NSObject>
 
+- (iTermMetalFrameDataStat)createTransientStateStat;
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalRendererTransientState *)transientState;
 

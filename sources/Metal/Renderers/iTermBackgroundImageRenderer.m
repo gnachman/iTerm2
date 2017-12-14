@@ -83,6 +83,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateBackgroundImageTS;
+}
+
 - (void)setImage:(NSImage *)image blending:(CGFloat)blending tiled:(BOOL)tiled {
     if (image != _image) {
         _texture = image ? [_metalRenderer textureFromImage:image] : nil;
@@ -106,6 +110,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    if (_image == nil) {
+        return nil;
+    }
     iTermBackgroundImageRendererTransientState * _Nonnull tState =
         [_metalRenderer createTransientStateForConfiguration:configuration
                                                commandBuffer:commandBuffer];

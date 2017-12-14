@@ -19,6 +19,18 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqBuildRowData,
     iTermMetalFrameDataStatPqUpdateRenderers,
     iTermMetalFrameDataStatPqCreateTransientStates,
+
+    iTermMetalFrameDataStatPqCreateBadgeTS,
+    iTermMetalFrameDataStatPqCreateBackgroundImageTS,
+    iTermMetalFrameDataStatPqCreateBackgroundColorTS,
+    iTermMetalFrameDataStatPqCreateCursorGuideTS,
+    iTermMetalFrameDataStatPqCreateBroadcastStripesTS,
+    iTermMetalFrameDataStatPqCreateCopyBackgroundTS,
+    iTermMetalFrameDataStatPqCreateMarkTS,
+    iTermMetalFrameDataStatPqCreateCursorTS,
+    iTermMetalFrameDataStatPqCreateMarginTS,
+    iTermMetalFrameDataStatPqCreateTextTS,
+
     iTermMetalFrameDataStatPqPopulateTransientStates,
     iTermMetalFrameDataStatDispatchToMainQueue,
     iTermMetalFrameDataStatMtGetCurrentDrawable,
@@ -40,6 +52,7 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
 extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle);
 extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTermPreciseTimerStats *source);
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState;
 @class iTermMetalRendererTransientState;
 @class iTermMetalRowData;
@@ -47,6 +60,7 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
 @property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
 @property (atomic, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;

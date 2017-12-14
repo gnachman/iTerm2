@@ -32,6 +32,10 @@
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateCopyBackgroundTS;
+}
+
 - (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermCopyBackgroundRendererTransientState *tState = transientState;
@@ -46,6 +50,9 @@
 
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    if (!_enabled) {
+        return nil;
+    }
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
         [_metalRenderer createTransientStateForConfiguration:configuration
                                                commandBuffer:commandBuffer];
