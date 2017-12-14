@@ -49,15 +49,13 @@
     return self;
 }
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForCellConfiguration:configuration
-                                              commandBuffer:commandBuffer
-                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                     [self initializeTransientState:transientState];
-                                                     completion(transientState);
-                                                 }];
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
+        [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                                  commandBuffer:commandBuffer];
+    [self initializeTransientState:transientState];
+    return transientState;
 }
 
 - (void)initializeTransientState:(iTermCursorGuideRendererTransientState *)tState {

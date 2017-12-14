@@ -83,23 +83,23 @@ NS_ASSUME_NONNULL_BEGIN
     return _transientStateClass;
 }
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion {
-    [super createTransientStateForConfiguration:configuration commandBuffer:commandBuffer completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-        iTermMetalCellRendererTransientState *tState = transientState;
-        tState.piuElementSize = _piuElementSize;
+- (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    __kindof iTermMetalRendererTransientState *transientState =
+    [super createTransientStateForConfiguration:configuration commandBuffer:commandBuffer];
+    
+    iTermMetalCellRendererTransientState *tState = transientState;
+    tState.piuElementSize = _piuElementSize;
 
-        const NSEdgeInsets margins = tState.margins;
-        const vector_float2 offset = {
-            margins.left,
-            margins.top
-        };
-        tState.offsetBuffer = [self.device newBufferWithBytes:&offset
-                                                       length:sizeof(offset)
-                                                      options:MTLResourceStorageModeShared];
-        completion(tState);
-    }];
+    const NSEdgeInsets margins = tState.margins;
+    const vector_float2 offset = {
+        margins.left,
+        margins.top
+    };
+    tState.offsetBuffer = [self.device newBufferWithBytes:&offset
+                                                   length:sizeof(offset)
+                                                  options:MTLResourceStorageModeShared];
+    return tState;
 }
 
 @end

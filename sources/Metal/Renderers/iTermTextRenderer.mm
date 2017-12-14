@@ -919,25 +919,23 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     delete _texturePageCollection;
 }
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
     // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
     // blends using the output of the preceding passes.
     _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
-    [_cellRenderer createTransientStateForCellConfiguration:configuration
-                                              commandBuffer:commandBuffer
-                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                     [self initializeTransientState:transientState
-                                                                      commandBuffer:commandBuffer
-                                                                         completion:completion];
-                                                 }];
+    __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
+        [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer];
+    [self initializeTransientState:transientState
+                     commandBuffer:commandBuffer];
+    return transientState;
+
 }
 
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
-                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                      completion:(void (^)(__kindof iTermMetalCellRendererTransientState * _Nonnull))completion {
+                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (_texturePageCollection != NULL) {
 #warning TODO: Freeing the texture page collection without using reference counting will leave transient states with dangling pointers if we ever have more than one frame in flight.
         const vector_uint2 &oldSize = _texturePageCollection->get_cell_size();
@@ -962,7 +960,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     tState.asciiTextureGroup = _asciiTextureGroup;
     tState.texturePageCollection = _texturePageCollection;
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
-    completion(tState);
 }
 
 - (id<MTLBuffer>)quadOfSize:(CGSize)size textureSize:(CGSize)textureSize {

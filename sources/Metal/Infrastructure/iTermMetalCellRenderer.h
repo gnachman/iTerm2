@@ -36,9 +36,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState;
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion;
+- (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 
@@ -74,13 +73,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
                          piuElementSize:(size_t)piuElementSize
                     transientStateClass:(Class)transientStateClass NS_DESIGNATED_INITIALIZER;
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion;
+- (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
-- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                  completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion NS_UNAVAILABLE;
+- (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 
