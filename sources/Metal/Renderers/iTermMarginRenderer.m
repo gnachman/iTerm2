@@ -45,15 +45,13 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{}];
 }
 
-- (void)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer
-                                      completion:(nonnull void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForCellConfiguration:configuration
-                                              commandBuffer:commandBuffer
-                                                 completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                     [self initializeTransientState:transientState];
-                                                     completion(transientState);
-                                                 }];
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
+    __kindof iTermMetalRendererTransientState * _Nonnull transientState =
+        [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer];
+    [self initializeTransientState:transientState];
+    return transientState;
 }
 
 - (vector_float2 *)appendVerticesForQuad:(CGRect)quad vertices:(vector_float2 *)v {

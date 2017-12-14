@@ -104,25 +104,15 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                  completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_metalRenderer createTransientStateForConfiguration:configuration
-                                           commandBuffer:commandBuffer
-                                              completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                  [self initializeTransientState:transientState];
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    iTermBackgroundImageRendererTransientState * _Nonnull tState =
+        [_metalRenderer createTransientStateForConfiguration:configuration
+                                               commandBuffer:commandBuffer];
 
-                                                  iTermBackgroundImageRendererTransientState *tState = transientState;
-                                                  tState.texture = _texture;
+    [self initializeTransientState:tState];
 
-                                                  if (!tState.skipRenderer) {
-                                                      tState.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-                                                      [self initializeColorAttachmentOfSize:configuration.viewportSize
-                                                                     inRenderPassDescriptor:tState.intermediateRenderPassDescriptor];
-                                                  }
-
-                                                  completion(transientState);
-                                              }];
+    return tState;
 }
 
 - (void)didFinishWithTransientState:(iTermBackgroundImageRendererTransientState *)tState {
@@ -154,6 +144,13 @@ NS_ASSUME_NONNULL_BEGIN
     tState.tiled = _tiled;
     tState.vertexBuffer = [_metalRenderer newQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
                                                                    tState.configuration.viewportSize.y)];
+    tState.texture = _texture;
+
+    if (!tState.skipRenderer) {
+        tState.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+        [self initializeColorAttachmentOfSize:tState.configuration.viewportSize
+                       inRenderPassDescriptor:tState.intermediateRenderPassDescriptor];
+    }
 }
 
 @end

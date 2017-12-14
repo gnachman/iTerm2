@@ -24,9 +24,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalRendererTransientState *)transientState;
 
-- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                  completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion;
+- (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 
@@ -84,9 +83,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                        vertexFunction:(id<MTLFunction>)vertexFunction
                                      fragmentFunction:(id<MTLFunction>)fragmentFunction;
 
-- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                  completion:(void (^)(__kindof iTermMetalRendererTransientState *transientState))completion;
+- (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 

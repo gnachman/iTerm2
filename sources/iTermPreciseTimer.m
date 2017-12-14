@@ -72,7 +72,7 @@ NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) {
     return nanoseconds / 1000000000.0;
 }
 
-void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, char *name) {
+void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, const char *name) {
     if (!gPreciseTimersEnabled) {
         return;
     }
@@ -207,4 +207,22 @@ void iTermPreciseTimerLog(iTermPreciseTimerStats stats[],
     }
     DLog(@"%@", log);
 }
+
+void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
+                                  size_t count,
+                                  BOOL logToConsole) {
+    NSMutableString *log = [[@"-- Precice Timers (One Event) --\n" mutableCopy] autorelease];
+    for (size_t i = 0; i < count; i++) {
+        if (stats[i].n != 1) {
+            continue;
+        }
+        [log appendFormat:@"%20s: %0.3fms\n", stats[i].name, iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0];
+        iTermPreciseTimerStatsInit(&stats[i], NULL);
+    }
+    if (logToConsole) {
+        NSLog(@"%@", log);
+    }
+    DLog(@"%@", log);
+}
+
 #endif

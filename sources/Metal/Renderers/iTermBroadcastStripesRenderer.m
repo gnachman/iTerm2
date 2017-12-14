@@ -43,15 +43,13 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (void)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                  completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_metalRenderer createTransientStateForConfiguration:configuration
-                                           commandBuffer:commandBuffer
-                                              completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                  [self initializeTransientState:transientState];
-                                                  completion(transientState);
-                                              }];
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    __kindof iTermMetalRendererTransientState * _Nonnull transientState =
+        [_metalRenderer createTransientStateForConfiguration:configuration
+                                           commandBuffer:commandBuffer];
+    [self initializeTransientState:transientState];
+    return transientState;
 }
 
 - (void)initializeTransientState:(iTermBroadcastStripesRendererTransientState *)tState {

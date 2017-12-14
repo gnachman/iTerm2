@@ -17,7 +17,7 @@
                  row:(int)row
                width:(int)width {
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
-    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)self.pius.contents + sizeof(iTermBackgroundColorPIU) * _numberOfPIUs;
+    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)self.pius.contents + _numberOfPIUs;
     const int height = self.cellConfiguration.gridSize.height;
     for (int i = 0; i < count; i++) {
         pius[i].color = rles[i].color;
@@ -47,15 +47,13 @@
     return self;
 }
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForCellConfiguration:configuration
-                                              commandBuffer:commandBuffer
-                                                 completion:^(__kindof iTermMetalCellRendererTransientState * _Nonnull transientState) {
-                                                     [self initializeTransientState:transientState];
-                                                     completion(transientState);
-                                                 }];
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
+        [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer];
+    [self initializeTransientState:transientState];
+    return transientState;
 }
 
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {

@@ -12,35 +12,34 @@
 
 #import <MetalKit/MetalKit.h>
 
-void iTermMetalFrameDataStatsBundleInitialize(iTermMetalFrameDataStatsBundle *bundle) {
+void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
     iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
-    iTermPreciseTimerStatsInit(&bundle->mainThreadStats, "main thread");
-    iTermPreciseTimerStatsInit(&bundle->extractFromApp, "mt.extractFromApp");
 
-    iTermPreciseTimerStatsInit(&bundle->dispatchForPrepareStats, "dispatchForPrepare");
-    iTermPreciseTimerStatsInit(&bundle->prepareStats, "prepare");
-    iTermPreciseTimerStatsInit(&bundle->waitForGroup, "wait for group");
-    iTermPreciseTimerStatsInit(&bundle->finalizeStats, "finalize");
-
-    iTermPreciseTimerStatsInit(&bundle->fzCopyBackgroundRenderer, "fin cp bg<");
-    iTermPreciseTimerStatsInit(&bundle->fzCursor, "fin cursor<");
-    iTermPreciseTimerStatsInit(&bundle->fzText, "fin text<");
-
-    iTermPreciseTimerStatsInit(&bundle->getScarceResources, "mt.get scarce");
-    iTermPreciseTimerStatsInit(&bundle->getCurrentDrawableStats, "mt.currentDrawable<<");
-    iTermPreciseTimerStatsInit(&bundle->getCurrentRenderPassDescriptorStats, "mt.renderPassDescr<<");
-
-    iTermPreciseTimerStatsInit(&bundle->drawStats, "draw<");
-    iTermPreciseTimerStatsInit(&bundle->drawMargins, "drawMargins<<");
-    iTermPreciseTimerStatsInit(&bundle->drawBGImage, "drawBGImage<<");
-    iTermPreciseTimerStatsInit(&bundle->drawBGColor, "drawBGColor<<");
-    iTermPreciseTimerStatsInit(&bundle->drawCursor, "drawCursor<<");
-    iTermPreciseTimerStatsInit(&bundle->drawCopyBG, "drawCopyBG<<");
-    iTermPreciseTimerStatsInit(&bundle->drawText, "drawText<<");
+    const char *names[iTermMetalFrameDataStatCount] = {
+        "mt.ExtractFromApp",
+        "dispatchToPrivateQueue",
+        "pq.BuildRowData",
+        "pq.UpdateRenderers",
+        "pq.CreateTransient",
+        "pq.PopulateTransient",
+        "dispatchToMainQueue",
+        "mt.GetCurrentDrawable",
+        "mt.GetRenderPassD",
+        "mt.EnqueueDrawCalls",
+        "enqueueDrawMargin<",
+        "enqueueDrawBgImage<",
+        "enqueueDrawBgColor<",
+        "enqueueDrawCursor<",
+        "enqueueCopyBg<",
+        "enqueueDrawText<",
+        "gpu",
+        "endToEnd",
+    };
 
 
-    iTermPreciseTimerStatsInit(&bundle->renderingStats, "rendering");
-    iTermPreciseTimerStatsInit(&bundle->endToEnd, "end to end");
+    for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
+        iTermPreciseTimerStatsInit(&bundle[i], names[i]);
+    }
 }
 
 static NSInteger gNextFrameDataNumber;
@@ -51,18 +50,19 @@ static NSInteger gNextFrameDataNumber;
 
 @implementation iTermMetalFrameData {
     NSTimeInterval _creation;
-    iTermMetalFrameDataStatsBundle _stats;
+    iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
 }
 
-- (instancetype)init {
+- (instancetype)initWithView:(MTKView *)view {
     self = [super init];
     if (self) {
+        _view = view;
+        _device = view.device;
         _creation = [NSDate timeIntervalSinceReferenceDate];
         _frameNumber = gNextFrameDataNumber++;
-        iTermMetalFrameDataStatsBundleInitialize(&_stats);
+        iTermMetalFrameDataStatsBundleInitialize(_stats);
 
-        iTermPreciseTimerStatsStartTimer(&_stats.endToEnd);
-        iTermPreciseTimerStatsStartTimer(&_stats.mainThreadStats);
+        iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
         self.status = @"just created";
     }
     return self;
@@ -79,164 +79,69 @@ static NSInteger gNextFrameDataNumber;
             self.status];
 }
 
-- (void)loadFromView:(MTKView *)view {
-    self.view = view;
-    self.device = view.device;
+- (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block {
+    self.status = [NSString stringWithUTF8String:_stats[stat].name];
+    iTermPreciseTimerStatsStartTimer(&_stats[stat]);
+    block();
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[stat]);
 }
 
 - (void)extractStateFromAppInBlock:(void (^)(void))block {
-    iTermPreciseTimerStatsStartTimer(&_stats.extractFromApp);
+    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
     block();
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.extractFromApp);
-}
-
-- (void)performBlockWithScarceResources:(void (^)(MTLRenderPassDescriptor *, id<CAMetalDrawable>))block {
-    iTermPreciseTimerStatsStartTimer(&_stats.getScarceResources);
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        @autoreleasepool {
-            id<CAMetalDrawable> drawable;
-            MTLRenderPassDescriptor *renderPassDescriptor;
-            iTermPreciseTimerStatsStartTimer(&_stats.getCurrentDrawableStats);
-            drawable = self.view.currentDrawable;
-            iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.getCurrentDrawableStats);
-            
-            iTermPreciseTimerStatsStartTimer(&_stats.getCurrentRenderPassDescriptorStats);
-            renderPassDescriptor = self.view.currentRenderPassDescriptor;
-            iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.getCurrentRenderPassDescriptorStats);
-            block(renderPassDescriptor, drawable);
-            iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.getScarceResources);
-        }
-    });
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
 }
 
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block {
-    iTermPreciseTimerStatsStartTimer(&_stats.dispatchForPrepareStats);
+    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.dispatchForPrepareStats);
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
         block();
     });
 }
 
-- (void)prepareWithBlock:(void (^)(void))block {
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.mainThreadStats);
-    iTermPreciseTimerStatsStartTimer(&_stats.prepareStats);
-    self.status = @"before prepare";
-    block();
-    self.status = @"after prepare";
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.prepareStats);
-}
-
-- (void)waitForUpdatesToFinishOnGroup:(dispatch_group_t)group
-                              onQueue:(dispatch_queue_t)queue
-                             finalize:(void (^)(void))finalize
-                               render:(void (^)(void))render {
-    iTermPreciseTimerStatsStartTimer(&_stats.waitForGroup);
-    dispatch_group_notify(group, queue, ^{
-        self.status = @"before finalize";
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.waitForGroup);
-
-        iTermPreciseTimerStatsStartTimer(&_stats.finalizeStats);
-        self.status = @"finalizing";
-        finalize();
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.finalizeStats);
-
-        iTermPreciseTimerStatsStartTimer(&_stats.drawStats);
-        self.status = @"doing metal setup";
-        render();
-        self.status = @"waiting for render to complete";
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.drawStats);
-
-        iTermPreciseTimerStatsStartTimer(&_stats.renderingStats);
+- (void)dispatchToMainQueue:(void (^)(void))block {
+    self.status = [NSString stringWithUTF8String:_stats[iTermMetalFrameDataStatDispatchToMainQueue].name];
+    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+        block();
     });
 }
 
-- (iTermPreciseTimerStats **)statsArrayFromBundle:(iTermMetalFrameDataStatsBundle *)bundle count:(int *)countOut {
-    iTermPreciseTimerStats *stats[] = {
-        &bundle->mainThreadStats,
-        &bundle->extractFromApp,
-        &bundle->dispatchForPrepareStats,
-        &bundle->prepareStats,
-        &bundle->waitForGroup,
-
-        &bundle->finalizeStats,
-        &bundle->fzCopyBackgroundRenderer,
-        &bundle->fzCursor,
-        &bundle->fzText,
-
-        &bundle->getScarceResources,
-        &bundle->getCurrentDrawableStats,
-        &bundle->getCurrentRenderPassDescriptorStats,
-
-        &bundle->drawStats,
-        &bundle->drawMargins,
-        &bundle->drawBGImage,
-        &bundle->drawBGColor,
-        &bundle->drawCursor,
-        &bundle->drawCopyBG,
-        &bundle->drawText,
-
-        &bundle->renderingStats,
-        &bundle->endToEnd
-    };
-
-    *countOut = sizeof(stats) / sizeof(*stats);
-    NSMutableData *data = [NSMutableData dataWithBytes:stats length:sizeof(stats)];
-    return (iTermPreciseTimerStats **)data.mutableBytes;
+- (void)willHandOffToGPU {
+    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
 }
 
-- (void)finalizeTextRendererWithBlock:(void (^)(void))block {
-    iTermPreciseTimerStatsStartTimer(&_stats.fzText);
-    block();
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.fzText);
-}
-
-- (void)finalizeCursorRendererWithBlock:(void (^)(void))block {
-    iTermPreciseTimerStatsStartTimer(&_stats.fzCursor);
-    block();
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.fzCursor);
-}
-
-- (void)finalizeCopyBackgroundRendererWithBlock:(void (^)(void))block {
-    iTermPreciseTimerStatsStartTimer(&_stats.fzCopyBackgroundRenderer);
-    block();
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.fzCopyBackgroundRenderer);
-}
-
-- (void)didCompleteWithAggregateStats:(iTermMetalFrameDataStatsBundle *)aggregateStats {
+- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats {
     self.status = @"complete";
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.renderingStats);
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats.endToEnd);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
 
-    int numStats;
-    iTermPreciseTimerStats **array = [self statsArrayFromBundle:&_stats count:&numStats];
-#define ENABLE_PER_FRAME_METAL_STATS 0
+#define ENABLE_PER_FRAME_METAL_STATS 1
 #if ENABLE_PER_FRAME_METAL_STATS
-    iTermPreciseTimerLog(array, numStats, YES);
+    iTermPreciseTimerLogOneEvent(_stats, iTermMetalFrameDataStatCount, YES);
 #endif
 
     [self addStatsTo:aggregateStats];
 
-    array = [self statsArrayFromBundle:aggregateStats count:&numStats];
-    iTermPreciseTimerStats *temp = malloc(sizeof(iTermPreciseTimerStats) * numStats);
-    for (int i = 0; i < numStats; i++) {
-        temp[i] = *array[i];
+    iTermPreciseTimerStats temp[iTermMetalFrameDataStatCount];
+    for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
+        temp[i] = aggregateStats[i];
     }
-    iTermPreciseTimerPeriodicLog(temp, numStats, 1, YES);
-    free(temp);
+    iTermPreciseTimerPeriodicLog(temp, iTermMetalFrameDataStatCount, 1, YES);
 }
 
-- (void)addStatsTo:(iTermMetalFrameDataStatsBundle *)dest {
-    int n;
-    iTermPreciseTimerStats **destArray = [self statsArrayFromBundle:dest count:&n];
-    iTermPreciseTimerStats **sourceArray = [self statsArrayFromBundle:&_stats count:&n];
-    for (int i = 0; i < n; i++) {
-        iTermPreciseTimerStatsRecord(destArray[i], sourceArray[i]->mean * sourceArray[i]->n, sourceArray[i]->n);
+- (void)addStatsTo:(iTermPreciseTimerStats *)dest {
+    for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
+        iTermPreciseTimerStatsRecord(&dest[i], _stats[i].mean * _stats[i].n, _stats[i].n);
     }
 }
 
-- (iTermMetalFrameDataStatsBundle *)stats {
-    return &_stats;
+- (iTermPreciseTimerStats *)stats {
+    return _stats;
 }
 
 @end
+
 

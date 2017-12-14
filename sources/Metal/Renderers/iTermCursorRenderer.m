@@ -147,15 +147,13 @@ NS_ASSUME_NONNULL_BEGIN
            fragmentFunctionName:@"iTermCursorFragmentShader"];
 }
 
-- (void)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                      completion:(void (^)(__kindof iTermMetalRendererTransientState * _Nonnull))completion {
-    [_cellRenderer createTransientStateForCellConfiguration:configuration
-                                              commandBuffer:commandBuffer
-                                                 completion:^(__kindof iTermMetalRendererTransientState * _Nonnull transientState) {
-                                                     [self initializeTransientState:transientState];
-                                                     completion(transientState);
-                                                 }];
+- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    __kindof iTermMetalRendererTransientState * _Nonnull transientState =
+        [_cellRenderer createTransientStateForCellConfiguration:configuration
+                                              commandBuffer:commandBuffer];
+    [self initializeTransientState:transientState];
+    return transientState;
 }
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {

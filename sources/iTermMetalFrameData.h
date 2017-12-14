@@ -13,36 +13,32 @@
 #import <Metal/Metal.h>
 #import <simd/simd.h>
 
-typedef struct {
-    iTermPreciseTimerStats mainThreadStats;
-    iTermPreciseTimerStats getScarceResources;
-    iTermPreciseTimerStats getCurrentDrawableStats;
-    iTermPreciseTimerStats getCurrentRenderPassDescriptorStats;
-    iTermPreciseTimerStats extractFromApp;
-    iTermPreciseTimerStats dispatchForPrepareStats;
-    iTermPreciseTimerStats prepareStats;
-    iTermPreciseTimerStats waitForGroup;
-    iTermPreciseTimerStats finalizeStats;
+typedef NS_ENUM(int, iTermMetalFrameDataStat) {
+    iTermMetalFrameDataStatMtExtractFromApp,
+    iTermMetalFrameDataStatDispatchToPrivateQueue,
+    iTermMetalFrameDataStatPqBuildRowData,
+    iTermMetalFrameDataStatPqUpdateRenderers,
+    iTermMetalFrameDataStatPqCreateTransientStates,
+    iTermMetalFrameDataStatPqPopulateTransientStates,
+    iTermMetalFrameDataStatDispatchToMainQueue,
+    iTermMetalFrameDataStatMtGetCurrentDrawable,
+    iTermMetalFrameDataStatMtGetRenderPassDescriptor,
+    iTermMetalFrameDataStatMtEnqueueDrawCalls,
+    iTermMetalFrameDataStatMtEnqueueDrawMargin,
+    iTermMetalFrameDataStatMtEnqueueDrawBackgroundImage,
+    iTermMetalFrameDataStatMtEnqueueDrawBackgroundColor,
+    iTermMetalFrameDataStatMtEnqueueDrawCursor,
+    iTermMetalFrameDataStatMtEnqueueCopyBackground,
+    iTermMetalFrameDataStatMtEnqueueDrawText,
+    
+    iTermMetalFrameDataStatGpu,
+    iTermMetalFrameDataStatEndToEnd,
 
-    // Finalize stats
-    iTermPreciseTimerStats fzCopyBackgroundRenderer;
-    iTermPreciseTimerStats fzCursor;
-    iTermPreciseTimerStats fzText;
+    iTermMetalFrameDataStatCount
+};
 
-    iTermPreciseTimerStats drawStats;
-    iTermPreciseTimerStats drawMargins;
-    iTermPreciseTimerStats drawBGImage;
-    iTermPreciseTimerStats drawBGColor;
-    iTermPreciseTimerStats drawCursor;
-    iTermPreciseTimerStats drawCopyBG;
-    iTermPreciseTimerStats drawText;
-
-    iTermPreciseTimerStats renderingStats;
-    iTermPreciseTimerStats endToEnd;
-} iTermMetalFrameDataStatsBundle;
-
-extern void iTermMetalFrameDataStatsBundleInitialize(iTermMetalFrameDataStatsBundle *bundle);
-extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *dest, iTermMetalFrameDataStatsBundle *source);
+extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle);
+extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTermPreciseTimerStats *source);
 
 @protocol iTermMetalDriverDataSourcePerFrameState;
 @class iTermMetalRendererTransientState;
@@ -62,28 +58,20 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermMetalFrameDataStatsBundle *de
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
-@property (nonatomic, readonly) iTermMetalFrameDataStatsBundle *stats;
+@property (nonatomic, readonly) iTermPreciseTimerStats *stats;
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture.
 @property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 
-- (void)loadFromView:(MTKView *)view;
-- (void)extractStateFromAppInBlock:(void (^)(void))block;
+- (instancetype)initWithView:(MTKView *)view NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
+- (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block;
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
-- (void)prepareWithBlock:(void (^)(void))block;
-- (void)waitForUpdatesToFinishOnGroup:(dispatch_group_t)group
-                              onQueue:(dispatch_queue_t)queue
-                             finalize:(void (^)(void))finalize
-                               render:(void (^)(void))render;
-- (void)didCompleteWithAggregateStats:(iTermMetalFrameDataStatsBundle *)aggregateStats;
-
-- (void)finalizeCopyBackgroundRendererWithBlock:(void (^)(void))block;
-- (void)finalizeCursorRendererWithBlock:(void (^)(void))block;
-- (void)finalizeTextRendererWithBlock:(void (^)(void))block;
-
-- (void)performBlockWithScarceResources:(void (^)(MTLRenderPassDescriptor *renderPassDescriptor,
-                                                  id<CAMetalDrawable> drawable))block;
+- (void)dispatchToMainQueue:(void (^)(void))block;
+- (void)willHandOffToGPU;
+- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;
 
 @end
 
