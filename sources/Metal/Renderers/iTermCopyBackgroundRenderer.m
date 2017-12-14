@@ -62,7 +62,8 @@
 
 - (void)initializeTransientState:(iTermCopyBackgroundRendererTransientState *)tState {
     tState.vertexBuffer = [_metalRenderer newFlippedQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
-                                                                          tState.configuration.viewportSize.y)];
+                                                                          tState.configuration.viewportSize.y)
+                                                   poolContext:tState.poolContext];
 }
 
 @end

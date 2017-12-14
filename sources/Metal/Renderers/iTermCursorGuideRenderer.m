@@ -55,7 +55,7 @@
 
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    if (_color == nil) {
+    if (!_enabled == nil) {
         return nil;
     }
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
@@ -68,7 +68,8 @@
 - (void)initializeTransientState:(iTermCursorGuideRendererTransientState *)tState {
     tState.color = _color;
     tState.row = _row;
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize
+                                           poolContext:tState.poolContext];
     if (!CGSizeEqualToSize(tState.cellConfiguration.cellSize, _lastCellSize)) {
         _texture = [self newCursorGuideTextureWithTransientState:tState];
         _lastCellSize = tState.cellConfiguration.cellSize;

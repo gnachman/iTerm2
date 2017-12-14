@@ -2,6 +2,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermMetalBufferPool.h"
 #import "iTermShaderTypes.h"
 
 @implementation iTermRenderConfiguration
@@ -27,6 +28,7 @@
     self = [super init];
     if (self) {
         _configuration = configuration;
+        _poolContext = [[iTermMetalBufferPoolContext alloc] init];
     }
     return self;
 }
@@ -40,6 +42,7 @@
 @implementation iTermMetalRenderer {
     BOOL _blending;
     NSString *_vertexFunctionName;
+    iTermMetalBufferPool *_verticesPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -62,6 +65,7 @@
         _fragmentFunctionName = [fragmentFunctionName copy];
         _blending = blending;
         _transientStateClass = transientStateClass;
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;
 }
@@ -97,7 +101,7 @@
 
 #pragma mark - Utilities for subclasses
 
-- (id<MTLBuffer>)newQuadOfSize:(CGSize)size {
+- (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext {
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
         { { size.width,           0 }, { 1.f, 0.f } },
@@ -108,10 +112,12 @@
         { {          0, size.height }, { 0.f, 1.f } },
         { { size.width, size.height }, { 1.f, 1.f } },
     };
-    return [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
+    return [_verticesPool requestBufferFromContext:poolContext
+                                         withBytes:vertices
+                                    checkIfChanged:YES];
 }
 
-- (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size {
+- (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext {
     const iTermVertex vertices[] = {
         // Pixel Positions, Texture Coordinates
         { { size.width,           0 }, { 1.f, 1.f } },
@@ -122,7 +128,9 @@
         { {          0, size.height }, { 0.f, 0.f } },
         { { size.width, size.height }, { 1.f, 0.f } },
     };
-    return [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
+    return [_verticesPool requestBufferFromContext:poolContext
+                                         withBytes:vertices
+                                    checkIfChanged:YES];
 }
 
 - (id<MTLRenderPipelineState>)newPipelineWithBlending:(BOOL)blending
@@ -149,6 +157,15 @@
     }
 
     NSError *error = NULL;
+#warning TODO: Reuse these
+    // From https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/MTLBestPracticesGuide/PersistentObjects.html
+    // Building a programmable pipeline involves an expensive evaluation of GPU state. You should
+    // build MTLRenderPipelineState and MTLComputePipelineState objects only once, then reuse them
+    // for every new render or compute command encoder you create. Do not build new pipelines for
+    // new command encoders. For an overview of building multiple pipelines asynchronously, see the
+    // Pipelines best practices.
+
+
     id<MTLRenderPipelineState> pipeline = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                                                   error:&error];
     ITDebugAssert(pipeline);

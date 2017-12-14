@@ -82,7 +82,7 @@
     tState.marksArrayTexture = _marksArrayTexture;
     tState.markSize = _markSize;
     tState.marks = [_marks copy];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:_markSize];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:_markSize poolContext:tState.poolContext];
 
     if (_marks.count > 0) {
         NSData *data = [tState newMarkPerInstanceUniforms];
