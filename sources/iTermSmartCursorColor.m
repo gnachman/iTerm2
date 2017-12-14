@@ -23,7 +23,6 @@
     for (int y = 0; y < 3; y++) {
         for (int x = 0; x < 3; x++) {
             if (neighbors.valid[y][x]) {
-                NSLog(@"Background color for dx=%d dy=%d is %@", x-1, y-1, [self backgroundColorForChar:neighbors.chars[y][x]]);
                 [constraints addObject:@([self brightnessOfCharBackground:neighbors.chars[y][x]])];
             }
         }
