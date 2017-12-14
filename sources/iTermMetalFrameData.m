@@ -21,6 +21,18 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "pq.BuildRowData",
         "pq.UpdateRenderers",
         "pq.CreateTransient",
+
+        "badgeTS<",
+        "backgroundImageTS<",
+        "backgroundColorTS<",
+        "cursorGuideTS<",
+        "broadcastStripesTS<",
+        "copyBackgroundTS<",
+        "markTS<",
+        "cursorTS<",
+        "marginTS<",
+        "textTS<",
+
         "pq.PopulateTransient",
         "dispatchToMainQueue",
         "mt.GetCurrentDrawable",

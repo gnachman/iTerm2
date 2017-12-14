@@ -217,7 +217,6 @@ void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
             continue;
         }
         [log appendFormat:@"%20s: %0.3fms\n", stats[i].name, iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0];
-        iTermPreciseTimerStatsInit(&stats[i], NULL);
     }
     if (logToConsole) {
         NSLog(@"%@", log);

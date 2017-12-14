@@ -47,6 +47,10 @@
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateBackgroundColorTS;
+}
+
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =

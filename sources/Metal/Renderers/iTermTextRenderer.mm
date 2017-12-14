@@ -878,6 +878,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     return subpixelModelData;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateTextTS;
+}
+
 - (id<MTLBuffer>)subpixelModelsForState:(iTermTextRendererTransientState *)tState {
     if (tState.colorModels) {
         if (tState.colorModels.length == 0) {

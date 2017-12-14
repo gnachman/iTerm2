@@ -1,4 +1,6 @@
 #import "iTermMetalRenderer.h"
+
+#import "iTermMetalFrameData.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -33,6 +35,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalCellRenderer<NSObject>
 
+- (iTermMetalFrameDataStat)createTransientStateStat;
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState;
 
@@ -75,9 +78,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                           commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
-
-- (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                                                                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 

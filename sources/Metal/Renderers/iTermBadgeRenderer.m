@@ -42,6 +42,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (iTermMetalFrameDataStat)createTransientStateStat {
+    return iTermMetalFrameDataStatPqCreateBadgeTS;
+}
+
 - (void)setBadgeImage:(NSImage *)image {
     _size = image.size;
     _texture = [_metalRenderer textureFromImage:image];
@@ -63,6 +67,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    if (CGSizeEqualToSize(CGSizeZero, _size)) {
+        return nil;
+    }
+
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
         [_metalRenderer createTransientStateForConfiguration:configuration
                                            commandBuffer:commandBuffer];

@@ -100,7 +100,7 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
         _currentFrames = [NSMutableArray array];
         _fpsMovingAverage = [[MovingAverage alloc] init];
-        iTermMetalFrameDataStatsBundleInitialize(&_stats);
+        iTermMetalFrameDataStatsBundleInitialize(_stats);
     }
 
     return self;
@@ -217,7 +217,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     }];
 
     // Set properties of the renderers for values that tend not to change very often and which
-    // are used to create transient states.
+    // are used to create transient states. This must happen before creating transient states
+    // since renderers use this info to decide if they should return a nil transient state.
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqUpdateRenderers ofBlock:^{
         [self updateRenderersForNewFrameData:frameData];
     }];
@@ -298,6 +299,9 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     BOOL tiled;
     NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
     [_backgroundImageRenderer setImage:backgroundImage blending:blending tiled:tiled];
+
+    // TODO: Badges and background stripes would also control this.
+    _copyBackgroundRenderer.enabled = (backgroundImage != nil);
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
@@ -307,40 +311,46 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 
     [commandBuffer enqueue];
     commandBuffer.label = @"Draw Terminal";
-    [self.nonCellRenderers enumerateObjectsUsingBlock:^(id<iTermMetalRenderer>  _Nonnull renderer, NSUInteger idx, BOOL * _Nonnull stop) {
-        __kindof iTermMetalRendererTransientState * _Nonnull tState =
+    for (id<iTermMetalRenderer> renderer in self.nonCellRenderers) {
+        [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
+            __kindof iTermMetalRendererTransientState * _Nonnull tState =
             [renderer createTransientStateForConfiguration:configuration
-                                         commandBuffer:commandBuffer];
-        if (tState) {
-            frameData.transientStates[NSStringFromClass(renderer.class)] = tState;
-            [self updateRenderer:renderer
-                           state:tState
-                       frameData:frameData];
-        }
-    }];
+                                             commandBuffer:commandBuffer];
+            if (tState) {
+                frameData.transientStates[NSStringFromClass(renderer.class)] = tState;
+                [self updateRenderer:renderer
+                               state:tState
+                           frameData:frameData];
+            }
+        }];
+    };
     VT100GridSize gridSize = frameData.gridSize;
 
-    // We need frameData's intermediateRenderPassDescriptor to be initialized before creating
-    // tstate's for subsequent objects. This assertion is there to make sure the tState exists,
-    // with the assumption its IRPD is set prior to creation if it should exist.
-    assert(frameData.transientStates[NSStringFromClass(_backgroundImageRenderer.class)]);
+    if (_backgroundImageRenderer.image != nil) {
+        // We need frameData's intermediateRenderPassDescriptor to be initialized before creating
+        // tstate's for subsequent objects. This assertion is there to make sure the tState exists,
+        // with the assumption its IRPD is set prior to creation if it should exist.
+        assert(frameData.transientStates[NSStringFromClass(_backgroundImageRenderer.class)]);
+    }
 
     iTermCellRenderConfiguration *cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:_viewportSize
                                                                                                            scale:frameData.scale
                                                                                                         cellSize:_cellSize
                                                                                                         gridSize:gridSize
                                                                                            usingIntermediatePass:(frameData.intermediateRenderPassDescriptor != nil)];
-    [self.cellRenderers enumerateObjectsUsingBlock:^(id<iTermMetalCellRenderer>  _Nonnull renderer, NSUInteger idx, BOOL * _Nonnull stop) {
-        __kindof iTermMetalCellRendererTransientState * _Nonnull tState =
-            [renderer createTransientStateForCellConfiguration:cellConfiguration
-                                                 commandBuffer:commandBuffer];
-        if (tState) {
-            frameData.transientStates[NSStringFromClass([renderer class])] = tState;
-            [self updateRenderer:renderer
-                           state:tState
-                       frameData:frameData];
-        }
-    }];
+    for (id<iTermMetalCellRenderer> renderer in self.cellRenderers) {
+        [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
+            __kindof iTermMetalCellRendererTransientState * _Nonnull tState =
+                [renderer createTransientStateForCellConfiguration:cellConfiguration
+                                                     commandBuffer:commandBuffer];
+            if (tState) {
+                frameData.transientStates[NSStringFromClass([renderer class])] = tState;
+                [self updateRenderer:renderer
+                               state:tState
+                           frameData:frameData];
+            }
+        }];
+    };
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
@@ -502,8 +512,8 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 
     NSString *className = NSStringFromClass([renderer class]);
     iTermMetalRendererTransientState *state = frameData.transientStates[className];
-    ITDebugAssert(state);
-    if (!state.skipRenderer) {
+    // NOTE: State may be nil if we determined it should be skipped early on.
+    if (state != nil && !state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }
 
@@ -675,12 +685,12 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     [textState didComplete];
 
     iTermBackgroundImageRendererTransientState *backgroundImageState = frameData.transientStates[NSStringFromClass([_backgroundImageRenderer class])];
-    if (!backgroundImageState.skipRenderer) {
+    if (backgroundImageState != nil && !backgroundImageState.skipRenderer) {
         [_backgroundImageRenderer didFinishWithTransientState:backgroundImageState];
     }
 
     DLog(@"  Recording final stats");
-    [frameData didCompleteWithAggregateStats:&_stats];
+    [frameData didCompleteWithAggregateStats:_stats];
 
     @synchronized(self) {
         _framesInFlight--;
