@@ -115,9 +115,11 @@ NS_ASSUME_NONNULL_BEGIN
                                                   iTermBackgroundImageRendererTransientState *tState = transientState;
                                                   tState.texture = _texture;
 
-                                                  tState.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-                                                  [self initializeColorAttachmentOfSize:configuration.viewportSize
-                                                                 inRenderPassDescriptor:tState.intermediateRenderPassDescriptor];
+                                                  if (!tState.skipRenderer) {
+                                                      tState.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+                                                      [self initializeColorAttachmentOfSize:configuration.viewportSize
+                                                                     inRenderPassDescriptor:tState.intermediateRenderPassDescriptor];
+                                                  }
 
                                                   completion(transientState);
                                               }];
