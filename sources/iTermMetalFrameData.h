@@ -15,6 +15,9 @@
 
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatMtExtractFromApp,
+    iTermMetalFrameDataStatMtGetCurrentDrawable,
+    iTermMetalFrameDataStatMtGetRenderPassDescriptor,
+
     iTermMetalFrameDataStatDispatchToPrivateQueue,
     iTermMetalFrameDataStatPqBuildRowData,
     iTermMetalFrameDataStatPqUpdateRenderers,
@@ -33,8 +36,6 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
 
     iTermMetalFrameDataStatPqPopulateTransientStates,
     iTermMetalFrameDataStatDispatchToMainQueue,
-    iTermMetalFrameDataStatMtGetCurrentDrawable,
-    iTermMetalFrameDataStatMtGetRenderPassDescriptor,
 
     iTermMetalFrameDataStatMtEnqueueDrawCalls,
     iTermMetalFrameDataStatMtEnqueueDrawCreateFirstRenderEncoder,
@@ -80,6 +81,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong, readonly) MTKView *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
+@property (nonatomic, strong) id<CAMetalDrawable> drawable;
+@property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture.

@@ -165,6 +165,8 @@
     }
     if (shouldDrop) {
         NSLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
+        NSLog(@"  current frames:\n%@", _currentFrames);
+
         _dropped++;
         self.needsDraw = YES;
         return;
@@ -173,6 +175,15 @@
     @synchronized(self) {
         [_currentFrames addObject:frameData];
     }
+
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+        frameData.drawable = view.currentDrawable;
+    }];
+
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
+        frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+    }];
+
 
     [frameData dispatchToPrivateQueue:_queue forPreparation:^{
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
@@ -244,22 +255,12 @@
 - (void)finishInMainQueueWithFrameData:(iTermMetalFrameData *)frameData
                                   view:(MTKView *)view
                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    __block id<CAMetalDrawable> drawable;
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-        drawable = view.currentDrawable;
-    }];
-
-    __block MTLRenderPassDescriptor *renderPassDescriptor;
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-        renderPassDescriptor = view.currentRenderPassDescriptor;
-    }];
-
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtEnqueueDrawCalls ofBlock:^{
         [self drawIfPossibleInView:view
                          frameData:frameData
                      commandBuffer:commandBuffer
-              renderPassDescriptor:renderPassDescriptor
-                          drawable:drawable];
+              renderPassDescriptor:frameData.renderPassDescriptor
+                          drawable:frameData.drawable];
     }];
     [frameData willHandOffToGPU];
 }
