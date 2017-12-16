@@ -10,6 +10,9 @@
 
 @interface NSMutableData (iTerm)
 
++ (instancetype)uninitializedDataWithLength:(NSUInteger)length;
+
+- (instancetype)initWithUninitializedLength:(NSUInteger)length;
 - (void)appendBytes:(unsigned char *)bytes length:(int)length excludingCharacter:(char)exclude;
 
 @end
