@@ -64,7 +64,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (id<MTLRenderPipelineState>)newPipelineState;
+- (id<MTLRenderPipelineState>)pipelineState;
 
 #pragma mark - For subclasses
 

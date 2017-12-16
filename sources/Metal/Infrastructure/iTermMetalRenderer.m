@@ -43,6 +43,7 @@
     BOOL _blending;
     NSString *_vertexFunctionName;
     iTermMetalBufferPool *_verticesPool;
+    NSMutableDictionary<NSDictionary *, id<MTLRenderPipelineState>> *_pipelineStates;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -66,23 +67,34 @@
         _blending = blending;
         _transientStateClass = transientStateClass;
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _pipelineStates = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
-- (id<MTLRenderPipelineState>)newPipelineState {
-    static id<MTLLibrary> defaultLibrary;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        defaultLibrary = [_device newDefaultLibrary];
-    });
-    id <MTLFunction> vertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
-    ITDebugAssert(vertexShader);
-    id <MTLFunction> fragmentShader = [defaultLibrary newFunctionWithName:_fragmentFunctionName];
-    ITDebugAssert(fragmentShader);
-    return [self newPipelineWithBlending:_blending
-                          vertexFunction:vertexShader
-                        fragmentFunction:fragmentShader];
+- (NSDictionary *)keyForPipelineState {
+    // At the time of writing only the fragment function is mutable. If other inputs to the pipeline
+    // state descriptor become mutable, add them here.
+    return @{ @"fragment function": _fragmentFunctionName ?: @"" };
+}
+
+- (id<MTLRenderPipelineState>)pipelineState {
+    NSDictionary *key = [self keyForPipelineState];
+    if (_pipelineStates[key] == nil) {
+        static id<MTLLibrary> defaultLibrary;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            defaultLibrary = [_device newDefaultLibrary];
+        });
+        id <MTLFunction> vertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
+        ITDebugAssert(vertexShader);
+        id <MTLFunction> fragmentShader = [defaultLibrary newFunctionWithName:_fragmentFunctionName];
+        ITDebugAssert(fragmentShader);
+        _pipelineStates[key] = [self newPipelineWithBlending:_blending
+                                              vertexFunction:vertexShader
+                                            fragmentFunction:fragmentShader];
+    }
+    return _pipelineStates[key];
 }
 
 #pragma mark - Protocol Methods
@@ -90,7 +102,7 @@
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     iTermMetalRendererTransientState *tState = [[self.transientStateClass alloc] initWithConfiguration:configuration];
-    tState.pipelineState = [self newPipelineState];
+    tState.pipelineState = [self pipelineState];
     return tState;
 }
 
