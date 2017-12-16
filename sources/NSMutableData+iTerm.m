@@ -10,6 +10,14 @@
 
 @implementation NSMutableData (iTerm)
 
++ (instancetype)uninitializedDataWithLength:(NSUInteger)length {
+    return [[self alloc] initWithUninitializedLength:length];
+}
+
+- (instancetype)initWithUninitializedLength:(NSUInteger)length {
+    return [self initWithBytesNoCopy:malloc(length) length:length freeWhenDone:YES];
+}
+
 - (void)appendBytes:(unsigned char *)bytes length:(int)length excludingCharacter:(char)exclude {
     int i;
     int lastIndex = 0;

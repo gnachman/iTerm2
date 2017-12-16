@@ -18,10 +18,10 @@
 #import "iTermMetalRowData.h"
 #import "MovingAverage.h"
 #import "iTermPreciseTimer.h"
+#import "iTermShaderTypes.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextureArray.h"
-
-#import "iTermShaderTypes.h"
+#import "NSMutableData+iTerm.h"
 
 // Maybe I could increase this in the future but it's easier to reason about issues during development when it's 1.
 static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
@@ -358,10 +358,9 @@ static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
         rowData.y = y;
-#warning TODO: Use malloc instead of NSMutableData. A lot of time is spent in bzero.
-        rowData.keysData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
-        rowData.attributesData = [NSMutableData dataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
-        rowData.backgroundColorRLEData = [NSMutableData dataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
+        rowData.keysData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
+        rowData.attributesData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
+        rowData.backgroundColorRLEData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;

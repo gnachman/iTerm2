@@ -12,6 +12,7 @@ extern "C" {
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
 #import "NSArray+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import <map>
@@ -823,7 +824,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
 - (nonnull NSMutableData *)modelData  {
     if (_modelData == nil) {
-        _modelData = [[NSMutableData alloc] initWithLength:sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height];
+        _modelData = [[NSMutableData alloc] initWithUninitializedLength:sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height];
     }
     return _modelData;
 }
