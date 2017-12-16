@@ -36,8 +36,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // new buffers, which is terribly slow.
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalMixedSizeBufferPool : NSObject
+@property (nonatomic, copy, readonly) NSString *name;
 
-- (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity name:(NSString *)name NS_DESIGNATED_INITIALIZER;
 
 - (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
                                      size:(size_t)size;

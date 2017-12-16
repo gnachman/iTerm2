@@ -49,7 +49,8 @@
                                                         piuElementSize:sizeof(iTermMarkPIU)
                                                    transientStateClass:[iTermMarkRendererTransientState class]];
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
+                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
+                                                                    name:@"mark PIU"];
     }
     return self;
 }
