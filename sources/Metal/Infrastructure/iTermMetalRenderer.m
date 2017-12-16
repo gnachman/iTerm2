@@ -5,7 +5,7 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermShaderTypes.h"
 
-const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
+const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 
 @implementation iTermRenderConfiguration
 
