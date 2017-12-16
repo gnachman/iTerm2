@@ -17,6 +17,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 
     const char *names[iTermMetalFrameDataStatCount] = {
         "mt.ExtractFromApp",
+        "mt.GetCurrentDrawable",
+        "mt.GetRenderPassD",
         "dispatchToPrivateQueue",
         "pq.BuildRowData",
         "pq.UpdateRenderers",
@@ -35,8 +37,6 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 
         "pq.PopulateTransient",
         "dispatchToMainQueue",
-        "mt.GetCurrentDrawable",
-        "mt.GetRenderPassD",
         "mt.EnqueueDrawCalls",
         "mt.Create1stRE<",
         "mt.DrawMargin<",
@@ -136,6 +136,7 @@ static NSInteger gNextFrameDataNumber;
 
 #define ENABLE_PER_FRAME_METAL_STATS 1
 #if ENABLE_PER_FRAME_METAL_STATS
+    NSLog(@"Stats for %@", self);
     iTermPreciseTimerLogOneEvent(_stats, iTermMetalFrameDataStatCount, YES);
 #endif
 
