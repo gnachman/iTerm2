@@ -67,11 +67,13 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     id<MTLDevice> _device;
     NSMutableArray<id<MTLBuffer>> *_buffers;
     NSUInteger _capacity;
+    NSInteger _numberOutstanding;
 }
 
-- (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity {
+- (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity name:(nonnull NSString *)name {
     self = [super init];
     if (self) {
+        _name = [name copy];
         _device = device;
         _capacity = capacity;
         _buffers = [NSMutableArray arrayWithCapacity:capacity];
@@ -116,15 +118,18 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             buffer = bestMatch;
             memcpy(buffer.contents, bytes, size);
         } else {
+            NSLog(@"%@ allocating a new buffer of size %d (%d outstanding)", _name, (int)size, (int)_numberOutstanding);
             buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
         }
         [context addBuffer:buffer pool:self];
+        _numberOutstanding++;
         return buffer;
     }
 }
 
 - (void)returnBuffer:(id<MTLBuffer>)buffer {
     @synchronized(self) {
+        _numberOutstanding--;
         if (_buffers.count == _capacity) {
             id<MTLBuffer> smallest = [[_buffers mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
                 return [@(a.length) compare:@(b.length)];

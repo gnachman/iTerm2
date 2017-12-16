@@ -45,7 +45,8 @@
                                                         piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
+                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
+                                                                    name:@"background color PIU"];
     }
     return self;
 }

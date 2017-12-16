@@ -46,7 +46,9 @@
                                                               blending:YES
                                                         piuElementSize:sizeof(iTermCursorGuidePIU)
                                                    transientStateClass:[iTermCursorGuideRendererTransientState class]];
-        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
+                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
+                                                                    name:@"cursor guide PIU"];
     }
     return self;
 }

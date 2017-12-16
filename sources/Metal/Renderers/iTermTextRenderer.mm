@@ -374,7 +374,7 @@ namespace iTerm2 {
         void prune_if_needed() {
             if (is_over_maximum_size()) {
 #warning Test this code path
-                DLog(@"Pruning");
+                ELog(@"Pruning");
                 std::vector<TexturePage *> pages;
                 std::copy(_allPages.begin(), _allPages.end(), std::back_inserter(pages));
                 std::sort(pages.begin(), pages.end(), TexturePageCollection::LRUComparison);
@@ -986,9 +986,11 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         // 3 frames in flight, we might use 600 megabytes in the worst case.
         //
 #warning: TODO: Prevent runaway PIU buffer sizes. Cut them off at something reasonable like 10 megs.
-        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:64];
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:512 name:@"text PIU"];
 
-        _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
+        _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
+                                                                          capacity:512
+                                                                              name:@"subpixel PIU"];
     }
     return self;
 }
@@ -1023,7 +1025,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             _texturePageCollection = NULL;
         }
     }
-    int maximumSize = MAX(1024, tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height);
+    // This seems like a good number 🤷‍♂️
+    const int maximumSize = 4096;
     if (!_texturePageCollection) {
         _texturePageCollection = new iTerm2::TexturePageCollection(_cellRenderer.device,
                                                                    simd_make_uint2(tState.cellConfiguration.cellSize.width,
