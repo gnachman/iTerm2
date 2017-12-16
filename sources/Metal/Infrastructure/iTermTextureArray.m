@@ -55,7 +55,8 @@ int ImagePartFromDeltas(int dx, int dy) {
         MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
         textureDescriptor.textureType = MTLTextureType2D;
-        textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+#warning TODO: This could be MTLPixelFormatBGRA8Unorm_SRGB. I'll need to somehow get SRGB values of out of the character source too.
+        textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
         textureDescriptor.width = atlasSize.width;
         textureDescriptor.height = atlasSize.height;
         textureDescriptor.arrayLength = 1;
@@ -107,6 +108,19 @@ int ImagePartFromDeltas(int dx, int dy) {
 
 - (BOOL)setSlice:(NSUInteger)slice withContentsOfFile:(NSString *)path {
     return [self setSlice:slice withImage:[[NSImage alloc] initWithContentsOfFile:path]];
+}
+
+- (void)setSlice:(NSUInteger)slice withBitmap:(iTermCharacterBitmap *)bitmap {
+    ITDebugAssert(slice < _arrayLength);
+    MTLOrigin origin = [self offsetForIndex:slice];
+    MTLRegion region = MTLRegionMake2D(origin.x, origin.y, _width, _height);
+
+    [_texture replaceRegion:region
+                mipmapLevel:0
+                      slice:0
+                  withBytes:bitmap.data.bytes
+                bytesPerRow:bitmap.size.width * 4
+              bytesPerImage:bitmap.size.height * bitmap.size.width * 4];
 }
 
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage {

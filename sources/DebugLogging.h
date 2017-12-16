@@ -13,6 +13,13 @@ extern BOOL gDebugLogging;
 
 #define USE_STOPWATCH 0
 
+#define ENABLE_EXTRA_DEBUGGING 0
+#if ENABLE_EXTRA_DEBUGGING
+#define ITExtraDebugAssert assert
+#else
+#define ITExtraDebugAssert(condition)
+#endif
+
 #if ITERM_DEBUG
 #define ITDebugAssert assert
 #else

@@ -678,10 +678,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
               @"nonasciiAntialiased": @(_nonasciiAntialias) };
 }
 
-- (NSDictionary<NSNumber *,NSImage *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
-                                                          size:(CGSize)size
-                                                         scale:(CGFloat)scale
-                                                         emoji:(nonnull BOOL *)emoji {
+- (NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                                        size:(CGSize)size
+                                                                       scale:(CGFloat)scale
+                                                                       emoji:(nonnull BOOL *)emoji {
     BOOL fakeBold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
     BOOL fakeItalic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
     const BOOL isAscii = !glyphKey->isComplex && (glyphKey->code < 128);
@@ -710,10 +710,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         return nil;
     }
 
-    NSMutableDictionary<NSNumber *, NSImage *> *result = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSNumber *, iTermCharacterBitmap *> *result = [NSMutableDictionary dictionary];
     [characterSource.parts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull partNumber, NSUInteger idx, BOOL * _Nonnull stop) {
         int part = partNumber.intValue;
-        result[partNumber] = [characterSource imageAtPart:part];
+        result[partNumber] = [characterSource bitmapForPart:part];
     }];
     if (emoji) {
         *emoji = characterSource.emoji;

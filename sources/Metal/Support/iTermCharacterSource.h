@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermCharacterBitmap;
 
 @interface iTermCharacterSource : NSObject
 
@@ -24,6 +25,6 @@
                        fakeItalic:(BOOL)fakeItalic
                       antialiased:(BOOL)antialiased;
 
-- (NSImage *)imageAtPart:(int)part;
+- (iTermCharacterBitmap *)bitmapForPart:(int)part;
 
 @end
