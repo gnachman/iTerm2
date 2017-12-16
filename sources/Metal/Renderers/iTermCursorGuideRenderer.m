@@ -55,7 +55,7 @@
 
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    if (!_enabled == nil) {
+    if (!_enabled) {
         return nil;
     }
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =

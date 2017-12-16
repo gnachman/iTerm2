@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 // Creating a new buffer can be very slow. Try to reuse them.
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPool : NSObject
 
 @property (nonatomic) size_t bufferSize;
