@@ -100,6 +100,29 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     }
 }
 
+- (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
+                                     size:(size_t)size
+                                    bytes:(nonnull const void *)bytes {
+    assert(context);
+    @synchronized(self) {
+        id<MTLBuffer> buffer;
+        id<MTLBuffer> bestMatch = [[[_buffers filteredArrayUsingBlock:^BOOL(id<MTLBuffer> buffer) {
+            return buffer.length > size;
+        }] mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
+            return [@(a.length) compare:@(b.length)];
+        }] firstObject];
+        if (bestMatch != nil) {
+            [_buffers removeObject:bestMatch];
+            buffer = bestMatch;
+            memcpy(buffer.contents, bytes, size);
+        } else {
+            buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
+        }
+        [context addBuffer:buffer pool:self];
+        return buffer;
+    }
+}
+
 - (void)returnBuffer:(id<MTLBuffer>)buffer {
     @synchronized(self) {
         if (_buffers.count == _capacity) {

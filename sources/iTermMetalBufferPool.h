@@ -42,6 +42,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
                                      size:(size_t)size;
 
+- (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
+                                     size:(size_t)size
+                                    bytes:(const void *)bytes;
+
 
 @end
 

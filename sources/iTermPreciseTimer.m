@@ -211,7 +211,7 @@ void iTermPreciseTimerLog(iTermPreciseTimerStats stats[],
 void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
                                   size_t count,
                                   BOOL logToConsole) {
-    NSMutableString *log = [[@"-- Precice Timers (One Event) --\n" mutableCopy] autorelease];
+    NSMutableString *log = [[@"-- Precise Timers (One Event) --\n" mutableCopy] autorelease];
     for (size_t i = 0; i < count; i++) {
         if (stats[i].n != 1) {
             continue;
