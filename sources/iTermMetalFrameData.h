@@ -35,14 +35,21 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatDispatchToMainQueue,
     iTermMetalFrameDataStatMtGetCurrentDrawable,
     iTermMetalFrameDataStatMtGetRenderPassDescriptor,
+
     iTermMetalFrameDataStatMtEnqueueDrawCalls,
+    iTermMetalFrameDataStatMtEnqueueDrawCreateFirstRenderEncoder,
     iTermMetalFrameDataStatMtEnqueueDrawMargin,
     iTermMetalFrameDataStatMtEnqueueDrawBackgroundImage,
     iTermMetalFrameDataStatMtEnqueueDrawBackgroundColor,
     iTermMetalFrameDataStatMtEnqueueDrawCursor,
+    iTermMetalFrameDataStatMtEnqueueDrawEndEncodingToIntermediateTexture,
+
+    iTermMetalFrameDataStatMtEnqueueDrawCreateSecondRenderEncoder,
     iTermMetalFrameDataStatMtEnqueueCopyBackground,
     iTermMetalFrameDataStatMtEnqueueDrawText,
-    
+    iTermMetalFrameDataStatMtEnqueueDrawEndEncodingToDrawable,
+    iTermMetalFrameDataStatMtEnqueueDrawPresentAndCommit,
+
     iTermMetalFrameDataStatGpu,
     iTermMetalFrameDataStatEndToEnd,
 
