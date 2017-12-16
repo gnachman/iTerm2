@@ -862,6 +862,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     iTermMetalBufferPool *_emptyBuffers;
     iTermMetalBufferPool *_verticesPool;
     iTermMetalBufferPool *_dimensionsPool;
+    iTermMetalMixedSizeBufferPool *_piuPool;
+    iTermMetalMixedSizeBufferPool *_subpixelModelPool;
 }
 
 + (NSData *)subpixelModelData {
@@ -894,12 +896,14 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             // Blank screen, emoji-only screen, etc. The buffer won't get accessed but it can't be nil.
             return [_emptyBuffers requestBufferFromContext:tState.poolContext];
         }
-        // TODO: Need a buffer pool that stores a few different sizes.
-        return [_cellRenderer.device newBufferWithBytes:tState.colorModels.bytes
-                                                 length:tState.colorModels.length
-                                                options:MTLResourceStorageModeShared];
+        // Return a color model with exactly the fg/bg combos on screen.
+        return [_subpixelModelPool requestBufferFromContext:tState.poolContext
+                                                       size:tState.colorModels.length
+                                                      bytes:tState.colorModels.bytes];
     }
 
+    // Use a generic color model for blending. No need to use a buffer pool here because this is only
+    // created once.
     if (_models == nil) {
         NSData *subpixelModelData = [iTermTextRenderer subpixelModelData];
         _models = [_cellRenderer.device newBufferWithBytes:subpixelModelData.bytes
@@ -923,6 +927,20 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
+
+        // The capacity here is a guess, and it's possible that it's nowhere near enough, but there's
+        // significant risk of it using a crazy amount of memory. The largest array could be the
+        // number of draws, although that's unlikely. That would happen if you had a character that
+        // overflowed its bounds by the maximum amount that repeated on every cell. Then you'd have
+        // one big buffer of size iTermTextureMapMaxCharacterParts^2 * number of cells, which could
+        // be on the order of 2 million entries times O(100 bytes) for a PIU = 200 megabytes per. Of
+        // course, you'd never have more than max-frames-in-flight of those allocated at once. Given
+        // 3 frames in flight, we might use 600 megabytes in the worst case.
+        //
+#warning: TODO: Prevent runaway PIU buffer sizes. Cut them off at something reasonable like 10 megs.
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:64];
+
+        _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
     }
     return self;
 }
@@ -1031,10 +1049,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         tState.vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
                                    textureSize:CGSizeMake(textureSize.x, textureSize.y)
                                    poolContext:tState.poolContext];
-        // TODO: Need heterogeneous size buffer pool
-        id<MTLBuffer> piuBuffer = [_cellRenderer.device newBufferWithBytes:pius
-                                                                    length:sizeof(iTermTextPIU) * instances
-                                                                   options:MTLResourceStorageModeShared];
+        id<MTLBuffer> piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
+                                                                size:sizeof(iTermTextPIU) * instances
+                                                               bytes:pius];
         ITDebugAssert(piuBuffer);
         piuBuffer.label = @"Text PIUs";
 
