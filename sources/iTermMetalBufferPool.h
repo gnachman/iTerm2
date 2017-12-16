@@ -31,4 +31,18 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
+// Keeps up to `capacity` buffers in the pool. If it exceeds that size the smallest ones are released.
+// This might use more texture memory than necessary but it will stabilize quickly and stop creating
+// new buffers, which is terribly slow.
+NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermMetalMixedSizeBufferPool : NSObject
+
+- (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity NS_DESIGNATED_INITIALIZER;
+
+- (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
+                                     size:(size_t)size;
+
+
+@end
+
 NS_ASSUME_NONNULL_END

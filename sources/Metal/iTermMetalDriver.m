@@ -23,9 +23,6 @@
 #import "iTermTextureArray.h"
 #import "NSMutableData+iTerm.h"
 
-// Maybe I could increase this in the future but it's easier to reason about issues during development when it's 1.
-static const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
-
 @implementation iTermMetalCursorInfo
 @end
 

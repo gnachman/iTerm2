@@ -5,6 +5,8 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermShaderTypes.h"
 
+const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
+
 @implementation iTermRenderConfiguration
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize scale:(CGFloat)scale {
