@@ -216,7 +216,30 @@ void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
         if (stats[i].n != 1) {
             continue;
         }
-        [log appendFormat:@"%20s: %0.3fms\n", stats[i].name, iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0];
+        const char *cname = stats[i].name;
+        int length = strlen(cname);
+        NSMutableString *name = [NSMutableString string];
+        while (length > 1 && cname[length - 1] == '<') {
+            length--;
+            [name appendString:@"    "];
+        }
+        NSTimeInterval ms = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
+        NSString *emoji;
+        if (ms > 100) {
+            emoji = @"😱";
+        } else if (ms > 10) {
+            emoji = @"😳";
+        } else if (ms > 5) {
+            emoji = @"😢";
+        } else if (ms > 1) {
+            emoji = @"🙁";
+        } else if (ms > 0.5) {
+            emoji = @"🤔";
+        } else {
+            emoji = @"  ";
+        }
+        [name appendString:[[NSString alloc] initWithBytes:cname length:length encoding:NSUTF8StringEncoding]];
+        [log appendFormat:@"%@ %0.1fms %@\n", emoji, ms, name];
     }
     if (logToConsole) {
         NSLog(@"%@", log);
