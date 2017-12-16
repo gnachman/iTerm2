@@ -38,16 +38,20 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "mt.GetCurrentDrawable",
         "mt.GetRenderPassD",
         "mt.EnqueueDrawCalls",
-        "enqueueDrawMargin<",
-        "enqueueDrawBgImage<",
-        "enqueueDrawBgColor<",
-        "enqueueDrawCursor<",
-        "enqueueCopyBg<",
-        "enqueueDrawText<",
+        "mt.Create1stRE<",
+        "mt.DrawMargin<",
+        "mt.DrawBgImage<",
+        "mt.DrawBgColor<",
+        "mt.DrawCursor<",
+        "mt.EndEncodingInt<",
+        "mt.Create2ndRE<",
+        "mt.enqueueCopyBg<",
+        "mt.enqueueDrawText<",
+        "mt.EndEncodingDrwbl<",
+        "mt.PresentCommit<",
         "gpu",
         "endToEnd",
     };
-
 
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
         iTermPreciseTimerStatsInit(&bundle[i], names[i]);
