@@ -8,8 +8,10 @@
 #import <Cocoa/Cocoa.h>
 
 #import "DebugLogging.h"
+#import "iTermCharacterBitmap.h"
 #import "iTermCharacterSource.h"
 #import "iTermTextureArray.h"
+#import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
@@ -52,6 +54,8 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 }
 
 + (CGContextRef)newBitmapContextOfSize:(CGSize)size {
+    // In order to get subpixel antialiasing you have to use premultiplied first and byte order 32 host.
+    // This influences the choice of pixel format for the textures containing glyphs.
     return CGBitmapContextCreate(NULL,
                                  size.width,
                                  size.height,
@@ -123,13 +127,33 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 
 #pragma mark - APIs
 
-- (NSImage *)imageAtPart:(int)part {
+- (iTermCharacterBitmap *)bitmapForPart:(int)part {
     [self drawIfNeeded];
     const int radius = iTermTextureMapMaxCharacterParts / 2;
-    int dx = ImagePartDX(part) + radius;
-    int dy = ImagePartDY(part) + radius;
-    return [self newImageWithOffset:CGPointMake(dx * _partSize.width,
-                                                dy * _partSize.height)];
+    const int dx = ImagePartDX(part) + radius;
+    const int dy = ImagePartDY(part) + radius;
+    const size_t sourceRowSize = _size.width * 4;
+    const size_t destRowSize = _partSize.width * 4;
+    const NSUInteger length = destRowSize * _partSize.height;
+
+    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
+    bitmap.data = [NSMutableData uninitializedDataWithLength:length];
+    bitmap.size = _partSize;
+
+    const char *source = (const char *)CGBitmapContextGetData(_cgContext);
+    char *dest = (char *)bitmap.data.mutableBytes;
+
+    // Flip vertically and copy. The vertical flip is for historical reasons
+    // (i.e., if I had more time I'd undo it but it's annoying because there
+    // are assumptions about vertical flipping all over the fragment shader).
+    size_t destOffset = (_partSize.height - 1) * destRowSize;
+    size_t sourceOffset = (dx * 4 * _partSize.width) + (dy * _partSize.height * sourceRowSize);
+    for (int i = 0; i < _partSize.height; i++) {
+        memcpy(dest + destOffset, source + sourceOffset, destRowSize);
+        sourceOffset += sourceRowSize;
+        destOffset -= destRowSize;
+    }
+    return bitmap;
 }
 
 - (NSArray<NSNumber *> *)parts {

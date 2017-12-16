@@ -54,6 +54,8 @@ typedef NS_OPTIONS(int, iTermASCIITextureParts) {
     iTermASCIITexturePartsRight = (1 << 2)
 };
 
+@class iTermCharacterBitmap;
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITexture : NSObject
 
@@ -66,7 +68,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
                           cellSize:(CGSize)cellSize
                             device:(id<MTLDevice>)device
-                          creation:(NSDictionary<NSNumber *, NSImage *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+                          creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 
 @end
 
@@ -92,14 +94,14 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic, readonly) CGSize cellSize;
 @property (nonatomic, strong, readonly) id<MTLDevice> device;
-@property (nonatomic, copy, readonly) NSDictionary<NSNumber *, NSImage *> *(^creation)(char, iTermASCIITextureAttributes);
+@property (nonatomic, copy, readonly) NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creation)(char, iTermASCIITextureAttributes);
 @property (nonatomic, readonly) id creationIdentifier;
 @property (nonatomic, readonly) vector_float2 atlasSize;
 
 - (instancetype)initWithCellSize:(CGSize)cellSize
                           device:(id<MTLDevice>)device
               creationIdentifier:(id)creationIdentifier
-                        creation:(NSDictionary<NSNumber *, NSImage *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+                        creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (iTermASCIITexture *)asciiTextureForAttributes:(iTermASCIITextureAttributes)attributes;

@@ -32,6 +32,8 @@ struct iTermMetalBackgroundColorRLE {
 
 typedef struct iTermMetalBackgroundColorRLE iTermMetalBackgroundColorRLE;
 
+@class iTermCharacterBitmap;
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) NSMutableData *modelData;
@@ -46,7 +48,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
           attributesData:(NSData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(NSData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
-                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
 - (void)willDraw;
 - (void)didComplete;
 
@@ -60,7 +62,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setASCIICellSize:(CGSize)cellSize
       creationIdentifier:(id)creationIdentifier
-                creation:(NSDictionary<NSNumber *, NSImage *> *(^)(char, iTermASCIITextureAttributes))creation;
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation;
 
 @end
 

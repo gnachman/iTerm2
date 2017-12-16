@@ -165,7 +165,9 @@
     }
     if (shouldDrop) {
         NSLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
-        NSLog(@"  current frames:\n%@", _currentFrames);
+        @synchronized(self) {
+            NSLog(@"  current frames:\n%@", _currentFrames);
+        }
 
         _dropped++;
         self.needsDraw = YES;
@@ -271,7 +273,7 @@
     CGFloat scale = _scale;
     [_textRenderer setASCIICellSize:_cellSize
                  creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
-                           creation:^NSDictionary<NSNumber *, NSImage *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
+                           creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
                                if (strongSelf) {
                                    static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
@@ -473,7 +475,7 @@
                      attributesData:rowData.attributesData
                                 row:rowData.y
              backgroundColorRLEData:rowData.backgroundColorRLEData
-                           creation:^NSDictionary<NSNumber *,NSImage *> * _Nonnull(int x, BOOL *emoji) {
+                           creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
                                return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
                                                                                  size:cellSize
                                                                                 scale:scale

@@ -1,5 +1,7 @@
 #import <Metal/Metal.h>
 
+#import "iTermCharacterBitmap.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,6 +38,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (BOOL)addSliceWithContentsOfFile:(NSString *)path;
 - (void)addSliceWithImage:(NSImage *)image;
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage;
+- (void)setSlice:(NSUInteger)slice withBitmap:(iTermCharacterBitmap *)bitmap;
+
 - (void)copyTextureAtIndex:(NSInteger)index
                    toArray:(iTermTextureArray *)destination
                      index:(NSInteger)destinationIndex

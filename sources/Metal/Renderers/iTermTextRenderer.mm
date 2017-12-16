@@ -20,6 +20,15 @@ extern "C" {
 #import <unordered_map>
 #import <vector>
 
+// This is useful when we over-release a texture page.
+// TODO: Use shared_ptr or the like, if it can do the job.
+#define ENABLE_OWNERSHIP_LOG 0
+#if ENABLE_OWNERSHIP_LOG
+#define ITOwnershipLog(args...) NSLog
+#else
+#define ITOwnershipLog(args...)
+#endif
+
 namespace iTerm2 {
 class TexturePage;
 }
@@ -127,15 +136,16 @@ namespace iTerm2 {
         }
 
         virtual ~TexturePage() {
+            ITOwnershipLog(@"OWNERSHIP: Destructor for page %p", this);
         }
 
         int get_available_count() const {
             return _capacity - _count;
         }
 
-        int add_image(NSImage *image, bool is_emoji) {
-            assert(_count < _capacity);
-            [_textureArray setSlice:_count withImage:image];
+        int add_image(iTermCharacterBitmap *image, bool is_emoji) {
+            ITExtraDebugAssert(_count < _capacity);
+            [_textureArray setSlice:_count withBitmap:image];
             _emoji[_count] = is_emoji;
             return _count++;
         }
@@ -166,16 +176,30 @@ namespace iTerm2 {
 
         void retain(TexturePageOwner *owner) {
             _owners[owner]++;
+            ITOwnershipLog(@"OWNERSHIP: retain %p as owner of %p with refcount %d", owner, this, (int)_owners[owner]);
         }
 
         void release(TexturePageOwner *owner) {
+            ITOwnershipLog(@"OWNERSHIP: release %p as owner of %p. New refcount for this owner will be %d", owner, this, (int)_owners[owner]-1);
+            ITExtraDebugAssert(_owners[owner] > 0);
+
             auto it = _owners.find(owner);
-            assert(it != _owners.end());
+#if ENABLE_OWNERSHIP_LOG
+            if (it == _owners.end()) {
+                ITOwnershipLog(@"I have %d owners", (int)_owners.size());
+                for (auto pair : _owners) {
+                    ITOwnershipLog(@"%p is owner", pair.first);
+                }
+                ITExtraDebugAssert(it != _owners.end());
+            }
+#endif
             it->second--;
             if (it->second == 0) {
                 _owners.erase(it);
                 if (_owners.empty()) {
+                    ITOwnershipLog(@"OWNERSHIP: DELETE %p", this);
                     delete this;
+                    return;
                 }
             }
         }
@@ -190,7 +214,21 @@ namespace iTerm2 {
         }
 
         std::map<TexturePageOwner *, int> get_owners() const {
+#if ENABLE_OWNERSHIP_LOG
+            for (auto pair : _owners) {
+                ITExtraDebugAssert(pair.second > 0);
+            }
+#endif
             return _owners;
+        }
+
+        // This is for debugging purposes only.
+        int get_retain_count() const {
+            int sum = 0;
+            for (auto pair : _owners) {
+                sum += pair.second;
+            }
+            return sum;
         }
 
     private:
@@ -248,16 +286,17 @@ namespace iTerm2 {
 
     class TexturePageCollection : TexturePageOwner {
     private:
-        const GlyphEntry *internal_add(int part, const GlyphKey &key, NSImage *image, bool is_emoji) {
+        const GlyphEntry *internal_add(int part, const GlyphKey &key, iTermCharacterBitmap *image, bool is_emoji) {
             if (!_openPage) {
-                _openPage = new TexturePage(this, _device, _pageCapacity, _cellSize);
+                _openPage = new TexturePage(this, _device, _pageCapacity, _cellSize);  // Retains this for _openPage
 
+                // Add to allPages and retain that reference too
                 _allPages.insert(_openPage);
                 _openPage->retain(this);
             }
 
             TexturePage *openPage = _openPage;
-            assert(_openPage->get_available_count() > 0);
+            ITExtraDebugAssert(_openPage->get_available_count() > 0);
             const GlyphEntry *result = new GlyphEntry(part,
                                                       key,
                                                       openPage,
@@ -311,13 +350,13 @@ namespace iTerm2 {
 
         std::vector<const GlyphEntry *> *add(int column,
                                              const GlyphKey &glyphKey,
-                                             NSDictionary<NSNumber *, NSImage *> *(^creator)(int, BOOL *)) {
+                                             NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creator)(int, BOOL *)) {
             BOOL emoji;
-            NSDictionary<NSNumber *, NSImage *> *images = creator(column, &emoji);
+            NSDictionary<NSNumber *, iTermCharacterBitmap *> *images = creator(column, &emoji);
             std::vector<const GlyphEntry *> *result = new std::vector<const GlyphEntry *>();
             _pages[glyphKey] = result;
             for (NSNumber *partNumber in images) {
-                NSImage *image = images[partNumber];
+                iTermCharacterBitmap *image = images[partNumber];
                 const GlyphEntry *entry = internal_add(partNumber.intValue, glyphKey, image, emoji);
                 result->push_back(entry);
             }
@@ -341,23 +380,32 @@ namespace iTerm2 {
                 std::sort(pages.begin(), pages.end(), TexturePageCollection::LRUComparison);
 
                 for (int i = 0; is_over_maximum_size() && i < pages.size(); i++) {
-                    _allPages.erase(pages[i]);
-                    pages[i]->release(this);
+                    ITOwnershipLog(@"OWNERSHIP: Begin pruning page %p", pages[i]);
+                    TexturePage *pageToPrune = pages[i];
+                    if (pageToPrune == _openPage) {
+                        pageToPrune->release(this);
+                        _openPage = NULL;
+                    }
+                    _allPages.erase(pageToPrune);
+                    pageToPrune->release(this);
+                    ITExtraDebugAssert(pageToPrune->get_retain_count() > 0);
 
                     // Make all glyph entries remove their references to the page. Remove our
                     // references to the glyph entries.
-                    auto owners = pages[i]->get_owners();
+                    auto owners = pageToPrune->get_owners();  // map<TexturePageOwner *, int>
+                    ITOwnershipLog(@"OWNERSHIP: page %p has %d owners", pageToPrune, (int)owners.size());
                     for (auto pair : owners) {
-                        auto owner = pair.first;
-                        auto count = pair.second;
-                        for (int i = 0; i < count; i++) {
+                        auto owner = pair.first;  // TexturePageOwner *
+                        auto count = pair.second;  // int
+                        for (int j = 0; j < count; j++) {
                             if (owner->texture_page_owner_is_glyph_entry()) {
                                 GlyphEntry *glyph_entry = static_cast<GlyphEntry *>(owner);
-                                pages[i]->release(glyph_entry);
+                                pageToPrune->release(glyph_entry);
                                 _pages.erase(glyph_entry->_key);
                             }
                         }
                     }
+                    ITOwnershipLog(@"OWNERSHIP: Done pruning page %p", pageToPrune);
                 }
             } else {
                 DLog(@"Not pruning");
@@ -689,7 +737,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
           attributesData:(NSData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(nonnull NSData *)backgroundColorRLEData
-                creation:(NSDictionary<NSNumber *, NSImage *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     DLog(@"BEGIN setGlyphKeysData for %@", self);
     ITDebugAssert(row == _backgroundColorRLEDataArray.count);
     [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
@@ -1094,7 +1142,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
 - (void)setASCIICellSize:(CGSize)cellSize
       creationIdentifier:(id)creationIdentifier
-                creation:(NSDictionary<NSNumber *, NSImage *> *(^)(char, iTermASCIITextureAttributes))creation {
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation {
     iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithCellSize:cellSize
                                                                                     device:_cellRenderer.device
                                                                         creationIdentifier:(id)creationIdentifier
