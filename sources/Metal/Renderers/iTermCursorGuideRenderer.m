@@ -33,6 +33,7 @@
     NSColor *_color;
     int _row;
     CGSize _lastCellSize;
+    iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -45,6 +46,7 @@
                                                               blending:YES
                                                         piuElementSize:sizeof(iTermCursorGuidePIU)
                                                    transientStateClass:[iTermCursorGuideRendererTransientState class]];
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
     }
     return self;
 }
@@ -105,7 +107,7 @@
 
 - (void)updatePIUsInState:(iTermCursorGuideRendererTransientState *)tState {
     NSData *data = [tState newCursorGuidePerInstanceUniforms];
-    tState.pius = [_cellRenderer.device newBufferWithLength:data.length options:MTLResourceStorageModeShared];
+    tState.pius = [_piuPool requestBufferFromContext:tState.poolContext size:data.length];
     memcpy(tState.pius.contents, data.bytes, data.length);
 }
 

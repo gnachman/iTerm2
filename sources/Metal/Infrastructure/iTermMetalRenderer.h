@@ -8,6 +8,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Maybe I could increase this in the future but it's easier to reason about issues during development when it's 1.
+// This is exposed because it's used to set the capacity of mixed-size buffer pools.
+extern const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight;
+
 @class iTermMetalRendererTransientState;
 
 NS_CLASS_AVAILABLE(10_11, NA)

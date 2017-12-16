@@ -35,6 +35,7 @@
     iTermTextureArray *_marksArrayTexture;
     CGSize _markSize;
     NSMutableDictionary<NSNumber *, NSNumber *> *_marks;
+    iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -47,6 +48,8 @@
                                                               blending:YES
                                                         piuElementSize:sizeof(iTermMarkPIU)
                                                    transientStateClass:[iTermMarkRendererTransientState class]];
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
+                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
     }
     return self;
 }
@@ -86,7 +89,8 @@
 
     if (_marks.count > 0) {
         NSData *data = [tState newMarkPerInstanceUniforms];
-        tState.pius = [_cellRenderer.device newBufferWithLength:data.length options:MTLResourceStorageModeShared];
+        tState.pius = [_piuPool requestBufferFromContext:tState.poolContext
+                                                    size:data.length];
         memcpy(tState.pius.contents, data.bytes, data.length);
     }
 }

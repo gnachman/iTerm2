@@ -6,26 +6,34 @@
 //
 
 #import "iTermMetalBufferPool.h"
+
+#import "NSArray+iTerm.h"
 #import <Metal/Metal.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferPoolContextStackKey";
 
-@interface iTermMetalBufferPool()
+@protocol iTermMetalBufferPool<NSObject>
 - (void)returnBuffer:(id<MTLBuffer>)buffer;
+@end
+
+@interface iTermMetalBufferPool()<iTermMetalBufferPool>
+@end
+
+@interface iTermMetalMixedSizeBufferPool()<iTermMetalBufferPool>
 @end
 
 @interface iTermMetalBufferPoolContextEntry : NSObject
 @property (nonatomic, strong) id<MTLBuffer> buffer;
-@property (nonatomic, strong) iTermMetalBufferPool *pool;
+@property (nonatomic, strong) id<iTermMetalBufferPool> pool;
 @end
 
 @implementation iTermMetalBufferPoolContextEntry
 @end
 
 @interface iTermMetalBufferPoolContext()
-- (void)addBuffer:(id<MTLBuffer>)buffer pool:(iTermMetalBufferPool *)pool;
+- (void)addBuffer:(id<MTLBuffer>)buffer pool:(id<iTermMetalBufferPool>)pool;
 @end
 
 @implementation iTermMetalBufferPoolContext {
@@ -46,11 +54,62 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     [_entries removeAllObjects];
 }
 
-- (void)addBuffer:(id<MTLBuffer>)buffer pool:(iTermMetalBufferPool *)pool {
+- (void)addBuffer:(id<MTLBuffer>)buffer pool:(id<iTermMetalBufferPool>)pool {
     iTermMetalBufferPoolContextEntry *entry = [[iTermMetalBufferPoolContextEntry alloc] init];
     entry.buffer = buffer;
     entry.pool = pool;
     [_entries addObject:entry];
+}
+
+@end
+
+@implementation iTermMetalMixedSizeBufferPool {
+    id<MTLDevice> _device;
+    NSMutableArray<id<MTLBuffer>> *_buffers;
+    NSUInteger _capacity;
+}
+
+- (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity {
+    self = [super init];
+    if (self) {
+        _device = device;
+        _capacity = capacity;
+        _buffers = [NSMutableArray arrayWithCapacity:capacity];
+    }
+    return self;
+}
+
+- (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
+                                     size:(size_t)size {
+    assert(context);
+    @synchronized(self) {
+        id<MTLBuffer> buffer;
+        id<MTLBuffer> bestMatch = [[[_buffers filteredArrayUsingBlock:^BOOL(id<MTLBuffer> buffer) {
+            return buffer.length > size;
+        }] mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
+            return [@(a.length) compare:@(b.length)];
+        }] firstObject];
+        if (bestMatch != nil) {
+            [_buffers removeObject:bestMatch];
+            buffer = bestMatch;
+        } else {
+            buffer = [_device newBufferWithLength:size options:MTLResourceStorageModeShared];
+        }
+        [context addBuffer:buffer pool:self];
+        return buffer;
+    }
+}
+
+- (void)returnBuffer:(id<MTLBuffer>)buffer {
+    @synchronized(self) {
+        if (_buffers.count == _capacity) {
+            id<MTLBuffer> smallest = [[_buffers mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
+                return [@(a.length) compare:@(b.length)];
+            }] firstObject];
+            [_buffers removeObject:smallest];
+        }
+        [_buffers addObject:buffer];
+    }
 }
 
 @end

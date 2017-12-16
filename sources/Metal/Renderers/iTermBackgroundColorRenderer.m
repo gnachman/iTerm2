@@ -32,6 +32,7 @@
 
 @implementation iTermBackgroundColorRenderer {
     iTermMetalCellRenderer *_cellRenderer;
+    iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -43,6 +44,8 @@
                                                               blending:YES
                                                         piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
+                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1];
     }
     return self;
 }
@@ -67,8 +70,8 @@
     // TODO: This is kinda big since it holds the worst case of every cell having a different
     // background color than its neighbors. See if it's a performance bottleneck and consider using
     // one draw call per line and a number of small PIU buffers.
-    tState.pius = [_cellRenderer.device newBufferWithLength:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * sizeof(iTermBackgroundColorPIU)
-                                                    options:MTLResourceStorageModeShared];
+    tState.pius = [_piuPool requestBufferFromContext:tState.poolContext
+                                                size:tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height * sizeof(iTermBackgroundColorPIU)];
 }
 
 
