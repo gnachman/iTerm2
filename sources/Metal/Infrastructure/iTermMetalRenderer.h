@@ -2,6 +2,7 @@
 
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalFrameData.h"
+#import "iTermPreciseTimer.h"
 #import "iTermShaderTypes.h"
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
@@ -48,6 +49,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration;
 - (instancetype)init NS_UNAVAILABLE;
+
+- (void)measureTimeForStat:(int)index ofBlock:(void (^)(void))block;
+- (iTermPreciseTimerStats *)stats;
+- (int)numberOfStats;
+- (NSString *)nameForStat:(int)i;
 
 @end
 

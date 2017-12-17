@@ -80,6 +80,8 @@ void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, const char *name)
     stats->totalEventCount = 0;
     stats->mean = 0;
     stats->m2 = 0;
+    stats->min = INFINITY;
+    stats->max = -INFINITY;
     iTermPreciseTimerReset(&stats->timer);
     if (name) {
         strlcpy(stats->name, name, sizeof(stats->name));
@@ -146,6 +148,8 @@ void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval 
     double delta = value - stats->mean;
     stats->mean += delta / stats->n;
     stats->m2 += delta * (value - stats->mean);
+    stats->min = MIN(stats->min, value);
+    stats->max = MAX(stats->max, value);
 }
 
 NSTimeInterval iTermPreciseTimerStatsGetMean(iTermPreciseTimerStats *stats) {
@@ -213,7 +217,7 @@ void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
                                   BOOL logToConsole) {
     NSMutableString *log = [[@"-- Precise Timers (One Event) --\n" mutableCopy] autorelease];
     for (size_t i = 0; i < count; i++) {
-        if (stats[i].n != 1) {
+        if (stats[i].n == 0) {
             continue;
         }
         const char *cname = stats[i].name;
@@ -223,7 +227,7 @@ void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
             length--;
             [name appendString:@"    "];
         }
-        NSTimeInterval ms = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
+        NSTimeInterval ms = stats[i].n * iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
         NSString *emoji;
         if (ms > 100) {
             emoji = @"😱";
@@ -239,7 +243,13 @@ void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
             emoji = @"  ";
         }
         [name appendString:[[NSString alloc] initWithBytes:cname length:length encoding:NSUTF8StringEncoding]];
-        [log appendFormat:@"%@ %0.1fms %@\n", emoji, ms, name];
+        NSString *other = @"";
+        if (stats[i].n > 1) {
+            int count = iTermPreciseTimerStatsGetCount(&stats[i]);
+            double mean = iTermPreciseTimerStatsGetMean(&stats[i]);
+            other = [NSString stringWithFormat:@"N=%@ µ=%0.1fms [%0.1fms…%0.1fms]", @(count), mean * 1000, stats[i].min * 1000, stats[i].max * 1000];
+        }
+        [log appendFormat:@"%@ %0.1fms %@ %@\n", emoji, ms, name, other];
     }
     if (logToConsole) {
         NSLog(@"%@", log);

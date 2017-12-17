@@ -2,6 +2,7 @@
 
 extern "C" {
 #import "DebugLogging.h"
+#import "iTermPreciseTimer.h"
 }
 
 #import "iTermMetalCellRenderer.h"
@@ -444,6 +445,16 @@ namespace iTerm2 {
 // text color component, background color component
 typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
+typedef NS_ENUM(int, iTermTextRendererStat) {
+    iTermTextRendererStatNewQuad,
+    iTermTextRendererStatNewPIU,
+    iTermTextRendererStatNewDims,
+    iTermTextRendererStatSubpixelModel,
+    iTermTextRendererStatDraw,
+
+    iTermTextRendererStatCount
+};
+
 @implementation iTermTextRendererTransientState {
     // Data's bytes contains a C array of iTermMetalBackgroundColorRLE with background colors.
     NSMutableArray<NSData *> *_backgroundColorRLEDataArray;
@@ -466,6 +477,8 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
     // Array of PIUs for each texture page.
     std::map<iTerm2::TexturePage *, iTerm2::PIUArray *> _pius;
+
+    iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
 }
 
 - (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
@@ -492,6 +505,22 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     for (auto it = _pius.begin(); it != _pius.end(); it++) {
         delete it->second;
     }
+}
+
+- (iTermPreciseTimerStats *)stats {
+    return _stats;
+}
+
+- (int)numberOfStats {
+    return iTermTextRendererStatCount;
+}
+
+- (NSString *)nameForStat:(int)i {
+    return [@[ @"text.newQuad",
+               @"text.newPIU",
+               @"text.newDims",
+               @"text.subpixel",
+               @"text.draw" ] objectAtIndex:i];
 }
 
 - (void)enumerateASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
@@ -1025,7 +1054,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             _texturePageCollection = NULL;
         }
     }
-    // This seems like a good number 🤷‍♂️
+    // This seems like a good number 🤷‍♂️e
     const int maximumSize = 4096;
     if (!_texturePageCollection) {
         _texturePageCollection = new iTerm2::TexturePageCollection(_cellRenderer.device,
@@ -1082,6 +1111,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     return entry.quad;
 }
 
+
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
@@ -1097,49 +1127,67 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
     [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize) {
         totalInstances += instances;
-        tState.vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
-                                   textureSize:CGSizeMake(textureSize.x, textureSize.y)
-                                   poolContext:tState.poolContext];
-        id<MTLBuffer> piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
-                                                                size:sizeof(iTermTextPIU) * instances
-                                                               bytes:pius];
-        ITDebugAssert(piuBuffer);
-        piuBuffer.label = @"Text PIUs";
+
+        [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
+            tState.vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
+                                       textureSize:CGSizeMake(textureSize.x, textureSize.y)
+                                       poolContext:tState.poolContext];
+        }];
+
+        __block id<MTLBuffer> piuBuffer;
+        [tState measureTimeForStat:iTermTextRendererStatNewPIU ofBlock:^{
+            piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
+                                                      size:sizeof(iTermTextPIU) * instances
+                                                     bytes:pius];
+            piuBuffer.label = @"Text PIUs";
+            ITDebugAssert(piuBuffer);
+        }];
 
         NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture };
         if (tState.cellConfiguration.usingIntermediatePass) {
             textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
         }
-        iTermTextureDimensions textureDimensions = {
-            .textureSize = simd_make_float2(textureSize.x, textureSize.y),
-            .cellSize = simd_make_float2(cellSize.x, cellSize.y),
-            .underlineOffset = cellSize.y - (tState.asciiUnderlineDescriptor.offset * scale),
-            .underlineThickness = tState.asciiUnderlineDescriptor.thickness * scale,
-            .scale = scale
-        };
 
-        // These tend to get reused so avoid changing the buffer if it is the same as the last one.
-        id<MTLBuffer> textureDimensionsBuffer;
-        if (previousTextureDimensionsBuffer != nil &&
-            !memcmp(&textureDimensions, &previousTextureDimensions, sizeof(textureDimensions))) {
-            textureDimensionsBuffer = previousTextureDimensionsBuffer;
-        } else {
-            textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
-                                                                      withBytes:&textureDimensions
-                                                                 checkIfChanged:YES];
-            textureDimensionsBuffer.label = @"Texture dimensions";
-        }
 
-        [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:renderEncoder
-                             numberOfVertices:6
-                                 numberOfPIUs:instances
-                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-                                                 @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
-                                                 @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                              fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): [self subpixelModelsForState:tState],
-                                                 @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
-                                     textures:textures];
+        __block id<MTLBuffer> textureDimensionsBuffer;
+        [tState measureTimeForStat:iTermTextRendererStatNewDims ofBlock:^{
+            iTermTextureDimensions textureDimensions = {
+                .textureSize = simd_make_float2(textureSize.x, textureSize.y),
+                .cellSize = simd_make_float2(cellSize.x, cellSize.y),
+                .underlineOffset = cellSize.y - (tState.asciiUnderlineDescriptor.offset * scale),
+                .underlineThickness = tState.asciiUnderlineDescriptor.thickness * scale,
+                .scale = scale
+            };
+
+            // These tend to get reused so avoid changing the buffer if it is the same as the last one.
+            if (previousTextureDimensionsBuffer != nil &&
+                !memcmp(&textureDimensions, &previousTextureDimensions, sizeof(textureDimensions))) {
+                textureDimensionsBuffer = previousTextureDimensionsBuffer;
+            } else {
+                textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
+                                                                          withBytes:&textureDimensions
+                                                                     checkIfChanged:YES];
+                textureDimensionsBuffer.label = @"Texture dimensions";
+            }
+        }];
+
+        __block id<MTLBuffer> subpixelModelsBuffer;
+        [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
+            subpixelModelsBuffer = [self subpixelModelsForState:tState];
+        }];
+
+        [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
+            [_cellRenderer drawWithTransientState:tState
+                                    renderEncoder:renderEncoder
+                                 numberOfVertices:6
+                                     numberOfPIUs:instances
+                                    vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                                     @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
+                                                     @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                                  fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
+                                                     @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                                         textures:textures];
+        }];
     }];
 }
 
