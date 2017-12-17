@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermCharacterBitmap.h"
+#import "iTermCharacterParts.h"
 #import "iTermCharacterSource.h"
 #import "iTermTextureArray.h"
 #import "NSMutableData+iTerm.h"
@@ -130,8 +131,8 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {
     [self drawIfNeeded];
     const int radius = iTermTextureMapMaxCharacterParts / 2;
-    const int dx = ImagePartDX(part) + radius;
-    const int dy = ImagePartDY(part) + radius;
+    const int dx = iTermImagePartDX(part) + radius;
+    const int dy = iTermImagePartDY(part) + radius;
     const size_t sourceRowSize = _size.width * 4;
     const size_t destRowSize = _partSize.width * 4;
     const NSUInteger length = destRowSize * _partSize.height;
@@ -178,7 +179,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
                                          _partSize.width,
                                          _partSize.height);
             if (CGRectIntersectsRect(partRect, boundingBox)) {
-                [result addObject:@(ImagePartFromDeltas(x - radius, y - radius))];
+                [result addObject:@(iTermImagePartFromDeltas(x - radius, y - radius))];
             }
         }
     }

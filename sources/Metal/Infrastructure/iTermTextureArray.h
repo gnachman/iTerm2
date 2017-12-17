@@ -1,21 +1,7 @@
 #import <Metal/Metal.h>
 
 #import "iTermCharacterBitmap.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#warning TODO Find a better home for this. Also make them inline.
-    extern int ImagePartDX(int part);
-    extern int ImagePartDY(int part);
-    extern int ImagePartFromDeltas(int dx, int dy);
-
-    extern const int iTermTextureMapMaxCharacterParts;
-    extern const int iTermTextureMapMiddleCharacterPart;
-
-#if __cplusplus
-}
-#endif
+#import "iTermCharacterParts.h"
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextureArray : NSObject

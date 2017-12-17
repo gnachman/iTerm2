@@ -9,6 +9,7 @@ extern "C" {
 
 #import "GlyphKey.h"
 #import "iTermASCIITexture.h"
+#import "iTermCharacterParts.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
@@ -523,7 +524,7 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
                @"text.draw" ] objectAtIndex:i];
 }
 
-- (void)enumerateASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
+- (void)enumerateASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
     for (int i = 0; i < iTermASCIITextureAttributesMax * 2; i++) {
         if (_asciiInstances[i]) {
             iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
@@ -532,12 +533,13 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
                   _asciiInstances[i],
                   asciiTexture.textureArray.texture,
                   CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
-                  CGSizeToVectorUInt2(_asciiTextureGroup.cellSize));
+                  CGSizeToVectorUInt2(_asciiTextureGroup.cellSize),
+                  _asciiUnderlineDescriptor);
         }
     }
 }
 
-- (void)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
+- (void)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
     for (auto const &mapPair : _pius) {
         const iTerm2::TexturePage *const &texturePage = mapPair.first;
         const iTerm2::PIUArray *const &piuArray = mapPair.second;
@@ -549,13 +551,14 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
                       count,
                       texturePage->get_texture(),
                       texturePage->get_atlas_size(),
-                      texturePage->get_cell_size());
+                      texturePage->get_cell_size(),
+                      _nonAsciiUnderlineDescriptor);
             }
         }
     }
 }
 
-- (void)enumerateDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2))block {
+- (void)enumerateDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
     [self enumerateNonASCIIDraws:block];
     [self enumerateASCIIDraws:block];
 }
@@ -817,8 +820,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 iTermTextPIU *piu = array->get_next();
                 // Build the PIU
                 const int &part = entry->_part;
-                const int dx = ImagePartDX(part);
-                const int dy = ImagePartDY(part);
+                const int dx = iTermImagePartDX(part);
+                const int dy = iTermImagePartDY(part);
                 piu->offset = simd_make_float2((x + dx) * cellWidth,
                                                -dy * cellHeight + yOffset);
                 MTLOrigin origin = entry->get_origin();
@@ -1111,6 +1114,17 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     return entry.quad;
 }
 
+- (id<MTLBuffer>)piuBufferForPIUs:(const iTermTextPIU *)pius
+                           tState:(__kindof iTermTextRendererTransientState *)tState
+                        instances:(NSInteger)instances {
+    id<MTLBuffer> piuBuffer;
+    piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
+                                              size:sizeof(iTermTextPIU) * instances
+                                             bytes:pius];
+    piuBuffer.label = @"Text PIUs";
+    ITDebugAssert(piuBuffer);
+    return piuBuffer;
+}
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
@@ -1122,10 +1136,15 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
     __block NSInteger totalInstances = 0;
-    iTermTextureDimensions previousTextureDimensions;
-    id<MTLBuffer> previousTextureDimensionsBuffer = nil;
+    __block iTermTextureDimensions previousTextureDimensions;
+    __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
-    [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize) {
+    __block id<MTLBuffer> subpixelModelsBuffer;
+    [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
+        subpixelModelsBuffer = [self subpixelModelsForState:tState];
+    }];
+
+    [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize, iTermMetalUnderlineDescriptor underlineDescriptor) {
         totalInstances += instances;
 
         [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
@@ -1136,11 +1155,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
         __block id<MTLBuffer> piuBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewPIU ofBlock:^{
-            piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
-                                                      size:sizeof(iTermTextPIU) * instances
-                                                     bytes:pius];
-            piuBuffer.label = @"Text PIUs";
-            ITDebugAssert(piuBuffer);
+            piuBuffer = [self piuBufferForPIUs:pius tState:tState instances:instances];
         }];
 
         NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture };
@@ -1154,8 +1169,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             iTermTextureDimensions textureDimensions = {
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
                 .cellSize = simd_make_float2(cellSize.x, cellSize.y),
-                .underlineOffset = cellSize.y - (tState.asciiUnderlineDescriptor.offset * scale),
-                .underlineThickness = tState.asciiUnderlineDescriptor.thickness * scale,
+                .underlineOffset = cellSize.y - (underlineDescriptor.offset * scale),
+                .underlineThickness = underlineDescriptor.thickness * scale,
                 .scale = scale
             };
 
@@ -1168,12 +1183,11 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                                           withBytes:&textureDimensions
                                                                      checkIfChanged:YES];
                 textureDimensionsBuffer.label = @"Texture dimensions";
+                previousTextureDimensionsBuffer = textureDimensionsBuffer;
+                std::memcpy((void *)&previousTextureDimensions,
+                            (void *)&textureDimensions,
+                            sizeof(textureDimensions));
             }
-        }];
-
-        __block id<MTLBuffer> subpixelModelsBuffer;
-        [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
-            subpixelModelsBuffer = [self subpixelModelsForState:tState];
         }];
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{

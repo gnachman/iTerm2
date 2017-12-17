@@ -58,6 +58,11 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     return 0;
 }
 
+- (NSString *)nameForStat:(int)i {
+    [self doesNotRecognizeSelector:_cmd];
+    return @"NA";
+}
+
 @end
 
 @implementation iTermMetalRenderer {
