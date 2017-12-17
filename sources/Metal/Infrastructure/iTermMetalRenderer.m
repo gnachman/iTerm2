@@ -31,12 +31,31 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     if (self) {
         _configuration = configuration;
         _poolContext = [[iTermMetalBufferPoolContext alloc] init];
+        iTermPreciseTimerStats *stats = self.stats;
+        for (int i = 0; i < self.numberOfStats; i++) {
+            iTermPreciseTimerStatsInit(&stats[i], [self nameForStat:i].UTF8String);
+        }
     }
     return self;
 }
 
 - (BOOL)skipRenderer {
     return NO;
+}
+
+- (void)measureTimeForStat:(int)index ofBlock:(void (^)(void))block {
+    iTermPreciseTimerStats *stat = self.stats + index;
+    iTermPreciseTimerStatsStartTimer(stat);
+    block();
+    iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
+}
+
+- (iTermPreciseTimerStats *)stats {
+    return NULL;
+}
+
+- (int)numberOfStats {
+    return 0;
 }
 
 @end

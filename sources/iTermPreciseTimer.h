@@ -21,6 +21,8 @@ typedef struct {
     NSInteger totalEventCount;
     double mean;
     double m2;
+    double min;
+    double max;
 } iTermPreciseTimerStats;
 
 #define ENABLE_PRECISE_TIMERS 1

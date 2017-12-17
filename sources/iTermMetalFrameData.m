@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermMetalRenderer.h"
 
 #import <MetalKit/MetalKit.h>
 
@@ -138,6 +139,12 @@ static NSInteger gNextFrameDataNumber;
 #if ENABLE_PER_FRAME_METAL_STATS
     NSLog(@"Stats for %@", self);
     iTermPreciseTimerLogOneEvent(_stats, iTermMetalFrameDataStatCount, YES);
+
+    [self.transientStates enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, __kindof iTermMetalRendererTransientState * _Nonnull tState, BOOL * _Nonnull stop) {
+        if ([tState numberOfStats] > 0) {
+            iTermPreciseTimerLogOneEvent([tState stats], [tState numberOfStats], YES);
+        }
+    }];
 #endif
 
     [self addStatsTo:aggregateStats];
