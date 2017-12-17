@@ -23,7 +23,8 @@ extern BOOL gDebugLogging;
 #if ITERM_DEBUG
 #define ITDebugAssert assert
 #else
-#define ITDebugAssert(condition)
+// Cast condition to void to avoid unused variable warnings.
+#define ITDebugAssert(condition) ((void)(condition))
 #endif
 
 #if !ITERM_DEBUG && USE_STOPWATCH

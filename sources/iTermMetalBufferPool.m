@@ -102,22 +102,41 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     }
 }
 
+- (NSInteger)insertionIndexForBufferOfSize:(size_t)size {
+    return [_buffers indexOfObject:(id)@(size)
+                     inSortedRange:NSMakeRange(0, _buffers.count)
+                           options:NSBinarySearchingInsertionIndex
+                   usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+                       NSNumber *size1;
+                       if ([obj1 isKindOfClass:[NSNumber class]]) {
+                           size1 = obj1;
+                       } else {
+                           size1 = @([(id<MTLBuffer>)obj1 length]);
+                       }
+                       NSNumber *size2;
+                       if ([obj2 isKindOfClass:[NSNumber class]]) {
+                           size2 = obj2;
+                       } else {
+                           size2 = @([(id<MTLBuffer>)obj2 length]);
+                       }
+                       return [size1 compare:size2];
+                   }];
+}
+
 - (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
                                      size:(size_t)size
                                     bytes:(nonnull const void *)bytes {
     assert(context);
     @synchronized(self) {
         id<MTLBuffer> buffer;
-        id<MTLBuffer> bestMatch = [[[_buffers filteredArrayUsingBlock:^BOOL(id<MTLBuffer> buffer) {
-            return buffer.length > size;
-        }] mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
-            return [@(a.length) compare:@(b.length)];
-        }] firstObject];
-        if (bestMatch != nil) {
-            [_buffers removeObject:bestMatch];
+        NSInteger index = [self insertionIndexForBufferOfSize:size];
+        if (index < _buffers.count) {
+            id<MTLBuffer> bestMatch = _buffers[index];
+            [_buffers removeObjectAtIndex:index];
             buffer = bestMatch;
             memcpy(buffer.contents, bytes, size);
         } else {
+            // size was larger than the largest item
             NSLog(@"%@ allocating a new buffer of size %d (%d outstanding)", _name, (int)size, (int)_numberOutstanding);
             buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
         }
@@ -131,12 +150,10 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     @synchronized(self) {
         _numberOutstanding--;
         if (_buffers.count == _capacity) {
-            id<MTLBuffer> smallest = [[_buffers mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
-                return [@(a.length) compare:@(b.length)];
-            }] firstObject];
-            [_buffers removeObject:smallest];
+            [_buffers removeObjectAtIndex:0];
         }
-        [_buffers addObject:buffer];
+        NSInteger index = [self insertionIndexForBufferOfSize:buffer.length];
+        [_buffers insertObject:buffer atIndex:index];
     }
 }
 

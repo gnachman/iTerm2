@@ -31,9 +31,9 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                                                                  device:device];
         for (int i = iTermASCIITextureMinimumCharacter; i <= iTermASCIITextureMaximumCharacter; i++) {
             NSDictionary<NSNumber *, iTermCharacterBitmap *> *dict = creation(i, attributes);
-            iTermCharacterBitmap *left = dict[@(ImagePartFromDeltas(-1, 0))];
-            iTermCharacterBitmap *center = dict[@(ImagePartFromDeltas(0, 0))];
-            iTermCharacterBitmap *right = dict[@(ImagePartFromDeltas(1, 0))];
+            iTermCharacterBitmap *left = dict[@(iTermImagePartFromDeltas(-1, 0))];
+            iTermCharacterBitmap *center = dict[@(iTermImagePartFromDeltas(0, 0))];
+            iTermCharacterBitmap *right = dict[@(iTermImagePartFromDeltas(1, 0))];
             if (left) {
                 _parts[i] |= iTermASCIITexturePartsLeft;
                 [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetLeft)
