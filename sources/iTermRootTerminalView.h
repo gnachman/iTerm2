@@ -69,6 +69,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 @property(nonatomic, readonly) CGFloat tabviewWidth;
 
 @property(nonatomic, readonly) CGFloat leftTabBarWidth;
+@property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color
@@ -92,5 +93,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (void)layoutSubviews;
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs;
+
+- (void)willShowTabBar;
 
 @end
