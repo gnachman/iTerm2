@@ -4427,10 +4427,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [session setIgnoreResizeNotifications:NO];
     }
 
+    const BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
+                                 [_contentView.tabView numberOfTabViewItems] > 1 &&
+                                 [_contentView.tabBarControl isHidden]);
     // check window size in case tabs have to be hidden or shown
     if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
-        ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
-         ([_contentView.tabView numberOfTabViewItems] > 1 && [_contentView.tabBarControl isHidden]))) {
+        willShowTabBar) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
@@ -4448,6 +4450,9 @@ ITERM_WEAKLY_REFERENCEABLE
             // Remove the tab title bar.
             PTYSession *session = firstTab.sessions.firstObject;
             [[session view] setShowTitle:NO adjustScrollView:YES];
+        }
+        if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            [_contentView willShowTabBar];
         }
         [self fitWindowToTabs];
         [self repositionWidgets];
