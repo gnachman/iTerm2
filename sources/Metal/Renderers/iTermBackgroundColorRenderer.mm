@@ -1,12 +1,14 @@
 #import "iTermBackgroundColorRenderer.h"
 
+#import "iTermPIUArray.h"
 #import "iTermTextRenderer.h"
 
 @interface iTermBackgroundColorRendererTransientState()
-@property (nonatomic, readonly) NSInteger numberOfPIUs;
 @end
 
-@implementation iTermBackgroundColorRendererTransientState
+@implementation iTermBackgroundColorRendererTransientState {
+    iTerm2::PIUArray<iTermBackgroundColorPIU> _pius;
+}
 
 - (NSUInteger)sizeOfNewPIUBuffer {
     return sizeof(iTermBackgroundColorPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
@@ -14,18 +16,25 @@
 
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
-                 row:(int)row
-               width:(int)width {
+                 row:(int)row {
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
-    iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)self.pius.contents + _numberOfPIUs;
     const int height = self.cellConfiguration.gridSize.height;
     for (int i = 0; i < count; i++) {
-        pius[i].color = rles[i].color;
-        pius[i].runLength = rles[i].count;
-        pius[i].offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
-                                          cellSize.y * (height - row - 1));
+        iTermBackgroundColorPIU &piu = *_pius.get_next();
+        piu.color = rles[i].color;
+        piu.runLength = rles[i].count;
+        piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
+                                      cellSize.y * (height - row - 1));
     }
-    _numberOfPIUs += count;
+}
+
+- (void)enumerateSegments:(void (^)(const iTermBackgroundColorPIU *, size_t))block {
+    const int n = _pius.get_number_of_segments();
+    for (int segment = 0; segment < n; segment++) {
+        const iTermBackgroundColorPIU *array = _pius.start_of_segment(segment);
+        size_t size = _pius.size_of_segment(segment);
+        block(array, size);
+    }
 }
 
 @end
@@ -44,8 +53,9 @@
                                                               blending:YES
                                                         piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
+        // TODO: The capacity here is a total guess. But this would be a lot of rows to have.
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
+                                                                capacity:512
                                                                     name:@"background color PIU"];
     }
     return self;
@@ -79,15 +89,20 @@
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
-    [_cellRenderer drawWithTransientState:tState
-                            renderEncoder:renderEncoder
-                         numberOfVertices:6
-                             numberOfPIUs:tState.numberOfPIUs
-                            vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-                                             @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
-                                             @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                          fragmentBuffers:@{}
-                                 textures:@{} ];
+    [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
+        id<MTLBuffer> piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
+                                                                size:numberOfInstances * sizeof(*pius)
+                                                               bytes:pius];
+        [_cellRenderer drawWithTransientState:tState
+                                renderEncoder:renderEncoder
+                             numberOfVertices:6
+                                 numberOfPIUs:numberOfInstances
+                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                                 @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
+                                                 @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                              fragmentBuffers:@{}
+                                     textures:@{} ];
+    }];
 }
 
 @end

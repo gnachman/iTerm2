@@ -39,6 +39,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, copy, readonly) NSString *name;
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device capacity:(NSUInteger)capacity name:(NSString *)name NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 - (id<MTLBuffer>)requestBufferFromContext:(iTermMetalBufferPoolContext *)context
                                      size:(size_t)size;
