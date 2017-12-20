@@ -69,8 +69,8 @@
 }
 
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
-    CGSize markSize = CGSizeMake(MAX(0, tState.margins.left - 2 * tState.configuration.scale),
-                                 MAX(0, MIN(15, tState.cellConfiguration.cellSize.height - 1 * tState.configuration.scale)));
+    CGSize markSize = CGSizeMake(MAX(1, tState.margins.left - 2 * tState.configuration.scale),
+                                 MAX(1, MIN(15, tState.cellConfiguration.cellSize.height - 1 * tState.configuration.scale)));
     if (!CGSizeEqualToSize(markSize, _markSize)) {
         // Mark size has changed
         _markSize = markSize;
