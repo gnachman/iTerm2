@@ -11,6 +11,7 @@ extern "C" {
 #import "iTermASCIITexture.h"
 #import "iTermCharacterParts.h"
 #import "iTermMetalBufferPool.h"
+#import "iTermPIUArray.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextureArray.h"
 #import "NSArray+iTerm.h"
@@ -48,66 +49,6 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
 static const NSInteger iTermTextAtlasCapacity = 16;
 
 namespace iTerm2 {
-    // A PIUArray is an array of arrays of iTermTextPIU structs. This avoids giant allocations.
-    // It is append-only.
-    class PIUArray {
-    public:
-        PIUArray() : _capacity(1024), _size(0) {
-            _arrays.resize(1);
-            _arrays.back().reserve(_capacity);
-        }
-
-        explicit PIUArray(size_t capacity) : _capacity(capacity), _size(0) {
-            _arrays.resize(1);
-            _arrays.back().reserve(_capacity);
-        }
-
-        iTermTextPIU *get_next() {
-            if (_arrays.back().size() == _capacity) {
-                _arrays.resize(_arrays.size() + 1);
-                _arrays.back().reserve(_capacity);
-            }
-
-            std::vector<iTermTextPIU> &array = _arrays.back();
-            array.resize(array.size() + 1);
-            _size++;
-            return &array.back();
-        }
-
-        iTermTextPIU &get(const size_t &segment, const size_t &index) {
-            return _arrays[segment][index];
-        }
-
-        iTermTextPIU &get(const size_t &index) {
-            return _arrays[index / _capacity][index % _capacity];
-        }
-
-        void push_back(const iTermTextPIU &piu) {
-            memmove(get_next(), &piu, sizeof(piu));
-        }
-
-        size_t get_number_of_segments() const {
-            return _arrays.size();
-        }
-
-        const iTermTextPIU *start_of_segment(const size_t segment) const {
-            return &_arrays[segment][0];
-        }
-
-        size_t size_of_segment(const size_t segment) const {
-            return _arrays[segment].size();
-        }
-
-        const size_t &size() const {
-            return _size;
-        }
-
-    private:
-        const size_t _capacity;
-        size_t _size;
-        std::vector<std::vector<iTermTextPIU>> _arrays;
-    };
-
     class TexturePage;
 
     class TexturePageOwner {
@@ -477,7 +418,7 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
     NSInteger _asciiInstances[iTermASCIITextureAttributesMax * 2];
 
     // Array of PIUs for each texture page.
-    std::map<iTerm2::TexturePage *, iTerm2::PIUArray *> _pius;
+    std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius;
 
     iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
 }
@@ -542,7 +483,7 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
 - (void)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
     for (auto const &mapPair : _pius) {
         const iTerm2::TexturePage *const &texturePage = mapPair.first;
-        const iTerm2::PIUArray *const &piuArray = mapPair.second;
+        const iTerm2::PIUArray<iTermTextPIU> *const &piuArray = mapPair.second;
 
         for (size_t i = 0; i < piuArray->get_number_of_segments(); i++) {
             const size_t count = piuArray->size_of_segment(i);
@@ -568,12 +509,12 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
     // Fix up the background color of parts of glyphs that are drawn outside their cell. Add to the
     // correct page's PIUs.
     const int numRows = _backgroundColorRLEDataArray.count;
-    const int width = self.cellConfiguration.gridSize.width;
+        const int width = self.cellConfiguration.gridSize.width;
     for (auto pair : _fixups) {
         iTerm2::TexturePage *page = pair.first;
         std::vector<iTermTextFixup> *fixups = pair.second;
         for (auto fixup : *fixups) {
-            iTerm2::PIUArray &piuArray = *_pius[page];
+            iTerm2::PIUArray<iTermTextPIU> &piuArray = *_pius[page];
             iTermTextPIU &piu = piuArray.get(fixup.piu_index);
 
             // Set fields in piu
@@ -811,9 +752,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             }
             for (auto entry : *entries) {
                 auto it = _pius.find(entry->_page);
-                iTerm2::PIUArray *array;
+                iTerm2::PIUArray<iTermTextPIU> *array;
                 if (it == _pius.end()) {
-                    array = _pius[entry->_page] = new iTerm2::PIUArray(_numberOfCells);
+                    array = _pius[entry->_page] = new iTerm2::PIUArray<iTermTextPIU>(_numberOfCells);
                 } else {
                     array = it->second;
                 }
