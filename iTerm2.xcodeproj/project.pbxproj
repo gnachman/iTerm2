@@ -3517,6 +3517,7 @@
 		A66E5E5C1E63625600E8FE35 /* iTermURLActionFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLActionFactory.m; sourceTree = "<group>"; };
 		A66EF82A1EF59CFC0005891A /* iTermRateLimitedUpdate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRateLimitedUpdate.h; sourceTree = "<group>"; };
 		A66EF82B1EF59CFC0005891A /* iTermRateLimitedUpdate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRateLimitedUpdate.m; sourceTree = "<group>"; };
+		A66F3CED1FEA2A6C00AA2021 /* iTermPIUArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermPIUArray.h; path = Metal/Infrastructure/iTermPIUArray.h; sourceTree = "<group>"; };
 		A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyLabels.h; sourceTree = "<group>"; };
 		A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyLabels.m; sourceTree = "<group>"; };
 		A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testCustomUnderline.png"; sourceTree = "<group>"; };
@@ -5572,6 +5573,7 @@
 				A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */,
 				A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */,
 				A614F2661FE4B16400EEE919 /* iTermCharacterParts.m */,
+				A66F3CED1FEA2A6C00AA2021 /* iTermPIUArray.h */,
 			);
 			name = Infrastructure;
 			sourceTree = "<group>";
