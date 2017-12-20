@@ -483,8 +483,7 @@
                            }];
         [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes
                                 count:rowData.numberOfBackgroundRLEs
-                                  row:rowData.y
-                                width:frameData.gridSize.width];
+                                  row:rowData.y];
         numberOfRows++;
     }];
 
