@@ -592,10 +592,13 @@
         counter = nextCounter++;
         __block BOOL completed = NO;
 
+        iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
+        [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
+            iTermPreciseTimerStatsMeasureAndRecordTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
+        }];
+
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
-            frameData.status = @"completion handler, waiting for dispatch";
-            dispatch_async(_queue, ^{
-                frameData.status = @"completion handler on main queue";
+            [frameData dispatchToPrivateQueue:_queue forCompletion:^{
                 if (!completed) {
                     completed = YES;
                     [self complete:frameData];
@@ -606,7 +609,7 @@
                         [weakSelf.dataSource metalDriverDidDrawFrame];
                     });
                 }
-            });
+            }];
         }];
 
         [commandBuffer commit];

@@ -14,6 +14,8 @@
 #import <simd/simd.h>
 
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
+    iTermMetalFrameDataStatEndToEnd,
+
     iTermMetalFrameDataStatMtExtractFromApp,
     iTermMetalFrameDataStatMtGetCurrentDrawable,
     iTermMetalFrameDataStatMtGetRenderPassDescriptor,
@@ -51,7 +53,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit,
 
     iTermMetalFrameDataStatGpu,
-    iTermMetalFrameDataStatEndToEnd,
+    iTermMetalFrameDataStatGpuScheduleWait,
+    iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion,
 
     iTermMetalFrameDataStatCount
 };
@@ -92,6 +95,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block;
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
+- (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)willHandOffToGPU;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;
 

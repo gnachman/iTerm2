@@ -17,40 +17,45 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
     iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
 
     const char *names[iTermMetalFrameDataStatCount] = {
-        "mt.ExtractFromApp",
-        "mt.GetCurrentDrawable",
-        "mt.GetRenderPassD",
-        "dispatchToPrivateQueue",
-        "BuildRowData",
-        "UpdateRenderers",
-        "CreateTransient",
-
-        "badgeTS<",
-        "backgroundImageTS<",
-        "backgroundColorTS<",
-        "cursorGuideTS<",
-        "broadcastStripesTS<",
-        "copyBackgroundTS<",
-        "markTS<",
-        "cursorTS<",
-        "marginTS<",
-        "textTS<",
-
-        "PopulateTransient",
-        "EnqueueDrawCalls",
-        "Create1stRE<",
-        "DrawMargin<",
-        "DrawBgImage<",
-        "DrawBgColor<",
-        "DrawCursor<",
-        "EndEncodingInt<",
-        "Create2ndRE<",
-        "enqueueCopyBg<",
-        "enqueueDrawText<",
-        "EndEncodingDrwbl<",
-        "PresentCommit<",
-        "gpu",
         "endToEnd",
+
+        "mt.ExtractFromApp<",
+        "mt.GetDrawable<",
+        "mt.GetRenderPassD<",
+        "dispatchToPQ<",
+        "BuildRowData<",
+        "UpdateRenderers<",
+        "CreateTransient<",
+
+        "badgeTS<<",
+        "backgroundImageTS<<",
+        "backgroundColorTS<<",
+        "cursorGuideTS<<",
+        "bcastStripesTS<<",
+        "copyBackgroundTS<<",
+        "markTS<<",
+        "cursorTS<<",
+        "marginTS<<",
+        "textTS<<",
+
+        "PopulateTransient<",
+        "EnqueueDrawCalls<",
+        "Create1stRE<<",
+        "DrawMargin<<",
+        "DrawBgImage<<",
+        "DrawBgColor<<",
+        "DrawCursor<<",
+        "EndEncodingInt<<",
+        "Create2ndRE<<",
+        "enqueueCopyBg<<",
+        "enqueueDrawText<<",
+        "EndEncodingDrwbl<<",
+        "PresentCommit<<",
+
+        "gpu<",
+        "scheduleWait<<",
+
+        "dispatchToPQ2<",
     };
 
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
@@ -112,6 +117,16 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
         iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
+        block();
+    });
+}
+
+- (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block {
+    self.status = @"completion handler, waiting for dispatch";
+    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
+    dispatch_async(queue, ^{
+        self.status = @"completion handler on private queue";
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
         block();
     });
 }
