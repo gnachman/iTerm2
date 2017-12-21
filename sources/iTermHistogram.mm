@@ -22,7 +22,7 @@ static const NSInteger iTermHistogramStringWidth = 20;
 }
 
 - (void)addValue:(double)value {
-    double logValue = std::log(value) / std::log(2);
+    double logValue = std::log(value + 1) / std::log(2);
 
     int bucket = std::floor(logValue);
     int newCount = _buckets[bucket];
@@ -76,8 +76,8 @@ static const NSInteger iTermHistogramStringWidth = 20;
         [stars appendString:@"*"];
     }
     return [NSString stringWithFormat:@"[%12@…%12@) %8@ |%@",
+            @(pow(2, bucket - 1)),
             @(pow(2, bucket)),
-            @(pow(2, bucket + 1)),
             @(_buckets[bucket]),
             stars];
 }

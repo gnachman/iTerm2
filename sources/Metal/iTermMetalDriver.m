@@ -251,11 +251,15 @@
         [self populateTransientStatesWithFrameData:frameData range:NSMakeRange(0, frameData.rows.count)];
     }];
 
-    [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:^{
-        [self enequeueDrawCallsForFrameData:frameData
-                              commandBuffer:commandBuffer];
-    }];
-    [frameData willHandOffToGPU];
+    // It's not clear to me if dispatching to the main queue is actually necessary, but I'm leaving
+    // this here so it's easy to switch back to doing so. It adds a ton of latency.
+//    [frameData dispatchToMainQueueForDrawing:^{
+        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:^{
+            [self enequeueDrawCallsForFrameData:frameData
+                                  commandBuffer:commandBuffer];
+        }];
+        [frameData willHandOffToGPU];
+//    }];
 }
 
 - (void)updateTextRendererForFrameData:(iTermMetalFrameData *)frameData {
