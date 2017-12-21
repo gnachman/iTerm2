@@ -259,6 +259,9 @@
 }
 
 - (void)updateTextRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_textRenderer.rendererDisabled) {
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     CGSize cellSize = _cellSize;
     CGFloat scale = _scale;
@@ -289,6 +292,9 @@
 }
 
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_backgroundImageRenderer.rendererDisabled) {
+        return;
+    }
     CGFloat blending;
     BOOL tiled;
     NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
@@ -296,6 +302,9 @@
 }
 
 - (void)updateCopyBackgroundRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_copyBackgroundRenderer.rendererDisabled) {
+        return;
+    }
     CGFloat blending;
     BOOL tiled;
     NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
@@ -317,6 +326,9 @@
     [commandBuffer enqueue];
     commandBuffer.label = @"Draw Terminal";
     for (id<iTermMetalRenderer> renderer in self.nonCellRenderers) {
+        if (renderer.rendererDisabled) {
+            continue;
+        }
         [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
             __kindof iTermMetalRendererTransientState * _Nonnull tState =
             [renderer createTransientStateForConfiguration:configuration
@@ -344,6 +356,9 @@
                                                                                                         gridSize:gridSize
                                                                                            usingIntermediatePass:(frameData.intermediateRenderPassDescriptor != nil)];
     for (id<iTermMetalCellRenderer> renderer in self.cellRenderers) {
+        if (renderer.rendererDisabled) {
+            continue;
+        }
         [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
             __kindof iTermMetalCellRendererTransientState * _Nonnull tState =
                 [renderer createTransientStateForCellConfiguration:cellConfiguration
@@ -382,6 +397,9 @@
 }
 
 - (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (_copyBackgroundRenderer.rendererDisabled) {
+        return;
+    }
     // Copy state
     iTermCopyBackgroundRendererTransientState *copyState =
         frameData.transientStates[NSStringFromClass([_copyBackgroundRenderer class])];
@@ -389,6 +407,12 @@
 }
 
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (_underlineCursorRenderer.rendererDisabled &&
+        _barCursorRenderer.rendererDisabled &&
+        _blockCursorRenderer.rendererDisabled) {
+        return;
+    }
+
     // Update glyph attributes for block cursor if needed.
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
 #warning TODO Why is the cursor sometimes equal to grid height?
@@ -403,11 +427,15 @@
     }
 }
 
-- (NSInteger)populateTextAndBackgroundRenderersTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+- (void)populateTextAndBackgroundRenderersTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (_textRenderer.rendererDisabled && _backgroundColorRenderer.rendererDisabled) {
+        return;
+    }
+
     // Update the text renderer's transient state with current glyphs and colors.
     CGFloat scale = frameData.scale;
     iTermTextRendererTransientState *textState =
-    frameData.transientStates[NSStringFromClass([_textRenderer class])];
+        frameData.transientStates[NSStringFromClass([_textRenderer class])];
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
@@ -423,8 +451,7 @@
     
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState =
-    frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
-    __block NSUInteger numberOfRows = 0;
+        frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
 #if ENABLE_ONSCREEN_STATS
@@ -446,26 +473,30 @@
         }
 #endif
 
-        [textState setGlyphKeysData:rowData.keysData
-                              count:rowData.numberOfDrawableGlyphs
-                     attributesData:rowData.attributesData
-                                row:rowData.y
-             backgroundColorRLEData:rowData.backgroundColorRLEData
-                           creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
-                               return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
-                                                                                 size:cellSize
-                                                                                scale:scale
-                                                                                emoji:emoji];
-                           }];
-        [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes
-                                count:rowData.numberOfBackgroundRLEs
-                                  row:rowData.y];
-        numberOfRows++;
+        if (!_textRenderer.rendererDisabled) {
+            [textState setGlyphKeysData:rowData.keysData
+                                  count:rowData.numberOfDrawableGlyphs
+                         attributesData:rowData.attributesData
+                                    row:rowData.y
+                 backgroundColorRLEData:rowData.backgroundColorRLEData
+                               creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
+                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
+                                                                                     size:cellSize
+                                                                                    scale:scale
+                                                                                    emoji:emoji];
+                               }];
+        }
+        if (!_backgroundColorRenderer.rendererDisabled) {
+            [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes
+                                    count:rowData.numberOfBackgroundRLEs
+                                      row:rowData.y];
+        }
     }];
 
     // Tell the text state that it's done getting row data.
-    [textState willDraw];
-    return numberOfRows;
+    if (!_textRenderer.rendererDisabled) {
+        [textState willDraw];
+    }
 }
 
 // Called when all renderers have transient state
@@ -481,6 +512,9 @@
            frameData:(iTermMetalFrameData *)frameData
        renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                 stat:(iTermPreciseTimerStats *)stat {
+    if (renderer.rendererDisabled) {
+        return;
+    }
     iTermPreciseTimerStatsStartTimer(stat);
 
     NSString *className = NSStringFromClass([renderer class]);
@@ -497,6 +531,9 @@
                frameData:(iTermMetalFrameData *)frameData
            renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                     stat:(iTermPreciseTimerStats *)stat {
+    if (renderer.rendererDisabled) {
+        return;
+    }
     iTermPreciseTimerStatsStartTimer(stat);
 
     NSString *className = NSStringFromClass([renderer class]);

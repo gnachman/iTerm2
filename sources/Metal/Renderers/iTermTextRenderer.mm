@@ -972,6 +972,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     delete _texturePageCollection;
 }
 
+- (BOOL)rendererDisabled {
+    return NO;
+}
+
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.

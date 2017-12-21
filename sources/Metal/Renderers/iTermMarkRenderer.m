@@ -55,6 +55,10 @@
     return self;
 }
 
+- (BOOL)rendererDisabled {
+    return NO;
+}
+
 - (iTermMetalFrameDataStat)createTransientStateStat {
     return iTermMetalFrameDataStatPqCreateMarkTS;
 }
