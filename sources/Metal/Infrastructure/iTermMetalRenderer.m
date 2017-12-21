@@ -210,7 +210,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     return pipeline;
 }
 
-- (id<MTLTexture>)textureFromImage:(NSImage *)image {
+- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context {
     if (!image)
         return nil;
 

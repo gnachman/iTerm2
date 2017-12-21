@@ -91,9 +91,9 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateBackgroundImageTS;
 }
 
-- (void)setImage:(NSImage *)image blending:(CGFloat)blending tiled:(BOOL)tiled {
+- (void)setImage:(NSImage *)image blending:(CGFloat)blending tiled:(BOOL)tiled context:(nullable iTermMetalBufferPoolContext *)context {
     if (image != _image) {
-        _texture = image ? [_metalRenderer textureFromImage:image] : nil;
+        _texture = image ? [_metalRenderer textureFromImage:image context:context] : nil;
     }
     _image = image;
     _blending = blending;

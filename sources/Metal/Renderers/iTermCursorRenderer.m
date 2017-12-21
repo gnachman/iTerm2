@@ -260,7 +260,8 @@ NS_ASSUME_NONNULL_BEGIN
                                            poolContext:tState.poolContext];
     tState.color = _color;
     if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
-        _texture = [_cellRenderer textureFromImage:[tState newImage]];
+        _texture = [_cellRenderer textureFromImage:[tState newImage]
+                                           context:tState.poolContext];
         _textureSize = tState.cellConfiguration.cellSize;
     }
     tState.texture = _texture;
@@ -314,7 +315,8 @@ NS_ASSUME_NONNULL_BEGIN
     tState.selecting = _selecting;
     tState.color = _color;
     if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
-        _texture = [_cellRenderer textureFromImage:[tState newImage]];
+        _texture = [_cellRenderer textureFromImage:[tState newImage]
+                                           context:tState.poolContext];
         _textureSize = tState.cellConfiguration.cellSize;
     }
     tState.texture = _texture;

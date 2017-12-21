@@ -302,7 +302,7 @@
     CGFloat blending;
     BOOL tiled;
     NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
-    [_backgroundImageRenderer setImage:backgroundImage blending:blending tiled:tiled];
+    [_backgroundImageRenderer setImage:backgroundImage blending:blending tiled:tiled context:frameData.framePoolContext];
 }
 
 - (void)updateCopyBackgroundRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -483,6 +483,7 @@
                          attributesData:rowData.attributesData
                                     row:rowData.y
                  backgroundColorRLEData:rowData.backgroundColorRLEData
+                                context:textState.poolContext
                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
                                    return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
                                                                                      size:cellSize

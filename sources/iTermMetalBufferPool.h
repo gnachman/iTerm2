@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMetalBufferPoolContext : NSObject
 - (NSString *)summaryStatisticsWithName:(NSString *)name;
+- (void)didAddTextureOfSize:(double)size;
 @end
 
 // Creating a new buffer can be very slow. Try to reuse them.

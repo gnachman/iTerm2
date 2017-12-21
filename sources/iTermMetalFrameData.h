@@ -65,6 +65,7 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState;
+@class iTermMetalBufferPoolContext;
 @class iTermMetalRendererTransientState;
 @class iTermMetalRowData;
 @class MTKView;
@@ -86,6 +87,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
 @property (nonatomic, strong) id<CAMetalDrawable> drawable;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
+@property (nonatomic, readonly) iTermMetalBufferPoolContext *framePoolContext;
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture.

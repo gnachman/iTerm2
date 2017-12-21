@@ -8,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)setBadgeImage:(NSImage *)image;
+- (void)setBadgeImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context;
 
 @end
 

@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                 transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
         NSImage *image = [NSImage imageNamed:@"BackgroundStripes"];
         _size = image.size;
-        _texture = [_metalRenderer textureFromImage:image];
+        _texture = [_metalRenderer textureFromImage:image context:nil];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;
