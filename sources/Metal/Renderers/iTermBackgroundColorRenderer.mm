@@ -16,15 +16,17 @@
 
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
-                 row:(int)row {
+                 row:(int)row
+       repeatingRows:(int)repeatingRows {
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
     const int height = self.cellConfiguration.gridSize.height;
     for (int i = 0; i < count; i++) {
         iTermBackgroundColorPIU &piu = *_pius.get_next();
         piu.color = rles[i].color;
         piu.runLength = rles[i].count;
+        piu.numRows = repeatingRows;
         piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
-                                      cellSize.y * (height - row - 1));
+                                      cellSize.y * (height - row - repeatingRows));
     }
 }
 

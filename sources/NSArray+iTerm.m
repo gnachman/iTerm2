@@ -304,6 +304,27 @@
     return [NSURL fileURLWithPath:path];
 }
 
+- (void)enumerateCoalescedObjectsWithComparator:(BOOL (^)(id obj1, id obj2))comparator
+                                          block:(void (^)(id object, NSUInteger count))block {
+    id previous = self.firstObject;
+    NSUInteger count = 1;
+    const NSUInteger n = self.count;
+    for (NSUInteger i = 1; i < n; i++) {
+        id thisObject = self[i];
+        const BOOL isEqual = comparator(previous, thisObject);
+        if (isEqual) {
+            count++;
+        } else {
+            block(previous, count);
+            previous = thisObject;
+            count = 1;
+        }
+    }
+    if (previous) {
+        block(previous, count);
+    }
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

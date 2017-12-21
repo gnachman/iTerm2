@@ -78,8 +78,11 @@ typedef struct {
     // Offset from vertex
     vector_float2 offset;
 
-    // Number of cells occupied
+    // Number of cells occupied (stretches to the right)
     unsigned short runLength;
+
+    // Number of rows occupied (stretches down)
+    unsigned short numRows;
 
     // Background color
     vector_float4 color;
