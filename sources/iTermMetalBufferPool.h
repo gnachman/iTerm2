@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MTLBuffer;
 
 @interface iTermMetalBufferPoolContext : NSObject
+- (NSString *)summaryStatisticsWithName:(NSString *)name;
 @end
 
 // Creating a new buffer can be very slow. Try to reuse them.

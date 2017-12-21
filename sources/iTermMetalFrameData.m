@@ -150,6 +150,10 @@ static NSInteger gNextFrameDataNumber;
             iTermPreciseTimerLogOneEvent([tState stats], [tState numberOfStats], YES);
         }
     }];
+
+    [self.transientStates enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, __kindof iTermMetalRendererTransientState * _Nonnull tState, BOOL * _Nonnull stop) {
+        NSLog(@"%@", [tState.poolContext summaryStatisticsWithName:NSStringFromClass([tState class])]);
+    }];
 #endif
 
     [self addStatsTo:aggregateStats];
