@@ -7,6 +7,7 @@
 
 #import "iTermMetalBufferPool.h"
 
+#import "iTermHistogram.h"
 #import "NSArray+iTerm.h"
 #import <Metal/Metal.h>
 
@@ -38,11 +39,16 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 
 @implementation iTermMetalBufferPoolContext {
     NSMutableArray<iTermMetalBufferPoolContextEntry *> *_entries;
+    iTermHistogram *_histogram;
+    iTermHistogram *_wasteHistogram;
 }
+
 - (instancetype)init {
     self = [super init];
     if (self) {
         _entries = [NSMutableArray array];
+        _histogram = [[iTermHistogram alloc] init];
+        _wasteHistogram = [[iTermHistogram alloc] init];
     }
     return self;
 }
@@ -55,10 +61,20 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 }
 
 - (void)addBuffer:(id<MTLBuffer>)buffer pool:(id<iTermMetalBufferPool>)pool {
+    [_histogram addValue:buffer.length];
     iTermMetalBufferPoolContextEntry *entry = [[iTermMetalBufferPoolContextEntry alloc] init];
     entry.buffer = buffer;
     entry.pool = pool;
     [_entries addObject:entry];
+}
+
+- (void)addWastedSpace:(double)wastedSpace {
+    [_wasteHistogram addValue:wastedSpace];
+}
+
+- (NSString *)summaryStatisticsWithName:(NSString *)name {
+    return [NSString stringWithFormat:@"%@\n  Buffer sizes: %@\n  Wasted space: %@\n",
+            name, [_histogram sparklines], [_wasteHistogram sparklines]];
 }
 
 @end
@@ -98,6 +114,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             buffer = [_device newBufferWithLength:size options:MTLResourceStorageModeShared];
         }
         [context addBuffer:buffer pool:self];
+        [context addWastedSpace:buffer.length - size];
         return buffer;
     }
 }
@@ -141,6 +158,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
         }
         [context addBuffer:buffer pool:self];
+        [context addWastedSpace:buffer.length - size];
         _numberOutstanding++;
         return buffer;
     }

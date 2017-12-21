@@ -10,7 +10,7 @@
 #import <map>
 #include <cmath>
 
-static const NSInteger iTermHistogramStringWidth = 80;
+static const NSInteger iTermHistogramStringWidth = 20;
 
 @implementation iTermHistogram {
     std::map<int, int> _buckets;
@@ -25,7 +25,9 @@ static const NSInteger iTermHistogramStringWidth = 80;
     double logValue = std::log(value) / std::log(2);
 
     int bucket = std::floor(logValue);
-    int newCount = _buckets[bucket]++;
+    int newCount = _buckets[bucket];
+    newCount++;
+    _buckets[bucket] = newCount;
     _maxCount = std::max(_maxCount, newCount);
     if (_count == 0) {
         _min = _max = value;
@@ -62,7 +64,7 @@ static const NSInteger iTermHistogramStringWidth = 80;
         }
     }
 
-    return [NSString stringWithFormat:@"%@ %@ %@  Count=%@ Mean=%@", @(_min), sparklines, @(_max), @(_count), @(_sum / _count)];
+    return [NSString stringWithFormat:@"%@ %@ %@  Count=%@ Mean=%@ Sum=%@", @(_min), sparklines, @(_max), @(_count), @(_sum / _count), @(_sum)];
 }
 
 #pragma mark - Private
@@ -83,7 +85,7 @@ static const NSInteger iTermHistogramStringWidth = 80;
 - (NSString *)sparkForBucket:(int)bucket {
     double fraction = (double)_buckets[bucket] / (double)_maxCount;
     NSArray *characters = @[ @"▁", @"▂", @"▃", @"▄", @"▅", @"▆", @"▇", @"█" ];
-    int index = std::round(fraction * characters.count);
+    int index = std::round(fraction * (characters.count - 1));
     return characters[index];
 }
 
