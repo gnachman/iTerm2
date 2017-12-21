@@ -245,24 +245,9 @@
         [self populateTransientStatesWithFrameData:frameData range:NSMakeRange(0, frameData.rows.count)];
     }];
 
-    // Return to main queue and enqueue draw calls into command buffer.
-    [frameData dispatchToMainQueue:^{
-        [self finishInMainQueueWithFrameData:frameData
-                                        view:view
-                               commandBuffer:commandBuffer];
-    }];
-}
-
-// Runs in main queue
-- (void)finishInMainQueueWithFrameData:(iTermMetalFrameData *)frameData
-                                  view:(MTKView *)view
-                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtEnqueueDrawCalls ofBlock:^{
-        [self drawIfPossibleInView:view
-                         frameData:frameData
-                     commandBuffer:commandBuffer
-              renderPassDescriptor:frameData.renderPassDescriptor
-                          drawable:frameData.drawable];
+    [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:^{
+        [self drawFrameDataIfPossible:frameData
+                        commandBuffer:commandBuffer];
     }];
     [frameData willHandOffToGPU];
 }
@@ -374,35 +359,6 @@
         rowData.numberOfBackgroundRLEs = rles;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
     }
-}
-
-- (void)drawIfPossibleInView:(MTKView *)view
-                   frameData:(iTermMetalFrameData *)frameData
-               commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-        renderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
-                    drawable:(id<CAMetalDrawable>)drawable {
-    DLog(@"  Really drawing");
-
-    BOOL ok = YES;
-    if (drawable == nil) {
-        frameData.status = @"nil currentDrawable";
-        ok = NO;
-    }
-    if (renderPassDescriptor == nil) {
-        frameData.status = @"nil renderPassDescriptor";
-        ok = NO;
-    }
-    if (!ok) {
-        [commandBuffer commit];
-        [self complete:frameData];
-        NSLog(@"** DRAW FAILED: %@", frameData);
-        return;
-    }
-    drawable.texture.label = @"Drawable";
-    [self drawWithDrawable:drawable
-      renderPassDescriptor:renderPassDescriptor
-                 frameData:frameData
-             commandBuffer:commandBuffer];
 }
 
 - (void)finalizeCopyBackgroundRendererWithFrameData:(iTermMetalFrameData *)frameData {
@@ -538,17 +494,17 @@
     [self drawCellRenderer:_marginRenderer
                  frameData:frameData
              renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawMargin]];
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMargin]];
 
     [self drawRenderer:_backgroundImageRenderer
              frameData:frameData
          renderEncoder:renderEncoder
-                  stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawBackgroundImage]];
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundImage]];
 
     [self drawCellRenderer:_backgroundColorRenderer
                  frameData:frameData
              renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawBackgroundColor]];
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor]];
 
     //        [_broadcastStripesRenderer drawWithRenderEncoder:renderEncoder];
     //        [_badgeRenderer drawWithRenderEncoder:renderEncoder];
@@ -562,26 +518,26 @@
                 [self drawCellRenderer:_underlineCursorRenderer
                              frameData:frameData
                          renderEncoder:renderEncoder
-                                  stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawCursor]];
+                                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
                 break;
             case CURSOR_BOX:
                 if (cursorInfo.frameOnly) {
                     [self drawCellRenderer:_frameCursorRenderer
                                  frameData:frameData
                              renderEncoder:renderEncoder
-                                      stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawCursor]];
+                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
                 } else {
                     [self drawCellRenderer:_blockCursorRenderer
                                  frameData:frameData
                              renderEncoder:renderEncoder
-                                      stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawCursor]];
+                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
                 }
                 break;
             case CURSOR_VERTICAL:
                 [self drawCellRenderer:_barCursorRenderer
                              frameData:frameData
                          renderEncoder:renderEncoder
-                                  stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawCursor]];
+                                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
                 break;
             case CURSOR_DEFAULT:
                 break;
@@ -591,7 +547,7 @@
     //        [_copyModeCursorRenderer drawWithRenderEncoder:renderEncoder];
 
     if (frameData.intermediateRenderPassDescriptor) {
-        [frameData measureTimeForStat:iTermMetalFrameDataStatMtEnqueueDrawEndEncodingToIntermediateTexture ofBlock:^{
+        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture ofBlock:^{
             [renderEncoder endEncoding];
         }];
     }
@@ -601,10 +557,10 @@
                               drawable:(id<CAMetalDrawable>)drawable
                              frameData:(iTermMetalFrameData *)frameData
                          renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtEnqueueDrawEndEncodingToDrawable ofBlock:^{
+    [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         [renderEncoder endEncoding];
     }];
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtEnqueueDrawPresentAndCommit ofBlock:^{
+    [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
         [commandBuffer presentDrawable:drawable];
 
         int counter;
@@ -633,11 +589,30 @@
     }];
 }
 
-- (void)drawWithDrawable:(id<CAMetalDrawable>)drawable
-    renderPassDescriptor:(MTLRenderPassDescriptor *)viewRenderPassDescriptor
-               frameData:(iTermMetalFrameData *)frameData
-           commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    MTLRenderPassDescriptor *renderPassDescriptor = frameData.intermediateRenderPassDescriptor ?: viewRenderPassDescriptor;
+- (void)drawFrameDataIfPossible:(iTermMetalFrameData *)frameData
+                  commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    DLog(@"  Really drawing");
+
+    BOOL ok = YES;
+    if (frameData.drawable == nil) {
+        frameData.status = @"nil currentDrawable";
+        ok = NO;
+    }
+    if (frameData.renderPassDescriptor == nil) {
+        frameData.status = @"nil renderPassDescriptor";
+        ok = NO;
+    }
+    if (!ok) {
+        [commandBuffer commit];
+        [self complete:frameData];
+        NSLog(@"** DRAW FAILED: %@", frameData);
+        return;
+    }
+
+    id<CAMetalDrawable> drawable = frameData.drawable;
+    drawable.texture.label = @"Drawable";
+
+    MTLRenderPassDescriptor *renderPassDescriptor = frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor;
     if (!renderPassDescriptor) {
         frameData.status = @"failed to get a render pass descriptor";
         [commandBuffer commit];
@@ -651,29 +626,29 @@
                                        renderPassDescriptor:renderPassDescriptor
                                                       label:label
                                                   frameData:frameData
-                                                       stat:iTermMetalFrameDataStatMtEnqueueDrawCreateFirstRenderEncoder];
+                                                       stat:iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder];
 
     [self drawContentBehindTextWithFrameData:frameData renderEncoder:renderEncoder];
 
-    renderPassDescriptor = viewRenderPassDescriptor;
+    renderPassDescriptor = frameData.renderPassDescriptor;
 
     // If we're using an intermediate render pass, copy from it to the view for final steps.
     if (frameData.intermediateRenderPassDescriptor) {
         renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                           renderPassDescriptor:viewRenderPassDescriptor
+                                           renderPassDescriptor:frameData.renderPassDescriptor
                                                           label:@"Copy bg and render text"
                                                       frameData:frameData
-                                                           stat:iTermMetalFrameDataStatMtEnqueueDrawCreateSecondRenderEncoder];
+                                                           stat:iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder];
         [self drawRenderer:_copyBackgroundRenderer
                  frameData:frameData
              renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueCopyBackground]];
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
     }
 
     [self drawCellRenderer:_textRenderer
                  frameData:frameData
              renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatMtEnqueueDrawText]];
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
 
     //        [_markRenderer drawWithRenderEncoder:renderEncoder];
 

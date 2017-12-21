@@ -21,9 +21,9 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "mt.GetCurrentDrawable",
         "mt.GetRenderPassD",
         "dispatchToPrivateQueue",
-        "pq.BuildRowData",
-        "pq.UpdateRenderers",
-        "pq.CreateTransient",
+        "BuildRowData",
+        "UpdateRenderers",
+        "CreateTransient",
 
         "badgeTS<",
         "backgroundImageTS<",
@@ -36,20 +36,19 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "marginTS<",
         "textTS<",
 
-        "pq.PopulateTransient",
-        "dispatchToMainQueue",
-        "mt.EnqueueDrawCalls",
-        "mt.Create1stRE<",
-        "mt.DrawMargin<",
-        "mt.DrawBgImage<",
-        "mt.DrawBgColor<",
-        "mt.DrawCursor<",
-        "mt.EndEncodingInt<",
-        "mt.Create2ndRE<",
-        "mt.enqueueCopyBg<",
-        "mt.enqueueDrawText<",
-        "mt.EndEncodingDrwbl<",
-        "mt.PresentCommit<",
+        "PopulateTransient",
+        "EnqueueDrawCalls",
+        "Create1stRE<",
+        "DrawMargin<",
+        "DrawBgImage<",
+        "DrawBgColor<",
+        "DrawCursor<",
+        "EndEncodingInt<",
+        "Create2ndRE<",
+        "enqueueCopyBg<",
+        "enqueueDrawText<",
+        "EndEncodingDrwbl<",
+        "PresentCommit<",
         "gpu",
         "endToEnd",
     };
@@ -113,15 +112,6 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
         iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
-        block();
-    });
-}
-
-- (void)dispatchToMainQueue:(void (^)(void))block {
-    self.status = [NSString stringWithUTF8String:_stats[iTermMetalFrameDataStatDispatchToMainQueue].name];
-    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
         block();
     });
 }
