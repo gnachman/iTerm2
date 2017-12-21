@@ -35,21 +35,20 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqCreateTextTS,
 
     iTermMetalFrameDataStatPqPopulateTransientStates,
-    iTermMetalFrameDataStatDispatchToMainQueue,
 
-    iTermMetalFrameDataStatMtEnqueueDrawCalls,
-    iTermMetalFrameDataStatMtEnqueueDrawCreateFirstRenderEncoder,
-    iTermMetalFrameDataStatMtEnqueueDrawMargin,
-    iTermMetalFrameDataStatMtEnqueueDrawBackgroundImage,
-    iTermMetalFrameDataStatMtEnqueueDrawBackgroundColor,
-    iTermMetalFrameDataStatMtEnqueueDrawCursor,
-    iTermMetalFrameDataStatMtEnqueueDrawEndEncodingToIntermediateTexture,
+    iTermMetalFrameDataStatPqEnqueueDrawCalls,
+    iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
+    iTermMetalFrameDataStatPqEnqueueDrawMargin,
+    iTermMetalFrameDataStatPqEnqueueDrawBackgroundImage,
+    iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor,
+    iTermMetalFrameDataStatPqEnqueueDrawCursor,
+    iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture,
 
-    iTermMetalFrameDataStatMtEnqueueDrawCreateSecondRenderEncoder,
-    iTermMetalFrameDataStatMtEnqueueCopyBackground,
-    iTermMetalFrameDataStatMtEnqueueDrawText,
-    iTermMetalFrameDataStatMtEnqueueDrawEndEncodingToDrawable,
-    iTermMetalFrameDataStatMtEnqueueDrawPresentAndCommit,
+    iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
+    iTermMetalFrameDataStatPqEnqueueCopyBackground,
+    iTermMetalFrameDataStatPqEnqueueDrawText,
+    iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable,
+    iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit,
 
     iTermMetalFrameDataStatGpu,
     iTermMetalFrameDataStatEndToEnd,
@@ -93,7 +92,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block;
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
-- (void)dispatchToMainQueue:(void (^)(void))block;
 - (void)willHandOffToGPU;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;
 
