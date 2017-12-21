@@ -39,6 +39,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "textTS<<",
 
         "PopulateTransient<",
+        "dispatchToMain<",
         "EnqueueDrawCalls<",
         "Create1stRE<<",
         "DrawMargin<<",
@@ -117,6 +118,14 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
         iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
+        block();
+    });
+}
+
+- (void)dispatchToMainQueueForDrawing:(void (^)(void))block {
+    iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
         block();
     });
 }
