@@ -8,7 +8,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
-                 row:(int)row;
+                 row:(int)row
+       repeatingRows:(int)repeatingRows;
 
 @end
 
