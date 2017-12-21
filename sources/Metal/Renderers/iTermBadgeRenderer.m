@@ -41,7 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                fragmentFunctionName:@"iTermBadgeFragmentShader"
                                                            blending:YES
                                                 transientStateClass:[iTermBadgeRendererTransientState class]];
-        [self setBadgeImage:[NSImage imageNamed:@"badge"]];
+        [self setBadgeImage:[NSImage imageNamed:@"badge"] context:nil];
         _offsetsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 2];
     }
     return self;
@@ -55,9 +55,9 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateBadgeTS;
 }
 
-- (void)setBadgeImage:(NSImage *)image {
+- (void)setBadgeImage:(NSImage *)image context:(nonnull iTermMetalBufferPoolContext *)context {
     _size = image.size;
-    _texture = [_metalRenderer textureFromImage:image];
+    _texture = [_metalRenderer textureFromImage:image context:context];
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder

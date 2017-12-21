@@ -58,6 +58,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
+@class iTermMetalBufferPoolContext;
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRenderer : NSObject
 
@@ -92,7 +94,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
-- (id<MTLTexture>)textureFromImage:(NSImage *)image;
+- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
 
 - (id<MTLRenderPipelineState>)newPipelineWithBlending:(BOOL)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction

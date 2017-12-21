@@ -229,10 +229,10 @@ namespace iTerm2 {
 
     class TexturePageCollection : TexturePageOwner {
     private:
-        const GlyphEntry *internal_add(int part, const GlyphKey &key, iTermCharacterBitmap *image, bool is_emoji) {
+        const GlyphEntry *internal_add(int part, const GlyphKey &key, iTermCharacterBitmap *image, bool is_emoji, iTermMetalBufferPoolContext *context) {
             if (!_openPage) {
                 _openPage = new TexturePage(this, _device, _pageCapacity, _cellSize);  // Retains this for _openPage
-
+                [context didAddTextureOfSize:_cellSize.x * _cellSize.y * _pageCapacity];
                 // Add to allPages and retain that reference too
                 _allPages.insert(_openPage);
                 _openPage->retain(this);
@@ -293,6 +293,7 @@ namespace iTerm2 {
 
         std::vector<const GlyphEntry *> *add(int column,
                                              const GlyphKey &glyphKey,
+                                             iTermMetalBufferPoolContext *context,
                                              NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creator)(int, BOOL *)) {
             BOOL emoji;
             NSDictionary<NSNumber *, iTermCharacterBitmap *> *images = creator(column, &emoji);
@@ -300,7 +301,7 @@ namespace iTerm2 {
             _pages[glyphKey] = result;
             for (NSNumber *partNumber in images) {
                 iTermCharacterBitmap *image = images[partNumber];
-                const GlyphEntry *entry = internal_add(partNumber.intValue, glyphKey, image, emoji);
+                const GlyphEntry *entry = internal_add(partNumber.intValue, glyphKey, image, emoji, context);
                 result->push_back(entry);
             }
             return result;
@@ -710,6 +711,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
           attributesData:(NSData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(nonnull NSData *)backgroundColorRLEData
+                 context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     DLog(@"BEGIN setGlyphKeysData for %@", self);
     ITDebugAssert(row == _backgroundColorRLEDataArray.count);
@@ -745,7 +747,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             const iTerm2::GlyphKey glyphKey(&glyphKeys[x]);
             std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollection->find(glyphKey);
             if (!entries) {
-                entries = _texturePageCollection->add(x, glyphKey, creation);
+                entries = _texturePageCollection->add(x, glyphKey, context, creation);
                 if (!entries) {
                     continue;
                 }

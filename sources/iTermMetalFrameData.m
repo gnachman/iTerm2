@@ -82,6 +82,7 @@ static NSInteger gNextFrameDataNumber;
         _device = view.device;
         _creation = [NSDate timeIntervalSinceReferenceDate];
         _frameNumber = gNextFrameDataNumber++;
+        _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
         iTermMetalFrameDataStatsBundleInitialize(_stats);
 
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
@@ -160,6 +161,7 @@ static NSInteger gNextFrameDataNumber;
         }
     }];
 
+    NSLog(@"%@", [_framePoolContext summaryStatisticsWithName:@"Frame"]);
     [self.transientStates enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, __kindof iTermMetalRendererTransientState * _Nonnull tState, BOOL * _Nonnull stop) {
         NSLog(@"%@", [tState.poolContext summaryStatisticsWithName:NSStringFromClass([tState class])]);
     }];

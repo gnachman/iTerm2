@@ -137,7 +137,7 @@
     }
     [image unlockFocus];
 
-    return [_cellRenderer textureFromImage:image];
+    return [_cellRenderer textureFromImage:image context:tState.poolContext];
 }
 
 @end

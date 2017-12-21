@@ -11,6 +11,7 @@
 
 @property (nonatomic, readonly) NSString *stringValue;
 @property (nonatomic, readonly) NSString *sparklines;
+@property (nonatomic, readonly) int64_t count;
 
 - (void)addValue:(double)value;
 

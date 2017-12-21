@@ -15,7 +15,6 @@ static const NSInteger iTermHistogramStringWidth = 20;
 @implementation iTermHistogram {
     std::map<int, int> _buckets;
     double _sum;
-    int64_t _count;
     int _maxCount;
     double _min;
     double _max;

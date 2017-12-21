@@ -40,6 +40,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 @implementation iTermMetalBufferPoolContext {
     NSMutableArray<iTermMetalBufferPoolContextEntry *> *_entries;
     iTermHistogram *_histogram;
+    iTermHistogram *_textureHistogram;
     iTermHistogram *_wasteHistogram;
 }
 
@@ -48,6 +49,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     if (self) {
         _entries = [NSMutableArray array];
         _histogram = [[iTermHistogram alloc] init];
+        _textureHistogram = [[iTermHistogram alloc] init];
         _wasteHistogram = [[iTermHistogram alloc] init];
     }
     return self;
@@ -58,6 +60,10 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
         [entry.pool returnBuffer:entry.buffer];
     }
     [_entries removeAllObjects];
+}
+
+- (void)didAddTextureOfSize:(double)size {
+    [_textureHistogram addValue:size];
 }
 
 - (void)addBuffer:(id<MTLBuffer>)buffer pool:(id<iTermMetalBufferPool>)pool {
@@ -73,8 +79,17 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 }
 
 - (NSString *)summaryStatisticsWithName:(NSString *)name {
-    return [NSString stringWithFormat:@"%@\n  Buffer sizes: %@\n  Wasted space: %@\n",
-            name, [_histogram sparklines], [_wasteHistogram sparklines]];
+    NSMutableString *string = [NSMutableString stringWithFormat:@"%@\n", name];
+    if (_histogram.count) {
+        [string appendFormat:@"  Buffer sizes: %@\n", [_histogram sparklines]];
+    }
+    if (_wasteHistogram.count) {
+        [string appendFormat:@"  Wasted space: %@\n", [_wasteHistogram sparklines]];
+    }
+    if (_textureHistogram.count) {
+        [string appendFormat:@"  New textures: %@\n", [_textureHistogram sparklines]];
+    }
+    return string;
 }
 
 @end
