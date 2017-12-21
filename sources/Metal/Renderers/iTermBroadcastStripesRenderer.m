@@ -35,6 +35,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (BOOL)rendererDisabled {
+    return NO;
+}
+
 - (iTermMetalFrameDataStat)createTransientStateStat {
     return iTermMetalFrameDataStatPqCreateBroadcastStripesTS;
 }

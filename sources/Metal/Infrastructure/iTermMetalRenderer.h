@@ -27,6 +27,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalRenderer<NSObject>
+@property (nonatomic, readonly) BOOL rendererDisabled;
 
 - (iTermMetalFrameDataStat)createTransientStateStat;
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder

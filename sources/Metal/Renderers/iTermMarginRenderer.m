@@ -56,6 +56,10 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{}];
 }
 
+- (BOOL)rendererDisabled {
+    return NO;
+}
+
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
                                    commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =

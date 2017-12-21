@@ -48,6 +48,10 @@
                                   textures:@{ @(iTermTextureIndexPrimary): tState.sourceTexture }];
 }
 
+- (BOOL)rendererDisabled {
+    return NO;
+}
+
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!_enabled) {
