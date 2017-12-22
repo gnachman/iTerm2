@@ -16,11 +16,12 @@
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
-#import "MovingAverage.h"
 #import "iTermPreciseTimer.h"
 #import "iTermShaderTypes.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextureArray.h"
+#import "MovingAverage.h"
+#import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
 @implementation iTermMetalCursorInfo
@@ -491,13 +492,33 @@
                                                                                     emoji:emoji];
                                }];
         }
-        if (!_backgroundColorRenderer.rendererDisabled) {
+    }];
+    if (!_backgroundColorRenderer.rendererDisabled) {
+        BOOL (^comparator)(iTermMetalRowData *obj1, iTermMetalRowData *obj2) = ^BOOL(iTermMetalRowData *obj1, iTermMetalRowData *obj2) {
+            const NSUInteger count = obj1.numberOfBackgroundRLEs;
+            if (count != obj2.numberOfBackgroundRLEs) {
+                return NO;
+            }
+            const iTermMetalBackgroundColorRLE *array1 = (const iTermMetalBackgroundColorRLE *)obj1.backgroundColorRLEData.bytes;
+            const iTermMetalBackgroundColorRLE *array2 = (const iTermMetalBackgroundColorRLE *)obj2.backgroundColorRLEData.bytes;
+            for (int i = 0; i < count; i++) {
+                if (array1[i].color.x != array2[i].color.x ||
+                    array1[i].color.y != array2[i].color.y ||
+                    array1[i].color.z != array2[i].color.z ||
+                    array1[i].count != array2[i].count) {
+                    return NO;
+                }
+            }
+            return YES;
+        };
+        [frameData.rows enumerateCoalescedObjectsWithComparator:comparator block:^(iTermMetalRowData *rowData, NSUInteger count) {
             [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes
                                     count:rowData.numberOfBackgroundRLEs
-                                      row:rowData.y];
-        }
-    }];
-
+                                      row:rowData.y
+                            repeatingRows:count];
+        }];
+    }
+    
     // Tell the text state that it's done getting row data.
     if (!_textRenderer.rendererDisabled) {
         [textState willDraw];
