@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermMetalBufferPoolContext : NSObject
 - (NSString *)summaryStatisticsWithName:(NSString *)name;
 - (void)didAddTextureOfSize:(double)size;
+
+// Relinquished buffers will not automatically be returned to the pool after the frame is done.
+- (void)relinquishOwnershipOfBuffer:(id<MTLBuffer>)buffer;
 @end
 
 // Creating a new buffer can be very slow. Try to reuse them.
