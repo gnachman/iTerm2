@@ -17,6 +17,7 @@
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
 #import "iTermPreciseTimer.h"
+#import "iTermTextRendererTransientState.h"
 #import "iTermShaderTypes.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextureArray.h"

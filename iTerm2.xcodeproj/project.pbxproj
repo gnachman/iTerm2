@@ -1559,6 +1559,8 @@
 		A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */ = {isa = PBXBuildFile; fileRef = A66EF82B1EF59CFC0005891A /* iTermRateLimitedUpdate.m */; };
 		A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F3CEE1FEA3D9E00AA2021 /* iTermHistogram.h */; };
 		A66F3CF11FEA3D9E00AA2021 /* iTermHistogram.mm in Sources */ = {isa = PBXBuildFile; fileRef = A66F3CEF1FEA3D9E00AA2021 /* iTermHistogram.mm */; };
+		A66F3CF71FED741E00AA2021 /* iTermTextRendererTransientState.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */; };
+		A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */ = {isa = PBXBuildFile; fileRef = A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */; };
 		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
 		A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
 		A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
@@ -3525,6 +3527,10 @@
 		A66F3CF21FED6FB000AA2021 /* iTermTexturePage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePage.h; path = Metal/Renderers/iTermTexturePage.h; sourceTree = "<group>"; };
 		A66F3CF31FED709800AA2021 /* iTermGlyphEntry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermGlyphEntry.h; path = Metal/Renderers/iTermGlyphEntry.h; sourceTree = "<group>"; };
 		A66F3CF41FED713500AA2021 /* iTermTexturePageCollection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePageCollection.h; path = Metal/Renderers/iTermTexturePageCollection.h; sourceTree = "<group>"; };
+		A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextRendererTransientState.h; path = Metal/Renderers/iTermTextRendererTransientState.h; sourceTree = "<group>"; };
+		A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTextRendererTransientState.mm; path = Metal/Renderers/iTermTextRendererTransientState.mm; sourceTree = "<group>"; };
+		A66F3CF91FED75EA00AA2021 /* iTermTextRendererCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextRendererCommon.h; path = Metal/Renderers/iTermTextRendererCommon.h; sourceTree = "<group>"; };
+		A66F3CFA1FED770100AA2021 /* iTermTextRendererTransientState+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "iTermTextRendererTransientState+Private.h"; path = "Metal/Renderers/iTermTextRendererTransientState+Private.h"; sourceTree = "<group>"; };
 		A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyLabels.h; sourceTree = "<group>"; };
 		A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyLabels.m; sourceTree = "<group>"; };
 		A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testCustomUnderline.png"; sourceTree = "<group>"; };
@@ -5555,6 +5561,10 @@
 				A67960A01F81FC9C008A42BC /* iTermTextRenderer.h */,
 				A67960A11F81FC9C008A42BC /* iTermTextRenderer.mm */,
 				A66F3CF41FED713500AA2021 /* iTermTexturePageCollection.h */,
+				A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */,
+				A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */,
+				A66F3CF91FED75EA00AA2021 /* iTermTextRendererCommon.h */,
+				A66F3CFA1FED770100AA2021 /* iTermTextRendererTransientState+Private.h */,
 			);
 			name = Renderers;
 			sourceTree = "<group>";
@@ -7202,6 +7212,7 @@
 				A66719421DCE36C3000CE608 /* iTermTip.h in Headers */,
 				A66719431DCE36C3000CE608 /* iTermScriptingWindow.h in Headers */,
 				A60BB38E1EB6A08A00D76C09 /* iTermProcessCollection.h in Headers */,
+				A66F3CF71FED741E00AA2021 /* iTermTextRendererTransientState.h in Headers */,
 				A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */,
 				A66719441DCE36C3000CE608 /* iTermHotKeyProfileBindingController.h in Headers */,
 				A66719451DCE36C3000CE608 /* iTermSavePanel.h in Headers */,
@@ -8780,6 +8791,7 @@
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
+				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
