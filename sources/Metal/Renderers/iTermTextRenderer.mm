@@ -881,6 +881,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
     iTerm2::TexturePageCollection *_texturePageCollection;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
+    CGSize _cellSizeForQuadCache;
 
     iTermMetalBufferPool *_emptyBuffers;
     iTermMetalBufferPool *_verticesPool;
@@ -980,6 +981,11 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
 - (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    if (!CGSizeEqualToSize(configuration.cellSize, _cellSizeForQuadCache)) {
+        // All quads depend on cell size. No point keeping usesless entries in the cache.
+        [_quadCache removeAllObjects];
+        _cellSizeForQuadCache = configuration.cellSize;
+    }
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
     // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
     // blends using the output of the preceding passes.
@@ -1030,7 +1036,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     entry.textureSize = textureSize;
     NSInteger index = [_quadCache indexOfObject:entry];
     if (index != NSNotFound) {
-        return _quadCache[index].quad;
+        id<MTLBuffer> quad = _quadCache[index].quad;
+        return quad;
     }
 
     const float vw = static_cast<float>(size.width);
@@ -1052,6 +1059,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     entry.quad = [_verticesPool requestBufferFromContext:poolContext
                                                withBytes:vertices
                                           checkIfChanged:YES];
+    entry.quad.label = @"Text Quad";
+    // I cache quads myself, so I don't want them returned to the pool where they could change
+    // out from under my cache.
+    [poolContext relinquishOwnershipOfBuffer:entry.quad];
     [_quadCache addObject:entry];
     // It's useful to hold a quad for ascii and one for non-ascii.
     if (_quadCache.count > 2) {
@@ -1093,11 +1104,11 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
     [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize, iTermMetalUnderlineDescriptor underlineDescriptor) {
         totalInstances += instances;
-
+        __block id<MTLBuffer> vertexBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
-            tState.vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
-                                       textureSize:CGSizeMake(textureSize.x, textureSize.y)
-                                       poolContext:tState.poolContext];
+            vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
+                                textureSize:CGSizeMake(textureSize.x, textureSize.y)
+                                poolContext:tState.poolContext];
         }];
 
         __block id<MTLBuffer> piuBuffer;
@@ -1142,7 +1153,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                     renderEncoder:renderEncoder
                                  numberOfVertices:6
                                      numberOfPIUs:instances
-                                    vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                    vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
                                                      @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
                                                      @(iTermVertexInputIndexOffset): tState.offsetBuffer }
                                   fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
