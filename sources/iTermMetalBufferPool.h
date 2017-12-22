@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MTLBuffer;
 
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPoolContext : NSObject
 - (NSString *)summaryStatisticsWithName:(NSString *)name;
 - (void)didAddTextureOfSize:(double)size;
