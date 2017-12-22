@@ -25,6 +25,8 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
+#define ENABLE_PRIVATE_QUEUE 0
+
 @implementation iTermMetalCursorInfo
 @end
 
@@ -61,9 +63,9 @@
     int _columns;
     BOOL _sizeChanged;
     CGFloat _scale;
-
+#if ENABLE_PRIVATE_QUEUE
     dispatch_queue_t _queue;
-
+#endif
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
     int _dropped;
     int _total;
@@ -96,7 +98,9 @@
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
 
         _commandQueue = [mtkView.device newCommandQueue];
+#if ENABLE_PRIVATE_QUEUE
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
+#endif
         _currentFrames = [NSMutableArray array];
         _fpsMovingAverage = [[MovingAverage alloc] init];
         iTermMetalFrameDataStatsBundleInitialize(_stats);
@@ -111,7 +115,7 @@
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
-    dispatch_async(_queue, ^{
+    [self dispatchAsyncToPrivateQueue:^{
         if (scale == 0) {
             NSLog(@"Warning: scale is 0");
         }
@@ -121,18 +125,18 @@
         _rows = MAX(1, gridSize.height);
         _columns = MAX(1, gridSize.width);
         _scale = scale;
-    });
+    }];
 }
 
 #pragma mark - MTKViewDelegate
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size {
-    dispatch_async(_queue, ^{
+    [self dispatchAsyncToPrivateQueue: ^{
         // Save the size of the drawable as we'll pass these
         //   values to our vertex shader when we draw
         _viewportSize.x = size.width;
         _viewportSize.y = size.height;
-    });
+    }];
 }
 
 // Called whenever the view needs to render a frame
@@ -176,26 +180,20 @@
         return;
     }
 
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-        frameData.drawable = view.currentDrawable;
-        frameData.drawable.texture.label = @"Drawable";
-    }];
-
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-        frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
-    }];
-
+#if ENABLE_PRIVATE_QUEUE
+    [self acquireScarceResources:frameData view:view];
     if (frameData.drawable == nil || frameData.renderPassDescriptor == nil) {
         NSLog(@"  abort: failed to get drawable or RPD");
         self.needsDraw = YES;
         return;
     }
+#endif
 
     @synchronized(self) {
         [_currentFrames addObject:frameData];
     }
 
-    [frameData dispatchToPrivateQueue:_queue forPreparation:^{
+    void (^block)(void) = ^{
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
         if (_lastFrameTime) {
             [_fpsMovingAverage addValue:now - _lastFrameTime];
@@ -203,7 +201,12 @@
         _lastFrameTime = now;
 
         [self performPrivateQueueSetupForFrameData:frameData view:view];
-    }];
+    };
+#if ENABLE_PRIVATE_QUEUE
+    [frameData dispatchToPrivateQueue:_queue forPreparation:block];
+#else
+    block();
+#endif
 }
 
 #pragma mark - Drawing
@@ -252,6 +255,16 @@
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqPopulateTransientStates ofBlock:^{
         [self populateTransientStatesWithFrameData:frameData range:NSMakeRange(0, frameData.rows.count)];
     }];
+
+#if !ENABLE_PRIVATE_QUEUE
+    [self acquireScarceResources:frameData view:view];
+    if (frameData.drawable == nil || frameData.renderPassDescriptor == nil) {
+        ELog(@"  abort: failed to get drawable or RPD");
+        self.needsDraw = YES;
+        [self complete:frameData];
+        return;
+    }
+#endif
 
     // It's not clear to me if dispatching to the main queue is actually necessary, but I'm leaving
     // this here so it's easy to switch back to doing so. It adds a ton of latency.
@@ -662,18 +675,23 @@
         }];
 
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
-            [frameData dispatchToPrivateQueue:_queue forCompletion:^{
+            void (^block)(void) = ^{
                 if (!completed) {
                     completed = YES;
                     [self complete:frameData];
                     [self scheduleDrawIfNeededInView:frameData.view];
 
                     __weak __typeof(self) weakSelf = self;
-                    dispatch_async(dispatch_get_main_queue(), ^{
+                    [weakSelf dispatchAsyncToMainQueue:^{
                         [weakSelf.dataSource metalDriverDidDrawFrame];
-                    });
+                    }];
                 }
-            }];
+            };
+#if ENABLE_PRIVATE_QUEUE
+            [frameData dispatchToPrivateQueue:_queue forCompletion:block];
+#else
+            [frameData dispatchToPrivateQueue:dispatch_get_main_queue() forCompletion:block];
+#endif
         }];
 
         [commandBuffer commit];
@@ -785,9 +803,9 @@
             [_currentFrames removeObject:frameData];
         }
     }
-    dispatch_async(dispatch_get_main_queue(), ^{
+    [self dispatchAsyncToPrivateQueue:^{
         [self scheduleDrawIfNeededInView:frameData.view];
-    });
+    }];
 }
 
 #pragma mark - Updating
@@ -897,14 +915,47 @@
 
 - (void)scheduleDrawIfNeededInView:(MTKView *)view {
     if (self.needsDraw) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        void (^block)(void) = ^{
             if (self.needsDraw) {
                 self.needsDraw = NO;
                 [view setNeedsDisplay:YES];
             }
-        });
+        };
+#if ENABLE_PRIVATE_QUEUE
+        dispatch_async(dispatch_get_main_queue(), block);
+#else
+        block();
+#endif
     }
 }
 
+- (void)dispatchAsyncToPrivateQueue:(void (^)(void))block {
+#if ENABLE_PRIVATE_QUEUE
+    dispatch_async(_queue, block);
+#else
+    block();
+#endif
+}
+
+- (void)dispatchAsyncToMainQueue:(void (^)(void))block {
+#if ENABLE_PRIVATE_QUEUE
+    dispatch_async(dispatch_get_main_queue(), block);
+#else
+    block();
+#endif
+}
+
+- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+        frameData.drawable = view.currentDrawable;
+        frameData.drawable.texture.label = @"Drawable";
+    }];
+
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
+        frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+    }];
+}
+
 @end
+
 
