@@ -4,6 +4,7 @@
 #import "iTermCursor.h"
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRenderer.h"
+#import "iTermTextRendererTransientState.h"
 
 @import MetalKit;
 
