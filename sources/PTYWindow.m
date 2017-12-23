@@ -34,6 +34,7 @@
 #import "objc/runtime.h"
 
 NSString *const kTerminalWindowStateRestorationWindowArrangementKey = @"ptyarrangement";
+const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 
 @interface NSView (PrivateTitleBarMethods)
 - (NSView *)titlebarContainerView;

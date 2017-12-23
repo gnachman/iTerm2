@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Cached value of the percentage of this window that is occluded by other nonpanel windows in this app.
     double _cachedTotalOcclusion;
+
+    NSTimeInterval _timeOfLastWindowTitleChange;
 }
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
@@ -51,6 +53,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [restoreState_ release];
     [super dealloc];
 
+}
+
+- (BOOL)titleChangedRecently {
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    return (now > _timeOfLastWindowTitleChange && now - _timeOfLastWindowTitleChange < iTermWindowTitleChangeMinimumInterval);
+}
+
+- (void)setTitle:(NSString *)title {
+    [super setTitle:title];
+    _timeOfLastWindowTitleChange = [NSDate timeIntervalSinceReferenceDate];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {

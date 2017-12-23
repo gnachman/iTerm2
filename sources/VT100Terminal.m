@@ -1701,11 +1701,11 @@ static const int kMaxScreenRows = 4096;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [delegate_ terminalSetWindowTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
+            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharsWithQuestionMark]]];
             break;
         case XTERMCC_WINICON_TITLE:
-            [delegate_ terminalSetWindowTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
-            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
+            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharsWithQuestionMark]]];
+            [delegate_ terminalSetIconTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharsWithQuestionMark]]];
             break;
         case XTERMCC_PASTE64: {
             if (token.string) {
@@ -2725,6 +2725,21 @@ static const int kMaxScreenRows = 4096;
     [_unicodeVersionStack removeAllObjects];
     if (dict[kTerminalStateUnicodeVersionStack]) {
         [_unicodeVersionStack addObjectsFromArray:dict[kTerminalStateUnicodeVersionStack]];
+    }
+}
+
+- (NSString *)sanitizedTitle:(NSString *)unsafeTitle {
+    // Very long titles are slow to draw in the tabs. Limit their length and
+    // cut off anything after newline since it wouldn't be visible anyway.
+    NSCharacterSet *newlinesCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
+    NSRange newlineRange = [unsafeTitle rangeOfCharacterFromSet:newlinesCharacterSet];
+    
+    if (newlineRange.location != NSNotFound) {
+        return [unsafeTitle substringToIndex:newlineRange.location];
+    } else if (unsafeTitle.length > 256) {
+        return [unsafeTitle substringToIndex:256];
+    } else {
+        return unsafeTitle;
     }
 }
 
