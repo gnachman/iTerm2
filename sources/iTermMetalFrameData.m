@@ -150,7 +150,7 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
 
-#define ENABLE_PER_FRAME_METAL_STATS 1
+#define ENABLE_PER_FRAME_METAL_STATS 0
 #if ENABLE_PER_FRAME_METAL_STATS
     NSLog(@"Stats for %@", self);
     iTermPreciseTimerLogOneEvent(_stats, iTermMetalFrameDataStatCount, YES);

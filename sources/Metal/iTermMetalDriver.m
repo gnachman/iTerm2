@@ -25,7 +25,7 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
-#define ENABLE_PRIVATE_QUEUE 0
+#define ENABLE_PRIVATE_QUEUE 1
 
 @implementation iTermMetalCursorInfo
 @end
