@@ -189,7 +189,7 @@ DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, YES, @"Semantic History: Use a 
 
 #pragma mark - Debugging
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");
-DEFINE_BOOL(logDrawingPerformance, NO, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
+DEFINE_BOOL(logDrawingPerformance, YES, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
 DEFINE_BOOL(logRestorableStateSize, NO, @"Debugging: Log restorable state size info to /tmp/statesize.*.txt.");
 
 #pragma mark - Session

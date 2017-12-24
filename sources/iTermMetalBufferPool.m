@@ -39,9 +39,6 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 
 @implementation iTermMetalBufferPoolContext {
     NSMutableArray<iTermMetalBufferPoolContextEntry *> *_entries;
-    iTermHistogram *_histogram;
-    iTermHistogram *_textureHistogram;
-    iTermHistogram *_wasteHistogram;
 }
 
 - (instancetype)init {

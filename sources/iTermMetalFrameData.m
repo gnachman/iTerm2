@@ -9,9 +9,12 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermHistogram.h"
 #import "iTermMetalRenderer.h"
 
 #import <MetalKit/MetalKit.h>
+
+static NSMutableDictionary *sHistograms;
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
     iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
@@ -166,6 +169,15 @@ static NSInteger gNextFrameDataNumber;
         NSLog(@"%@", [tState.poolContext summaryStatisticsWithName:NSStringFromClass([tState class])]);
     }];
 #endif
+    [self mergeHistogram:_framePoolContext.histogram name:@"Global buffer sizes"];
+    [self mergeHistogram:_framePoolContext.textureHistogram name:@"Global texture sizes"];
+    [self mergeHistogram:_framePoolContext.wasteHistogram name:@"Global wasted space"];
+    [self.transientStates enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, __kindof iTermMetalRendererTransientState * _Nonnull tState, BOOL * _Nonnull stop) {
+        [self mergeHistogram:tState.poolContext.histogram name:[NSString stringWithFormat:@"%@: buffer sizes", NSStringFromClass(tState.class)]];
+        [self mergeHistogram:tState.poolContext.textureHistogram name:[NSString stringWithFormat:@"%@: texture sizes", NSStringFromClass(tState.class)]];
+        [self mergeHistogram:tState.poolContext.wasteHistogram name:[NSString stringWithFormat:@"%@: wasted space", NSStringFromClass(tState.class)]];
+    }];
+    iTermPreciseTimerSaveLog(@"Histograms", [self histogramsString]);
 
     [self addStatsTo:aggregateStats];
 
@@ -173,7 +185,29 @@ static NSInteger gNextFrameDataNumber;
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
         temp[i] = aggregateStats[i];
     }
-    iTermPreciseTimerPeriodicLog(temp, iTermMetalFrameDataStatCount, 1, YES);
+    iTermPreciseTimerPeriodicLog(@"Metal Frame Data", temp, iTermMetalFrameDataStatCount, 1, YES);
+}
+
+- (void)mergeHistogram:(iTermHistogram *)histogramToMerge name:(NSString *)name {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sHistograms = [[NSMutableDictionary alloc] init];
+    });
+    iTermHistogram *hist = sHistograms[name];
+    if (!hist) {
+        hist = [[iTermHistogram alloc] init];
+        sHistograms[name] = hist;
+    }
+    [hist mergeFrom:histogramToMerge];
+}
+
+- (NSString *)histogramsString {
+    NSMutableString *result = [NSMutableString string];
+    [[sHistograms.allKeys sortedArrayUsingSelector:@selector(compare:)] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
+        iTermHistogram *histogram = sHistograms[name];
+        [result appendFormat:@"%@:\n%@\n\n", name, [histogram stringValue]];
+    }];
+    return result;
 }
 
 - (void)addStatsTo:(iTermPreciseTimerStats *)dest {
