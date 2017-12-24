@@ -17,6 +17,10 @@ prod: Deployment
 debug: Development
 	/Developer/usr/bin/gdb build/Development/Therm.app/Contents/MacOS/Therm
 
+dist: prod
+	cd build/Deployment/ && zip -r Therm.app.zip Therm.app
+	mv build/Deployment/Therm.app.zip .
+
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
 
