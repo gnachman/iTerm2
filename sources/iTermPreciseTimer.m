@@ -289,4 +289,10 @@ NSString *iTermPreciseTimerGetSavedLogs(void) {
     }
 }
 
+void iTermPreciseTimerClearLogs(void) {
+    @synchronized([iTermPreciseTimersLock class]) {
+        [sLogs removeAllObjects];
+    }
+}
+
 #endif

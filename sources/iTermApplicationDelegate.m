@@ -911,6 +911,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     
     [self hideStuckToolTips];
+    iTermPreciseTimerClearLogs();
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {

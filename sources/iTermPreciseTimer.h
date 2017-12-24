@@ -63,6 +63,7 @@ void iTermPreciseTimerLog(NSString *identifier,
                           BOOL logToConsole);
 NSString *iTermPreciseTimerGetSavedLogs(void);
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log);
+void iTermPreciseTimerClearLogs(void);
 
 #else
 
@@ -100,5 +101,6 @@ void iTermPreciseTimerLogOneEvent(NSString *identifier,
                                   BOOL logToConsole) { }
 NSString *iTermPreciseTimerGetSavedLogs(void) { }
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) { }
+void iTermPreciseTimerClearLogs(void);
 
 #endif
