@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13196" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13529" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13196"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13529"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -44,6 +44,11 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="debugLogging:" target="-1" id="951"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Copy Performance Stats" identifier="Check for Incompatible Software" id="cYu-lQ-5GD">
+                                <connections>
+                                    <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="199">

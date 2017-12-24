@@ -9,10 +9,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermHistogram;
 @protocol MTLBuffer;
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPoolContext : NSObject
+@property (nonatomic, readonly) iTermHistogram *histogram;
+@property (nonatomic, readonly) iTermHistogram *textureHistogram;
+@property (nonatomic, readonly) iTermHistogram *wasteHistogram;
+
 - (NSString *)summaryStatisticsWithName:(NSString *)name;
 - (void)didAddTextureOfSize:(double)size;
 

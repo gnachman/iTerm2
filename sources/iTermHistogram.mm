@@ -38,17 +38,34 @@ static const NSInteger iTermHistogramStringWidth = 20;
     _count++;
 }
 
+- (void)mergeFrom:(iTermHistogram *)other {
+    if (other == nil) {
+        return;
+    }
+    for (auto pair : other->_buckets) {
+        _buckets[pair.first] += pair.second;
+        _maxCount = std::max(_maxCount, _buckets[pair.first]);
+    }
+    _sum += other->_sum;
+    _min = MIN(_min, other->_min);
+    _max = MAX(_max, other->_max);
+    _count += other->_count;
+}
+
 - (NSString *)stringValue {
+    if (_count == 0) {
+        return @"No events";
+    }
     NSMutableString *string = [NSMutableString string];
     if (_buckets.size() > 0) {
         const int min = _buckets.begin()->first;
         const int max = _buckets.rbegin()->first;
         for (int bucket = min; bucket <= max; bucket++) {
             [string appendString:[self stringForBucket:bucket]];
+            [string appendString:@"\n"];
         }
     }
-    [string appendString:@"\n"];
-    [string appendFormat:@"Count=%@ Sum=%@ Mean=%@", @(_count), @(_sum), @(_sum / _count)];
+    [string appendFormat:@"Count=%@ Sum=%@ Mean=%0.3f", @(_count), @(_sum), (double)_sum / (double)_count];
     return string;
 }
 
@@ -74,10 +91,10 @@ static const NSInteger iTermHistogramStringWidth = 20;
     for (int i = 0; i < n; i++) {
         [stars appendString:@"*"];
     }
-    return [NSString stringWithFormat:@"[%12@…%12@) %8@ |%@",
-            @(pow(2, bucket - 1)),
-            @(pow(2, bucket)),
-            @(_buckets[bucket]),
+    return [NSString stringWithFormat:@"[%12.0f, %12.0f) %8d |%@",
+            pow(2, bucket) - 1,
+            pow(2, bucket + 1) - 1,
+            _buckets[bucket],
             stars];
 }
 

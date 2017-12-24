@@ -17,6 +17,13 @@
 
 #if ENABLE_PRECISE_TIMERS
 static BOOL gPreciseTimersEnabled;
+static NSMutableDictionary *sLogs;
+
+@interface iTermPreciseTimersLock : NSObject
+@end
+
+@implementation iTermPreciseTimersLock
+@end
 
 void iTermPreciseTimerSetEnabled(BOOL enabled) {
     gPreciseTimersEnabled = enabled;
@@ -170,7 +177,8 @@ NSTimeInterval iTermPreciseTimerStatsGetStddev(iTermPreciseTimerStats *stats) {
     }
 }
 
-void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
+void iTermPreciseTimerPeriodicLog(NSString *identifier,
+                                  iTermPreciseTimerStats stats[],
                                   size_t count,
                                   NSTimeInterval interval,
                                   BOOL logToConsole) {
@@ -183,12 +191,13 @@ void iTermPreciseTimerPeriodicLog(iTermPreciseTimerStats stats[],
     }
 
     if (iTermPreciseTimerMeasure(&gLastLog) >= interval) {
-        iTermPreciseTimerLog(stats, count, logToConsole);
+        iTermPreciseTimerLog(identifier, stats, count, logToConsole);
         iTermPreciseTimerStart(&gLastLog);
     }
 }
 
-void iTermPreciseTimerLog(iTermPreciseTimerStats stats[],
+void iTermPreciseTimerLog(NSString *identifier,
+                          iTermPreciseTimerStats stats[],
                           size_t count,
                           BOOL logToConsole) {
     NSMutableString *log = [[@"-- Precise Timers --\n" mutableCopy] autorelease];
@@ -209,10 +218,12 @@ void iTermPreciseTimerLog(iTermPreciseTimerStats stats[],
     if (logToConsole) {
         NSLog(@"%@", log);
     }
+    iTermPreciseTimerSaveLog(identifier, log);
     DLog(@"%@", log);
 }
 
-void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
+void iTermPreciseTimerLogOneEvent(NSString *identifier,
+                                  iTermPreciseTimerStats stats[],
                                   size_t count,
                                   BOOL logToConsole) {
     NSMutableString *log = [[@"-- Precise Timers (One Event) --\n" mutableCopy] autorelease];
@@ -254,7 +265,28 @@ void iTermPreciseTimerLogOneEvent(iTermPreciseTimerStats stats[],
     if (logToConsole) {
         NSLog(@"%@", log);
     }
+    iTermPreciseTimerSaveLog(identifier, log);
+
     DLog(@"%@", log);
+}
+
+void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) {
+    @synchronized([iTermPreciseTimersLock class]) {
+        if (!sLogs) {
+            sLogs = [[NSMutableDictionary alloc] init];
+        }
+        sLogs[identifier] = log;
+    }
+}
+
+NSString *iTermPreciseTimerGetSavedLogs(void) {
+    @synchronized([iTermPreciseTimersLock class]) {
+        NSMutableString *result = [NSMutableString string];
+        [sLogs enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            [result appendFormat:@"Precise timers %@:\n%@", key, obj];
+        }];
+         return result;
+    }
 }
 
 #endif
