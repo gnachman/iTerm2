@@ -246,7 +246,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         --width;
     }
 // Adjust tabbar width to cover the [+] "button"
-width += 24;
+// width += 24;
     return width;
 }
 
@@ -258,7 +258,7 @@ width += 24;
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
 
-    BOOL showToolbeltInline = self.shouldShowToolbelt;
+    BOOL showToolbeltInline = NO; // self.shouldShowToolbelt;
     BOOL hasScrollbar = self.scrollbarShouldBeVisible;
     NSWindow *thisWindow = _delegate.window;
     [thisWindow setShowsResizeIndicator:hasScrollbar];
@@ -308,7 +308,6 @@ width += 24;
                 if (_delegate.divisionViewShouldBeVisible) {
                     heightAdjustment += kDivisionViewHeight;
                 }
-
 		if (minitabs) {
 			heightAdjustment -= 18;
 		}
@@ -363,7 +362,7 @@ width += 24;
                 if (!self.tabBarControl.flashing) {
                     y += kHorizontalTabBarHeight;
                 }
-		y-=tabsdelta;
+		y -= tabsdelta;
 		heightAdjustment -= tabsdelta;
                 NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
                                                  y,
