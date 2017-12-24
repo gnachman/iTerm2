@@ -25,12 +25,12 @@ NSString *const PSMTabDragDidBeginNotification = @"PSMTabDragDidBeginNotificatio
 const CGFloat kPSMTabBarControlHeight = 24;
 const CGFloat kSPMTabBarCellInternalXMargin = 6;
 
-const CGFloat kPSMTabBarCellPadding = 4;
+const CGFloat kPSMTabBarCellPadding = 0;
 const CGFloat kPSMTabBarCellIconPadding = 0;
 // fixed size objects
 const CGFloat kPSMMinimumTitleWidth = 30;
-const CGFloat kPSMTabBarIndicatorWidth = 16.0;
-const CGFloat kPSMTabBarIconWidth = 16.0;
+const CGFloat kPSMTabBarIndicatorWidth = 0.0;
+const CGFloat kPSMTabBarIconWidth = 0.0;
 const CGFloat kPSMHideAnimationSteps = 2.0;
 
 // Value used in _currentStep to indicate that resizing operation is not in progress
@@ -678,7 +678,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     if (_currentStep == kPSMHideAnimationSteps + 1) {
         _currentStep = kPSMIsNotBeingResized;
         [self viewDidEndLiveResize];
-        _hideIndicators = NO;
+        _hideIndicators = YES;
         [self update];
 
         // send the delegate messages
@@ -1074,7 +1074,7 @@ return;
             [cell setEnabled:YES];
 
             //add the tooltip tracking rect
-            [self addToolTipRect:cellRect owner:self userData:nil];
+            // [self addToolTipRect:cellRect owner:self userData:nil];
 
             // selected? set tab states...
             if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
@@ -1106,6 +1106,7 @@ return;
             [cell setIsInOverflowMenu:NO];
 
             // indicator
+/*
             if (![[cell indicator] isHidden] && !_hideIndicators) {
                 [[cell indicator] setFrame:[cell indicatorRectForFrame:cellRect]];
                 if (![[self subviews] containsObject:[cell indicator]]) {
@@ -1114,9 +1115,9 @@ return;
                 }
             }
 
+*/
             // next...
             cellRect.origin.x += [[newValues objectAtIndex:i] floatValue];
-
         } else {
             // set up menu items
             NSMenuItem *menuItem;
@@ -1133,9 +1134,11 @@ return;
                 [menuItem setState:NSOnState];
             }
 
+/*
             if ([cell hasIcon]) {
                 [menuItem setImage:[(id)[[cell representedObject] identifier] icon]];
             }
+*/
 
             if ([cell count] > 0) {
                 [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%d)", [cell count]]];

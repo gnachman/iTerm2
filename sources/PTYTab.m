@@ -4609,7 +4609,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setLabelAttributesForActiveTab:(BOOL)notify {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-    [self setIsProcessing:[self anySessionIsProcessing] && ![self isForegroundTab]];
+    // [self setIsProcessing:[self anySessionIsProcessing] && ![self isForegroundTab]];
 
     if (![[self activeSession] havePostedNewOutputNotification] &&
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
