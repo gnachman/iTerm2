@@ -828,8 +828,11 @@ static int MyForkPty(int *amaster,
     [self.delegate threadedTaskBrokenPipe];
 }
 
-- (void)sendSignal:(int)signo {
-    if (_serverChildPid != -1) {
+- (void)sendSignal:(int)signo toServer:(BOOL)toServer {
+    if (toServer && _serverPid != -1) {
+        DLog(@"Sending signal to server %@", @(_serverPid));
+        kill(_serverPid, signo);
+    } else if (_serverChildPid != -1) {
         kill(_serverChildPid, signo);
      } else if (_childPid >= 0) {
          kill(_childPid, signo);
@@ -931,7 +934,7 @@ static int MyForkPty(int *amaster,
 - (void)stop {
     self.paused = NO;
     [self stopLogging];
-    [self sendSignal:SIGHUP];
+    [self sendSignal:SIGHUP toServer:NO];
     [self killServerIfRunning];
 
     if (fd >= 0) {

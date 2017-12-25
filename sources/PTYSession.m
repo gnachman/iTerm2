@@ -1794,7 +1794,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self replaceTerminatedShellWithNewInstance];
     } else {
         _shouldRestart = YES;
-        [_shell sendSignal:SIGKILL];
+        [_shell sendSignal:SIGKILL toServer:NO];
     }
 }
 

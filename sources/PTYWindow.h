@@ -35,6 +35,9 @@
 // The key used for a window's arrangement in encoding restorable state.
 extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 
+// Rate limit title changes since they force a redraw.
+extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
+
 // Extra methods for delegates of terminal windows to implement.
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
 - (BOOL)lionFullScreen;
@@ -57,6 +60,7 @@ extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 // A unique identifier that does not get recycled during the program's lifetime.
 @property(nonatomic, readonly) NSString *windowIdentifier;
 @property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
+@property(nonatomic, readonly) BOOL titleChangedRecently;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

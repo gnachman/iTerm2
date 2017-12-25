@@ -1370,7 +1370,10 @@ static iTermController *gSharedInstance;
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     for (iTermRestorableSession *restorableSession in _restorableSessions) {
         for (PTYSession *aSession in restorableSession.sessions) {
-            [aSession.shell sendSignal:SIGHUP];
+            if (aSession.shell.serverPid != -1) {
+                [aSession.shell sendSignal:SIGKILL toServer:YES];
+            }
+            [aSession.shell sendSignal:SIGHUP toServer:YES];
         }
     }
 }

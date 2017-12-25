@@ -30,7 +30,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 @property(nonatomic, retain) SolidColorView *divisionView;
 @property(nonatomic, retain) iTermToolbeltView *toolbelt;
 @property(nonatomic, retain) iTermDragHandleView *leftTabBarDragHandle;
-@property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;
 
 @end
 
@@ -293,6 +292,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
         [self.tabView setFrame:tabViewFrame];
         [self updateDivisionView];
+
+        // Even though it's not visible it needs an accurate number so we can compute the proper
+        // window size when it appears.
+        [self setLeftTabBarWidthFromPreferredWidth];
     } else {
         // The tabBar control is visible.
         DLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
@@ -451,14 +454,31 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"repositionWidgets - return.");
 }
 
-- (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth {
+- (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
     const CGFloat minimumWidth = 50;
-    const CGFloat maximumWidth = self.bounds.size.width / 3;
-    return  MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
+    const CGFloat maximumWidth = contentWidth / 3;
+    return MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
+}
+
+- (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth {
+    return [self leftTabBarWidthForPreferredWidth:preferredWidth contentWidth:self.bounds.size.width];
 }
 
 - (void)setLeftTabBarWidthFromPreferredWidth {
     _leftTabBarWidth = [self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth];
+}
+
+- (void)willShowTabBar {
+    const CGFloat minimumWidth = 50;
+    // Given that the New window width (N) = Tab bar width (T) + Content Size (C)
+    // Given that T < N/3 (by leftTabBarWidthForPreferredWidth):
+    // T <= N / 3
+    // T <= 1/3(T+C)
+    // T <= T/3 + C/3
+    // 2/3T <= C/3
+    // T <= C/2
+    const CGFloat maximumWidth = self.bounds.size.width / 2;
+    _leftTabBarWidth = MAX(MIN(maximumWidth, _leftTabBarPreferredWidth), minimumWidth);
 }
 
 #pragma mark - iTermTabBarControlViewDelegate
