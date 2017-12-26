@@ -68,7 +68,6 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 @implementation iTermMetalRenderer {
     BOOL _blending;
     NSString *_vertexFunctionName;
-    iTermMetalBufferPool *_verticesPool;
     NSMutableDictionary<NSDictionary *, id<MTLRenderPipelineState>> *_pipelineStates;
 }
 

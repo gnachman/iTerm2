@@ -30,8 +30,9 @@ iTermBackgroundImageVertexShader(uint vertexID [[ vertex_id ]],
 fragment float4
 iTermBackgroundImageFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
                                    texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
+    constexpr sampler textureSampler(mag_filter::linear,
+                                     min_filter::linear,
+                                     address::repeat);
 
     const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     return float4(colorSample);

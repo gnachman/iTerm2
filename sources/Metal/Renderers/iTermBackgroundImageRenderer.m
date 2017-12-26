@@ -148,9 +148,34 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
     tState.tiled = _tiled;
-    tState.vertexBuffer = [_metalRenderer newQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
-                                                                   tState.configuration.viewportSize.y)
-                                            poolContext:tState.poolContext];
+
+//    NSImageRep *rep = _image.representations.firstObject;
+//    const CGSize nativeTextureSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
+    const CGSize nativeTextureSize = NSMakeSize(_image.size.width * tState.configuration.scale,
+                                                _image.size.height * tState.configuration.scale);
+    const CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
+                                   tState.configuration.viewportSize.y);
+    CGSize textureSize;
+    if (_tiled) {
+        textureSize = CGSizeMake(size.width / nativeTextureSize.width,
+                                 size.height / nativeTextureSize.height);
+    } else {
+        textureSize = CGSizeMake(1, 1);
+    }
+    const iTermVertex vertices[] = {
+        // Pixel Positions             Texture Coordinates
+        { { size.width,           0 }, { textureSize.width,                  0 } },
+        { {          0,           0 }, {                 0,                  0 } },
+        { {          0, size.height }, {                 0, textureSize.height } },
+
+        { { size.width,           0 }, { textureSize.width,                  0 } },
+        { {          0, size.height }, {                 0, textureSize.height } },
+        { { size.width, size.height }, { textureSize.width, textureSize.height } },
+    };
+    tState.vertexBuffer = [_metalRenderer.verticesPool requestBufferFromContext:tState.poolContext
+                                                                      withBytes:vertices
+                                                                 checkIfChanged:YES];
+
     tState.texture = _texture;
 
     if (!tState.skipRenderer) {
