@@ -72,10 +72,6 @@ namespace iTerm2 {
             return _cellSize;
         }
 
-        void set_maximum_size(int maximumSize) {
-            _maximumSize = maximumSize;
-        }
-
         // Discard least-recently used texture pages.
         void prune_if_needed() {
             if (is_over_maximum_size()) {
@@ -171,7 +167,7 @@ namespace iTerm2 {
         id<MTLDevice> _device;
         const vector_uint2 _cellSize;
         const int _pageCapacity;
-        int _maximumSize;
+        const int _maximumSize;
         std::unordered_map<GlyphKey, std::vector<const GlyphEntry *> *> _pages;
         std::set<TexturePage *> _allPages;
         TexturePage *_openPage;
