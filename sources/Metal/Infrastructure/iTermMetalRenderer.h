@@ -67,6 +67,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) Class transientStateClass;
 @property (nonatomic, copy) NSString *fragmentFunctionName;
 
+// Pool of vertex buffers for quads of iTermVertex.
+@property (nonatomic, readonly) iTermMetalBufferPool *verticesPool;
+
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device;
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
