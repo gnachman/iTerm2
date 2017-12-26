@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Call this before creating transient state.
 - (void)setImage:(NSImage *)image
-        blending:(CGFloat)blending
            tiled:(BOOL)tiled
          context:(nullable iTermMetalBufferPoolContext *)context;
 

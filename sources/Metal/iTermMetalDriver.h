@@ -49,7 +49,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                                                        emoji:(BOOL *)emoji;
 
 // Returns the background image or nil. If there's a background image, fill in blending and tiled.
-- (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled;
+- (NSImage *)metalBackgroundImageGetTiled:(nullable BOOL *)tiled;
 
 // An object that compares as equal if ascii characters produced by metalImagesForGlyph would
 // produce the same bitmap.

@@ -46,8 +46,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
-#warning TODO: Add support for blending and tiled modes
-@property (nonatomic) CGFloat blending;
 @property (nonatomic) BOOL tiled;
 @property (nonatomic) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 @end
@@ -63,7 +61,6 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermBackgroundImageRenderer {
     iTermMetalRenderer *_metalRenderer;
 
-    CGFloat _blending;
     BOOL _tiled;
     NSImage *_image;
     iTermTexturePool *_texturePool;
@@ -91,12 +88,11 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateBackgroundImageTS;
 }
 
-- (void)setImage:(NSImage *)image blending:(CGFloat)blending tiled:(BOOL)tiled context:(nullable iTermMetalBufferPoolContext *)context {
+- (void)setImage:(NSImage *)image tiled:(BOOL)tiled context:(nullable iTermMetalBufferPoolContext *)context {
     if (image != _image) {
         _texture = image ? [_metalRenderer textureFromImage:image context:context] : nil;
     }
     _image = image;
-    _blending = blending;
     _tiled = tiled;
 }
 
@@ -151,7 +147,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
-    tState.blending = _blending;
     tState.tiled = _tiled;
     tState.vertexBuffer = [_metalRenderer newQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
                                                                    tState.configuration.viewportSize.y)
