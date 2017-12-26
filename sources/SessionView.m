@@ -229,8 +229,9 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11) {
-#warning TODO: Would be nice to only draw the part that needs to be drawn.
     if (_useMetal) {
+        // TODO: Would be nice to draw only the rect, but I don't see a way to do that with MTKView
+        // that doesn't involve doing something nutty like saving a copy of the drawable.
         [_metalView setNeedsDisplay:YES];
     }
 }
