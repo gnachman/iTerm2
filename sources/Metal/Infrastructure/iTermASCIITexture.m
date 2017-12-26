@@ -10,7 +10,7 @@
 
 #import "DebugLogging.h"
 
-const unsigned char iTermASCIITextureMinimumCharacter = 33; // !
+const unsigned char iTermASCIITextureMinimumCharacter = 32; // space
 const unsigned char iTermASCIITextureMaximumCharacter = 126; // ~
 
 static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount * (iTermASCIITextureMaximumCharacter - iTermASCIITextureMinimumCharacter + 1);

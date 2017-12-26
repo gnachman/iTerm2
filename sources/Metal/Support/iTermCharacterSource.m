@@ -88,7 +88,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
     ITDebugAssert(size.width > 0 && size.height > 0);
     ITDebugAssert(scale > 0);
 
-    if (string.length == 0 || [string isEqualToString:@" "]) {
+    if (string.length == 0) {
         return nil;
     }
 
