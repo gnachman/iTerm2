@@ -79,7 +79,6 @@ namespace iTerm2 {
         // Discard least-recently used texture pages.
         void prune_if_needed() {
             if (is_over_maximum_size()) {
-#warning Test this code path
                 ELog(@"Pruning. Have %@/%@ glyphs", @(_pageCapacity * _allPages.size()), @(_maximumSize));
 
                 // Create a copy of texture pages sorted by recency of use (from least recent to most).
