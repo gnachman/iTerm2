@@ -13,7 +13,10 @@ namespace iTerm2 {
     template<class T>
     class PIUArray {
     public:
-        PIUArray() : _capacity(1024), _size(0) {
+        // Maximum number of PIUs in one segment.
+        const static size_t DEFAULT_CAPACITY = 1024;
+
+        PIUArray() : _capacity(DEFAULT_CAPACITY), _size(0) {
             _arrays.resize(1);
             _arrays.back().reserve(_capacity);
         }

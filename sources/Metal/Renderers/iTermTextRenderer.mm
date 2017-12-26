@@ -12,6 +12,7 @@ extern "C" {
 #import "iTermCharacterParts.h"
 #import "iTermGlyphEntry.h"
 #import "iTermMetalBufferPool.h"
+#import "iTermPIUArray.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTextRendererTransientState+Private.h"
@@ -29,6 +30,10 @@ extern "C" {
 
 static const NSInteger iTermTextAtlasCapacity = 16;
 
+// This seems like a good number 🤷. It lets you draw this many * iTermTextAtlasCapacity distinct
+// non-ascii characters at one time without having to constantly prune and redraw glyphs. That's
+// 64k chars under the current values of 16 and 4096.
+static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
 @interface iTermTextRendererCachedQuad : NSObject
 @property (nonatomic, strong) id<MTLBuffer> quad;
@@ -128,17 +133,16 @@ static const NSInteger iTermTextAtlasCapacity = 16;
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
 
-        // The capacity here is a guess, and it's possible that it's nowhere near enough, but there's
-        // significant risk of it using a crazy amount of memory. The largest array could be the
-        // number of draws, although that's unlikely. That would happen if you had a character that
-        // overflowed its bounds by the maximum amount that repeated on every cell. Then you'd have
-        // one big buffer of size iTermTextureMapMaxCharacterParts^2 * number of cells, which could
-        // be on the order of 2 million entries times O(100 bytes) for a PIU = 200 megabytes per. Of
-        // course, you'd never have more than max-frames-in-flight of those allocated at once. Given
-        // 3 frames in flight, we might use 600 megabytes in the worst case.
-        //
-#warning: TODO: Prevent runaway PIU buffer sizes. Cut them off at something reasonable like 10 megs.
-        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device capacity:512 name:@"text PIU"];
+        // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
+        // of buffers we are OK with keeping permanently allocated. By having enough characters on
+        // screen you could easily go over this, which will cost a major performance penalty because
+        // vertex buffers are slow to create.
+        const NSInteger memoryBudget = 1024 * 1024 * 100;
+        const NSInteger maxInstances = memoryBudget / sizeof(iTermTextPIU);
+        const size_t capacity = iTerm2::PIUArray<iTermTextPIU>::DEFAULT_CAPACITY;
+        _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
+                                                                capacity:maxInstances / capacity
+                                                                    name:@"text PIU"];
 
         _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                           capacity:512
@@ -186,16 +190,12 @@ static const NSInteger iTermTextAtlasCapacity = 16;
             _texturePageCollection = NULL;
         }
     }
-    // This seems like a good number 🤷‍♂️
-    const int maximumSize = 4096;
     if (!_texturePageCollection) {
         _texturePageCollection = new iTerm2::TexturePageCollection(_cellRenderer.device,
                                                                    simd_make_uint2(tState.cellConfiguration.cellSize.width,
                                                                                    tState.cellConfiguration.cellSize.height),
                                                                    iTermTextAtlasCapacity,
-                                                                   maximumSize);
-    } else {
-        _texturePageCollection->set_maximum_size(maximumSize);
+                                                                   iTermTextRendererMaximumNumberOfTexturePages);
     }
 
     tState.device = _cellRenderer.device;
