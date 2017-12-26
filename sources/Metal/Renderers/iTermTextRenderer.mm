@@ -186,7 +186,7 @@ static const NSInteger iTermTextAtlasCapacity = 16;
             _texturePageCollection = NULL;
         }
     }
-    // This seems like a good number 🤷‍♂️e
+    // This seems like a good number 🤷‍♂️
     const int maximumSize = 4096;
     if (!_texturePageCollection) {
         _texturePageCollection = new iTerm2::TexturePageCollection(_cellRenderer.device,

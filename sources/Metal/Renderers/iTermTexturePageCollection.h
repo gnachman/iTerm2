@@ -139,11 +139,19 @@ namespace iTerm2 {
             for (auto pair : owners) {
                 auto owner = pair.first;  // TexturePageOwner *
                 auto count = pair.second;  // int
+                ITOwnershipLog(@"OWNERSHIP: remove all %d references by owner %p", count, owner);
                 for (int j = 0; j < count; j++) {
                     if (owner->texture_page_owner_is_glyph_entry()) {
                         GlyphEntry *glyph_entry = static_cast<GlyphEntry *>(owner);
                         pageToPrune->release(glyph_entry);
-                        _pages.erase(glyph_entry->_key);
+                        auto it = _pages.find(glyph_entry->_key);
+                        if (it != _pages.end()) {
+                            // Remove from _pages as soon as the first part is found for this glyph
+                            // key. Subsequent parts won't need to remove an entry from _pages.
+                            std::vector<const GlyphEntry *> *entries = it->second;
+                            delete entries;
+                            _pages.erase(it);
+                        }
                     }
                 }
             }
