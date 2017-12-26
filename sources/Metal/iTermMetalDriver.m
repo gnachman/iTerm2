@@ -314,19 +314,16 @@
     if (_backgroundImageRenderer.rendererDisabled) {
         return;
     }
-    CGFloat blending;
     BOOL tiled;
-    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
-    [_backgroundImageRenderer setImage:backgroundImage blending:blending tiled:tiled context:frameData.framePoolContext];
+    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetTiled:&tiled];
+    [_backgroundImageRenderer setImage:backgroundImage tiled:tiled context:frameData.framePoolContext];
 }
 
 - (void)updateCopyBackgroundRendererForFrameData:(iTermMetalFrameData *)frameData {
     if (_copyBackgroundRenderer.rendererDisabled) {
         return;
     }
-    CGFloat blending;
-    BOOL tiled;
-    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetBlending:&blending tiled:&tiled];
+    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetTiled:NULL];
     _copyBackgroundRenderer.enabled = (backgroundImage != nil);
 }
 

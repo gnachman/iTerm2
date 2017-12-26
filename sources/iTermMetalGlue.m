@@ -328,9 +328,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 }
 
 // Private queue
-- (NSImage *)metalBackgroundImageGetBlending:(CGFloat *)blending tiled:(BOOL *)tiled {
-    *blending = _backgroundImageBlending;
-    *tiled = _backgroundImageTiled;
+- (NSImage *)metalBackgroundImageGetTiled:(nullable BOOL *)tiled {
+    if (tiled) {
+        *tiled = _backgroundImageTiled;
+    }
     return _backgroundImage;
 }
 
