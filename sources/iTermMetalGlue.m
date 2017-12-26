@@ -65,7 +65,9 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         if (code == DWC_RIGHT ||
             code == DWC_SKIP ||
             code == TAB_FILLER ||
-            code <= ' ') {
+            code < ' ') {
+            return NO;
+        } else if (code == ' ' && !c->underline) {
             return NO;
         }
     }
