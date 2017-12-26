@@ -488,7 +488,10 @@ const int kColorMapAnsiBrightModifier = 8;
 
     other->_delegate = _delegate;
 
+    [other->_map release];
     other->_map = [_map mutableCopy];
+
+    delete other->_fastMap;
     other->_fastMap = new std::unordered_map<int, vector_float4>(*_fastMap);
 
     return other;

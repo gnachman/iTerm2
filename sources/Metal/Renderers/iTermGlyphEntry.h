@@ -37,6 +37,10 @@ namespace iTerm2 {
             return true;
         }
 
+        NSString *description() const {
+            return [NSString stringWithFormat:@"<iTerm2::GlyphEntry: %p part=%@ key=%@ page=%p index=%@ emoji=%@>",
+                    this, @(_part), _key.description(), _page, @(_index), @(_is_emoji)];
+        }
         int _part;
         GlyphKey _key;
         TexturePage *_page;

@@ -45,6 +45,17 @@ namespace iTerm2 {
             return _hash;
         }
 
+        NSString *description() const {
+            return [NSString stringWithFormat:@"[GlyphKey: code=%@ complex=%@ image=%@ boxdrawing=%@ thinstrokes=%@ drawable=%@ typeface=%@]",
+                    @(_repr.code),
+                    @(_repr.isComplex),
+                    @(_repr.image),
+                    @(_repr.boxDrawing),
+                    @(_repr.thinStrokes),
+                    @(_repr.drawable),
+                    @(_repr.typeface)];
+        }
+
     private:
         inline std::size_t compute_hash() const {
             std::size_t seed = 0;
