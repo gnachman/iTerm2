@@ -15,7 +15,7 @@
 @property (nonatomic, readonly) NSData *piuData;
 @property (nonatomic, strong) id<MTLDevice> device;
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;
-@property (nonatomic) iTerm2::TexturePageCollection *texturePageCollection;
+@property (nonatomic) iTermTexturePageCollectionSharedPointer *texturePageCollectionSharedPointer;
 @property (nonatomic) NSInteger numberOfCells;
 
 - (void)enumerateDraws:(void (^)(const iTermTextPIU *,
