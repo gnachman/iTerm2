@@ -284,11 +284,13 @@
     __weak __typeof(self) weakSelf = self;
     CGSize cellSize = _cellSize;
     CGFloat scale = _scale;
+    __weak iTermMetalFrameData *weakFrameData = frameData;
     [_textRenderer setASCIICellSize:_cellSize
                  creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
                            creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
-                               if (strongSelf) {
+                               iTermMetalFrameData *strongFrameData = weakFrameData;
+                               if (strongSelf && strongFrameData) {
                                    static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
                                    iTermMetalGlyphKey glyphKey = {
                                        .code = c,
@@ -300,10 +302,10 @@
                                        .typeface = (attributes & typefaceMask),
                                    };
                                    BOOL emoji = NO;
-                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKey
-                                                                                     size:cellSize
-                                                                                    scale:scale
-                                                                                    emoji:&emoji];
+                                   return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKey
+                                                                                           size:cellSize
+                                                                                          scale:scale
+                                                                                          emoji:&emoji];
                                } else {
                                    return nil;
                                }

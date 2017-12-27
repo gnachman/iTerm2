@@ -7,6 +7,7 @@
 
 #import <Metal/Metal.h>
 #import "iTermGlyphEntry.h"
+#import "iTermMetalBufferPool.h"
 #import "iTermTexturePage.h"
 #include <unordered_map>
 #include <set>
@@ -174,3 +175,10 @@ namespace iTerm2 {
     };
 }
 
+@interface iTermTexturePageCollectionSharedPointer : NSObject
+@property (nonatomic, readonly) iTerm2::TexturePageCollection *object;
+
+- (instancetype)initWithObject:(iTerm2::TexturePageCollection *)object;
+- (instancetype)init NS_UNAVAILABLE;
+
+@end

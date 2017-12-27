@@ -13,6 +13,7 @@ extern "C" {
 #import "iTermGlyphEntry.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermPIUArray.h"
+#import "iTermTexturePageCollection.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTextRendererTransientState+Private.h"
@@ -60,7 +61,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     id<MTLBuffer> _models;
     iTermASCIITextureGroup *_asciiTextureGroup;
 
-    iTerm2::TexturePageCollection *_texturePageCollection;
+    iTermTexturePageCollectionSharedPointer *_texturePageCollectionSharedPointer;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
     CGSize _cellSizeForQuadCache;
 
@@ -151,10 +152,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return self;
 }
 
-- (void)dealloc {
-    delete _texturePageCollection;
-}
-
 - (BOOL)rendererDisabled {
     return NO;
 }
@@ -181,26 +178,25 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    if (_texturePageCollection != NULL) {
-#warning TODO: Freeing the texture page collection without using reference counting will leave transient states with dangling pointers if we ever have more than one frame in flight.
-        const vector_uint2 &oldSize = _texturePageCollection->get_cell_size();
+    if (_texturePageCollectionSharedPointer != NULL) {
+        const vector_uint2 &oldSize = _texturePageCollectionSharedPointer.object->get_cell_size();
         CGSize newSize = tState.cellConfiguration.cellSize;
         if (oldSize.x != newSize.width || oldSize.y != newSize.height) {
-            delete _texturePageCollection;
-            _texturePageCollection = NULL;
+            _texturePageCollectionSharedPointer = nil;
         }
     }
-    if (!_texturePageCollection) {
-        _texturePageCollection = new iTerm2::TexturePageCollection(_cellRenderer.device,
-                                                                   simd_make_uint2(tState.cellConfiguration.cellSize.width,
-                                                                                   tState.cellConfiguration.cellSize.height),
-                                                                   iTermTextAtlasCapacity,
-                                                                   iTermTextRendererMaximumNumberOfTexturePages);
+    if (!_texturePageCollectionSharedPointer) {
+        iTerm2::TexturePageCollection *collection = new iTerm2::TexturePageCollection(_cellRenderer.device,
+                                                                                      simd_make_uint2(tState.cellConfiguration.cellSize.width,
+                                                                                                      tState.cellConfiguration.cellSize.height),
+                                                                                      iTermTextAtlasCapacity,
+                                                                                      iTermTextRendererMaximumNumberOfTexturePages);
+        _texturePageCollectionSharedPointer = [[iTermTexturePageCollectionSharedPointer alloc] initWithObject:collection];
     }
 
     tState.device = _cellRenderer.device;
     tState.asciiTextureGroup = _asciiTextureGroup;
-    tState.texturePageCollection = _texturePageCollection;
+    tState.texturePageCollectionSharedPointer = _texturePageCollectionSharedPointer;
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
 }
 

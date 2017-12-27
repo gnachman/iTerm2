@@ -368,9 +368,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         } else {
             // Non-ASCII slower path
             const iTerm2::GlyphKey glyphKey(&glyphKeys[x]);
-            std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollection->find(glyphKey);
+            std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(glyphKey);
             if (!entries) {
-                entries = _texturePageCollection->add(x, glyphKey, context, creation);
+                entries = _texturePageCollectionSharedPointer.object->add(x, glyphKey, context, creation);
                 if (!entries) {
                     continue;
                 }
@@ -464,7 +464,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
 - (void)didComplete {
     DLog(@"BEGIN didComplete for %@", self);
-    _texturePageCollection->prune_if_needed();
+    _texturePageCollectionSharedPointer.object->prune_if_needed();
     DLog(@"END didComplete");
 }
 
