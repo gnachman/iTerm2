@@ -39,7 +39,6 @@
         MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
         textureDescriptor.textureType = MTLTextureType2D;
-#warning TODO: This could be MTLPixelFormatBGRA8Unorm_SRGB. I'll need to somehow get SRGB values of out of the character source too.
         textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
         textureDescriptor.width = atlasSize.width;
         textureDescriptor.height = atlasSize.height;
