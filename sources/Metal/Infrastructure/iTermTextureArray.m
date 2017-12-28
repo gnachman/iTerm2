@@ -112,7 +112,6 @@
     if (!bitmapRepresentation) {
         return NO;
     }
-#warning Is this right? Really should be SRGB shouldn't it?
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     if (!colorSpace) {
         return NO;
