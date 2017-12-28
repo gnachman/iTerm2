@@ -108,7 +108,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
 - (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
-- (id<MTLTexture>)textureFromSRGBImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
 
 - (id<MTLRenderPipelineState>)newPipelineWithBlending:(nullable iTermMetalBlending *)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction
