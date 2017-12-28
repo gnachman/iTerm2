@@ -26,7 +26,7 @@
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermCopyBackgroundVertexShader"
                                                fragmentFunctionName:@"iTermCopyBackgroundFragmentShader"
-                                                           blending:NO
+                                                           blending:nil
                                                 transientStateClass:[iTermCopyBackgroundRendererTransientState class]];
     }
     return self;

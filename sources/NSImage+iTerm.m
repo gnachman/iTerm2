@@ -141,6 +141,10 @@
   return coloredImage;
 }
 
+- (void)saveAsPNGTo:(NSString *)filename {
+    [[self dataForFileOfType:NSPNGFileType] writeToFile:filename atomically:NO];
+}
+
 // TODO: Should this use -bitmapImageRep?
 - (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType {
     CGImageRef cgImage = [self CGImageForProposedRect:NULL

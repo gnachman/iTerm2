@@ -52,7 +52,7 @@
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermBackgroundColorVertexShader"
                                                   fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
-                                                              blending:YES
+                                                              blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
         // TODO: The capacity here is a total guess. But this would be a lot of rows to have.

@@ -67,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
                      vertexFunctionName:(NSString *)vertexFunctionName
                    fragmentFunctionName:(NSString *)fragmentFunctionName
-                               blending:(BOOL)blending
+                               blending:(nullable iTermMetalBlending *)blending
                          piuElementSize:(size_t)piuElementSize
                transientStateClass:(Class)transientStateClass {
     self = [super initWithDevice:device

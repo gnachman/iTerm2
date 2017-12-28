@@ -3,12 +3,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface iTermBadgeRendererTransientState : iTermMetalRendererTransientState
+@property (nonatomic) CGRect sourceRect;
+@property (nonatomic) CGRect destinationRect;
+@end
+
 @interface iTermBadgeRenderer : NSObject<iTermMetalRenderer>
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)setBadgeImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context;
+- (void)setBadgeImage:(NSImage *)image
+              context:(iTermMetalBufferPoolContext *)context;
 
 @end
 

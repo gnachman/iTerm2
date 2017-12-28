@@ -1,48 +1,44 @@
 #import "iTermBadgeRenderer.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalRenderer.h"
+#import "iTermTextDrawingHelper.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermBadgeRendererTransientState : iTermMetalRendererTransientState
+@interface iTermBadgeRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
-@property (nonatomic) CGSize size;
 @end
 
 @implementation iTermBadgeRendererTransientState
-
-- (id<MTLBuffer>)newOffsetBufferWithDevice:(id<MTLDevice>)device
-                                      pool:(iTermMetalBufferPool *)pool {
-    CGSize viewport = CGSizeMake(self.configuration.viewportSize.x, self.configuration.viewportSize.y);
-    vector_float2 offset = {
-        viewport.width - _size.width - 20,
-        viewport.height - _size.height - 20
-    };
-    return [pool requestBufferFromContext:self.poolContext
-                                withBytes:&offset
-                           checkIfChanged:YES];
-}
-
 @end
 
 @implementation iTermBadgeRenderer {
     iTermMetalRenderer *_metalRenderer;
     id<MTLTexture> _texture;
     CGSize _size;
-    iTermMetalBufferPool *_offsetsPool;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
+        iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+        // I tried to make this the same as NSCompositeSourceOver. It's not quite right but I have
+        // no idea why.
+        blending.rgbBlendOperation = MTLBlendOperationAdd;
+        blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // because it's premultiplied
+        blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+        blending.alphaBlendOperation = MTLBlendOperationMax;
+        blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
+        blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
+
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBadgeVertexShader"
                                                fragmentFunctionName:@"iTermBadgeFragmentShader"
-                                                           blending:YES
+                                                           blending:blending
                                                 transientStateClass:[iTermBadgeRendererTransientState class]];
-        [self setBadgeImage:[NSImage imageNamed:@"badge"] context:nil];
-        _offsetsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 2];
     }
     return self;
 }
@@ -58,19 +54,43 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setBadgeImage:(NSImage *)image context:(nonnull iTermMetalBufferPoolContext *)context {
     _size = image.size;
     _texture = [_metalRenderer textureFromImage:image context:context];
+    _texture.label = @"Badge";
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBadgeRendererTransientState *tState = transientState;
-    id<MTLBuffer> offsetBuffer = [tState newOffsetBufferWithDevice:_metalRenderer.device
-                                                              pool:_offsetsPool];
+    const CGSize size = tState.destinationRect.size;
+    const CGFloat scale = tState.configuration.scale;
+    CGRect textureFrame = tState.sourceRect;
+    textureFrame.origin.x /= tState.texture.width / scale;
+    textureFrame.origin.y /= tState.texture.height / scale;
+    textureFrame.size.width /= tState.texture.width / scale;
+    textureFrame.size.height /= tState.texture.height / scale;
+    const CGFloat MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+
+    CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
+                             tState.configuration.viewportSize.y - scale * CGRectGetMaxY(tState.destinationRect) - MARGIN_HEIGHT,
+                             scale * size.width,
+                             scale * size.height);
+    const iTermVertex vertices[] = {
+        // Pixel Positions             Texture Coordinates
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+    };
+    tState.vertexBuffer = [_metalRenderer.verticesPool requestBufferFromContext:tState.poolContext
+                                                                      withBytes:vertices
+                                                                 checkIfChanged:YES];
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:renderEncoder
                           numberOfVertices:6
                               numberOfPIUs:0
-                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-                                              @(iTermVertexInputIndexOffset): offsetBuffer }
+                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
                            fragmentBuffers:@{}
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
@@ -90,8 +110,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBadgeRendererTransientState *)tState {
     tState.texture = _texture;
-    tState.size = _size;
-    tState.vertexBuffer = [_metalRenderer newQuadOfSize:_size poolContext:tState.poolContext];
 }
 
 @end

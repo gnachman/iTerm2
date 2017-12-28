@@ -74,7 +74,7 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBackgroundImageVertexShader"
                                                fragmentFunctionName:@"iTermBackgroundImageFragmentShader"
-                                                           blending:NO
+                                                           blending:nil
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
     }
     return self;

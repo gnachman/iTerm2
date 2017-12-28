@@ -48,6 +48,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawMargin<<",
         "DrawBgImage<<",
         "DrawBgColor<<",
+        "DrawBadge<<",
         "DrawCursor<<",
         "EndEncodingInt<<",
         "Create2ndRE<<",

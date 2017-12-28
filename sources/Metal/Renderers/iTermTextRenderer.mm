@@ -126,7 +126,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermTextVertexShader"
                                                   fragmentFunctionName:@"iTermTextFragmentShader"
-                                                              blending:YES
+                                                              blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
         _quadCache = [NSMutableArray array];

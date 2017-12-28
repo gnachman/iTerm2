@@ -148,6 +148,10 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
     BOOL _nonasciiAntialias;
     iTermMetalUnderlineDescriptor _asciiUnderlineDescriptor;
     iTermMetalUnderlineDescriptor _nonAsciiUnderlineDescriptor;
+    NSImage *_badgeImage;
+    CGRect _badgeSourceRect;
+    CGRect _badgeDestinationRect;
+    CGRect _documentVisibleRect;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -196,7 +200,8 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
         _underlinedRanges = [NSMutableDictionary dictionary];
-        _visibleRange = [drawingHelper coordRangeForRect:textView.enclosingScrollView.documentVisibleRect];
+        _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
+        _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
         long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
         const int width = _visibleRange.end.x - _visibleRange.start.x;
         for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
@@ -235,6 +240,14 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
         _asciiAntialias = drawingHelper.asciiAntiAlias;
         _nonasciiAntialias = drawingHelper.nonAsciiAntiAlias;
+        _badgeImage = drawingHelper.badgeImage;
+        if (_badgeImage) {
+            _badgeDestinationRect = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
+                                                                    destinationRect:textView.enclosingScrollView.documentVisibleRect
+                                                               destinationFrameSize:textView.frame.size
+                                                                        visibleSize:textView.enclosingScrollView.documentVisibleRect.size
+                                                                      sourceRectPtr:&_badgeSourceRect];
+        }
 
         VT100GridCoord cursorScreenCoord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                               textView.dataSource.cursorY - 1);
@@ -308,6 +321,21 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
     }
     return self;
+}
+
+- (CGRect)badgeSourceRect {
+    return _badgeSourceRect;
+}
+
+- (CGRect)badgeDestinationRect {
+    CGRect rect = _badgeDestinationRect;
+    rect.origin.x -= _documentVisibleRect.origin.x;
+    rect.origin.y -= _documentVisibleRect.origin.y;
+    return rect;
+}
+
+- (NSImage *)badgeImage {
+    return _badgeImage;
 }
 
 - (VT100GridSize)gridSize {

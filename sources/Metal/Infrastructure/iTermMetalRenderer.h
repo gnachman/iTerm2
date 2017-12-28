@@ -61,6 +61,16 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @class iTermMetalBufferPoolContext;
 
 NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermMetalBlending : NSObject
+@property (nonatomic) MTLBlendOperation rgbBlendOperation;
+@property (nonatomic) MTLBlendOperation alphaBlendOperation;
+@property (nonatomic) MTLBlendFactor sourceRGBBlendFactor;
+@property (nonatomic) MTLBlendFactor destinationRGBBlendFactor;
+@property (nonatomic) MTLBlendFactor sourceAlphaBlendFactor;
+@property (nonatomic) MTLBlendFactor destinationAlphaBlendFactor;
+@end
+
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRenderer : NSObject
 
 @property (nonatomic, readonly) id<MTLDevice> device;
@@ -75,7 +85,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
                      vertexFunctionName:(NSString *)vertexFunctionName
                    fragmentFunctionName:(NSString *)fragmentFunctionName
-                               blending:(BOOL)blending
+                               blending:(nullable iTermMetalBlending *)blending
                     transientStateClass:(Class)transientStateClass;
 
 - (instancetype)init NS_UNAVAILABLE;
@@ -98,8 +108,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
 - (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
+- (id<MTLTexture>)textureFromSRGBImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
 
-- (id<MTLRenderPipelineState>)newPipelineWithBlending:(BOOL)blending
+- (id<MTLRenderPipelineState>)newPipelineWithBlending:(nullable iTermMetalBlending *)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction
                                      fragmentFunction:(id<MTLFunction>)fragmentFunction;
 

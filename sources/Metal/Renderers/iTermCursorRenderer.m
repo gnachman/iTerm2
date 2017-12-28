@@ -133,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:vertexFunctionName
                                                   fragmentFunctionName:fragmentFunctionName
-                                                              blending:YES
+                                                              blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:0
                                                    transientStateClass:self.transientStateClass];
         _descriptionPool = [[iTermMetalBufferPool alloc] initWithDevice:device

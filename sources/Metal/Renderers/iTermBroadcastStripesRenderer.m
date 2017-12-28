@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBroadcastStripesVertexShader"
                                                fragmentFunctionName:@"iTermBroadcastStripesFragmentShader"
-                                                           blending:YES
+                                                           blending:[[iTermMetalBlending alloc] init]
                                                 transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
         NSImage *image = [NSImage imageNamed:@"BackgroundStripes"];
         _size = image.size;

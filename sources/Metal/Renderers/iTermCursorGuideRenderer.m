@@ -43,7 +43,7 @@
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermCursorGuideVertexShader"
                                                   fragmentFunctionName:@"iTermCursorGuideFragmentShader"
-                                                              blending:YES
+                                                              blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermCursorGuidePIU)
                                                    transientStateClass:[iTermCursorGuideRendererTransientState class]];
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device

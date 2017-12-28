@@ -272,6 +272,19 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Show the password input cursor?
 @property(nonatomic) BOOL passwordInput;
 
+// imageSize: size of image to draw
+// destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
+// destinationFrameSize: size of the scrollview's content view
+// visibleSize: size of visible portion of scrollview
+// sourceRectPtr: filled in with source frame to draw from
+//
+// Returns: destination frame to draw to
++ (NSRect)rectForBadgeImageOfSize:(NSSize)imageSize
+                  destinationRect:(NSRect)destinationRect
+             destinationFrameSize:(NSSize)destinationFrameSize
+                      visibleSize:(NSSize)visibleSize
+                    sourceRectPtr:(NSRect *)sourceRectPtr;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

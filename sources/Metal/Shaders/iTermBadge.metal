@@ -12,12 +12,11 @@ typedef struct {
 
 vertex iTermBadgeVertexFunctionOutput
 iTermBadgeVertexShader(uint vertexID [[ vertex_id ]],
-                       constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                        constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                        constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]]) {
     iTermBadgeVertexFunctionOutput out;
 
-    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + offset[0];
+    float2 pixelSpacePosition = vertexArray[vertexID].position.xy;
     float2 viewportSize = float2(*viewportSizePointer);
 
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
@@ -35,7 +34,6 @@ iTermBadgeFragmentShader(iTermBadgeVertexFunctionOutput in [[stage_in]],
                                      min_filter::linear);
 
     const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    colorSample.w *= 0.75;
     return float4(colorSample);
 }
 

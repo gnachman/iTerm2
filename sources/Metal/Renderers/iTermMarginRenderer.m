@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermMarginVertexShader"
                                                   fragmentFunctionName:@"iTermMarginFragmentShader"
-                                                              blending:YES
+                                                              blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:0
                                                    transientStateClass:[iTermMarginRendererTransientState class]];
         _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
