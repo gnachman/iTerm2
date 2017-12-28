@@ -4699,9 +4699,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL allowed = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
     }];
+    const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
+    const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);
     const BOOL foregroundTab = [self isForegroundTab];
-    const BOOL useMetal = allowed && isKey && foregroundTab;
+    const BOOL useMetal = allowed && satisfiesKeyRequirement && foregroundTab;
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         obj.useMetal = useMetal;
     }];
