@@ -55,44 +55,6 @@ static NSColor *ColorForVector(vector_float4 v) {
     return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
 }
 
-#warning TODO: This is copied from drawing helper (except it calls space nondrawable)
-static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
-                                                      BOOL hasStringRepresentation,
-                                                      BOOL blinkingItemsVisible,
-                                                      BOOL blinkAllowed) {
-    const unichar code = c->code;
-    if (!c->complexChar) {
-        if (code == DWC_RIGHT ||
-            code == DWC_SKIP ||
-            code == TAB_FILLER ||
-            code < ' ') {
-            return NO;
-        } else if (code == ' ' && !c->underline) {
-            return NO;
-        }
-    }
-    if (blinkingItemsVisible || !(blinkAllowed && c->blink)) {
-        // This char is either not blinking or during the "on" cycle of the
-        // blink. It should be drawn.
-
-        if (c->complexChar) {
-            // TODO: Not all composed/surrogate pair grapheme clusters are drawable
-            return hasStringRepresentation;
-        } else {
-            // Non-complex char
-            // TODO: There are other spaces in unicode that should be supported.
-            return (code != 0 &&
-                    code != '\t' &&
-                    !(code >= ITERM2_PRIVATE_BEGIN && code <= ITERM2_PRIVATE_END));
-
-        }
-    } else {
-        // Chatacter hidden because of blinking.
-        return NO;
-    }
-}
-
-
 @interface iTermMetalGlue()
 // Screen-relative cursor location on last frame
 @property (nonatomic) VT100GridCoord oldCursorScreenCoord;
