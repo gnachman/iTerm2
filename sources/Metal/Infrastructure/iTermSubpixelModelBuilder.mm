@@ -82,7 +82,7 @@ static NSString *const iTermSubpixelModelString = @"O";
     // 0->128. The values in this map are unique.
     std::unordered_map<int, int> *_indexToReferenceColor;
 
-#warning TODO: There's no reason to cache this any more.
+    // Cache of models that have already been built.
     NSMutableDictionary<NSNumber *, iTermSubpixelModel *> *_models;
 }
 
