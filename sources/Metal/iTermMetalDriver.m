@@ -442,8 +442,11 @@
 
     // Update glyph attributes for block cursor if needed.
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
-#warning TODO Why is the cursor sometimes equal to grid height?
-    if (!cursorInfo.frameOnly && cursorInfo.cursorVisible && cursorInfo.shouldDrawText && cursorInfo.coord.y >= 0 && cursorInfo.coord.y < frameData.gridSize.height) {
+    if (!cursorInfo.frameOnly &&
+        cursorInfo.cursorVisible &&
+        cursorInfo.shouldDrawText &&
+        cursorInfo.coord.y >= 0 &&
+        cursorInfo.coord.y < frameData.gridSize.height) {
         iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
         iTermMetalGlyphAttributes *glyphAttributes = (iTermMetalGlyphAttributes *)rowWithCursor.attributesData.mutableBytes;
         glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
@@ -451,6 +454,39 @@
                                                                                cursorInfo.cursorColor.greenComponent,
                                                                                cursorInfo.cursorColor.blueComponent,
                                                                                1);
+    }
+
+    if (cursorInfo.copyMode) {
+        iTermCopyModeCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_copyModeCursorRenderer class])];
+        tState.selecting = cursorInfo.copyModeCursorSelecting;
+        tState.coord = cursorInfo.copyModeCursorCoord;
+    } else if (cursorInfo.cursorVisible) {
+        switch (cursorInfo.type) {
+            case CURSOR_UNDERLINE: {
+                iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_underlineCursorRenderer class])];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+                break;
+            }
+            case CURSOR_BOX: {
+                iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_blockCursorRenderer class])];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+
+                tState = frameData.transientStates[NSStringFromClass([_frameCursorRenderer class])];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+                break;
+            }
+            case CURSOR_VERTICAL: {
+                iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_barCursorRenderer class])];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+                break;
+            }
+            case CURSOR_DEFAULT:
+                break;
+        }
     }
 }
 
@@ -607,7 +643,12 @@
 - (void)drawCursorWithFrameData:(iTermMetalFrameData *)frameData renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
 
-    if (cursorInfo.cursorVisible) {
+    if (cursorInfo.copyMode) {
+        [self drawCellRenderer:_copyModeCursorRenderer
+                     frameData:frameData
+                 renderEncoder:renderEncoder
+                          stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+    } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE:
                 [self drawCellRenderer:_underlineCursorRenderer
@@ -841,7 +882,12 @@
     } else if (renderer == _backgroundColorRenderer ||
                renderer == _textRenderer ||
                renderer == _markRenderer ||
-               renderer == _broadcastStripesRenderer) {
+               renderer == _broadcastStripesRenderer ||
+               renderer == _underlineCursorRenderer ||
+               renderer == _barCursorRenderer ||
+               renderer == _blockCursorRenderer ||
+               renderer == _frameCursorRenderer ||
+               renderer == _copyBackgroundRenderer) {
         // Nothing to do here
     } else if (renderer == _marginRenderer) {
         [self updateMarginRendererWithTransientState:tState
@@ -850,12 +896,6 @@
         [self updateBadgeRendererWithPerFrameState:perFrameState];
     } else if (renderer == _cursorGuideRenderer) {
         [self updateCursorGuideRendererWithPerFrameState:perFrameState];
-    } else if (renderer == _underlineCursorRenderer ||
-               renderer == _barCursorRenderer ||
-               renderer == _blockCursorRenderer ||
-               renderer == _frameCursorRenderer ||
-               renderer == _copyBackgroundRenderer) {
-        [self updateCursorRendererWithPerFrameState:perFrameState];
     } else if (renderer == _copyModeCursorRenderer) {
         [self updateCopyModeCursorRendererWithPerFrameState:perFrameState];
     }
@@ -880,31 +920,6 @@
     // TODO:
     // [_cursorGuideRenderer setRow:_dataSource.cursorGuideRow];
     // [_cursorGuideRenderer setColor:_dataSource.cursorGuideColor];
-}
-
-- (void)updateCursorRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-#warning TODO: I think it's a bug to modify a renderer here. Only the transient state should be changed.
-    iTermMetalCursorInfo *cursorInfo = [perFrameState metalDriverCursorInfo];
-    if (cursorInfo.cursorVisible) {
-        switch (cursorInfo.type) {
-            case CURSOR_UNDERLINE:
-                [_underlineCursorRenderer setCoord:cursorInfo.coord];
-                [_underlineCursorRenderer setColor:cursorInfo.cursorColor];
-                break;
-            case CURSOR_BOX:
-                [_blockCursorRenderer setCoord:cursorInfo.coord];
-                [_blockCursorRenderer setColor:cursorInfo.cursorColor];
-                [_frameCursorRenderer setCoord:cursorInfo.coord];
-                [_frameCursorRenderer setColor:cursorInfo.cursorColor];
-                break;
-            case CURSOR_VERTICAL:
-                [_barCursorRenderer setCoord:cursorInfo.coord];
-                [_barCursorRenderer setColor:cursorInfo.cursorColor];
-                break;
-            case CURSOR_DEFAULT:
-                break;
-        }
-    }
 }
 
 - (void)updateCopyModeCursorRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
