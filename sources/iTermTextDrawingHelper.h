@@ -302,3 +302,39 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
 @end
+
+NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
+                                                         BOOL isStringifiable,
+                                                         BOOL blinkingItemsVisible,
+                                                         BOOL blinkAllowed) {
+    const unichar code = c->code;
+    if (!c->complexChar) {
+        if (code == DWC_RIGHT ||
+            code == DWC_SKIP ||
+            code == TAB_FILLER ||
+            code < ' ') {
+            return NO;
+        } else if (code == ' ' && !c->underline) {
+            return NO;
+        }
+    }
+    if (blinkingItemsVisible || !(blinkAllowed && c->blink)) {
+        // This char is either not blinking or during the "on" cycle of the
+        // blink. It should be drawn.
+
+        if (c->complexChar) {
+            // TODO: Not all composed/surrogate pair grapheme clusters are drawable
+            return !isStringifiable;
+        } else {
+            // Non-complex char
+            // TODO: There are other spaces in unicode that should be supported.
+            return (code != 0 &&
+                    code != '\t' &&
+                    !(code >= ITERM2_PRIVATE_BEGIN && code <= ITERM2_PRIVATE_END));
+
+        }
+    } else {
+        // Chatacter hidden because of blinking.
+        return NO;
+    }
+}

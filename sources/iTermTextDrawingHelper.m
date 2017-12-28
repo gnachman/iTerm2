@@ -1712,37 +1712,6 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
-static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
-                                                      NSString *charAsString,
-                                                      BOOL blinkingItemsVisible,
-                                                      BOOL blinkAllowed) {
-    const unichar code = c->code;
-    if ((code == DWC_RIGHT ||
-         code == DWC_SKIP ||
-         code == TAB_FILLER) && !c->complexChar) {
-        return NO;
-    }
-    if (blinkingItemsVisible || !(blinkAllowed && c->blink)) {
-        // This char is either not blinking or during the "on" cycle of the
-        // blink. It should be drawn.
-
-        if (c->complexChar) {
-            // TODO: Not all composed/surrogate pair grapheme clusters are drawable
-            return charAsString != nil;
-        } else {
-            // Non-complex char
-            // TODO: There are other spaces in unicode that should be supported.
-            return (code != 0 &&
-                    code != '\t' &&
-                    !(code >= ITERM2_PRIVATE_BEGIN && code <= ITERM2_PRIVATE_END));
-
-        }
-    } else {
-        // Chatacter hidden because of blinking.
-        return NO;
-    }
-}
-
 - (BOOL)shouldSegmentWithAttributes:(iTermCharacterAttributes *)newAttributes
                     imageAttributes:(NSDictionary *)imageAttributes
                  previousAttributes:(iTermCharacterAttributes *)previousAttributes
@@ -1977,7 +1946,7 @@ static BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         }
         
         const BOOL drawable = iTermTextDrawingHelperIsCharacterDrawable(&c,
-                                                                        charAsString,
+                                                                        charAsString != nil,
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed);
         if (!drawable) {
