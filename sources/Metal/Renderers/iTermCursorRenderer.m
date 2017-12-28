@@ -4,24 +4,38 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermCursorRendererTransientState : iTermMetalCellRendererTransientState
-@property (nonatomic, strong) NSColor *color;
-@property (nonatomic) VT100GridCoord coord;
+@interface iTermCursorRenderer()
+@property (nonatomic, readonly) iTermMetalCellRenderer *cellRenderer;
+@end
+
+@interface iTermFrameCursorRenderer()
+@property (nonatomic, strong) id<MTLTexture> cachedTexture;
+@property (nonatomic) CGSize cachedTextureSize;
+@property (nonatomic) NSColor *cachedColor;
+@end
+
+@interface iTermCopyModeCursorRenderer()
+@property (nonatomic, strong) id<MTLTexture> cachedTexture;
+@property (nonatomic) CGSize cachedTextureSize;
+@property (nonatomic) NSColor *cachedColor;
 @end
 
 @implementation iTermCursorRendererTransientState
 @end
 
-@interface iTermCopyModeCursorRendererTransientState : iTermCursorRendererTransientState
+@interface iTermCopyModeCursorRendererTransientState()
 @property (nonatomic, strong) id<MTLTexture> texture;
-@property (nonatomic) BOOL selecting;
+@property (nonatomic, weak) iTermCopyModeCursorRenderer *renderer;
 @end
 
 @interface iTermFrameCursorRendererTransientState : iTermCursorRendererTransientState
+@property (nonatomic, weak) iTermFrameCursorRenderer *renderer;
 @property (nonatomic, strong) id<MTLTexture> texture;
 @end
 
-@implementation iTermCopyModeCursorRendererTransientState
+@implementation iTermCopyModeCursorRendererTransientState {
+    NSColor *_color;
+}
 
 - (NSImage *)newImage {
     NSImage *image = [[NSImage alloc] initWithSize:self.cellConfiguration.cellSize];
@@ -58,6 +72,23 @@ NS_ASSUME_NONNULL_BEGIN
     return image;
 }
 
+- (void)setSelecting:(BOOL)selecting {
+    _selecting = selecting;
+    NSColor *color = selecting ? [NSColor colorWithRed:0xc1 / 255.0 green:0xde / 255.0 blue:0xff / 255.0 alpha:1] : [NSColor whiteColor];
+    _texture = nil;
+
+    if (_renderer.cachedTexture == nil ||
+        ![color isEqual:_renderer.cachedColor] ||
+        !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize)) {
+        _renderer.cachedTexture = [_renderer.cellRenderer textureFromImage:[self newImage]
+                                                                   context:self.poolContext];
+        _renderer.cachedTextureSize = self.cellConfiguration.cellSize;
+        _renderer.cachedColor = color;
+    }
+    _texture = _renderer.cachedTexture;
+}
+
+
 @end
 
 @implementation iTermFrameCursorRendererTransientState
@@ -81,6 +112,18 @@ NS_ASSUME_NONNULL_BEGIN
     return image;
 }
 
+- (void)setColor:(NSColor *)color {
+    if (_renderer.cachedTexture == nil ||
+        ![color isEqual:_renderer.cachedColor] ||
+        !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize)) {
+        _renderer.cachedTexture = [_renderer.cellRenderer textureFromImage:[self newImage]
+                                                                   context:self.poolContext];
+        _renderer.cachedTextureSize = self.cellConfiguration.cellSize;
+        _renderer.cachedColor = color;
+    }
+    _texture = _renderer.cachedTexture;
+}
+
 @end
 
 @interface iTermUnderlineCursorRenderer : iTermCursorRenderer
@@ -95,8 +138,6 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermCursorRenderer {
 @protected
     iTermMetalCellRenderer *_cellRenderer;
-    NSColor *_color;
-    VT100GridCoord _coord;
     iTermMetalBufferPool *_descriptionPool;
 }
 
@@ -129,7 +170,6 @@ NS_ASSUME_NONNULL_BEGIN
           fragmentFunctionName:(NSString *)fragmentFunctionName {
     self = [super init];
     if (self) {
-        _color = [NSColor colorWithRed:1 green:1 blue:1 alpha:1];
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:vertexFunctionName
                                                   fragmentFunctionName:fragmentFunctionName
@@ -170,16 +210,6 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
-    tState.color = _color;
-    tState.coord = _coord;
-}
-
-- (void)setColor:(NSColor *)color {
-    _color = color;
-}
-
-- (void)setCoord:(VT100GridCoord)coord {
-    _coord = coord;
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -217,7 +247,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, 2)
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, 2 * tState.cellConfiguration.scale)
                                            poolContext:tState.poolContext];
 }
 
@@ -255,16 +285,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermFrameCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
+    tState.renderer = self;
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
                                                                   tState.cellConfiguration.cellSize.height)
                                            poolContext:tState.poolContext];
-    tState.color = _color;
-    if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
-        _texture = [_cellRenderer textureFromImage:[tState newImage]
-                                           context:tState.poolContext];
-        _textureSize = tState.cellConfiguration.cellSize;
-    }
-    tState.texture = _texture;
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -309,25 +333,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCopyModeCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
+    tState.renderer = self;
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
                                                                   tState.cellConfiguration.cellSize.height)
                                            poolContext:tState.poolContext];
-    tState.selecting = _selecting;
-    tState.color = _color;
-    if (_texture == nil || !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
-        _texture = [_cellRenderer textureFromImage:[tState newImage]
-                                           context:tState.poolContext];
-        _textureSize = tState.cellConfiguration.cellSize;
-    }
-    tState.texture = _texture;
-}
-
-- (void)setSelecting:(BOOL)selecting {
-    if (selecting != _selecting) {
-        _selecting = selecting;
-        _color = selecting ? [NSColor colorWithRed:0xc1 / 255.0 green:0xde / 255.0 blue:0xff / 255.0 alpha:1] : [NSColor whiteColor];
-        _texture = nil;
-    }
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -346,7 +355,7 @@ NS_ASSUME_NONNULL_BEGIN
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.cellConfiguration.gridSize.width
+                             numberOfPIUs:0
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexCursorDescription): descriptionBuffer,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }

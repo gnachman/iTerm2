@@ -226,6 +226,9 @@ static NSColor *ColorForVector(vector_float4 v) {
             smartCursorColor.delegate = self;
         }
         _cursorInfo = [[iTermMetalCursorInfo alloc] init];
+        _cursorInfo.copyMode = drawingHelper.copyMode;
+        _cursorInfo.copyModeCursorCoord = drawingHelper.copyModeCursorCoord;
+        _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
 #warning TODO: blinking cursor
         NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
         if ([self shouldDrawCursor] &&

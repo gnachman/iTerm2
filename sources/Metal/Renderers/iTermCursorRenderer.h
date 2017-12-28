@@ -6,6 +6,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermCopyModeCursorRenderer;
 
+@interface iTermCursorRendererTransientState : iTermMetalCellRendererTransientState
+@property (nonatomic, strong) NSColor *color;
+@property (nonatomic) VT100GridCoord coord;
+@end
+
 @interface iTermCursorRenderer : NSObject<iTermMetalCellRenderer>
 
 + (instancetype)newUnderlineCursorRendererWithDevice:(id<MTLDevice>)device;
@@ -17,16 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)setColor:(NSColor *)color;
-- (void)setCoord:(VT100GridCoord)coord;
+@end
 
+@interface iTermCopyModeCursorRendererTransientState : iTermCursorRendererTransientState
+@property (nonatomic) BOOL selecting;
 @end
 
 @interface iTermCopyModeCursorRenderer : iTermCursorRenderer
-
-// This must be set before setting the viewport size, if it is to be changed for this frame.
-@property (nonatomic) BOOL selecting;
-
 @end
 
 @interface iTermFrameCursorRenderer : iTermCursorRenderer
