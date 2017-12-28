@@ -67,13 +67,13 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
                      vertexFunctionName:(NSString *)vertexFunctionName
                    fragmentFunctionName:(NSString *)fragmentFunctionName
-                               blending:(BOOL)blending
+                               blending:(nullable iTermMetalBlending *)blending
                     transientStateClass:(Class)transientStateClass NS_UNAVAILABLE;
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
                      vertexFunctionName:(NSString *)vertexFunctionName
                    fragmentFunctionName:(NSString *)fragmentFunctionName
-                               blending:(BOOL)blending
+                               blending:(nullable iTermMetalBlending *)blending
                          piuElementSize:(size_t)piuElementSize
                     transientStateClass:(Class)transientStateClass NS_DESIGNATED_INITIALIZER;
 

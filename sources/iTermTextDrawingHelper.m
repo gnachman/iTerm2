@@ -886,33 +886,48 @@ typedef struct iTermTextColorContext {
     return theTimestamp;
 }
 
-- (NSSize)drawBadgeInRect:(NSRect)rect {
-    NSImage *image = _badgeImage;
-    if (!image) {
-        return NSZeroSize;
++ (NSRect)rectForBadgeImageOfSize:(NSSize)imageSize
+                  destinationRect:(NSRect)rect
+             destinationFrameSize:(NSSize)textViewSize
+                      visibleSize:(NSSize)visibleSize
+                    sourceRectPtr:(NSRect *)sourceRectPtr {
+    if (NSEqualSizes(NSZeroSize, imageSize)) {
+        return NSZeroRect;
     }
-    NSSize textViewSize = _frame.size;
-    NSSize visibleSize = _scrollViewDocumentVisibleRect.size;
-    NSSize imageSize = image.size;
     NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - [iTermAdvancedSettingsModel badgeRightMargin],
                                     textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + [iTermAdvancedSettingsModel badgeTopMargin],
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
     if (intersection.size.width == 0 || intersection.size.height == 1) {
-        return NSZeroSize;
+        return NSZeroRect;
     }
     NSRect source = intersection;
     source.origin.x -= destination.origin.x;
     source.origin.y -= destination.origin.y;
     source.origin.y = imageSize.height - (source.origin.y + source.size.height);
+    *sourceRectPtr = source;
+    return intersection;
+}
 
-    [image drawInRect:intersection
-             fromRect:source
-            operation:NSCompositeSourceOver
-             fraction:1
-       respectFlipped:YES
-                hints:nil];
+- (NSSize)drawBadgeInRect:(NSRect)rect {
+    NSRect source;
+    NSRect intersection = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
+                                                          destinationRect:rect
+                                                     destinationFrameSize:_frame.size
+                                                              visibleSize:_scrollViewDocumentVisibleRect.size
+                                                            sourceRectPtr:&source];
+    if (NSEqualSizes(NSZeroSize, intersection.size)) {
+        return NSZeroSize;
+    }
+    [_badgeImage drawInRect:intersection
+                   fromRect:source
+                  operation:NSCompositeSourceOver
+                   fraction:1
+             respectFlipped:YES
+                      hints:nil];
+
+    NSSize imageSize = _badgeImage.size;
     imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeRightMargin];
 
     return imageSize;

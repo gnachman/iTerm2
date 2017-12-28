@@ -32,6 +32,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic, readonly) VT100GridSize gridSize;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
+@property (nonatomic, readonly) NSImage *badgeImage;
+@property (nonatomic, readonly) CGRect badgeSourceRect;
+@property (nonatomic, readonly) CGRect badgeDestinationRect;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes

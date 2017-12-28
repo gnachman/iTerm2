@@ -329,11 +329,20 @@
     _copyBackgroundRenderer.enabled = (backgroundImage != nil);
 }
 
+- (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_badgeRenderer.rendererDisabled) {
+        return;
+    }
+    [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage context:frameData.framePoolContext];
+}
+
+
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
     [self updateTextRendererForFrameData:frameData];
     [self updateBackgroundImageRendererForFrameData:frameData];
     [self updateCopyBackgroundRendererForFrameData:frameData];
-    // TODO: Badges and background stripes would also control this.
+    [self updateBadgeRendererForFrameData:frameData];
+    // TODO:  background stripes would also control this.
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
@@ -445,6 +454,15 @@
     }
 }
 
+- (void)populateBadgeRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (_badgeRenderer.rendererDisabled) {
+        return;
+    }
+    iTermBadgeRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_badgeRenderer class])];
+    tState.sourceRect = frameData.perFrameState.badgeSourceRect;
+    tState.destinationRect = frameData.perFrameState.badgeDestinationRect;
+}
+
 - (void)populateTextAndBackgroundRenderersTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (_textRenderer.rendererDisabled && _backgroundColorRenderer.rendererDisabled) {
         return;
@@ -545,6 +563,7 @@
     [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
     [self populateCursorRendererTransientStateWithFrameData:frameData];
     [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
+    [self populateBadgeRendererTransientStateWithFrameData:frameData];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
@@ -638,7 +657,10 @@
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor]];
 
     //        [_broadcastStripesRenderer drawWithRenderEncoder:renderEncoder];
-    //        [_badgeRenderer drawWithRenderEncoder:renderEncoder];
+    [self drawRenderer:_badgeRenderer
+             frameData:frameData
+         renderEncoder:renderEncoder
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBadge]];
     //        [_cursorGuideRenderer drawWithRenderEncoder:renderEncoder];
     //
 

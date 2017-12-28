@@ -7,6 +7,25 @@
 
 const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 
+@implementation iTermMetalBlending
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _rgbBlendOperation = MTLBlendOperationAdd;
+        _alphaBlendOperation = MTLBlendOperationAdd;
+
+        _sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+        _destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+        _sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+        _destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+    }
+    return self;
+}
+
+@end
+
 @implementation iTermRenderConfiguration
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize scale:(CGFloat)scale {
@@ -66,9 +85,9 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 @end
 
 @implementation iTermMetalRenderer {
-    BOOL _blending;
     NSString *_vertexFunctionName;
     NSMutableDictionary<NSDictionary *, id<MTLRenderPipelineState>> *_pipelineStates;
+    iTermMetalBlending *_blending;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -82,7 +101,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device
                      vertexFunctionName:(NSString *)vertexFunctionName
                    fragmentFunctionName:(NSString *)fragmentFunctionName
-                               blending:(BOOL)blending
+                               blending:(iTermMetalBlending *)blending
                     transientStateClass:(Class)transientStateClass {
     self = [super init];
     if (self) {
@@ -170,7 +189,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
                                     checkIfChanged:YES];
 }
 
-- (id<MTLRenderPipelineState>)newPipelineWithBlending:(BOOL)blending
+- (id<MTLRenderPipelineState>)newPipelineWithBlending:(iTermMetalBlending *)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction
                                      fragmentFunction:(id<MTLFunction>)fragmentFunction {
     // Set up a descriptor for creating a pipeline state object
@@ -183,14 +202,14 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     if (blending) {
         MTLRenderPipelineColorAttachmentDescriptor *renderbufferAttachment = pipelineStateDescriptor.colorAttachments[0];
         renderbufferAttachment.blendingEnabled = YES;
-        renderbufferAttachment.rgbBlendOperation = MTLBlendOperationAdd;
-        renderbufferAttachment.alphaBlendOperation = MTLBlendOperationAdd;
+        renderbufferAttachment.rgbBlendOperation = blending.rgbBlendOperation;
+        renderbufferAttachment.alphaBlendOperation = blending.alphaBlendOperation;
 
-        renderbufferAttachment.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-        renderbufferAttachment.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        renderbufferAttachment.sourceRGBBlendFactor = blending.sourceRGBBlendFactor;
+        renderbufferAttachment.destinationRGBBlendFactor = blending.destinationRGBBlendFactor;
 
-        renderbufferAttachment.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-        renderbufferAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        renderbufferAttachment.sourceAlphaBlendFactor = blending.sourceAlphaBlendFactor;
+        renderbufferAttachment.destinationAlphaBlendFactor = blending.destinationAlphaBlendFactor;
     }
 
     NSError *error = NULL;

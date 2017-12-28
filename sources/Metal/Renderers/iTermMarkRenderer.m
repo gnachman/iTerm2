@@ -45,7 +45,7 @@
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermMarkVertexShader"
                                                   fragmentFunctionName:@"iTermMarkFragmentShader"
-                                                              blending:YES
+                                                              blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermMarkPIU)
                                                    transientStateClass:[iTermMarkRendererTransientState class]];
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
