@@ -32,6 +32,10 @@ typedef struct {
 @interface iTermSmartCursorColor : NSObject
 @property (nonatomic, weak) id<iTermSmartCursorColorDelegate> delegate;
 
++ (iTermCursorNeighbors)neighborsForCursorAtCoord:(VT100GridCoord)cursorCoord
+                                         gridSize:(VT100GridSize)gridSize
+                                       lineSource:(screen_char_t *(^)(int))lineSource;
+
 - (NSColor *)backgroundColorForCharacter:(screen_char_t)screenChar;
 
 - (NSColor *)textColorForCharacter:(screen_char_t)screenChar
