@@ -13,6 +13,45 @@
 
 @implementation iTermSmartCursorColor
 
++ (iTermCursorNeighbors)neighborsForCursorAtCoord:(VT100GridCoord)cursorCoord
+                                         gridSize:(VT100GridSize)gridSize
+                                       lineSource:(screen_char_t *(^)(int))lineSource {
+    iTermCursorNeighbors neighbors;
+    memset(&neighbors, 0, sizeof(neighbors));
+    NSArray *coords = @[ @[ @0,    @(-1) ],     // Above
+                         @[ @(-1), @0    ],     // Left
+                         @[ @1,    @0    ],     // Right
+                         @[ @0,    @1    ] ];   // Below
+    int prevY = -2;
+    screen_char_t *theLine = nil;
+
+    for (NSArray *tuple in coords) {
+        int dx = [tuple[0] intValue];
+        int dy = [tuple[1] intValue];
+        int x = cursorCoord.x + dx;
+        int y = cursorCoord.y + dy;
+
+        if (y != prevY) {
+            if (y >= 0 && y < gridSize.height) {
+                theLine = lineSource(y);
+            } else {
+                theLine = nil;
+            }
+        }
+        prevY = y;
+
+        int xi = dx + 1;
+        int yi = dy + 1;
+        if (theLine && x >= 0 && x < gridSize.width) {
+            neighbors.chars[yi][xi] = theLine[x];
+            neighbors.valid[yi][xi] = YES;
+        }
+
+    }
+    return neighbors;
+}
+
+
 - (NSColor *)backgroundColorForCharacter:(screen_char_t)screenChar {
     iTermCursorNeighbors neighbors = [self.delegate cursorNeighbors];
     NSColor *bgColor = [self.delegate cursorColorForCharacter:screenChar

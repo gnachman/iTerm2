@@ -834,39 +834,16 @@ static NSColor *ColorForVector(vector_float4 v) {
 #pragma mark - iTermSmartCursorColorDelegate
 
 - (iTermCursorNeighbors)cursorNeighbors {
-    iTermCursorNeighbors neighbors;
-    memset(&neighbors, 0, sizeof(neighbors));
-    NSArray *coords = @[ @[ @0,    @(-1) ],     // Above
-                         @[ @(-1), @0    ],     // Left
-                         @[ @1,    @0    ],     // Right
-                         @[ @0,    @1    ] ];   // Below
-    int prevY = -2;
-    const screen_char_t *theLine = nil;
-
-    for (NSArray *tuple in coords) {
-        int dx = [tuple[0] intValue];
-        int dy = [tuple[1] intValue];
-        int x = _cursorInfo.coord.x + dx;
-        int y = _cursorInfo.coord.y + dy + _numberOfScrollbackLines;
-
-        if (y != prevY) {
-            if (y >= _visibleRange.start.y && y < _visibleRange.end.y) {
-                theLine = (const screen_char_t *)_lines[y - _visibleRange.start.y].bytes;
-            } else {
-                theLine = nil;
-            }
-        }
-        prevY = y;
-
-        int xi = dx + 1;
-        int yi = dy + 1;
-        if (theLine && x >= 0 && x < _gridSize.width) {
-            neighbors.chars[yi][xi] = theLine[x];
-            neighbors.valid[yi][xi] = YES;
-        }
-
-    }
-    return neighbors;
+    return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorInfo.coord
+                                                   gridSize:_gridSize
+                                                 lineSource:^screen_char_t *(int y) {
+                                                     const int i = y + _numberOfScrollbackLines - _visibleRange.start.y;
+                                                     if (i >= 0 && i < _lines.count) {
+                                                         return (screen_char_t *)_lines[i].bytes;
+                                                     } else {
+                                                         return nil;
+                                                     }
+                                                 }];
 }
 
 // TODO: This is copypasta

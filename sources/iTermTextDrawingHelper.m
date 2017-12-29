@@ -2800,39 +2800,11 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 #pragma mark - iTermCursorDelegate
 
 - (iTermCursorNeighbors)cursorNeighbors {
-    iTermCursorNeighbors neighbors;
-    memset(&neighbors, 0, sizeof(neighbors));
-    NSArray *coords = @[ @[ @0,    @(-1) ],     // Above
-                         @[ @(-1), @0    ],     // Left
-                         @[ @1,    @0    ],     // Right
-                         @[ @0,    @1    ] ];   // Below
-    int prevY = -2;
-    screen_char_t *theLine = nil;
-
-    for (NSArray *tuple in coords) {
-        int dx = [tuple[0] intValue];
-        int dy = [tuple[1] intValue];
-        int x = _cursorCoord.x + dx;
-        int y = _cursorCoord.y + dy;
-
-        if (y != prevY) {
-            if (y >= 0 && y < _gridSize.height) {
-                theLine = [_delegate drawingHelperLineAtScreenIndex:y];
-            } else {
-                theLine = nil;
-            }
-        }
-        prevY = y;
-
-        int xi = dx + 1;
-        int yi = dy + 1;
-        if (theLine && x >= 0 && x < _gridSize.width) {
-            neighbors.chars[yi][xi] = theLine[x];
-            neighbors.valid[yi][xi] = YES;
-        }
-
-    }
-    return neighbors;
+    return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorCoord
+                                                   gridSize:_gridSize
+                                                 lineSource:^screen_char_t *(int y) {
+                                                     return [_delegate drawingHelperLineAtScreenIndex:y];
+                                                 }];
 }
 
 - (void)cursorDrawCharacterAt:(VT100GridCoord)coord
