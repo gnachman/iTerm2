@@ -829,8 +829,6 @@ static NSColor *ColorForVector(vector_float4 v) {
     return [_colorMap colorByDimmingTextColor:color];
 }
 
-#warning TODO: Lots of code was copied from PTYTextView. Make it shared.
-
 #pragma mark - iTermSmartCursorColorDelegate
 
 - (iTermCursorNeighbors)cursorNeighbors {
