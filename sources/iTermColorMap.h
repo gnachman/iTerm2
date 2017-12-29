@@ -82,6 +82,7 @@ extern const int kColorMap24bitBase;
 
 - (void)setColor:(NSColor *)theColor forKey:(iTermColorMapKey)theKey;
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey;
+- (vector_float4)fastColorForKey:(iTermColorMapKey)theKey;
 
 // Apply the following filters in order:
 // 1. Modify textColor to have at least self.minimumContrast against backgroundColor

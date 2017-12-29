@@ -144,6 +144,23 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 }
 
+- (vector_float4)fastColorForKey:(iTermColorMapKey)theKey {
+    if (theKey == kColorMapInvalid) {
+        return simd_make_float4(1, 0, 0, 1);
+    } else if (theKey >= kColorMap24bitBase) {
+        int n = theKey - kColorMap24bitBase;
+        int blue = (n & 0xff);
+        int green = (n >> 8) & 0xff;
+        int red = (n >> 16) & 0xff;
+        return simd_make_float4(red / 255.0,
+                                green / 255.0,
+                                blue / 255.0,
+                                1);
+    } else {
+        return (*_fastMap)[theKey];
+    }
+}
+
 - (void)setDimOnlyText:(BOOL)dimOnlyText {
     _dimOnlyText = dimOnlyText;
     [_delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
