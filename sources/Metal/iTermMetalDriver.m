@@ -829,10 +829,6 @@
     }];
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
         [commandBuffer presentDrawable:frameData.drawable];
-
-        int counter;
-        static int nextCounter;
-        counter = nextCounter++;
         __block BOOL completed = NO;
 
         iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
