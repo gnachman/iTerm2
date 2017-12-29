@@ -51,6 +51,10 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateBadgeTS;
 }
 
+- (BOOL)hasImage {
+    return _texture != nil;
+}
+
 - (void)setBadgeImage:(NSImage *)image context:(nonnull iTermMetalBufferPoolContext *)context {
     _size = image.size;
     _texture = [_metalRenderer textureFromImage:image context:context];

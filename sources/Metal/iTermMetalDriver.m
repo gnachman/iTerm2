@@ -248,6 +248,20 @@
     return frameData;
 }
 
+- (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
+    if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetTiled:NULL]) {
+        return YES;
+    }
+    if (!_badgeRenderer.rendererDisabled && [frameData.perFrameState badgeImage]) {
+        return YES;
+    }
+    if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
+        return YES;
+    }
+
+    return NO;
+}
+
 // Runs in private queue
 - (void)performPrivateQueueSetupForFrameData:(iTermMetalFrameData *)frameData
                                         view:(nonnull MTKView *)view {
@@ -255,6 +269,14 @@
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqBuildRowData ofBlock:^{
         [self addRowDataToFrameData:frameData];
     }];
+
+    // If we're rendering to an intermediate texture because there's something complicated
+    // behind text and we need to use the fancy subpixel antialiasing algorithm, create it now.
+    // This has to be done before updates so the copyBackgroundRenderer's `enabled` flag can be
+    // set properly.
+    if ([self shouldCreateIntermediateRenderPassDescriptor:frameData]) {
+        [frameData createIntermediateRenderPassDescriptor];
+    }
 
     // Set properties of the renderers for values that tend not to change very often and which
     // are used to create transient states. This must happen before creating transient states
@@ -339,8 +361,7 @@
     if (_copyBackgroundRenderer.rendererDisabled) {
         return;
     }
-    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetTiled:NULL];
-    _copyBackgroundRenderer.enabled = (backgroundImage != nil);
+    _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
 }
 
 - (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -350,13 +371,19 @@
     [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage context:frameData.framePoolContext];
 }
 
+- (void)updateBroadcastStripesRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_broadcastStripesRenderer.rendererDisabled) {
+        return;
+    }
+    _broadcastStripesRenderer.enabled = frameData.perFrameState.showBroadcastStripes;
+}
 
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
     [self updateTextRendererForFrameData:frameData];
     [self updateBackgroundImageRendererForFrameData:frameData];
     [self updateCopyBackgroundRendererForFrameData:frameData];
     [self updateBadgeRendererForFrameData:frameData];
-    // TODO:  background stripes would also control this.
+    [self updateBroadcastStripesRendererForFrameData:frameData];
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
@@ -382,15 +409,7 @@
             }
         }];
     };
-    VT100GridSize gridSize = frameData.gridSize;
-
-    if (_backgroundImageRenderer.image != nil) {
-        // We need frameData's intermediateRenderPassDescriptor to be initialized before creating
-        // tstate's for subsequent objects. This assertion is there to make sure the tState exists,
-        // with the assumption its IRPD is set prior to creation if it should exist.
-        assert(frameData.transientStates[NSStringFromClass(_backgroundImageRenderer.class)]);
-    }
-
+    const VT100GridSize gridSize = frameData.gridSize;
     iTermCellRenderConfiguration *cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:_viewportSize
                                                                                                            scale:frameData.scale
                                                                                                         cellSize:_cellSize
@@ -796,7 +815,11 @@
              renderEncoder:renderEncoder
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor]];
 
-    //        [_broadcastStripesRenderer drawWithRenderEncoder:renderEncoder];
+    [self drawRenderer:_broadcastStripesRenderer
+             frameData:frameData
+         renderEncoder:renderEncoder
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBroadcastStripes]];
+
     [self drawRenderer:_badgeRenderer
              frameData:frameData
          renderEncoder:renderEncoder
@@ -946,11 +969,6 @@
         frameData.transientStates[NSStringFromClass([_textRenderer class])];
     [textState didComplete];
 
-    iTermBackgroundImageRendererTransientState *backgroundImageState = frameData.transientStates[NSStringFromClass([_backgroundImageRenderer class])];
-    if (backgroundImageState != nil && !backgroundImageState.skipRenderer) {
-        [_backgroundImageRenderer didFinishWithTransientState:backgroundImageState];
-    }
-
     DLog(@"  Recording final stats");
     [frameData didCompleteWithAggregateStats:_stats];
 
@@ -1006,7 +1024,6 @@
 - (void)updateBackgroundImageRendererWithTransientState:(iTermBackgroundImageRendererTransientState *)tState
                                           withFrameData:(iTermMetalFrameData *)frameData {
     // TODO: Change the image if needed
-    frameData.intermediateRenderPassDescriptor = tState.intermediateRenderPassDescriptor;
 }
 
 - (void)updateBadgeRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {

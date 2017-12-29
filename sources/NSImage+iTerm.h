@@ -32,6 +32,7 @@
 - (NSData *)rawPixelsInRGBColorSpace;
 
 - (NSBitmapImageRep *)bitmapImageRep;
+- (NSImageRep *)bestRepresentationForScale:(CGFloat)scale;
 - (void)saveAsPNGTo:(NSString *)filename;
 
 @end
