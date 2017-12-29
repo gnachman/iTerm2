@@ -135,7 +135,7 @@ static NSInteger gNextFrameDataNumber;
     });
 }
 
-- (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block {
+- (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block {
     self.status = @"completion handler, waiting for dispatch";
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
     dispatch_async(queue, ^{
@@ -223,6 +223,18 @@ static NSInteger gNextFrameDataNumber;
 
 - (iTermPreciseTimerStats *)stats {
     return _stats;
+}
+
+- (void)enqueueDrawCallsWithBlock:(void (^)(void))block {
+#if ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS
+    [self dispatchToMainQueueForDrawing:^{
+        block();
+        [self willHandOffToGPU];
+    }];
+#else
+    [self measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:block];
+#endif
+    [self willHandOffToGPU];
 }
 
 @end

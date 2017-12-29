@@ -13,6 +13,14 @@
 #import <Metal/Metal.h>
 #import <simd/simd.h>
 
+// Perform most metal activities on a private queue? Relieves the main thread of most drawing
+// work when enabled.
+#define ENABLE_PRIVATE_QUEUE 1
+
+// It's not clear to me if dispatching to the main queue is actually necessary, but I'm leaving
+// this here so it's easy to switch back to doing so. It adds a ton of latency when enabled.
+#define ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS 0
+
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatEndToEnd,
 
@@ -98,10 +106,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block;
+#if ENABLE_PRIVATE_QUEUE
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
-- (void)dispatchToMainQueueForDrawing:(void (^)(void))block;
-- (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
-- (void)willHandOffToGPU;
+#endif
+- (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
+- (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;
 
 @end
