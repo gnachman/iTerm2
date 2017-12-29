@@ -213,15 +213,6 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     }
 
     NSError *error = NULL;
-#warning TODO: Reuse these
-    // From https://developer.apple.com/library/content/documentation/3DDrawing/Conceptual/MTLBestPracticesGuide/PersistentObjects.html
-    // Building a programmable pipeline involves an expensive evaluation of GPU state. You should
-    // build MTLRenderPipelineState and MTLComputePipelineState objects only once, then reuse them
-    // for every new render or compute command encoder you create. Do not build new pipelines for
-    // new command encoders. For an overview of building multiple pipelines asynchronously, see the
-    // Pipelines best practices.
-
-
     id<MTLRenderPipelineState> pipeline = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                                                   error:&error];
     ITDebugAssert(pipeline);
