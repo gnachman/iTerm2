@@ -14,6 +14,7 @@
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
+#import "iTermTextRendererTransientState.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
@@ -71,7 +72,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     vector_float4 _lastUnprocessedColor;
     BOOL _havePreviousForegroundColor;
     vector_float4 _previousForegroundColor;
-    NSMutableArray<NSData *> *_lines;
+    NSMutableArray<NSMutableData *> *_lines;
     NSMutableArray<NSIndexSet *> *_selectedIndexes;
     NSMutableDictionary<NSNumber *, NSData *> *_matches;
     NSMutableDictionary<NSNumber *, NSValue *> *_underlinedRanges;
@@ -114,6 +115,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     CGRect _badgeSourceRect;
     CGRect _badgeDestinationRect;
     CGRect _documentVisibleRect;
+    iTermMetalIMEInfo *_imeInfo;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -168,7 +170,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         const int width = _visibleRange.end.x - _visibleRange.start.x;
         for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
             screen_char_t *line = [screen getLineAtIndex:i];
-            [_lines addObject:[NSData dataWithBytes:line length:sizeof(screen_char_t) * width]];
+            [_lines addObject:[NSMutableData dataWithBytes:line length:sizeof(screen_char_t) * width]];
             [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
             NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
             if (findMatches) {
@@ -297,8 +299,111 @@ static NSColor *ColorForVector(vector_float4 v) {
         _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
         _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_nonAsciiFont.font.xHeight yOffset:0];
         _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
+
+        // Replace screen contents with input method editor.
+        if ([self hasMarkedText]) {
+            VT100GridCoord startCoord = drawingHelper.cursorCoord;
+            startCoord.y += drawingHelper.numberOfScrollbackLines - _visibleRange.start.y;
+            [self copyMarkedText:drawingHelper.markedText.string
+                  cursorLocation:drawingHelper.inputMethodSelectedRange.location
+                              to:drawingHelper.cursorCoord
+          ambiguousIsDoubleWidth:drawingHelper.ambiguousIsDoubleWidth
+                   normalization:drawingHelper.normalization
+                  unicodeVersion:drawingHelper.unicodeVersion
+                       gridWidth:drawingHelper.gridSize.width
+                numberOfIMELines:drawingHelper.numberOfIMELines];
+        }
     }
     return self;
+}
+
+- (void)copyMarkedText:(NSString *)str
+        cursorLocation:(int)cursorLocation
+                    to:(VT100GridCoord)startCoord
+ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+         normalization:(iTermUnicodeNormalization)normalization
+        unicodeVersion:(NSInteger)unicodeVersion
+             gridWidth:(int)gridWidth
+      numberOfIMELines:(int)numberOfIMELines {
+    const int maxLen = [str length] * kMaxParts;
+    screen_char_t buf[maxLen];
+    screen_char_t fg = {0}, bg = {0};
+    int len;
+    int cursorIndex = cursorLocation;
+    StringToScreenChars(str,
+                        buf,
+                        fg,
+                        bg,
+                        &len,
+                        ambiguousIsDoubleWidth,
+                        &cursorIndex,
+                        NULL,
+                        normalization,
+                        unicodeVersion);
+    VT100GridCoord coord = startCoord;
+    coord.y -= numberOfIMELines;
+    BOOL foundCursor = NO;
+    BOOL justWrapped = NO;
+    BOOL foundStart = NO;
+    _imeInfo = [[iTermMetalIMEInfo alloc] init];
+    for (int i = 0; i < len; i++) {
+        if (coord.y >= 0 && coord.y < _lines.count) {
+            if (i == cursorIndex) {
+                foundCursor = YES;
+                _imeInfo.cursorCoord = coord;
+            }
+            screen_char_t *line = (screen_char_t *)_lines[coord.y].mutableBytes;
+            screen_char_t c = buf[i];
+            c.foregroundColor = iTermIMEColor.x * 255;
+            c.fgGreen = iTermIMEColor.y * 255;
+            c.fgBlue = iTermIMEColor.z * 255;
+            c.foregroundColorMode = ColorMode24bit;
+
+            c.backgroundColor = ALTSEM_DEFAULT;
+            c.bgGreen = 0;
+            c.bgBlue = 0;
+            c.backgroundColorMode = ColorModeAlternate;
+
+            c.underline = YES;
+
+            if (i + 1 < len &&
+                coord.x == gridWidth -1 &&
+                line[i+1].code == DWC_RIGHT &&
+                !line[i+1].complexChar) {
+                // Bump DWC to start of next line instead of splitting it
+                c.code = ' ';
+                c.complexChar = NO;
+                i--;
+            } else {
+                if (!foundStart) {
+                    foundStart = YES;
+                    [_imeInfo setRangeStart:coord];
+                }
+                line[coord.x] = c;
+            }
+
+        }
+        justWrapped = NO;
+        coord.x++;
+        if (coord.x == gridWidth) {
+            coord.x = 0;
+            coord.y++;
+            justWrapped = YES;
+        }
+        [_imeInfo setRangeEnd:coord];
+    }
+
+    if (!foundCursor) {
+        if (justWrapped) {
+            _imeInfo.cursorCoord = VT100GridCoordMake(gridWidth, coord.y - 1);
+        } else {
+            _imeInfo.cursorCoord = coord;
+        }
+    }
+}
+
+- (nullable iTermMetalIMEInfo *)imeInfo {
+    return _imeInfo;
 }
 
 - (CGRect)badgeSourceRect {
@@ -910,7 +1015,6 @@ static NSColor *ColorForVector(vector_float4 v) {
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
     // the screen (which is just a sanity check, really).
-#warning TODO: Support marked text in metal renderer
     BOOL result = (![self hasMarkedText] &&
                    _cursorVisible &&
                    !hideCursorBecauseBlinking);

@@ -144,6 +144,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermBarCursorRenderer : iTermCursorRenderer
 @end
 
+@interface iTermIMECursorRenderer : iTermBarCursorRenderer
+@end
+
 @interface iTermBlockCursorRenderer : iTermCursorRenderer
 @end
 
@@ -159,6 +162,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)newBarCursorRendererWithDevice:(id<MTLDevice>)device {
     return [[iTermBarCursorRenderer alloc] initWithDevice:device];
+}
+
++ (instancetype)newIMECursorRendererWithDevice:(id<MTLDevice>)device {
+    return [[iTermIMECursorRenderer alloc] initWithDevice:device];
 }
 
 + (instancetype)newBlockCursorRendererWithDevice:(id<MTLDevice>)device {
@@ -273,6 +280,9 @@ NS_ASSUME_NONNULL_BEGIN
                                            poolContext:tState.poolContext];
 }
 
+@end
+
+@implementation iTermIMECursorRenderer
 @end
 
 @implementation iTermBlockCursorRenderer

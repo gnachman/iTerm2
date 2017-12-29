@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)newUnderlineCursorRendererWithDevice:(id<MTLDevice>)device;
 + (instancetype)newBarCursorRendererWithDevice:(id<MTLDevice>)device;
++ (instancetype)newIMECursorRendererWithDevice:(id<MTLDevice>)device;
 + (instancetype)newBlockCursorRendererWithDevice:(id<MTLDevice>)device;
 + (instancetype)newFrameCursorRendererWithDevice:(id<MTLDevice>)device;
 

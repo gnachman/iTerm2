@@ -30,6 +30,16 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) VT100GridCoord copyModeCursorCoord;
 @end
 
+@interface iTermMetalIMEInfo : NSObject
+
+@property (nonatomic) VT100GridCoord cursorCoord;
+@property (nonatomic) VT100GridCoordRange markedRange;
+
+- (void)setRangeStart:(VT100GridCoord)start;
+- (void)setRangeEnd:(VT100GridCoord)end;
+
+@end
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 
@@ -38,6 +48,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;
+@property (nonatomic, nullable, readonly) iTermMetalIMEInfo *imeInfo;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
