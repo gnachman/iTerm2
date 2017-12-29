@@ -225,34 +225,35 @@ static NSColor *ColorForVector(vector_float4 v) {
             smartCursorColor = [[iTermSmartCursorColor alloc] init];
             smartCursorColor.delegate = self;
         }
+
+        const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
         _cursorInfo = [[iTermMetalCursorInfo alloc] init];
         _cursorInfo.copyMode = drawingHelper.copyMode;
-        _cursorInfo.copyModeCursorCoord = drawingHelper.copyModeCursorCoord;
+        _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
+                                                             drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
         _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
-#warning TODO: blinking cursor
         NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
         if ([self shouldDrawCursor] &&
             textView.cursorVisible &&
             _visibleRange.start.y <= lineWithCursor &&
             lineWithCursor + 1 < _visibleRange.end.y) {
-            const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
             _cursorInfo.cursorVisible = YES;
             _cursorInfo.type = drawingHelper.cursorType;
             _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                    textView.dataSource.cursorY - 1 - offset);
-#warning handle frame cursor, text color, smart cursor color, and other fancy cursors of various kinds
             _cursorInfo.cursorColor = [self backgroundColorForCursor];
             if (_cursorInfo.type == CURSOR_BOX) {
                 _cursorInfo.shouldDrawText = YES;
                 const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].bytes;
                 screen_char_t screenChar = line[_cursorInfo.coord.x];
                 const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
-                _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
-                                                           wantBackground:YES
-                                                                    muted:NO];
                 if (!focused) {
+                    _cursorInfo.shouldDrawText = NO;
                     _cursorInfo.frameOnly = YES;
                 } else if (smartCursorColor) {
+                    _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
+                                                               wantBackground:YES
+                                                                        muted:NO];
                     _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
                     NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
                                                                 green:_cursorInfo.textColor.y
@@ -267,6 +268,18 @@ static NSColor *ColorForVector(vector_float4 v) {
                                                              components[1],
                                                              components[2],
                                                              components[3]);
+                } else {
+                    if (_reverseVideo) {
+                        _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
+                    } else {
+                        _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
+                                                             green:0
+                                                              blue:0
+                                                         colorMode:ColorModeAlternate
+                                                              bold:NO
+                                                             faint:NO
+                                                      isBackground:NO];
+                    }
                 }
             }
         } else {
@@ -478,11 +491,14 @@ static NSColor *ColorForVector(vector_float4 v) {
     *drawableGlyphsPtr = lastDrawableGlyph + 1;
 
     // Tweak the text color for the cell that has a box cursor.
-    if (_cursorInfo.cursorVisible &&
+    if (row == _cursorInfo.coord.y &&
         _cursorInfo.type == CURSOR_BOX &&
-        row == _cursorInfo.coord.y) {
+        _cursorInfo.cursorVisible &&
+        !_cursorInfo.frameOnly) {
         vector_float4 cursorTextColor;
-        if (_reverseVideo) {
+        if (_cursorInfo.shouldDrawText) {
+            cursorTextColor = _cursorInfo.textColor;
+        } else if (_reverseVideo) {
             cursorTextColor = VectorForColor([_colorMap colorForKey:kColorMapBackground]);
         } else {
             cursorTextColor = [self colorForCode:ALTSEM_CURSOR
@@ -493,7 +509,7 @@ static NSColor *ColorForVector(vector_float4 v) {
                                            faint:NO
                                     isBackground:NO];
         }
-        attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor.x;
+        attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
         attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
     }
 }

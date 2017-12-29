@@ -71,7 +71,6 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
 }
 
 - (void)dealloc {
-#warning TODO: Look for memory leaks in the C++ objects
     for (auto pair : _fixups) {
         delete pair.second;
     }

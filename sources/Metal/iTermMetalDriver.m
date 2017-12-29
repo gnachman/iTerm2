@@ -640,7 +640,44 @@
     iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
 }
 
-- (void)drawCursorWithFrameData:(iTermMetalFrameData *)frameData renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
+- (void)drawCursorBeforeTextWithFrameData:(iTermMetalFrameData *)frameData
+                            renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
+    iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
+
+    if (!cursorInfo.copyMode && cursorInfo.cursorVisible) {
+        switch (cursorInfo.type) {
+            case CURSOR_UNDERLINE:
+                if (frameData.intermediateRenderPassDescriptor) {
+                    [self drawCellRenderer:_underlineCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder
+                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                }
+                break;
+            case CURSOR_BOX:
+                if (!cursorInfo.frameOnly) {
+                    [self drawCellRenderer:_blockCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder
+                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                }
+                break;
+            case CURSOR_VERTICAL:
+                if (frameData.intermediateRenderPassDescriptor) {
+                    [self drawCellRenderer:_barCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder
+                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                }
+                break;
+            case CURSOR_DEFAULT:
+                break;
+        }
+    }
+}
+
+- (void)drawCursorAfterTextWithFrameData:(iTermMetalFrameData *)frameData
+                           renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder {
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
 
     if (cursorInfo.copyMode) {
@@ -651,10 +688,12 @@
     } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE:
-                [self drawCellRenderer:_underlineCursorRenderer
-                             frameData:frameData
-                         renderEncoder:renderEncoder
-                                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                if (!frameData.intermediateRenderPassDescriptor) {
+                    [self drawCellRenderer:_underlineCursorRenderer
+                                 frameData:frameData
+                             renderEncoder:renderEncoder
+                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                }
                 break;
             case CURSOR_BOX:
                 if (cursorInfo.frameOnly) {
@@ -662,18 +701,15 @@
                                  frameData:frameData
                              renderEncoder:renderEncoder
                                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
-                } else {
-                    [self drawCellRenderer:_blockCursorRenderer
+                }
+                break;
+            case CURSOR_VERTICAL:
+                if (!frameData.intermediateRenderPassDescriptor) {
+                    [self drawCellRenderer:_barCursorRenderer
                                  frameData:frameData
                              renderEncoder:renderEncoder
                                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
                 }
-                break;
-            case CURSOR_VERTICAL:
-                [self drawCellRenderer:_barCursorRenderer
-                             frameData:frameData
-                         renderEncoder:renderEncoder
-                                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
                 break;
             case CURSOR_DEFAULT:
                 break;
@@ -705,10 +741,8 @@
     //        [_cursorGuideRenderer drawWithRenderEncoder:renderEncoder];
     //
 
-    [self drawCursorWithFrameData:frameData
-                    renderEncoder:renderEncoder];
-
-    //        [_copyModeCursorRenderer drawWithRenderEncoder:renderEncoder];
+    [self drawCursorBeforeTextWithFrameData:frameData
+                              renderEncoder:renderEncoder];
 
     if (frameData.intermediateRenderPassDescriptor) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture ofBlock:^{
@@ -834,6 +868,9 @@
                  frameData:frameData
              renderEncoder:renderEncoder
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
+
+    [self drawCursorAfterTextWithFrameData:frameData
+                             renderEncoder:renderEncoder];
 
     //        [_markRenderer drawWithRenderEncoder:renderEncoder];
 

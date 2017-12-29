@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermCopyModeCursorRendererTransientState()
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic, weak) iTermCopyModeCursorRenderer *renderer;
+@property (nonatomic, readonly) CGSize size;
 @end
 
 @interface iTermFrameCursorRendererTransientState : iTermCursorRendererTransientState
@@ -37,8 +38,14 @@ NS_ASSUME_NONNULL_BEGIN
     NSColor *_color;
 }
 
+- (CGSize)size {
+    CGSize size = self.cellConfiguration.cellSize;
+    size.width += 1;
+    return size;
+}
+
 - (NSImage *)newImage {
-    NSImage *image = [[NSImage alloc] initWithSize:self.cellConfiguration.cellSize];
+    NSImage *image = [[NSImage alloc] initWithSize:self.size];
 
     [image lockFocus];
     const CGFloat heightFraction = 1 / 3.0;
@@ -61,7 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
     [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMinY(cursorRect))];
     [path lineToPoint:NSMakePoint(NSMaxX(cursorRect), NSMaxY(cursorRect))];
     [path lineToPoint:NSMakePoint(NSMinX(cursorRect), NSMaxY(cursorRect))];
-    [self.color set];
+    [_color set];
     [path fill];
 
     [[NSColor blackColor] set];
@@ -74,16 +81,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setSelecting:(BOOL)selecting {
     _selecting = selecting;
-    NSColor *color = selecting ? [NSColor colorWithRed:0xc1 / 255.0 green:0xde / 255.0 blue:0xff / 255.0 alpha:1] : [NSColor whiteColor];
+    _color = selecting ? [NSColor colorWithRed:0xc1 / 255.0 green:0xde / 255.0 blue:0xff / 255.0 alpha:1] : [NSColor whiteColor];
     _texture = nil;
 
     if (_renderer.cachedTexture == nil ||
-        ![color isEqual:_renderer.cachedColor] ||
+        ![_color isEqual:_renderer.cachedColor] ||
         !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize)) {
         _renderer.cachedTexture = [_renderer.cellRenderer textureFromImage:[self newImage]
                                                                    context:self.poolContext];
         _renderer.cachedTextureSize = self.cellConfiguration.cellSize;
-        _renderer.cachedColor = color;
+        _renderer.cachedColor = _color;
     }
     _texture = _renderer.cachedTexture;
 }
@@ -104,6 +111,10 @@ NS_ASSUME_NONNULL_BEGIN
     rect = NSInsetRect(rect, self.cellConfiguration.scale / 2, self.cellConfiguration.scale / 2);
     NSBezierPath *path = [NSBezierPath bezierPathWithRect:rect];
     [path setLineWidth:self.cellConfiguration.scale];
+
+    [[NSColor clearColor] setFill];
+    [path fill];
+
     [self.color setStroke];
     [path stroke];
 
@@ -113,6 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setColor:(NSColor *)color {
+    [super setColor:color];
     if (_renderer.cachedTexture == nil ||
         ![color isEqual:_renderer.cachedColor] ||
         !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize)) {
@@ -349,6 +361,8 @@ NS_ASSUME_NONNULL_BEGIN
         },
         .color = { 0, 0, 0, 0 }
     };
+    // This cursor is a little larger than a cell.
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.size poolContext:tState.poolContext];
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
