@@ -25,8 +25,6 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
-#define ENABLE_PRIVATE_QUEUE 1
-
 @implementation iTermMetalCursorInfo
 @end
 
@@ -287,15 +285,10 @@
     }
 #endif
 
-    // It's not clear to me if dispatching to the main queue is actually necessary, but I'm leaving
-    // this here so it's easy to switch back to doing so. It adds a ton of latency.
-//    [frameData dispatchToMainQueueForDrawing:^{
-        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:^{
-            [self enequeueDrawCallsForFrameData:frameData
-                                  commandBuffer:commandBuffer];
-        }];
-        [frameData willHandOffToGPU];
-//    }];
+    [frameData enqueueDrawCallsWithBlock:^{
+        [self enequeueDrawCallsForFrameData:frameData
+                              commandBuffer:commandBuffer];
+    }];
 }
 
 - (void)updateTextRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -850,9 +843,9 @@
                 }
             };
 #if ENABLE_PRIVATE_QUEUE
-            [frameData dispatchToPrivateQueue:_queue forCompletion:block];
+            [frameData dispatchToQueue:_queue forCompletion:block];
 #else
-            [frameData dispatchToPrivateQueue:dispatch_get_main_queue() forCompletion:block];
+            [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:block];
 #endif
         }];
 
