@@ -596,8 +596,6 @@ static NSColor *ColorForVector(vector_float4 v) {
     return color;
 }
 
-#warning Remember to add support for blinking text.
-
 - (vector_float4)colorForCode:(int)theIndex
                         green:(int)green
                          blue:(int)blue
