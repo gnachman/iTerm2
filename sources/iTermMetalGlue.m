@@ -846,23 +846,13 @@ static NSColor *ColorForVector(vector_float4 v) {
                                                  }];
 }
 
-// TODO: This is copypasta
 - (vector_float4)fastCursorColorForCharacter:(screen_char_t)screenChar
                               wantBackground:(BOOL)wantBackgroundColor
                                        muted:(BOOL)muted {
-    BOOL isBackground = wantBackgroundColor;
+    BOOL isBackground = [iTermTextDrawingHelper cursorUsesBackgroundColorForScreenChar:screenChar
+                                                                        wantBackground:wantBackgroundColor
+                                                                          reverseVideo:_reverseVideo];
 
-    if (_reverseVideo) {
-        if (wantBackgroundColor &&
-            screenChar.backgroundColorMode == ColorModeAlternate &&
-            screenChar.backgroundColor == ALTSEM_DEFAULT) {
-            isBackground = NO;
-        } else if (!wantBackgroundColor &&
-                   screenChar.foregroundColorMode == ColorModeAlternate &&
-                   screenChar.foregroundColor == ALTSEM_DEFAULT) {
-            isBackground = YES;
-        }
-    }
     vector_float4 color;
     if (wantBackgroundColor) {
         color = [self colorForCode:screenChar.backgroundColor

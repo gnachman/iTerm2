@@ -2836,22 +2836,30 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     [context restoreGraphicsState];
 }
 
-- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
-                      wantBackground:(BOOL)wantBackgroundColor
-                               muted:(BOOL)muted {
-    BOOL isBackground = wantBackgroundColor;
-
-    if (_reverseVideo) {
++ (BOOL)cursorUsesBackgroundColorForScreenChar:(screen_char_t)screenChar
+                                wantBackground:(BOOL)wantBackgroundColor
+                                  reverseVideo:(BOOL)reverseVideo {
+    if (reverseVideo) {
         if (wantBackgroundColor &&
             screenChar.backgroundColorMode == ColorModeAlternate &&
             screenChar.backgroundColor == ALTSEM_DEFAULT) {
-            isBackground = NO;
+            return NO;
         } else if (!wantBackgroundColor &&
                    screenChar.foregroundColorMode == ColorModeAlternate &&
                    screenChar.foregroundColor == ALTSEM_DEFAULT) {
-            isBackground = YES;
+            return YES;
         }
     }
+
+    return wantBackgroundColor;
+}
+
+- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
+                      wantBackground:(BOOL)wantBackgroundColor
+                               muted:(BOOL)muted {
+    BOOL isBackground = [iTermTextDrawingHelper cursorUsesBackgroundColorForScreenChar:screenChar
+                                                                        wantBackground:wantBackgroundColor
+                                                                          reverseVideo:_reverseVideo];
     NSColor *color;
     if (wantBackgroundColor) {
         color = [_delegate drawingHelperColorForCode:screenChar.backgroundColor

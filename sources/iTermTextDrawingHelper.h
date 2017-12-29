@@ -285,6 +285,11 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                       visibleSize:(NSSize)visibleSize
                     sourceRectPtr:(NSRect *)sourceRectPtr;
 
+// Indicates whether the cursor should take its color from the background (if YES) or text color (if NO).
++ (BOOL)cursorUsesBackgroundColorForScreenChar:(screen_char_t)screenChar
+                                wantBackground:(BOOL)wantBackgroundColor
+                                  reverseVideo:(BOOL)reverseVideo;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
