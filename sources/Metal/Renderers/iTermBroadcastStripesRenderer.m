@@ -22,10 +22,20 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
+        iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+        // I tried to make this the same as NSCompositeSourceOver. It's not quite right but I have
+        // no idea why.
+        blending.rgbBlendOperation = MTLBlendOperationAdd;
+        blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // because it's premultiplied
+        blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+        blending.alphaBlendOperation = MTLBlendOperationMax;
+        blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
+        blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBroadcastStripesVertexShader"
                                                fragmentFunctionName:@"iTermBroadcastStripesFragmentShader"
-                                                           blending:[[iTermMetalBlending alloc] init]
+                                                           blending:blending
                                                 transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
         NSImage *image = [NSImage imageNamed:@"BackgroundStripes"];
         _size = image.size;
@@ -69,11 +79,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBroadcastStripesRendererTransientState *)tState {
     tState.texture = _texture;
-    tState.size = _size;
+    CGSize size = _size;
+    size.width *= tState.configuration.scale;
+    size.height *= tState.configuration.scale;
+    tState.size = size;
 
     const vector_uint2 viewportSize = tState.configuration.viewportSize;
-    const float maxX = viewportSize.x / _size.width;
-    const float maxY = viewportSize.y / _size.height;
+    const float maxX = viewportSize.x / size.width;
+    const float maxY = viewportSize.y / size.height;
     const iTermVertex vertices[] = {
         // Pixel Positions, Texture Coordinates
         { { viewportSize.x, 0 },              { maxX, 0 } },

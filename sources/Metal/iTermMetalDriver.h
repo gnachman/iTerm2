@@ -49,6 +49,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;
 @property (nonatomic, nullable, readonly) iTermMetalIMEInfo *imeInfo;
+@property (nonatomic, readonly) BOOL showBroadcastStripes;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes

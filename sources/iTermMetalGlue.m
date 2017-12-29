@@ -116,6 +116,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     CGRect _badgeDestinationRect;
     CGRect _documentVisibleRect;
     iTermMetalIMEInfo *_imeInfo;
+    BOOL _showBroadcastStripes;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -313,6 +314,8 @@ static NSColor *ColorForVector(vector_float4 v) {
                        gridWidth:drawingHelper.gridSize.width
                 numberOfIMELines:drawingHelper.numberOfIMELines];
         }
+
+        _showBroadcastStripes = drawingHelper.showStripes;
     }
     return self;
 }
@@ -400,6 +403,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             _imeInfo.cursorCoord = coord;
         }
     }
+}
+
+- (BOOL)showBroadcastStripes {
+    return _showBroadcastStripes;
 }
 
 - (nullable iTermMetalIMEInfo *)imeInfo {

@@ -30,6 +30,7 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
 
     iTermMetalFrameDataStatDispatchToPrivateQueue,
     iTermMetalFrameDataStatPqBuildRowData,
+    iTermMetalFrameDataStatPqCreateIntermediate,
     iTermMetalFrameDataStatPqUpdateRenderers,
     iTermMetalFrameDataStatPqCreateTransientStates,
 
@@ -52,6 +53,7 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawMargin,
     iTermMetalFrameDataStatPqEnqueueDrawBackgroundImage,
     iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor,
+    iTermMetalFrameDataStatPqEnqueueBroadcastStripes,
     iTermMetalFrameDataStatPqEnqueueBadge,
     iTermMetalFrameDataStatPqEnqueueDrawCursor,
     iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture,
@@ -99,7 +101,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) iTermMetalBufferPoolContext *framePoolContext;
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
-// It will have a texture identical to the drawable's texture.
+// It will have a texture identical to the drawable's texture. Invoke createIntermediateRenderPassDescriptor
+// to create this if it's nil.
 @property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 
 - (instancetype)initWithView:(MTKView *)view NS_DESIGNATED_INITIALIZER;
@@ -109,6 +112,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #if ENABLE_PRIVATE_QUEUE
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 #endif
+- (void)createIntermediateRenderPassDescriptor;
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;

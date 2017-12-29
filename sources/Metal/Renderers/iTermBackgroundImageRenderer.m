@@ -4,50 +4,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermTexturePool : NSObject
-- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
-- (void)returnTexture:(id<MTLTexture>)texture;
-@end
-
-@implementation iTermTexturePool {
-    NSMutableArray<id<MTLTexture>> *_textures;
-    vector_uint2 _size;
-}
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _textures = [NSMutableArray array];
-    }
-    return self;
-}
-
-- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size {
-    _size = size;
-    [_textures removeObjectsAtIndexes:[_textures indexesOfObjectsPassingTest:^BOOL(id<MTLTexture>  _Nonnull texture, NSUInteger idx, BOOL * _Nonnull stop) {
-        return (texture.width != _size.x || texture.height != _size.y);
-    }]];
-    if (_textures.count) {
-        id<MTLTexture> result = _textures.firstObject;
-        [_textures removeObjectAtIndex:0];
-        return result;
-    } else {
-        return nil;
-    }
-}
-
-- (void)returnTexture:(id<MTLTexture>)texture {
-    if (texture.width == _size.x && texture.height == _size.y) {
-        [_textures addObject:texture];
-    }
-}
-
-@end
-
 @interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic) BOOL tiled;
-@property (nonatomic) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 @end
 
 @implementation iTermBackgroundImageRendererTransientState
@@ -63,14 +22,12 @@ NS_ASSUME_NONNULL_BEGIN
 
     BOOL _tiled;
     NSImage *_image;
-    iTermTexturePool *_texturePool;
     id<MTLTexture> _texture;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-        _texturePool = [[iTermTexturePool alloc] init];
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBackgroundImageVertexShader"
                                                fragmentFunctionName:@"iTermBackgroundImageFragmentShader"
@@ -122,35 +79,10 @@ NS_ASSUME_NONNULL_BEGIN
     return tState;
 }
 
-- (void)didFinishWithTransientState:(iTermBackgroundImageRendererTransientState *)tState {
-    [_texturePool returnTexture:tState.intermediateRenderPassDescriptor.colorAttachments[0].texture];
-}
-
-- (void)initializeColorAttachmentOfSize:(vector_uint2)size inRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
-    MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
-    colorAttachment.storeAction = MTLStoreActionStore;
-    colorAttachment.texture = [_texturePool requestTextureOfSize:size];
-    if (!colorAttachment.texture) {
-        // Allocate a new texture.
-        MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
-                                                                                                     width:size.x
-                                                                                                    height:size.y
-                                                                                                 mipmapped:NO];
-        textureDescriptor.usage = (MTLTextureUsageShaderRead |
-                                   MTLTextureUsageShaderWrite |
-                                   MTLTextureUsageRenderTarget |
-                                   MTLTextureUsagePixelFormatView);
-        colorAttachment.texture = [_metalRenderer.device newTextureWithDescriptor:textureDescriptor];
-        colorAttachment.texture.label = @"Intermediate Texture";
-    }
-}
-
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
     tState.tiled = _tiled;
 
-//    NSImageRep *rep = _image.representations.firstObject;
-//    const CGSize nativeTextureSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
     const CGSize nativeTextureSize = NSMakeSize(_image.size.width * tState.configuration.scale,
                                                 _image.size.height * tState.configuration.scale);
     const CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
@@ -175,14 +107,6 @@ NS_ASSUME_NONNULL_BEGIN
     tState.vertexBuffer = [_metalRenderer.verticesPool requestBufferFromContext:tState.poolContext
                                                                       withBytes:vertices
                                                                  checkIfChanged:YES];
-
-    tState.texture = _texture;
-
-    if (!tState.skipRenderer) {
-        tState.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-        [self initializeColorAttachmentOfSize:tState.configuration.viewportSize
-                       inRenderPassDescriptor:tState.intermediateRenderPassDescriptor];
-    }
 }
 
 @end

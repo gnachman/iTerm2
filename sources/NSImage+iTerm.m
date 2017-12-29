@@ -196,4 +196,21 @@
     return [rep autorelease];
 }
 
+- (NSImageRep *)bestRepresentationForScale:(CGFloat)desiredScale {
+    NSImageRep *best = nil;
+    double bestScale = 0;
+    CGFloat width = self.size.width;
+    if (width <= 0) {
+        return nil;
+    }
+    for (NSImageRep *rep in self.representations) {
+        const double scale = best.pixelsWide / width;
+        if (!best || fabs(desiredScale - scale) < fabs(desiredScale - bestScale)) {
+            best = rep;
+            bestScale = scale;
+        }
+    }
+    return best;
+}
+
 @end

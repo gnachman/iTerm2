@@ -4,7 +4,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState : iTermMetalRendererTransientState
-@property (nonatomic, readonly) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
 @end
 
 @interface iTermBackgroundImageRenderer : NSObject<iTermMetalRenderer>
@@ -18,8 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setImage:(NSImage *)image
            tiled:(BOOL)tiled
          context:(nullable iTermMetalBufferPoolContext *)context;
-
-- (void)didFinishWithTransientState:(iTermBackgroundImageRendererTransientState *)tState;
 
 @end
 
