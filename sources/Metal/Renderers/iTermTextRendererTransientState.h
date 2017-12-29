@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern const vector_float4 iTermIMEColor;
+
 @class iTermCharacterBitmap;
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -27,6 +29,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
           attributesData:(NSData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(NSData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
+       markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
 - (void)willDraw;

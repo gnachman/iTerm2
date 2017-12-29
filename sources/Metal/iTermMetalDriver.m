@@ -30,6 +30,25 @@
 @implementation iTermMetalCursorInfo
 @end
 
+@implementation iTermMetalIMEInfo
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p cursor=%@ range=%@>",
+            NSStringFromClass(self.class),
+            self,
+            VT100GridCoordDescription(_cursorCoord),
+            VT100GridCoordRangeDescription(_markedRange)];
+}
+- (void)setRangeStart:(VT100GridCoord)start {
+    _markedRange.start = start;
+}
+
+- (void)setRangeEnd:(VT100GridCoord)end {
+    _markedRange.end = end;
+}
+
+@end
+
 @interface iTermMetalDriver()
 // This indicates if a draw call was made while busy. When we stop being busy
 // and this is set, then we must schedule another draw.
@@ -47,6 +66,7 @@
     iTermCursorGuideRenderer *_cursorGuideRenderer;
     iTermCursorRenderer *_underlineCursorRenderer;
     iTermCursorRenderer *_barCursorRenderer;
+    iTermCursorRenderer *_imeCursorRenderer;
     iTermCursorRenderer *_blockCursorRenderer;
     iTermCursorRenderer *_frameCursorRenderer;
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
@@ -92,6 +112,7 @@
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
         _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:mtkView.device];
         _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:mtkView.device];
+        _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:mtkView.device];
         _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:mtkView.device];
         _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:mtkView.device];
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
@@ -436,7 +457,8 @@
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (_underlineCursorRenderer.rendererDisabled &&
         _barCursorRenderer.rendererDisabled &&
-        _blockCursorRenderer.rendererDisabled) {
+        _blockCursorRenderer.rendererDisabled &&
+        _imeCursorRenderer.rendererDisabled) {
         return;
     }
 
@@ -488,6 +510,16 @@
                 break;
         }
     }
+
+    iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
+    if (imeInfo) {
+        iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_imeCursorRenderer class])];
+        tState.coord = imeInfo.cursorCoord;
+        tState.color = [NSColor colorWithSRGBRed:iTermIMEColor.x
+                                           green:iTermIMEColor.y
+                                            blue:iTermIMEColor.z
+                                           alpha:iTermIMEColor.w];
+    }
 }
 
 - (void)populateBadgeRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -524,7 +556,38 @@
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState =
         frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
+
+    iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
+
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSRange markedRangeOnLine = NSMakeRange(NSNotFound, 0);
+        if (imeInfo &&
+            rowData.y >= imeInfo.markedRange.start.y &&
+            rowData.y <= imeInfo.markedRange.end.y) {
+            // This line contains at least part of the marked range
+            if (rowData.y == imeInfo.markedRange.start.y) {
+                // Makred range starts on this line
+                if (rowData.y == imeInfo.markedRange.end.y) {
+                    // Marked range starts and ends on this line.
+                    markedRangeOnLine = NSMakeRange(imeInfo.markedRange.start.x,
+                                                    imeInfo.markedRange.end.x - imeInfo.markedRange.start.x);
+                } else {
+                    // Marked line begins on this line and ends later
+                    markedRangeOnLine = NSMakeRange(imeInfo.markedRange.start.x,
+                                                    frameData.gridSize.width - imeInfo.markedRange.start.x);
+                }
+            } else {
+                // Marked range started on a prior line
+                if (rowData.y == imeInfo.markedRange.end.y) {
+                    // Marked range ends on this line
+                    markedRangeOnLine = NSMakeRange(0, imeInfo.markedRange.end.x);
+                } else {
+                    // Marked range ends on a later line
+                    markedRangeOnLine = NSMakeRange(0, frameData.gridSize.width);
+                }
+            }
+        }
+
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
 #if ENABLE_ONSCREEN_STATS
         if (idx == 0) {
@@ -551,6 +614,7 @@
                          attributesData:rowData.attributesData
                                     row:rowData.y
                  backgroundColorRLEData:rowData.backgroundColorRLEData
+                      markedRangeOnLine:markedRangeOnLine
                                 context:textState.poolContext
                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
                                    return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
@@ -714,6 +778,12 @@
             case CURSOR_DEFAULT:
                 break;
         }
+    }
+    if (frameData.perFrameState.imeInfo) {
+        [self drawCellRenderer:_imeCursorRenderer
+                     frameData:frameData
+                 renderEncoder:renderEncoder
+                          stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
     }
 }
 
@@ -922,6 +992,7 @@
                renderer == _broadcastStripesRenderer ||
                renderer == _underlineCursorRenderer ||
                renderer == _barCursorRenderer ||
+               renderer == _imeCursorRenderer ||
                renderer == _blockCursorRenderer ||
                renderer == _frameCursorRenderer ||
                renderer == _copyBackgroundRenderer) {
@@ -974,6 +1045,7 @@
               _cursorGuideRenderer,
               _underlineCursorRenderer,
               _barCursorRenderer,
+              _imeCursorRenderer,
               _blockCursorRenderer,
               _frameCursorRenderer,
               _copyModeCursorRenderer ];

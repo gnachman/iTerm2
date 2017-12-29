@@ -14,6 +14,7 @@
 
 #import <MetalKit/MetalKit.h>
 
+#warning If there are two sessions using metal this fails. The histograms should be per metal driver.
 static NSMutableDictionary *sHistograms;
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {

@@ -15,6 +15,8 @@
 
 #include <map>
 
+const vector_float4 iTermIMEColor = simd_make_float4(1, 1, 0, 1);
+
 namespace iTerm2 {
     class TexturePage;
 }
@@ -215,7 +217,8 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                 h:(float)h
                         cellWidth:(float)cellWidth
                        asciiAttrs:(iTermASCIITextureAttributes)asciiAttrs
-                       attributes:(const iTermMetalGlyphAttributes *)attributes {
+                       attributes:(const iTermMetalGlyphAttributes *)attributes
+                    inMarkedRange:(BOOL)inMarkedRange {
     iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
 
     iTermASCIITextureParts parts = texture.parts[(size_t)code];
@@ -223,6 +226,16 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
     if (attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
         underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[x].foregroundColor;
     }
+
+    iTermMetalGlyphAttributesUnderline underlineStyle = attributes[x].underlineStyle;
+    vector_float4 textColor = attributes[x].foregroundColor;
+    if (inMarkedRange) {
+        // Marked range gets a yellow underline.
+        underlineColor = iTermIMEColor;
+        textColor = iTermIMEColor;
+        underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+    }
+
     // Add PIU for left overflow
     iTermTextPIU *piu;
     if (parts & iTermASCIITexturePartsLeft) {
@@ -237,7 +250,7 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                                               x - 1,
                                                               yOffset,
                                                               iTermASCIITextureOffsetLeft,
-                                                              attributes[x].foregroundColor,
+                                                              textColor,
                                                               attributes[x - 1].backgroundColor,
                                                               iTermMetalGlyphAttributesUnderlineNone,
                                                               underlineColor);
@@ -252,7 +265,7 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                                               x - 1,
                                                               yOffset,
                                                               iTermASCIITextureOffsetLeft,
-                                                              attributes[x].foregroundColor,
+                                                              textColor,
                                                               _defaultBackgroundColor,
                                                               iTermMetalGlyphAttributesUnderlineNone,
                                                               underlineColor);
@@ -272,9 +285,9 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                                       x,
                                                       yOffset,
                                                       iTermASCIITextureOffsetCenter,
-                                                      attributes[x].foregroundColor,
+                                                      textColor,
                                                       attributes[x].backgroundColor,
-                                                      attributes[x].underlineStyle,
+                                                      underlineStyle,
                                                       underlineColor);
     if (_colorModels) {
         piu->colorModelIndex = [self colorModelIndexForPIU:piu];
@@ -333,6 +346,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
           attributesData:(NSData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(nonnull NSData *)backgroundColorRLEData
+       markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     DLog(@"BEGIN setGlyphKeysData for %@", self);
@@ -347,7 +361,15 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
 
     std::map<int, int> lastRelations;
     BOOL havePrevious = NO;
+    BOOL inMarkedRange = NO;
+
     for (int x = 0; x < count; x++) {
+        if (x == markedRangeOnLine.location) {
+            inMarkedRange = YES;
+        } else if (inMarkedRange && x == NSMaxRange(markedRangeOnLine)) {
+            inMarkedRange = NO;
+        }
+
         if (!glyphKeys[x].drawable) {
             continue;
         }
@@ -362,7 +384,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                           h:asciiCellSize.y
                                   cellWidth:cellWidth
                                  asciiAttrs:asciiAttrs
-                                 attributes:attributes];
+                                 attributes:attributes
+                              inMarkedRange:inMarkedRange];
             havePrevious = NO;
         } else {
             // Non-ASCII slower path
@@ -395,8 +418,14 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                       origin.y * reciprocal_atlas_size.y);
                 piu->textColor = attributes[x].foregroundColor;
                 piu->remapColors = !entry->_is_emoji;
-                piu->underlineStyle = attributes[x].underlineStyle;
-                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+                if (inMarkedRange) {
+                    piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+                    piu->underlineColor = iTermIMEColor;
+                    piu->textColor = iTermIMEColor;
+                } else {
+                    piu->underlineStyle = attributes[x].underlineStyle;
+                    piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+                }
 
                 // Set color info or queue for fixup since color info may not exist yet.
                 if (entry->_part == iTermTextureMapMiddleCharacterPart) {
