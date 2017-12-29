@@ -14,7 +14,6 @@
 
 #import <MetalKit/MetalKit.h>
 
-#warning If there are two sessions using metal this fails. The histograms should be per metal driver.
 static NSMutableDictionary *sHistograms;
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
@@ -191,24 +190,28 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)mergeHistogram:(iTermHistogram *)histogramToMerge name:(NSString *)name {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sHistograms = [[NSMutableDictionary alloc] init];
-    });
-    iTermHistogram *hist = sHistograms[name];
-    if (!hist) {
-        hist = [[iTermHistogram alloc] init];
-        sHistograms[name] = hist;
+    @synchronized(sHistograms) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            sHistograms = [[NSMutableDictionary alloc] init];
+        });
+        iTermHistogram *hist = sHistograms[name];
+        if (!hist) {
+            hist = [[iTermHistogram alloc] init];
+            sHistograms[name] = hist;
+        }
+        [hist mergeFrom:histogramToMerge];
     }
-    [hist mergeFrom:histogramToMerge];
 }
 
 - (NSString *)histogramsString {
     NSMutableString *result = [NSMutableString string];
-    [[sHistograms.allKeys sortedArrayUsingSelector:@selector(compare:)] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
-        iTermHistogram *histogram = sHistograms[name];
-        [result appendFormat:@"%@:\n%@\n\n", name, [histogram stringValue]];
-    }];
+    @synchronized(sHistograms) {
+        [[sHistograms.allKeys sortedArrayUsingSelector:@selector(compare:)] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
+            iTermHistogram *histogram = sHistograms[name];
+            [result appendFormat:@"%@:\n%@\n\n", name, [histogram stringValue]];
+        }];
+    }
     return result;
 }
 
