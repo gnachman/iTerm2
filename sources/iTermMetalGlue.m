@@ -906,32 +906,31 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 #pragma mark - Cursor Logic
 
-#warning TODO: This is copypasta
-
 - (BOOL)shouldDrawCursor {
-    BOOL shouldShowCursor = [self shouldShowCursor];
+    BOOL hideCursorBecauseBlinking = [self hideCursorBecauseBlinking];
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
     // the screen (which is just a sanity check, really).
+#warning TODO: Support marked text in metal renderer
     BOOL result = (![self hasMarkedText] &&
                    _cursorVisible &&
-                   shouldShowCursor);
-    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, result=%@",
-         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, @(result));
+                   !hideCursorBecauseBlinking);
+    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, hideCursorBecauseBlinking=%d, result=%@",
+         (int)[self hasMarkedText], (int)_cursorVisible, (int)hideCursorBecauseBlinking, @(result));
     return result;
 }
 
-- (BOOL)shouldShowCursor {
+- (BOOL)hideCursorBecauseBlinking {
     if (_cursorBlinking &&
         _isInKeyWindow &&
         _textViewIsActiveSession &&
         _timeSinceCursorMoved > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.
-        return _blinkingItemsVisible;
+        return !_blinkingItemsVisible;
     } else {
-        return YES;
+        return NO;
     }
 }
 
