@@ -76,6 +76,7 @@
     // The current size of our view so we can use this in our render pipeline
     vector_uint2 _viewportSize;
     CGSize _cellSize;
+    CGSize _cellSizeWithoutSpacing;
 //    int _iteration;
     int _rows;
     int _columns;
@@ -130,10 +131,17 @@
 
 #pragma mark - APIs
 
-- (void)setCellSize:(CGSize)cellSize gridSize:(VT100GridSize)gridSize scale:(CGFloat)scale {
+- (void)setCellSize:(CGSize)cellSize
+cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
+           gridSize:(VT100GridSize)gridSize
+              scale:(CGFloat)scale {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
+
+    cellSizeWithoutSpacing.width *= scale;
+    cellSizeWithoutSpacing.height *= scale;
+
     [self dispatchAsyncToPrivateQueue:^{
         if (scale == 0) {
             NSLog(@"Warning: scale is 0");
@@ -141,6 +149,7 @@
         NSLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
         _sizeChanged = YES;
         _cellSize = cellSize;
+        _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
         _rows = MAX(1, gridSize.height);
         _columns = MAX(1, gridSize.width);
         _scale = scale;
@@ -413,6 +422,7 @@
     iTermCellRenderConfiguration *cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:_viewportSize
                                                                                                            scale:frameData.scale
                                                                                                         cellSize:_cellSize
+                                                                                          cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                                                                                         gridSize:gridSize
                                                                                            usingIntermediatePass:(frameData.intermediateRenderPassDescriptor != nil)];
     for (id<iTermMetalCellRenderer> renderer in self.cellRenderers) {
@@ -444,15 +454,18 @@
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
+        iTermMarkStyle markStyle;
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                         attributes:rowData.attributesData.mutableBytes
                                         background:rowData.backgroundColorRLEData.mutableBytes
                                           rleCount:&rles
+                                         markStyle:&markStyle
                                                row:y
                                              width:_columns
                                     drawableGlyphs:&drawableGlyphs];
         rowData.numberOfBackgroundRLEs = rles;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
+        rowData.markStyle = markStyle;
     }
 }
 
@@ -668,14 +681,22 @@
     }
 }
 
+- (void)populateMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermMarkRendererTransientState *tState =
+        frameData.transientStates[NSStringFromClass([_markRenderer class])];
+    [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+        [tState setMarkStyle:rowData.markStyle row:idx];
+    }];
+}
+
 // Called when all renderers have transient state
 - (void)populateTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
                                        range:(NSRange)range {
-    // TODO: call setMarkStyle:row: for each mark
     [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
     [self populateCursorRendererTransientStateWithFrameData:frameData];
     [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
     [self populateBadgeRendererTransientStateWithFrameData:frameData];
+    [self populateMarkRendererTransientStateWithFrameData:frameData];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
@@ -954,7 +975,10 @@
     [self drawCursorAfterTextWithFrameData:frameData
                              renderEncoder:renderEncoder];
 
-    //        [_markRenderer drawWithRenderEncoder:renderEncoder];
+    [self drawCellRenderer:_markRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMarks]];
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData

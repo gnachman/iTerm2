@@ -136,8 +136,6 @@ static const int kDragThreshold = 3;
     // geometry
     double _lineHeight;
     double _charWidth;
-    double _charWidthWithoutSpacing;
-    double _charHeightWithoutSpacing;
 
     // NSTextInputClient support
     

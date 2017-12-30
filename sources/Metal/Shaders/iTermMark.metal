@@ -38,5 +38,6 @@ iTermMarkFragmentShader(iTermMarkVertexFunctionOutput in [[stage_in]],
                                      min_filter::linear);
 
     const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    return float4(colorSample);
+    // TODO: Why do I have to do this? Other renderers like the copy cursor don't have this problem.
+    return float4(colorSample.zyxw);
 }

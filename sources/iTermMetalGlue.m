@@ -8,9 +8,11 @@
 #import "iTermMetalGlue.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermMarkRenderer.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
@@ -21,6 +23,7 @@
 #import "PTYFontInfo.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
+#import "VT100ScreenMark.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -117,6 +120,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     CGRect _documentVisibleRect;
     iTermMetalIMEInfo *_imeInfo;
     BOOL _showBroadcastStripes;
+    NSMutableArray<NSNumber *> *_markStyles;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -162,6 +166,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         // Copy lines from model. Always use these for consistency. I should also copy the color map
         // and any other data dependencies.
         _lines = [NSMutableArray array];
+        _markStyles = [NSMutableArray array];
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
         _underlinedRanges = [NSMutableDictionary dictionary];
@@ -169,6 +174,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
         long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
         const int width = _visibleRange.end.x - _visibleRange.start.x;
+        const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
         for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
             screen_char_t *line = [screen getLineAtIndex:i];
             [_lines addObject:[NSMutableData dataWithBytes:line length:sizeof(screen_char_t) * width]];
@@ -180,6 +186,22 @@ static NSColor *ColorForVector(vector_float4 v) {
 
             const long long absoluteLine = totalScrollbackOverflow + i;
             _underlinedRanges[@(i - _visibleRange.start.y)] = [NSValue valueWithRange:[drawingHelper underlinedRangeOnLine:absoluteLine]];
+
+            iTermMarkStyle markStyle = iTermMarkStyleNone;
+            if (drawingHelper.drawMarkIndicators) {
+                VT100ScreenMark *mark = [textView.dataSource markOnLine:i];
+                if (mark.isVisible) {
+                    if (mark.code == 0) {
+                        markStyle = iTermMarkStyleSuccess;
+                    } else if (allowOtherMarkStyle &&
+                               mark.code >= 128 && mark.code <= 128 + 32) {
+                        markStyle = iTermMarkStyleOther;
+                    } else {
+                        markStyle = iTermMarkStyleFailure;
+                    }
+                }
+            }
+            [_markStyles addObject:@(markStyle)];
         }
 
         _gridSize = VT100GridSizeMake(textView.dataSource.width,
@@ -458,6 +480,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                attributes:(iTermMetalGlyphAttributes *)attributes
                background:(iTermMetalBackgroundColorRLE *)backgroundRLE
                  rleCount:(int *)rleCount
+                markStyle:(out iTermMarkStyle *)markStylePtr
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr {
@@ -471,6 +494,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSRange underlinedRange = [_underlinedRanges[@(row)] rangeValue];
     int rles = 0;
 
+    *markStylePtr = [_markStyles[row] intValue];
     int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
         BOOL selected = [selectedIndexes containsIndex:x];

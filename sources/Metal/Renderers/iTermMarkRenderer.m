@@ -1,31 +1,48 @@
 #import "iTermMarkRenderer.h"
+
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermTextureArray.h"
 #import "iTermMetalCellRenderer.h"
 
-@interface iTermMarkRendererTransientState : iTermMetalCellRendererTransientState
+@interface iTermMarkRendererTransientState()
 @property (nonatomic, strong) iTermTextureArray *marksArrayTexture;
 @property (nonatomic) CGSize markSize;
+@property (nonatomic) CGPoint markOffset;
 @property (nonatomic, copy) NSDictionary<NSNumber *, NSNumber *> *marks;
 @end
 
-@implementation iTermMarkRendererTransientState
+@implementation iTermMarkRendererTransientState {
+    NSMutableDictionary<NSNumber *, NSNumber *> *_marks;
+}
 
 - (nonnull NSData *)newMarkPerInstanceUniforms {
     NSMutableData *data = [[NSMutableData alloc] initWithLength:sizeof(iTermMarkPIU) * _marks.count];
     iTermMarkPIU *pius = (iTermMarkPIU *)data.mutableBytes;
+    CGSize atlasSize = _marksArrayTexture.atlasSize;
     __block size_t i = 0;
     [_marks enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull rowNumber, NSNumber * _Nonnull styleNumber, BOOL * _Nonnull stop) {
         MTLOrigin origin = [_marksArrayTexture offsetForIndex:styleNumber.integerValue];
         pius[i] = (iTermMarkPIU) {
             .offset = {
-                2,
-                (self.cellConfiguration.gridSize.height - rowNumber.intValue - 1) * self.cellConfiguration.cellSize.height
+                0,
+                (self.cellConfiguration.gridSize.height - rowNumber.intValue - 1) * self.cellConfiguration.cellSize.height + self.margins.top
             },
-            .textureOffset = { origin.x, origin.y }
+            .textureOffset = { origin.x / atlasSize.width, origin.y / atlasSize.height }
         };
         i++;
     }];
     return data;
+}
+
+- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row {
+    if (!_marks) {
+        _marks = [NSMutableDictionary dictionary];
+    }
+    if (markStyle == iTermMarkStyleNone) {
+        [_marks removeObjectForKey:@(row)];
+    } else {
+        _marks[@(row)] = @(markStyle);
+    }
 }
 
 @end
@@ -34,18 +51,26 @@
     iTermMetalCellRenderer *_cellRenderer;
     iTermTextureArray *_marksArrayTexture;
     CGSize _markSize;
-    NSMutableDictionary<NSNumber *, NSNumber *> *_marks;
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-        _marks = [NSMutableDictionary dictionary];
+        iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+        // I tried to make this the same as NSCompositeSourceOver. It's not quite right but I have
+        // no idea why.
+        blending.rgbBlendOperation = MTLBlendOperationAdd;
+        blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // because it's premultiplied
+        blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+        blending.alphaBlendOperation = MTLBlendOperationMax;
+        blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
+        blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermMarkVertexShader"
                                                   fragmentFunctionName:@"iTermMarkFragmentShader"
-                                                              blending:[[iTermMetalBlending alloc] init]
+                                                              blending:blending
                                                         piuElementSize:sizeof(iTermMarkPIU)
                                                    transientStateClass:[iTermMarkRendererTransientState class]];
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
@@ -73,8 +98,25 @@
 }
 
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
-    CGSize markSize = CGSizeMake(MAX(1, tState.margins.left - 2 * tState.configuration.scale),
-                                 MAX(1, MIN(15, tState.cellConfiguration.cellSize.height - 1 * tState.configuration.scale)));
+    const CGFloat scale = tState.configuration.scale;
+
+    NSRect leftMargin = NSMakeRect(0,
+                                   0,
+                                   [iTermAdvancedSettingsModel terminalMargin],
+                                   tState.cellConfiguration.cellSize.height);
+    const CGFloat verticalSpacing = MAX(0,
+                                        round((tState.cellConfiguration.cellSize.height - tState.cellConfiguration.cellSizeWithoutSpacing.height) / 2.0));
+    CGRect rect = NSMakeRect(leftMargin.origin.x,
+                             leftMargin.origin.y + verticalSpacing,
+                             [iTermAdvancedSettingsModel terminalMargin],
+                             tState.cellConfiguration.cellSizeWithoutSpacing.height);
+    const CGFloat kMaxHeight = 15 * scale;
+    const CGFloat kMinMargin = 3 * scale;
+    const CGFloat kMargin = MAX(kMinMargin, (tState.cellConfiguration.cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
+
+    CGSize markSize = CGSizeMake(scale * [iTermAdvancedSettingsModel terminalMargin],
+                                 tState.cellConfiguration.cellSizeWithoutSpacing.height - kMargin * 2);
+
     if (!CGSizeEqualToSize(markSize, _markSize)) {
         // Mark size has changed
         _markSize = markSize;
@@ -83,29 +125,26 @@
                                                                  arrayLength:3
                                                                       device:_cellRenderer.device];
 
-        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:[NSColor blueColor] size:_markSize]];
-        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:[NSColor redColor] size:_markSize]];
-        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:[NSColor yellowColor] size:_markSize]];
+        NSColor *successColor = [NSColor colorWithSRGBRed:120.0 / 255.0 green:178.0 / 255.0 blue:255.0 / 255.0 alpha:1];
+        NSColor *otherColor = [NSColor colorWithSRGBRed:210.0 / 255.0 green:210.0 / 255.0 blue:90.0 / 255.0 alpha:1];
+        NSColor *failureColor = [NSColor colorWithSRGBRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1];
+
+        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:successColor size:_markSize]];
+        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:failureColor size:_markSize]];
+        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:otherColor size:_markSize]];
     }
+
+    const CGFloat overage = rect.size.width - rect.size.height + 2 * kMargin;
+    if (overage > 0) {
+        rect.origin.x += overage * .7;
+        rect.size.width -= overage;
+    }
+
+    tState.markOffset = CGPointMake(NSMinX(rect) * scale,
+                                    (NSMinY(rect) * scale + kMargin));
     tState.marksArrayTexture = _marksArrayTexture;
     tState.markSize = _markSize;
-    tState.marks = [_marks copy];
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:_markSize poolContext:tState.poolContext];
-
-    if (_marks.count > 0) {
-        NSData *data = [tState newMarkPerInstanceUniforms];
-        tState.pius = [_piuPool requestBufferFromContext:tState.poolContext
-                                                    size:data.length];
-        memcpy(tState.pius.contents, data.bytes, data.length);
-    }
-}
-
-- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row {
-    if (markStyle == iTermMarkStyleNone) {
-        [_marks removeObjectForKey:@(row)];
-    } else {
-        _marks[@(row)] = @(markStyle);
-    }
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -115,10 +154,37 @@
         return;
     }
 
+    const CGRect quad = CGRectMake(tState.markOffset.x,
+                                   tState.markOffset.y,
+                                   tState.markSize.width,
+                                   tState.markSize.height);
+    const CGRect textureFrame = CGRectMake(0,
+                                           0,
+                                           tState.markSize.width / tState.marksArrayTexture.atlasSize.width,
+                                           tState.markSize.height / tState.marksArrayTexture.atlasSize.height);
+    const iTermVertex vertices[] = {
+        // Pixel Positions                              Texture Coordinates
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+    };
+    tState.vertexBuffer = [_cellRenderer.verticesPool requestBufferFromContext:tState.poolContext
+                                                                      withBytes:vertices
+                                                                 checkIfChanged:YES];
+
+    NSData *data = [tState newMarkPerInstanceUniforms];
+    tState.pius = [_piuPool requestBufferFromContext:tState.poolContext
+                                                size:data.length];
+    memcpy(tState.pius.contents, data.bytes, data.length);
+
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:_marks.count
+                             numberOfPIUs:tState.marks.count
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexPerInstanceUniforms): tState.pius,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
@@ -130,16 +196,31 @@
 
 - (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)size {
     NSImage *image = [[NSImage alloc] initWithSize:size];
-    NSBezierPath *path = [NSBezierPath bezierPath];
 
     [image lockFocus];
-    [path moveToPoint:NSMakePoint(0,0)];
-    [path lineToPoint:NSMakePoint(size.width - 1, size.height / 2)];
-    [path lineToPoint:NSMakePoint(0, size.height - 1)];
-    [path lineToPoint:NSMakePoint(0,0)];
+    CGRect rect = CGRectMake(0, 0, size.width, size.height);
 
-    [color setFill];
+    NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
+    NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
+    NSPoint top = NSMakePoint(NSMinX(rect), NSMaxY(rect));
+
+    NSBezierPath *path;
+
+    path = [NSBezierPath bezierPath];
+    [color set];
+    [path moveToPoint:top];
+    [path lineToPoint:right];
+    [path lineToPoint:bottom];
+    [path lineToPoint:top];
     [path fill];
+
+    [[NSColor blackColor] set];
+    path = [NSBezierPath bezierPath];
+    [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
+    [path lineToPoint:NSMakePoint(right.x, right.y)];
+    [path setLineWidth:1.0];
+    [path stroke];
+
     [image unlockFocus];
 
     return image;

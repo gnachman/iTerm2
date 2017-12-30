@@ -4761,6 +4761,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
     [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+       cellSizeWithoutSpacing:CGSizeMake(_textview.charWidthWithoutSpacing, _textview.charHeightWithoutSpacing)
                      gridSize:_screen.currentGrid.size
                         scale:_view.window.screen.backingScaleFactor];
 }

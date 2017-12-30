@@ -10,11 +10,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
                             cellSize:(CGSize)cellSize
+              cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             gridSize:(VT100GridSize)gridSize
                usingIntermediatePass:(BOOL)usingIntermediatePass {
     self = [super initWithViewportSize:viewportSize scale:scale];
     if (self) {
         _cellSize = cellSize;
+        _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
         _gridSize = gridSize;
         _usingIntermediatePass = usingIntermediatePass;
     }
