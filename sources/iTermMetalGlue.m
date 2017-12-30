@@ -121,6 +121,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     iTermMetalIMEInfo *_imeInfo;
     BOOL _showBroadcastStripes;
     NSMutableArray<NSNumber *> *_markStyles;
+    BOOL _cursorGuideEnabled;
+    NSColor *_cursorGuideColor;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -311,6 +313,9 @@ static NSColor *ColorForVector(vector_float4 v) {
             _cursorInfo.cursorVisible = NO;
         }
 
+        _cursorGuideEnabled = drawingHelper.highlightCursorLine;
+        _cursorGuideColor = drawingHelper.cursorGuideColor;
+
         _backgroundImageBlending = textView.blend;
         _backgroundImageTiled = textView.delegate.backgroundImageTiled;
         _backgroundImage = [textView.delegate textViewBackgroundImage];
@@ -425,6 +430,14 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             _imeInfo.cursorCoord = coord;
         }
     }
+}
+
+- (BOOL)cursorGuideEnabled {
+    return _cursorGuideColor && _cursorGuideEnabled;
+}
+
+- (NSColor *)cursorGuideColor {
+    return _cursorGuideColor;
 }
 
 - (BOOL)showBroadcastStripes {

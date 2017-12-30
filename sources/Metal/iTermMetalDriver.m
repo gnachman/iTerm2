@@ -387,12 +387,21 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     _broadcastStripesRenderer.enabled = frameData.perFrameState.showBroadcastStripes;
 }
 
+- (void)updateCursorGuideRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_cursorGuideRenderer.rendererDisabled) {
+        return;
+    }
+    [_cursorGuideRenderer setColor:frameData.perFrameState.cursorGuideColor];
+    _cursorGuideRenderer.enabled = frameData.perFrameState.cursorGuideEnabled;
+}
+
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
     [self updateTextRendererForFrameData:frameData];
     [self updateBackgroundImageRendererForFrameData:frameData];
     [self updateCopyBackgroundRendererForFrameData:frameData];
     [self updateBadgeRendererForFrameData:frameData];
     [self updateBroadcastStripesRendererForFrameData:frameData];
+    [self updateCursorGuideRendererForFrameData:frameData];
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
@@ -689,6 +698,18 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }];
 }
 
+- (void)populateCursorGuideRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermCursorGuideRendererTransientState *tState =
+        frameData.transientStates[NSStringFromClass([_cursorGuideRenderer class])];
+    iTermMetalCursorInfo *cursorInfo = frameData.perFrameState.metalDriverCursorInfo;
+    if (cursorInfo.coord.y >= 0 &&
+        cursorInfo.coord.y < frameData.gridSize.height) {
+        [tState setRow:frameData.perFrameState.metalDriverCursorInfo.coord.y];
+    } else {
+        [tState setRow:-1];
+    }
+}
+
 // Called when all renderers have transient state
 - (void)populateTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
                                        range:(NSRange)range {
@@ -697,6 +718,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
     [self populateBadgeRendererTransientStateWithFrameData:frameData];
     [self populateMarkRendererTransientStateWithFrameData:frameData];
+    [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
@@ -729,8 +751,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     NSString *className = NSStringFromClass([renderer class]);
     iTermMetalCellRendererTransientState *state = frameData.transientStates[className];
-    ITDebugAssert(state);
-    if (!state.skipRenderer) {
+    if (state != nil && !state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }
 
@@ -845,8 +866,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
              frameData:frameData
          renderEncoder:renderEncoder
                   stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBadge]];
-    //        [_cursorGuideRenderer drawWithRenderEncoder:renderEncoder];
-    //
 
     [self drawCursorBeforeTextWithFrameData:frameData
                               renderEncoder:renderEncoder];
@@ -980,6 +999,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
              renderEncoder:renderEncoder
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMarks]];
 
+    [self drawCellRenderer:_cursorGuideRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
+
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData
                            renderEncoder:renderEncoder];
@@ -1034,7 +1058,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     } else if (renderer == _badgeRenderer) {
         [self updateBadgeRendererWithPerFrameState:perFrameState];
     } else if (renderer == _cursorGuideRenderer) {
-        [self updateCursorGuideRendererWithPerFrameState:perFrameState];
+        [self updateCursorGuideRendererWithTransientState:tState
+                                            perFrameState:perFrameState];
     } else if (renderer == _copyModeCursorRenderer) {
         [self updateCopyModeCursorRendererWithPerFrameState:perFrameState];
     }
@@ -1054,10 +1079,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // TODO: call setBadgeImage: if needed
 }
 
-- (void)updateCursorGuideRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-    // TODO:
-    // [_cursorGuideRenderer setRow:_dataSource.cursorGuideRow];
-    // [_cursorGuideRenderer setColor:_dataSource.cursorGuideColor];
+- (void)updateCursorGuideRendererWithTransientState:(iTermCursorGuideRendererTransientState *)tState
+                                      perFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+    iTermMetalCursorInfo *cursorInfo = perFrameState.metalDriverCursorInfo;
+    if (cursorInfo.cursorVisible) {
+        [tState setRow:perFrameState.metalDriverCursorInfo.coord.y];
+    } else {
+        [tState setRow:-1];
+    }
 }
 
 - (void)updateCopyModeCursorRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {

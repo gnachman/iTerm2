@@ -4,6 +4,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface iTermCursorGuideRendererTransientState : iTermMetalCellRendererTransientState
+// set to -1 if cursor's row is not currently visible.
+- (void)setRow:(int)row;
+@end
+
 @interface iTermCursorGuideRenderer : NSObject<iTermMetalCellRenderer>
 
 @property (nonatomic) BOOL enabled;
@@ -12,7 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)setColor:(NSColor *)color;
-- (void)setRow:(int)row;
 
 @end
 

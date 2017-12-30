@@ -12,14 +12,12 @@ typedef struct {
 
 vertex iTermCursorGuideVertexFunctionOutput
 iTermCursorGuideVertexShader(uint vertexID [[ vertex_id ]],
-                             constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                              constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                              constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                             constant iTermCursorGuidePIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                              unsigned int iid [[instance_id]]) {
     iTermCursorGuideVertexFunctionOutput out;
 
-    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy + offset[0];
+    float2 pixelSpacePosition = vertexArray[vertexID].position.xy;
     float2 viewportSize = float2(*viewportSizePointer);
 
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
