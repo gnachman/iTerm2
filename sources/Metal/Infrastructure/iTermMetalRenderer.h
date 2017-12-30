@@ -68,6 +68,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) MTLBlendFactor destinationRGBBlendFactor;
 @property (nonatomic) MTLBlendFactor sourceAlphaBlendFactor;
 @property (nonatomic) MTLBlendFactor destinationAlphaBlendFactor;
+
+// Use this for premultiplied blending.
++ (instancetype)compositeSourceOver;
+
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

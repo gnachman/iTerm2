@@ -57,20 +57,10 @@
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-        iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
-        // I tried to make this the same as NSCompositeSourceOver. It's not quite right but I have
-        // no idea why.
-        blending.rgbBlendOperation = MTLBlendOperationAdd;
-        blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // because it's premultiplied
-        blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-
-        blending.alphaBlendOperation = MTLBlendOperationMax;
-        blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
-        blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermMarkVertexShader"
                                                   fragmentFunctionName:@"iTermMarkFragmentShader"
-                                                              blending:blending
+                                                              blending:[iTermMetalBlending compositeSourceOver]
                                                         piuElementSize:sizeof(iTermMarkPIU)
                                                    transientStateClass:[iTermMarkRendererTransientState class]];
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device

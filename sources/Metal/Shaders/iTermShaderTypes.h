@@ -89,11 +89,6 @@ typedef struct {
 } iTermBackgroundColorPIU;
 
 typedef struct {
-    // Offset from vertex
-    vector_float2 offset;
-} iTermCursorGuidePIU;
-
-typedef struct {
     vector_float4 color;
     vector_float2 origin;
 } iTermCursorDescription;
