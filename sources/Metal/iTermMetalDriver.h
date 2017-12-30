@@ -2,6 +2,7 @@
 
 #import "iTermASCIITexture.h"
 #import "iTermCursor.h"
+#import "iTermMarkRenderer.h"
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextRendererTransientState.h"
@@ -55,6 +56,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                attributes:(iTermMetalGlyphAttributes *)attributes
                background:(iTermMetalBackgroundColorRLE *)backgrounds
                  rleCount:(int *)rleCount
+                markStyle:(out iTermMarkStyle *)markStylePtr
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr;
@@ -94,7 +96,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nullable, nonatomic, weak) id<iTermMetalDriverDataSource> dataSource;
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView;
-- (void)setCellSize:(CGSize)cellSize gridSize:(VT100GridSize)gridSize scale:(CGFloat)scale;
+- (void)setCellSize:(CGSize)cellSize
+cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
+           gridSize:(VT100GridSize)gridSize
+              scale:(CGFloat)scale;
 
 @end
 

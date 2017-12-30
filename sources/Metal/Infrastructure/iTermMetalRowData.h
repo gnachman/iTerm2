@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermMarkRenderer.h"
 
 @interface iTermMetalRowData : NSObject
 @property (nonatomic) int y;
@@ -24,6 +25,8 @@
 
 // Number of elements in preceding arrays to use.
 @property (nonatomic) int numberOfDrawableGlyphs;
+
+@property (nonatomic) iTermMarkStyle markStyle;
 
 @end
 

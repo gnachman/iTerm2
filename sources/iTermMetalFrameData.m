@@ -52,6 +52,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawStripes<<",
         "DrawBadge<<",
         "DrawCursor<<",
+        "DrawMarks<<",
         "EndEncodingInt<<",
         "Create2ndRE<<",
         "enqueueCopyBg<<",

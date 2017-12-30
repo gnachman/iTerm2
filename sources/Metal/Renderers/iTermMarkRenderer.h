@@ -11,13 +11,15 @@ typedef NS_ENUM(int, iTermMarkStyle) {
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermMarkRendererTransientState : iTermMetalCellRendererTransientState
+- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row;
+@end
+
 @interface iTermMarkRenderer : NSObject<iTermMetalCellRenderer>
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
-
-// Call this before setting the viewport size for it to take effect in this frame.
-- (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row;
 
 @end
 

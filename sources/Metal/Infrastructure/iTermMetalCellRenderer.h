@@ -14,6 +14,7 @@ extern const CGFloat BOTTOM_MARGIN;
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermCellRenderConfiguration : iTermRenderConfiguration
 @property (nonatomic, readonly) CGSize cellSize;
+@property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) VT100GridSize gridSize;
 
 // This determines how subpixel antialiasing is done. It's unfortunate that one
@@ -27,6 +28,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
                             cellSize:(CGSize)cellSize
+              cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             gridSize:(VT100GridSize)gridSize
                usingIntermediatePass:(BOOL)usingIntermediatePass NS_DESIGNATED_INITIALIZER;
 

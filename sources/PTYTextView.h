@@ -286,6 +286,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 @property(nonatomic, readonly) double lineHeight;
 @property(nonatomic, readonly) double charWidth;
 
+@property(nonatomic, readonly) double charWidthWithoutSpacing;
+@property(nonatomic, readonly) double charHeightWithoutSpacing;
+
 // Is the cursor visible? Defaults to YES.
 @property(nonatomic, assign) BOOL cursorVisible;
 
