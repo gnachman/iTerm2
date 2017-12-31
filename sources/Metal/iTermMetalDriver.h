@@ -2,6 +2,7 @@
 
 #import "iTermASCIITexture.h"
 #import "iTermCursor.h"
+#import "iTermIndicatorRenderer.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRenderer.h"
@@ -53,6 +54,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL showBroadcastStripes;
 @property (nonatomic, readonly) NSColor *cursorGuideColor;
 @property (nonatomic, readonly) BOOL cursorGuideEnabled;
+@property (nonatomic, readonly) vector_float4 fullScreenFlashColor;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
@@ -80,6 +82,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // Returns metrics and optional color for underlines.
 - (void)metalGetUnderlineDescriptorsForASCII:(out iTermMetalUnderlineDescriptor *)ascii
                                     nonASCII:(out iTermMetalUnderlineDescriptor *)nonAscii;
+
+- (void)enumerateIndicatorsInFrame:(NSRect)frame block:(void (^)(iTermIndicatorDescriptor *))block;
 
 @end
 

@@ -44,6 +44,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqCreateCursorTS,
     iTermMetalFrameDataStatPqCreateMarginTS,
     iTermMetalFrameDataStatPqCreateTextTS,
+    iTermMetalFrameDataStatPqCreateIndicatorsTS,
+    iTermMetalFrameDataStatPqCreateFullScreenFlashTS,
 
     iTermMetalFrameDataStatPqPopulateTransientStates,
 
@@ -63,6 +65,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
     iTermMetalFrameDataStatPqEnqueueCopyBackground,
     iTermMetalFrameDataStatPqEnqueueDrawText,
+    iTermMetalFrameDataStatPqEnqueueDrawIndicators,
+    iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash,
     iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable,
     iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit,
 

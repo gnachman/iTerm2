@@ -34,9 +34,20 @@ extern CGFloat kiTermIndicatorStandardHeight;
 @property(nonatomic, assign) id<iTermIndicatorsHelperDelegate> delegate;
 @property(nonatomic, readonly) NSInteger numberOfVisibleIndicators;
 
+// Alpha value for fullscreen flash.
+@property(nonatomic, readonly) CGFloat fullScreenAlpha;
+
 - (void)setIndicator:(NSString *)identifier visible:(BOOL)visible;
 - (void)beginFlashingIndicator:(NSString *)identifier;
 - (void)beginFlashingFullScreen;
+
+// Use this from drawRect:
 - (void)drawInFrame:(NSRect)frame;
+
+// Use this with Metal
+- (void)didDraw;
+
+- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect))block;
+- (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat))block;
 
 @end

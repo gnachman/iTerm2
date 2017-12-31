@@ -272,6 +272,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Show the password input cursor?
 @property(nonatomic) BOOL passwordInput;
 
+@property(nonatomic) NSRect indicatorFrame;
+
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
 // destinationFrameSize: size of the scrollview's content view

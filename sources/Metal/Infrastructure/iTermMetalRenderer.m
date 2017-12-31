@@ -28,11 +28,10 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     self = [super init];
     if (self) {
         _rgbBlendOperation = MTLBlendOperationAdd;
-        _alphaBlendOperation = MTLBlendOperationAdd;
-
         _sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
         _destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 
+        _alphaBlendOperation = MTLBlendOperationAdd;
         _sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
         _destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     }

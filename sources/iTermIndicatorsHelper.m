@@ -59,9 +59,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     NSTimeInterval _fullScreenFlashStartTime;
     // Rate limits calls to setNeedsDisplay: to not be faster than drawRect can be called.
     BOOL _haveSetNeedsDisplay;
-    
-    // Alpha value for fullscreen flash.
-    CGFloat _fullScreenAlpha;
 }
 
 + (NSDictionary *)indicatorImages {
@@ -124,10 +121,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorCopyMode ];
 }
 
-- (void)drawInFrame:(NSRect)frame {
-    DLog(@"drawInFrame %@", NSStringFromRect(frame));
-
-    // Draw top-right indicators.
+- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect))block {
     NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentiaIndicatorlIdentifiers];
     static const CGFloat kIndicatorTopMargin = 4;
     NSPoint point = NSMakePoint(frame.origin.x + frame.size.width,
@@ -139,6 +133,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             point.x -= indicator.image.size.width;
             point.x -= kInterIndicatorHorizontalMargin;
             NSImage *image = indicator.image;
+
+            block(identifier, image, NSMakeRect(point.x, point.y, image.size.width, image.size.height));
             [image drawInRect:NSMakeRect(point.x, point.y, image.size.width, image.size.height)
                      fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
                     operation:NSCompositeSourceOver
@@ -147,10 +143,10 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                         hints:nil];
         }
     }
+}
 
-    // Draw centered flashing indicators.
+- (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat))block {
     NSArray *centeredIdentifiers = [iTermIndicatorsHelper flashingIndicatorIdentifiers];
-    NSMutableArray *keysToRemove = [NSMutableArray array];
     for (NSString *identifier in centeredIdentifiers) {
         iTermIndicator *indicator = _visibleIndicators[identifier];
         CGFloat alpha = indicator.alpha;
@@ -161,20 +157,35 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                                                 frame.origin.y + frame.size.height / 2 - size.height / 2,
                                                 size.width,
                                                 size.height);
-            [image drawInRect:destinationRect
-                     fromRect:NSMakeRect(0, 0, size.width, size.height)
-                    operation:NSCompositeSourceOver
-                     fraction:alpha
-               respectFlipped:YES
-                        hints:nil];
+            block(identifier, image, destinationRect, alpha);
         }
     }
+}
 
-    [_visibleIndicators removeObjectsForKeys:keysToRemove];
+- (void)drawInFrame:(NSRect)frame {
+    DLog(@"drawInFrame %@", NSStringFromRect(frame));
+
+    // Draw top-right indicators.
+    [self enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect frame) {
+        [image drawInRect:frame
+                 fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+                operation:NSCompositeSourceOver
+                 fraction:0.5
+           respectFlipped:YES
+                    hints:nil];
+    }];
+
+    // Draw centered flashing indicators.
+    [self enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect destinationRect, CGFloat alpha) {
+        [image drawInRect:destinationRect
+                 fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+                operation:NSCompositeSourceOver
+                 fraction:alpha
+           respectFlipped:YES
+                    hints:nil];
+    }];
 
     // Draw full screen flash.
-    NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
-    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(_fullScreenAlpha));
     if (_fullScreenAlpha > 0) {
         DLog(@"Drawing full screen flash overlay");
         [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:_fullScreenAlpha] set];
@@ -182,6 +193,12 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     } else if (_fullScreenFlashStartTime > 0 && _fullScreenAlpha == 0) {
         DLog(@"Not drawing full screen flash overlay");
     }
+    [self didDraw];
+}
+
+- (void)didDraw {
+    NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
+    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(_fullScreenAlpha));
     DLog(@"Set haveSetNeedsDisplay=NO");
     _haveSetNeedsDisplay = NO;
 }
