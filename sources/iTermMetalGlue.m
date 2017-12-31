@@ -123,6 +123,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSMutableArray<NSNumber *> *_markStyles;
     BOOL _cursorGuideEnabled;
     NSColor *_cursorGuideColor;
+    NSMutableArray<iTermIndicatorDescriptor *> *_indicators;
+    vector_float4 _fullScreenFlashColor;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -343,8 +345,38 @@ static NSColor *ColorForVector(vector_float4 v) {
         }
 
         _showBroadcastStripes = drawingHelper.showStripes;
+        [self loadIndicatorsFromTextView:textView];
     }
     return self;
+}
+
+- (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
+    _indicators = [NSMutableArray array];
+    NSRect frame = NSMakeRect(0, 0, textView.visibleRect.size.width, textView.visibleRect.size.height);
+    [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect) {
+        rect.origin.y = frame.size.height - NSMaxY(rect);
+        iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
+        indicator.identifier = identifier;
+        indicator.image = image;
+        indicator.frame = rect;
+        indicator.alpha = 0.5;
+        [_indicators addObject:indicator];
+    }];
+    [textView.indicatorsHelper enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, CGFloat alpha) {
+        rect.origin.y = frame.size.height - NSMaxY(rect);
+        iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
+        indicator.identifier = identifier;
+        indicator.image = image;
+        indicator.frame = rect;
+        indicator.alpha = alpha;
+        [_indicators addObject:indicator];
+    }];
+    [textView.indicatorsHelper didDraw];
+    NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    _fullScreenFlashColor = simd_make_float4(color.redComponent,
+                                             color.greenComponent,
+                                             color.blueComponent,
+                                             textView.indicatorsHelper.fullScreenAlpha);
 }
 
 - (void)copyMarkedText:(NSString *)str
@@ -430,6 +462,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             _imeInfo.cursorCoord = coord;
         }
     }
+}
+
+- (void)enumerateIndicatorsInFrame:(NSRect)frame block:(void (^)(iTermIndicatorDescriptor * _Nonnull))block {
+    [_indicators enumerateObjectsUsingBlock:^(iTermIndicatorDescriptor * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        block(obj);
+    }];
+}
+
+- (vector_float4)fullScreenFlashColor {
+    return _fullScreenFlashColor;
 }
 
 - (BOOL)cursorGuideEnabled {

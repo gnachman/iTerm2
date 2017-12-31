@@ -12,6 +12,8 @@
 #import "iTermCopyBackgroundRenderer.h"
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
+#import "iTermFullScreenFlashRenderer.h"
+#import "iTermIndicatorRenderer.h"
 #import "iTermMarginRenderer.h"
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
@@ -60,6 +62,8 @@
     iTermTextRenderer *_textRenderer;
     iTermMarkRenderer *_markRenderer;
     iTermBadgeRenderer *_badgeRenderer;
+    iTermFullScreenFlashRenderer *_flashRenderer;
+    iTermIndicatorRenderer *_indicatorRenderer;
     iTermBroadcastStripesRenderer *_broadcastStripesRenderer;
     iTermCursorGuideRenderer *_cursorGuideRenderer;
     iTermCursorRenderer *_underlineCursorRenderer;
@@ -107,6 +111,8 @@
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:mtkView.device];
         _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:mtkView.device];
         _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:mtkView.device];
+        _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:mtkView.device];
+        _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:mtkView.device];
         _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:mtkView.device];
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
         _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:mtkView.device];
@@ -380,6 +386,21 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage context:frameData.framePoolContext];
 }
 
+- (void)updateIndicatorRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_indicatorRenderer.rendererDisabled) {
+        return;
+    }
+    const CGFloat scale = frameData.scale;
+    NSRect frame = NSMakeRect(0,
+                              0,
+                              frameData.viewportSize.x / scale,
+                              frameData.viewportSize.y / scale);
+    [_indicatorRenderer reset];
+    [frameData.perFrameState enumerateIndicatorsInFrame:frame block:^(iTermIndicatorDescriptor * _Nonnull indicator) {
+        [_indicatorRenderer addIndicator:indicator context:frameData.framePoolContext];
+    }];
+}
+
 - (void)updateBroadcastStripesRendererForFrameData:(iTermMetalFrameData *)frameData {
     if (_broadcastStripesRenderer.rendererDisabled) {
         return;
@@ -402,6 +423,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self updateBadgeRendererForFrameData:frameData];
     [self updateBroadcastStripesRendererForFrameData:frameData];
     [self updateCursorGuideRendererForFrameData:frameData];
+    [self updateIndicatorRendererForFrameData:frameData];
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
@@ -1004,6 +1026,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
              renderEncoder:renderEncoder
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
 
+    [self drawRenderer:_indicatorRenderer
+             frameData:frameData
+         renderEncoder:renderEncoder
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawIndicators]];
+
+    [self drawRenderer:_flashRenderer
+             frameData:frameData
+         renderEncoder:renderEncoder
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash]];
+
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData
                            renderEncoder:renderEncoder];
@@ -1062,7 +1094,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                             perFrameState:perFrameState];
     } else if (renderer == _copyModeCursorRenderer) {
         [self updateCopyModeCursorRendererWithPerFrameState:perFrameState];
+    } else if (renderer == _indicatorRenderer) {
+        [self updateIndicatorRendererForFrameData:frameData];
+    } else if (renderer == _flashRenderer) {
+        [self updateFlashRendererWithTransientState:tState withPerFrameState:perFrameState];
     }
+}
+
+- (void)updateFlashRendererWithTransientState:(iTermFullScreenFlashRendererTransientState *)tState
+                            withPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+    tState.color = perFrameState.fullScreenFlashColor;
 }
 
 - (void)updateMarginRendererWithTransientState:(iTermMarginRendererTransientState *)marginState
@@ -1114,7 +1155,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return @[ _backgroundImageRenderer,
               _badgeRenderer,
               _broadcastStripesRenderer,
-              _copyBackgroundRenderer ];
+              _copyBackgroundRenderer,
+              _indicatorRenderer,
+              _flashRenderer ];
 }
 
 - (void)scheduleDrawIfNeededInView:(MTKView *)view {

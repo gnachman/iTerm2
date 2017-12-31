@@ -108,7 +108,6 @@ static const int kDragThreshold = 3;
     iTermTextDrawingHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
-    iTermIndicatorsHelperDelegate,
     iTermSelectionDelegate,
     iTermSelectionScrollHelperDelegate,
     NSDraggingSource,
@@ -225,8 +224,6 @@ static const int kDragThreshold = 3;
 
     // Size of the documentVisibleRect when the badge was set.
     NSSize _badgeDocumentVisibleRectSize;
-
-    iTermIndicatorsHelper *_indicatorsHelper;
 
     // Show a background indicator when in broadcast input mode
     BOOL _showStripesWhenBroadcastingInput;
@@ -1109,6 +1106,12 @@ static const int kDragThreshold = 3;
     _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
     _drawingHelper.passwordInput = _delegate.textViewPasswordInput;
 
+    CGFloat rightMargin = 0;
+    if (_drawingHelper.showTimestamps) {
+        rightMargin = [_drawingHelper drawTimestamps] + 8;
+    }
+    _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];
+
     return _drawingHelper;
 }
 
@@ -1190,12 +1193,7 @@ static const int kDragThreshold = 3;
 
     [self.drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
-    CGFloat rightMargin = 0;
-    if (_drawingHelper.showTimestamps) {
-        rightMargin = [_drawingHelper drawTimestamps] + 8;
-    }
-
-    [self drawIndicatorsWithRightMargin:rightMargin];
+    [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
 
     // Not sure why this is needed, but for some reason this view draws over its subviews.
     for (NSView *subview in [self subviews]) {
@@ -1219,7 +1217,7 @@ static const int kDragThreshold = 3;
     return result;
 }
 
-- (void)drawIndicatorsWithRightMargin:(CGFloat)rightMargin {
+- (NSRect)configureIndicatorsHelperWithRightMargin:(CGFloat)rightMargin {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
@@ -1236,7 +1234,7 @@ static const int kDragThreshold = 3;
                             visible:[_delegate textViewCopyMode]];
     NSRect rect = self.visibleRect;
     rect.size.width -= rightMargin;
-    [_indicatorsHelper drawInFrame:rect];
+    return rect;
 }
 
 - (NSString*)_getTextInWindowAroundX:(int)x
