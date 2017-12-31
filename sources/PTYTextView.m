@@ -1099,7 +1099,8 @@ static const int kDragThreshold = 3;
 
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
-        rightMargin = [_drawingHelper drawTimestamps] + 8;
+        [_drawingHelper createTimestampDrawingHelper];
+        rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
     _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];
 
@@ -1136,7 +1137,8 @@ static const int kDragThreshold = 3;
     [self.drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
     [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
-
+    [self.drawingHelper drawTimestamps];
+    
     // Not sure why this is needed, but for some reason this view draws over its subviews.
     for (NSView *subview in [self subviews]) {
         [subview setNeedsDisplay:YES];

@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
+#import "iTermTimestampDrawHelper.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
@@ -274,6 +275,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 @property(nonatomic) NSRect indicatorFrame;
 
+@property(nonatomic, readonly) iTermTimestampDrawHelper *timestampDrawHelper;
+
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
 // destinationFrameSize: size of the scrollview's content view
@@ -299,8 +302,11 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (NSImage *)imageForCoord:(VT100GridCoord)coord size:(CGSize)size;
 
-// Draw timestamps. Returns the width of the widest timestamp.
-- (CGFloat)drawTimestamps;
+// If timestamps are to be shown, call this just before drawing.
+- (void)createTimestampDrawingHelper;
+
+// Draw timestamps.
+- (void)drawTimestamps;
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect;
 
