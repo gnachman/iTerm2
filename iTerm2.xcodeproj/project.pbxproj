@@ -1749,6 +1749,8 @@
 		A68400B31FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A68400B11FF8644F008D3EE2 /* iTermFulScreenFlash.metal */; };
 		A68400B41FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A68400B11FF8644F008D3EE2 /* iTermFulScreenFlash.metal */; };
 		A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A68400B11FF8644F008D3EE2 /* iTermFulScreenFlash.metal */; };
+		A68400B81FF97138008D3EE2 /* iTermTimestampDrawHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A68400B61FF97138008D3EE2 /* iTermTimestampDrawHelper.h */; };
+		A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A68400B71FF97138008D3EE2 /* iTermTimestampDrawHelper.m */; };
 		A685D9DA1E5A24AA0091C3A7 /* PTYSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2D14BABE8700BD5035 /* PTYSession.h */; };
 		A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */; };
 		A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */; };
@@ -3651,6 +3653,8 @@
 		A68400AD1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermFullScreenFlashRenderer.h; path = Metal/Renderers/iTermFullScreenFlashRenderer.h; sourceTree = "<group>"; };
 		A68400AE1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermFullScreenFlashRenderer.m; path = Metal/Renderers/iTermFullScreenFlashRenderer.m; sourceTree = "<group>"; };
 		A68400B11FF8644F008D3EE2 /* iTermFulScreenFlash.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermFulScreenFlash.metal; path = Metal/Shaders/iTermFulScreenFlash.metal; sourceTree = "<group>"; };
+		A68400B61FF97138008D3EE2 /* iTermTimestampDrawHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTimestampDrawHelper.h; sourceTree = "<group>"; };
+		A68400B71FF97138008D3EE2 /* iTermTimestampDrawHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTimestampDrawHelper.m; sourceTree = "<group>"; };
 		A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+TouchBar.h"; sourceTree = "<group>"; };
 		A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+TouchBar.m"; sourceTree = "<group>"; };
 		A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Private.h"; sourceTree = "<group>"; };
@@ -6056,6 +6060,8 @@
 				A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */,
 				A66F3CEE1FEA3D9E00AA2021 /* iTermHistogram.h */,
 				A66F3CEF1FEA3D9E00AA2021 /* iTermHistogram.mm */,
+				A68400B61FF97138008D3EE2 /* iTermTimestampDrawHelper.h */,
+				A68400B71FF97138008D3EE2 /* iTermTimestampDrawHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -7188,6 +7194,7 @@
 				A667191B1DCE36C3000CE608 /* iTermDynamicProfileManager.h in Headers */,
 				A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */,
 				A667191C1DCE36C3000CE608 /* iTermAppHotKey.h in Headers */,
+				A68400B81FF97138008D3EE2 /* iTermTimestampDrawHelper.h in Headers */,
 				A667191D1DCE36C3000CE608 /* iTermHotKeyMigrationHelper.h in Headers */,
 				A667191E1DCE36C3000CE608 /* iTermCPS.h in Headers */,
 				A667191F1DCE36C3000CE608 /* PSMDarkHighContrastTabStyle.h in Headers */,
@@ -8855,6 +8862,7 @@
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
+				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
 				A66719631DCE3772000CE608 /* iTermSocketIPV4Address.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,

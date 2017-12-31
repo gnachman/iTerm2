@@ -23,6 +23,7 @@
 #import "iTermPreciseTimer.h"
 #import "iTermSelection.h"
 #import "iTermTextExtractor.h"
+#import "iTermTimestampDrawHelper.h"
 #import "MovingAverage.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -201,6 +202,7 @@ typedef struct iTermTextColorContext {
     [_backgroundStripesImage release];
     [_lineRefCache release];
     [_replacementLineRefCache release];
+    [_timestampDrawHelper release];
 
     [super dealloc];
 }
@@ -765,125 +767,37 @@ typedef struct iTermTextColorContext {
     }
 }
 
-- (CGFloat)drawTimestamps {
+- (void)createTimestampDrawingHelper {
+    _timestampDrawHelper =
+        [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:[self defaultBackgroundColor]
+                                                        textColor:[_colorMap colorForKey:kColorMapForeground]
+                                                              now:self.now
+                                               useTestingTimezone:self.useTestingTimezone
+                                                          inFrame:_frame
+                                                        rowHeight:_cellSize.height
+                                                          context:[NSGraphicsContext currentContext]
+                                                           retina:self.isRetina];
+
+}
+
+- (void)drawTimestamps {
     [self updateCachedMetrics];
 
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, NO);
     }
-    NSString *previous = nil;
-    CGFloat width = 0;
+    // Note: for the foreground color, we don't use the dimmed version because it looks bad on
+    // nonretina displays. That's why I go to the colormap instead of using -defaultForegroundColor.
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
          y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
          y++) {
-        CGFloat thisWidth = 0;
-        previous = [self drawTimestampForLine:y previousTimestamp:previous width:&thisWidth];
-        width = MAX(thisWidth, width);
+        [_timestampDrawHelper setDate:[_delegate drawingHelperTimestampForLine:y] forLine:y];
     }
+    [_timestampDrawHelper draw];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);
     }
-    
-    return width;
-}
-
-- (NSString *)drawTimestampForLine:(int)line
-                 previousTimestamp:(NSString *)previousTimestamp
-                             width:(CGFloat *)widthPtr {
-    NSDate *timestamp = [_delegate drawingHelperTimestampForLine:line];
-    NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
-    const NSTimeInterval day = -86400;
-    const NSTimeInterval timeDelta = timestamp.timeIntervalSinceReferenceDate - self.now;
-    if (timeDelta < day * 180) {
-        // More than 180 days ago: include year
-        // I tried using 365 but it was pretty confusing to see tomorrow's date.
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day * 6) {
-        // 6 days to 180 days ago: include date without year
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"MMMd jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day) {
-        // 1 day to 6 days ago: include day of week
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"EEE jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else {
-        // In last 24 hours, just show time
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    }
-
-    if (self.useTestingTimezone) {
-        fmt.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
-    }
-    NSString *theTimestamp = [fmt stringFromDate:timestamp];
-    if (!timestamp || ![timestamp timeIntervalSinceReferenceDate]) {
-        theTimestamp = @"";
-    }
-    NSString *s = theTimestamp;
-    BOOL repeat = [theTimestamp isEqualToString:previousTimestamp];
-
-    NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
-    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
-    int w = size.width + [iTermAdvancedSettingsModel terminalMargin];
-    int x = MAX(0, _frame.size.width - w);
-    CGFloat y = line * _cellSize.height;
-    NSColor *bgColor = [self defaultBackgroundColor];
-    // I don't want to use the dimmed color for this because it's really ugly (esp on nonretina)
-    // so I can't use -defaultForegroundColor here.
-    NSColor *fgColor = [_colorMap colorForKey:kColorMapForeground];
-    NSColor *shadowColor;
-    if ([fgColor isDark]) {
-        shadowColor = [NSColor whiteColor];
-    } else {
-        shadowColor = [NSColor blackColor];
-    }
-
-    const CGFloat alpha = 0.9;
-    NSGradient *gradient =
-        [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
-                                       endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-    [gradient drawInRect:NSMakeRect(x - 20, y, 20, _cellSize.height) angle:0];
-
-    [[bgColor colorWithAlphaComponent:alpha] set];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-    NSRectFillUsingOperation(NSMakeRect(x, y, w, _cellSize.height), NSCompositeSourceOver);
-
-    NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
-    shadow.shadowColor = shadowColor;
-    shadow.shadowBlurRadius = 0.2f;
-    shadow.shadowOffset = CGSizeMake(0.5, -0.5);
-
-    NSDictionary *attributes;
-    if (self.isRetina) {
-        attributes = @{ NSFontAttributeName: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]],
-                        NSForegroundColorAttributeName: fgColor,
-                        NSShadowAttributeName: shadow };
-    } else {
-        NSFont *font = [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]];
-        attributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] fontWithFamily:font.familyName
-                                                                                        traits:NSBoldFontMask
-                                                                                        weight:0
-                                                                                          size:font.pointSize],
-                        NSForegroundColorAttributeName: fgColor };
-    }
-    CGFloat offset = (_cellSize.height - size.height) / 2;
-    if (s.length && repeat) {
-        [fgColor set];
-        CGFloat center = x + 10;
-        NSRectFill(NSMakeRect(center - 1, y, 1, _cellSize.height));
-        NSRectFill(NSMakeRect(center + 1, y, 1, _cellSize.height));
-    } else {
-        [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
-    }
-    *widthPtr = w;
-    return theTimestamp;
 }
 
 + (NSRect)rectForBadgeImageOfSize:(NSSize)imageSize
