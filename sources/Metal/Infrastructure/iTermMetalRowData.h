@@ -28,5 +28,7 @@
 
 @property (nonatomic) iTermMarkStyle markStyle;
 
-@end
+// Last-changed timestamp, if used.
+@property (nonatomic) NSDate *date;
 
+@end

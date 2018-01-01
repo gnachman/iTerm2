@@ -76,6 +76,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     BOOL _havePreviousForegroundColor;
     vector_float4 _previousForegroundColor;
     NSMutableArray<NSMutableData *> *_lines;
+    NSMutableArray<NSDate *> *_dates;
     NSMutableArray<NSIndexSet *> *_selectedIndexes;
     NSMutableDictionary<NSNumber *, NSData *> *_matches;
     NSMutableDictionary<NSNumber *, NSValue *> *_underlinedRanges;
@@ -125,6 +126,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSColor *_cursorGuideColor;
     NSMutableArray<iTermIndicatorDescriptor *> *_indicators;
     vector_float4 _fullScreenFlashColor;
+    NSColor *_defaultBackgroundColor;
+    BOOL _timestampsEnabled;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -170,16 +173,23 @@ static NSColor *ColorForVector(vector_float4 v) {
         // Copy lines from model. Always use these for consistency. I should also copy the color map
         // and any other data dependencies.
         _lines = [NSMutableArray array];
+        _dates = [NSMutableArray array];
         _markStyles = [NSMutableArray array];
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
         _underlinedRanges = [NSMutableDictionary dictionary];
         _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
         _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
+        _defaultBackgroundColor = [drawingHelper defaultBackgroundColor];
+        _timestampsEnabled = drawingHelper.showTimestamps;
+
         long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
         const int width = _visibleRange.end.x - _visibleRange.start.x;
         const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
         for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
+            if (_timestampsEnabled) {
+                [_dates addObject:[textView drawingHelperTimestampForLine:i]];
+            }
             screen_char_t *line = [screen getLineAtIndex:i];
             [_lines addObject:[NSMutableData dataWithBytes:line length:sizeof(screen_char_t) * width]];
             [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
@@ -464,6 +474,20 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
+- (BOOL)timestampsEnabled {
+    return _timestampsEnabled;
+}
+
+- (NSColor *)timestampsTextColor {
+    assert(_timestampsEnabled);
+    return [_colorMap colorForKey:kColorMapForeground];
+}
+
+- (NSColor *)timestampsBackgroundColor {
+    assert(_timestampsEnabled);
+    return _defaultBackgroundColor;
+}
+
 - (void)enumerateIndicatorsInFrame:(NSRect)frame block:(void (^)(iTermIndicatorDescriptor * _Nonnull))block {
     [_indicators enumerateObjectsUsingBlock:^(iTermIndicatorDescriptor * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         block(obj);
@@ -538,7 +562,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 markStyle:(out iTermMarkStyle *)markStylePtr
                       row:(int)row
                     width:(int)width
-           drawableGlyphs:(int *)drawableGlyphsPtr {
+           drawableGlyphs:(int *)drawableGlyphsPtr
+                     date:(out NSDate **)datePtr {
+    if (_timestampsEnabled) {
+        *datePtr = _dates[row];
+    }
     screen_char_t *line = (screen_char_t *)_lines[row].bytes;
     NSIndexSet *selectedIndexes = _selectedIndexes[row];
     NSData *findMatches = _matches[@(row)];

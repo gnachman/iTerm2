@@ -171,6 +171,24 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 
 #pragma mark - Utilities for subclasses
 
+- (id<MTLBuffer>)newQuadWithFrame:(CGRect)quad
+                     textureFrame:(CGRect)textureFrame
+                      poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    const iTermVertex vertices[] = {
+        // Pixel Positions                              Texture Coordinates
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+    };
+    return [_verticesPool requestBufferFromContext:poolContext
+                                         withBytes:vertices
+                                    checkIfChanged:YES];
+}
+
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext {
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
