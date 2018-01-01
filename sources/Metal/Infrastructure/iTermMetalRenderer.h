@@ -100,6 +100,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext;
 
+- (id<MTLBuffer>)newQuadWithFrame:(CGRect)quad  // pixel coordinates on viewport with 0,0 at bottom left
+                     textureFrame:(CGRect)textureFrame  // normalized coordinates
+                      poolContext:(iTermMetalBufferPoolContext *)poolContext;
+
 // Things in Metal are randomly upside down for no good reason. So make it easy to flip them back.
 - (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext;
 

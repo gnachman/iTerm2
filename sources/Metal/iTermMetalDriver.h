@@ -55,6 +55,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSColor *cursorGuideColor;
 @property (nonatomic, readonly) BOOL cursorGuideEnabled;
 @property (nonatomic, readonly) vector_float4 fullScreenFlashColor;
+@property (nonatomic, readonly) BOOL timestampsEnabled;
+@property (nonatomic, readonly) NSColor *timestampsBackgroundColor;
+@property (nonatomic, readonly) NSColor *timestampsTextColor;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
@@ -63,7 +66,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                 markStyle:(out iTermMarkStyle *)markStylePtr
                       row:(int)row
                     width:(int)width
-           drawableGlyphs:(int *)drawableGlyphsPtr;
+           drawableGlyphs:(int *)drawableGlyphsPtr
+                     date:(out NSDate * _Nonnull * _Nonnull)date;
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 

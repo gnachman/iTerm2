@@ -105,7 +105,6 @@ static const int kDragThreshold = 3;
 @interface PTYTextView () <
     iTermAltScreenMouseScrollInfererDelegate,
     iTermTextViewAccessibilityHelperDelegate,
-    iTermTextDrawingHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
     iTermSelectionDelegate,

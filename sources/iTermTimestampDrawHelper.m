@@ -11,6 +11,8 @@
 #import "NSColor+iTerm.h"
 #import "RegexKitLite.h"
 
+const CGFloat iTermTimestampGradientWidth = 20;
+
 @interface iTermTimestampRow : NSObject
 @property (nonatomic, strong) NSString *string;
 @property (nonatomic) int line;
@@ -24,12 +26,9 @@
     NSColor *_fgColor;
     NSTimeInterval _now;
     BOOL _useTestingTimezone;
-    NSRect _frame;
     CGFloat _rowHeight;
-    NSGraphicsContext *_context;
     BOOL _isRetina;
 
-    NSString *_previousString;
     NSMutableArray<iTermTimestampRow *> *_rows;
 }
 
@@ -37,9 +36,7 @@
                               textColor:(NSColor *)textColor
                                     now:(NSTimeInterval)now
                      useTestingTimezone:(BOOL)useTestingTimezone
-                                inFrame:(NSRect)frame
                               rowHeight:(CGFloat)rowHeight
-                                context:(NSGraphicsContext *)context
                                  retina:(BOOL)isRetina {
     self = [super init];
     if (self) {
@@ -47,9 +44,7 @@
         _fgColor = textColor;
         _now = now;
         _useTestingTimezone = useTestingTimezone;
-        _frame = frame;
         _rowHeight = rowHeight;
-        _context = context;
         _isRetina = isRetina;
         _rows = [NSMutableArray array];
     }
@@ -62,7 +57,7 @@
     NSString *string = [self stringForTimestamp:timestamp
                                             now:_now
                              useTestingTimezone:_useTestingTimezone];
-    NSRect textFrame = [self frameForString:string line:line];
+    NSRect textFrame = [self frameForString:string line:line maxX:0];
     _maximumWidth = MAX(_maximumWidth, NSWidth(textFrame));
 
     iTermTimestampRow *row = [[iTermTimestampRow alloc] init];
@@ -71,14 +66,39 @@
     [_rows addObject:row];
 }
 
-- (void)draw {
+- (void)drawInContext:(NSGraphicsContext *)context frame:(NSRect)frame {
     [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRect frame = [self frameForStringGivenWidth:_maximumWidth line:row.line];
-        [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:frame]
+        NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:row.line maxX:NSMaxX(frame)];
+        [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                             bgColor:_bgColor
-                            context:_context];
-        [self drawString:row.string frame:frame];
+                            context:context];
+        [self drawString:row.string row:idx frame:stringFrame];
     }];
+}
+
+- (void)drawRow:(int)index inContext:(NSGraphicsContext *)context frame:(NSRect)frameWithGradient {
+    NSRect frame = frameWithGradient;
+    frame.origin.x += iTermTimestampGradientWidth;
+    frame.size.width -= iTermTimestampGradientWidth;
+    
+    iTermTimestampRow *row = _rows[index];
+    NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:0 maxX:NSMaxX(frame)];
+    stringFrame.origin.y += frame.origin.y;
+    [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
+                        bgColor:_bgColor
+                        context:context];
+    [self drawString:row.string row:index frame:stringFrame];
+}
+
+- (BOOL)rowIsRepeat:(int)index {
+    if (index == 0) {
+        return NO;
+    }
+    return [_rows[index - 1].string isEqual:_rows[index].string];
+}
+
+- (CGFloat)suggestedWidth {
+    return _maximumWidth + [iTermAdvancedSettingsModel terminalMargin] + iTermTimestampGradientWidth;
 }
 
 #pragma mark - Draw Methods
@@ -86,31 +106,30 @@
 - (void)drawBackgroundInFrame:(NSRect)frame
                       bgColor:(NSColor *)bgColor
                       context:(NSGraphicsContext *)context {
-    static const CGFloat gradientWidth = 20;
     const CGFloat alpha = 0.9;
     NSGradient *gradient =
     [[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
                                   endingColor:[bgColor colorWithAlphaComponent:alpha]];
     [context setCompositingOperation:NSCompositeSourceOver];
     NSRect gradientFrame = frame;
-    gradientFrame.size.width = gradientWidth;
+    gradientFrame.size.width = iTermTimestampGradientWidth;
     [gradient drawInRect:gradientFrame
                    angle:0];
 
     NSRect solidFrame = frame;
-    solidFrame.origin.x += gradientWidth;
-    solidFrame.size.width -= gradientWidth;
+    solidFrame.origin.x += iTermTimestampGradientWidth;
+    solidFrame.size.width -= iTermTimestampGradientWidth;
     [[bgColor colorWithAlphaComponent:alpha] set];
     [context setCompositingOperation:NSCompositeSourceOver];
     NSRectFillUsingOperation(solidFrame, NSCompositeSourceOver);
 }
 
-- (void)drawString:(NSString *)s frame:(NSRect)frame {
+- (void)drawString:(NSString *)s row:(int)index frame:(NSRect)frame {
     NSDictionary *attributes = [self attributesForTextColor:_fgColor
                                                      shadow:[self shadowForTextColor:_fgColor]
                                                      retina:_isRetina];
     const CGFloat offset = (_rowHeight - NSHeight(frame)) / 2;
-    const BOOL repeat = [s isEqualToString:_previousString];
+    const BOOL repeat = [self rowIsRepeat:index];
     if (s.length && repeat) {
         [_fgColor set];
         const CGFloat center = NSMinX(frame) + 10;
@@ -119,25 +138,27 @@
     } else {
         [s drawAtPoint:NSMakePoint(NSMinX(frame), NSMinY(frame) + offset) withAttributes:attributes];
     }
-    _previousString = s;
 }
 
 #pragma mark - Pixel Arithmetic
 
 - (NSRect)backgroundFrameForTextFrame:(NSRect)frame {
-    return NSMakeRect(NSMinX(frame) - 20, NSMinY(frame), NSWidth(frame) + 20, NSHeight(frame));
+    return NSMakeRect(NSMinX(frame) - iTermTimestampGradientWidth,
+                      NSMinY(frame),
+                      NSWidth(frame) + iTermTimestampGradientWidth,
+                      NSHeight(frame));
 }
 
-- (NSRect)frameForString:(NSString *)s line:(int)line {
+- (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX {
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
     NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
 
-    return [self frameForStringGivenWidth:size.width line:line];
+    return [self frameForStringGivenWidth:size.width line:line maxX:maxX];
 }
 
-- (NSRect)frameForStringGivenWidth:(CGFloat)width line:(int)line {
+- (NSRect)frameForStringGivenWidth:(CGFloat)width line:(int)line maxX:(CGFloat)maxX {
     const int w = width + [iTermAdvancedSettingsModel terminalMargin];
-    const int x = MAX(0, _frame.size.width - w);
+    const int x = MAX(0, maxX - w);
     const CGFloat y = line * _rowHeight;
 
     return NSMakeRect(x, y, w, _rowHeight);

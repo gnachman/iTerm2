@@ -20,6 +20,7 @@
 #import "iTermMetalRowData.h"
 #import "iTermPreciseTimer.h"
 #import "iTermTextRendererTransientState.h"
+#import "iTermTimestampsRenderer.h"
 #import "iTermShaderTypes.h"
 #import "iTermTextRenderer.h"
 #import "iTermTextureArray.h"
@@ -63,6 +64,7 @@
     iTermMarkRenderer *_markRenderer;
     iTermBadgeRenderer *_badgeRenderer;
     iTermFullScreenFlashRenderer *_flashRenderer;
+    iTermTimestampsRenderer *_timestampsRenderer;
     iTermIndicatorRenderer *_indicatorRenderer;
     iTermBroadcastStripesRenderer *_broadcastStripesRenderer;
     iTermCursorGuideRenderer *_cursorGuideRenderer;
@@ -112,6 +114,7 @@
         _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:mtkView.device];
         _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:mtkView.device];
         _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:mtkView.device];
+        _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:mtkView.device];
         _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:mtkView.device];
         _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:mtkView.device];
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
@@ -416,6 +419,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     _cursorGuideRenderer.enabled = frameData.perFrameState.cursorGuideEnabled;
 }
 
+- (void)updateTimestampsRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_timestampsRenderer.rendererDisabled) {
+        return;
+    }
+    _timestampsRenderer.enabled = frameData.perFrameState.timestampsEnabled;
+}
+
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
     [self updateTextRendererForFrameData:frameData];
     [self updateBackgroundImageRendererForFrameData:frameData];
@@ -424,6 +434,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self updateBroadcastStripesRendererForFrameData:frameData];
     [self updateCursorGuideRendererForFrameData:frameData];
     [self updateIndicatorRendererForFrameData:frameData];
+    [self updateTimestampsRendererForFrameData:frameData];
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
@@ -486,6 +497,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         int drawableGlyphs = 0;
         int rles = 0;
         iTermMarkStyle markStyle;
+        NSDate *date;
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                         attributes:rowData.attributesData.mutableBytes
                                         background:rowData.backgroundColorRLEData.mutableBytes
@@ -493,7 +505,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                          markStyle:&markStyle
                                                row:y
                                              width:_columns
-                                    drawableGlyphs:&drawableGlyphs];
+                                    drawableGlyphs:&drawableGlyphs
+                                              date:&date];
+        rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
         rowData.markStyle = markStyle;
@@ -732,6 +746,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+- (void)populateTimestampsRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermTimestampsRendererTransientState *tState =
+        frameData.transientStates[NSStringFromClass([_timestampsRenderer class])];
+    if (frameData.perFrameState.timestampsEnabled) {
+        tState.backgroundColor = frameData.perFrameState.timestampsBackgroundColor;
+        tState.textColor = frameData.perFrameState.timestampsTextColor;
+
+        tState.timestamps = [frameData.rows mapWithBlock:^id(iTermMetalRowData *row) {
+            return row.date;
+        }];
+    }
+}
+
 // Called when all renderers have transient state
 - (void)populateTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
                                        range:(NSRange)range {
@@ -741,6 +768,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateBadgeRendererTransientStateWithFrameData:frameData];
     [self populateMarkRendererTransientStateWithFrameData:frameData];
     [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
+    [self populateTimestampsRendererTransientStateWithFrameData:frameData];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
@@ -1031,6 +1059,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
          renderEncoder:renderEncoder
                   stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawIndicators]];
 
+    [self drawCellRenderer:_timestampsRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawTimestamps]];
+
     [self drawRenderer:_flashRenderer
              frameData:frameData
          renderEncoder:renderEncoder
@@ -1082,7 +1115,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                renderer == _imeCursorRenderer ||
                renderer == _blockCursorRenderer ||
                renderer == _frameCursorRenderer ||
-               renderer == _copyBackgroundRenderer) {
+               renderer == _copyBackgroundRenderer ||
+               renderer == _timestampsRenderer) {
         // Nothing to do here
     } else if (renderer == _marginRenderer) {
         [self updateMarginRendererWithTransientState:tState
@@ -1148,7 +1182,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _imeCursorRenderer,
               _blockCursorRenderer,
               _frameCursorRenderer,
-              _copyModeCursorRenderer ];
+              _copyModeCursorRenderer,
+              _timestampsRenderer ];
 }
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {

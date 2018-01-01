@@ -204,6 +204,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
   iTermColorMapDelegate,
   iTermIndicatorsHelperDelegate,
   iTermSemanticHistoryControllerDelegate,
+  iTermTextDrawingHelperDelegate,
   NSDraggingDestination,
   NSTextInputClient,
   PointerControllerDelegate>

@@ -768,14 +768,13 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)createTimestampDrawingHelper {
+    [_timestampDrawHelper autorelease];
     _timestampDrawHelper =
         [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:[self defaultBackgroundColor]
                                                         textColor:[_colorMap colorForKey:kColorMapForeground]
                                                               now:self.now
                                                useTestingTimezone:self.useTestingTimezone
-                                                          inFrame:_frame
                                                         rowHeight:_cellSize.height
-                                                          context:[NSGraphicsContext currentContext]
                                                            retina:self.isRetina];
 
 }
@@ -794,7 +793,7 @@ typedef struct iTermTextColorContext {
          y++) {
         [_timestampDrawHelper setDate:[_delegate drawingHelperTimestampForLine:y] forLine:y];
     }
-    [_timestampDrawHelper draw];
+    [_timestampDrawHelper drawInContext:[NSGraphicsContext currentContext] frame:_frame];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);
     }

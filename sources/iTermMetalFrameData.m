@@ -42,6 +42,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "marginTS<<",
         "textTS<<",
         "indicatorsTS<<",
+        "timestampsTS<<",
         "flashTS<<",
 
         "PopulateTransient<",
@@ -57,6 +58,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawMarks<<",
         "DrawCrGuide<<",
         "DrawIndicators<<",
+        "DrawTimestamps<<",
         "DrawFlash<<",
         
         "EndEncodingInt<<",
