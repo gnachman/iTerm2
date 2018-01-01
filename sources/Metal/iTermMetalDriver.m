@@ -154,9 +154,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     [self dispatchAsyncToPrivateQueue:^{
         if (scale == 0) {
-            NSLog(@"Warning: scale is 0");
+            ELog(@"Warning: scale is 0");
         }
-        NSLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
+        DLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
         _sizeChanged = YES;
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
@@ -188,15 +188,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     _total++;
     if (_total % 60 == 0) {
         @synchronized (self) {
-            NSLog(@"fps=%f (%d in flight)", (_total - _dropped) / ([NSDate timeIntervalSinceReferenceDate] - _startTime), (int)_framesInFlight);
-            NSLog(@"%@", _currentFrames);
+            ELog(@"fps=%f (%d in flight)", (_total - _dropped) / ([NSDate timeIntervalSinceReferenceDate] - _startTime), (int)_framesInFlight);
+            ELog(@"%@", _currentFrames);
         }
+    }
+
+    if (view.bounds.size.width == 0 || view.bounds.size.height == 0) {
+        ELog(@"  abort: 0x0 view");
+        return;
     }
 
     iTermMetalFrameData *frameData = [self newFrameDataForView:view];
     if (VT100GridSizeEquals(frameData.gridSize, VT100GridSizeMake(0, 0))) {
-        // TODO: Could early exit a lot faster since newFrameDataForView is expensive.
-        NSLog(@"  abort: 0x0");
+        ELog(@"  abort: 0x0 grid");
         return;
     }
 
@@ -208,9 +212,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
     }
     if (shouldDrop) {
-        NSLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
+        ELog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
         @synchronized(self) {
-            NSLog(@"  current frames:\n%@", _currentFrames);
+            ELog(@"  current frames:\n%@", _currentFrames);
         }
 
         _dropped++;
@@ -221,7 +225,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #if ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
     if (frameData.drawable == nil || frameData.renderPassDescriptor == nil) {
-        NSLog(@"  abort: failed to get drawable or RPD");
+        ELog(@"  abort: failed to get drawable or RPD");
         self.needsDraw = YES;
         return;
     }
