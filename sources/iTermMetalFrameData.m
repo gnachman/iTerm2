@@ -83,6 +83,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 static NSInteger gNextFrameDataNumber;
 
 @interface iTermMetalFrameData()
+@property (readonly, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
 @property (atomic, strong, readwrite) MTKView *view;
 @end
 
