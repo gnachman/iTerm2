@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 #import "iTermMetalRenderer.h"
+#import "iTermTexturePool.h"
 
 #import <MetalKit/MetalKit.h>
 
@@ -80,59 +81,6 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 }
 
 static NSInteger gNextFrameDataNumber;
-
-@interface iTermTexturePool : NSObject
-- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
-- (void)returnTexture:(id<MTLTexture>)texture;
-@end
-
-@implementation iTermTexturePool {
-    NSMutableArray<id<MTLTexture>> *_textures;
-    vector_uint2 _size;
-}
-
-+ (instancetype)sharedInstance {
-    static dispatch_once_t onceToken;
-    static id instance;
-    dispatch_once(&onceToken, ^{
-        instance = [[self alloc] init];
-    });
-    return instance;
-}
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _textures = [NSMutableArray array];
-    }
-    return self;
-}
-
-- (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size {
-    @synchronized(self) {
-        _size = size;
-        [_textures removeObjectsAtIndexes:[_textures indexesOfObjectsPassingTest:^BOOL(id<MTLTexture>  _Nonnull texture, NSUInteger idx, BOOL * _Nonnull stop) {
-            return (texture.width != _size.x || texture.height != _size.y);
-        }]];
-        if (_textures.count) {
-            id<MTLTexture> result = _textures.firstObject;
-            [_textures removeObjectAtIndex:0];
-            return result;
-        } else {
-            return nil;
-        }
-    }
-}
-
-- (void)returnTexture:(id<MTLTexture>)texture {
-    @synchronized(self) {
-        if (texture.width == _size.x && texture.height == _size.y) {
-            [_textures addObject:texture];
-        }
-    }
-}
-
-@end
 
 @interface iTermMetalFrameData()
 @property (atomic, strong, readwrite) MTKView *view;
@@ -213,6 +161,15 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
 }
 
+- (iTermTexturePool *)sharedTexturePool {
+    static iTermTexturePool *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[iTermTexturePool alloc] init];
+    });
+    return instance;
+}
+
 - (void)createIntermediateRenderPassDescriptor {
     [self measureTimeForStat:iTermMetalFrameDataStatPqCreateIntermediate ofBlock:^{
         assert(!self.intermediateRenderPassDescriptor);
@@ -220,7 +177,7 @@ static NSInteger gNextFrameDataNumber;
         self.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
         MTLRenderPassColorAttachmentDescriptor *colorAttachment = self.intermediateRenderPassDescriptor.colorAttachments[0];
         colorAttachment.storeAction = MTLStoreActionStore;
-        colorAttachment.texture = [[iTermTexturePool sharedInstance] requestTextureOfSize:self.viewportSize];
+        colorAttachment.texture = [[self sharedTexturePool] requestTextureOfSize:self.viewportSize];
         if (!colorAttachment.texture) {
             // Allocate a new texture.
             MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
@@ -243,7 +200,7 @@ static NSInteger gNextFrameDataNumber;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats {
     self.status = @"complete";
     if (self.intermediateRenderPassDescriptor) {
-        [[iTermTexturePool sharedInstance] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
+        [[self sharedTexturePool] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
     }
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);

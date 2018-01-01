@@ -2428,6 +2428,8 @@
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22B441BC9D368004084E0 /* iTermShellHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */; };
+		A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */; };
+		A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
@@ -4035,6 +4037,8 @@
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryTest.m; sourceTree = "<group>"; };
+		A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePool.h; path = Metal/Infrastructure/iTermTexturePool.h; sourceTree = "<group>"; };
+		A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermTexturePool.m; path = Metal/Infrastructure/iTermTexturePool.m; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
@@ -5636,6 +5640,8 @@
 				A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */,
 				A614F2661FE4B16400EEE919 /* iTermCharacterParts.m */,
 				A66F3CED1FEA2A6C00AA2021 /* iTermPIUArray.h */,
+				A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */,
+				A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */,
 			);
 			name = Infrastructure;
 			sourceTree = "<group>";
@@ -7271,6 +7277,7 @@
 				A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */,
 				A667194A1DCE36C3000CE608 /* iTermSessionHotkeyController.h in Headers */,
 				A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */,
+				A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				A667194C1DCE36C3000CE608 /* iTermSocket.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
@@ -8852,6 +8859,7 @@
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
+				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,

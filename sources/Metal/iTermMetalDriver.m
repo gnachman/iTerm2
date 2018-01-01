@@ -1077,10 +1077,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)complete:(iTermMetalFrameData *)frameData {
     DLog(@"  Completed");
 
-    // Unlock indices and free up the stage texture.
-    iTermTextRendererTransientState *textState =
-        frameData.transientStates[NSStringFromClass([_textRenderer class])];
-    [textState didComplete];
+    if (!_textRenderer.rendererDisabled) {
+        // Unlock indices and free up the stage texture.
+        iTermTextRendererTransientState *textState =
+            frameData.transientStates[NSStringFromClass([_textRenderer class])];
+        [textState didComplete];
+    }
 
     DLog(@"  Recording final stats");
     [frameData didCompleteWithAggregateStats:_stats];
