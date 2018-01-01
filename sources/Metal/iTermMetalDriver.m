@@ -4,6 +4,7 @@
 #import "iTermMetalDriver.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermASCIITexture.h"
 #import "iTermBackgroundImageRenderer.h"
 #import "iTermBackgroundColorRenderer.h"
@@ -131,6 +132,7 @@
 #endif
         _currentFrames = [NSMutableArray array];
         _fpsMovingAverage = [[MovingAverage alloc] init];
+        _fpsMovingAverage.alpha = 0.75;
         iTermMetalFrameDataStatsBundleInitialize(_stats);
     }
 
@@ -739,24 +741,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
-#if ENABLE_ONSCREEN_STATS
-        if (idx == 0) {
-            iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)rowData.attributesData.bytes;
-            char frame[80];
-            sprintf(frame, sizeof(frame) - 1, "Frame %d, %d fps", (int)frameData.frameNumber, (int)(1.0 / [_fpsMovingAverage value]));
-            for (int i = 0; frame[i]; i++) {
-                glyphKeys[i].code = frame[i];
-                glyphKeys[i].isComplex = NO;
-                glyphKeys[i].image = NO;
-                glyphKeys[i].drawable = YES;
-                glyphKeys[i].typeface = iTermMetalGlyphKeyTypefaceRegular;
-
-                attributes[i].backgroundColor = simd_make_float4(1.0, 0.0, 0.0, 1.0);
-                attributes[i].foregroundColor = simd_make_float4(1.0, 1.0, 1.0, 1.0);
-                attributes[i].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-            }
+        if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
+            [self writeFPSMeterIntoGlyphKeys:glyphKeys
+                                  attributes:(iTermMetalGlyphAttributes *)rowData.attributesData.bytes
+                                       width:frameData.gridSize.width
+                                 frameNumber:frameData.frameNumber];
         }
-#endif
 
         if (!_textRenderer.rendererDisabled) {
             [textState setGlyphKeysData:rowData.keysData
@@ -803,6 +793,33 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // Tell the text state that it's done getting row data.
     if (!_textRenderer.rendererDisabled) {
         [textState willDraw];
+    }
+}
+
+- (void)writeFPSMeterIntoGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
+                        attributes:(iTermMetalGlyphAttributes *)attributes
+                             width:(int)width
+                       frameNumber:(NSInteger)frameNumber {
+    const size_t fpsMeterSize = MAX(0, MIN(80, width));
+    if (fpsMeterSize > 1) {
+        char frame[fpsMeterSize];
+        snprintf(frame,
+                 fpsMeterSize - 1,
+                 " [Frame %d: %d fps] ",
+                 (int)frameNumber,
+                 (int)(1.0 / [_fpsMovingAverage value]));
+        int o = MAX(0, width - strlen(frame));
+        for (int i = 0; frame[i]; i++, o++) {
+            glyphKeys[o].code = frame[i];
+            glyphKeys[o].isComplex = NO;
+            glyphKeys[o].image = NO;
+            glyphKeys[o].drawable = YES;
+            glyphKeys[o].typeface = iTermMetalGlyphKeyTypefaceRegular;
+
+            attributes[o].backgroundColor = simd_make_float4(1.0, 0.0, 0.0, 1.0);
+            attributes[o].foregroundColor = simd_make_float4(1.0, 1.0, 1.0, 1.0);
+            attributes[o].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
     }
 }
 
