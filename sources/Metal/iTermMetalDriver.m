@@ -857,8 +857,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     iTermPreciseTimerStatsStartTimer(stat);
 
-    NSString *className = NSStringFromClass([renderer class]);
-    iTermMetalRendererTransientState *state = frameData.transientStates[className];
+    iTermMetalRendererTransientState *state = [frameData transientStateForRenderer:renderer];
     // NOTE: State may be nil if we determined it should be skipped early on.
     if (state != nil && !state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
@@ -876,8 +875,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     iTermPreciseTimerStatsStartTimer(stat);
 
-    NSString *className = NSStringFromClass([renderer class]);
-    iTermMetalCellRendererTransientState *state = frameData.transientStates[className];
+    iTermMetalCellRendererTransientState *state = [frameData transientStateForRenderer:renderer];
     if (state != nil && !state.skipRenderer) {
         [renderer drawWithRenderEncoder:renderEncoder transientState:state];
     }

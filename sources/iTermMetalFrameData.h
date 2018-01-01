@@ -96,7 +96,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
 @property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
-@property (atomic, readonly, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
 @property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
 @property (atomic) vector_uint2 viewportSize;
 @property (atomic) VT100GridSize gridSize;
