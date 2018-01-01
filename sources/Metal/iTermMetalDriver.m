@@ -257,7 +257,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         // This is the slow part
         frameData.perFrameState = [_dataSource metalDriverWillBeginDrawingFrame];
 
-        frameData.transientStates = [NSMutableDictionary dictionary];
         frameData.rows = [NSMutableArray array];
         frameData.gridSize = frameData.perFrameState.gridSize;
         frameData.scale = _scale;
@@ -388,7 +387,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             [renderer createTransientStateForConfiguration:configuration
                                              commandBuffer:commandBuffer];
             if (tState) {
-                frameData.transientStates[NSStringFromClass(renderer.class)] = tState;
+                [frameData setTransientState:tState forRenderer:renderer];
             }
         }];
     };
@@ -408,7 +407,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 [renderer createTransientStateForCellConfiguration:cellConfiguration
                                                      commandBuffer:commandBuffer];
             if (tState) {
-                frameData.transientStates[NSStringFromClass([renderer class])] = tState;
+                [frameData setTransientState:tState forRenderer:renderer];
             }
         }];
     };
@@ -603,8 +602,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     // Copy state
-    iTermCopyBackgroundRendererTransientState *copyState =
-        frameData.transientStates[NSStringFromClass([_copyBackgroundRenderer class])];
+    iTermCopyBackgroundRendererTransientState *copyState = [frameData transientStateForRenderer:_copyBackgroundRenderer];
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
 }
 
@@ -633,29 +631,29 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     if (cursorInfo.copyMode) {
-        iTermCopyModeCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_copyModeCursorRenderer class])];
+        iTermCopyModeCursorRendererTransientState *tState = [frameData transientStateForRenderer:_copyModeCursorRenderer];
         tState.selecting = cursorInfo.copyModeCursorSelecting;
         tState.coord = cursorInfo.copyModeCursorCoord;
     } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE: {
-                iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_underlineCursorRenderer class])];
+                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 break;
             }
             case CURSOR_BOX: {
-                iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_blockCursorRenderer class])];
+                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
 
-                tState = frameData.transientStates[NSStringFromClass([_frameCursorRenderer class])];
+                tState = [frameData transientStateForRenderer:_frameCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 break;
             }
             case CURSOR_VERTICAL: {
-                iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_barCursorRenderer class])];
+                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 break;
@@ -667,7 +665,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
     if (imeInfo) {
-        iTermCursorRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_imeCursorRenderer class])];
+        iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_imeCursorRenderer];
         tState.coord = imeInfo.cursorCoord;
         tState.color = [NSColor colorWithSRGBRed:iTermIMEColor.x
                                            green:iTermIMEColor.y
@@ -680,7 +678,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (_badgeRenderer.rendererDisabled) {
         return;
     }
-    iTermBadgeRendererTransientState *tState = frameData.transientStates[NSStringFromClass([_badgeRenderer class])];
+    iTermBadgeRendererTransientState *tState = [frameData transientStateForRenderer:_badgeRenderer];
     tState.sourceRect = frameData.perFrameState.badgeSourceRect;
     tState.destinationRect = frameData.perFrameState.badgeDestinationRect;
 }
@@ -692,8 +690,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     // Update the text renderer's transient state with current glyphs and colors.
     CGFloat scale = frameData.scale;
-    iTermTextRendererTransientState *textState =
-        frameData.transientStates[NSStringFromClass([_textRenderer class])];
+    iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_textRenderer];
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
@@ -708,8 +705,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
     
     CGSize cellSize = textState.cellConfiguration.cellSize;
-    iTermBackgroundColorRendererTransientState *backgroundState =
-        frameData.transientStates[NSStringFromClass([_backgroundColorRenderer class])];
+    iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
 
@@ -811,16 +807,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)populateMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    iTermMarkRendererTransientState *tState =
-        frameData.transientStates[NSStringFromClass([_markRenderer class])];
+    iTermMarkRendererTransientState *tState = [frameData transientStateForRenderer:_markRenderer];
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         [tState setMarkStyle:rowData.markStyle row:idx];
     }];
 }
 
 - (void)populateCursorGuideRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    iTermCursorGuideRendererTransientState *tState =
-        frameData.transientStates[NSStringFromClass([_cursorGuideRenderer class])];
+    iTermCursorGuideRendererTransientState *tState = [frameData transientStateForRenderer:_cursorGuideRenderer];
     iTermMetalCursorInfo *cursorInfo = frameData.perFrameState.metalDriverCursorInfo;
     if (cursorInfo.coord.y >= 0 &&
         cursorInfo.coord.y < frameData.gridSize.height) {
@@ -831,8 +825,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)populateTimestampsRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    iTermTimestampsRendererTransientState *tState =
-        frameData.transientStates[NSStringFromClass([_timestampsRenderer class])];
+    iTermTimestampsRendererTransientState *tState = [frameData transientStateForRenderer:_timestampsRenderer];
     if (frameData.perFrameState.timestampsEnabled) {
         tState.backgroundColor = frameData.perFrameState.timestampsBackgroundColor;
         tState.textColor = frameData.perFrameState.timestampsTextColor;
@@ -844,14 +837,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)populateFlashRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    iTermFullScreenFlashRendererTransientState *tState =
-        frameData.transientStates[NSStringFromClass([_flashRenderer class])];
+    iTermFullScreenFlashRendererTransientState *tState = [frameData transientStateForRenderer:_flashRenderer];
     tState.color = frameData.perFrameState.fullScreenFlashColor;
 }
 
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    iTermMarginRendererTransientState *tState =
-        frameData.transientStates[NSStringFromClass([_marginRenderer class])];
+    iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
     [tState setColor:frameData.perFrameState.defaultBackgroundColor];
 }
 
@@ -1108,8 +1099,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     if (!_textRenderer.rendererDisabled) {
         // Unlock indices and free up the stage texture.
-        iTermTextRendererTransientState *textState =
-            frameData.transientStates[NSStringFromClass([_textRenderer class])];
+        iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_textRenderer];
         [textState didComplete];
     }
 
