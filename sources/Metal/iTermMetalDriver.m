@@ -83,7 +83,6 @@
     vector_uint2 _viewportSize;
     CGSize _cellSize;
     CGSize _cellSizeWithoutSpacing;
-//    int _iteration;
     int _rows;
     int _columns;
     BOOL _sizeChanged;
@@ -246,7 +245,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
 }
 
-#pragma mark - Drawing
+#pragma mark - Draw Helpers
 
 // Called on the main queue
 - (iTermMetalFrameData *)newFrameDataForView:(MTKView *)view {
@@ -266,19 +265,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return frameData;
 }
 
-- (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
-    if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetTiled:NULL]) {
-        return YES;
-    }
-    if (!_badgeRenderer.rendererDisabled && [frameData.perFrameState badgeImage]) {
-        return YES;
-    }
-    if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
-        return YES;
-    }
-
-    return NO;
-}
+#pragma mark - Private Queue Orchestration
 
 // Runs in private queue
 - (void)performPrivateQueueSetupForFrameData:(iTermMetalFrameData *)frameData
@@ -330,6 +317,189 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                               commandBuffer:commandBuffer];
     }];
 }
+
+- (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
+    for (int y = 0; y < frameData.gridSize.height; y++) {
+        iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
+        [frameData.rows addObject:rowData];
+        rowData.y = y;
+        rowData.keysData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
+        rowData.attributesData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
+        rowData.backgroundColorRLEData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
+        iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
+        int drawableGlyphs = 0;
+        int rles = 0;
+        iTermMarkStyle markStyle;
+        NSDate *date;
+        [frameData.perFrameState metalGetGlyphKeys:glyphKeys
+                                        attributes:rowData.attributesData.mutableBytes
+                                        background:rowData.backgroundColorRLEData.mutableBytes
+                                          rleCount:&rles
+                                         markStyle:&markStyle
+                                               row:y
+                                             width:_columns
+                                    drawableGlyphs:&drawableGlyphs
+                                              date:&date];
+        rowData.date = date;
+        rowData.numberOfBackgroundRLEs = rles;
+        rowData.numberOfDrawableGlyphs = drawableGlyphs;
+        rowData.markStyle = markStyle;
+    }
+}
+
+- (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
+    if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetTiled:NULL]) {
+        return YES;
+    }
+    if (!_badgeRenderer.rendererDisabled && [frameData.perFrameState badgeImage]) {
+        return YES;
+    }
+    if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
+        return YES;
+    }
+
+    return NO;
+}
+
+- (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
+    [self updateTextRendererForFrameData:frameData];
+    [self updateBackgroundImageRendererForFrameData:frameData];
+    [self updateCopyBackgroundRendererForFrameData:frameData];
+    [self updateBadgeRendererForFrameData:frameData];
+    [self updateBroadcastStripesRendererForFrameData:frameData];
+    [self updateCursorGuideRendererForFrameData:frameData];
+    [self updateIndicatorRendererForFrameData:frameData];
+    [self updateTimestampsRendererForFrameData:frameData];
+}
+
+- (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
+                                      view:(nonnull MTKView *)view
+                             commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    iTermRenderConfiguration *configuration = [[iTermRenderConfiguration alloc] initWithViewportSize:_viewportSize scale:frameData.scale];
+
+    [commandBuffer enqueue];
+    commandBuffer.label = @"Draw Terminal";
+    for (id<iTermMetalRenderer> renderer in self.nonCellRenderers) {
+        if (renderer.rendererDisabled) {
+            continue;
+        }
+        [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
+            __kindof iTermMetalRendererTransientState * _Nonnull tState =
+            [renderer createTransientStateForConfiguration:configuration
+                                             commandBuffer:commandBuffer];
+            if (tState) {
+                frameData.transientStates[NSStringFromClass(renderer.class)] = tState;
+            }
+        }];
+    };
+    const VT100GridSize gridSize = frameData.gridSize;
+    iTermCellRenderConfiguration *cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:_viewportSize
+                                                                                                           scale:frameData.scale
+                                                                                                        cellSize:_cellSize
+                                                                                          cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                                                                                                        gridSize:gridSize
+                                                                                           usingIntermediatePass:(frameData.intermediateRenderPassDescriptor != nil)];
+    for (id<iTermMetalCellRenderer> renderer in self.cellRenderers) {
+        if (renderer.rendererDisabled) {
+            continue;
+        }
+        [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
+            __kindof iTermMetalCellRendererTransientState * _Nonnull tState =
+                [renderer createTransientStateForCellConfiguration:cellConfiguration
+                                                     commandBuffer:commandBuffer];
+            if (tState) {
+                frameData.transientStates[NSStringFromClass([renderer class])] = tState;
+            }
+        }];
+    };
+}
+
+// Called when all renderers have transient state
+- (void)populateTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
+                                       range:(NSRange)range {
+    [self populateMarginRendererTransientStateWithFrameData:frameData];
+    [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
+    [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
+    [self populateCursorRendererTransientStateWithFrameData:frameData];
+    [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
+    [self populateBadgeRendererTransientStateWithFrameData:frameData];
+    [self populateMarkRendererTransientStateWithFrameData:frameData];
+    [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
+    [self populateTimestampsRendererTransientStateWithFrameData:frameData];
+    [self populateFlashRendererTransientStateWithFrameData:frameData];
+}
+
+- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+        frameData.drawable = view.currentDrawable;
+        frameData.drawable.texture.label = @"Drawable";
+    }];
+
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
+        frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+    }];
+}
+
+- (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
+                        commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    DLog(@"  enequeueDrawCallsForFrameData");
+
+    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
+                                                                              frameData:frameData
+                                                                                   pass:0];
+
+    [self drawContentBehindTextWithFrameData:frameData renderEncoder:renderEncoder];
+
+    // If we're using an intermediate render pass, copy from it to the view for final steps.
+    if (frameData.intermediateRenderPassDescriptor) {
+        renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
+                                                      frameData:frameData
+                                                           pass:1];
+        [self drawRenderer:_copyBackgroundRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
+    }
+
+    [self drawCellRenderer:_textRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
+
+    [self drawCursorAfterTextWithFrameData:frameData
+                             renderEncoder:renderEncoder];
+
+    [self drawCellRenderer:_markRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMarks]];
+
+    [self drawCellRenderer:_cursorGuideRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
+
+    [self drawRenderer:_indicatorRenderer
+             frameData:frameData
+         renderEncoder:renderEncoder
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawIndicators]];
+
+    [self drawCellRenderer:_timestampsRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawTimestamps]];
+
+    [self drawRenderer:_flashRenderer
+             frameData:frameData
+         renderEncoder:renderEncoder
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash]];
+
+    [self finishDrawingWithCommandBuffer:commandBuffer
+                               frameData:frameData
+                           renderEncoder:renderEncoder];
+}
+
+#pragma mark - Update Renderers
 
 - (void)updateTextRendererForFrameData:(iTermMetalFrameData *)frameData {
     if (_textRenderer.rendererDisabled) {
@@ -426,93 +596,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     _timestampsRenderer.enabled = frameData.perFrameState.timestampsEnabled;
 }
 
-- (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
-    [self updateTextRendererForFrameData:frameData];
-    [self updateBackgroundImageRendererForFrameData:frameData];
-    [self updateCopyBackgroundRendererForFrameData:frameData];
-    [self updateBadgeRendererForFrameData:frameData];
-    [self updateBroadcastStripesRendererForFrameData:frameData];
-    [self updateCursorGuideRendererForFrameData:frameData];
-    [self updateIndicatorRendererForFrameData:frameData];
-    [self updateTimestampsRendererForFrameData:frameData];
-}
-
-- (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
-                                      view:(nonnull MTKView *)view
-                             commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    iTermRenderConfiguration *configuration = [[iTermRenderConfiguration alloc] initWithViewportSize:_viewportSize scale:frameData.scale];
-
-    [commandBuffer enqueue];
-    commandBuffer.label = @"Draw Terminal";
-    for (id<iTermMetalRenderer> renderer in self.nonCellRenderers) {
-        if (renderer.rendererDisabled) {
-            continue;
-        }
-        [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
-            __kindof iTermMetalRendererTransientState * _Nonnull tState =
-            [renderer createTransientStateForConfiguration:configuration
-                                             commandBuffer:commandBuffer];
-            if (tState) {
-                frameData.transientStates[NSStringFromClass(renderer.class)] = tState;
-                [self updateRenderer:renderer
-                               state:tState
-                           frameData:frameData];
-            }
-        }];
-    };
-    const VT100GridSize gridSize = frameData.gridSize;
-    iTermCellRenderConfiguration *cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:_viewportSize
-                                                                                                           scale:frameData.scale
-                                                                                                        cellSize:_cellSize
-                                                                                          cellSizeWithoutSpacing:_cellSizeWithoutSpacing
-                                                                                                        gridSize:gridSize
-                                                                                           usingIntermediatePass:(frameData.intermediateRenderPassDescriptor != nil)];
-    for (id<iTermMetalCellRenderer> renderer in self.cellRenderers) {
-        if (renderer.rendererDisabled) {
-            continue;
-        }
-        [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
-            __kindof iTermMetalCellRendererTransientState * _Nonnull tState =
-                [renderer createTransientStateForCellConfiguration:cellConfiguration
-                                                     commandBuffer:commandBuffer];
-            if (tState) {
-                frameData.transientStates[NSStringFromClass([renderer class])] = tState;
-                [self updateRenderer:renderer
-                               state:tState
-                           frameData:frameData];
-            }
-        }];
-    };
-}
-
-- (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
-    for (int y = 0; y < frameData.gridSize.height; y++) {
-        iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
-        [frameData.rows addObject:rowData];
-        rowData.y = y;
-        rowData.keysData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
-        rowData.attributesData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
-        rowData.backgroundColorRLEData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
-        iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
-        int drawableGlyphs = 0;
-        int rles = 0;
-        iTermMarkStyle markStyle;
-        NSDate *date;
-        [frameData.perFrameState metalGetGlyphKeys:glyphKeys
-                                        attributes:rowData.attributesData.mutableBytes
-                                        background:rowData.backgroundColorRLEData.mutableBytes
-                                          rleCount:&rles
-                                         markStyle:&markStyle
-                                               row:y
-                                             width:_columns
-                                    drawableGlyphs:&drawableGlyphs
-                                              date:&date];
-        rowData.date = date;
-        rowData.numberOfBackgroundRLEs = rles;
-        rowData.numberOfDrawableGlyphs = drawableGlyphs;
-        rowData.markStyle = markStyle;
-    }
-}
+#pragma mark - Populate Transient States
 
 - (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (_copyBackgroundRenderer.rendererDisabled) {
@@ -759,17 +843,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-// Called when all renderers have transient state
-- (void)populateTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
-                                       range:(NSRange)range {
-    [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
-    [self populateCursorRendererTransientStateWithFrameData:frameData];
-    [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
-    [self populateBadgeRendererTransientStateWithFrameData:frameData];
-    [self populateMarkRendererTransientStateWithFrameData:frameData];
-    [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
-    [self populateTimestampsRendererTransientStateWithFrameData:frameData];
+- (void)populateFlashRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermFullScreenFlashRendererTransientState *tState =
+        frameData.transientStates[NSStringFromClass([_flashRenderer class])];
+    tState.color = frameData.perFrameState.fullScreenFlashColor;
 }
+
+- (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermMarginRendererTransientState *tState =
+        frameData.transientStates[NSStringFromClass([_marginRenderer class])];
+    [tState setColor:frameData.perFrameState.defaultBackgroundColor];
+}
+
+#pragma mark - Draw
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
            frameData:(iTermMetalFrameData *)frameData
@@ -966,6 +1052,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }];
 }
 
+#pragma mark - Drawing Helpers
+
 - (id<MTLRenderCommandEncoder>)newRenderEncoderFromCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                                             renderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
                                                            label:(NSString *)label
@@ -1015,65 +1103,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return renderEncoder;
 }
 
-- (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
-                        commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    DLog(@"  enequeueDrawCallsForFrameData");
-
-    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                                                              frameData:frameData
-                                                                                   pass:0];
-
-    [self drawContentBehindTextWithFrameData:frameData renderEncoder:renderEncoder];
-
-    // If we're using an intermediate render pass, copy from it to the view for final steps.
-    if (frameData.intermediateRenderPassDescriptor) {
-        renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                                      frameData:frameData
-                                                           pass:1];
-        [self drawRenderer:_copyBackgroundRenderer
-                 frameData:frameData
-             renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
-    }
-
-    [self drawCellRenderer:_textRenderer
-                 frameData:frameData
-             renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
-
-    [self drawCursorAfterTextWithFrameData:frameData
-                             renderEncoder:renderEncoder];
-
-    [self drawCellRenderer:_markRenderer
-                 frameData:frameData
-             renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMarks]];
-
-    [self drawCellRenderer:_cursorGuideRenderer
-                 frameData:frameData
-             renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
-
-    [self drawRenderer:_indicatorRenderer
-             frameData:frameData
-         renderEncoder:renderEncoder
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawIndicators]];
-
-    [self drawCellRenderer:_timestampsRenderer
-                 frameData:frameData
-             renderEncoder:renderEncoder
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawTimestamps]];
-
-    [self drawRenderer:_flashRenderer
-             frameData:frameData
-         renderEncoder:renderEncoder
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash]];
-
-    [self finishDrawingWithCommandBuffer:commandBuffer
-                               frameData:frameData
-                           renderEncoder:renderEncoder];
-}
-
 - (void)complete:(iTermMetalFrameData *)frameData {
     DLog(@"  Completed");
 
@@ -1099,79 +1128,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }];
 }
 
-#pragma mark - Updating
-
-- (void)updateRenderer:(id)renderer
-                 state:(__kindof iTermMetalRendererTransientState *)tState
-             frameData:(iTermMetalFrameData *)frameData {
-    id<iTermMetalDriverDataSourcePerFrameState> perFrameState = frameData.perFrameState;
-    
-    if (renderer == _backgroundImageRenderer) {
-        [self updateBackgroundImageRendererWithTransientState:tState withFrameData:frameData];
-    } else if (renderer == _backgroundColorRenderer ||
-               renderer == _textRenderer ||
-               renderer == _markRenderer ||
-               renderer == _broadcastStripesRenderer ||
-               renderer == _underlineCursorRenderer ||
-               renderer == _barCursorRenderer ||
-               renderer == _imeCursorRenderer ||
-               renderer == _blockCursorRenderer ||
-               renderer == _frameCursorRenderer ||
-               renderer == _copyBackgroundRenderer ||
-               renderer == _timestampsRenderer) {
-        // Nothing to do here
-    } else if (renderer == _marginRenderer) {
-        [self updateMarginRendererWithTransientState:tState
-                                       perFrameState:perFrameState];
-    } else if (renderer == _badgeRenderer) {
-        [self updateBadgeRendererWithPerFrameState:perFrameState];
-    } else if (renderer == _cursorGuideRenderer) {
-        [self updateCursorGuideRendererWithTransientState:tState
-                                            perFrameState:perFrameState];
-    } else if (renderer == _copyModeCursorRenderer) {
-        [self updateCopyModeCursorRendererWithPerFrameState:perFrameState];
-    } else if (renderer == _indicatorRenderer) {
-        [self updateIndicatorRendererForFrameData:frameData];
-    } else if (renderer == _flashRenderer) {
-        [self updateFlashRendererWithTransientState:tState withPerFrameState:perFrameState];
-    }
-}
-
-- (void)updateFlashRendererWithTransientState:(iTermFullScreenFlashRendererTransientState *)tState
-                            withPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-    tState.color = perFrameState.fullScreenFlashColor;
-}
-
-- (void)updateMarginRendererWithTransientState:(iTermMarginRendererTransientState *)marginState
-                                 perFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-    [marginState setColor:perFrameState.defaultBackgroundColor];
-}
-
-- (void)updateBackgroundImageRendererWithTransientState:(iTermBackgroundImageRendererTransientState *)tState
-                                          withFrameData:(iTermMetalFrameData *)frameData {
-    // TODO: Change the image if needed
-}
-
-- (void)updateBadgeRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-    // TODO: call setBadgeImage: if needed
-}
-
-- (void)updateCursorGuideRendererWithTransientState:(iTermCursorGuideRendererTransientState *)tState
-                                      perFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-    iTermMetalCursorInfo *cursorInfo = perFrameState.metalDriverCursorInfo;
-    if (cursorInfo.cursorVisible) {
-        [tState setRow:perFrameState.metalDriverCursorInfo.coord.y];
-    } else {
-        [tState setRow:-1];
-    }
-}
-
-- (void)updateCopyModeCursorRendererWithPerFrameState:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
-    // TODO
-    // setCoord, setSelecting:
-}
-
-#pragma mark - Helpers
+#pragma mark - Miscellaneous Utility Methods
 
 - (NSArray<id<iTermMetalCellRenderer>> *)cellRenderers {
     return @[ _marginRenderer,
@@ -1227,17 +1184,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #else
     block();
 #endif
-}
-
-- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-        frameData.drawable = view.currentDrawable;
-        frameData.drawable.texture.label = @"Drawable";
-    }];
-
-    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-        frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
-    }];
 }
 
 @end
