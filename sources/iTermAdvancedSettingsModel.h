@@ -198,5 +198,6 @@
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)supportREPCode;
 + (BOOL)useMetal;
++ (BOOL)showMetalFPSmeter;
 
 @end

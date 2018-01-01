@@ -291,5 +291,6 @@ DEFINE_BOOL(supportREPCode, YES, @"Experimental Features: Enable support for REP
 DEFINE_BOOL(supportREPCode, NO, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
 #endif
 DEFINE_BOOL(useMetal, NO, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
+DEFINE_BOOL(showMetalFPSmeter, NO, @"Experimental Features: Show FPS meter\nRequires Metal renderer");
 
 @end
