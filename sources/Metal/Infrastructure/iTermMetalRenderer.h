@@ -4,6 +4,7 @@
 #import "iTermMetalFrameData.h"
 #import "iTermPreciseTimer.h"
 #import "iTermShaderTypes.h"
+#import "iTermTexturePool.h"
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
 
@@ -116,6 +117,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
 - (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
+- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context pool:(nullable iTermTexturePool *)pool;
 
 - (id<MTLRenderPipelineState>)newPipelineWithBlending:(nullable iTermMetalBlending *)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction

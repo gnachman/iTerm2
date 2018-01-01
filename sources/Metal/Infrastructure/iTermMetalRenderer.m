@@ -252,8 +252,13 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 }
 
 - (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context {
-    if (!image)
+    return [self textureFromImage:image context:context pool:nil];
+}
+
+- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+    if (!image) {
         return nil;
+    }
 
     NSRect imageRect = NSMakeRect(0, 0, image.size.width, image.size.height);
     CGImageRef imageRef = [image CGImageForProposedRect:&imageRect context:NULL hints:nil];
@@ -262,8 +267,9 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     NSUInteger width = CGImageGetWidth(imageRef);
     NSUInteger height = CGImageGetHeight(imageRef);
 
-    if (width == 0 || height == 0)
+    if (width == 0 || height == 0) {
         return nil;
+    }
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     uint8_t *rawData = (uint8_t *)calloc(height * width * 4, sizeof(uint8_t));
@@ -287,8 +293,14 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
                                                        width:width
                                                       height:height
                                                    mipmapped:NO];
-    id<MTLTexture> texture = [_device newTextureWithDescriptor:textureDescriptor];
-
+    id<MTLTexture> texture = nil;
+    if (pool) {
+        texture = [pool requestTextureOfSize:simd_make_uint2(width, height)];
+    }
+    if (!texture) {
+        texture = [_device newTextureWithDescriptor:textureDescriptor];
+    }
+    
     MTLRegion region = MTLRegionMake2D(0, 0, width, height);
     [texture replaceRegion:region mipmapLevel:0 withBytes:rawData bytesPerRow:bytesPerRow];
 

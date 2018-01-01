@@ -6,9 +6,9 @@
 //
 
 #import "iTermTimestampsRenderer.h"
-#import "iTermTimestampDrawHelper.h"
 
-#warning TODO :Use texture pools
+#import "iTermTexturePool.h"
+#import "iTermTimestampDrawHelper.h"
 
 @interface iTermTimestampKey : NSObject
 @property (nonatomic) CGFloat width;
@@ -39,10 +39,19 @@
 @interface iTermTimestampsRendererTransientState()
 - (void)enumerateRows:(void (^)(int row, iTermTimestampKey *key, NSRect frame))block;
 - (NSImage *)imageForRow:(int)row;
+- (void)addPooledTexture:(iTermPooledTexture *)pooledTexture;
 @end
 
 @implementation iTermTimestampsRendererTransientState {
     iTermTimestampDrawHelper *_drawHelper;
+    NSMutableArray<iTermPooledTexture *> *_pooledTextures;
+}
+
+- (void)addPooledTexture:(iTermPooledTexture *)pooledTexture {
+    if (!_pooledTextures) {
+        _pooledTextures = [NSMutableArray array];
+    }
+    [_pooledTextures addObject:pooledTexture];
 }
 
 - (void)enumerateRows:(void (^)(int row, iTermTimestampKey *key, NSRect frame))block {
@@ -102,12 +111,14 @@
 
 @implementation iTermTimestampsRenderer {
     iTermMetalCellRenderer *_cellRenderer;
-    NSCache<iTermTimestampKey *, id<MTLTexture>> *_cache;
+    NSCache<iTermTimestampKey *, iTermPooledTexture *> *_cache;
+    iTermTexturePool *_texturePool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
+        _texturePool = [[iTermTexturePool alloc] init];
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermTimestampsVertexShader"
                                                   fragmentFunctionName:@"iTermTimestampsFragmentShader"
@@ -148,13 +159,20 @@
     _cache.countLimit = tState.cellConfiguration.gridSize.height * 4;
     const CGFloat scale = tState.configuration.scale;
     [tState enumerateRows:^(int row, iTermTimestampKey *key, NSRect frame) {
-        id<MTLTexture> texture = [_cache objectForKey:key];
-        if (!texture) {
-            texture = [_cellRenderer textureFromImage:[tState imageForRow:row]
-                                              context:tState.poolContext];
-            [_cache setObject:texture forKey:key];
+        iTermPooledTexture *pooledTexture = [_cache objectForKey:key];
+        if (!pooledTexture) {
+            NSImage *image = [tState imageForRow:row];
+            iTermMetalBufferPoolContext *context = tState.poolContext;
+            id<MTLTexture> texture = [_cellRenderer textureFromImage:image
+                                                             context:context
+                                                                pool:_texturePool];
+            assert(texture);
+            pooledTexture = [[iTermPooledTexture alloc] initWithTexture:texture
+                                                                   pool:_texturePool];
+            [_cache setObject:pooledTexture forKey:key];
         }
-        assert(tState.configuration.viewportSize.x > texture.width);
+        [tState addPooledTexture:pooledTexture];
+        assert(tState.configuration.viewportSize.x > pooledTexture.texture.width);
         tState.vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(frame.origin.x * scale,
                                                                          frame.origin.y * scale,
                                                                          frame.size.width * scale,
@@ -168,7 +186,7 @@
                                  numberOfPIUs:0
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
                               fragmentBuffers:@{}
-                                     textures:@{ @(iTermTextureIndexPrimary): texture } ];
+                                     textures:@{ @(iTermTextureIndexPrimary): pooledTexture.texture } ];
     }];
 }
 
