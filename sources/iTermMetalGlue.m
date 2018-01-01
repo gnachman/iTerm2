@@ -966,7 +966,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                      inUnderlinedRange:(BOOL)inUnderlinedRange
                                  index:(int)index {
     vector_float4 rawColor = { 0, 0, 0, 0 };
-    BOOL isMatch = NO;
     iTermColorMap *colorMap = _colorMap;
     const BOOL needsProcessing = (colorMap.minimumContrast > 0.001 ||
                                   colorMap.dimmingAmount > 0.001 ||
@@ -974,7 +973,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                   c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
 
 
-    if (isMatch) {
+    if (findMatch) {
         // Black-on-yellow search result.
         rawColor = (vector_float4){ 0, 0, 0, 1 };
         _havePreviousCharacterAttributes = NO;
