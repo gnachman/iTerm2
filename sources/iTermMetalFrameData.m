@@ -99,6 +99,7 @@ static NSInteger gNextFrameDataNumber;
         _creation = [NSDate timeIntervalSinceReferenceDate];
         _frameNumber = gNextFrameDataNumber++;
         _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
+        _transientStates = [NSMutableDictionary dictionary];
         iTermMetalFrameDataStatsBundleInitialize(_stats);
 
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
@@ -238,6 +239,14 @@ static NSInteger gNextFrameDataNumber;
         temp[i] = aggregateStats[i];
     }
     iTermPreciseTimerPeriodicLog(@"Metal Frame Data", temp, iTermMetalFrameDataStatCount, 1, YES);
+}
+
+- (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer {
+    return self.transientStates[NSStringFromClass([renderer class])];
+}
+
+- (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer {
+    self.transientStates[NSStringFromClass([renderer class])] = tState;
 }
 
 - (void)mergeHistogram:(iTermHistogram *)histogramToMerge name:(NSString *)name {

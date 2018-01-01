@@ -21,6 +21,8 @@
 // this here so it's easy to switch back to doing so. It adds a ton of latency when enabled.
 #define ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS 0
 
+@protocol iTermMetalRenderer;
+
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatEndToEnd,
 
@@ -94,7 +96,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
 @property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
-@property (atomic, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
+@property (atomic, readonly, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
 @property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
 @property (atomic) vector_uint2 viewportSize;
 @property (atomic) VT100GridSize gridSize;
@@ -124,6 +126,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;
+
+- (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
+- (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;
 
 @end
 
