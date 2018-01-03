@@ -162,6 +162,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     IBOutlet NSMenuItem *windowArrangements_;
     IBOutlet NSMenuItem *windowArrangementsAsTabs_;
     IBOutlet NSMenu *_buriedSessions;
+    NSMenu *_statusIconBuriedSessions;  // unsafe unretained
 
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
@@ -457,12 +458,23 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)updateBuriedSessionsMenu {
-    [_buriedSessions removeAllItems];
+    [self updateBuriedSessionsMenu:_buriedSessions];
+    [self updateBuriedSessionsMenu:_statusIconBuriedSessions];
+}
+
+- (void)updateBuriedSessionsMenu:(NSMenu *)menu {
+    if (!menu) {
+        return;
+    }
+    [menu removeAllItems];
     for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
         NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
         item.representedObject = session;
-        [_buriedSessions addItem:item];
+        [menu addItem:item];
     }
+    [[menu.supermenu.itemArray objectPassingTest:^BOOL(NSMenuItem *element, NSUInteger index, BOOL *stop) {
+        return element.submenu == menu;
+    }] setEnabled:menu.itemArray.count > 0];
 }
 
 - (void)disinter:(NSMenuItem *)menuItem {
@@ -1084,6 +1096,14 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                        action:@selector(arrangeInFront:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
+
+    item = [[[NSMenuItem alloc] init] autorelease];
+    _statusIconBuriedSessions = [[[NSMenu alloc] init] autorelease];
+    item.submenu = _statusIconBuriedSessions;
+    item.title = @"Buried Sessions";
+    [menu addItem:item];
+
+    [self updateBuriedSessionsMenu:_statusIconBuriedSessions];
 
     item = [[[NSMenuItem alloc] initWithTitle:@"Check For Updates"
                                        action:@selector(checkForUpdatesFromMenu:)
