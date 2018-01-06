@@ -31,6 +31,7 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
 #import "NSArray+iTerm.h"
@@ -1168,9 +1169,16 @@ static iTermController *gSharedInstance;
             canActivate = NO;
         }
         if (canActivate) {
-            [NSApp activateIgnoringOtherApps:YES];
+            // activateIgnoringApp: happens asynchronously which means doing makeKeyAndOrderFront:
+            // immediately after it won't do what you want. Issue 6397
+            NSWindow *termWindow = [[term window] retain];
+            [[iTermApplication sharedApplication] activateAppWithCompletion:^{
+                [termWindow makeKeyAndOrderFront:nil];
+                [termWindow release];
+            }];
+        } else {
+            [[term window] makeKeyAndOrderFront:nil];
         }
-        [[term window] makeKeyAndOrderFront:nil];
         if (canActivate) {
             [NSApp arrangeInFront:self];
         }
