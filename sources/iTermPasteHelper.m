@@ -271,14 +271,14 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
 - (void)pasteEventImmediately:(PasteEvent *)pasteEvent {
     // A queued up paste command might have wanted bracketing but the host might not accept it
     // any more.
-    if (![_delegate pasteHelperShouldBracket]) {
+    if (pasteEvent.isUpload || ![_delegate pasteHelperShouldBracket]) {
         pasteEvent.flags = pasteEvent.flags & ~kPasteFlagsBracket;
     }
 
     [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:[_delegate pasteHelperEncoding]];
 
     // Save to history
-    if (pasteEvent.string.length > 0) {
+    if (!pasteEvent.isUpload && pasteEvent.string.length > 0) {
         DLog(@"Save string being pasted to history");
         [[PasteboardHistory sharedInstance] save:pasteEvent.string];
     }
