@@ -7929,6 +7929,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    const BOOL hadHost = (_currentHost != nil);
     if (host.hostname) {
         _variables[kVariableKeySessionHostname] = host.hostname;
     } else {
@@ -7948,6 +7949,22 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *path = [_screen workingDirectoryOnLine:line];
     [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
 
+    if (hadHost) {
+        [self maybeResetTerminalStateOnHostChange];
+    }
+    self.currentHost = host;
+
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
+    notification.locationChangeNotification.hostName = host.hostname;
+    notification.locationChangeNotification.userName = host.username;
+    notification.locationChangeNotification.session = self.guid;
+    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+    }];
+}
+
+- (void)maybeResetTerminalStateOnHostChange {
     if (_xtermMouseReporting && self.terminal.mouseMode != MOUSE_REPORTING_NONE) {
         NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
         if ([number boolValue]) {
@@ -7980,16 +7997,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self offerToTurnOffBracketedPasteOnHostChange];
         }
     }
-    self.currentHost = host;
-
-    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
-    notification.locationChangeNotification.hostName = host.hostname;
-    notification.locationChangeNotification.userName = host.username;
-    notification.locationChangeNotification.session = self.guid;
-    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
-    }];
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
