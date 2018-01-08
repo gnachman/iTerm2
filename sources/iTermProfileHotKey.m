@@ -301,6 +301,7 @@ static NSString *const kArrangement = @"Arrangement";
     [self.windowController moveToPreferredScreen];
 
     NSRect destination = [self preferredFrameForWindowController:self.windowController];
+    DLog(@"iTermProfileHotKey: move to preferred screen setting frame to %@", NSStringFromRect(destination));
     [self.windowController.window setFrame:destination display:NO];
 }
 
