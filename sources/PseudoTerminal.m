@@ -3398,18 +3398,33 @@ return NO;
     return [self traditionalFullScreenFrameForScreen:self.window.screen];
 }
 
+- (BOOL)menuBarVisibleInFullScreen {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+        return YES;
+    }
+    // LSUIElement cannot hide the menu bar, but floating panels have a very high level and overlap it.
+    if ([iTermPreferences boolForKey:kPreferenceKeyUIElement] && ![self.window isKindOfClass:[iTermPanel class]]) {
+        return YES;
+    }
+    return NO;
+}
+
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
     NSRect screenFrame = [screen frame];
     NSRect frameMinusMenuBar = screenFrame;
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
 
-    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen] || [iTermPreferences boolForKey:kPreferenceKeyUIElement]) {
+    if ([self menuBarVisibleInFullScreen]) {
         // Menu bar can show in fullscreen...
         // There is a menu bar on all screens.
         menuBarIsVisible = YES;
     }
-
+    if (menuBarIsVisible) {
+        PtyLog(@"Subtract menu bar from frame");
+    } else {
+        PtyLog(@"Do not subtract menu bar from frame");
+    }
     return menuBarIsVisible ? frameMinusMenuBar : screenFrame;
 }
 
