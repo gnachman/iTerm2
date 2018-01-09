@@ -9,6 +9,8 @@
 
 #import "iTermMarkRenderer.h"
 
+@class iTermMetalImageRun;
+
 @interface iTermMetalRowData : NSObject
 @property (nonatomic) int y;
 
@@ -30,5 +32,7 @@
 
 // Last-changed timestamp, if used.
 @property (nonatomic) NSDate *date;
+
+@property (nonatomic, readonly) NSMutableArray<iTermMetalImageRun *> *imageRuns;
 
 @end

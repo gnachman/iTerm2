@@ -12,6 +12,7 @@
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermImageInfo.h"
 #import "iTermMarkRenderer.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
@@ -49,6 +50,7 @@ typedef struct {
     ColorMode bgColorMode;
     BOOL selected;
     BOOL isMatch;
+    BOOL image;
 } iTermBackgroundColorKey;
 
 static vector_float4 VectorForColor(NSColor *color) {
@@ -128,6 +130,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     vector_float4 _fullScreenFlashColor;
     NSColor *_defaultBackgroundColor;
     BOOL _timestampsEnabled;
+    long long _firstVisibleAbsoluteLineNumber;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -137,7 +140,46 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 @end
 
-@implementation iTermMetalGlue
+@implementation iTermMetalGlue {
+    NSMutableSet<NSString *> *_missingImages;
+    NSMutableSet<NSString *> *_loadedImages;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(imageDidLoad:)
+                                                     name:iTermImageDidLoad
+                                                   object:nil];
+        _missingImages = [NSMutableSet set];
+        _loadedImages = [NSMutableSet set];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Notifications
+
+- (void)imageDidLoad:(NSNotification *)notification {
+    iTermImageInfo *image = notification.object;
+    [_loadedImages addObject:image.uniqueIdentifier];
+    if ([self missingImageIsVisible:image]) {
+        [_textView setNeedsDisplay:YES];
+    }
+}
+
+#pragma mark - Private
+
+- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
+    if (![_missingImages containsObject:image.uniqueIdentifier]) {
+        return NO;
+    }
+    return [_textView imageIsVisible:image];
+}
 
 #pragma mark - iTermMetalDriverDataSource
 
@@ -146,6 +188,33 @@ static NSColor *ColorForVector(vector_float4 v) {
         return nil;
     }
     return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView screen:self.screen glue:self];
+}
+
+- (void)metalDidFindImages:(NSSet<NSString *> *)foundImages
+             missingImages:(NSSet<NSString *> *)missingImages
+            animatedLines:(NSSet<NSNumber *> *)animatedLines {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_missingImages unionSet:missingImages];
+        [_missingImages minusSet:foundImages];
+        if (animatedLines.count) {
+            _textView.drawingHelper.animated = YES;
+        }
+        int width = _textView.dataSource.width;
+        long long offset = _textView.dataSource.totalScrollbackOverflow;
+        for (NSNumber *absoluteLine in animatedLines) {
+            long long abs = absoluteLine.longLongValue;
+            if (abs >= offset) {
+                int row = abs - offset;
+                [_textView.dataSource setRangeOfCharsAnimated:NSMakeRange(0, width) onLine:row];
+            }
+        }
+        NSMutableSet<NSString *> *newlyLoaded = [_missingImages mutableCopy];
+        [newlyLoaded intersectSet:_loadedImages];
+        if (newlyLoaded.count) {
+            [_textView setNeedsDisplay:YES];
+            [_missingImages minusSet:_loadedImages];
+        }
+    });
 }
 
 - (void)metalDriverDidDrawFrame {
@@ -180,6 +249,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         _underlinedRanges = [NSMutableDictionary dictionary];
         _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
         _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
+        _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + textView.dataSource.totalScrollbackOverflow;
         _defaultBackgroundColor = [drawingHelper defaultBackgroundColor];
         _timestampsEnabled = drawingHelper.showTimestamps;
 
@@ -474,6 +544,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
+- (long long)firstVisibleAbsoluteLineNumber {
+    return _firstVisibleAbsoluteLineNumber;
+}
+
 - (BOOL)timestampsEnabled {
     return _timestampsEnabled;
 }
@@ -557,6 +631,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 // Private queue
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
+                imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
                background:(iTermMetalBackgroundColorRLE *)backgroundRLE
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
@@ -576,6 +651,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     iTermBackgroundColorKey lastBackgroundKey;
     NSRange underlinedRange = [_underlinedRanges[@(row)] rangeValue];
     int rles = 0;
+    int previousImageCode = -1;
+    VT100GridCoord previousImageCoord;
 
     *markStylePtr = [_markStyles[row] intValue];
     int lastDrawableGlyph = -1;
@@ -595,6 +672,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .bgColorMode = line[x].backgroundColorMode,
             .selected = selected,
             .isMatch = findMatch,
+            .image = line[x].image
         };
 
         vector_float4 backgroundColor;
@@ -604,7 +682,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             backgroundKey.bgBlue == lastBackgroundKey.bgBlue &&
             backgroundKey.bgColorMode == lastBackgroundKey.bgColorMode &&
             backgroundKey.selected == lastBackgroundKey.selected &&
-            backgroundKey.isMatch == lastBackgroundKey.isMatch) {
+            backgroundKey.isMatch == lastBackgroundKey.isMatch &&
+            backgroundKey.image == lastBackgroundKey.image) {
 
             const int previousRLE = rles - 1;
             backgroundColor = backgroundRLE[previousRLE].color;
@@ -683,24 +762,36 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         currentColorKey = previousColorKey;
         previousColorKey = temp;
 
-        // Also need to take into account which font will be used (bold, italic, nonascii, etc.) plus
-        // box drawing and images. If I want to support subpixel rendering then background color has
-        // to be a factor also.
-        glyphKeys[x].code = line[x].code;
-        glyphKeys[x].isComplex = line[x].complexChar;
-        glyphKeys[x].image = line[x].image;
-        glyphKeys[x].boxDrawing = NO;
-        glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
-
-        const int boldBit = line[x].bold ? (1 << 0) : 0;
-        const int italicBit = line[x].italic ? (1 << 1) : 0;
-        glyphKeys[x].typeface = (boldBit | italicBit);
-
-        if (iTermTextDrawingHelperIsCharacterDrawable(&line[x],
-                                                      ScreenCharToStr(&line[x]) != nil,
-                                                      _blinkingItemsVisible,
-                                                      _blinkAllowed)) {
+        if (line[x].image) {
+            if (line[x].code == previousImageCode &&
+                line[x].foregroundColor == previousImageCoord.x + 1 &&
+                line[x].backgroundColor == previousImageCoord.y) {
+                imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
+                previousImageCoord.x++;
+            } else {
+                previousImageCode = line[x].code;
+                iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
+                previousImageCoord = GetPositionOfImageInChar(line[x]);
+                run.startingCoordInImage = previousImageCoord;
+                run.startingCoordOnScreen = VT100GridCoordMake(x, row);
+                run.length = 1;
+                run.imageInfo = GetImageInfo(line[x].code);
+                [imageRuns addObject:run];
+            }
+            glyphKeys[x].drawable = NO;
+        } else if (iTermTextDrawingHelperIsCharacterDrawable(&line[x],
+                                                             ScreenCharToStr(&line[x]) != nil,
+                                                             _blinkingItemsVisible,
+                                                             _blinkAllowed)) {
             lastDrawableGlyph = x;
+            glyphKeys[x].code = line[x].code;
+            glyphKeys[x].isComplex = line[x].complexChar;
+            glyphKeys[x].boxDrawing = NO;
+            glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
+
+            const int boldBit = line[x].bold ? (1 << 0) : 0;
+            const int italicBit = line[x].italic ? (1 << 1) : 0;
+            glyphKeys[x].typeface = (boldBit | italicBit);
             glyphKeys[x].drawable = YES;
         } else {
             glyphKeys[x].drawable = NO;
@@ -775,6 +866,18 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         if (_transparencyAffectsOnlyDefaultBackgroundColor) {
             alpha = 1;
         }
+    } else if (colorKey->image) {
+        // Recurse to get the default background color
+        iTermBackgroundColorKey temp = {
+            .bgColor = ALTSEM_DEFAULT,
+            .bgGreen = 0,
+            .bgBlue = 0,
+            .bgColorMode = ColorModeAlternate,
+            .selected = NO,
+            .isMatch = NO,
+            .image = NO
+        };
+        return [self unprocessedColorForBackgroundColorKey:&temp];
     } else if (colorKey->isMatch) {
         color = (vector_float4){ 1, 1, 0, 1 };
     } else {

@@ -22,7 +22,6 @@ typedef NS_OPTIONS(int, iTermMetalGlyphKeyTypeface) {
 typedef struct {
     unichar code;
     BOOL isComplex;
-    BOOL image;
     BOOL boxDrawing;
     BOOL thinStrokes;
     BOOL drawable;  // If this is NO it will be ignored

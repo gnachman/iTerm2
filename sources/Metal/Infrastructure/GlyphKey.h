@@ -35,7 +35,6 @@ namespace iTerm2 {
         inline bool operator==(const GlyphKey &other) const {
             return (_repr.code == other._repr.code &&
                     _repr.isComplex == other._repr.isComplex &&
-                    _repr.image == other._repr.image &&
                     _repr.boxDrawing == other._repr.boxDrawing &&
                     _repr.thinStrokes == other._repr.thinStrokes &&
                     _repr.typeface == other._repr.typeface);
@@ -46,10 +45,9 @@ namespace iTerm2 {
         }
 
         NSString *description() const {
-            return [NSString stringWithFormat:@"[GlyphKey: code=%@ complex=%@ image=%@ boxdrawing=%@ thinstrokes=%@ drawable=%@ typeface=%@]",
+            return [NSString stringWithFormat:@"[GlyphKey: code=%@ complex=%@ boxdrawing=%@ thinstrokes=%@ drawable=%@ typeface=%@]",
                     @(_repr.code),
                     @(_repr.isComplex),
-                    @(_repr.image),
                     @(_repr.boxDrawing),
                     @(_repr.thinStrokes),
                     @(_repr.drawable),
@@ -62,7 +60,6 @@ namespace iTerm2 {
 
             hash_combine(seed, _repr.code);
             hash_combine(seed, _repr.isComplex);
-            hash_combine(seed, _repr.image);
             hash_combine(seed, _repr.boxDrawing);
             hash_combine(seed, _repr.thinStrokes);
             // No need to include _repr.drawable because we just skip those glyphs.

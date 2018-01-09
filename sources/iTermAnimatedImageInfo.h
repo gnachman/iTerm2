@@ -13,11 +13,12 @@
 // Breaks out the frames of an animated GIF. A helper for iTermImageInfo.
 @interface iTermAnimatedImageInfo : NSObject
 
-@property(nonatomic, readonly) int currentFrame;
+@property(nonatomic, readonly) int currentFrame;  // Use frameForTimestamp: for more predictable behavior
 @property(nonatomic, readonly) NSImage *currentImage;
 @property(nonatomic) BOOL paused;
 
 - (instancetype)initWithImage:(iTermImage *)image;
 - (NSImage *)imageForFrame:(int)frame;
+- (int)frameForTimestamp:(NSTimeInterval)timestamp;
 
 @end

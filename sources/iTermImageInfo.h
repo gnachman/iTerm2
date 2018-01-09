@@ -70,6 +70,9 @@ extern NSString *const iTermImageDidLoad;
 // there will be a transparent area around the edges.
 - (NSImage *)imageWithCellSize:(CGSize)cellSize;
 
+// A more predictable version of the above. Timestamp determines GIF frame.
+- (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp;
+
 // Binds an image. Data is optional and only used for animated GIFs. Not to be used after
 // -initWithDictionary.
 - (void)setImageFromImage:(iTermImage *)image data:(NSData *)data;
@@ -79,5 +82,8 @@ extern NSString *const iTermImageDidLoad;
 
 // Format inferred from extension
 - (void)saveToFile:(NSString *)filename;
+
+// Always returns 0 for non-animated images.
+- (int)frameForTimestamp:(NSTimeInterval)timestamp;
 
 @end

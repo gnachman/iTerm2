@@ -14,6 +14,7 @@
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
 #import "iTermFullScreenFlashRenderer.h"
+#import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
 #import "iTermMarginRenderer.h"
 #import "iTermMetalFrameData.h"
@@ -76,6 +77,7 @@
     iTermCursorRenderer *_frameCursorRenderer;
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
+    iTermImageRenderer *_imageRenderer;
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
@@ -118,6 +120,7 @@
         _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:mtkView.device];
         _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:mtkView.device];
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
+        _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:mtkView.device];
         _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:mtkView.device];
         _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:mtkView.device];
         _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:mtkView.device];
@@ -338,6 +341,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         NSDate *date;
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                         attributes:rowData.attributesData.mutableBytes
+                                         imageRuns:rowData.imageRuns
                                         background:rowData.backgroundColorRLEData.mutableBytes
                                           rleCount:&rles
                                          markStyle:&markStyle
@@ -423,7 +427,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
                                        range:(NSRange)range {
     [self populateMarginRendererTransientStateWithFrameData:frameData];
-    [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
     [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
     [self populateCursorRendererTransientStateWithFrameData:frameData];
     [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
@@ -432,6 +435,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
     [self populateTimestampsRendererTransientStateWithFrameData:frameData];
     [self populateFlashRendererTransientStateWithFrameData:frameData];
+    [self populateImageRendererTransientStateWithFrameData:frameData];
 }
 
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
@@ -470,6 +474,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  frameData:frameData
              renderEncoder:renderEncoder
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
+
+    [self drawCellRenderer:_imageRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawImage]];
 
     [self drawCursorAfterTextWithFrameData:frameData
                              renderEncoder:renderEncoder];
@@ -524,7 +533,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                    iTermMetalGlyphKey glyphKey = {
                                        .code = c,
                                        .isComplex = NO,
-                                       .image = NO,
                                        .boxDrawing = NO,
                                        .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
                                        .drawable = YES,
@@ -747,9 +755,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
             [self writeFPSMeterIntoGlyphKeys:glyphKeys
+                                       count:rowData.numberOfDrawableGlyphs
                                   attributes:(iTermMetalGlyphAttributes *)rowData.attributesData.bytes
                                        width:frameData.gridSize.width
                                  frameNumber:frameData.frameNumber];
+            rowData.numberOfDrawableGlyphs = frameData.gridSize.width;
         }
 
         if (!_textRenderer.rendererDisabled) {
@@ -801,6 +811,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)writeFPSMeterIntoGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
+                             count:(int)count
                         attributes:(iTermMetalGlyphAttributes *)attributes
                              width:(int)width
                        frameNumber:(NSInteger)frameNumber {
@@ -813,15 +824,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  (int)frameNumber,
                  (int)(1.0 / [_fpsMovingAverage value]));
         int o = MAX(0, width - strlen(frame));
+        for (int i = count; i < o; i++) {
+            glyphKeys[o].drawable = NO;
+        }
         for (int i = 0; frame[i]; i++, o++) {
             glyphKeys[o].code = frame[i];
             glyphKeys[o].isComplex = NO;
-            glyphKeys[o].image = NO;
+            glyphKeys[o].boxDrawing = NO;
+            glyphKeys[o].thinStrokes = NO;
             glyphKeys[o].drawable = YES;
             glyphKeys[o].typeface = iTermMetalGlyphKeyTypefaceRegular;
 
-            attributes[o].backgroundColor = simd_make_float4(1.0, 0.0, 0.0, 1.0);
-            attributes[o].foregroundColor = simd_make_float4(1.0, 1.0, 1.0, 1.0);
+            attributes[o].backgroundColor = simd_make_float4(0.0, 0.0, 0.0, 1.0);
+            attributes[o].foregroundColor = simd_make_float4(1.0, 0.0, 1.0, 1.0);
             attributes[o].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
         }
     }
@@ -865,6 +880,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
     [tState setColor:frameData.perFrameState.defaultBackgroundColor];
+}
+
+- (void)populateImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:_imageRenderer];
+    tState.firstVisibleAbsoluteLineNumber = frameData.perFrameState.firstVisibleAbsoluteLineNumber;
+    [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
+        [row.imageRuns enumerateObjectsUsingBlock:^(iTermMetalImageRun * _Nonnull imageRun, NSUInteger idx, BOOL * _Nonnull stop) {
+            [tState addRun:imageRun];
+        }];
+    }];
 }
 
 #pragma mark - Draw
@@ -1047,6 +1072,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
                     __weak __typeof(self) weakSelf = self;
                     [weakSelf dispatchAsyncToMainQueue:^{
+                        if (!_imageRenderer.rendererDisabled) {
+                            iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:_imageRenderer];
+                            [weakSelf.dataSource metalDidFindImages:tState.missingImageUniqueIdentifiers
+                                                      missingImages:tState.foundImageUniqueIdentifiers
+                                                      animatedLines:tState.animatedLines];
+                        }
                         [weakSelf.dataSource metalDriverDidDrawFrame];
                     }];
                 }
@@ -1145,6 +1176,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _backgroundColorRenderer,
               _markRenderer,
               _cursorGuideRenderer,
+              _imageRenderer,
               _underlineCursorRenderer,
               _barCursorRenderer,
               _imeCursorRenderer,

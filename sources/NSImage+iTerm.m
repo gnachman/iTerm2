@@ -11,6 +11,17 @@
 
 @implementation NSImage (iTerm)
 
++ (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color {
+    NSImage *image = [[[NSImage alloc] initWithSize:size] autorelease];
+
+    [image lockFocus];
+    [color set];
+    NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+    [image unlockFocus];
+
+    return image;
+}
+
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
                    bitsPerSample:(NSInteger)bitsPerSample

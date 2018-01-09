@@ -575,6 +575,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 - (void)showFireworks;
 
+- (BOOL)imageIsVisible:(iTermImageInfo *)image;
+
 #pragma mark - Testing only
 
 - (id)selectedTextAttributed:(BOOL)attributed

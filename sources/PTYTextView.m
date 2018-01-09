@@ -293,13 +293,10 @@ static const int kDragThreshold = 3;
                                                  selector:@selector(imageDidLoad:)
                                                      name:iTermImageDidLoad
                                                    object:nil];
-<<<<<<< HEAD
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
-=======
->>>>>>> Make the use of metal renderer contingint on the window being key, the session belonging to the active tab, and there being no transparency
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
@@ -1103,7 +1100,9 @@ static const int kDragThreshold = 3;
     _drawingHelper.copyMode = _delegate.textViewCopyMode;
     _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
     _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
-    _drawingHelper.passwordInput = _delegate.textViewPasswordInput;
+    _drawingHelper.passwordInput = ([self isInKeyWindow] &&
+                                    [_delegate textViewIsActiveSession] &&
+                                    _delegate.textViewPasswordInput);
 
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
@@ -1130,71 +1129,24 @@ static const int kDragThreshold = 3;
     }
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
-<<<<<<< HEAD
-    // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
-    // recently hidden and what we're drawing is how the screen looked just before the cursor was
-    // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
-    // value when we're done.
-    if ([_dataSource setUseSavedGridIfAvailable:YES]) {
-        _drawingHelper.cursorVisible = YES;
-    }
-
-    _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
-                                  [_delegate textViewSessionIsBroadcastingInput]);
-    _drawingHelper.cursorBlinking = [self isCursorBlinking];
-    _drawingHelper.excess = [self excess];
-    _drawingHelper.selection = _selection;
-    _drawingHelper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
-    _drawingHelper.normalization = [_delegate textViewUnicodeNormalizationForm];
-    _drawingHelper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
-    _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
-    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
-    _drawingHelper.numberOfLines = _dataSource.numberOfLines;
-    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
-                                                    _dataSource.cursorY - 1);
-    _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
-    _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
-    _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
-    _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
-    _drawingHelper.isInKeyWindow = [self isInKeyWindow];
-    // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
-    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
-    _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
-    _drawingHelper.transparencyAlpha = [self transparencyAlpha];
-    _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
-    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
-    _drawingHelper.thinStrokes = _thinStrokes;
-    _drawingHelper.showSearchingCursor = _showSearchingCursor;
-    _drawingHelper.baselineOffset = [self minimumBaselineOffset];
-    _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
-    _drawingHelper.boldAllowed = _useBoldFont;
-    _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
-    _drawingHelper.asciiLigatures = _primaryFont.hasDefaultLigatures || _asciiLigatures;
-    _drawingHelper.nonAsciiLigatures = _secondaryFont.hasDefaultLigatures || _nonAsciiLigatures;
-    _drawingHelper.copyMode = _delegate.textViewCopyMode;
-    _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
-    _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
-    _drawingHelper.passwordInput = ([self isInKeyWindow] &&
-                                    [_delegate textViewIsActiveSession] &&
-                                    _delegate.textViewPasswordInput);
-=======
->>>>>>> Make the use of metal renderer contingint on the window being key, the session belonging to the active tab, and there being no transparency
-
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
     
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
 
+    // Initialize drawing helper
+    [self drawingHelper];
+
     if (_drawingHook) {
         // This is used by tests to customize the draw helper.
         _drawingHook(_drawingHelper);
     }
 
-    [self.drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
+    [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
     [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
-    [self.drawingHelper drawTimestamps];
+    [_drawingHelper drawTimestamps];
     
     // Not sure why this is needed, but for some reason this view draws over its subviews.
     for (NSView *subview in [self subviews]) {
@@ -6194,7 +6146,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {
-    if ([self imageIsVisible:notification.object]) {
+    if ([self missingImageIsVisible:notification.object]) {
         [self setNeedsDisplay:YES];
     }
 }
@@ -6203,11 +6155,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
-- (BOOL)imageIsVisible:(iTermImageInfo *)image {
+- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
     if (![_drawingHelper.missingImages containsObject:image.uniqueIdentifier]) {
         return NO;
     }
-    
+    return [self imageIsVisible:image];
+}
+
+- (BOOL)imageIsVisible:(iTermImageInfo *)image {
     int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / _lineHeight;
     int width = [_dataSource width];
     for (int y = 0; y < [_dataSource height]; y++) {

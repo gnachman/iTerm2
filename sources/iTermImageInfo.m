@@ -231,13 +231,21 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
 }
 
 - (NSImage *)imageWithCellSize:(CGSize)cellSize {
+    return [self imageWithCellSize:cellSize timestamp:[NSDate timeIntervalSinceReferenceDate]];
+}
+
+- (int)frameForTimestamp:(NSTimeInterval)timestamp {
+    return [self.animatedImage frameForTimestamp:timestamp];
+}
+
+- (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp {
     if (!self.image && !self.animatedImage) {
         return nil;
     }
     if (!_embeddedImages) {
         _embeddedImages = [[NSMutableDictionary alloc] init];
     }
-    int frame = self.animatedImage.currentFrame;  // 0 if not animated
+    int frame = [self.animatedImage frameForTimestamp:timestamp];  // 0 if not animated
     NSImage *embeddedImage = _embeddedImages[@(frame)];
 
     NSSize region = NSMakeSize(cellSize.width * _size.width,
