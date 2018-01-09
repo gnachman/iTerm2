@@ -2,6 +2,7 @@
 
 #import "iTermASCIITexture.h"
 #import "iTermCursor.h"
+#import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalGlyphKey.h"
@@ -58,9 +59,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL timestampsEnabled;
 @property (nonatomic, readonly) NSColor *timestampsBackgroundColor;
 @property (nonatomic, readonly) NSColor *timestampsTextColor;
+@property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
+                imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
                background:(iTermMetalBackgroundColorRLE *)backgrounds
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
@@ -95,7 +98,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSource<NSObject>
 
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame;
+
 - (void)metalDriverDidDrawFrame;
+
+- (void)metalDidFindImages:(NSSet<NSString *> *)foundImages
+             missingImages:(NSSet<NSString *> *)missingImages
+             animatedLines:(NSSet<NSNumber *> *)animatedLines;  // absolute line numbers
 
 @end
 

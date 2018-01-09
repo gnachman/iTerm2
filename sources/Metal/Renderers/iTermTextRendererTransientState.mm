@@ -337,8 +337,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     return (glyphKey.code <= iTermASCIITextureMaximumCharacter &&
             glyphKey.code >= iTermASCIITextureMinimumCharacter &&
             !glyphKey.isComplex &&
-            !glyphKey.boxDrawing &&
-            !glyphKey.image);
+            !glyphKey.boxDrawing);
 }
 
 - (void)setGlyphKeysData:(NSData *)glyphKeysData

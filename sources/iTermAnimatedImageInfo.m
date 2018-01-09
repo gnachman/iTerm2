@@ -39,11 +39,11 @@
     _paused = paused;
 }
 
-- (int)currentFrame {
+- (int)frameForTimestamp:(NSTimeInterval)timestamp {
     if (_paused) {
         return _lastFrameNumber;
     }
-    NSTimeInterval offset = [NSDate timeIntervalSinceReferenceDate] - _creationTime;
+    NSTimeInterval offset = timestamp - _creationTime;
     NSTimeInterval delay = fmod(offset, _maxDelay);
     for (int i = 0; i < _image.delays.count; i++) {
         if ([_image.delays[i] doubleValue] >= delay) {
@@ -53,6 +53,13 @@
     }
     _lastFrameNumber = 0;
     return 0;
+}
+
+- (int)currentFrame {
+    if (_paused) {
+        return _lastFrameNumber;
+    }
+    return [self frameForTimestamp:[NSDate timeIntervalSinceReferenceDate]];
 }
 
 - (NSImage *)currentImage {

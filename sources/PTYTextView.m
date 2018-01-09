@@ -6132,16 +6132,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {
-    if ([self imageIsVisible:notification.object]) {
+    if ([self missingImageIsVisible:notification.object]) {
         [self setNeedsDisplay:YES];
     }
 }
 
-- (BOOL)imageIsVisible:(iTermImageInfo *)image {
+- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
     if (![_drawingHelper.missingImages containsObject:image.uniqueIdentifier]) {
         return NO;
     }
-    
+    return [self imageIsVisible:image];
+}
+
+- (BOOL)imageIsVisible:(iTermImageInfo *)image {
     int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / _lineHeight;
     int width = [_dataSource width];
     for (int y = 0; y < [_dataSource height]; y++) {

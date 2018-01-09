@@ -10,6 +10,8 @@
 
 @interface NSImage (iTerm)
 
++ (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
+
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
                    bitsPerSample:(NSInteger)bitsPerSample  // e.g. 8 or 1

@@ -8,5 +8,14 @@
 #import "iTermMetalRowData.h"
 
 @implementation iTermMetalRowData
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _imageRuns = [NSMutableArray array];
+    }
+    return self;
+}
+
 @end
 
