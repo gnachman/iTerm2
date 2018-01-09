@@ -12,14 +12,32 @@
 @implementation NSImage (iTerm)
 
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color {
+    return [self imageOfSize:size drawBlock:^{
+        [color set];
+        NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+    }];
+}
+
++ (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^)(void))block {
     NSImage *image = [[[NSImage alloc] initWithSize:size] autorelease];
 
     [image lockFocus];
-    [color set];
-    NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+    block();
     [image unlockFocus];
 
     return image;
+}
+
++ (NSMutableData *)argbDataForImageOfSize:(NSSize)size drawBlock:(void (^)(CGContextRef context))block {
+    NSMutableData *data = [NSMutableData data];
+    CGContextRef context = [NSImage newBitmapContextOfSize:size storage:data];
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:context flipped:NO];
+    NSGraphicsContext *savedContext = [NSGraphicsContext currentContext];
+    [NSGraphicsContext setCurrentContext:graphicsContext];
+    block(context);
+    [NSGraphicsContext setCurrentContext:savedContext];
+    CGContextRelease(context);
+    return data;
 }
 
 + (instancetype)imageWithRawData:(NSData *)data
@@ -99,8 +117,7 @@
     return destination;
 }
 
-- (CGContextRef)newBitmapContextWithStorage:(NSMutableData *)data {
-  NSSize size = self.size;
++ (CGContextRef)newBitmapContextOfSize:(NSSize)size storage:(NSMutableData *)data {
   NSInteger bytesPerRow = size.width * 4;
   NSUInteger storageNeeded = bytesPerRow * size.height;
   [data setLength:storageNeeded];
@@ -120,6 +137,11 @@
 
 
   return context;
+}
+
+- (CGContextRef)newBitmapContextWithStorage:(NSMutableData *)data {
+    NSSize size = self.size;
+    return [NSImage newBitmapContextOfSize:size storage:data];
 }
 
 - (NSImage *)imageWithColor:(NSColor *)color {
