@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -222,6 +223,8 @@ static NSColor *ColorForVector(vector_float4 v) {
 }
 
 @end
+
+#pragma mark -
 
 @implementation iTermMetalPerFrameState
 
@@ -639,6 +642,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
                      date:(out NSDate **)datePtr {
+    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths];
     if (_timestampsEnabled) {
         *datePtr = _dates[row];
     }
@@ -786,7 +790,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             lastDrawableGlyph = x;
             glyphKeys[x].code = line[x].code;
             glyphKeys[x].isComplex = line[x].complexChar;
-            glyphKeys[x].boxDrawing = NO;
+            glyphKeys[x].boxDrawing = !line[x].complexChar && [boxCharacterSet characterIsMember:line[x].code];
             glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
 
             const int boldBit = line[x].bold ? (1 << 0) : 0;
@@ -1014,6 +1018,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                         size:(CGSize)size
                                                                        scale:(CGFloat)scale
                                                                        emoji:(nonnull BOOL *)emoji {
+    if (glyphKey->boxDrawing) {
+        *emoji = NO;
+        iTermCharacterBitmap *bitmap = [self bitmapForBoxDrawingCode:glyphKey->code size:size scale:scale];
+        return @{ @(iTermTextureMapMiddleCharacterPart): bitmap };
+    }
+
+    // Normal path
     BOOL fakeBold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
     BOOL fakeItalic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
     const BOOL isAscii = !glyphKey->isComplex && (glyphKey->code < 128);
@@ -1148,6 +1159,35 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         color = [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
     }
     return [_colorMap colorByDimmingTextColor:color];
+}
+
+#pragma mark - Box Drawing
+
+- (iTermCharacterBitmap *)bitmapForBoxDrawingCode:(unichar)code
+                                             size:(CGSize)size
+                                            scale:(CGFloat)scale {
+    NSColor *backgroundColor = [NSColor whiteColor];
+    NSColor *foregroundColor = [NSColor blackColor];
+    NSMutableData *data = [NSImage argbDataForImageOfSize:size drawBlock:^(CGContextRef context) {
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform concat];
+
+        for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
+                                                                                          cellSize:size
+                                                                                             scale:scale]) {
+            [backgroundColor set];
+            NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+
+            [foregroundColor set];
+            [path setLineWidth:scale];
+            [path stroke];
+        }
+    }];
+
+    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
+    bitmap.data = data;
+    bitmap.size = size;
+    return bitmap;
 }
 
 #pragma mark - iTermSmartCursorColorDelegate

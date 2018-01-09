@@ -12,6 +12,15 @@
 
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
 
+// Creates an image context and runs block. Do drawing into the current
+// graphics context in the block. Returns the resulting image.
++ (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^)(void))block;
+
+// Creates a bitmap image context and runs the block. Do drawing into the
+// context (or current NSGraphicsContext) in the block. Returns the argb raw
+// data.
++ (NSMutableData *)argbDataForImageOfSize:(NSSize)size drawBlock:(void (^)(CGContextRef context))block;
+
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
                    bitsPerSample:(NSInteger)bitsPerSample  // e.g. 8 or 1
