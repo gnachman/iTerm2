@@ -817,12 +817,17 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                        frameNumber:(NSInteger)frameNumber {
     const size_t fpsMeterSize = MAX(0, MIN(80, width));
     if (fpsMeterSize > 1) {
+        const double period = [_fpsMovingAverage value];
+        double fps = 1.0 / period;
+        if (period < 0.001) {
+            fps = 0;
+        }
         char frame[fpsMeterSize];
         snprintf(frame,
                  fpsMeterSize - 1,
                  " [Frame %d: %d fps] ",
                  (int)frameNumber,
-                 (int)(1.0 / [_fpsMovingAverage value]));
+                 (int)round(fps));
         int o = MAX(0, width - strlen(frame));
         for (int i = count; i < o; i++) {
             glyphKeys[o].drawable = NO;
@@ -838,6 +843,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             attributes[o].backgroundColor = simd_make_float4(0.0, 0.0, 0.0, 1.0);
             attributes[o].foregroundColor = simd_make_float4(1.0, 0.0, 1.0, 1.0);
             attributes[o].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+            attributes[o].annotation = NO;
         }
     }
 }
@@ -1055,7 +1061,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [renderEncoder endEncoding];
     }];
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
+#if !ENABLE_SYNCHRONOUS_PRESENTATION
         [commandBuffer presentDrawable:frameData.drawable];
+#endif
         __block BOOL completed = NO;
 
         iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
@@ -1090,6 +1098,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }];
 
         [commandBuffer commit];
+#if ENABLE_SYNCHRONOUS_PRESENTATION
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [commandBuffer waitUntilScheduled];
+            [frameData.drawable present];
+        });
+#endif
     }];
 }
 

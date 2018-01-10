@@ -33,5 +33,6 @@ typedef struct {
     vector_float4 foregroundColor;
     vector_float4 backgroundColor;
     iTermMetalGlyphAttributesUnderline underlineStyle : 2;
+    BOOL annotation;  // affects underline color
 } iTermMetalGlyphAttributes;
 

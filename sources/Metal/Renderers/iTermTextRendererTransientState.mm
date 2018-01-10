@@ -16,6 +16,7 @@
 #include <map>
 
 const vector_float4 iTermIMEColor = simd_make_float4(1, 1, 0, 1);
+const vector_float4 iTermAnnotationUnderlineColor = simd_make_float4(1, 1, 0, 1);
 
 namespace iTerm2 {
     class TexturePage;
@@ -223,7 +224,9 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
 
     iTermASCIITextureParts parts = texture.parts[(size_t)code];
     vector_float4 underlineColor = { 0, 0, 0, 0 };
-    if (attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+    if (attributes[x].annotation) {
+        underlineColor = iTermAnnotationUnderlineColor;
+    } else if (attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
         underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[x].foregroundColor;
     }
 
@@ -417,7 +420,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                       origin.y * reciprocal_atlas_size.y);
                 piu->textColor = attributes[x].foregroundColor;
                 piu->remapColors = !entry->_is_emoji;
-                if (inMarkedRange) {
+                if (attributes[x].annotation) {
+                    piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+                    piu->underlineColor = iTermAnnotationUnderlineColor;
+                } else if (inMarkedRange) {
                     piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
                     piu->underlineColor = iTermIMEColor;
                     piu->textColor = iTermIMEColor;

@@ -604,6 +604,10 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(windowDidEndLiveResize:)
                                                      name:NSWindowDidEndLiveResizeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(annotationVisibilityDidChange:)
+                                                     name:iTermAnnotationVisibilityDidChange
+                                                   object:nil];
         [self updateVariables];
 
         if (!synthetic) {
@@ -4406,6 +4410,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Metal is disabled when any note anywhere is visible because compositing NSViews over Metal
+// is a horror and besides these are subviews of PTYTextView and I really don't
+// want to invest any more in this little-used feature.
+- (void)annotationVisibilityDidChange:(NSNotification *)notification {
+    if ([iTermAdvancedSettingsModel useMetal]) {
+        [_delegate sessionUpdateMetalAllowed];
+    }
+}
+
 - (void)synchronizeTmuxFonts:(NSNotification *)notification {
     if (!_exited && [self isTmuxClient]) {
         NSArray *args = [notification object];
@@ -4725,7 +4738,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
-    return [iTermAdvancedSettingsModel useMetal] && _textview.transparencyAlpha == 1;
+    return ([iTermAdvancedSettingsModel useMetal] &&
+            _textview.transparencyAlpha == 1 &&
+            ![PTYNoteViewController anyNoteVisible]);
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
@@ -4741,11 +4756,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (useMetal) {
             [self updateMetalDriver];
         }
+        [_textview setNeedsDisplay:YES];
     }
 }
 
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
-    _view.useSubviewWithLayer = [self viewShouldWantLayer];
+    _view.useSubviewWithLayer = useMetal && [self viewShouldWantLayer];
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.alphaValue = 1;

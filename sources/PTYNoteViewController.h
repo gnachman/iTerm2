@@ -13,6 +13,9 @@
 // Post this when the note view's anchor has a chance to become centered.
 extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
+// Notification posted when we transition between [any note is visible] <-> [no notes are visible]
+extern NSString *const iTermAnnotationVisibilityDidChange;
+
 @class PTYNoteViewController;
 
 @protocol PTYNoteViewControllerDelegate <NSObject>
@@ -35,6 +38,8 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 @property(nonatomic, retain) PTYNoteView *noteView;
 @property(nonatomic, assign) NSPoint anchor;
 @property(nonatomic, assign) id<PTYNoteViewControllerDelegate> delegate;
+
++ (BOOL)anyNoteVisible;
 
 - (void)beginEditing;
 - (BOOL)isEmpty;

@@ -19,6 +19,8 @@
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextRendererTransientState.h"
+#import "iTermTuple.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
@@ -132,6 +134,9 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSColor *_defaultBackgroundColor;
     BOOL _timestampsEnabled;
     long long _firstVisibleAbsoluteLineNumber;
+
+    // Row on screen to characters with annotation underline on that row.
+    NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
 }
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -429,8 +434,27 @@ static NSColor *ColorForVector(vector_float4 v) {
 
         _showBroadcastStripes = drawingHelper.showStripes;
         [self loadIndicatorsFromTextView:textView];
+        [self loadAnnotationRangesFromTextView:textView];
     }
     return self;
+}
+
+// Populate _rowToAnnotationRanges.
+- (void)loadAnnotationRangesFromTextView:(PTYTextView *)textView {
+    NSRange rangeOfRows = NSMakeRange(_visibleRange.start.y, _visibleRange.end.y - _visibleRange.start.y + 1);
+    NSArray<NSNumber *> *rows = [NSArray sequenceWithRange:rangeOfRows];
+    _rowToAnnotationRanges = [rows reduceWithFirstValue:[NSMutableDictionary dictionary] block:^id(NSMutableDictionary *dict, NSNumber *second) {
+        NSArray<NSValue *> *ranges = [textView.dataSource charactersWithNotesOnLine:second.intValue];
+        if (ranges.count) {
+            NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+            [ranges enumerateObjectsUsingBlock:^(NSValue * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                VT100GridRange gridRange = [obj gridRangeValue];
+                [indexes addIndexesInRange:NSMakeRange(gridRange.location, gridRange.length)];
+            }];
+            dict[@(second.intValue - _visibleRange.start.y)] = indexes;
+        }
+        return dict;
+    }];
 }
 
 - (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
@@ -657,6 +681,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     int rles = 0;
     int previousImageCode = -1;
     VT100GridCoord previousImageCoord;
+    NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
 
     *markStylePtr = [_markStyles[row] intValue];
     int lastDrawableGlyph = -1;
@@ -666,7 +691,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, x);
         }
-        const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange);
+        const BOOL annotated = [annotatedIndexes containsIndex:x];
+        const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange) || annotated;
 
         // Background colors
         iTermBackgroundColorKey backgroundKey = {
@@ -715,6 +741,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         lastBackgroundKey = backgroundKey;
         attributes[x].backgroundColor = backgroundColor;
         attributes[x].backgroundColor.w = 1;
+        attributes[x].annotation = annotated;
 
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
@@ -744,12 +771,14 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                   backgroundColor:backgroundColor
                                                          selected:selected
                                                         findMatch:findMatch
-                                                inUnderlinedRange:inUnderlinedRange
+                                                inUnderlinedRange:inUnderlinedRange && !annotated
                                                             index:x];
             attributes[x].foregroundColor = textColor;
             attributes[x].foregroundColor.w = 1;
         }
-        if (line[x].underline || inUnderlinedRange) {
+        if (annotated) {
+            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+        } else if (line[x].underline || inUnderlinedRange) {
             if (line[x].urlCode) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
             } else {
@@ -783,10 +812,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 [imageRuns addObject:run];
             }
             glyphKeys[x].drawable = NO;
-        } else if (iTermTextDrawingHelperIsCharacterDrawable(&line[x],
-                                                             ScreenCharToStr(&line[x]) != nil,
-                                                             _blinkingItemsVisible,
-                                                             _blinkAllowed)) {
+        } else if (annotated || iTermTextDrawingHelperIsCharacterDrawable(&line[x],
+                                                                          ScreenCharToStr(&line[x]) != nil,
+                                                                          _blinkingItemsVisible,
+                                                                          _blinkAllowed)) {
             lastDrawableGlyph = x;
             glyphKeys[x].code = line[x].code;
             glyphKeys[x].isComplex = line[x].complexChar;
