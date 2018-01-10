@@ -2436,6 +2436,8 @@
 		A6DBC04020049CB100F1466D /* iTermImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC03E20049CB100F1466D /* iTermImage.metal */; };
 		A6DBC04120049CB100F1466D /* iTermImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC03E20049CB100F1466D /* iTermImage.metal */; };
 		A6DBC04220049CB100F1466D /* iTermImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC03E20049CB100F1466D /* iTermImage.metal */; };
+		A6DBC0452005DC2B00F1466D /* iTermTuple.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0432005DC2B00F1466D /* iTermTuple.h */; };
+		A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0442005DC2B00F1466D /* iTermTuple.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
@@ -4048,6 +4050,8 @@
 		A6DBC03A2003479400F1466D /* iTermImageRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermImageRenderer.h; path = Metal/Renderers/iTermImageRenderer.h; sourceTree = "<group>"; };
 		A6DBC03B2003479400F1466D /* iTermImageRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermImageRenderer.m; path = Metal/Renderers/iTermImageRenderer.m; sourceTree = "<group>"; };
 		A6DBC03E20049CB100F1466D /* iTermImage.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermImage.metal; path = Metal/Shaders/iTermImage.metal; sourceTree = "<group>"; };
+		A6DBC0432005DC2B00F1466D /* iTermTuple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTuple.h; sourceTree = "<group>"; };
+		A6DBC0442005DC2B00F1466D /* iTermTuple.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTuple.m; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
@@ -6084,6 +6088,8 @@
 				A66F3CEF1FEA3D9E00AA2021 /* iTermHistogram.mm */,
 				A68400B61FF97138008D3EE2 /* iTermTimestampDrawHelper.h */,
 				A68400B71FF97138008D3EE2 /* iTermTimestampDrawHelper.m */,
+				A6DBC0432005DC2B00F1466D /* iTermTuple.h */,
+				A6DBC0442005DC2B00F1466D /* iTermTuple.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -7292,6 +7298,7 @@
 				A66719501DCE36C3000CE608 /* iTermWebViewWrapperViewController.h in Headers */,
 				A66719511DCE36C3000CE608 /* iTermPreferences.h in Headers */,
 				53AFFC8F1DD2A04600E6CEC6 /* iTermLSOF.h in Headers */,
+				A6DBC0452005DC2B00F1466D /* iTermTuple.h in Headers */,
 				A66EF82C1EF59CFC0005891A /* iTermRateLimitedUpdate.h in Headers */,
 				A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */,
 				A66719521DCE36C3000CE608 /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
@@ -8881,6 +8888,7 @@
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */,
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
+				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A67960D51F81FCBB008A42BC /* iTermCursorRenderer.m in Sources */,
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
