@@ -13,6 +13,14 @@
 
 @implementation NSArray (iTerm)
 
++ (NSArray<NSNumber *> *)sequenceWithRange:(NSRange)range {
+    NSMutableArray<NSNumber *> *temp = [NSMutableArray array];
+    for (NSUInteger i = 0; i < range.length; i++) {
+        [temp addObject:@(i + range.location)];
+    }
+    return temp;
+}
+
 - (NSArray *)objectsOfClasses:(NSArray *)classes {
     NSMutableArray *result = [NSMutableArray array];
     for (NSObject *object in self) {
@@ -266,6 +274,14 @@
     id reduction = self.firstObject;
     for (NSInteger i = 0; i < self.count; i++) {
         reduction = block(reduction, i + 1 < self.count ? self[i + 1] : nil);
+    }
+    return reduction;
+}
+
+- (id)reduceWithFirstValue:(id)firstValue block:(id (^)(id first, id second))block {
+    id reduction = firstValue;
+    for (NSInteger i = 0; i < self.count; i++) {
+        reduction = block(reduction, self[i]);
     }
     return reduction;
 }

@@ -8,11 +8,14 @@
 
 #import "PTYNoteViewController.h"
 #import "IntervalTree.h"
+#import "NSView+iTerm.h"
 #import "PTYNoteView.h"
 
 static NSString *const kNoteViewTextKey = @"Text";
+static NSInteger gVisibleNotes;
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
+NSString *const iTermAnnotationVisibilityDidChange = @"iTermAnnotationVisibilityDidChange";
 
 static const CGFloat kBottomPadding = 3;
 
@@ -34,15 +37,23 @@ static const CGFloat kBottomPadding = 3;
 @synthesize entry;
 @synthesize delegate;
 
++ (BOOL)anyNoteVisible {
+    return gVisibleNotes > 0;
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super init];
     if (self) {
         self.string = dict[kNoteViewTextKey];
+        gVisibleNotes++;
     }
     return self;
 }
 
 - (void)dealloc {
+    if (!hidden_) {
+        gVisibleNotes--;
+    }
     [noteView_ removeFromSuperview];
     noteView_.delegate = nil;
     [noteView_ release];
@@ -163,9 +174,15 @@ static const CGFloat kBottomPadding = 3;
     }
 }
 
-- (void)finalizeToggleOfHide {
-    [noteView_ setHidden:hidden_];
-    noteView_.alphaValue = hidden_ ? 0 : 1;
+- (void)finalizeToggleOfHide:(BOOL)newValue {
+    [noteView_ setHidden:newValue];
+    noteView_.alphaValue = newValue ? 0 : 1;
+    if (newValue) {
+        gVisibleNotes--;
+        if (gVisibleNotes == 0) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
+        }
+    }
 }
 
 - (void)setNoteHidden:(BOOL)hidden {
@@ -174,10 +191,19 @@ static const CGFloat kBottomPadding = 3;
     }
     hidden_ = hidden;
     [noteView_ setHidden:NO];
-    [noteView_.animator setAlphaValue:(hidden ? 0 : 1)];
-    [self performSelector:@selector(finalizeToggleOfHide)
-               withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];
+    [NSView animateWithDuration:0.25
+                     animations:^{
+                         [noteView_.animator setAlphaValue:(hidden ? 0 : 1)];
+                     }
+                     completion:^(BOOL finished) {
+                         [self finalizeToggleOfHide:hidden];
+                     }];
+    if (!hidden) {
+        gVisibleNotes++;
+        if (gVisibleNotes == 1) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
+        }
+    }
 }
 
 - (BOOL)isEmpty {
