@@ -246,11 +246,6 @@ static NSColor *ColorForVector(vector_float4 v) {
     self = [super init];
     if (self) {
         _startTime = [NSDate timeIntervalSinceReferenceDate];
-        _havePreviousCharacterAttributes = NO;
-        _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
-        _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
-                                                                                           towardsGrayLevel:0.5]);
-        _transparencyAlpha = textView.transparencyAlpha;
 
         // Getting the drawingHelper may reset the cursorVisible flag as a side effect of the
         // hacky flicker fixer.
@@ -258,8 +253,6 @@ static NSColor *ColorForVector(vector_float4 v) {
         iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
         _cursorVisible = drawingHelper.cursorVisible;
         drawingHelper.cursorVisible = savedCursorVisible;
-
-        _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
 
         // Copy lines from model. Always use these for consistency. I should also copy the color map
         // and any other data dependencies.
@@ -269,191 +262,252 @@ static NSColor *ColorForVector(vector_float4 v) {
         _selectedIndexes = [NSMutableArray array];
         _matches = [NSMutableDictionary dictionary];
         _underlinedRanges = [NSMutableDictionary dictionary];
-        _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
-        _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
-        _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + textView.dataSource.totalScrollbackOverflow;
-        _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + textView.dataSource.totalScrollbackOverflow;
-        _defaultBackgroundColor = [drawingHelper defaultBackgroundColor];
-        _timestampsEnabled = drawingHelper.showTimestamps;
 
-        long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
-        const int width = _visibleRange.end.x - _visibleRange.start.x;
-        const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
-        for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
-            if (_timestampsEnabled) {
-                [_dates addObject:[textView drawingHelperTimestampForLine:i]];
-            }
-            screen_char_t *line = [screen getLineAtIndex:i];
-            [_lines addObject:[NSMutableData dataWithBytes:line length:sizeof(screen_char_t) * width]];
-            [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
-            NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
-            if (findMatches) {
-                _matches[@(i - _visibleRange.start.y)] = findMatches;
-            }
-
-            const long long absoluteLine = totalScrollbackOverflow + i;
-            _underlinedRanges[@(i - _visibleRange.start.y)] = [NSValue valueWithRange:[drawingHelper underlinedRangeOnLine:absoluteLine]];
-
-            iTermMarkStyle markStyle = iTermMarkStyleNone;
-            if (drawingHelper.drawMarkIndicators) {
-                VT100ScreenMark *mark = [textView.dataSource markOnLine:i];
-                if (mark.isVisible) {
-                    if (mark.code == 0) {
-                        markStyle = iTermMarkStyleSuccess;
-                    } else if (allowOtherMarkStyle &&
-                               mark.code >= 128 && mark.code <= 128 + 32) {
-                        markStyle = iTermMarkStyleOther;
-                    } else {
-                        markStyle = iTermMarkStyleFailure;
-                    }
-                }
-            }
-            [_markStyles addObject:@(markStyle)];
-        }
-
-        _gridSize = VT100GridSizeMake(textView.dataSource.width,
-                                      textView.dataSource.height);
-        _colorMap = [textView.colorMap copy];
-        _asciiFont = textView.primaryFont;
-        _nonAsciiFont = textView.secondaryFont;
-        _useBoldFont = textView.useBoldFont;
-        _useItalicFont = textView.useItalicFont;
-        _useNonAsciiFont = textView.useNonAsciiFont;
-        _reverseVideo = textView.dataSource.terminal.reverseVideo;
-        _useBrightBold = textView.useBrightBold;
-        _thinStrokes = textView.thinStrokes;
-        _isRetina = drawingHelper.isRetina;
-        _isInKeyWindow = [textView isInKeyWindow];
-        _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
-        _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
-        _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
-        _cursorBlinking = textView.isCursorBlinking;
-        _blinkAllowed = textView.blinkAllowed;
-        _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
-        _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
-        _asciiAntialias = drawingHelper.asciiAntiAlias;
-        _nonasciiAntialias = drawingHelper.nonAsciiAntiAlias;
-        _badgeImage = drawingHelper.badgeImage;
-        if (_badgeImage) {
-            _badgeDestinationRect = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
-                                                                    destinationRect:textView.enclosingScrollView.documentVisibleRect
-                                                               destinationFrameSize:textView.frame.size
-                                                                        visibleSize:textView.enclosingScrollView.documentVisibleRect.size
-                                                                      sourceRectPtr:&_badgeSourceRect];
-        }
-
-        VT100GridCoord cursorScreenCoord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
-                                                              textView.dataSource.cursorY - 1);
-        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        if (!VT100GridCoordEquals(cursorScreenCoord, glue.oldCursorScreenCoord)) {
-            glue.lastTimeCursorMoved = now;
-        }
-        _timeSinceCursorMoved = now - glue.lastTimeCursorMoved;
-        glue.oldCursorScreenCoord = cursorScreenCoord;
-
-        iTermSmartCursorColor *smartCursorColor = nil;
-        if (drawingHelper.useSmartCursorColor) {
-            smartCursorColor = [[iTermSmartCursorColor alloc] init];
-            smartCursorColor.delegate = self;
-        }
-
-        const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
-        _cursorInfo = [[iTermMetalCursorInfo alloc] init];
-        _cursorInfo.copyMode = drawingHelper.copyMode;
-        _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
-                                                             drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
-        _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
-        NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
-        if ([self shouldDrawCursor] &&
-            _cursorVisible &&
-            _visibleRange.start.y <= lineWithCursor &&
-            lineWithCursor + 1 < _visibleRange.end.y) {
-            _cursorInfo.cursorVisible = YES;
-            _cursorInfo.type = drawingHelper.cursorType;
-            _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
-                                                   textView.dataSource.cursorY - 1 - offset);
-            _cursorInfo.cursorColor = [self backgroundColorForCursor];
-            if (_cursorInfo.type == CURSOR_BOX) {
-                _cursorInfo.shouldDrawText = YES;
-                const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].bytes;
-                screen_char_t screenChar = line[_cursorInfo.coord.x];
-                const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
-                if (!focused) {
-                    _cursorInfo.shouldDrawText = NO;
-                    _cursorInfo.frameOnly = YES;
-                } else if (smartCursorColor) {
-                    _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
-                                                               wantBackground:YES
-                                                                        muted:NO];
-                    _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
-                    NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
-                                                                green:_cursorInfo.textColor.y
-                                                                 blue:_cursorInfo.textColor.z
-                                                                alpha:_cursorInfo.textColor.w];
-                    NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
-                                                                     regularTextColor:regularTextColor
-                                                                 smartBackgroundColor:_cursorInfo.cursorColor];
-                    CGFloat components[4];
-                    [smartTextColor getComponents:components];
-                    _cursorInfo.textColor = simd_make_float4(components[0],
-                                                             components[1],
-                                                             components[2],
-                                                             components[3]);
-                } else {
-                    if (_reverseVideo) {
-                        _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
-                    } else {
-                        _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
-                                                             green:0
-                                                              blue:0
-                                                         colorMode:ColorModeAlternate
-                                                              bold:NO
-                                                             faint:NO
-                                                      isBackground:NO];
-                    }
-                }
-            }
-        } else {
-            _cursorInfo.cursorVisible = NO;
-        }
-
-        _cursorGuideEnabled = drawingHelper.highlightCursorLine;
-        _cursorGuideColor = drawingHelper.cursorGuideColor;
-
-        _backgroundImageBlending = textView.blend;
-        _backgroundImageTiled = textView.delegate.backgroundImageTiled;
-        _backgroundImage = [textView.delegate textViewBackgroundImage];
-
-        _asciiUnderlineDescriptor.color = VectorForColor([_colorMap colorForKey:kColorMapUnderline]);
-        _asciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_asciiFont.font.xHeight yOffset:0];
-        _asciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_asciiFont.font];
-
-        _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
-        _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_nonAsciiFont.font.xHeight yOffset:0];
-        _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
-
-        // Replace screen contents with input method editor.
-        if ([self hasMarkedText]) {
-            VT100GridCoord startCoord = drawingHelper.cursorCoord;
-            startCoord.y += drawingHelper.numberOfScrollbackLines - _visibleRange.start.y;
-            [self copyMarkedText:drawingHelper.markedText.string
-                  cursorLocation:drawingHelper.inputMethodSelectedRange.location
-                              to:drawingHelper.cursorCoord
-          ambiguousIsDoubleWidth:drawingHelper.ambiguousIsDoubleWidth
-                   normalization:drawingHelper.normalization
-                  unicodeVersion:drawingHelper.unicodeVersion
-                       gridWidth:drawingHelper.gridSize.width
-                numberOfIMELines:drawingHelper.numberOfIMELines];
-        }
-
-        _showBroadcastStripes = drawingHelper.showStripes;
-        _highlightedRows = [textView.highlightedRows copy];
+        [self loadMetricsWithDrawingHelper:drawingHelper textView:textView screen:screen];
+        [self loadSettingsWithDrawingHelper:drawingHelper textView:textView];
+        [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
+        [self loadBadgeWithDrawingHelper:drawingHelper textView:textView];
+        [self loadBlinkingCursorWithTextView:textView glue:glue];
+        [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
+        [self loadCursorGuideWithDrawingHelper:drawingHelper];
+        [self loadBackgroundImageWithTextView:textView];
+        [self loadUnderlineDescriptorsWithDrawingHelper:drawingHelper];
+        [self loadMarkedTextWithDrawingHelper:drawingHelper];
         [self loadIndicatorsFromTextView:textView];
+        [self loadHighlightedRowsFromTextView:textView];
         [self loadAnnotationRangesFromTextView:textView];
 
         [textView.dataSource setUseSavedGridIfAvailable:NO];
     }
     return self;
+}
+
+- (void)loadMetricsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                            textView:(PTYTextView *)textView
+                              screen:(VT100Screen *)screen {
+    _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
+    _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
+    const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
+    _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
+    _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
+    _gridSize = VT100GridSizeMake(textView.dataSource.width,
+                                  textView.dataSource.height);
+}
+
+- (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                             textView:(PTYTextView *)textView {
+    _colorMap = [textView.colorMap copy];
+    _asciiFont = textView.primaryFont;
+    _nonAsciiFont = textView.secondaryFont;
+    _useBoldFont = textView.useBoldFont;
+    _useItalicFont = textView.useItalicFont;
+    _useNonAsciiFont = textView.useNonAsciiFont;
+    _reverseVideo = textView.dataSource.terminal.reverseVideo;
+    _useBrightBold = textView.useBrightBold;
+    _thinStrokes = textView.thinStrokes;
+    _isRetina = drawingHelper.isRetina;
+    _isInKeyWindow = [textView isInKeyWindow];
+    _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
+    _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
+    _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
+    _cursorBlinking = textView.isCursorBlinking;
+    _blinkAllowed = textView.blinkAllowed;
+    _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
+    _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
+    _asciiAntialias = drawingHelper.asciiAntiAlias;
+    _nonasciiAntialias = drawingHelper.nonAsciiAntiAlias;
+    _showBroadcastStripes = drawingHelper.showStripes;
+    _defaultBackgroundColor = [drawingHelper defaultBackgroundColor];
+    _timestampsEnabled = drawingHelper.showTimestamps;
+    _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
+    _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
+                                                                                       towardsGrayLevel:0.5]);
+    _transparencyAlpha = textView.transparencyAlpha;
+    _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
+}
+
+- (void)loadLinesWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                          textView:(PTYTextView *)textView
+                            screen:(VT100Screen *)screen {
+    const int width = _visibleRange.end.x - _visibleRange.start.x;
+    const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
+    const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
+    for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
+        if (_timestampsEnabled) {
+            [_dates addObject:[textView drawingHelperTimestampForLine:i]];
+        }
+        screen_char_t *line = [screen getLineAtIndex:i];
+        [_lines addObject:[NSMutableData dataWithBytes:line length:sizeof(screen_char_t) * width]];
+        [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
+        NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
+        if (findMatches) {
+            _matches[@(i - _visibleRange.start.y)] = findMatches;
+        }
+
+        const long long absoluteLine = totalScrollbackOverflow + i;
+        _underlinedRanges[@(i - _visibleRange.start.y)] = [NSValue valueWithRange:[drawingHelper underlinedRangeOnLine:absoluteLine]];
+
+        [self loadMarksWithDrawingHelper:drawingHelper
+                                textView:textView
+                                    line:i
+                     allowOtherMarkStyle:allowOtherMarkStyle];
+    }
+}
+
+- (void)loadBadgeWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                          textView:(PTYTextView *)textView {
+    _badgeImage = drawingHelper.badgeImage;
+    if (_badgeImage) {
+        _badgeDestinationRect = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
+                                                                destinationRect:textView.enclosingScrollView.documentVisibleRect
+                                                           destinationFrameSize:textView.frame.size
+                                                                    visibleSize:textView.enclosingScrollView.documentVisibleRect.size
+                                                                  sourceRectPtr:&_badgeSourceRect];
+    }
+}
+
+- (void)loadBlinkingCursorWithTextView:(PTYTextView *)textView
+                                  glue:(iTermMetalGlue *)glue {
+    VT100GridCoord cursorScreenCoord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
+                                                          textView.dataSource.cursorY - 1);
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (!VT100GridCoordEquals(cursorScreenCoord, glue.oldCursorScreenCoord)) {
+        glue.lastTimeCursorMoved = now;
+    }
+    _timeSinceCursorMoved = now - glue.lastTimeCursorMoved;
+    glue.oldCursorScreenCoord = cursorScreenCoord;
+}
+
+- (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                               textView:(PTYTextView *)textView {
+    const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
+    _cursorInfo = [[iTermMetalCursorInfo alloc] init];
+    _cursorInfo.copyMode = drawingHelper.copyMode;
+    _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
+                                                         drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
+    _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
+    NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
+    if ([self shouldDrawCursor] &&
+        _cursorVisible &&
+        _visibleRange.start.y <= lineWithCursor &&
+        lineWithCursor + 1 < _visibleRange.end.y) {
+        _cursorInfo.cursorVisible = YES;
+        _cursorInfo.type = drawingHelper.cursorType;
+        _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
+                                               textView.dataSource.cursorY - 1 - offset);
+        _cursorInfo.cursorColor = [self backgroundColorForCursor];
+        if (_cursorInfo.type == CURSOR_BOX) {
+            _cursorInfo.shouldDrawText = YES;
+            const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].bytes;
+            screen_char_t screenChar = line[_cursorInfo.coord.x];
+            const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
+
+            iTermSmartCursorColor *smartCursorColor = nil;
+            if (drawingHelper.useSmartCursorColor) {
+                smartCursorColor = [[iTermSmartCursorColor alloc] init];
+                smartCursorColor.delegate = self;
+            }
+
+            if (!focused) {
+                _cursorInfo.shouldDrawText = NO;
+                _cursorInfo.frameOnly = YES;
+            } else if (smartCursorColor) {
+                _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
+                                                           wantBackground:YES
+                                                                    muted:NO];
+                _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
+                NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
+                                                            green:_cursorInfo.textColor.y
+                                                             blue:_cursorInfo.textColor.z
+                                                            alpha:_cursorInfo.textColor.w];
+                NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
+                                                                 regularTextColor:regularTextColor
+                                                             smartBackgroundColor:_cursorInfo.cursorColor];
+                CGFloat components[4];
+                [smartTextColor getComponents:components];
+                _cursorInfo.textColor = simd_make_float4(components[0],
+                                                         components[1],
+                                                         components[2],
+                                                         components[3]);
+            } else {
+                if (_reverseVideo) {
+                    _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
+                } else {
+                    _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
+                                                         green:0
+                                                          blue:0
+                                                     colorMode:ColorModeAlternate
+                                                          bold:NO
+                                                         faint:NO
+                                                  isBackground:NO];
+                }
+            }
+        }
+    } else {
+        _cursorInfo.cursorVisible = NO;
+    }
+}
+
+- (void)loadCursorGuideWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
+    _cursorGuideEnabled = drawingHelper.highlightCursorLine;
+    _cursorGuideColor = drawingHelper.cursorGuideColor;
+}
+
+- (void)loadBackgroundImageWithTextView:(PTYTextView *)textView {
+    _backgroundImageBlending = textView.blend;
+    _backgroundImageTiled = textView.delegate.backgroundImageTiled;
+    _backgroundImage = [textView.delegate textViewBackgroundImage];
+}
+
+- (void)loadUnderlineDescriptorsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
+    _asciiUnderlineDescriptor.color = VectorForColor([_colorMap colorForKey:kColorMapUnderline]);
+    _asciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_asciiFont.font.xHeight yOffset:0];
+    _asciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_asciiFont.font];
+
+    _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
+    _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineGivenFontXHeight:_nonAsciiFont.font.xHeight yOffset:0];
+    _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
+}
+
+// Replace screen contents with input method editor.
+- (void)loadMarkedTextWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
+    if ([self hasMarkedText]) {
+        VT100GridCoord startCoord = drawingHelper.cursorCoord;
+        startCoord.y += drawingHelper.numberOfScrollbackLines - _visibleRange.start.y;
+        [self copyMarkedText:drawingHelper.markedText.string
+              cursorLocation:drawingHelper.inputMethodSelectedRange.location
+                          to:drawingHelper.cursorCoord
+      ambiguousIsDoubleWidth:drawingHelper.ambiguousIsDoubleWidth
+               normalization:drawingHelper.normalization
+              unicodeVersion:drawingHelper.unicodeVersion
+                   gridWidth:drawingHelper.gridSize.width
+            numberOfIMELines:drawingHelper.numberOfIMELines];
+    }
+}
+
+- (void)loadHighlightedRowsFromTextView:(PTYTextView *)textView {
+    _highlightedRows = [textView.highlightedRows copy];
+}
+
+- (void)loadMarksWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                          textView:(PTYTextView *)textView
+                              line:(int)i
+               allowOtherMarkStyle:(BOOL)allowOtherMarkStyle {
+    iTermMarkStyle markStyle = iTermMarkStyleNone;
+    if (drawingHelper.drawMarkIndicators) {
+        VT100ScreenMark *mark = [textView.dataSource markOnLine:i];
+        if (mark.isVisible) {
+            if (mark.code == 0) {
+                markStyle = iTermMarkStyleSuccess;
+            } else if (allowOtherMarkStyle &&
+                       mark.code >= 128 && mark.code <= 128 + 32) {
+                markStyle = iTermMarkStyleOther;
+            } else {
+                markStyle = iTermMarkStyleFailure;
+            }
+        }
+    }
+    [_markStyles addObject:@(markStyle)];
 }
 
 // Populate _rowToAnnotationRanges.
