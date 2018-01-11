@@ -544,7 +544,7 @@ static const int kDragThreshold = 3;
         DLog(@"resignFirstResponder %@", self);
         DLog(@"%@", [NSThread callStackSymbols]);
     } else {
-        DLog(@"%@ ignoring first responder changes in resignFirstResponder");
+        DLog(@"%@ ignoring first responder changes in resignFirstResponder", self);
     }
     return YES;
 }
@@ -556,7 +556,7 @@ static const int kDragThreshold = 3;
         DLog(@"becomeFirstResponder %@", self);
         DLog(@"%@", [NSThread callStackSymbols]);
     } else {
-        DLog(@"%@ ignoring first responder changes in becomeFirstResponder");
+        DLog(@"%@ ignoring first responder changes in becomeFirstResponder", self);
     }
     return YES;
 }
