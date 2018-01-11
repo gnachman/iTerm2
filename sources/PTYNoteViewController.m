@@ -41,6 +41,14 @@ static const CGFloat kBottomPadding = 3;
     return gVisibleNotes > 0;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        gVisibleNotes++;
+    }
+    return self;
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super init];
     if (self) {
