@@ -95,9 +95,9 @@
     }
     if (useMetal) {
         _needsClear = YES;
-        [self setNeedsDisplay:YES];
     }
     _useMetal = useMetal;
+    [self setNeedsDisplay:YES];
 }
 
 @end

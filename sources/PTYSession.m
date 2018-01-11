@@ -4739,6 +4739,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // If the text view had been visible, hide it. Hiding it before the
         // first frame is drawn causes a flash of gray.
         DLog(@"metalGlueDidDrawFrame");
+        _wrapper.useMetal = YES;
         _textview.alphaValue = 0;
         _view.metalView.alphaValue = 1;
         if (redrawAsap) {
@@ -4758,13 +4759,14 @@ ITERM_WEAKLY_REFERENCEABLE
         if (useMetal == _useMetal) {
             return;
         }
-        DLog(@"setUseMetal:%@ %@", @(useMetal), self);
         _useMetal = useMetal;
         // The metalview's alpha will initially be 0. Once it has drawn a frame we'll swap what is visible.
         [self setUseMetal:useMetal dataSource:_metalGlue];
-        _wrapper.useMetal = useMetal;
         if (useMetal) {
             [self updateMetalDriver];
+            // wrapper.useMetal becomes YES after the first frame is done drawing
+        } else {
+            _wrapper.useMetal = NO;
         }
         [_textview setNeedsDisplay:YES];
     }
