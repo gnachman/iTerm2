@@ -46,6 +46,7 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSPasteboard+iTerm.h"
+#import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "NSWindow+PSM.h"
@@ -536,19 +537,27 @@ static const int kDragThreshold = 3;
 }
 
 - (BOOL)resignFirstResponder {
-    [_altScreenMouseScrollInferer firstResponderDidChange];
-    [self removeUnderline];
-    [self placeFindCursorOnAutoHide];
-    DLog(@"resignFirstResponder %@", self);
-    DLog(@"%@", [NSThread callStackSymbols]);
+    if (!self.it_shouldIgnoreFirstResponderChanges) {
+        [_altScreenMouseScrollInferer firstResponderDidChange];
+        [self removeUnderline];
+        [self placeFindCursorOnAutoHide];
+        DLog(@"resignFirstResponder %@", self);
+        DLog(@"%@", [NSThread callStackSymbols]);
+    } else {
+        DLog(@"%@ ignoring first responder changes in resignFirstResponder");
+    }
     return YES;
 }
 
 - (BOOL)becomeFirstResponder {
-    [_altScreenMouseScrollInferer firstResponderDidChange];
-    [_delegate textViewDidBecomeFirstResponder];
-    DLog(@"becomeFirstResponder %@", self);
-    DLog(@"%@", [NSThread callStackSymbols]);
+    if (!self.it_shouldIgnoreFirstResponderChanges) {
+        [_altScreenMouseScrollInferer firstResponderDidChange];
+        [_delegate textViewDidBecomeFirstResponder];
+        DLog(@"becomeFirstResponder %@", self);
+        DLog(@"%@", [NSThread callStackSymbols]);
+    } else {
+        DLog(@"%@ ignoring first responder changes in becomeFirstResponder");
+    }
     return YES;
 }
 
