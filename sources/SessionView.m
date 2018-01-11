@@ -9,6 +9,7 @@
 #import "iTermPreferences.h"
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
+#import "NSResponder+iTerm.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -240,26 +241,32 @@ static NSDate* lastResizeDate_;
     if (useSubviewWithLayer == _useSubviewWithLayer) {
         return;
     }
-    _useSubviewWithLayer = useSubviewWithLayer;
-    if (!_subviewWithLayer && _useSubviewWithLayer) {
-        _subviewWithLayer = [[NSView alloc] initWithFrame:self.bounds];
-        _subviewWithLayer.wantsLayer = YES;
-        [_subviewWithLayer addSubview:_scrollview];
-        if (_currentAnnouncement.view) {
-            [_subviewWithLayer addSubview:_currentAnnouncement.view];
+    // Fiddling with the view hierarchy resets the first responder. Conspire with PTYTextView to
+    // silently restore first responder status.
+    [self.window.firstResponder it_ignoreFirstResponderChangesInBlock:^{
+        NSResponder *firstResponder = self.window.firstResponder;
+        _useSubviewWithLayer = useSubviewWithLayer;
+        if (!_subviewWithLayer && _useSubviewWithLayer) {
+            _subviewWithLayer = [[NSView alloc] initWithFrame:self.bounds];
+            _subviewWithLayer.wantsLayer = YES;
+            [_subviewWithLayer addSubview:_scrollview];
+            if (_currentAnnouncement.view) {
+                [_subviewWithLayer addSubview:_currentAnnouncement.view];
+            }
+            [_subviewWithLayer addSubview:_findView.view];
+            [self addSubview:_subviewWithLayer];
+        } else if (_subviewWithLayer && !_useSubviewWithLayer) {
+            [self addSubview:_scrollview];
+            if (_currentAnnouncement.view) {
+                [self addSubview:_currentAnnouncement.view];
+            }
+            [self addSubview:_findView.view];
+            [_subviewWithLayer removeFromSuperview];
+            [_subviewWithLayer release];
+            _subviewWithLayer = nil;
         }
-        [_subviewWithLayer addSubview:_findView.view];
-        [self addSubview:_subviewWithLayer];
-    } else if (_subviewWithLayer && !_useSubviewWithLayer) {
-        [self addSubview:_scrollview];
-        if (_currentAnnouncement.view) {
-            [self addSubview:_currentAnnouncement.view];
-        }
-        [self addSubview:_findView.view];
-        [_subviewWithLayer removeFromSuperview];
-        [_subviewWithLayer release];
-        _subviewWithLayer = nil;
-    }
+        [self.window makeFirstResponder:firstResponder];
+    }];
 }
 
 - (void)addSubview:(NSView *)aView {
