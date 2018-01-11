@@ -32,6 +32,6 @@ iTermMarginVertexShader(uint vertexID [[ vertex_id ]],
 
 fragment float4
 iTermMarginFragmentShader(iTermMarginVertexFunctionOutput in [[stage_in]],
-                          constant vector_float4 *color [[ buffer(iTermTextureIndexPrimary) ]]) {
+                          constant vector_float4 *color [[ buffer(iTermFragmentBufferIndexMarginColor) ]]) {
     return *color;
 }

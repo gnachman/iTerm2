@@ -14,6 +14,7 @@
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
 #import "iTermFullScreenFlashRenderer.h"
+#import "iTermHighlightRowRenderer.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
 #import "iTermMarginRenderer.h"
@@ -70,6 +71,7 @@
     iTermIndicatorRenderer *_indicatorRenderer;
     iTermBroadcastStripesRenderer *_broadcastStripesRenderer;
     iTermCursorGuideRenderer *_cursorGuideRenderer;
+    iTermHighlightRowRenderer *_highlightRowRenderer;
     iTermCursorRenderer *_underlineCursorRenderer;
     iTermCursorRenderer *_barCursorRenderer;
     iTermCursorRenderer *_imeCursorRenderer;
@@ -120,6 +122,7 @@
         _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:mtkView.device];
         _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:mtkView.device];
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
+        _highlightRowRenderer = [[iTermHighlightRowRenderer alloc] initWithDevice:mtkView.device];
         _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:mtkView.device];
         _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:mtkView.device];
         _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:mtkView.device];
@@ -433,6 +436,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateBadgeRendererTransientStateWithFrameData:frameData];
     [self populateMarkRendererTransientStateWithFrameData:frameData];
     [self populateCursorGuideRendererTransientStateWithFrameData:frameData];
+    [self populateHighlightRowRendererTransientStateWithFrameData:frameData];
     [self populateTimestampsRendererTransientStateWithFrameData:frameData];
     [self populateFlashRendererTransientStateWithFrameData:frameData];
     [self populateImageRendererTransientStateWithFrameData:frameData];
@@ -507,6 +511,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
              frameData:frameData
          renderEncoder:renderEncoder
                   stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash]];
+
+    [self drawCellRenderer:_highlightRowRenderer
+                 frameData:frameData
+             renderEncoder:renderEncoder
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawHighlightRow]];
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData
@@ -855,6 +864,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }];
 }
 
+- (void)populateHighlightRowRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermHighlightRowRendererTransientState *tState = [frameData transientStateForRenderer:_highlightRowRenderer];
+    [frameData.perFrameState metalEnumerateHighlightedRows:^(vector_float3 color, NSTimeInterval age, int row) {
+        const CGFloat opacity = MAX(0, 0.75 - age);
+        [tState setOpacity:opacity color:color row:row];
+    }];
+}
+
 - (void)populateCursorGuideRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermCursorGuideRendererTransientState *tState = [frameData transientStateForRenderer:_cursorGuideRenderer];
     iTermMetalCursorInfo *cursorInfo = frameData.perFrameState.metalDriverCursorInfo;
@@ -1086,7 +1103,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                       missingImages:tState.foundImageUniqueIdentifiers
                                                       animatedLines:tState.animatedLines];
                         }
-                        [weakSelf.dataSource metalDriverDidDrawFrame];
+                        [weakSelf.dataSource metalDriverDidDrawFrame:frameData.perFrameState];
                     }];
                 }
             };
@@ -1190,6 +1207,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _backgroundColorRenderer,
               _markRenderer,
               _cursorGuideRenderer,
+              _highlightRowRenderer,
               _imageRenderer,
               _underlineCursorRenderer,
               _barCursorRenderer,

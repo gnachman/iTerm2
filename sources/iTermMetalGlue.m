@@ -134,10 +134,15 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSColor *_defaultBackgroundColor;
     BOOL _timestampsEnabled;
     long long _firstVisibleAbsoluteLineNumber;
+    long long _lastVisibleAbsoluteLineNumber;
 
     // Row on screen to characters with annotation underline on that row.
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
+    NSArray<iTermHighlightedRow *> *_highlightedRows;
+    NSTimeInterval _startTime;
 }
+
+@property (nonatomic, readonly) BOOL isAnimating;
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
                           screen:(VT100Screen *)screen
@@ -223,8 +228,9 @@ static NSColor *ColorForVector(vector_float4 v) {
     });
 }
 
-- (void)metalDriverDidDrawFrame {
-    [self.delegate metalGlueDidDrawFrame];
+- (void)metalDriverDidDrawFrame:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState {
+    iTermMetalPerFrameState *state = (iTermMetalPerFrameState *)perFrameState;
+    [self.delegate metalGlueDidDrawFrameAndNeedsRedraw:state.isAnimating];
 }
 
 @end
@@ -239,6 +245,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     assert([NSThread isMainThread]);
     self = [super init];
     if (self) {
+        _startTime = [NSDate timeIntervalSinceReferenceDate];
         _havePreviousCharacterAttributes = NO;
         _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
         _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
@@ -258,6 +265,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
         _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
         _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + textView.dataSource.totalScrollbackOverflow;
+        _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + textView.dataSource.totalScrollbackOverflow;
         _defaultBackgroundColor = [drawingHelper defaultBackgroundColor];
         _timestampsEnabled = drawingHelper.showTimestamps;
 
@@ -433,6 +441,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         }
 
         _showBroadcastStripes = drawingHelper.showStripes;
+        _highlightedRows = [textView.highlightedRows copy];
         [self loadIndicatorsFromTextView:textView];
         [self loadAnnotationRangesFromTextView:textView];
     }
@@ -571,6 +580,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
+- (BOOL)isAnimating {
+    return _highlightedRows.count > 0;
+}
+
 - (long long)firstVisibleAbsoluteLineNumber {
     return _firstVisibleAbsoluteLineNumber;
 }
@@ -593,6 +606,21 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     [_indicators enumerateObjectsUsingBlock:^(iTermIndicatorDescriptor * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         block(obj);
     }];
+}
+
+- (void)metalEnumerateHighlightedRows:(void (^)(vector_float3, NSTimeInterval, int))block {
+    for (iTermHighlightedRow *row in _highlightedRows) {
+        long long line = row.absoluteLineNumber;
+        if (line >= _firstVisibleAbsoluteLineNumber && line <= _lastVisibleAbsoluteLineNumber) {
+            vector_float3 color;
+            if (row.success) {
+                color = simd_make_float3(0, 0, 1);
+            } else {
+                color = simd_make_float3(1, 0, 0);
+            }
+            block(color, _startTime - row.creationDate, line - _firstVisibleAbsoluteLineNumber);
+        }
+    }
 }
 
 - (vector_float4)fullScreenFlashColor {

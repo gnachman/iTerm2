@@ -92,6 +92,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)enumerateIndicatorsInFrame:(NSRect)frame block:(void (^)(iTermIndicatorDescriptor *))block;
 
+- (void)metalEnumerateHighlightedRows:(void (^)(vector_float3 color, NSTimeInterval age, int row))block;
+
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -99,7 +101,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame;
 
-- (void)metalDriverDidDrawFrame;
+- (void)metalDriverDidDrawFrame:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState;
 
 - (void)metalDidFindImages:(NSSet<NSString *> *)foundImages
              missingImages:(NSSet<NSString *> *)missingImages

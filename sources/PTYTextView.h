@@ -197,7 +197,14 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (NSImage *)textViewBackgroundImage;
 - (BOOL)backgroundImageTiled;
 - (BOOL)textViewShouldDrawRect;
+- (void)textViewDidHighightMark;
 
+@end
+
+@interface iTermHighlightedRow : NSObject
+@property (nonatomic, readonly) long long absoluteLineNumber;
+@property (nonatomic, readonly) NSTimeInterval creationDate;
+@property (nonatomic, readonly) BOOL success;
 @end
 
 @interface PTYTextView : NSView <
@@ -349,6 +356,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) BOOL isCursorBlinking;
 
 @property (nonatomic, readonly) iTermIndicatorsHelper *indicatorsHelper;
+
+@property (nonatomic, readonly) NSArray<iTermHighlightedRow *> *highlightedRows;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
