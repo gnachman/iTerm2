@@ -251,7 +251,14 @@ static NSColor *ColorForVector(vector_float4 v) {
         _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                            towardsGrayLevel:0.5]);
         _transparencyAlpha = textView.transparencyAlpha;
+
+        // Getting the drawingHelper may reset the cursorVisible flag as a side effect of the
+        // hacky flicker fixer.
+        BOOL savedCursorVisible = textView.cursorVisible;
         iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
+        _cursorVisible = drawingHelper.cursorVisible;
+        drawingHelper.cursorVisible = savedCursorVisible;
+
         _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
 
         // Copy lines from model. Always use these for consistency. I should also copy the color map
@@ -320,7 +327,6 @@ static NSColor *ColorForVector(vector_float4 v) {
         _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
         _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
         _numberOfScrollbackLines = textView.dataSource.numberOfScrollbackLines;
-        _cursorVisible = drawingHelper.cursorVisible;
         _cursorBlinking = textView.isCursorBlinking;
         _blinkAllowed = textView.blinkAllowed;
         _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
@@ -359,7 +365,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
         NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
         if ([self shouldDrawCursor] &&
-            textView.cursorVisible &&
+            _cursorVisible &&
             _visibleRange.start.y <= lineWithCursor &&
             lineWithCursor + 1 < _visibleRange.end.y) {
             _cursorInfo.cursorVisible = YES;
@@ -444,6 +450,8 @@ static NSColor *ColorForVector(vector_float4 v) {
         _highlightedRows = [textView.highlightedRows copy];
         [self loadIndicatorsFromTextView:textView];
         [self loadAnnotationRangesFromTextView:textView];
+
+        [textView.dataSource setUseSavedGridIfAvailable:NO];
     }
     return self;
 }

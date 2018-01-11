@@ -1147,6 +1147,7 @@ static const int kDragThreshold = 3;
 
 - (void)drawRect:(NSRect)rect {
     if (![_delegate textViewShouldDrawRect]) {
+        // Metal code path in use
         return;
     }
     if (_dataSource.width <= 0) {
