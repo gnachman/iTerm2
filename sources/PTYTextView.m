@@ -1139,6 +1139,7 @@ static const int kDragThreshold = 3;
 
 - (void)drawRect:(NSRect)rect {
     if (![_delegate textViewShouldDrawRect]) {
+        // Metal code path in use
         return;
     }
     if (_dataSource.width <= 0) {
@@ -1146,7 +1147,6 @@ static const int kDragThreshold = 3;
         return;
     }
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
-
 
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
     
