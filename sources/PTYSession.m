@@ -4727,13 +4727,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Metal Support
 
-- (void)metalGlueDidDrawFrame NS_AVAILABLE_MAC(10_11) {
+- (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
     if (_view.useMetal) {
         // If the text view had been visible, hide it. Hiding it before the
         // first frame is drawn causes a flash of gray.
         DLog(@"metalGlueDidDrawFrame");
         _textview.alphaValue = 0;
         _view.metalView.alphaValue = 1;
+        if (redrawAsap) {
+            [_textview setNeedsDisplay:YES];
+        }
     }
 }
 
@@ -6962,6 +6965,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return _textview.alphaValue > 0;
     } else {
         return YES;
+    }
+}
+
+- (void)textViewDidHighightMark {
+    if (self.useMetal) {
+        [_textview setNeedsDisplay:YES];
     }
 }
 

@@ -102,6 +102,20 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // recognized as a drag.
 static const int kDragThreshold = 3;
 
+@implementation iTermHighlightedRow
+
+- (instancetype)initWithAbsoluteLineNumber:(long long)row success:(BOOL)success {
+    self = [super init];
+    if (self) {
+        _absoluteLineNumber = row;
+        _creationDate = [NSDate timeIntervalSinceReferenceDate];
+        _success = success;
+    }
+    return self;
+}
+
+@end
+
 @interface PTYTextView () <
     iTermAltScreenMouseScrollInfererDelegate,
     iTermTextViewAccessibilityHelperDelegate,
@@ -239,6 +253,8 @@ static const int kDragThreshold = 3;
     iTermAltScreenMouseScrollInferer *_altScreenMouseScrollInferer;
 
     NSEvent *_eventBeingHandled;
+
+    NSMutableArray<iTermHighlightedRow *> *_highlightedRows;
 }
 
 
@@ -402,6 +418,7 @@ static const int kDragThreshold = 3;
     [_savedSelectedText release];
     [_keyBindingEmulator release];
     [_altScreenMouseScrollInferer release];
+    [_highlightedRows release];
 
     [super dealloc];
 }
@@ -5626,6 +5643,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [highlightingView.layer addAnimation:animation forKey:@"opacity"];
 
     [CATransaction commit];
+
+    if (!_highlightedRows) {
+        _highlightedRows = [[NSMutableArray alloc] init];
+    }
+    
+    iTermHighlightedRow *entry = [[iTermHighlightedRow alloc] initWithAbsoluteLineNumber:_dataSource.totalScrollbackOverflow + line
+                                                                                 success:!hasErrorCode];
+    [_highlightedRows addObject:entry];
+    [_delegate textViewDidHighightMark];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self removeHighlightedRow:entry];
+        [entry release];
+    });
+}
+
+- (void)removeHighlightedRow:(iTermHighlightedRow *)row {
+    [_highlightedRows removeObject:row];
 }
 
 #pragma mark - Find Cursor

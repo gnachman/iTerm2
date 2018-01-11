@@ -2438,6 +2438,11 @@
 		A6DBC04220049CB100F1466D /* iTermImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC03E20049CB100F1466D /* iTermImage.metal */; };
 		A6DBC0452005DC2B00F1466D /* iTermTuple.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0432005DC2B00F1466D /* iTermTuple.h */; };
 		A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0442005DC2B00F1466D /* iTermTuple.m */; };
+		A6DBC0492005F09100F1466D /* iTermHighlightRowRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0472005F09100F1466D /* iTermHighlightRowRenderer.h */; };
+		A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0482005F09100F1466D /* iTermHighlightRowRenderer.mm */; };
+		A6DBC04C2005F45700F1466D /* iTermHighlightRow.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */; };
+		A6DBC04D2005F45700F1466D /* iTermHighlightRow.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */; };
+		A6DBC04E2005F45700F1466D /* iTermHighlightRow.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
@@ -4052,6 +4057,9 @@
 		A6DBC03E20049CB100F1466D /* iTermImage.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermImage.metal; path = Metal/Shaders/iTermImage.metal; sourceTree = "<group>"; };
 		A6DBC0432005DC2B00F1466D /* iTermTuple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTuple.h; sourceTree = "<group>"; };
 		A6DBC0442005DC2B00F1466D /* iTermTuple.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTuple.m; sourceTree = "<group>"; };
+		A6DBC0472005F09100F1466D /* iTermHighlightRowRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermHighlightRowRenderer.h; path = Metal/Renderers/iTermHighlightRowRenderer.h; sourceTree = "<group>"; };
+		A6DBC0482005F09100F1466D /* iTermHighlightRowRenderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermHighlightRowRenderer.mm; path = Metal/Renderers/iTermHighlightRowRenderer.mm; sourceTree = "<group>"; };
+		A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermHighlightRow.metal; path = Metal/Shaders/iTermHighlightRow.metal; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
@@ -5583,6 +5591,7 @@
 				A68400B11FF8644F008D3EE2 /* iTermFulScreenFlash.metal */,
 				A68400BE1FF99E1B008D3EE2 /* iTermTimestamps.metal */,
 				A6DBC03E20049CB100F1466D /* iTermImage.metal */,
+				A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */,
 			);
 			name = Shaders;
 			sourceTree = "<group>";
@@ -5626,6 +5635,8 @@
 				A68400BB1FF98101008D3EE2 /* iTermTimestampsRenderer.m */,
 				A6DBC03A2003479400F1466D /* iTermImageRenderer.h */,
 				A6DBC03B2003479400F1466D /* iTermImageRenderer.m */,
+				A6DBC0472005F09100F1466D /* iTermHighlightRowRenderer.h */,
+				A6DBC0482005F09100F1466D /* iTermHighlightRowRenderer.mm */,
 			);
 			name = Renderers;
 			sourceTree = "<group>";
@@ -7220,6 +7231,7 @@
 				A667191A1DCE36C3000CE608 /* iTermWebSocketFrameBuilder.h in Headers */,
 				A68400A61FF82424008D3EE2 /* iTermIndicatorRenderer.h in Headers */,
 				A667191B1DCE36C3000CE608 /* iTermDynamicProfileManager.h in Headers */,
+				A6DBC0492005F09100F1466D /* iTermHighlightRowRenderer.h in Headers */,
 				A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */,
 				A667191C1DCE36C3000CE608 /* iTermAppHotKey.h in Headers */,
 				A68400B81FF97138008D3EE2 /* iTermTimestampDrawHelper.h in Headers */,
@@ -8785,6 +8797,7 @@
 				A68400C11FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A67960FB1F8202C2008A42BC /* iTermCursorGuide.metal in Sources */,
 				A67960F91F8202C2008A42BC /* iTermBadge.metal in Sources */,
+				A6DBC04E2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A60EBD191FAED954008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A67960F81F8202C2008A42BC /* iTermBackgroundImage.metal in Sources */,
 			);
@@ -8811,6 +8824,7 @@
 				A67960F11F8202C1008A42BC /* iTermBadge.metal in Sources */,
 				A67960F21F8202C1008A42BC /* iTermBroadcastStripes.metal in Sources */,
 				A60BB3911EB6A56800D76C09 /* iTermProcessCollectionTest.m in Sources */,
+				A6DBC04D2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A67960EF1F8202C1008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A67960F41F8202C1008A42BC /* iTermCursorRenderer.metal in Sources */,
 			);
@@ -8843,6 +8857,7 @@
 				A68400BF1FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A67960EB1F8202C0008A42BC /* iTermCursorGuide.metal in Sources */,
 				A67960E91F8202C0008A42BC /* iTermBadge.metal in Sources */,
+				A6DBC04C2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A67960E81F8202C0008A42BC /* iTermBackgroundImage.metal in Sources */,
 			);
@@ -8904,6 +8919,7 @@
 				A67960D61F81FCBB008A42BC /* iTermMarkRenderer.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
+				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
