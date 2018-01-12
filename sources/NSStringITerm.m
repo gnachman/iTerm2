@@ -509,6 +509,7 @@ int decode_utf8_char(const unsigned char *datap,
             // Stop on end of stream.
             break;
         } else if (utf8DecodeResult < 0) {
+            ITCriticalError(NO, @"Error decoding input %.*s produced replacement char", len, p);
             theChar = UNICODE_REPLACEMENT_CHAR;
             utf8DecodeResult = -utf8DecodeResult;
         } else if (theChar > 0xFFFF) {

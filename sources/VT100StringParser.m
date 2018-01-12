@@ -7,6 +7,8 @@
 //
 
 #import "VT100StringParser.h"
+
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
 #import "ScreenChar.h"
 
@@ -346,6 +348,7 @@ void ParseString(unsigned char *datap,
     if (result->type == VT100_INVALID_SEQUENCE) {
         // Output only one replacement symbol, even if rmlen is higher.
         datap[0] = ONECHAR_UNKNOWN;
+        ITCriticalError(NO, @"Parsed an invalid sequence %.*s", datalen, datap);
         result.string = ReplacementString();
         result->type = VT100_STRING;
     } else if (result->type != VT100_WAIT && !isAscii) {

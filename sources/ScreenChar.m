@@ -30,6 +30,7 @@
 
 #import "ScreenChar.h"
 #import "charmaps.h"
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
 #import "NSCharacterSet+iTerm.h"
@@ -137,6 +138,7 @@ static void CreateComplexCharMapIfNeeded() {
 NSString* ComplexCharToStr(int key)
 {
     if (key == UNICODE_REPLACEMENT_CHAR) {
+        ITCriticalError(NO, @"Tried to convert replacement char to string");
         return ReplacementString();
     }
 
@@ -152,6 +154,7 @@ NSString* ScreenCharToStr(screen_char_t* sct)
 NSString* CharToStr(unichar code, BOOL isComplex)
 {
     if (code == UNICODE_REPLACEMENT_CHAR) {
+        ITCriticalError(NO, @"Tried to convert replacement char to string");
         return ReplacementString();
     }
 
@@ -165,6 +168,7 @@ NSString* CharToStr(unichar code, BOOL isComplex)
 int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
     NSString* value = nil;
     if (sct->code == UNICODE_REPLACEMENT_CHAR) {
+        ITCriticalError(NO, @"Tried to expand replacement character");
         value = ReplacementString();
     } else if (sct->complexChar) {
         value = ComplexCharToStr(sct->code);
@@ -289,6 +293,7 @@ int GetOrSetComplexChar(NSString* str)
 int AppendToComplexChar(int key, unichar codePoint)
 {
     if (key == UNICODE_REPLACEMENT_CHAR) {
+        ITCriticalError(NO, @"Appending to replacement char");
         return UNICODE_REPLACEMENT_CHAR;
     }
 
@@ -308,6 +313,7 @@ int AppendToComplexChar(int key, unichar codePoint)
 void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, iTermUnicodeNormalization normalization) {
     unichar initialCodePoint = screenChar->code;
     if (initialCodePoint == UNICODE_REPLACEMENT_CHAR) {
+        ITCriticalError(NO, @"Begin complex char with code of replacement char");
         return;
     }
 
@@ -544,13 +550,16 @@ void StringToScreenChars(NSString *s,
                 return;
             } else if (baseBmpChar >= ITERM2_PRIVATE_BEGIN && baseBmpChar <= ITERM2_PRIVATE_END) {
                 // Convert private range characters into the replacement character.
+                ITCriticalError(NO, @"Got a private range character %@", @(baseBmpChar));
                 baseBmpChar = UNICODE_REPLACEMENT_CHAR;
             } else if (IsLowSurrogate(baseBmpChar)) {
                 // Low surrogate without high surrogate.
                 baseBmpChar = UNICODE_REPLACEMENT_CHAR;
+                ITCriticalError(NO, @"Low surrogate %@ without high surrogate", @(baseBmpChar));
             } else if (IsHighSurrogate(baseBmpChar) && NSMaxRange(range) != s.length) {
                 // High surrogate not followed by low surrogate.
                 baseBmpChar = UNICODE_REPLACEMENT_CHAR;
+                ITCriticalError(NO, @"High surrogate %@ without low surrogate", @(baseBmpChar));
             }
             buf[j].code = baseBmpChar;
             buf[j].complexChar = NO;
