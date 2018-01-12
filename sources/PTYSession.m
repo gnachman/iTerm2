@@ -4762,6 +4762,7 @@ ITERM_WEAKLY_REFERENCEABLE
             _wrapper.useMetal = NO;
         }
         [_textview setNeedsDisplay:YES];
+        [_cadenceController changeCadenceIfNeeded];
     }
 }
 
@@ -9181,7 +9182,7 @@ ITERM_WEAKLY_REFERENCEABLE
     state.active = _active;
     state.idle = self.isIdle;
     state.visible = [_delegate sessionBelongsToVisibleTab];
-    state.useAdaptiveFrameRate = _useAdaptiveFrameRate;
+    state.useAdaptiveFrameRate = _useAdaptiveFrameRate && !self.useMetal;
     state.adaptiveFrameRateThroughputThreshold = _adaptiveFrameRateThroughputThreshold;
     state.slowFrameRate = _slowFrameRate;
     state.liveResizing = _inLiveResize;
