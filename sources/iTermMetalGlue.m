@@ -386,6 +386,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
                                                          drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
     _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
+    _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
+                                           textView.dataSource.cursorY - 1 - offset);
     NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
     if ([self shouldDrawCursor] &&
         _cursorVisible &&
@@ -393,8 +395,6 @@ static NSColor *ColorForVector(vector_float4 v) {
         lineWithCursor + 1 < _visibleRange.end.y) {
         _cursorInfo.cursorVisible = YES;
         _cursorInfo.type = drawingHelper.cursorType;
-        _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
-                                               textView.dataSource.cursorY - 1 - offset);
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
         if (_cursorInfo.type == CURSOR_BOX) {
             _cursorInfo.shouldDrawText = YES;
