@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermHistogram;
 @class iTermThroughputEstimator;
 @class iTermUpdateCadenceController;
 
@@ -35,6 +36,7 @@ typedef struct {
 
 @property (nonatomic, readonly) BOOL updateTimerIsValid;
 @property (nonatomic, weak) id<iTermUpdateCadenceControllerDelegate> delegate;
+@property (nonatomic, readonly) iTermHistogram *histogram;
 
 - (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

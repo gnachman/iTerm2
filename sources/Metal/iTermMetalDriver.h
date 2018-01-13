@@ -114,6 +114,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalDriver : NSObject<MTKViewDelegate>
 
 @property (nullable, nonatomic, weak) id<iTermMetalDriverDataSource> dataSource;
+@property (nonatomic, readonly) NSString *identifier;
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView;
 - (void)setCellSize:(CGSize)cellSize

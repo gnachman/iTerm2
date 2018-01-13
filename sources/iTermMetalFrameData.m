@@ -277,7 +277,7 @@ static NSInteger gNextFrameDataNumber;
     @synchronized(sHistograms) {
         [[sHistograms.allKeys sortedArrayUsingSelector:@selector(compare:)] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
             iTermHistogram *histogram = sHistograms[name];
-            [result appendFormat:@"%@:\n%@\n\n", name, [histogram stringValue]];
+            [result appendFormat:@"%@: %@\n", name, [histogram sparklines]];
         }];
     }
     return result;

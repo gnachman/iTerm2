@@ -26,10 +26,14 @@ namespace iTerm2 {
         }
 
         void add(const double &value) {
+            // Reservoir sampling
             if (_values.size() < _capacity) {
                 _values.push_back(value);
             } else {
-                _values[arc4random_uniform(_capacity)] = value;
+                uint32_t r = arc4random_uniform(_weight + 1);
+                if (r < _capacity) {
+                    _values[r] = value;
+                }
             }
             _weight++;
             assert(_values.size() > 0);
@@ -192,6 +196,9 @@ namespace iTerm2 {
 }
 
 - (NSString *)sparklines {
+    if (_count == 0) {
+        return @"No data";
+    }
     NSMutableString *sparklines = [NSMutableString string];
 
     if (_buckets.size() > 0) {
