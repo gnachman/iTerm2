@@ -19,6 +19,7 @@
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
@@ -467,6 +468,8 @@ static const NSUInteger kMaxHosts = 100;
     iTermUpdateCadenceController *_cadenceController;
 
     iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
+
+    int _updateCount;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -4172,6 +4175,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateDisplay {
+    _updateCount++;
+    if (@available(macOS 10.11, *)) {
+        if (_useMetal && _updateCount % 10 == 0) {
+            iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
+                                     _cadenceController.histogram.stringValue);
+        }
+    }
     _timerRunning = YES;
     
     // Set attributes of tab to indicate idle, processing, etc.

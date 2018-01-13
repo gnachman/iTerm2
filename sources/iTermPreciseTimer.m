@@ -287,7 +287,8 @@ NSString *iTermPreciseTimerGetSavedLogs(void) {
     @synchronized([iTermPreciseTimersLock class]) {
         NSMutableString *result = [NSMutableString string];
         [sLogs enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            [result appendFormat:@"Precise timers %@:\n%@\n", key, obj];
+            NSInteger numLines = [[obj componentsSeparatedByString:@"\n"] count];
+            [result appendFormat:@"Precise timers %@:%@%@\n", key, numLines > 1 ? @"\n" : @"", obj];
         }];
         return result;
     }

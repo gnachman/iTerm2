@@ -87,7 +87,6 @@ static NSDate* lastResizeDate_;
     NSView *_hoverURLView;
     NSTextField *_hoverURLTextField;
 
-    iTermMetalDriver *_driver NS_AVAILABLE_MAC(10_11);
     BOOL _useMetal;
     iTermMetalClipView *_metalClipView;
 }

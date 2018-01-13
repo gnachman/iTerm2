@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "NSTimer+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermHistogram.h"
 #import "iTermThroughputEstimator.h"
 
 // Timer period between updates when active (not idle, tab is visible or title bar is changing,
@@ -39,6 +40,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     BOOL _deferredCadenceChange;
 
     iTermThroughputEstimator *_throughputEstimator;
+    NSTimeInterval _lastUpdate;
 }
 
 - (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator {
@@ -46,11 +48,17 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     if (self) {
         _useGCDUpdateTimer = [iTermAdvancedSettingsModel useGCDUpdateTimer];
         _throughputEstimator = throughputEstimator;
+        _histogram = [[iTermHistogram alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     if (_gcdUpdateTimer != nil) {
         dispatch_source_cancel(_gcdUpdateTimer);
     }
@@ -195,7 +203,18 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         [self changeCadenceIfNeeded:YES];
         _deferredCadenceChange = NO;
     }
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (_lastUpdate) {
+        double ms = (now - _lastUpdate) * 1000;
+        [_histogram addValue:ms];
+    }
+    _lastUpdate = now;
     [_delegate updateCadenceControllerUpdateDisplay:self];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    _histogram = [[iTermHistogram alloc] init];
+    _lastUpdate = 0;
 }
 
 @end

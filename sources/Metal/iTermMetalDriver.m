@@ -109,7 +109,6 @@
     NSTimeInterval _lastFrameStartTime;
     iTermHistogram *_startToStartHistogram;
     iTermHistogram *_inFlightHistogram;
-    NSString *_identifier;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
