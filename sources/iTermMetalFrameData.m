@@ -22,7 +22,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 
     const char *names[iTermMetalFrameDataStatCount] = {
         "endToEnd",
-
+        "cpu",
+        
         "mt.ExtractFromApp<",
         "mt.GetDrawable<",
         "mt.GetRenderPassD<",
@@ -108,6 +109,7 @@ static NSInteger gNextFrameDataNumber;
         iTermMetalFrameDataStatsBundleInitialize(_stats);
 
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
+        iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatCPU]);
         self.status = @"just created";
     }
     return self;
@@ -164,6 +166,7 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)willHandOffToGPU {
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatCPU]);
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
 }
 
@@ -203,7 +206,7 @@ static NSInteger gNextFrameDataNumber;
 }
 
 
-- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats {
+- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats owner:(NSString *)owner {
     self.status = @"complete";
     if (self.intermediateRenderPassDescriptor) {
         [[self sharedTexturePool] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
@@ -235,7 +238,7 @@ static NSInteger gNextFrameDataNumber;
         [self mergeHistogram:tState.poolContext.textureHistogram name:[NSString stringWithFormat:@"%@: texture sizes", NSStringFromClass(tState.class)]];
         [self mergeHistogram:tState.poolContext.wasteHistogram name:[NSString stringWithFormat:@"%@: wasted space", NSStringFromClass(tState.class)]];
     }];
-    iTermPreciseTimerSaveLog(@"Histograms", [self histogramsString]);
+    iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Histograms", owner], [self histogramsString]);
 
     [self addStatsTo:aggregateStats];
 
@@ -243,7 +246,7 @@ static NSInteger gNextFrameDataNumber;
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
         temp[i] = aggregateStats[i];
     }
-    iTermPreciseTimerPeriodicLog(@"Metal Frame Data", temp, iTermMetalFrameDataStatCount, 1, YES);
+    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, YES);
 }
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer {

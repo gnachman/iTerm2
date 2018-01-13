@@ -30,7 +30,8 @@
 
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatEndToEnd,
-
+    iTermMetalFrameDataStatCPU,
+    
     iTermMetalFrameDataStatMtExtractFromApp,
     iTermMetalFrameDataStatMtGetCurrentDrawable,
     iTermMetalFrameDataStatMtGetRenderPassDescriptor,
@@ -133,7 +134,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)createIntermediateRenderPassDescriptor;
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
-- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats;
+- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
+                                owner:(NSString *)owner;
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;

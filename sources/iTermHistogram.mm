@@ -138,7 +138,7 @@ namespace iTerm2 {
 }
 
 - (void)addValue:(double)value {
-    double logValue = std::log(value + 1) / std::log(2);
+    double logValue = std::log(value + 1) / std::log(M_SQRT2);
 
     int bucket = std::floor(logValue);
     int newCount = _buckets[bucket];
@@ -221,10 +221,12 @@ namespace iTerm2 {
     for (int i = 0; i < n; i++) {
         [stars appendString:@"*"];
     }
-    return [NSString stringWithFormat:@"[%12.0f, %12.0f) %8d |%@",
-            pow(2, bucket) - 1,
-            pow(2, bucket + 1) - 1,
+    NSString *percent = [NSString stringWithFormat:@"%0.1f%%", 100.0 * static_cast<double>(_buckets[bucket]) / static_cast<double>(_count)];
+    return [NSString stringWithFormat:@"[%12.0f, %12.0f) %8d (%6s) |%@",
+            pow(M_SQRT2, bucket) - 1,
+            pow(M_SQRT2, bucket + 1) - 1,
             _buckets[bucket],
+            percent.UTF8String,
             stars];
 }
 
