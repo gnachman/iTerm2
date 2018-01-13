@@ -15,6 +15,7 @@
 #import "iTermCursorRenderer.h"
 #import "iTermFullScreenFlashRenderer.h"
 #import "iTermHighlightRowRenderer.h"
+#import "iTermHistogram.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
 #import "iTermMarginRenderer.h"
@@ -105,11 +106,19 @@
     NSTimeInterval _startTime;
     MovingAverage *_fpsMovingAverage;
     NSTimeInterval _lastFrameTime;
+    NSTimeInterval _lastFrameStartTime;
+    iTermHistogram *_startToStartHistogram;
+    iTermHistogram *_inFlightHistogram;
+    NSString *_identifier;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
     self = [super init];
     if (self) {
+        static int gNextIdentifier;
+        _identifier = [NSString stringWithFormat:@"[driver %d]", gNextIdentifier++];
+        _startToStartHistogram = [[iTermHistogram alloc] init];
+        _inFlightHistogram = [[iTermHistogram alloc] init];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
         _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:mtkView.device];
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:mtkView.device];
@@ -143,6 +152,10 @@
     }
 
     return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p identifier=%@>", NSStringFromClass([self class]), self, _identifier];
 }
 
 #pragma mark - APIs
@@ -185,10 +198,29 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    const NSTimeInterval dt = now - _lastFrameStartTime;
+    _lastFrameStartTime = now;
+
+    [self reallyDrawInMTKView:view startToStartTime:dt];
+    iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Dropped frames", _identifier],
+                             [NSString stringWithFormat:@"%0.1f%%\n", 100.0 * ((double)_dropped / (double)_total)]);
+    if (_total % 10 == 1) {
+        iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Start-to-Start Time (ms)", _identifier],
+                                 [_startToStartHistogram stringValue]);
+        iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Frames In Flight at Start", _identifier],
+                                 [_inFlightHistogram stringValue]);
+    }
+}
+
+- (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+    @synchronized (self) {
+        [_inFlightHistogram addValue:_framesInFlight];
+    }
     if (_rows == 0 || _columns == 0) {
         DLog(@"  abort: uninitialized");
         [self scheduleDrawIfNeededInView:view];
-        return;
+        return NO;
     }
 
     _total++;
@@ -201,13 +233,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     if (view.bounds.size.width == 0 || view.bounds.size.height == 0) {
         ELog(@"  abort: 0x0 view");
-        return;
+        return NO;
     }
 
     iTermMetalFrameData *frameData = [self newFrameDataForView:view];
     if (VT100GridSizeEquals(frameData.gridSize, VT100GridSizeMake(0, 0))) {
         ELog(@"  abort: 0x0 grid");
-        return;
+        return NO;
     }
 
     BOOL shouldDrop;
@@ -225,15 +257,18 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         _dropped++;
         self.needsDraw = YES;
-        return;
+        return NO;
     }
 
+    if (_total > 1) {
+        [_startToStartHistogram addValue:startToStartTime * 1000];
+    }
 #if ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
     if (frameData.drawable == nil || frameData.renderPassDescriptor == nil) {
         ELog(@"  abort: failed to get drawable or RPD");
         self.needsDraw = YES;
-        return;
+        return NO;
     }
 #endif
 
@@ -255,6 +290,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #else
     block();
 #endif
+
+    return YES;
 }
 
 #pragma mark - Draw Helpers
@@ -1185,7 +1222,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     DLog(@"  Recording final stats");
-    [frameData didCompleteWithAggregateStats:_stats];
+    [frameData didCompleteWithAggregateStats:_stats owner:_identifier];
 
     @synchronized(self) {
         _framesInFlight--;
