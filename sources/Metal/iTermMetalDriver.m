@@ -148,9 +148,27 @@
         _fpsMovingAverage = [[MovingAverage alloc] init];
         _fpsMovingAverage.alpha = 0.75;
         iTermMetalFrameDataStatsBundleInitialize(_stats);
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
     }
 
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+#if ENABLE_PRIVATE_QUEUE
+    dispatch_async(_queue, ^{
+        iTermMetalFrameDataStatsBundleInitialize(_stats);
+    });
+#else
+    iTermMetalFrameDataStatsBundleInitialize(_stats);
+#endif
 }
 
 - (NSString *)description {

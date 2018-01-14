@@ -31,7 +31,9 @@
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatEndToEnd,
     iTermMetalFrameDataStatCPU,
-    
+    iTermMetalFrameDataStatMainQueueTotal,
+    iTermMetalFrameDataStatPrivateQueueTotal,
+
     iTermMetalFrameDataStatMtExtractFromApp,
     iTermMetalFrameDataStatMtGetCurrentDrawable,
     iTermMetalFrameDataStatMtGetRenderPassDescriptor,
