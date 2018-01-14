@@ -23,7 +23,9 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
     const char *names[iTermMetalFrameDataStatCount] = {
         "endToEnd",
         "cpu",
-        
+        "mainQueue",
+        "privateQueue",
+
         "mt.ExtractFromApp<",
         "mt.GetDrawable<",
         "mt.GetRenderPassD<",
@@ -110,6 +112,7 @@ static NSInteger gNextFrameDataNumber;
 
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatCPU]);
+        iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
         self.status = @"just created";
     }
     return self;
@@ -140,8 +143,11 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block {
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
+
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
+        iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
         iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
         block();
     });
@@ -167,6 +173,7 @@ static NSInteger gNextFrameDataNumber;
 
 - (void)willHandOffToGPU {
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatCPU]);
+    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
 }
 
