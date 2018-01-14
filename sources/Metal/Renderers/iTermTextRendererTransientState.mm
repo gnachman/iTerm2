@@ -37,7 +37,7 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
 
 @implementation iTermTextRendererTransientState {
     // Data's bytes contains a C array of iTermMetalBackgroundColorRLE with background colors.
-    NSMutableArray<NSData *> *_backgroundColorRLEDataArray;
+    NSMutableArray<iTermData *> *_backgroundColorRLEDataArray;
 
     // Info about PIUs that need their background colors set. They belong to
     // parts of glyphs that spilled out of their bounds. The actual PIUs
@@ -158,8 +158,8 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
 
             // Set fields in piu
             if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
-                NSData *data = _backgroundColorRLEDataArray[fixup.y];
-                const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.bytes;
+                iTermData *data = _backgroundColorRLEDataArray[fixup.y];
+                const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.mutableBytes;
                 // find RLE for index fixup.x
                 const int rleCount = data.length / sizeof(iTermMetalBackgroundColorRLE);
                 const iTermMetalBackgroundColorRLE &rle = *std::lower_bound(backgroundRLEs,
@@ -343,19 +343,19 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             !glyphKey.boxDrawing);
 }
 
-- (void)setGlyphKeysData:(NSData *)glyphKeysData
+- (void)setGlyphKeysData:(iTermData *)glyphKeysData
                    count:(int)count
-          attributesData:(NSData *)attributesData
+          attributesData:(iTermData *)attributesData
                      row:(int)row
-  backgroundColorRLEData:(nonnull NSData *)backgroundColorRLEData
+  backgroundColorRLEData:(nonnull iTermData *)backgroundColorRLEData
        markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     DLog(@"BEGIN setGlyphKeysData for %@", self);
     ITDebugAssert(row == _backgroundColorRLEDataArray.count);
     [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
-    const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
-    const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
+    const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.mutableBytes;
+    const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.mutableBytes;
     vector_float2 asciiCellSize = 1.0 / _asciiTextureGroup.atlasSize;
     const float cellHeight = self.cellConfiguration.cellSize.height;
     const float cellWidth = self.cellConfiguration.cellSize.width;

@@ -388,9 +388,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
         rowData.y = y;
-        rowData.keysData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphKey) * _columns];
-        rowData.attributesData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalGlyphAttributes) * _columns];
-        rowData.backgroundColorRLEData = [NSMutableData uninitializedDataWithLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
+        rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * _columns];
+        rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * _columns];
+        rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
@@ -819,7 +819,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
             [self writeFPSMeterIntoGlyphKeys:glyphKeys
                                        count:rowData.numberOfDrawableGlyphs
-                                  attributes:(iTermMetalGlyphAttributes *)rowData.attributesData.bytes
+                                  attributes:(iTermMetalGlyphAttributes *)rowData.attributesData.mutableBytes
                                        width:frameData.gridSize.width
                                  frameNumber:frameData.frameNumber];
             rowData.numberOfDrawableGlyphs = frameData.gridSize.width;
@@ -847,8 +847,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             if (count != obj2.numberOfBackgroundRLEs) {
                 return NO;
             }
-            const iTermMetalBackgroundColorRLE *array1 = (const iTermMetalBackgroundColorRLE *)obj1.backgroundColorRLEData.bytes;
-            const iTermMetalBackgroundColorRLE *array2 = (const iTermMetalBackgroundColorRLE *)obj2.backgroundColorRLEData.bytes;
+            const iTermMetalBackgroundColorRLE *array1 = (const iTermMetalBackgroundColorRLE *)obj1.backgroundColorRLEData.mutableBytes;
+            const iTermMetalBackgroundColorRLE *array2 = (const iTermMetalBackgroundColorRLE *)obj2.backgroundColorRLEData.mutableBytes;
             for (int i = 0; i < count; i++) {
                 if (array1[i].color.x != array2[i].color.x ||
                     array1[i].color.y != array2[i].color.y ||
@@ -860,7 +860,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             return YES;
         };
         [frameData.rows enumerateCoalescedObjectsWithComparator:comparator block:^(iTermMetalRowData *rowData, NSUInteger count) {
-            [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes
+            [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.mutableBytes
                                     count:rowData.numberOfBackgroundRLEs
                                       row:rowData.y
                             repeatingRows:count];
