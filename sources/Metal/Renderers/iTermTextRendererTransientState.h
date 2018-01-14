@@ -7,6 +7,7 @@
 
 #import "iTermMetalCellRenderer.h"
 #import "iTermMetalGlyphKey.h"
+#import "iTermMetalRowData.h"
 #import "iTermTextRendererCommon.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -24,11 +25,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 
 
-- (void)setGlyphKeysData:(NSData *)glyphKeysData
+- (void)setGlyphKeysData:(iTermData *)glyphKeysData
                    count:(int)count
-          attributesData:(NSData *)attributesData
+          attributesData:(iTermData *)attributesData
                      row:(int)row
-  backgroundColorRLEData:(NSData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
+  backgroundColorRLEData:(iTermData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
        markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;

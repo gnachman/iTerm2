@@ -141,6 +141,10 @@ namespace iTerm2 {
     return self;
 }
 
+- (void)dealloc {
+    delete _sampler;
+}
+
 - (void)addValue:(double)value {
     double logValue = std::log(value + 1) / std::log(M_SQRT2);
 
