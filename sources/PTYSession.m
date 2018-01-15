@@ -4740,7 +4740,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // first frame is drawn causes a flash of gray.
         DLog(@"metalGlueDidDrawFrame");
         _wrapper.useMetal = YES;
-        _textview.alphaValue = 0;
+        _textview.suppressDrawing = YES;
         _view.metalView.alphaValue = 1;
         if (redrawAsap) {
             [_textview setNeedsDisplay:YES];
@@ -4776,7 +4776,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
-        _textview.alphaValue = 1;
+        _textview.suppressDrawing = NO;
     }
 }
 
@@ -6971,7 +6971,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)textViewShouldDrawRect {
     if (@available(macOS 10.11, *)) {
-        return _textview.alphaValue > 0;
+        return !_textview.suppressDrawing;
     } else {
         return YES;
     }
