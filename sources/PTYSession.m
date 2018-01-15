@@ -3802,24 +3802,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)viewShouldWantLayer {
-    if (![iTermAdvancedSettingsModel useMetal]) {
-        return NO;
-    }
-    if (!_delegate.realParentWindow || !_textview) {
-        return YES;
-    }
-    BOOL isTransparent = ([[_delegate realParentWindow] useTransparency] && [_textview transparency] > 0);
-    return !isTransparent;
+    return NO;
 }
 
 - (void)useTransparencyDidChange {
     // The view does not like getting replaced during the spin of the runloop during which it is created.
-    if (_view.window && _delegate.realParentWindow && _textview && self.viewShouldWantLayer != _view.useSubviewWithLayer) {
+    if (_view.window && _delegate.realParentWindow && _textview) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            BOOL useLayer = self.viewShouldWantLayer;
-            if (_view.window && _delegate.realParentWindow && _textview && self.viewShouldWantLayer != _view.useSubviewWithLayer) {
-                DLog(@"useSubviewWithLayer:%@", @(useLayer));
-                _view.useSubviewWithLayer = useLayer;
+            if (_view.window && _delegate.realParentWindow && _textview) {
                 [_delegate sessionUpdateMetalAllowed];
             }
         });
@@ -4784,7 +4774,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
-    _view.useSubviewWithLayer = useMetal && [self viewShouldWantLayer];
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.alphaValue = 1;

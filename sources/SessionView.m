@@ -82,7 +82,6 @@ static NSDate* lastResizeDate_;
     SessionTitleView *_title;
     
     BOOL _inAddSubview;
-    NSView *_subviewWithLayer;
 
     NSView *_hoverURLView;
     NSTextField *_hoverURLTextField;
@@ -156,7 +155,6 @@ static NSDate* lastResizeDate_;
     [_currentAnnouncement dismiss];
     [_currentAnnouncement release];
     [_announcements release];
-    [_subviewWithLayer release];
     while (self.trackingAreas.count) {
         [self removeTrackingArea:self.trackingAreas[0]];
     }
@@ -197,10 +195,7 @@ static NSDate* lastResizeDate_;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
-    // Add the metal view to the view hierarchy. It needs a superview with layers so the scrollview
-    // can overlap it as a sibling.
-    assert(_useSubviewWithLayer);
-    [_subviewWithLayer insertSubview:_metalView atIndex:0];
+    [self insertSubview:_metalView atIndex:0];
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
@@ -236,43 +231,7 @@ static NSDate* lastResizeDate_;
     }
 }
 
-- (void)setUseSubviewWithLayer:(BOOL)useSubviewWithLayer {
-    if (useSubviewWithLayer == _useSubviewWithLayer) {
-        return;
-    }
-    // Fiddling with the view hierarchy resets the first responder. Conspire with PTYTextView to
-    // silently restore first responder status.
-    [self.window.firstResponder it_ignoreFirstResponderChangesInBlock:^{
-        NSResponder *firstResponder = self.window.firstResponder;
-        _useSubviewWithLayer = useSubviewWithLayer;
-        if (!_subviewWithLayer && _useSubviewWithLayer) {
-            _subviewWithLayer = [[NSView alloc] initWithFrame:self.bounds];
-            _subviewWithLayer.wantsLayer = YES;
-            [_subviewWithLayer addSubview:_scrollview];
-            if (_currentAnnouncement.view) {
-                [_subviewWithLayer addSubview:_currentAnnouncement.view];
-            }
-            [_subviewWithLayer addSubview:_findView.view];
-            [self addSubview:_subviewWithLayer];
-        } else if (_subviewWithLayer && !_useSubviewWithLayer) {
-            [self addSubview:_scrollview];
-            if (_currentAnnouncement.view) {
-                [self addSubview:_currentAnnouncement.view];
-            }
-            [self addSubview:_findView.view];
-            [_subviewWithLayer removeFromSuperview];
-            [_subviewWithLayer release];
-            _subviewWithLayer = nil;
-        }
-        [self.window makeFirstResponder:firstResponder];
-    }];
-}
-
 - (void)addSubview:(NSView *)aView {
-    if (_useSubviewWithLayer) {
-        [super addSubview:aView];
-        return;
-    }
     BOOL wasRunning = _inAddSubview;
     _inAddSubview = YES;
     if (!wasRunning && _findView && aView != [_findView view]) {
@@ -288,7 +247,6 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateLayout {
-    [_subviewWithLayer setFrame:self.bounds];
     if ([_delegate sessionViewShouldUpdateSubviewsFramesAutomatically]) {
         if (self.showTitle) {
             [self updateTitleFrame];
