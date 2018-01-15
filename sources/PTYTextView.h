@@ -359,6 +359,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 @property (nonatomic, readonly) NSArray<iTermHighlightedRow *> *highlightedRows;
 
+@property (nonatomic) BOOL suppressDrawing;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont
