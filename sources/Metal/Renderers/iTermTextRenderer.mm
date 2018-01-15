@@ -142,7 +142,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         const NSInteger maxInstances = memoryBudget / sizeof(iTermTextPIU);
         const size_t capacity = iTerm2::PIUArray<iTermTextPIU>::DEFAULT_CAPACITY;
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                capacity:maxInstances / capacity
+                                                                capacity:(maxInstances / capacity) * iTermMetalDriverMaximumNumberOfFramesInFlight
                                                                     name:@"text PIU"];
 
         _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
