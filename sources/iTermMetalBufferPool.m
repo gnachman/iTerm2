@@ -138,7 +138,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 }
 
 - (NSInteger)insertionIndexForBufferOfSize:(size_t)size {
-    return [_buffers indexOfObject:(id)@(size)
+    return [_buffers indexOfObject:(id)@(MAX(0, size - 1))
                      inSortedRange:NSMakeRange(0, _buffers.count)
                            options:NSBinarySearchingInsertionIndex
                    usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
