@@ -293,7 +293,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateMetalViewFrame {
-    _metalView.frame = _scrollview.frame;
+    _metalView.frame = _scrollview.contentView.frame;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 

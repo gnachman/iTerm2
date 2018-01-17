@@ -1145,6 +1145,16 @@ static const int kDragThreshold = 3;
     [super setAlphaValue:alphaValue];
 }
 
+- (void)setSuppressDrawing:(BOOL)suppressDrawing {
+    if (suppressDrawing == _suppressDrawing) {
+        return;
+    }
+    _suppressDrawing = suppressDrawing;
+    PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
+    [scrollView setOverrideAppearanceWhenNeeded:!suppressDrawing];
+    [scrollView.verticalScroller setNeedsDisplay];
+}
+
 - (void)drawRect:(NSRect)rect {
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
