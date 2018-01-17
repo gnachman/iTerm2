@@ -53,6 +53,7 @@
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
+- (BOOL)routeEventToShortcutInputView:(NSEvent *)event;
 
 // Like orderedWindows, but only iTermWindow/iTermPanel objects wrapped in iTermScriptingWindow*s are returned.
 - (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows;
