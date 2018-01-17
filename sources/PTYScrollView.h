@@ -48,5 +48,6 @@
 // that from the total and return the number of rows to scroll by. The result will always be an
 // integer.
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent;
+- (void)setOverrideAppearanceWhenNeeded:(BOOL)overrideAppearance;
 
 @end
