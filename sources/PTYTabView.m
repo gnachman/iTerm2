@@ -67,6 +67,19 @@ const NSUInteger kAllModifiers = (NSControlKeyMask |
     return NO;
 }
 
+- (void)setDrawsBackground:(BOOL)drawsBackground {
+    [super setDrawsBackground:YES];
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
+        [[NSColor blackColor] set];
+        NSRectFill(dirtyRect);
+    } else {
+        [super drawRect:dirtyRect];
+    }
+}
+
 #pragma mark - NSTabView
 
 - (void)addTabViewItem:(NSTabViewItem *) aTabViewItem {
