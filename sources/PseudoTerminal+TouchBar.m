@@ -14,6 +14,7 @@
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermColorPresets.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermRootTerminalView.h"
@@ -534,7 +535,13 @@ ITERM_IGNORE_PARTIAL_BEGIN
                    charactersIgnoringModifiers:chars
                                      isARepeat:NO
                                        keyCode:keyCodes[number - 1]];
-    [self.currentSession.textview keyDown:event];
+
+    iTermApplication *app = [iTermApplication sharedApplication];
+    if ([app routeEventToShortcutInputView:event]) {
+        return;
+    } else if (self.window.isKeyWindow && self.window.firstResponder == self.currentSession.textview) {
+        [self.currentSession.textview keyDown:event];
+    }
 }
 
 - (void)candidateListTouchBarItem:(NSCandidateListTouchBarItem *)anItem endSelectingCandidateAtIndex:(NSInteger)index {
