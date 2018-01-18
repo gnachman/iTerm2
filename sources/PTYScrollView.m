@@ -35,7 +35,6 @@
 @interface PTYScroller()
 // Total number of rows scrolled by. Will always be in (-1, 1).
 @property(nonatomic) CGFloat accumulatedDeltaY;
-@property(nonatomic) BOOL overrideAppearanceWhenNeeded;
 @end
 
 @implementation PTYScroller
@@ -81,14 +80,6 @@
     }
 }
 
-- (NSAppearance *)effectiveAppearance {
-    if (_overrideAppearanceWhenNeeded && [self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
-        return [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
-    } else {
-        return [super effectiveAppearance];
-    }
-}
-
 - (BOOL)isLegacyScroller
 {
     return [self scrollerStyle] == NSScrollerStyleLegacy;
@@ -111,7 +102,6 @@
         PTYScroller *aScroller;
 
         aScroller = [[PTYScroller alloc] init];
-        aScroller.overrideAppearanceWhenNeeded = YES;
         [self setVerticalScroller:aScroller];
         [aScroller release];
 
@@ -186,11 +176,6 @@ static CGFloat RoundTowardZero(CGFloat value) {
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];
-}
-
-- (void)setOverrideAppearanceWhenNeeded:(BOOL)overrideAppearance {
-    PTYScroller *scroller = (PTYScroller *)self.verticalScroller;
-    scroller.overrideAppearanceWhenNeeded = overrideAppearance;
 }
 
 - (void)detectUserScroll {

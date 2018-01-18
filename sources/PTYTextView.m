@@ -1143,7 +1143,6 @@ static const int kDragThreshold = 3;
     }
     _suppressDrawing = suppressDrawing;
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
-    [scrollView setOverrideAppearanceWhenNeeded:!suppressDrawing];
     [scrollView.verticalScroller setNeedsDisplay];
 }
 
