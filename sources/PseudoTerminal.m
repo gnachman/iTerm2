@@ -1607,10 +1607,12 @@ return NO;
         [self.window makeKeyAndOrderFront:nil];
     }
     [_contentView.tabView selectTabViewItem:tab.tabViewItem];
-    if (tab.isMaximized) {
-        [tab unmaximize];
+    if (tab.activeSession != session) {
+        if (tab.isMaximized) {
+            [tab unmaximize];
+        }
+        [tab setActiveSession:session];
     }
-    [tab setActiveSession:session];
 }
 
 - (PTYSession *)currentSession {
