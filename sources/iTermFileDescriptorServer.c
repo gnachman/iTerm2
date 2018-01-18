@@ -83,7 +83,7 @@ static void SigChildHandler(int arg) {
 
 static void SigUsr1Handler(int arg) {
     unlink(gPath);
-    exit(1);
+    _exit(1);
 }
 
 
