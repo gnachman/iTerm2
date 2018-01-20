@@ -901,6 +901,8 @@ static iTermController *gSharedInstance;
             // subsequent to this will appear in the previous space. This is short enough of a
             // delay that it's not annoying when you're already there.
             [NSThread sleepForTimeInterval:0.3];
+
+            [NSApp activateIgnoringOtherApps:YES];
         }
     }
 }
