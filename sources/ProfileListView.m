@@ -493,12 +493,12 @@ const CGFloat kDefaultTagsWidth = 80;
                                                     tags:@[ @"M" ]
                                                 selected:NO
                                                isDefault:YES
-                                                  filter:nil] heightForWidth:100];
+                                                  filter:nil] heightForWidth:100] + [self extraHeightWithTags:YES];
         _heightWithoutTags = [[self attributedStringForName:@"M"
                                                        tags:nil
                                                    selected:NO
                                                   isDefault:YES
-                                                     filter:nil] heightForWidth:100];
+                                                     filter:nil] heightForWidth:100] + [self extraHeightWithTags:NO];
         _haveHeights = YES;
     }
     return hasTags ? _heightWithTags : _heightWithoutTags;
