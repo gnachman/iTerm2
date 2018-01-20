@@ -93,17 +93,20 @@
 
 - (void)build {
     if (_canUseFastPath && !_attributedString && _characterData.length / sizeof(unichar) && !_string.length) {
+        // Create a cheap attributed string from character array
         iTermCheapAttributedString *cheap = [[iTermCheapAttributedString alloc] init];
         cheap.characterData = _characterData;
         cheap.attributes = _attributes;
         _attributedString = cheap;
         return;
     } else if ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]) {
+        // Convert a cheap attributed string to a real attributed string
         iTermCheapAttributedString *cheap = [(id)_attributedString autorelease];
         _attributedString = nil;
         [self appendRealAttributedStringWithText:[NSString stringWithCharacters:cheap.characters length:cheap.length]
                                       attributes:cheap.attributes];
         [_string setString:@""];
+        [_characterData setLength:0];
     }
     if (_characterData.length > 0) {
         [self flushCharacters];
@@ -163,6 +166,7 @@
     [_string appendString:string];
 }
 
+// Moves characters from characterData to string.
 - (void)flushCharacters {
     if (!_string) {
         _string = [[NSMutableString alloc] init];

@@ -32,6 +32,8 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 
 // Either a NSMutableAttributedString or an iTermCheapAttributedString
 @property(nonatomic, readonly) id attributedString;
+
+// The attributes to apply to all future characters
 @property(nonatomic, copy) NSDictionary *attributes;
 @property(nonatomic, readonly) NSInteger length;
 @property(nonatomic, assign) BOOL asciiLigaturesAvailable;
