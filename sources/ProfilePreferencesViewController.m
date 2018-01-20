@@ -16,6 +16,8 @@
 #import "iTermProfilePreferences.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
+#import "NSDictionary+Profile.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
 #import "ProfilesAdvancedPreferencesViewController.h"
@@ -595,7 +597,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     newProfile[KEY_DEFAULT_BOOKMARK] = @"No";
     newProfile[KEY_SHORTCUT] = @"";
     newProfile[KEY_BOUND_HOSTS] = @[];
-
+    newProfile[KEY_TAGS] = [newProfile[KEY_TAGS] arrayByRemovingObject:kProfileDynamicTag];
     [[_delegate profilePreferencesModel] addBookmark:newProfile];
     [_profilesListView reloadData];
     [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];
