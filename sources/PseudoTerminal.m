@@ -4749,9 +4749,10 @@ return NO;
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
         PTYSession *session = [[aTabViewItem identifier] activeSession];
-        return  [NSString stringWithFormat:@"Profile: %@\nCommand: %@",
-                                [[session profile] objectForKey:KEY_NAME],
-                                [session.shell command] ?: @"None"];
+    return [NSString stringWithFormat:@"Name: %@\nProfile: %@\nCommand: %@",
+            session.name,
+            [[session profile] objectForKey:KEY_NAME],
+            [session.shell originalCommand] ?: @"None"];
 }
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem

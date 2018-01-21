@@ -58,7 +58,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 - (instancetype)init;
 - (BOOL)hasBrokenPipe;
-- (NSString *)command;
+// Command the profile was created with. nil for login shell or whatever's in the command field of the profile otherwise.
+- (NSString *)originalCommand;
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
