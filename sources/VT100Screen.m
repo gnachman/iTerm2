@@ -3675,8 +3675,24 @@ return;
     [delegate_ screenSetColor:color forKey:kColorMapCursorText];
 }
 
-- (void)terminalSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMap8bitBase + n];
+- (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
+    switch (n) {
+        case VT100TerminalColorIndexText:
+            [delegate_ screenSetColor:color forKey:kColorMapForeground];
+            break;
+
+        case VT100TerminalColorIndexBackground:
+            [delegate_ screenSetColor:color forKey:kColorMapBackground];
+            break;
+
+        default:
+            if (n < 0 || n > 255) {
+                return;
+            } else {
+                [delegate_ screenSetColor:color forKey:kColorMap8bitBase + n];
+            }
+            break;
+    }
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
@@ -3699,11 +3715,21 @@ return;
     return [iTermAdvancedSettingsModel focusReportingEnabled];
 }
 
-- (NSColor *)terminalColorForIndex:(int)index {
-    if (index < 0 || index > 255) {
-        return nil;
+- (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
+    switch (index) {
+        case VT100TerminalColorIndexText:
+            return [[delegate_ screenColorMap] colorForKey:kColorMapForeground];
+
+        case VT100TerminalColorIndexBackground:
+            return [[delegate_ screenColorMap] colorForKey:kColorMapBackground];
+
+        default:
+            if (index < 0 || index > 255) {
+                return nil;
+            } else {
+                return [[delegate_ screenColorMap] colorForKey:kColorMap8bitBase + index];
+            }
     }
-    return [[delegate_ screenColorMap] colorForKey:kColorMap8bitBase + index];
 }
 
 - (int)terminalCursorX {

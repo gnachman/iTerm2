@@ -50,7 +50,10 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
 - (NSData *)reportStatus;
 - (NSData *)reportDeviceAttribute;
 - (NSData *)reportSecondaryDeviceAttribute;
-- (NSData *)reportColor:(NSColor *)color atIndex:(int)index;
+
+// Prefix is either @"4;" (for OSC 4) or @"" (for OSC 10 and OSC 11).
+- (NSData *)reportColor:(NSColor *)color atIndex:(int)index prefix:(NSString *)prefix;
+
 - (NSData *)reportChecksum:(int)checksum withIdentifier:(int)identifier;
 - (NSData *)reportFocusGained:(BOOL)gained;
 - (NSData *)reportiTerm2Version;
