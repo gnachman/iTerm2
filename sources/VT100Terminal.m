@@ -1930,6 +1930,14 @@ static const int kMaxScreenRows = 4096;
             [self executeWorkingDirectoryURL:token];
             break;
 
+        case XTERMCC_TEXT_FOREGROUND_COLOR:
+            [self executeXtermTextColorForeground:YES arg:token.string];
+            break;
+
+        case XTERMCC_TEXT_BACKGROUND_COLOR:
+            [self executeXtermTextColorForeground:NO arg:token.string];
+            break;
+
         case XTERMCC_LINK:
             [self executeLink:token];
             break;
@@ -1990,6 +1998,37 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+- (NSArray<NSNumber *> *)xtermParseColorArgument:(NSString *)part {
+    if ([part hasPrefix:@"rgb:"]) {
+        // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
+        NSString *componentsString = [part substringFromIndex:4];
+        NSArray *components = [componentsString componentsSeparatedByString:@"/"];
+        if (components.count == 3) {
+            CGFloat colors[3];
+            BOOL ok = YES;
+            for (int j = 0; j < 3; j++) {
+                NSScanner *scanner = [NSScanner scannerWithString:components[j]];
+                unsigned int intValue;
+                if (![scanner scanHexInt:&intValue]) {
+                    ok = NO;
+                } else {
+                    ok = (intValue <= 255);
+                }
+                if (ok) {
+                    int limit = (1 << (4 * [components[j] length])) - 1;
+                    colors[j] = (CGFloat)intValue / (CGFloat)limit;
+                } else {
+                    break;
+                }
+            }
+            if (ok) {
+                return @[ @(colors[0]), @(colors[1]), @(colors[2]) ];
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)executeXtermSetRgb:(VT100Token *)token {
     NSArray *parts = [token.string componentsSeparatedByString:@";"];
     int theIndex = 0;
@@ -1998,41 +2037,18 @@ static const int kMaxScreenRows = 4096;
         if ((i % 2) == 0 ) {
             theIndex = [part intValue];
         } else {
-            if ([part hasPrefix:@"rgb:"]) {
-                // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
-                NSString *componentsString = [part substringFromIndex:4];
-                NSArray *components = [componentsString componentsSeparatedByString:@"/"];
-                if (components.count == 3) {
-                    CGFloat colors[3];
-                    BOOL ok = YES;
-                    for (int j = 0; j < 3; j++) {
-                        NSScanner *scanner = [NSScanner scannerWithString:components[j]];
-                        unsigned int intValue;
-                        if (![scanner scanHexInt:&intValue]) {
-                            ok = NO;
-                        } else {
-                            ok = (intValue <= 255);
-                        }
-                        if (ok) {
-                            int limit = (1 << (4 * [components[j] length])) - 1;
-                            colors[j] = (CGFloat)intValue / (CGFloat)limit;
-                        } else {
-                            break;
-                        }
-                    }
-                    if (ok) {
-                        NSColor *srgb = [NSColor colorWithSRGBRed:colors[0]
-                                                            green:colors[1]
-                                                             blue:colors[2]
-                                                            alpha:1];
-                        NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                        [delegate_ terminalSetColorTableEntryAtIndex:theIndex
-                                                               color:theColor];
-                    }
-                }
+            NSArray<NSNumber *> *components = [self xtermParseColorArgument:part];
+            if (components) {
+                NSColor *srgb = [NSColor colorWithSRGBRed:components[0].doubleValue
+                                                    green:components[1].doubleValue
+                                                     blue:components[2].doubleValue
+                                                    alpha:1];
+                NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                [delegate_ terminalSetColorTableEntryAtIndex:theIndex
+                                                       color:theColor];
             } else if ([part isEqualToString:@"?"]) {
                 NSColor *theColor = [delegate_ terminalColorForIndex:theIndex];
-                [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:theIndex]];
+                [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
             }
         }
     }
@@ -2133,6 +2149,27 @@ static const int kMaxScreenRows = 4096;
     value = @"";
   }
   return @[ key, value ];
+}
+
+- (void)executeXtermTextColorForeground:(BOOL)foreground arg:(NSString *)arg {
+    // arg is like one of:
+    //   rgb:ffff/ffff/ffff
+    //   ?
+    const VT100TerminalColorIndex ptyIndex = foreground ? VT100TerminalColorIndexText : VT100TerminalColorIndexBackground;
+    const int xtermIndex = foreground ? 10 : 11;
+    if ([arg isEqualToString:@"?"]) {
+        NSColor *theColor = [delegate_ terminalColorForIndex:ptyIndex];
+        [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:xtermIndex prefix:@""]];
+    } else {
+        NSArray<NSNumber *> *components = [self xtermParseColorArgument:arg];
+        NSColor *srgb = [NSColor colorWithSRGBRed:components[0].doubleValue
+                                            green:components[1].doubleValue
+                                             blue:components[2].doubleValue
+                                            alpha:1];
+        NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+        [delegate_ terminalSetColorTableEntryAtIndex:ptyIndex
+                                               color:theColor];
+    }
 }
 
 - (void)executeWorkingDirectoryURL:(VT100Token *)token {

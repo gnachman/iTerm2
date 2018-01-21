@@ -38,6 +38,13 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
     VT100AttentionRequestTypeFireworks
 };
 
+typedef NS_ENUM(int, VT100TerminalColorIndex) {
+    VT100TerminalColorIndexText = -1,
+    VT100TerminalColorIndexBackground = -2,
+    VT100TerminalColorIndexFirst8BitColorIndex = 0,
+    VT100TerminalColorIndexLast8BitColorIndex = 255
+};
+
 @protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
@@ -332,7 +339,7 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 - (void)terminalSetSelectedTextColor:(NSColor *)color;
 - (void)terminalSetCursorColor:(NSColor *)color;
 - (void)terminalSetCursorTextColor:(NSColor *)color;
-- (void)terminalSetColorTableEntryAtIndex:(int)n color:(NSColor *)color;
+- (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color;
 
 // Change the color tint of the current tab.
 - (void)terminalSetCurrentTabColor:(NSColor *)color;
@@ -340,7 +347,7 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color;
 
-- (NSColor *)terminalColorForIndex:(int)index;
+- (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index;
 
 // Returns the current cursor position.
 - (int)terminalCursorX;
