@@ -121,6 +121,14 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [super dealloc];
 }
 
+- (void)drawRect:(NSRect)dirtyRect {
+    if (_useMetal) {
+        return;
+    } else {
+        [super drawRect:dirtyRect];
+    }
+}
+
 - (void)setUseMetal:(BOOL)useMetal {
     _useMetal = useMetal;
     self.tabView.drawsBackground = !_useMetal;
