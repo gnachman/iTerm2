@@ -2401,7 +2401,7 @@ ITERM_WEAKLY_REFERENCEABLE
         dispatch_semaphore_signal(_executionSemaphore);
         dispatch_release(_executionSemaphore);
         [self release];
-        });
+    });
 }
 
 - (void)synchronousReadTask:(NSString *)string {
