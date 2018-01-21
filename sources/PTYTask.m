@@ -189,8 +189,7 @@ static void HandleSigChld(int n) {
     UnblockTaskNotifier();
 }
 
-- (NSString *)command
-{
+- (NSString *)originalCommand {
     return command_;
 }
 
@@ -445,6 +444,9 @@ static int MyForkPty(int *amaster,
     struct winsize win;
     char theTtyname[PATH_MAX];
 
+    [command_ autorelease];
+    command_ = [progpath copy];
+
     env = [self environmentBySettingShell:env];
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // We want to run
@@ -461,8 +463,6 @@ static int MyForkPty(int *amaster,
         progpath = iterm2Binary;
     }
 
-    [command_ autorelease];
-    command_ = [progpath copy];
     path = [progpath copy];
 
     setup_tty_param(&term, &win, width, height, isUTF8);
