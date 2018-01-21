@@ -1451,6 +1451,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     } else {
         [self fitSessionToCurrentViewSize:session];
     }
+    if (@available(macOS 10.11, *)) {
+        [self updateUseMetal];
+    }
 }
 
 - (void)removeSession:(PTYSession*)aSession {

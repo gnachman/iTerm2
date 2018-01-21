@@ -4744,6 +4744,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)metalAllowed {
     return ([iTermAdvancedSettingsModel useMetal] &&
             _textview.transparencyAlpha == 1 &&
+            ![iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:self.profile] &&
+            ![iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:self.profile] &&
             ![PTYNoteViewController anyNoteVisible]);
 }
 
