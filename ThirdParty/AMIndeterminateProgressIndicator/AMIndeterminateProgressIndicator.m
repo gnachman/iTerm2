@@ -20,6 +20,8 @@ static CGFloat DegreesToRadians(double radians) {
 
 @implementation AMIndeterminateProgressIndicator {
     NSSize _animationSize;
+    int _count;
+    BOOL _wantsAnimation;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
@@ -27,14 +29,59 @@ static CGFloat DegreesToRadians(double radians) {
   if (self) {
       self.wantsLayer = YES;
       [self setColor:[NSColor blackColor]];
+      [[NSNotificationCenter defaultCenter] addObserver:self
+                                               selector:@selector(windowWillEnterFullScreen:)
+                                                   name:NSWindowWillEnterFullScreenNotification
+                                                 object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self
+                                               selector:@selector(windowDidEnterFullScreen:)
+                                                   name:NSWindowDidEnterFullScreenNotification
+                                                 object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self
+                                               selector:@selector(windowWillExitFullScreen:)
+                                                   name:NSWindowWillExitFullScreenNotification
+                                                 object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self
+                                               selector:@selector(windowDidExitFullScreen:)
+                                                   name:NSWindowDidExitFullScreenNotification
+                                                 object:nil];
   }
   return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_animation release];
     [_color release];
     [super dealloc];
+}
+
+- (void)windowWillEnterFullScreen:(NSNotification *)notification {
+    if (_wantsAnimation && _count == 0) {
+        [self stopAnimation];
+    }
+    _count++;
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification *)notification {
+    _count--;
+    if (_count == 0 && _wantsAnimation) {
+        [self startAnimation];
+    }
+}
+
+- (void)windowWillExitFullScreen:(NSNotification *)notification {
+    if (_wantsAnimation && _count == 0) {
+        [self stopAnimation];
+    }
+    _count++;
+}
+
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
+    _count--;
+    if (_count == 0 && _wantsAnimation) {
+        [self startAnimation];
+    }
 }
 
 - (void)setColor:(NSColor *)value {
@@ -54,6 +101,14 @@ static CGFloat DegreesToRadians(double radians) {
 }
 
 - (void)startAnimation:(id)sender {
+    _wantsAnimation = YES;
+    [self startAnimation];
+}
+
+- (void)startAnimation {
+    if (_count) {
+        return;
+    }
     if (!self.animation || !NSEqualSizes(_animationSize, self.physicalSize)) {
         _animationSize = self.physicalSize;
         self.animation = [CAKeyframeAnimation animationWithKeyPath:@"contents"];
@@ -67,6 +122,11 @@ static CGFloat DegreesToRadians(double radians) {
 }
 
 - (void)stopAnimation:(id)sender {
+    _wantsAnimation = NO;
+    [self stopAnimation];
+}
+
+- (void)stopAnimation {
     [self.layer removeAllAnimations];
 }
 
