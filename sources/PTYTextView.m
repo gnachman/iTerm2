@@ -5279,7 +5279,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSRange)selectedRange {
     DLog(@"selectedRange->NSNotFound");
-    return NSMakeRange(NSNotFound, 0);
+    return NSMakeRange([_dataSource cursorX], 0);
 }
 
 - (NSArray *)validAttributesForMarkedText
