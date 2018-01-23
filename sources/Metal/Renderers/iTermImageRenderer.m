@@ -49,7 +49,7 @@
     id key = [self keyForRun:imageRun];
     if (_textures[key] == nil) {
         _textures[key] = [self newTextureForImageRun:imageRun];
-    } else {
+    } else if (imageRun.imageInfo) {
         [_foundImageUniqueIdentifiers addObject:imageRun.imageInfo.uniqueIdentifier];
     }
     if (imageRun.imageInfo.animated) {
@@ -79,10 +79,12 @@
             missing = YES;
         }
     }
-    if (missing) {
-        [_missingImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
-    } else {
-        [_foundImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
+    if (run.imageInfo) {
+        if (missing) {
+            [_missingImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
+        } else {
+            [_foundImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
+        }
     }
     id<MTLTexture> texture = [_cellRenderer textureFromImage:image context:self.poolContext];
     return texture;
