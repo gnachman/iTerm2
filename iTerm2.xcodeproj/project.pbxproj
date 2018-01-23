@@ -1372,6 +1372,7 @@
 		A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */; };
 		A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = A65871681D85E6700061CEEE /* PFMoveApplication.h */; };
 		A658716B1D85E6750061CEEE /* PFMoveApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = A65871671D85E6700061CEEE /* PFMoveApplication.m */; };
+		A6588822201708D8006F48DB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6588821201708D8006F48DB /* IOKit.framework */; };
 		A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */ = {isa = PBXBuildFile; fileRef = A65943C91F83382B00598B1E /* iTermMetalClipView.h */; };
 		A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */ = {isa = PBXBuildFile; fileRef = A65943CA1F83382B00598B1E /* iTermMetalClipView.m */; };
 		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
@@ -3490,6 +3491,7 @@
 		A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermSubpixelModelBuilder.h; path = Metal/Infrastructure/iTermSubpixelModelBuilder.h; sourceTree = "<group>"; };
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
+		A6588821201708D8006F48DB /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		A65943C91F83382B00598B1E /* iTermMetalClipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalClipView.h; path = Metal/Support/iTermMetalClipView.h; sourceTree = "<group>"; };
 		A65943CA1F83382B00598B1E /* iTermMetalClipView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMetalClipView.m; path = Metal/Support/iTermMetalClipView.m; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
@@ -4313,6 +4315,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6588822201708D8006F48DB /* IOKit.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
@@ -5330,6 +5333,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6588821201708D8006F48DB /* IOKit.framework */,
 				A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */,
 				A6184F881BAB3ED70088EF3C /* ColorPicker.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
