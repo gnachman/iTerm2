@@ -23,6 +23,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYFontInfo.h"
 #import "PTYTextView.h"
@@ -332,12 +333,19 @@ static NSColor *ColorForVector(vector_float4 v) {
     const int width = _visibleRange.end.x - _visibleRange.start.x;
     const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
     const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
+    const size_t rowSize = sizeof(screen_char_t) * (width + 1);
     for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
         if (_timestampsEnabled) {
             [_dates addObject:[textView drawingHelperTimestampForLine:i]];
         }
-        screen_char_t *line = [screen getLineAtIndex:i];
-        [_lines addObject:[NSMutableData dataWithBytes:line length:sizeof(screen_char_t) * width]];
+        NSMutableData *data = [NSMutableData uninitializedDataWithLength:rowSize];
+        screen_char_t *myBuffer = data.mutableBytes;
+        screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
+        if (line != myBuffer) {
+            memcpy(myBuffer, line, rowSize);
+        }
+        [_lines addObject:data];
+
         [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
         NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
         if (findMatches) {
@@ -903,7 +911,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             }
             glyphKeys[x].drawable = NO;
         } else if (annotated || iTermTextDrawingHelperIsCharacterDrawable(&line[x],
-                                                                          ScreenCharToStr(&line[x]) != nil,
+                                                                          line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
                                                                           _blinkingItemsVisible,
                                                                           _blinkAllowed)) {
             lastDrawableGlyph = x;
