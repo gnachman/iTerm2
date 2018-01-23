@@ -58,6 +58,22 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
     std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius;
 
     iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
+
+    vector_float4 _lastTextColor, _lastBackgroundColor;
+    vector_int3 _lastColorModelIndex;
+}
+
+NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *self, iTermTextPIU *piu) {
+    if (simd_equal(piu->textColor, self->_lastTextColor) &&
+        simd_equal(piu->backgroundColor, self->_lastBackgroundColor)) {
+        return self->_lastColorModelIndex;
+    } else {
+        vector_int3 result = SlowGetColorModelIndexForPIU(self, piu);
+        self->_lastTextColor = piu->textColor;
+        self->_lastBackgroundColor = piu->backgroundColor;
+        self->_lastColorModelIndex = result;
+        return result;
+    }
 }
 
 - (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
@@ -68,6 +84,7 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
         if (!cellConfiguration.usingIntermediatePass) {
             _colorModels = [NSMutableData data];
             _colorModelIndexes = new std::map<iTermColorComponentPair, int>();
+            _lastTextColor = _lastBackgroundColor = simd_make_float4(-1, -1, -1, -1);
         }
     }
     return self;
@@ -167,7 +184,7 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
                                                                             static_cast<unsigned short>(fixup.x));
                 piu.backgroundColor = rle.color;
                 if (_colorModels) {
-                    piu.colorModelIndex = [self colorModelIndexForPIU:&piu];
+                    piu.colorModelIndex = GetColorModelIndexForPIU(self, &piu);
                 }
             } else {
                 // Offscreen
@@ -186,22 +203,22 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
     DLog(@"END WILL DRAW");
 }
 
-static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *piu,
-                                                                 char code,
-                                                                 float w,
-                                                                 float h,
-                                                                 iTermASCIITexture *texture,
-                                                                 float cellWidth,
-                                                                 int x,
-                                                                 float yOffset,
-                                                                 iTermASCIITextureOffset offset,
-                                                                 vector_float4 textColor,
-                                                                 vector_float4 backgroundColor,
-                                                                 iTermMetalGlyphAttributesUnderline underlineStyle,
-                                                                 vector_float4 underlineColor) {
+NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *piu,
+                                                                    char code,
+                                                                    float w,
+                                                                    float h,
+                                                                    iTermASCIITexture *texture,
+                                                                    float cellWidth,
+                                                                    int x,
+                                                                    float yOffset,
+                                                                    iTermASCIITextureOffset offset,
+                                                                    vector_float4 textColor,
+                                                                    vector_float4 backgroundColor,
+                                                                    iTermMetalGlyphAttributesUnderline underlineStyle,
+                                                                    vector_float4 underlineColor) {
     piu->offset = simd_make_float2(x * cellWidth,
                                    yOffset);
-    MTLOrigin origin = [texture.textureArray offsetForIndex:iTermASCIITextureIndexOfCode(code, offset)];
+    MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, iTermASCIITextureIndexOfCode(code, offset));
     piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
     piu->textColor = textColor;
     piu->backgroundColor = backgroundColor;
@@ -220,7 +237,10 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                        asciiAttrs:(iTermASCIITextureAttributes)asciiAttrs
                        attributes:(const iTermMetalGlyphAttributes *)attributes
                     inMarkedRange:(BOOL)inMarkedRange {
-    iTermASCIITexture *texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
+    iTermASCIITexture *texture = _asciiTextureGroup->_textures[asciiAttrs];
+    if (!texture) {
+        texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
+    }
 
     iTermASCIITextureParts parts = texture.parts[(size_t)code];
     vector_float4 underlineColor = { 0, 0, 0, 0 };
@@ -274,7 +294,7 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                                               underlineColor);
         }
         if (_colorModels) {
-            piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+            piu->colorModelIndex = GetColorModelIndexForPIU(self, piu);
         }
     }
 
@@ -293,7 +313,7 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                                       underlineStyle,
                                                       underlineColor);
     if (_colorModels) {
-        piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+        piu->colorModelIndex = GetColorModelIndexForPIU(self, piu);
     }
 
     // Add PIU for right overflow
@@ -331,7 +351,7 @@ static iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *p
                                                               underlineColor);
         }
         if (_colorModels) {
-            piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+            piu->colorModelIndex = GetColorModelIndexForPIU(self, piu);
         }
     }
 }
@@ -436,7 +456,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 if (entry->_part == iTermTextureMapMiddleCharacterPart) {
                     piu->backgroundColor = attributes[x].backgroundColor;
                     if (_colorModels) {
-                        piu->colorModelIndex = [self colorModelIndexForPIU:piu];
+                        piu->colorModelIndex = GetColorModelIndexForPIU(self, piu);
                     }
                 } else {
                     iTermTextFixup fixup = {
@@ -457,7 +477,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     DLog(@"END setGlyphKeysData for %@", self);
 }
 
-- (vector_int3)colorModelIndexForPIU:(iTermTextPIU *)piu {
+static vector_int3 SlowGetColorModelIndexForPIU(iTermTextRendererTransientState *self, iTermTextPIU *piu) {
     iTermColorComponentPair redPair = std::make_pair(piu->textColor.x * 255,
                                                      piu->backgroundColor.x * 255);
     iTermColorComponentPair greenPair = std::make_pair(piu->textColor.y * 255,
@@ -465,24 +485,25 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     iTermColorComponentPair bluePair = std::make_pair(piu->textColor.z * 255,
                                                       piu->backgroundColor.z * 255);
     vector_int3 result;
-    auto it = _colorModelIndexes->find(redPair);
-    if (it == _colorModelIndexes->end()) {
+    auto it = self->_colorModelIndexes->find(redPair);
+    if (it == self->_colorModelIndexes->end()) {
         result.x = [self allocateColorModelForColorPair:redPair];
     } else {
         result.x = it->second;
     }
-    it = _colorModelIndexes->find(greenPair);
-    if (it == _colorModelIndexes->end()) {
+    it = self->_colorModelIndexes->find(greenPair);
+    if (it == self->_colorModelIndexes->end()) {
         result.y = [self allocateColorModelForColorPair:greenPair];
     } else {
         result.y = it->second;
     }
-    it = _colorModelIndexes->find(bluePair);
-    if (it == _colorModelIndexes->end()) {
+    it = self->_colorModelIndexes->find(bluePair);
+    if (it == self->_colorModelIndexes->end()) {
         result.z = [self allocateColorModelForColorPair:bluePair];
     } else {
         result.z = it->second;
     }
+
     return result;
 }
 

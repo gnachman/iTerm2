@@ -57,9 +57,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 
 @end
 
-@implementation iTermASCIITextureGroup {
-    iTermASCIITexture *_textures[iTermASCIITextureAttributesMax * 2];
-}
+@implementation iTermASCIITextureGroup
 
 - (instancetype)initWithCellSize:(CGSize)cellSize
                           device:(id<MTLDevice>)device
