@@ -65,20 +65,20 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawCrGuide<<",
         "DrawHighlite<<",
         "DrawImage<<",
-        "DrawIndicators<<",
-        "DrawTimestamps<<",
-        "DrawFlash<<",
         
         "EndEncodingInt<<",
         "Create2ndRE<<",
         "enqueueCopyBg<<",
         "enqueueDrawText<<",
+        "DrawIndicators<<",
+        "DrawTimestamps<<",
+        "DrawFlash<<",
+
         "EndEncodingDrwbl<<",
         "PresentCommit<<",
-
+        
         "gpu<",
         "scheduleWait<<",
-
         "dispatchToPQ2<",
     };
 
