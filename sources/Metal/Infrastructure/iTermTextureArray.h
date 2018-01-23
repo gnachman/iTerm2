@@ -4,7 +4,12 @@
 #import "iTermCharacterParts.h"
 
 NS_CLASS_AVAILABLE(10_11, NA)
-@interface iTermTextureArray : NSObject
+@interface iTermTextureArray : NSObject {
+@public
+    uint32_t _width;
+    uint32_t _height;
+    NSInteger _cellsPerRow;
+}
 
 @property (nonatomic, readonly) id <MTLTexture> texture;
 @property (nonatomic, readonly) uint32_t width;
@@ -33,3 +38,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (MTLOrigin)offsetForIndex:(NSInteger)index;
 
 @end
+
+NS_CLASS_AVAILABLE(10_11, NA)
+NS_INLINE MTLOrigin iTermTextureArrayOffsetForIndex(iTermTextureArray *self, const NSInteger index) {
+    return MTLOriginMake(self->_width * (index % self->_cellsPerRow),
+                         self->_height * (index / self->_cellsPerRow),
+                         0);
+}

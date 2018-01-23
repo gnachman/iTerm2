@@ -90,7 +90,10 @@ NS_INLINE int iTermASCIITextureIndexOfCode(char code, iTermASCIITextureOffset of
 
 // Implements isEqual:
 NS_CLASS_AVAILABLE(10_11, NA)
-@interface iTermASCIITextureGroup : NSObject
+@interface iTermASCIITextureGroup : NSObject {
+@public
+    iTermASCIITexture *_textures[iTermASCIITextureAttributesMax * 2];
+}
 
 @property (nonatomic, readonly) CGSize cellSize;
 @property (nonatomic, strong, readonly) id<MTLDevice> device;

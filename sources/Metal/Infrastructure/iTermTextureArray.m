@@ -5,10 +5,7 @@
 #import <CoreImage/CoreImage.h>
 
 @implementation iTermTextureArray {
-    uint32_t _width;
-    uint32_t _height;
     NSUInteger _count;
-    NSInteger _cellsPerRow;
     NSUInteger _arrayLength;
 }
 
@@ -82,9 +79,7 @@
 }
 
 - (MTLOrigin)offsetForIndex:(NSInteger)index {
-    return MTLOriginMake(_width * (index % _cellsPerRow),
-                         _height * (index / _cellsPerRow),
-                         0);
+    return iTermTextureArrayOffsetForIndex(self, index);
 }
 
 #pragma mark - Private
