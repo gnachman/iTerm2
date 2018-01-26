@@ -373,6 +373,7 @@ static NSString *const kArrangement = @"Arrangement";
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
         DLog(@"Activate iTerm2 prior to animating hotkey window in");
         _activationPending = YES;
+        [self.windowController.window makeKeyAndOrderFront:nil];
         [[iTermApplication sharedApplication] activateAppWithCompletion:^{
             [self reallyRollInAnimated:animated];
         }];
