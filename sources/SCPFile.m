@@ -244,13 +244,16 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     _okToAdd = NO;
+    int effectivePort;
     if (self.session) {
         self.session.delegate = self;
+        effectivePort = self.session.port.intValue;
     } else {
         self.session = [[[NMSSHSession alloc] initWithHost:[self hostname]
                                                    configs:[self configs]
                                            withDefaultPort:[self port]
                                            defaultUsername:self.path.username] autorelease];
+        effectivePort = self.session.port.intValue;
         self.session.delegate = self;
         [self.session connect];
         if (self.stopped) {
@@ -276,7 +279,7 @@ static NSError *SCPFileError(NSString *description) {
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:theError];
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to connect to %@:%d. Double-check that the host name is correct.", self.hostname, self.port]
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to connect to %@:%d. Double-check that the host name is correct.", self.hostname, effectivePort]
                                            actions:@[ @"Ok", @"Help" ]
                                      actionMapping:nil
                                          accessory:nil
