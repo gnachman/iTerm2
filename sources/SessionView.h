@@ -118,6 +118,9 @@
 // Current window changed.
 - (void)sessionViewDidChangeWindow;
 
+// Announcement shown, changed, or removed.
+- (void)sessionViewAnnouncementDidChange:(SessionView *)sessionView;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

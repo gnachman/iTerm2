@@ -4753,7 +4753,8 @@ ITERM_WEAKLY_REFERENCEABLE
             _textview.transparencyAlpha == 1 &&
             ![iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:self.profile] &&
             ![iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:self.profile] &&
-            ![PTYNoteViewController anyNoteVisible]);
+            ![PTYNoteViewController anyNoteVisible] &&
+            _view.currentAnnouncement == nil);
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
@@ -9162,6 +9163,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.11, *)) {
         [self updateMetalDriver];
     }
+}
+
+- (void)sessionViewAnnouncementDidChange:(SessionView *)sessionView {
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 #pragma mark - iTermCoprocessDelegate

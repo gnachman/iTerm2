@@ -894,6 +894,7 @@ static NSDate* lastResizeDate_;
         [_currentAnnouncement didBecomeVisible];
         [self addSubview:_currentAnnouncement.view];
     }
+    [self.delegate sessionViewAnnouncementDidChange:self];
 }
 
 #pragma mark - iTermAnnouncementDelegate
