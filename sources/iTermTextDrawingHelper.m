@@ -2681,7 +2681,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
     _scrollViewDocumentVisibleRect = _delegate.enclosingScrollView.documentVisibleRect;
 
-    BOOL ignore1, ignore2;
+    BOOL ignore1 = NO, ignore2 = NO;
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:'a'
                                                       isComplex:NO
                                                      renderBold:&ignore1
