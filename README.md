@@ -21,6 +21,21 @@ Therm is a fork of iTerm2 done by pancake <pancake@nopcode.org> that aims to:
 
 ![Therm Screenshot](therm.png)
 
+Installation
+------------
+
+I have decided to remove the auto-self-update feature, mainly because the library weights too much and i don't like my software to be doing network requests and downloading code that is installed without my own consent or review. I checked the code and the library is a 3rd party project used by many other projects, which is checking the SSL certficate and such, so there's no security issue (afaik).
+
+So, in order to get Therm installed in your system you can:
+
+* Download the last DMG from the Releases github page
+
+	https://github.com/trufae/Therm/releases	
+
+* Install it via brew
+
+	brew install caskroom/cask/therm
+
 Future
 ------
 
