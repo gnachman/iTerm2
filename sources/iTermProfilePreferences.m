@@ -383,10 +383,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     if (!dict) {
         dict = @{ KEY_IDLE_PERIOD: PROFILE_BLOCK(antiIdlePeriodWithLegacyDefaultInProfile),
                   KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm),
-#if BETA
-                  // TODO: If beta users don't complain too much turn this on for everyone.
                   KEY_UNICODE_VERSION: PROFILE_BLOCK(unicodeVersion),
-#endif
                 };
         [dict retain];
     }
