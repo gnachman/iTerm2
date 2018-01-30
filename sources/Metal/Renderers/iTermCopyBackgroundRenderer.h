@@ -10,11 +10,24 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermCopyBackgroundRendererTransientState : iTermMetalRendererTransientState
+@interface iTermCopyRendererTransientState : iTermMetalRendererTransientState
 
 // The texture to copy from.
 @property (nonatomic, strong) id<MTLTexture> sourceTexture;
 
+@end
+
+// Copies from one texture to another.
+@interface iTermCopyRenderer : NSObject<iTermMetalRenderer>
+
+@property (nonatomic) BOOL enabled;
+
+- (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
+@end
+
+@interface iTermCopyBackgroundRendererTransientState : iTermCopyRendererTransientState
 @end
 
 // The purpose of this renderer is to copy a texture to another texture. When
@@ -25,13 +38,13 @@ NS_ASSUME_NONNULL_BEGIN
 // necessitates drawing the composited background image, bars, badge, etc., to
 // a texture because for some reason Metal doesn't let you sample from the
 // texture you're drawing to.
-@interface iTermCopyBackgroundRenderer : NSObject<iTermMetalRenderer>
+@interface iTermCopyBackgroundRenderer : iTermCopyRenderer
+@end
 
-@property (nonatomic) BOOL enabled;
+@interface iTermCopyOffscreenRendererTransientState : iTermCopyRendererTransientState
+@end
 
-- (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
-
+@interface iTermCopyOffscreenRenderer : iTermCopyRenderer
 @end
 
 NS_ASSUME_NONNULL_END

@@ -12,6 +12,7 @@ extern "C" {
 #import "iTermCharacterParts.h"
 #import "iTermGlyphEntry.h"
 #import "iTermMetalBufferPool.h"
+#import "iTermMetalDebugInfo.h"
 #import "iTermPIUArray.h"
 #import "iTermTexturePageCollection.h"
 #import "iTermSubpixelModelBuilder.h"
@@ -54,6 +55,9 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
             CGSizeEqualToSize(_cellSize, other->_cellSize));
 }
 
+@end
+
+@interface iTermTextRenderer() <iTermMetalDebugInfoFormatter>
 @end
 
 @implementation iTermTextRenderer {
@@ -129,6 +133,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                                                               blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
+        _cellRenderer.formatterDelegate = self;
+
         _quadCache = [NSMutableArray array];
         _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
@@ -344,6 +350,20 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                                                                                   creation:creation];
     if (![replacement isEqual:_asciiTextureGroup]) {
         _asciiTextureGroup = replacement;
+    }
+}
+
+#pragma mark - iTermMetalDebugInfoFormatter
+
+- (void)writeVertexBuffer:(id<MTLBuffer>)buffer index:(NSUInteger)index toFolder:(NSURL *)folder {
+    if (index == iTermVertexInputIndexPerInstanceUniforms) {
+        NSMutableString *s = [NSMutableString string];
+        const iTermTextPIU *pius = (const iTermTextPIU *)buffer.contents;
+        for (int i = 0; i < buffer.length / sizeof(iTermTextPIU); i++) {
+            [s appendString:[iTermTextRendererTransientState formatTextPIU:pius[i]]];
+        }
+        NSURL *url = [folder URLByAppendingPathComponent:@"vertexBuffer.iTermVertexInputIndexPerInstanceUniforms.txt"];
+        [s writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
 }
 

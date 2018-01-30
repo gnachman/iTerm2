@@ -21,6 +21,20 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermCursorRendererTransientState
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    NSString *s = [NSString stringWithFormat:
+                   @"color=%@\n"
+                   @"coord=%@",
+                   self.color,
+                   VT100GridCoordDescription(_coord)];
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
 @end
 
 @interface iTermCopyModeCursorRendererTransientState()
@@ -36,6 +50,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermCopyModeCursorRendererTransientState {
     NSColor *_color;
+}
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    NSString *s = [NSString stringWithFormat:@"selecting=%@", _selecting ? @"YES" : @"NO"];
+    [s writeToURL:[folder URLByAppendingPathComponent:@"CopyModeState.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
 }
 
 - (CGSize)size {

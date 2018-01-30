@@ -22,6 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
 // if any non-ascii characters exist, so it's worth a shot.
 + (NSURL *)URLWithUserSuppliedString:(NSString *)string;
 
+- (BOOL)saveContentsOfPathToZip:(NSURL *)destination;
+- (NSData *)zippedContents;
+
 @end
 
 NS_ASSUME_NONNULL_END

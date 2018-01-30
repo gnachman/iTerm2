@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermMetalBufferPool.h"
+#import "iTermMetalDebugInfo.h"
 #import "iTermMetalFrameData.h"
 #import "iTermPreciseTimer.h"
 #import "iTermShaderTypes.h"
@@ -44,6 +45,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
 @property (nonatomic, readonly) iTermMetalBufferPoolContext *poolContext;
+@property (nonatomic, weak) iTermMetalDebugInfo *debugInfo;
+@property (nonatomic, strong) NSImage *renderedOutputForDebugging;
+@property (nonatomic) NSUInteger sequenceNumber;
 
 // You don't generally need to assign to this unless you plan to make more than one draw call.
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineState;
@@ -56,6 +60,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (iTermPreciseTimerStats *)stats;
 - (int)numberOfStats;
 - (NSString *)nameForStat:(int)i;
+
+// Subclasses should override this to provide useful debugging info.
+- (void)writeDebugInfoToFolder:(NSURL *)folder NS_REQUIRES_SUPER;
 
 @end
 
@@ -76,11 +83,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
-@interface iTermMetalRenderer : NSObject
+@interface iTermMetalRenderer : NSObject <iTermMetalDebugInfoFormatter>
 
 @property (nonatomic, readonly) id<MTLDevice> device;
 @property (nonatomic, readonly) Class transientStateClass;
 @property (nonatomic, copy) NSString *fragmentFunctionName;
+@property (nonatomic, weak) id<iTermMetalDebugInfoFormatter> formatterDelegate;
 
 // Pool of vertex buffers for quads of iTermVertex.
 @property (nonatomic, readonly) iTermMetalBufferPool *verticesPool;

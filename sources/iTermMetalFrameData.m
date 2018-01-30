@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 #import "iTermMetalRenderer.h"
+#import "iTermTexture.h"
 #import "iTermTexturePool.h"
 
 #import <MetalKit/MetalKit.h>
@@ -129,6 +130,11 @@ static NSInteger gNextFrameDataNumber;
             self.status];
 }
 
+- (void)setRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
+    _renderPassDescriptor = renderPassDescriptor;
+    [_debugInfo setRenderPassDescriptor:renderPassDescriptor];
+}
+
 - (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block {
     self.status = [NSString stringWithUTF8String:_stats[stat].name];
     iTermPreciseTimerStatsStartTimer(&_stats[stat]);
@@ -186,29 +192,39 @@ static NSInteger gNextFrameDataNumber;
     return instance;
 }
 
+- (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label {
+    MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+    MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
+    colorAttachment.storeAction = MTLStoreActionStore;
+    colorAttachment.texture = [[self sharedTexturePool] requestTextureOfSize:self.viewportSize];
+    if (!colorAttachment.texture) {
+        // Allocate a new texture.
+        MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+                                                                                                     width:self.viewportSize.x
+                                                                                                    height:self.viewportSize.y
+                                                                                                 mipmapped:NO];
+        textureDescriptor.usage = (MTLTextureUsageShaderRead |
+                                   MTLTextureUsageShaderWrite |
+                                   MTLTextureUsageRenderTarget |
+                                   MTLTextureUsagePixelFormatView);
+        colorAttachment.texture = [self.device newTextureWithDescriptor:textureDescriptor];
+        [iTermTexture setBytesPerRow:self.viewportSize.x * 4
+                         rawDataSize:self.viewportSize.x * self.viewportSize.y * 4
+                          forTexture:colorAttachment.texture];
+        colorAttachment.texture.label = label;
+    }
+
+    assert(renderPassDescriptor.colorAttachments[0].texture != nil);
+    return renderPassDescriptor;
+}
+
 - (void)createIntermediateRenderPassDescriptor {
     [self measureTimeForStat:iTermMetalFrameDataStatPqCreateIntermediate ofBlock:^{
         assert(!self.intermediateRenderPassDescriptor);
 
-        self.intermediateRenderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-        MTLRenderPassColorAttachmentDescriptor *colorAttachment = self.intermediateRenderPassDescriptor.colorAttachments[0];
-        colorAttachment.storeAction = MTLStoreActionStore;
-        colorAttachment.texture = [[self sharedTexturePool] requestTextureOfSize:self.viewportSize];
-        if (!colorAttachment.texture) {
-            // Allocate a new texture.
-            MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
-                                                                                                         width:self.viewportSize.x
-                                                                                                        height:self.viewportSize.y
-                                                                                                     mipmapped:NO];
-            textureDescriptor.usage = (MTLTextureUsageShaderRead |
-                                       MTLTextureUsageShaderWrite |
-                                       MTLTextureUsageRenderTarget |
-                                       MTLTextureUsagePixelFormatView);
-            colorAttachment.texture = [self.device newTextureWithDescriptor:textureDescriptor];
-            colorAttachment.texture.label = @"Intermediate Texture";
-        }
+        self.intermediateRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Intermediate Texture"];
 
-        assert(self.intermediateRenderPassDescriptor.colorAttachments[0].texture != nil);
+        [_debugInfo setIntermediateRenderPassDescriptor:self.intermediateRenderPassDescriptor];
     }];
 }
 

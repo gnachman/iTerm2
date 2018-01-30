@@ -49,4 +49,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic, readonly) NSMutableArray<iTermMetalImageRun *> *imageRuns;
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder;
+
 @end

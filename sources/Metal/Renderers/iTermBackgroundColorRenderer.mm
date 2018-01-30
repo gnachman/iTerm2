@@ -41,6 +41,9 @@
 
 @end
 
+@interface iTermBackgroundColorRenderer() <iTermMetalDebugInfoFormatter>
+@end
+
 @implementation iTermBackgroundColorRenderer {
     iTermMetalCellRenderer *_cellRenderer;
     iTermMetalMixedSizeBufferPool *_piuPool;
@@ -55,6 +58,7 @@
                                                               blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
+        _cellRenderer.formatterDelegate = self;
         // TODO: The capacity here is a total guess. But this would be a lot of rows to have.
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                 capacity:512
@@ -83,6 +87,7 @@
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize
                                            poolContext:tState.poolContext];
+    tState.vertexBuffer.label = @"Vertices";
 }
 
 
@@ -93,6 +98,7 @@
         id<MTLBuffer> piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
                                                                 size:numberOfInstances * sizeof(*pius)
                                                                bytes:pius];
+        piuBuffer.label = @"PIUs";
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:renderEncoder
                              numberOfVertices:6
@@ -103,6 +109,28 @@
                               fragmentBuffers:@{}
                                      textures:@{} ];
     }];
+}
+
+#pragma mark - iTermMetalDebugInfoFormatter
+
+- (void)writeVertexBuffer:(id<MTLBuffer>)buffer index:(NSUInteger)index toFolder:(NSURL *)folder {
+    if (index == iTermVertexInputIndexPerInstanceUniforms) {
+        iTermBackgroundColorPIU *pius = (iTermBackgroundColorPIU *)buffer.contents;
+        NSMutableString *s = [NSMutableString string];
+        for (int i = 0; i < buffer.length / sizeof(*pius); i++) {
+            [s appendFormat:@"offset=(%@, %@) runLength=%@ numRows=%@ color=(%@, %@, %@, %@)\n",
+             @(pius[i].offset.x),
+             @(pius[i].offset.y),
+             @(pius[i].runLength),
+             @(pius[i].numRows),
+             @(pius[i].color.x),
+             @(pius[i].color.y),
+             @(pius[i].color.z),
+             @(pius[i].color.w)];
+        }
+        NSURL *url = [folder URLByAppendingPathComponent:@"vertexBuffer.iTermVertexInputIndexPerInstanceUniforms.txt"];
+        [s writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
 }
 
 @end

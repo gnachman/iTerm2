@@ -15,6 +15,14 @@
     NSMutableDictionary<NSNumber *, NSNumber *> *_marks;
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    [[NSString stringWithFormat:@"marks=%@", _marks] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+                                                     atomically:NO
+                                                       encoding:NSUTF8StringEncoding
+                                                          error:NULL];
+}
+
 - (nonnull NSData *)newMarkPerInstanceUniforms {
     NSMutableData *data = [[NSMutableData alloc] initWithLength:sizeof(iTermMarkPIU) * _marks.count];
     iTermMarkPIU *pius = (iTermMarkPIU *)data.mutableBytes;

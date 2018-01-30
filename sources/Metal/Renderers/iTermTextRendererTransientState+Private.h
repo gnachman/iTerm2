@@ -18,6 +18,8 @@
 @property (nonatomic) iTermTexturePageCollectionSharedPointer *texturePageCollectionSharedPointer;
 @property (nonatomic) NSInteger numberOfCells;
 
++ (NSString *)formatTextPIU:(iTermTextPIU)a;
+
 - (void)enumerateDraws:(void (^)(const iTermTextPIU *,
                                  NSInteger,
                                  id<MTLTexture>,

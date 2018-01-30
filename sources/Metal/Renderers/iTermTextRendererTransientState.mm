@@ -102,6 +102,135 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     }
 }
 
++ (NSString *)formatTextPIU:(iTermTextPIU)a {
+    return [NSString stringWithFormat:
+            @"offset=(%@, %@) "
+            @"textureOffset=(%@, %@) "
+            @"backgroundColor=(%@, %@, %@, %@) "
+            @"textColor=(%@, %@, %@, %@) "
+            @"remapColors=%@ "
+            @"colorModelIndex=(%@, %@, %@) "
+            @"underlineStyle=%@ "
+            @"underlineColor=(%@, %@, %@, %@)\n",
+            @(a.offset.x),
+            @(a.offset.y),
+            @(a.textureOffset.x),
+            @(a.textureOffset.y),
+            @(a.backgroundColor.x),
+            @(a.backgroundColor.y),
+            @(a.backgroundColor.z),
+            @(a.backgroundColor.w),
+            @(a.textColor.x),
+            @(a.textColor.y),
+            @(a.textColor.z),
+            @(a.textColor.w),
+            a.remapColors ? @"YES" : @"NO",
+            @(a.colorModelIndex.x),
+            @(a.colorModelIndex.y),
+            @(a.colorModelIndex.z),
+            @(a.underlineStyle),
+            @(a.underlineColor.x),
+            @(a.underlineColor.y),
+            @(a.underlineColor.z),
+            @(a.underlineColor.w)];
+}
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+
+    [_modelData writeToURL:[folder URLByAppendingPathComponent:@"model.bin"] atomically:NO];
+
+    @autoreleasepool {
+        NSMutableString *s = [NSMutableString string];
+        [_backgroundColorRLEDataArray enumerateObjectsUsingBlock:^(iTermData * _Nonnull data, NSUInteger idx, BOOL * _Nonnull stop) {
+            iTermMetalBackgroundColorRLE *rle = (iTermMetalBackgroundColorRLE *)data.mutableBytes;
+            [s appendFormat:@"%4d: %@\n", (int)idx, iTermMetalBackgroundColorRLEDescription(rle)];
+        }];
+        [s writeToURL:[folder URLByAppendingPathComponent:@"backgroundColors.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+
+    @autoreleasepool {
+        NSMutableString *s = [NSMutableString string];
+        for (auto entry : _fixups) {
+            id<MTLTexture> texture = entry.first->get_texture();
+            [s appendFormat:@"Texture Page with texture %@\n", texture.label];
+            if (entry.second) {
+                for (auto fixup : *entry.second) {
+                    [s appendFormat:@"piu_index=%@ x=%@ y=%@\n", @(fixup.piu_index), @(fixup.x), @(fixup.y)];
+                }
+            }
+        }
+        [s writeToURL:[folder URLByAppendingPathComponent:@"fixups.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+
+    [_colorModels writeToURL:[folder URLByAppendingPathComponent:@"colorModels.bin"] atomically:NO];
+
+    if (_colorModelIndexes) {
+        @autoreleasepool {
+            NSMutableString *s = [NSMutableString string];
+            for (auto entry : *_colorModelIndexes) {
+                [s appendFormat:@"(%@, %@) -> %@\n",
+                 @(entry.first.first),
+                 @(entry.first.second),
+                 @(entry.second)];
+            }
+            [s writeToURL:[folder URLByAppendingPathComponent:@"colorModelIndexes.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        }
+    }
+
+    @autoreleasepool {
+        for (int i = 0; i < sizeof(_asciiPIUArrays) / sizeof(*_asciiPIUArrays); i++) {
+            NSMutableString *s = [NSMutableString string];
+            const int size = _asciiPIUArrays[i].size();
+            for (int j = 0; j < size; j++) {
+                const iTermTextPIU &a = _asciiPIUArrays[i].get(j);
+                [s appendString:[self.class formatTextPIU:a]];
+            }
+            NSMutableString *name = [NSMutableString stringWithFormat:@"asciiPIUs."];
+            if (i & iTermASCIITextureAttributesBold) {
+                [name appendString:@"B"];
+            }
+            if (i & iTermASCIITextureAttributesItalic) {
+                [name appendString:@"I"];
+            }
+            if (i & iTermASCIITextureAttributesThinStrokes) {
+                [name appendString:@"T"];
+            }
+            [name appendString:@".txt"];
+            [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        }
+    }
+
+    @autoreleasepool {
+        NSMutableString *s = [NSMutableString string];
+        for (auto entry : _pius) {
+            const iTerm2::TexturePage *texturePage = entry.first;
+            iTerm2::PIUArray<iTermTextPIU> *piuArray = entry.second;
+            [s appendFormat:@"Texture Page with texture %@:\n", texturePage->get_texture().label];
+            if (piuArray) {
+                for (int j = 0; j < piuArray->size(); j++) {
+                    iTermTextPIU &piu = piuArray->get(j);
+                    [s appendString:[self.class formatTextPIU:piu]];
+                }
+            }
+        }
+        [s writeToURL:[folder URLByAppendingPathComponent:@"pius.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+
+    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
+                   _backgroundTexture,
+                   iTermMetalUnderlineDescriptorDescription(&_asciiUnderlineDescriptor),
+                   iTermMetalUnderlineDescriptorDescription(&_nonAsciiUnderlineDescriptor),
+                   @(_defaultBackgroundColor.x),
+                   @(_defaultBackgroundColor.y),
+                   @(_defaultBackgroundColor.z),
+                   @(_defaultBackgroundColor.w)];
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
 - (iTermPreciseTimerStats *)stats {
     return _stats;
 }

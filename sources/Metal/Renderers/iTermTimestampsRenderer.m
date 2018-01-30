@@ -47,6 +47,19 @@
     NSMutableArray<iTermPooledTexture *> *_pooledTextures;
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    NSMutableString *s = [NSMutableString stringWithFormat:@"backgroundColor=%@\ntextColor=%@\n",
+                          _backgroundColor, _textColor];
+    [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [s appendFormat:@"%@\n", obj];
+    }];
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
 - (void)addPooledTexture:(iTermPooledTexture *)pooledTexture {
     if (!_pooledTextures) {
         _pooledTextures = [NSMutableArray array];

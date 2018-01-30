@@ -7,6 +7,8 @@
 
 #import "iTermIndicatorRenderer.h"
 
+#import "NSArray+iTerm.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermIndicatorDescriptor()
@@ -21,6 +23,19 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermIndicatorRendererTransientState
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+
+    NSString *descriptors = [[_indicatorDescriptors mapWithBlock:^id(iTermIndicatorDescriptor *descriptor) {
+        return descriptor.texture.label;
+    }] componentsJoinedByString:@", "];
+    [[NSString stringWithFormat:@"descriptors=%@", descriptors] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+                                                                atomically:NO
+                                                                  encoding:NSUTF8StringEncoding
+                                                                     error:NULL];
+}
+
 @end
 
 @implementation iTermIndicatorRenderer {
@@ -130,6 +145,7 @@ NS_ASSUME_NONNULL_BEGIN
              context:(iTermMetalBufferPoolContext *)context {
     indicator.texture = [self textureForIdentifier:indicator.identifier image:indicator.image context:context];
             [_indicatorDescriptors addObject:indicator];
+    indicator.texture.label = indicator.identifier;
 }
 
 - (id<MTLTexture>)textureForIdentifier:(NSString *)identifier image:(NSImage *)image context:(iTermMetalBufferPoolContext *)context {

@@ -10,6 +10,15 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermBroadcastStripesRendererTransientState
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    [[NSString stringWithFormat:@"size=%@", NSStringFromSize(self.size)] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+                                                                         atomically:NO
+                                                                           encoding:NSUTF8StringEncoding
+                                                                              error:NULL];
+}
+
 @end
 
 @implementation iTermBroadcastStripesRenderer {

@@ -1373,6 +1373,10 @@
 		A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = A65871681D85E6700061CEEE /* PFMoveApplication.h */; };
 		A658716B1D85E6750061CEEE /* PFMoveApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = A65871671D85E6700061CEEE /* PFMoveApplication.m */; };
 		A6588822201708D8006F48DB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6588821201708D8006F48DB /* IOKit.framework */; };
+		A6588825201E41A5006F48DB /* iTermMetalDebugInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6588823201E41A4006F48DB /* iTermMetalDebugInfo.h */; };
+		A6588826201E41A5006F48DB /* iTermMetalDebugInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6588824201E41A5006F48DB /* iTermMetalDebugInfo.m */; };
+		A6588829201F06ED006F48DB /* iTermTexture.h in Headers */ = {isa = PBXBuildFile; fileRef = A6588827201F06ED006F48DB /* iTermTexture.h */; };
+		A658882A201F06ED006F48DB /* iTermTexture.m in Sources */ = {isa = PBXBuildFile; fileRef = A6588828201F06ED006F48DB /* iTermTexture.m */; };
 		A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */ = {isa = PBXBuildFile; fileRef = A65943C91F83382B00598B1E /* iTermMetalClipView.h */; };
 		A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */ = {isa = PBXBuildFile; fileRef = A65943CA1F83382B00598B1E /* iTermMetalClipView.m */; };
 		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
@@ -3492,6 +3496,10 @@
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
 		A6588821201708D8006F48DB /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		A6588823201E41A4006F48DB /* iTermMetalDebugInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalDebugInfo.h; path = Metal/Infrastructure/iTermMetalDebugInfo.h; sourceTree = "<group>"; };
+		A6588824201E41A5006F48DB /* iTermMetalDebugInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMetalDebugInfo.m; path = Metal/Infrastructure/iTermMetalDebugInfo.m; sourceTree = "<group>"; };
+		A6588827201F06ED006F48DB /* iTermTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexture.h; path = Metal/Infrastructure/iTermTexture.h; sourceTree = "<group>"; };
+		A6588828201F06ED006F48DB /* iTermTexture.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermTexture.m; path = Metal/Infrastructure/iTermTexture.m; sourceTree = "<group>"; };
 		A65943C91F83382B00598B1E /* iTermMetalClipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalClipView.h; path = Metal/Support/iTermMetalClipView.h; sourceTree = "<group>"; };
 		A65943CA1F83382B00598B1E /* iTermMetalClipView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMetalClipView.m; path = Metal/Support/iTermMetalClipView.m; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
@@ -5609,8 +5617,6 @@
 		A67960881F81FC87008A42BC /* Renderers */ = {
 			isa = PBXGroup;
 			children = (
-				A66F3CF21FED6FB000AA2021 /* iTermTexturePage.h */,
-				A66F3CF31FED709800AA2021 /* iTermGlyphEntry.h */,
 				A679609A1F81FC9B008A42BC /* iTermBackgroundColorRenderer.h */,
 				A67960A51F81FC9D008A42BC /* iTermBackgroundColorRenderer.mm */,
 				A67960A71F81FC9D008A42BC /* iTermBackgroundImageRenderer.h */,
@@ -5625,28 +5631,30 @@
 				A679609C1F81FC9C008A42BC /* iTermCursorGuideRenderer.m */,
 				A67960A91F81FC9D008A42BC /* iTermCursorRenderer.h */,
 				A67960A21F81FC9C008A42BC /* iTermCursorRenderer.m */,
+				A68400AD1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h */,
+				A68400AE1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m */,
+				A66F3CF31FED709800AA2021 /* iTermGlyphEntry.h */,
+				A6DBC0472005F09100F1466D /* iTermHighlightRowRenderer.h */,
+				A6DBC0482005F09100F1466D /* iTermHighlightRowRenderer.mm */,
+				A6DBC03A2003479400F1466D /* iTermImageRenderer.h */,
+				A6DBC03B2003479400F1466D /* iTermImageRenderer.m */,
+				A68400A41FF82424008D3EE2 /* iTermIndicatorRenderer.h */,
+				A68400A51FF82424008D3EE2 /* iTermIndicatorRenderer.m */,
 				A6C1FD4F1FC2AC9B006B9A69 /* iTermMarginRenderer.h */,
 				A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */,
 				A679609B1F81FC9C008A42BC /* iTermMarkRenderer.h */,
 				A679609E1F81FC9C008A42BC /* iTermMarkRenderer.m */,
 				A67960A01F81FC9C008A42BC /* iTermTextRenderer.h */,
 				A67960A11F81FC9C008A42BC /* iTermTextRenderer.mm */,
-				A66F3CF41FED713500AA2021 /* iTermTexturePageCollection.h */,
+				A66F3CF91FED75EA00AA2021 /* iTermTextRendererCommon.h */,
 				A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */,
 				A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */,
-				A66F3CF91FED75EA00AA2021 /* iTermTextRendererCommon.h */,
 				A66F3CFA1FED770100AA2021 /* iTermTextRendererTransientState+Private.h */,
+				A66F3CF21FED6FB000AA2021 /* iTermTexturePage.h */,
+				A66F3CF41FED713500AA2021 /* iTermTexturePageCollection.h */,
 				A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */,
-				A68400A41FF82424008D3EE2 /* iTermIndicatorRenderer.h */,
-				A68400A51FF82424008D3EE2 /* iTermIndicatorRenderer.m */,
-				A68400AD1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h */,
-				A68400AE1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m */,
 				A68400BA1FF98101008D3EE2 /* iTermTimestampsRenderer.h */,
 				A68400BB1FF98101008D3EE2 /* iTermTimestampsRenderer.m */,
-				A6DBC03A2003479400F1466D /* iTermImageRenderer.h */,
-				A6DBC03B2003479400F1466D /* iTermImageRenderer.m */,
-				A6DBC0472005F09100F1466D /* iTermHighlightRowRenderer.h */,
-				A6DBC0482005F09100F1466D /* iTermHighlightRowRenderer.mm */,
 			);
 			name = Renderers;
 			sourceTree = "<group>";
@@ -5678,6 +5686,10 @@
 				A66F3CED1FEA2A6C00AA2021 /* iTermPIUArray.h */,
 				A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */,
 				A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */,
+				A6588823201E41A4006F48DB /* iTermMetalDebugInfo.h */,
+				A6588824201E41A5006F48DB /* iTermMetalDebugInfo.m */,
+				A6588827201F06ED006F48DB /* iTermTexture.h */,
+				A6588828201F06ED006F48DB /* iTermTexture.m */,
 			);
 			name = Infrastructure;
 			sourceTree = "<group>";
@@ -7234,6 +7246,7 @@
 				A66719131DCE36C3000CE608 /* iTermPreviousState.h in Headers */,
 				A66719141DCE36C3000CE608 /* iTermAutoMasterParser.h in Headers */,
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
+				A6588829201F06ED006F48DB /* iTermTexture.h in Headers */,
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
 				A66719181DCE36C3000CE608 /* iTermBaseHotKey.h in Headers */,
@@ -7328,6 +7341,7 @@
 				A66719531DCE36C3000CE608 /* iTermSocketAddress.h in Headers */,
 				A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */,
 				A66719541DCE36C3000CE608 /* SetDirectoryTrigger.h in Headers */,
+				A6588825201E41A5006F48DB /* iTermMetalDebugInfo.h in Headers */,
 				A66719551DCE36C3000CE608 /* iTermAutomaticProfileSwitcher.h in Headers */,
 				A66719561DCE36C3000CE608 /* iTermRecentDirectoryMO.h in Headers */,
 				A6556EA91FCB42E0000CC89C /* iTermCharacterSource.h in Headers */,
@@ -8895,6 +8909,7 @@
 				A68400A71FF82424008D3EE2 /* iTermIndicatorRenderer.m in Sources */,
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
+				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
 				A67960D31F81FCBB008A42BC /* iTermBroadcastStripesRenderer.m in Sources */,
@@ -8929,6 +8944,7 @@
 				A68400B01FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m in Sources */,
 				53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */,
 				A67960D61F81FCBB008A42BC /* iTermMarkRenderer.m in Sources */,
+				A6588826201E41A5006F48DB /* iTermMetalDebugInfo.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,

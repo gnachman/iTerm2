@@ -8,6 +8,21 @@
 #import "iTermFullScreenFlashRenderer.h"
 
 @implementation iTermFullScreenFlashRendererTransientState
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    NSString *s = [NSString stringWithFormat:
+                   @"color=(%@, %@, %@, %@)",
+                   @(self.color.x),
+                   @(self.color.y),
+                   @(self.color.z),
+                   @(self.color.w)];
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
 @end
 
 @implementation iTermFullScreenFlashRenderer {

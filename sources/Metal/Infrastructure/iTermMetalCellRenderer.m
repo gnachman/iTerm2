@@ -23,6 +23,19 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (NSString *)debugDescription {
+    return [NSString stringWithFormat:@"<%@: %p viewportSize=%@x%@ scale=%@ cellSize=%@ cellSizeWithoutSpacing=%@ gridSize=%@ usingIntermediatePass=%@>",
+            NSStringFromClass([self class]),
+            self,
+            @(self.viewportSize.x),
+            @(self.viewportSize.y),
+            @(self.scale),
+            NSStringFromSize(self.cellSize),
+            NSStringFromSize(self.cellSizeWithoutSpacing),
+            VT100GridSizeDescription(self.gridSize),
+            self.usingIntermediatePass ? @"YES" : @"NO"];
+}
+
 @end
 
 @interface iTermMetalCellRendererTransientState()
@@ -56,6 +69,17 @@ NS_ASSUME_NONNULL_BEGIN
                             MARGIN_WIDTH,
                             MARGIN_HEIGHT,
                             fmod(usableSize.width, self.cellConfiguration.cellSize.width) + MARGIN_WIDTH);
+}
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+
+    NSString *info = [NSString stringWithFormat:@"margins=(top=%@, left=%@, bottom=%@,right= %@)", @(self.margins.top), @(self.margins.left), @(self.margins.bottom), @(self.margins.right)];
+    [info writeToURL:[folder URLByAppendingPathComponent:@"CellTransientState.txt"]
+          atomically:NO
+            encoding:NSUTF8StringEncoding
+               error:NULL];
+
 }
 
 @end
@@ -106,6 +130,17 @@ NS_ASSUME_NONNULL_BEGIN
                                                          withBytes:&offset
                                                     checkIfChanged:YES];
     return tState;
+}
+
+- (void)writeVertexBuffer:(id<MTLBuffer>)buffer index:(NSUInteger)index toFolder:(NSURL *)folder {
+    if (index == iTermVertexInputIndexOffset && buffer.length == sizeof(vector_float2)) {
+        vector_float2 *v = (vector_float2 *)buffer.contents;
+        NSString *s = [NSString stringWithFormat:@"offset=(%@, %@)\n",
+                       @(v->x), @(v->y)];
+        [s writeToURL:[folder URLByAppendingPathComponent:@"vertexBuffer.iTermVertexInputIndexOffset.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    } else {
+        [super writeVertexBuffer:buffer index:index toFolder:folder];
+    }
 }
 
 @end

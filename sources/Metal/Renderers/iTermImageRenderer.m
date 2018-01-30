@@ -8,9 +8,22 @@
 #import "iTermImageRenderer.h"
 
 #import "iTermImageInfo.h"
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 
 @implementation iTermMetalImageRun
+
+- (NSString *)debugDescription {
+    NSString *info = [NSString stringWithFormat:@"startCoordInImage=%@ startCoordOnScreen=%@ length=%@ code=%@ size=%@ uniqueIdentifier=%@",
+                      VT100GridCoordDescription(self.startingCoordInImage),
+                      VT100GridCoordDescription(self.startingCoordOnScreen),
+                      @(self.length),
+                      @(self.code),
+                      NSStringFromSize(_imageInfo.size),
+                      _imageInfo.uniqueIdentifier];
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, info];
+}
+
 @end
 
 @interface iTermImageRendererTransientState()
@@ -40,6 +53,26 @@
     }
     return self;
 }
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    NSMutableString *s = [NSMutableString string];
+
+    NSString *runsString = [[_runs mapWithBlock:^id(iTermMetalImageRun *run) {
+        return [run debugDescription];
+    }] componentsJoinedByString:@"\n"];
+    [s appendFormat:@"runs:\n%@\n", runsString];
+
+    [s appendFormat:@"missingImageUniqueIDs: %@\n", _missingImageUniqueIdentifiers];
+    [s appendFormat:@"foundImageUniqueIDs: %@\n", _foundImageUniqueIdentifiers];
+    [s appendFormat:@"animated lines: %@\n", _animatedLines];
+
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
 
 - (void)addRun:(iTermMetalImageRun *)imageRun {
     if (!_runs) {

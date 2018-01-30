@@ -8,7 +8,7 @@
 #import "iTermCopyBackgroundRenderer.h"
 
 
-@implementation iTermCopyBackgroundRendererTransientState
+@implementation iTermCopyRendererTransientState
 
 - (BOOL)skipRenderer {
     return _sourceTexture == nil;
@@ -16,7 +16,7 @@
 
 @end
 
-@implementation iTermCopyBackgroundRenderer {
+@implementation iTermCopyRenderer {
     iTermMetalRenderer *_metalRenderer;
 }
 
@@ -27,7 +27,7 @@
                                                  vertexFunctionName:@"iTermCopyBackgroundVertexShader"
                                                fragmentFunctionName:@"iTermCopyBackgroundFragmentShader"
                                                            blending:nil
-                                                transientStateClass:[iTermCopyBackgroundRendererTransientState class]];
+                                                transientStateClass:[self transientStateClass]];
     }
     return self;
 }
@@ -38,7 +38,7 @@
 
 - (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
-    iTermCopyBackgroundRendererTransientState *tState = transientState;
+    iTermCopyRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:renderEncoder
                           numberOfVertices:6
@@ -64,10 +64,37 @@
     return transientState;
 }
 
-- (void)initializeTransientState:(iTermCopyBackgroundRendererTransientState *)tState {
+- (void)initializeTransientState:(iTermCopyRendererTransientState *)tState {
     tState.vertexBuffer = [_metalRenderer newFlippedQuadOfSize:CGSizeMake(tState.configuration.viewportSize.x,
                                                                           tState.configuration.viewportSize.y)
                                                    poolContext:tState.poolContext];
+}
+
+- (Class)transientStateClass {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
+}
+
+@end
+
+@implementation iTermCopyBackgroundRendererTransientState
+@end
+
+@implementation iTermCopyBackgroundRenderer
+
+- (Class)transientStateClass {
+    return [iTermCopyBackgroundRendererTransientState class];
+}
+
+@end
+
+@implementation iTermCopyOffscreenRendererTransientState
+@end
+
+@implementation iTermCopyOffscreenRenderer
+
+- (Class)transientStateClass {
+    return [iTermCopyOffscreenRendererTransientState class];
 }
 
 @end

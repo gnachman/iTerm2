@@ -5114,6 +5114,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (IBAction)captureNextMetalFrame:(id)sender {
+    if (@available(macOS 10.11, *)) {
+        self.currentSession.view.driver.captureDebugInfoForNextFrame = YES;
+    }
+}
+
 - (IBAction)zoomOut:(id)sender {
     [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
 }
@@ -7228,7 +7234,10 @@ ITERM_WEAKLY_REFERENCEABLE
         result = [[self currentSession] hasSelection];
     } else if ([item action] == @selector(zoomOut:)) {
         return self.currentSession.textViewIsZoomedIn;
+    } else if (item.action == @selector(captureNextMetalFrame:)) {
+        return self.currentSession.useMetal;
     }
+
     return result;
 }
 

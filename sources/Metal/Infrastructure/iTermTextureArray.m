@@ -1,6 +1,7 @@
 #import <AppKit/AppKit.h>
 
 #import "DebugLogging.h"
+#import "iTermTexture.h"
 #import "iTermTextureArray.h"
 #import <CoreImage/CoreImage.h>
 
@@ -44,6 +45,10 @@
         _atlasSize = CGSizeMake(textureDescriptor.width, textureDescriptor.height);
         
         _texture = [device newTextureWithDescriptor:textureDescriptor];
+        _texture.label = @"iTermTextureArray";
+        [iTermTexture setBytesPerRow:_atlasSize.width * 4
+                         rawDataSize:_atlasSize.width * _atlasSize.height * 4
+                          forTexture:_texture];
     }
 
     return self;

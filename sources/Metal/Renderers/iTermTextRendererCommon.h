@@ -29,6 +29,16 @@ typedef struct {
     vector_float4 color;
 } iTermMetalUnderlineDescriptor;
 
+NS_INLINE NSString *iTermMetalUnderlineDescriptorDescription(iTermMetalUnderlineDescriptor *d) {
+    return [NSString stringWithFormat:@"offset=%@, thickness=%@, color=(%@, %@, %@, %@)",
+            @(d->offset),
+            @(d->thickness),
+            @(d->color.x),
+            @(d->color.y),
+            @(d->color.z),
+            @(d->color.w)];
+}
+
 struct iTermMetalBackgroundColorRLE {
     vector_float4 color;
     unsigned short origin;  // Not strictly needed but this is needed to binary search the RLEs
@@ -45,3 +55,12 @@ struct iTermMetalBackgroundColorRLE {
 
 typedef struct iTermMetalBackgroundColorRLE iTermMetalBackgroundColorRLE;
 
+NS_INLINE NSString *iTermMetalBackgroundColorRLEDescription(iTermMetalBackgroundColorRLE *c) {
+    return [NSString stringWithFormat:@"color=(%0.2f, %0.2f, %0.2f, %0.2f) origin=%d count=%d",
+            c->color.x,
+            c->color.y,
+            c->color.z,
+            c->color.w,
+            c->origin,
+            c->count];
+}

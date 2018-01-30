@@ -3,7 +3,12 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
+#import "iTermMetalDebugInfo.h"
 #import "iTermShaderTypes.h"
+#import "iTermTexture.h"
+#import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
+#import <simd/simd.h>
 
 const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
@@ -51,6 +56,15 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return self;
 }
 
+- (NSString *)debugDescription {
+    return [NSString stringWithFormat:@"<%@: %p viewportSize=%@x%@ scale=%@>",
+            NSStringFromClass([self class]),
+            self,
+            @(self.viewportSize.x),
+            @(self.viewportSize.y),
+            @(self.scale)];
+}
+
 @end
 
 @interface iTermMetalRendererTransientState()
@@ -96,12 +110,30 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return @"NA";
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [[_pipelineState debugDescription] writeToURL:[folder URLByAppendingPathComponent:@"PipelineState.txt"]
+                                       atomically:NO
+                                         encoding:NSUTF8StringEncoding
+                                            error:NULL];
+    [[_configuration debugDescription] writeToURL:[folder URLByAppendingPathComponent:@"Configuration.txt"]
+                                       atomically:NO
+                                         encoding:NSUTF8StringEncoding
+                                            error:NULL];
+    NSString *state = [NSString stringWithFormat:@"skip=%@", self.skipRenderer ? @"YES" : @"NO"];
+    [state writeToURL:[folder URLByAppendingPathComponent:@"TransientState.txt"]
+           atomically:NO
+             encoding:NSUTF8StringEncoding
+                error:NULL];
+}
+
 @end
 
 @implementation iTermMetalRenderer {
     NSString *_vertexFunctionName;
     NSMutableDictionary<NSDictionary *, id<MTLRenderPipelineState>> *_pipelineStates;
     iTermMetalBlending *_blending;
+    vector_uint2 _cachedViewportSize;
+    id<MTLBuffer> _cachedViewportSizeBuffer;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -153,6 +185,66 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                             fragmentFunction:fragmentShader];
     }
     return _pipelineStates[key];
+}
+
+#pragma mark - iTermMetalDebugInfoFormatter
+
+- (void)writeVertexBuffer:(id<MTLBuffer>)buffer index:(NSUInteger)index toFolder:(NSURL *)folder {
+    NSString *name = [NSString stringWithFormat:@"vertexBuffer.%@.%@.bin", @(index), buffer.label];
+    if (index == iTermVertexInputIndexVertices) {
+        NSMutableString *s = [NSMutableString string];
+        iTermVertex *v = (iTermVertex *)buffer.contents;
+        for (int i = 0; i < buffer.length / sizeof(iTermVertex); i++) {
+            [s appendFormat:@"position=(%@, %@) textureCoordinate=(%@, %@)\n",
+             @(v[i].position.x),
+             @(v[i].position.y),
+             @(v[i].textureCoordinate.x),
+             @(v[i].textureCoordinate.y)];
+        }
+        [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    } else {
+        NSData *data = [NSData dataWithBytesNoCopy:buffer.contents
+                                            length:buffer.length
+                                      freeWhenDone:NO];
+        [data writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO];
+    }
+
+    if ([_formatterDelegate respondsToSelector:@selector(writeVertexBuffer:index:toFolder:)]) {
+        [_formatterDelegate writeVertexBuffer:buffer index:index toFolder:folder];
+    }
+}
+
+- (void)writeFragmentBuffer:(id<MTLBuffer>)buffer index:(NSUInteger)index toFolder:(NSURL *)folder {
+    NSData *data = [NSData dataWithBytesNoCopy:buffer.contents
+                                        length:buffer.length
+                                  freeWhenDone:NO];
+    NSString *name = [NSString stringWithFormat:@"fragmentBuffer.%@.%@.bin", @(index), buffer.label];
+    [data writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO];
+
+    if ([_formatterDelegate respondsToSelector:@selector(writeFragmentBuffer:index:toFolder:)]) {
+        [_formatterDelegate writeFragmentBuffer:buffer index:index toFolder:folder];
+    }
+}
+
+- (void)writeFragmentTexture:(id<MTLTexture>)texture index:(NSUInteger)index toFolder:(NSURL *)folder {
+    NSUInteger length = [iTermTexture rawDataSizeForTexture:texture];
+    NSMutableData *storage = [NSMutableData dataWithLength:length];
+    [texture getBytes:storage.mutableBytes
+          bytesPerRow:[iTermTexture bytesPerRowForForTexture:texture]
+           fromRegion:MTLRegionMake2D(0, 0, texture.width, texture.height)
+          mipmapLevel:0];
+    NSImage *image = [NSImage imageWithRawData:storage
+                                          size:NSMakeSize(texture.width, texture.height)
+                                 bitsPerSample:8
+                               samplesPerPixel:4
+                                      hasAlpha:YES
+                                colorSpaceName:NSDeviceRGBColorSpace];
+    NSString *name = [NSString stringWithFormat:@"texture.%@.%@.png", @(index), texture.label];
+    [image saveAsPNGTo:[folder URLByAppendingPathComponent:name].path];
+
+    if ([_formatterDelegate respondsToSelector:@selector(writeFragmentTexture:index:toFolder:)]) {
+        [_formatterDelegate writeFragmentTexture:texture index:index toFolder:folder];
+    }
 }
 
 #pragma mark - Protocol Methods
@@ -304,42 +396,65 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     MTLRegion region = MTLRegionMake2D(0, 0, width, height);
     [texture replaceRegion:region mipmapLevel:0 withBytes:rawData bytesPerRow:bytesPerRow];
 
+    [iTermTexture setBytesPerRow:bytesPerRow
+                     rawDataSize:height * width * 4
+                      forTexture:texture];
+
     free(rawData);
 
     return texture;
 }
 
+- (id<MTLBuffer>)vertexBufferForViewportSize:(vector_uint2)viewportSize {
+    if (!simd_equal(viewportSize, _cachedViewportSize)) {
+        _cachedViewportSize = viewportSize;
+        _cachedViewportSizeBuffer = [_device newBufferWithBytes:&viewportSize
+                                                         length:sizeof(viewportSize)
+                                                        options:MTLResourceStorageModeShared];
+    }
+    return _cachedViewportSizeBuffer;
+}
+
 - (void)drawWithTransientState:(iTermMetalRendererTransientState *)tState
-                 renderEncoder:(id <MTLRenderCommandEncoder>)renderEncoder
+                 renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
               numberOfVertices:(NSInteger)numberOfVertices
                   numberOfPIUs:(NSInteger)numberOfPIUs
-                 vertexBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)vertexBuffers
+                 vertexBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)clientVertexBuffers
                fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures {
+    iTermMetalDebugDrawInfo *debugDrawInfo = [tState.debugInfo newDrawWithFormatter:self];
+    debugDrawInfo.name = NSStringFromClass(tState.class);
+
+    debugDrawInfo.renderPipelineState = tState.pipelineState;
     [renderEncoder setRenderPipelineState:tState.pipelineState];
 
+    // Add viewport size to vertex buffers
+    NSDictionary<NSNumber *, id<MTLBuffer>> *vertexBuffers = clientVertexBuffers ?: @{};
+    vertexBuffers =
+        [clientVertexBuffers dictionaryBySettingObject:[self vertexBufferForViewportSize:tState.configuration.viewportSize]
+                                                forKey:@(iTermVertexInputIndexViewportSize)];
+
     [vertexBuffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLBuffer>  _Nonnull obj, BOOL * _Nonnull stop) {
+        [debugDrawInfo setVertexBuffer:obj atIndex:key.unsignedIntegerValue];
         [renderEncoder setVertexBuffer:obj
                                 offset:0
                                atIndex:[key unsignedIntegerValue]];
     }];
 
     [fragmentBuffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLBuffer>  _Nonnull obj, BOOL * _Nonnull stop) {
+        [debugDrawInfo setFragmentBuffer:obj atIndex:key.unsignedIntegerValue];
         [renderEncoder setFragmentBuffer:obj
                                   offset:0
                                  atIndex:[key unsignedIntegerValue]];
     }];
 
-    const vector_uint2 viewportSize = tState.configuration.viewportSize;
-    [renderEncoder setVertexBytes:&viewportSize
-                           length:sizeof(viewportSize)
-                          atIndex:iTermVertexInputIndexViewportSize];
-
     [textures enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLTexture>  _Nonnull obj, BOOL * _Nonnull stop) {
+        [debugDrawInfo setFragmentTexture:obj atIndex:key.unsignedIntegerValue];
         [renderEncoder setFragmentTexture:obj atIndex:[key unsignedIntegerValue]];
     }];
 
 
+    [debugDrawInfo drawWithVertexCount:numberOfVertices instanceCount:numberOfPIUs];
     if (numberOfPIUs > 0) {
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
                           vertexStart:0

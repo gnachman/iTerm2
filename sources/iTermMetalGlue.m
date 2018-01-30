@@ -234,6 +234,11 @@ static NSColor *ColorForVector(vector_float4 v) {
     [self.delegate metalGlueDidDrawFrameAndNeedsRedraw:state.isAnimating];
 }
 
+- (void)metalDriverDidProduceDebugInfo:(nonnull NSData *)archive {
+    [archive writeToFile:@"/tmp/iTerm2-frame-capture.zip" atomically:NO];
+}
+
+
 @end
 
 #pragma mark -
@@ -950,8 +955,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                            faint:NO
                                     isBackground:NO];
         }
-        attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
-        attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
+        if (_cursorInfo.coord.x < width) {
+            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
+            attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
+        }
     }
 }
 

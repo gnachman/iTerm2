@@ -15,6 +15,14 @@ NS_ASSUME_NONNULL_BEGIN
     return _texture == nil;
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    [[NSString stringWithFormat:@"tiled=%@", _tiled ? @"YES" : @"NO"] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+                                                                      atomically:NO
+                                                                        encoding:NSUTF8StringEncoding
+                                                                           error:NULL];
+}
+
 @end
 
 @implementation iTermBackgroundImageRenderer {

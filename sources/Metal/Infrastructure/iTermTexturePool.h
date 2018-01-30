@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Pools textures of a particular size.
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTexturePool : NSObject
 - (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
 - (void)returnTexture:(id<MTLTexture>)texture;

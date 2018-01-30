@@ -37,6 +37,14 @@
                                                 checkIfChanged:YES];
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    [[NSString stringWithFormat:@"row=%@", @(_row)] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+                                                    atomically:NO
+                                                      encoding:NSUTF8StringEncoding
+                                                         error:NULL];
+}
+
 @end
 
 @implementation iTermCursorGuideRenderer {

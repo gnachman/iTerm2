@@ -96,9 +96,11 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
 extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle);
 extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTermPreciseTimerStats *source);
 
+@class iTermCellRenderConfiguration;
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState;
 @class iTermMetalBufferPoolContext;
+@class iTermMetalDebugInfo;
 @class iTermMetalRendererTransientState;
 @class iTermMetalRowData;
 @class MTKView;
@@ -117,9 +119,21 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong, readonly) MTKView *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
-@property (nonatomic, strong) id<CAMetalDrawable> drawable;
+@property (nonatomic, strong) id<CAMetalDrawable> destinationDrawable;
+@property (nonatomic, strong) id<MTLTexture> destinationTexture;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
+@property (nonatomic, strong) MTLRenderPassDescriptor *debugRealRenderPassDescriptor;
 @property (nonatomic, readonly) iTermMetalBufferPoolContext *framePoolContext;
+@property (nonatomic, strong) iTermMetalDebugInfo *debugInfo;
+@property (nonatomic, strong) iTermCellRenderConfiguration *cellConfiguration;
+@property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
+@property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
+
+// When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
+@property (nonatomic) int currentPass;
+
+// For debugging. Gives an order to the log files.
+@property (nonatomic) int numberOfRenderersDrawn;
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture. Invoke createIntermediateRenderPassDescriptor
@@ -141,6 +155,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;
+- (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label;
 
 @end
 

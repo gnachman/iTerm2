@@ -23,6 +23,23 @@ namespace iTerm2 {
     std::vector<iTerm2::Highlight> _highlights;
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+    NSMutableString *s = [NSMutableString string];
+    for (auto h : _highlights) {
+        [s appendFormat:@"color=(%@, %@, %@, %@) row=%@\n",
+         @(h.color.x),
+         @(h.color.y),
+         @(h.color.z),
+         @(h.color.w),
+         @(h.row)];
+    }
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
 - (void)setOpacity:(CGFloat)opacity color:(vector_float3)color row:(int)row {
     iTerm2::Highlight h = {
         .color = simd_make_float4(color.x, color.y, color.z, opacity),
