@@ -81,7 +81,17 @@ BOOL IsSierraOrLater(void) {
     return SystemVersionIsGreaterOrEqualTo(10, 12, 0);
 }
 
+static int haveTouchBar = -1;
+
 BOOL IsTouchBarAvailable(void) {
-    // Checking for OS version doesn't work because there were two different 10.12.1's.
-    return [NSApp respondsToSelector:@selector(setAutomaticCustomizeTouchBarMenuItemEnabled:)];
+    if (haveTouchBar == -1) {
+	    // return NO;
+	    // Checking for OS version doesn't work because there were two different 10.12.1's.
+	    if (NSClassFromString(@"NSTouchBar") != nil) {
+		haveTouchBar = [NSApp respondsToSelector:@selector(setAutomaticCustomizeTouchBarMenuItemEnabled:)];
+	    } else {
+		haveTouchBar = 0;
+	    }
+    }
+    return (BOOL)haveTouchBar;
 }
