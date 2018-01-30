@@ -148,7 +148,8 @@ const float kItermExposeThumbMargin = 25;
         PseudoTerminal* term = [controller terminalAtIndex:i];
         if ([[term window] alphaValue] == 0 && ![term isHotKeyWindow]) {
             if (fade) {
-                [[[term window] animator] setAlphaValue:1];
+                // [[[term window] animator] setAlphaValue:1];
+                [[term window] setAlphaValue:1];
             } else {
                 [[term window] setAlphaValue:1];
             }
@@ -514,7 +515,8 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
         }
         assert(selectedIndex >= 0);
 
-        [[[term window] animator] setAlphaValue:0];
+        // [[[term window] animator] setAlphaValue:0];
+        [[term window] setAlphaValue:0];
     }
     return selectedIndex;
 }

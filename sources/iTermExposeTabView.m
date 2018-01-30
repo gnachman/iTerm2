@@ -106,7 +106,8 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
 - (void)onMouseExit
 {
     highlight_ = NO;
-    [[self animator] setFrame:normalFrame_];
+    // [[self animator] setFrame:normalFrame_];
+    [self setFrame:normalFrame_];
     [self setNeedsDisplay:YES];
 }
 
@@ -126,7 +127,8 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     if (windowIndex_ >= 0 && tabIndex_ >= 0) {
         highlight_ = YES;
         if (!RectsApproxEqual([self frame], fullSizeFrame_)) {
-            [[self animator] setFrame:fullSizeFrame_];
+            // [[self animator] setFrame:fullSizeFrame_];
+            [self setFrame:fullSizeFrame_];
         }
 
         [self moveToTop];

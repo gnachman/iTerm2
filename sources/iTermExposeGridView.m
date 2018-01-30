@@ -42,8 +42,9 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
         NSRect visibleScreenFrame = [theScreen visibleFrame];
         //NSLog(@"Screen origin is %lf, %lf", screenFrame.origin.x, screenFrame.origin.y);
         frames_ = frames;
-        [self setAlphaValue:0];
-        [[self animator] setAlphaValue:1];
+        // [self setAlphaValue:0];
+        // [[self animator] setAlphaValue:1];
+        [self setAlphaValue:1];
         const int n = [images count];
 
         iTermExposeTabView* selectedView = nil;
@@ -125,7 +126,8 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     int i = 0;
     for (iTermExposeTabView* tabView in [self subviews]) {
         if ([tabView isKindOfClass:[iTermExposeTabView class]]) {
-            [[tabView animator] setFrame:frames[i]];
+            // [[tabView animator] setFrame:frames[i]];
+            [tabView setFrame:frames[i]];
             //NSLog(@"setFrames: Set rect of tabview %@ to %@", [tabView label], FormatRect(frames[i]));
             [tabView setNormalFrame:frames[i]];
             NSRect zoomedFrame = [self zoomedFrame:frames[i]
@@ -255,7 +257,8 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
                                                              wasMaximized:wasMaximized];
     [self addSubview:aView];
     [aView release];
-    [[aView animator] setFrame:dest];
+    // [[aView animator] setFrame:dest];
+    [aView setFrame:dest];
     [self performSelector:@selector(viewIsReady:)
                withObject:aView
                afterDelay:[[NSAnimationContext currentContext] duration]];
@@ -302,13 +305,15 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     [theView moveToTop];
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
-            [[aView animator] setFrame:[aView originalFrame]];
+            [aView setFrame:[aView originalFrame]];
+            // [[aView animator] setFrame:[aView originalFrame]];
         }
     }
     if (theView) {
         [[theView tabObject] setActiveSession:theSession];
     }
-    [[self animator] setAlphaValue:0];
+    // [[self animator] setAlphaValue:0];
+    [self setAlphaValue:0];
     [self performSelector:@selector(bringTabToFore:)
                withObject:theView
                afterDelay:[[NSAnimationContext currentContext] duration]];
@@ -353,12 +358,15 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 {
     //NSLog(@"mouseExited:%p", focused_);
     [focused_ onMouseExit];
+#if 0
     for (iTermExposeTabView* aView in [self subviews]) {
         if (aView != focused_ &&
             [aView isKindOfClass:[iTermExposeTabView class]]) {
-            [[aView animator] setAlphaValue:1];
+            [aView setAlphaValue:1];
+            // [[aView animator] setAlphaValue:1];
         }
     }
+#endif
     focused_ = nil;
 }
 
@@ -368,12 +376,15 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
         focused_ = [event userData];
         //NSLog(@"mouseEntered:%p", focused_);
         [focused_ onMouseEnter];
+#if 0
         for (iTermExposeTabView* aView in [self subviews]) {
             if (aView != focused_ &&
                 [aView isKindOfClass:[iTermExposeTabView class]]) {
-                [[aView animator] setAlphaValue:0.8];
+                // [[aView animator] setAlphaValue:0.8];
+                [aView setAlphaValue:0.8];
             }
         }
+#endif
     }
 }
 
