@@ -189,6 +189,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     if (!IsTouchBarAvailable()) {
         return nil;
     }
+    // This seems to leak according to Instruments
     NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
     NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarFunctionKeysScrollView] autorelease];
     item.view = scrollView;

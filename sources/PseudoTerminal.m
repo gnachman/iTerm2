@@ -5694,16 +5694,20 @@ return NO;
 }
 
 - (void)tabActiveSessionDidChange {
+#if 0
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
     [[_contentView.toolbelt commandHistoryView] updateCommands];
+#endif
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+#if 0
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
     }
+#endif
     [self updateTouchBarIfNeeded];
-    [self updateCurrentLocation];
+   // [self updateCurrentLocation];
 }
 
 - (void)fitWindowToTabs {
