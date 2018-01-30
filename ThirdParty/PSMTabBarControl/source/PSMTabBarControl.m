@@ -989,13 +989,13 @@ const NSInteger kPSMStartResizeAnimation = 0;
     // Set up overflow menu.
     NSMenu *overflowMenu = [self _setupCells:newValues];
 
-return;
     if (overflowMenu) {
         [self _setupOverflowMenu:overflowMenu];
     }
 
     [_overflowPopUpButton setHidden:(overflowMenu == nil)];
 
+#if 0
     // Set up add tab button.
     if (!overflowMenu && _showAddTabButton) {
         NSRect cellRect = [self genericCellRect];
@@ -1013,6 +1013,7 @@ return;
     } else {
         [_addTabButton setHidden:YES];
     }
+#endif
 }
 
 - (NSMenu *)_setupCells:(NSArray *)newValues {

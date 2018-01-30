@@ -28,8 +28,8 @@
 - (instancetype)init {
     self = [super initWithWindowNibName:@"AboutWindow"];
     if (self) {
-        NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
 #if 0
+        NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
         NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n",
                                    myDict[(NSString *)kCFBundleVersionKey]];
 #endif

@@ -29,7 +29,6 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermOpenQuicklyWindow.h"
-#import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
@@ -149,7 +148,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 @interface PseudoTerminal () <
     iTermTabBarControlViewDelegate,
-    iTermPasswordManagerDelegate,
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
@@ -364,8 +362,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     // Used to prevent infinite re-entrancy in windowDidChangeScreen:.
     BOOL _inWindowDidChangeScreen;
-
-    iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Keeps the touch bar from updating on every keypress which is distracting.
     iTermRateLimitedUpdate *_touchBarRateLimitedUpdate;
@@ -852,7 +848,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_desiredTitle release];
     [_tabsTouchBarItem release];
     [_autocompleteCandidateListItem release];
-    [_passwordManagerWindowController release];
     [_touchBarRateLimitedUpdate invalidate];
     [_touchBarRateLimitedUpdate release];
     [_previousTouchBarWord release];
@@ -4851,6 +4846,8 @@ return NO;
 
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
+#if 0
+
     DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
     if (_passwordManagerWindowController != nil) {
         DLog(@"Password manager sheet already open");
@@ -4862,7 +4859,8 @@ return NO;
      [_passwordManagerWindowController autorelease];
      _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
     _passwordManagerWindowController.delegate = self;
-     BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
+    
+    BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
      if (noAnimations) {
         [CATransaction begin];
         [CATransaction setValue:@YES
@@ -4886,6 +4884,8 @@ return NO;
     }
 
     [_passwordManagerWindowController selectAccountName:name];
+#endif
+
 }
 
 - (void)genericCloseSheet:(NSWindow *)sheet

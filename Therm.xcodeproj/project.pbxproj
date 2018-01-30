@@ -699,7 +699,6 @@
 		1D6ED89F19AEA20D005A7799 /* CGSTransitions.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6F0E748404000EC682 /* CGSTransitions.h */; };
 		1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F700E748404000EC682 /* CGSWindow.h */; };
 		1D6ED8A119AEA20D005A7799 /* CGSWorkspace.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F710E748404000EC682 /* CGSWorkspace.h */; };
-		1D6ED8A219AEA20D005A7799 /* iTermPasswordManagerWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */; };
 		1D6ED8A319AEA20D005A7799 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D6ED8A419AEA20D005A7799 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
 		1D6ED8A519AEA20D005A7799 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
@@ -1158,7 +1157,6 @@
 		1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */; };
 		1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
 		1DF8FEF318F3217100722B35 /* KeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */; };
-		1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */; };
 		1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1DFA9D5E18F36DC3008ADC98 /* iTermKeyMappingViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */; };
@@ -2014,7 +2012,6 @@
 		A6C763311B45C52B00E3C992 /* iTermAnnouncementViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */; };
 		A6C763321B45C52B00E3C992 /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		A6C763331B45C52B00E3C992 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
-		A6C763341B45C52B00E3C992 /* iTermPasswordManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */; };
 		A6C763351B45C52B00E3C992 /* iTermPasteSpecialViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */; };
 		A6C763361B45C52B00E3C992 /* iTermPasteSpecialWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */; };
 		A6C763371B45C52B00E3C992 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */; };
@@ -2938,8 +2935,6 @@
 		1DF8AF5713FD781700C8A435 /* SplitPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SplitPanel.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = KeysPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = KeysPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasswordManagerWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
-		1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasswordManagerWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA7C9D1923F77100DF1410 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyMappingViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyMappingViewController.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -4169,7 +4164,6 @@
 				A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */,
 				A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */,
 				A6DF7B711A5BA33900D96409 /* iTermParser.h */,
-				1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */,
 				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
 				A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */,
 				A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */,
@@ -5589,7 +5583,6 @@
 				A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */,
 				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
 				A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */,
-				1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */,
 				A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */,
 				A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */,
 				A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */,
@@ -6018,7 +6011,6 @@
 				1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */,
 				A67F57D51B11882900B4F135 /* CapturedOutput.h in Headers */,
 				1D6ED8A119AEA20D005A7799 /* CGSWorkspace.h in Headers */,
-				1D6ED8A219AEA20D005A7799 /* iTermPasswordManagerWindowController.h in Headers */,
 				1D6ED8A319AEA20D005A7799 /* LineBuffer.h in Headers */,
 				1D6ED8A419AEA20D005A7799 /* iTermApplicationDelegate.h in Headers */,
 				A65B726E1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */,
@@ -6345,7 +6337,6 @@
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
 				1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */,
-				1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */,
 				1D72439011F416F300BD4924 /* LineBuffer.h in Headers */,
 				874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */,
 				DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */,
@@ -8266,7 +8257,6 @@
 				A667F3941B4CC8BA00705186 /* iTermBadgeLabel.m in Sources */,
 				A6C762BE1B45C52B00E3C992 /* NSPopUpButton+iTerm.m in Sources */,
 				A6C762AA1B45C52B00E3C992 /* PTYWindow+Scripting.m in Sources */,
-				A6C763341B45C52B00E3C992 /* iTermPasswordManagerWindowController.m in Sources */,
 				A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */,
 				A6C763571B45C52B00E3C992 /* iTermOpenQuicklyTextField.m in Sources */,
 				A6C763B81B45C52B00E3C992 /* iTermTip.m in Sources */,

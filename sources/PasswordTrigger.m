@@ -8,7 +8,6 @@
 
 #import "PasswordTrigger.h"
 #import "iTermApplicationDelegate.h"
-#import "iTermPasswordManagerWindowController.h"
 
 @interface PasswordTrigger ()
 @property(nonatomic, copy) NSArray *accountNames;
@@ -34,11 +33,13 @@
 }
 
 - (void)reloadData {
+#if 0
     [_accountNames release];
     _accountNames = [[iTermPasswordManagerWindowController accountNamesWithFilter:nil] copy];
     if (!_accountNames.count) {
         _accountNames = [@[ @"" ] copy];
     }
+#endif
 }
 
 - (NSString *)paramPlaceholder {
@@ -89,10 +90,12 @@
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
+#if 0
     iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
     [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:capturedStrings
                                                                                          count:captureCount]
                                      inSession:aSession];
+#endif
     return YES;
 }
 

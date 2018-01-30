@@ -54,7 +54,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
-#import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
@@ -133,7 +132,7 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 
-@interface iTermApplicationDelegate () <iTermAPIServerDelegate, iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <iTermAPIServerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -141,7 +140,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 
 @implementation iTermApplicationDelegate {
-    iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Menu items
     IBOutlet NSMenu *bookmarkMenu;
@@ -399,6 +397,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
+#if 0
     id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
     if (session) {
         term = session.delegate.realParentWindow;
@@ -415,6 +414,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
         [_passwordManagerWindowController selectAccountName:name];
     }
+#endif
 }
 
 - (BOOL)warnBeforeMultiLinePaste {
@@ -2261,7 +2261,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)currentSessionDidChange {
-    [_passwordManagerWindowController update];
+  //  [_passwordManagerWindowController update];
     PseudoTerminal *currentWindow = [[iTermController sharedInstance] currentTerminal];
     iTermQuickLookController *quickLookController = currentWindow.currentSession.quickLookController;
     if (quickLookController) {
