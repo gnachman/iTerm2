@@ -125,9 +125,9 @@
     [layoutManager addTextContainer:textContainer];
     NSDictionary *attributes = @{ NSFontNameAttribute: font_,
                                   NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
-    NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
-    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
-    [textStorage addLayoutManager:layoutManager];
+    // NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
+    // NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
+    // [textStorage addLayoutManager:layoutManager];
     
     NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];
     return [[layoutManager typesetter] baselineOffsetInLayoutManager:layoutManager
