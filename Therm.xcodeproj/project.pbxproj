@@ -734,10 +734,7 @@
 		1D6ED8C219AEA20D005A7799 /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
 		1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
-		1D6ED8C519AEA20D005A7799 /* UKCrashReporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAA512D64022008225A9 /* UKCrashReporter.h */; };
-		1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAA912D64022008225A9 /* UKNibOwner.h */; };
 		1D6ED8C819AEA20D005A7799 /* iTermShellHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* iTermShellHistoryController.h */; };
-		1D6ED8C919AEA20D005A7799 /* UKSystemInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAAB12D64022008225A9 /* UKSystemInfo.h */; };
 		1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
 		1D6ED8CB19AEA20D005A7799 /* ProfilesColorsPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */; };
 		1D6ED8CC19AEA20D005A7799 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
@@ -925,9 +922,6 @@
 		1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
 		1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
-		1D6ED9AD19AEA20D005A7799 /* UKCrashReporter Readme.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1D94EAA412D64022008225A9 /* UKCrashReporter Readme.txt */; };
-		1D6ED9AE19AEA20D005A7799 /* UKCrashReporter.nib in Resources */ = {isa = PBXBuildFile; fileRef = 1D94EAA712D64022008225A9 /* UKCrashReporter.nib */; };
-		1D6ED9AF19AEA20D005A7799 /* UKCrashReporter.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1D94EAA812D64022008225A9 /* UKCrashReporter.strings */; };
 		1D6ED9B519AEA20D005A7799 /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
 		1D6ED9B819AEA20D005A7799 /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
 		1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
@@ -1029,12 +1023,6 @@
 		1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D3491269746F007F741B /* DVRIndexEntry.h */; };
 		1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D34D126974BC007F741B /* DVRDecoder.h */; };
 		1D93D35312697529007F741B /* DVREncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D35112697529007F741B /* DVREncoder.h */; };
-		1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1D94EAA412D64022008225A9 /* UKCrashReporter Readme.txt */; };
-		1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAA512D64022008225A9 /* UKCrashReporter.h */; };
-		1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */ = {isa = PBXBuildFile; fileRef = 1D94EAA712D64022008225A9 /* UKCrashReporter.nib */; };
-		1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1D94EAA812D64022008225A9 /* UKCrashReporter.strings */; };
-		1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAA912D64022008225A9 /* UKNibOwner.h */; };
-		1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAAB12D64022008225A9 /* UKSystemInfo.h */; };
 		1D988597135D23BD0072023F /* ProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D988595135D23BD0072023F /* ProcessCache.h */; };
 		1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E21BD59C37001EE1FC /* SearchCursor.png */; };
 		1D99C8E51BD59C37001EE1FC /* SearchCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D99C8E21BD59C37001EE1FC /* SearchCursor.png */; };
@@ -2196,9 +2184,6 @@
 		A6C763E41B45C6F100E3C992 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
 		A6C763E51B45C70100E3C992 /* SCEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012419D0864C004AF81C /* SCEvent.m */; };
 		A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
-		A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAA612D64022008225A9 /* UKCrashReporter.m */; };
-		A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAA12D64022008225A9 /* UKNibOwner.m */; };
-		A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAC12D64022008225A9 /* UKSystemInfo.m */; };
 		A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5521180FA46100B42CE9 /* iTermTests.m */; };
 		A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
@@ -2791,15 +2776,6 @@
 		1D93D35212697529007F741B /* DVREncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DVREncoder.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D93D3591269778C007F741B /* DVRBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DVRBuffer.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D93D3B012697D53007F741B /* DVRIndexEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DVRIndexEntry.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D94EAA412D64022008225A9 /* UKCrashReporter Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "UKCrashReporter Readme.txt"; sourceTree = "<group>"; };
-		1D94EAA512D64022008225A9 /* UKCrashReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UKCrashReporter.h; sourceTree = "<group>"; };
-		1D94EAA612D64022008225A9 /* UKCrashReporter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UKCrashReporter.m; sourceTree = "<group>"; };
-		1D94EAA712D64022008225A9 /* UKCrashReporter.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = UKCrashReporter.nib; sourceTree = "<group>"; };
-		1D94EAA812D64022008225A9 /* UKCrashReporter.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; path = UKCrashReporter.strings; sourceTree = "<group>"; };
-		1D94EAA912D64022008225A9 /* UKNibOwner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UKNibOwner.h; sourceTree = "<group>"; };
-		1D94EAAA12D64022008225A9 /* UKNibOwner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UKNibOwner.m; sourceTree = "<group>"; };
-		1D94EAAB12D64022008225A9 /* UKSystemInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UKSystemInfo.h; sourceTree = "<group>"; };
-		1D94EAAC12D64022008225A9 /* UKSystemInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UKSystemInfo.m; sourceTree = "<group>"; };
 		1D988595135D23BD0072023F /* ProcessCache.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProcessCache.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D988596135D23BD0072023F /* ProcessCache.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessCache.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D99C8E21BD59C37001EE1FC /* SearchCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SearchCursor.png; path = images/SearchCursor.png; sourceTree = "<group>"; };
@@ -4494,7 +4470,6 @@
 				DD02571D09CB9363008F320C /* PSMTabBarControl */,
 				1D85D1C41306687700A3E998 /* RegexKitLite */,
 				A663012119D08638004AF81C /* SCEvents */,
-				1D94EAA312D64022008225A9 /* UKCrashReporter */,
 			);
 			name = ThirdParty;
 			path = ThirdParty/;
@@ -4813,22 +4788,6 @@
 				1D85D1DA1306687700A3E998 /* RegexKitLite.m */,
 			);
 			path = RegexKitLite;
-			sourceTree = "<group>";
-		};
-		1D94EAA312D64022008225A9 /* UKCrashReporter */ = {
-			isa = PBXGroup;
-			children = (
-				1D94EAA512D64022008225A9 /* UKCrashReporter.h */,
-				1D94EAA912D64022008225A9 /* UKNibOwner.h */,
-				1D94EAAB12D64022008225A9 /* UKSystemInfo.h */,
-				1D94EAA612D64022008225A9 /* UKCrashReporter.m */,
-				1D94EAAA12D64022008225A9 /* UKNibOwner.m */,
-				1D94EAAC12D64022008225A9 /* UKSystemInfo.m */,
-				1D94EAA712D64022008225A9 /* UKCrashReporter.nib */,
-				1D94EAA812D64022008225A9 /* UKCrashReporter.strings */,
-				1D94EAA412D64022008225A9 /* UKCrashReporter Readme.txt */,
-			);
-			path = UKCrashReporter;
 			sourceTree = "<group>";
 		};
 		1D9DDE2D142E730700275650 /* Triggers */ = {
@@ -6097,14 +6056,11 @@
 				1D6ED8C219AEA20D005A7799 /* PTYTab.h in Headers */,
 				1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */,
 				1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */,
-				1D6ED8C519AEA20D005A7799 /* UKCrashReporter.h in Headers */,
 				A6E77FB21A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */,
 				A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */,
-				1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */,
 				1D468F051B06A79000226083 /* StopTrigger.h in Headers */,
 				1D6ED8C819AEA20D005A7799 /* iTermShellHistoryController.h in Headers */,
-				1D6ED8C919AEA20D005A7799 /* UKSystemInfo.h in Headers */,
 				1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */,
 				1D6ED8CB19AEA20D005A7799 /* ProfilesColorsPreferencesViewController.h in Headers */,
 				1D6ED8CC19AEA20D005A7799 /* iTermPasteHelper.h in Headers */,
@@ -6438,12 +6394,9 @@
 				1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */,
 				1D2E813112A18F7500F3D71E /* SessionView.h in Headers */,
 				1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */,
-				1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */,
 				A6E77FB11A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */,
 				A6E77F811A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
-				1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */,
 				A6057C0E187BC4C3004A60AF /* iTermShellHistoryController.h in Headers */,
-				1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */,
 				A6E525DF1A9C5730007B898E /* VT100StateTransition.h in Headers */,
 				A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */,
 				A6E713BF18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h in Headers */,
@@ -7134,9 +7087,6 @@
 				A6B3A73D1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */,
 				1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */,
-				1D6ED9AD19AEA20D005A7799 /* UKCrashReporter Readme.txt in Resources */,
-				1D6ED9AE19AEA20D005A7799 /* UKCrashReporter.nib in Resources */,
-				1D6ED9AF19AEA20D005A7799 /* UKCrashReporter.strings in Resources */,
 				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				A65B72AB1B3285A300F947A7 /* DisableTips.png in Resources */,
@@ -7703,11 +7653,8 @@
 				1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */,
 				1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */,
 				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
-				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
-				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
-				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				A6374A211DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png in Resources */,
 				A6EFF2381D20F6BE00806EEF /* EraseDarkBackground@2x.png in Resources */,
@@ -8255,7 +8202,6 @@
 				539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */,
 				A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */,
 				A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */,
-				A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */,
 				A6CEC0751DCE80C9009F4FD2 /* Duration.pbobjc.m in Sources */,
 				A6CEC10A1DCE8146009F4FD2 /* GPBDescriptor.m in Sources */,
 				A6CEC0771DCE80C9009F4FD2 /* Empty.pbobjc.m in Sources */,
@@ -8443,7 +8389,6 @@
 				A6C7638C1B45C52B00E3C992 /* ProfileTableView.m in Sources */,
 				A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */,
 				A6C763291B45C52B00E3C992 /* PTYFontInfo.m in Sources */,
-				A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */,
 				A60BB3811EB51D0E00D76C09 /* iTermCopyModeState.m in Sources */,
 				A6C763B31B45C52B00E3C992 /* PasswordTrigger.m in Sources */,
 				A6C763531B45C52B00E3C992 /* iTermOpenQuicklyModel.m in Sources */,
@@ -8489,7 +8434,6 @@
 				A6C763A61B45C52B00E3C992 /* ToolJobs.m in Sources */,
 				A6C763C01B45C52B00E3C992 /* VT100ControlParser.m in Sources */,
 				A6C763B41B45C52B00E3C992 /* ScriptTrigger.m in Sources */,
-				A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */,
 				A6C7633E1B45C52B00E3C992 /* iTermAboutWindow.m in Sources */,
 				A6C7636F1B45C52B00E3C992 /* iTermPreferencesBaseViewController.m in Sources */,
 				A6FEA2691CF2C83700376F28 /* iTermPreviousState.m in Sources */,
