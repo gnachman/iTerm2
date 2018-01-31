@@ -4749,7 +4749,17 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
+    static dispatch_once_t onceToken;
+    static BOOL machineSupportsMetal;
+    if (@available(macOS 10.11, *)) {
+        dispatch_once(&onceToken, ^{
+            NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+            machineSupportsMetal = devices.count > 0;
+            [devices release];
+        });
+    }
     return ([iTermAdvancedSettingsModel useMetal] &&
+            machineSupportsMetal &&
             _textview.transparencyAlpha == 1 &&
             ![iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:self.profile] &&
             ![iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:self.profile] &&
