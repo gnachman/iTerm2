@@ -74,15 +74,14 @@ restart:
 
 canary:
 	cp canary-Therm.plist Therm.plist
-	make Deployment
+	$(MAKE) Deployment
 	./canary.sh
 
 release:
 	cp plists/release-Therm.plist plists/Therm.plist
-	make Deployment
+	$(MAKE) Deployment
 
 preview:
 	cp plists/preview-Therm.plist plists/Therm.plist
-	make Deployment
-
+	$(MAKE) Deployment
 force:
