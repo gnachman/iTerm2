@@ -263,29 +263,8 @@ static const int kMaxScreenRows = 4096;
 }
 - (void)setTermType:(NSString *)termtype
 {
-    static char *myterm = NULL;
-
-    self.allowKeypadMode = [termtype rangeOfString:@"xterm"].location != NSNotFound;
-    int r;
-
-    // NOTE: This seems to cause a memory leak. The setter for termTypeIsValid (below) has the
-    // side effect of copying various curses strings, and it depends on this. When I redo output,
-    // fix this disaster.
-    const char *t = [termtype UTF8String];
-    if (t) {
-        free (myterm);
-        myterm = strdup (t);
-    }
-    setupterm(myterm, fileno(stdout), &r);
-    if (r != 1) {
-        NSLog(@"Terminal type %s is not defined.", t);
-    }
-    _output.termTypeIsValid = (r == 1);
-
-    self.isAnsi = [termtype rangeOfString:@"ANSI"
-                                   options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
-    [delegate_ terminalTypeDidChange];
-    [termtype autorelease];
+    // Completely unnecessary, the user can control this from the shell.
+    return;
 }
 
 - (void)setAnswerBackString:(NSString *)s {
