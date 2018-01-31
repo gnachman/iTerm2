@@ -291,13 +291,18 @@ static NSColor *ColorForVector(vector_float4 v) {
 - (void)loadMetricsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                             textView:(PTYTextView *)textView
                               screen:(VT100Screen *)screen {
+    _gridSize = VT100GridSizeMake(textView.dataSource.width,
+                                  textView.dataSource.height);
     _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
+
     _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
+    _visibleRange.start.x = MAX(0, _visibleRange.start.x);
+    _visibleRange.start.y = MAX(0, _visibleRange.start.y);
+    _visibleRange.end.x = _visibleRange.start.x + _gridSize.width;
+    _visibleRange.end.y = _visibleRange.start.y + _gridSize.height;
     const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
     _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
-    _gridSize = VT100GridSizeMake(textView.dataSource.width,
-                                  textView.dataSource.height);
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -405,7 +410,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     if ([self shouldDrawCursor] &&
         _cursorVisible &&
         _visibleRange.start.y <= lineWithCursor &&
-        lineWithCursor + 1 < _visibleRange.end.y) {
+        lineWithCursor < _visibleRange.end.y) {
         _cursorInfo.cursorVisible = YES;
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
