@@ -76,7 +76,6 @@
 #import "NSStringITerm.h"
 #import "NSWindow+iTerm.h"
 #import "NSView+RecursiveDescription.h"
-#import "PFMoveApplication.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
@@ -916,9 +915,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
 
-#if !DEBUG
-    PFMoveToApplicationsFolderIfNecessary();
-#endif
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
