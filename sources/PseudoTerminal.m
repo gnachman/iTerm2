@@ -1622,10 +1622,15 @@ return NO;
 - (void)setWindowTitle {
     if (self.isShowingTransientTitle) {
         PTYSession *session = self.currentSession;
-        NSString *aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d",
-                            [self currentSessionName],
-                            [session columns],
-                            [session rows]];
+        NSString *aTitle;
+        if (self.window.frame.size.width < 250) {
+            aTitle = [NSString stringWithFormat:@"%d✕%d", session.columns, session.rows];
+        } else {
+            aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d",
+                      [self currentSessionName],
+                      [session columns],
+                      [session rows]];
+        }
         [self setWindowTitle:aTitle];
     } else {
         [self setWindowTitle:[self currentSessionName]];
