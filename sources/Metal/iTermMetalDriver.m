@@ -450,6 +450,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                              width:_columns
                                     drawableGlyphs:&drawableGlyphs
                                               date:&date];
+        rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
