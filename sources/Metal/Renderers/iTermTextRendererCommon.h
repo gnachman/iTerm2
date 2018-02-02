@@ -52,6 +52,11 @@ struct iTermMetalBackgroundColorRLE {
     }
 #endif
 };
+#if __cplusplus
+inline bool operator<(const int &origin, const iTermMetalBackgroundColorRLE &other) {
+    return origin < other.origin;
+}
+#endif
 
 typedef struct iTermMetalBackgroundColorRLE iTermMetalBackgroundColorRLE;
 

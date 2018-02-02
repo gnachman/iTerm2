@@ -308,9 +308,17 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                 const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.mutableBytes;
                 // find RLE for index fixup.x
                 const int rleCount = data.length / sizeof(iTermMetalBackgroundColorRLE);
-                const iTermMetalBackgroundColorRLE &rle = *std::lower_bound(backgroundRLEs,
-                                                                            backgroundRLEs + rleCount,
-                                                                            static_cast<unsigned short>(fixup.x));
+                // Use upper bound. Consider the following:
+                // Origins          0         10         20         end()
+                // Lower bounds     0         1...10     11...20    21...inf
+                // Upper bounds               0...9      10...19    20...inf
+                //
+                // Upper bound always gives you one past what you wanted. Lower bound is not consistent.
+                auto it = std::upper_bound(backgroundRLEs,
+                                           backgroundRLEs + rleCount,
+                                           static_cast<unsigned short>(fixup.x));
+                it--;
+                const iTermMetalBackgroundColorRLE &rle = *it;
                 piu.backgroundColor = rle.color;
                 if (_colorModels) {
                     piu.colorModelIndex = GetColorModelIndexForPIU(self, &piu);
