@@ -1032,7 +1032,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
-    [tState setColor:frameData.perFrameState.defaultBackgroundColor];
+    [tState setColor:frameData.perFrameState.processedDefaultBackgroundColor];
 }
 
 - (void)populateImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {

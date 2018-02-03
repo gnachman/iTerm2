@@ -132,7 +132,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSColor *_cursorGuideColor;
     NSMutableArray<iTermIndicatorDescriptor *> *_indicators;
     vector_float4 _fullScreenFlashColor;
-    NSColor *_defaultBackgroundColor;
+    NSColor *_processedDefaultBackgroundColor;  // dimmed, etc.
     BOOL _timestampsEnabled;
     long long _firstVisibleAbsoluteLineNumber;
     long long _lastVisibleAbsoluteLineNumber;
@@ -328,7 +328,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     _asciiAntialias = drawingHelper.asciiAntiAlias;
     _nonasciiAntialias = drawingHelper.nonAsciiAntiAlias;
     _showBroadcastStripes = drawingHelper.showStripes;
-    _defaultBackgroundColor = [drawingHelper defaultBackgroundColor];
+    _processedDefaultBackgroundColor = [drawingHelper defaultBackgroundColor];
     _timestampsEnabled = drawingHelper.showTimestamps;
     _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
     _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
@@ -679,7 +679,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (NSColor *)timestampsBackgroundColor {
     assert(_timestampsEnabled);
-    return _defaultBackgroundColor;
+    return _processedDefaultBackgroundColor;
 }
 
 - (void)enumerateIndicatorsInFrame:(NSRect)frame block:(void (^)(iTermIndicatorDescriptor * _Nonnull))block {
@@ -750,6 +750,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             1);
 }
 
+- (vector_float4)processedDefaultBackgroundColor {
+    return simd_make_float4((float)_processedDefaultBackgroundColor.redComponent,
+                            (float)_processedDefaultBackgroundColor.greenComponent,
+                            (float)_processedDefaultBackgroundColor.blueComponent,
+                            1);
+
+}
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;
