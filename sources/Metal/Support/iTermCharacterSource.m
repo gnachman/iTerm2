@@ -256,8 +256,6 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 - (void)drawWithOffset:(CGPoint)offset {
     CFArrayRef runs = CTLineGetGlyphRuns(_lineRef);
     CGContextSetShouldAntialias(_cgContext, _antialiased);
-    CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
-    CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
 
     const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
 
@@ -308,6 +306,8 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
             [self initializeTextMatrixInContext:_cgContext
                                        withSkew:skew
                                          offset:offset];
+            CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
+            CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
         }
 
         if (_isEmoji) {
