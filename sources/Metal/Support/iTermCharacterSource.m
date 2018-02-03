@@ -43,6 +43,9 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
     BOOL _haveDrawn;
     CGImageRef _imageRef;
     NSArray<NSNumber *> *_parts;
+
+    // If true then _isEmoji is valid.
+    BOOL _haveTestedForEmoji;
 }
 
 + (CGColorSpaceRef)colorSpace {
@@ -108,7 +111,6 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
         _attributedString = [[NSAttributedString alloc] initWithString:string attributes:self.attributes];
         _lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedString);
         _cgContext = [iTermCharacterSource newBitmapContextOfSize:_size];
-        _emoji = [string startsWithEmoji];
         _antialiased = antialiased;
     }
     return self;
@@ -252,8 +254,6 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 #pragma mark Drawing
 
 - (void)drawWithOffset:(CGPoint)offset {
-    [self fillBackground];
-
     CFArrayRef runs = CTLineGetGlyphRuns(_lineRef);
     CGContextSetShouldAntialias(_cgContext, _antialiased);
     CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
@@ -277,7 +277,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 }
 
 - (void)fillBackground {
-    if (self.emoji) {
+    if (_isEmoji) {
         CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 0);
     } else {
         CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 1);
@@ -286,9 +286,6 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 }
 
 - (void)drawRuns:(CFArrayRef)runs atOffset:(CGPoint)offset skew:(CGFloat)skew {
-    [self initializeTextMatrixInContext:_cgContext
-                               withSkew:skew
-                                 offset:offset];
 
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -297,7 +294,23 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
         CGPoint *positions = [self positionsInRun:run length:length];
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
 
-        if (_emoji) {
+        if (!_haveTestedForEmoji) {
+            // About to render the first glyph, emoji or not, for this string.
+            // This is our chance to discover if it's emoji. Chrome does the
+            // same trick.
+            _haveTestedForEmoji = YES;
+            NSString *fontName = CFBridgingRelease(CTFontCopyFamilyName(runFont));
+            _isEmoji = [fontName isEqualToString:@"AppleColorEmoji"];
+
+            // Now that we know we can do the setup operations that depend on
+            // knowing if it's emoji.
+            [self fillBackground];
+            [self initializeTextMatrixInContext:_cgContext
+                                       withSkew:skew
+                                         offset:offset];
+        }
+
+        if (_isEmoji) {
             [self drawEmojiWithFont:runFont offset:offset buffer:buffer positions:positions length:length];
         } else {
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContext);
@@ -342,7 +355,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 - (void)initializeTextMatrixInContext:(CGContextRef)cgContext
                              withSkew:(CGFloat)skew
                                offset:(CGPoint)offset {
-    if (!_emoji) {
+    if (!_isEmoji) {
         // Can't use this with emoji.
         CGAffineTransform textMatrix = CGAffineTransformMake(_scale, 0.0,
                                                              skew, _scale,

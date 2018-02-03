@@ -11,7 +11,7 @@
 
 @interface iTermCharacterSource : NSObject
 
-@property (nonatomic, readonly) BOOL emoji;
+@property (nonatomic, readonly) BOOL isEmoji;
 @property (nonatomic, readonly) CGRect frame;
 @property (nonatomic, readonly) NSArray<NSNumber *> *parts;
 

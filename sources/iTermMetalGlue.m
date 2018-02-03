@@ -1198,7 +1198,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         result[partNumber] = [characterSource bitmapForPart:part];
     }];
     if (emoji) {
-        *emoji = characterSource.emoji;
+        *emoji = characterSource.isEmoji;
     }
     return result;
 }
