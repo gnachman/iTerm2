@@ -146,7 +146,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         // vertex buffers are slow to create.
         const NSInteger memoryBudget = 1024 * 1024 * 100;
         const NSInteger maxInstances = memoryBudget / sizeof(iTermTextPIU);
-        const size_t capacity = iTerm2::PIUArray<iTermTextPIU>::default_capacity();
+        const size_t capacity = iTerm2::PIUArray<iTermTextPIU>::DEFAULT_CAPACITY;
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                 capacity:(maxInstances / capacity) * iTermMetalDriverMaximumNumberOfFramesInFlight
                                                                     name:@"text PIU"];

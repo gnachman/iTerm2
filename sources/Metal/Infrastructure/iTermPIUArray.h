@@ -14,14 +14,9 @@ namespace iTerm2 {
     class PIUArray {
     public:
         // Maximum number of PIUs in one segment.
-        static size_t default_capacity() {
-            // For some insane reason, some people's machines balk at more than 64k of PIUs.
-            // See issue 6453, where affected people got a broken character at the 586th position.
-            // At the time, sizeof(iTermTextPIU)=112, and 586*112=65,632.
-            return MIN(65535 / sizeof(T), 1024);
-        }
+        const static size_t DEFAULT_CAPACITY = 1024;
 
-        PIUArray() : _capacity(PIUArray<T>::default_capacity()), _size(0) {
+        PIUArray() : _capacity(DEFAULT_CAPACITY), _size(0) {
             _arrays.resize(1);
             _arrays.back().reserve(_capacity);
         }
