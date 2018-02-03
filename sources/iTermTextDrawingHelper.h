@@ -339,7 +339,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
 
         if (c->complexChar) {
             // TODO: Not all composed/surrogate pair grapheme clusters are drawable
-            return !isStringifiable;
+            return isStringifiable;
         } else {
             // Non-complex char
             // TODO: There are other spaces in unicode that should be supported.
