@@ -210,41 +210,42 @@ static NSString *const iTermSubpixelModelString = @"O";
 
 - (iTermSubpixelModel *)modelForForegoundColor:(float)foregroundComponent
                                backgroundColor:(float)backgroundComponent {
-    NSUInteger key = [iTermSubpixelModel keyForForegroundColor:foregroundComponent
+    @synchronized (self) {
+        NSUInteger key = [iTermSubpixelModel keyForForegroundColor:foregroundComponent
                                                backgroundColor:backgroundComponent];
-    iTermSubpixelModel *cachedModel = _models[@(key)];
-    if (cachedModel) {
-        return cachedModel;
+        iTermSubpixelModel *cachedModel = _models[@(key)];
+        if (cachedModel) {
+            return cachedModel;
+        }
+
+        NSData *imageData = [iTermSubpixelModelBuilder dataForImageWithForegroundColor:simd_make_float4(foregroundComponent, foregroundComponent, foregroundComponent, 1)
+                                                                       backgroundColor:simd_make_float4(backgroundComponent, backgroundComponent, backgroundComponent, 1)];
+        // Maps a reference color to a model color. We'll go back and fill in the gaps with linear
+        // interpolations, which is why we use a sorted container. When translating a black-on-white
+        // render to a color render, these mapping tables let us look up the proper color for a black
+        // on white sample.
+        std::map<unsigned char, unsigned char> map;
+        const unsigned char *bytes = (const unsigned char *)imageData.bytes;
+        for (auto kv : *_indexToReferenceColor) {
+            auto index = kv.first;
+            auto color = kv.second;
+
+            const unsigned char ref = (color & 0xff);
+            const unsigned char model = bytes[index];
+
+            map[ref] = model;
+        }
+
+        iTermSubpixelModel *subpixelModel = [[iTermSubpixelModel alloc] initWithForegroundColor:foregroundComponent
+                                                                                backgroundColor:backgroundComponent];
+        [self interpolateValuesInMap:&map toByteArrayInData:subpixelModel.mutableTable offset:0 stride:1];
+        if (backgroundComponent == 0) {
+            NSLog(@"Generated model for %f/%f", foregroundComponent, backgroundComponent);
+        }
+        //NSLog(@"Generated model for %f/%f\n%@", foregroundComponent, backgroundComponent, subpixelModel.table);
+        _models[@(key)] = subpixelModel;
+        return subpixelModel;
     }
-
-    NSData *imageData = [iTermSubpixelModelBuilder dataForImageWithForegroundColor:simd_make_float4(foregroundComponent, foregroundComponent, foregroundComponent, 1)
-                                                                   backgroundColor:simd_make_float4(backgroundComponent, backgroundComponent, backgroundComponent, 1)];
-    // Maps a reference color to a model color. We'll go back and fill in the gaps with linear
-    // interpolations, which is why we use a sorted container. When translating a black-on-white
-    // render to a color render, these mapping tables let us look up the proper color for a black
-    // on white sample.
-    std::map<unsigned char, unsigned char> map;
-    const unsigned char *bytes = (const unsigned char *)imageData.bytes;
-    for (auto kv : *_indexToReferenceColor) {
-        auto index = kv.first;
-        auto color = kv.second;
-
-        const unsigned char ref = (color & 0xff);
-        const unsigned char model = bytes[index];
-
-        map[ref] = model;
-    }
-
-    iTermSubpixelModel *subpixelModel = [[iTermSubpixelModel alloc] initWithForegroundColor:foregroundComponent
-                                                                    backgroundColor:backgroundComponent];
-    [self interpolateValuesInMap:&map toByteArrayInData:subpixelModel.mutableTable offset:0 stride:1];
-    if (backgroundComponent == 0) {
-        NSLog(@"Generated model for %f/%f", foregroundComponent, backgroundComponent);
-    }
-    //NSLog(@"Generated model for %f/%f\n%@", foregroundComponent, backgroundComponent, subpixelModel.table);
-    _models[@(key)] = subpixelModel;
-
-    return subpixelModel;
 }
 
 - (void)dealloc {
