@@ -1032,7 +1032,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
-    [tState setColor:frameData.perFrameState.processedDefaultBackgroundColor];
+    vector_float4 color = frameData.perFrameState.processedDefaultBackgroundColor;
+    [tState setColor:color];
 }
 
 - (void)populateImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1241,15 +1242,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)drawContentBehindTextWithFrameData:(iTermMetalFrameData *)frameData {
-    [self drawCellRenderer:_marginRenderer
-                 frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMargin]];
-
     [self drawRenderer:_backgroundImageRenderer
              frameData:frameData
                   stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundImage]];
 
-    [self drawCellRenderer:_backgroundColorRenderer
+    [self drawCellRenderer:_marginRenderer
+                 frameData:frameData
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMargin]];
+
+     [self drawCellRenderer:_backgroundColorRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor]];
 

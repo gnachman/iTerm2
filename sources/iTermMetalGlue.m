@@ -754,9 +754,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return simd_make_float4((float)_processedDefaultBackgroundColor.redComponent,
                             (float)_processedDefaultBackgroundColor.greenComponent,
                             (float)_processedDefaultBackgroundColor.blueComponent,
-                            1);
-
+                            _backgroundImage ? 1 - _backgroundImageBlending : 1);
 }
+
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;
