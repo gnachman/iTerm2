@@ -59,10 +59,10 @@
     [_fragmentTextures enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLTexture>  _Nonnull obj, BOOL * _Nonnull stop) {
         [_formatter writeFragmentTexture:obj index:key.integerValue toFolder:folder];
     }];
-    NSString *description = [NSString stringWithFormat:@"%@\n\nvertex count: %@\ninstance count: %@\nrenderPipelineState",
+    NSString *description = [NSString stringWithFormat:@"vertex count: %@\ninstance count: %@\nrenderPipelineState: %@\n",
                              @(_vertexCount),
                              @(_instanceCount),
-                             self.renderPipelineState.debugDescription];
+                             self.renderPipelineState];
     [description writeToURL:[folder URLByAppendingPathComponent:@"description.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
 }
 
