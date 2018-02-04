@@ -2741,9 +2741,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-// Forbid FFM from changing key window if is hotkey window.
+// Forbid FFM from changing key window when the key window is an auto-hiding hotkey window.
 - (BOOL)disableFocusFollowsMouse {
-    return self.isHotKeyWindow;
+    if (!self.isHotKeyWindow) {
+        return NO;
+    }
+    return [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] autoHides];
 }
 
 - (CGFloat)growToolbeltBy:(CGFloat)diff {
