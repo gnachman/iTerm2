@@ -542,6 +542,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewBurySession {
 }
 
+- (void)textViewNeedsDisplayInRect:(NSRect)rect {
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
     return NO;
 }
@@ -2284,7 +2287,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)testEmoji {
     // The exclamation point tests the case where CTRunGetGlyphsPtr returns nil. It has a combining
     // mark that colors it.
-    [self doGoldenTestForInput:@"😄 1️⃣ ❗ \r\n\e[41m🐶 🎅 🚀 "
+    [self doGoldenTestForInput:@"😄1️⃣❗\r\n\e[41m🐶🎅🚀"
                           name:NSStringFromSelector(_cmd)
                           hook:nil
               profileOverrides:nil
