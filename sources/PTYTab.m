@@ -4699,7 +4699,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
-    const BOOL allowed = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+    const BOOL resizing = self.realParentWindow.windowIsResizing;
+    const BOOL allowed = !resizing && [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
     }];
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
