@@ -100,6 +100,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
 @property(nonatomic, readonly) NSArray *tabs;
+@property(nonatomic, readonly) BOOL windowIsResizing;
 
 #pragma mark - Basics
 

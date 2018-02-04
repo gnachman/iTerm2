@@ -186,6 +186,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     
     // Currently dragging a split pane in a tab that's also a tmux tab?
     BOOL _isDraggingSplitInTmuxTab;
+
+    BOOL _resizingSplit;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -4471,6 +4473,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)splitViewWillResizeSubviews:(NSNotification *)notification {
+    _resizingSplit = YES;
+    if (@available(macOS 10.11, *)) {
+        [self updateUseMetal];
+    }
+}
+
 // Inform sessions about their new sizes. This is called after views have finished
 // being resized.
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification {
@@ -4486,6 +4495,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PtyLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);
     NSSplitView* splitView = [aNotification object];
     [self _splitViewDidResizeSubviews:splitView];
+    _resizingSplit = NO;
+    if (@available(macOS 10.11, *)) {
+        [self updateUseMetal];
+    }
 }
 
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
@@ -4699,7 +4712,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
-    const BOOL allowed = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+    const BOOL resizing = self.realParentWindow.windowIsResizing;
+    const BOOL allowed = !resizing && [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
     }];
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;

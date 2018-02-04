@@ -916,6 +916,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _contentView.shouldShowToolbelt;
 }
 
+- (BOOL)windowIsResizing {
+    return liveResize_ || togglingLionFullScreen_ || exitingLionFullscreen_ || zooming_;
+}
+
 - (void)hideToolbelt {
     if (_contentView.shouldShowToolbelt) {
         [self toggleToolbeltVisibility:nil];
@@ -3729,6 +3733,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
     liveResize_ = YES;
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
@@ -3803,11 +3808,13 @@ ITERM_WEAKLY_REFERENCEABLE
         [self tmuxTabLayoutDidChange:YES];
         postponedTmuxTabLayoutChange_ = NO;
     }
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
     togglingLionFullScreen_ = YES;
+    [self updateUseMetalInAllTabs];
     [self repositionWidgets];
 }
 
@@ -3836,6 +3843,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _didEnterLionFullscreen = nil;
     }
     [self updateTouchBarIfNeeded:NO];
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -3846,6 +3854,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self fitTabsToWindow];
     [self repositionWidgets];
     self.window.hasShadow = YES;
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
@@ -3872,11 +3881,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
     [self updateTouchBarIfNeeded:NO];
+    [self updateUseMetalInAllTabs];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
     // Disable redrawing during zoom-initiated live resize.
     zooming_ = YES;
+    [self updateUseMetalInAllTabs];
     if (togglingLionFullScreen_) {
         // Tell it to use the whole screen when entering Lion fullscreen.
         // This is actually called twice in a row when entering fullscreen.
