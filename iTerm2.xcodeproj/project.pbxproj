@@ -10216,6 +10216,7 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
+					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
