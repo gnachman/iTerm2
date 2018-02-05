@@ -60,6 +60,10 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
     return self;
 }
 
+- (void)dealloc {
+    free(_parts);
+}
+
 @end
 
 @implementation iTermASCIITextureGroup

@@ -1276,6 +1276,8 @@
 		A61D16FC1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */; };
+		A6232E76202832A900EC0F98 /* iTermData.h in Headers */ = {isa = PBXBuildFile; fileRef = A6232E74202832A900EC0F98 /* iTermData.h */; };
+		A6232E77202832A900EC0F98 /* iTermData.m in Sources */ = {isa = PBXBuildFile; fileRef = A6232E75202832A900EC0F98 /* iTermData.m */; };
 		A623D94B1F8984690011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
 		A623D94C1F8984690011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
 		A623D94D1F89846A0011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
@@ -3386,6 +3388,8 @@
 		A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorRun.m; sourceTree = "<group>"; };
 		A61F8E2E1E62591800D315D0 /* iTermFakeUserDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFakeUserDefaults.h; sourceTree = "<group>"; };
 		A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFakeUserDefaults.m; sourceTree = "<group>"; };
+		A6232E74202832A900EC0F98 /* iTermData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermData.h; path = Metal/Infrastructure/iTermData.h; sourceTree = "<group>"; };
+		A6232E75202832A900EC0F98 /* iTermData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermData.m; path = Metal/Infrastructure/iTermData.m; sourceTree = "<group>"; };
 		A623D9491F8983D70011F8C3 /* key.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = key.png; path = images/key.png; sourceTree = "<group>"; };
 		A623D94A1F8983D80011F8C3 /* key@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key@2x.png"; path = "images/key@2x.png"; sourceTree = "<group>"; };
 		A623D9521F8B04890011F8C3 /* iTermMetalGlue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalGlue.h; sourceTree = "<group>"; };
@@ -5690,6 +5694,8 @@
 				A6588824201E41A5006F48DB /* iTermMetalDebugInfo.m */,
 				A6588827201F06ED006F48DB /* iTermTexture.h */,
 				A6588828201F06ED006F48DB /* iTermTexture.m */,
+				A6232E74202832A900EC0F98 /* iTermData.h */,
+				A6232E75202832A900EC0F98 /* iTermData.m */,
 			);
 			name = Infrastructure;
 			sourceTree = "<group>";
@@ -7276,6 +7282,7 @@
 				A66719281DCE36C3000CE608 /* iTermEventTap.h in Headers */,
 				A66719291DCE36C3000CE608 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				A6556EAD1FD37ED6000CC89C /* iTermASCIITexture.h in Headers */,
+				A6232E76202832A900EC0F98 /* iTermData.h in Headers */,
 				53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */,
 				A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */,
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
@@ -8910,6 +8917,7 @@
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
+				A6232E77202832A900EC0F98 /* iTermData.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
 				A67960D31F81FCBB008A42BC /* iTermBroadcastStripesRenderer.m in Sources */,

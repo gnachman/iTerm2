@@ -196,13 +196,13 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 }
 
 - (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(id)key {
-    NSMutableDictionary *temp = [self mutableCopy];
+    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
     temp[key] = object;
     return temp;
 }
 
 - (NSDictionary *)dictionaryByRemovingObjectForKey:(id)key {
-    NSMutableDictionary *temp = [self mutableCopy];
+    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
     [temp removeObjectForKey:key];
     return temp;
 }
