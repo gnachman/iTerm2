@@ -298,7 +298,8 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
             // same trick.
             _haveTestedForEmoji = YES;
             NSString *fontName = CFBridgingRelease(CTFontCopyFamilyName(runFont));
-            _isEmoji = [fontName isEqualToString:@"AppleColorEmoji"];
+            _isEmoji = ([fontName isEqualToString:@"AppleColorEmoji"] ||
+                        [fontName isEqualToString:@"Apple Color Emoji"]);
 
             // Now that we know we can do the setup operations that depend on
             // knowing if it's emoji.
