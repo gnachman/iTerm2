@@ -3326,6 +3326,12 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         DLog(@"** Re-entrant call to windowDidChangeScreen:! Not canonicalizing. **");
     }
+    if (@available(macOS 10.11, *)) {
+        for (PTYSession *session in self.allSessions) {
+            [session updateMetalDriver];
+            [session.textview setNeedsDisplay:YES];
+        }
+    }
     DLog(@"Returning from windowDidChangeScreen:.");
 }
 

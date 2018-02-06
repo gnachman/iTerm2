@@ -98,7 +98,6 @@
     CGSize _cellSizeWithoutSpacing;
     int _rows;
     int _columns;
-    BOOL _sizeChanged;
     CGFloat _scale;
 #if ENABLE_PRIVATE_QUEUE
     dispatch_queue_t _queue;
@@ -200,7 +199,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             ELog(@"Warning: scale is 0");
         }
         DLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
-        _sizeChanged = YES;
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
         _rows = MAX(1, gridSize.height);

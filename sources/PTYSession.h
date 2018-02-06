@@ -730,6 +730,7 @@ typedef enum {
 - (void)disinter;
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
+- (void)updateMetalDriver;
 
 #pragma mark - API
 
