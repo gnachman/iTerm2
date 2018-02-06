@@ -279,6 +279,10 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 @property(nonatomic, readonly) NSColor *defaultBackgroundColor;
 
+// Does the current ascii font have ligatures? Used to determine if ASCII
+// symbols (non-alphanumerics) get to use the fastpath.
+@property (nonatomic, readonly) BOOL asciiLigaturesAvailable;
+
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
 // destinationFrameSize: size of the scrollview's content view
@@ -315,6 +319,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 - (CGFloat)yOriginForUnderlineGivenFontXHeight:(CGFloat)xHeight yOffset:(CGFloat)yOffset;
 - (CGFloat)underlineThicknessForFont:(NSFont *)font;
 - (NSRange)underlinedRangeOnLine:(long long)row;
+
+- (void)updateCachedMetrics;
 
 @end
 
