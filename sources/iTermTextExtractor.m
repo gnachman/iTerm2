@@ -261,6 +261,12 @@ const NSInteger kLongMaximumWordLength = 100000;
 // The maximum length is a rough guideline. You might get a word up to twice as long.
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
+    ITBetaAssert(location.y >= 0, @"Location has negative Y");
+    if (location.y < 0) {
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                          _logicalWindow.location, _logicalWindow.length);
+    }
+
     DLog(@"Compute range for word at %@, max length %@", VT100GridCoordDescription(location), @(maximumLength));
     DLog(@"These special chars will be treated as alphanumeric: %@", [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]);
 
