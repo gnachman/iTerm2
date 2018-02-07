@@ -1010,7 +1010,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                       verticalDir:(BOOL)verticalDir
                             after:(BOOL)after {
     NSArray<PTYSession *> *sessions = [self sessionsAdjacentToSession:session verticalDir:verticalDir after:after];
-    if (sessions.count) {
+    if (sessions.count || ![iTermAdvancedSettingsModel wrapFocus]) {
         return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
             return [a.activityCounter compare:b.activityCounter];
         }];

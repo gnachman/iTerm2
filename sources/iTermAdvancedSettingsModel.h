@@ -194,6 +194,7 @@
 + (BOOL)lowFiCombiningMarks;
 + (CGFloat)verticalBarCursorWidth;
 + (BOOL)statusBarIcon;
++ (BOOL)wrapFocus;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)useExperimentalFontMetrics;
