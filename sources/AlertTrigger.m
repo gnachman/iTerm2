@@ -42,7 +42,7 @@
     NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                                                   count:captureCount];
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = message;
+    alert.messageText = message ?: @"";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Show Session"];
     [alert addButtonWithTitle:@"Disable This Alert"];
