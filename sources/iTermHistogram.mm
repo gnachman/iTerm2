@@ -148,7 +148,7 @@ namespace iTerm2 {
 - (void)addValue:(double)value {
     double logValue = std::log(value + 1) / std::log(M_SQRT2);
 
-    int bucket = std::floor(logValue);
+    int bucket = std::min(255.0, std::floor(logValue));
     int newCount = _buckets[bucket];
     newCount++;
     _buckets[bucket] = newCount;
