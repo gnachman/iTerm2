@@ -3493,6 +3493,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
                                  forWindowPane:_tmuxPane];
     }
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 - (NSString *)badgeLabel {
@@ -4761,10 +4762,22 @@ ITERM_WEAKLY_REFERENCEABLE
     return ([iTermAdvancedSettingsModel useMetal] &&
             machineSupportsMetal &&
             _textview.transparencyAlpha == 1 &&
-            ![iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:self.profile] &&
-            ![iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:self.profile] &&
+            ![self ligaturesEnabledInEitherFont] &&
             ![PTYNoteViewController anyNoteVisible] &&
             _view.currentAnnouncement == nil);
+}
+
+- (BOOL)ligaturesEnabledInEitherFont {
+    iTermTextDrawingHelper *helper = _textview.drawingHelper;
+    [helper updateCachedMetrics];
+    if (helper.asciiLigatures && helper.asciiLigaturesAvailable) {
+        return YES;
+    }
+    if ([iTermProfilePreferences boolForKey:KEY_USE_NONASCII_FONT inProfile:self.profile] &&
+        [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:self.profile]) {
+        return YES;
+    }
+    return NO;
 }
 
 - (void)setUseMetal:(BOOL)useMetal {

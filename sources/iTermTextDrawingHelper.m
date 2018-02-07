@@ -151,10 +151,6 @@ typedef struct iTermTextColorContext {
     iTermPreciseTimerStats _stats[TIMER_STAT_MAX];
     CGFloat _baselineOffset;
 
-    // Does the current ascii font have ligatures? Used to determine if ASCII
-    // symbols (non-alphanumerics) get to use the fastpath.
-    BOOL _asciiLigaturesAvailable;
-
     // The cache we're using now.
     NSMutableDictionary<NSAttributedString *, id> *_lineRefCache;
 
