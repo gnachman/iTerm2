@@ -121,6 +121,8 @@
 // Announcement shown, changed, or removed.
 - (void)sessionViewAnnouncementDidChange:(SessionView *)sessionView;
 
+- (void)sessionViewHideMetalViewUntilNextFrame;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

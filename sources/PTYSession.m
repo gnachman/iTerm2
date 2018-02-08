@@ -9192,6 +9192,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.delegate sessionUpdateMetalAllowed];
 }
 
+- (void)sessionViewHideMetalViewUntilNextFrame {
+    if (@available(macOS 10.11, *)) {
+        if (!_useMetal) {
+            return;
+        }
+        _wrapper.useMetal = NO;
+        _textview.suppressDrawing = NO;
+        _view.metalView.alphaValue = 0;
+    }
+}
+
 #pragma mark - iTermCoprocessDelegate
 
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {

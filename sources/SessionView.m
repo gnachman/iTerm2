@@ -293,6 +293,9 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateMetalViewFrame {
+    // The metal view looks awful while resizing because it insists on scaling
+    // its contents.. Just switch off the metal renderer until it catches up.
+    [_delegate sessionViewHideMetalViewUntilNextFrame];
     _metalView.frame = _scrollview.contentView.frame;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
