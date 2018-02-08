@@ -19,7 +19,7 @@ extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 static const CGFloat iTermFakeItalicSkew = 0.4;
-static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
+static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 0.5;
 
 @implementation iTermCharacterSource {
     NSString *_string;
@@ -270,7 +270,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 
     [self drawRuns:runs atOffset:CGPointMake(offset.x, ty) skew:skew];
     if (_fakeBold) {
-        [self drawRuns:runs atOffset:CGPointMake(offset.x + iTermCharacterSourceFakeBoldShiftPoints, ty) skew:skew];
+        [self drawRuns:runs atOffset:CGPointMake(offset.x + iTermCharacterSourceFakeBoldShiftPoints * _scale, ty) skew:skew];
     }
 }
 
@@ -284,6 +284,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 }
 
 - (void)drawRuns:(CFArrayRef)runs atOffset:(CGPoint)offset skew:(CGFloat)skew {
+    BOOL haveSetTextMatrix = NO;
 
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -304,11 +305,14 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
             // Now that we know we can do the setup operations that depend on
             // knowing if it's emoji.
             [self fillBackground];
+            CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
+            CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
+        }
+        if (!haveSetTextMatrix) {
             [self initializeTextMatrixInContext:_cgContext
                                        withSkew:skew
                                          offset:offset];
-            CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
-            CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
+            haveSetTextMatrix = YES;
         }
 
         if (_isEmoji) {
