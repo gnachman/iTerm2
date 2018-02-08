@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
+#import "iTermMetalCellRenderer.h"
 #import "iTermMetalRenderer.h"
 #import "iTermTexture.h"
 #import "iTermTexturePool.h"
@@ -98,6 +99,7 @@ static NSInteger gNextFrameDataNumber;
 @implementation iTermMetalFrameData {
     NSTimeInterval _creation;
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
+    iTermCellRenderConfiguration *_cellConfiguration;
 }
 
 - (instancetype)initWithView:(MTKView *)view {
@@ -326,6 +328,18 @@ static NSInteger gNextFrameDataNumber;
     [self measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:block];
 #endif
     [self willHandOffToGPU];
+}
+
+- (iTermCellRenderConfiguration *)cellConfiguration {
+    if (!_cellConfiguration) {
+        _cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:self.viewportSize
+                                                                                  scale:self.scale
+                                                                               cellSize:self.cellSize
+                                                                 cellSizeWithoutSpacing:self.cellSizeWithoutSpacing
+                                                                               gridSize:self.gridSize
+                                                                  usingIntermediatePass:(self.intermediateRenderPassDescriptor != nil)];
+    }
+    return _cellConfiguration;
 }
 
 @end

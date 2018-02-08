@@ -48,6 +48,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 
 @property (nonatomic, readonly) VT100GridSize gridSize;
+@property (nonatomic, readonly) CGSize cellSize;
+@property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
 @property (nonatomic, readonly) NSImage *badgeImage;

@@ -146,6 +146,7 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 @property (nonatomic, readonly) BOOL isAnimating;
 @property (nonatomic, readonly) CGSize cellSize;
+@property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) CGFloat scale;
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
@@ -308,7 +309,8 @@ static NSColor *ColorForVector(vector_float4 v) {
                               screen:(VT100Screen *)screen {
     _gridSize = VT100GridSizeMake(textView.dataSource.width,
                                   textView.dataSource.height);
-    _cellSize = CGSizeMake(textView.charWidth, textView.lineHeight);
+    _cellSize = drawingHelper.cellSize;
+    _cellSizeWithoutSpacing = drawingHelper.cellSizeWithoutSpacing;
     _scale = textView.window.backingScaleFactor;
     _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
 

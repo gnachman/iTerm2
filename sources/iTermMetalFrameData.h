@@ -113,6 +113,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
 @property (atomic) vector_uint2 viewportSize;
 @property (atomic) VT100GridSize gridSize;
+@property (atomic) CGSize cellSize;
+@property (atomic) CGSize cellSizeWithoutSpacing;
 @property (atomic) CGFloat scale;
 @property (atomic, strong) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
@@ -125,7 +127,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) MTLRenderPassDescriptor *debugRealRenderPassDescriptor;
 @property (nonatomic, readonly) iTermMetalBufferPoolContext *framePoolContext;
 @property (nonatomic, strong) iTermMetalDebugInfo *debugInfo;
-@property (nonatomic, strong) iTermCellRenderConfiguration *cellConfiguration;
+@property (nonatomic, readonly) iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
 
