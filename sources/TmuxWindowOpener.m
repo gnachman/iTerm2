@@ -328,7 +328,7 @@ static int OctalValue(const char *bytes) {
         if (!term) {
             BOOL useOriginalWindow =
                 [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInExistingWindow;
-            if (useOriginalWindow) {
+            if (self.initial && useOriginalWindow) {
                 term = [gateway_ window];
                 DLog(@"Use original window %@", term);
             }

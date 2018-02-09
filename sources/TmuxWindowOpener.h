@@ -42,6 +42,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, assign) BOOL manuallyOpened;
 @property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *tabColors;
 @property (nonatomic, copy) Profile *profile;
+@property (nonatomic, assign) BOOL initial;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;
