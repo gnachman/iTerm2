@@ -12,7 +12,6 @@
 
 @end
 
-const int NUM_OF_TEST1_RECORDS = 100;
 const int NUM_OF_TEST2_RECORDS = 100;
 const int TEST2_CACHE_CAPACITY = 50;
 

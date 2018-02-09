@@ -2637,4 +2637,44 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewDidFindDirtyRects {
 }
 
+- (BOOL)backgroundImageTiled {
+    return NO;
+}
+
+- (NSImage *)textViewBackgroundImage {
+    return nil;
+}
+
+- (BOOL)textViewCopyMode {
+    return NO;
+}
+
+- (VT100GridCoord)textViewCopyModeCursorCoord {
+    return VT100GridCoordMake(0, 0);
+}
+
+- (BOOL)textViewCopyModeSelecting {
+    return NO;
+}
+
+- (void)textViewDidHighightMark { 
+}
+
+- (void)textViewDidSelectPasswordPrompt { 
+}
+
+- (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range { 
+}
+
+- (BOOL)textViewPasswordInput {
+    return NO;
+}
+
+- (BOOL)textViewShouldDrawRect {
+    return YES;
+}
+
+- (void)textViewShowHoverURL:(NSString *)url { 
+}
+
 @end

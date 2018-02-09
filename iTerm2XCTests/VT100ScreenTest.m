@@ -892,6 +892,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return nil;
 }
 
+- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *,NSString *> *)parameters payload:(NSString *)payload { 
+}
+
+- (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID { 
+}
+
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {

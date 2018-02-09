@@ -38,6 +38,8 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
     iTermFindModeCaseInsensitiveRegex = 4,
 };
 
+@class FindViewController;
+
 @protocol FindViewControllerDelegate <NSObject>
 
 // Returns true if there is a text area to search.
@@ -82,10 +84,14 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
               mode:(iTermFindMode)mode
         withOffset:(int)offset;
 
+- (void)findViewControllerVisibilityDidChange:(FindViewController *)sender;
+
 @end
 
 
 @interface FindViewController : NSViewController <NSTextFieldDelegate>
+
+@property (nonatomic, readonly) BOOL isVisible;
 
 - (void)close;
 - (void)open;

@@ -95,12 +95,15 @@ static float kAnimationDuration = 0.25;
     [[self.view animator] setFrame:newFrame];
 }
 
-- (void)close {
+- (void)closeWithCompletion:(void (^)(void))completion {
     NSRect newFrame = self.view.frame;
     newFrame.origin.y = self.view.superview.frame.size.height;
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     [[self.view animator] setFrame:newFrame];
     [self.view performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:kAnimationDuration];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        completion();
+    }];
 }
 
 - (void)themeDidChange:(id)sender {

@@ -26,6 +26,6 @@
 
 - (IBAction)cancel:(id)sender;
 - (void)updateFrame;
-- (void)close;
+- (void)closeWithCompletion:(void (^)(void))completion;
 
 @end

@@ -4697,6 +4697,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview clearHighlights:YES];
 }
 
+- (void)findViewControllerVisibilityDidChange:(id)sender {
+    if (@available(macOS 10.11, *)) {
+        [_delegate sessionUpdateMetalAllowed];
+    }
+}
+
 - (NSImage *)snapshot {
     DLog(@"Session %@ calling refresh", self);
     [_textview refresh];
@@ -4759,11 +4765,19 @@ ITERM_WEAKLY_REFERENCEABLE
             [devices release];
         });
     }
+    // Metal's not allowed when other views are composited over the metal view because that just
+    // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
+    // requires presenting the drawable on the main thread which defeats the purpose of the metal
+    // renderer).
+    //
+    // Perhaps some day transparency and ligatures will be supported.
     return ([iTermAdvancedSettingsModel useMetal] &&
             machineSupportsMetal &&
             _textview.transparencyAlpha == 1 &&
             ![self ligaturesEnabledInEitherFont] &&
             ![PTYNoteViewController anyNoteVisible] &&
+            !_view.findViewController.isVisible &&
+            !_pasteHelper.pasteViewIsVisible &&
             _view.currentAnnouncement == nil);
 }
 
@@ -8985,6 +8999,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)pasteHelperCanWaitForPrompt {
     return _shellIntegrationEverUsed;
+}
+
+- (void)pasteHelperPasteViewVisibilityDidChange {
+    if (@available(macOS 10.11, *)) {
+        [self.delegate sessionUpdateMetalAllowed];
+    }
 }
 
 #pragma mark - iTermAutomaticProfileSwitcherDelegate

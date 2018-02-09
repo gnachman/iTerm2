@@ -389,12 +389,17 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                                  _pasteViewController.view.frame.size.height);
     [view addSubview:_pasteViewController.view];
     [_pasteViewController updateFrame];
+    _pasteViewIsVisible = YES;
+    [self.delegate pasteHelperPasteViewVisibilityDidChange];
 }
 
 - (void)hidePasteIndicator {
-    [_pasteViewController close];
+    [_pasteViewController closeWithCompletion:^{
+        [self.delegate pasteHelperPasteViewVisibilityDidChange];
+    }];
     [_pasteViewController release];
     _pasteViewController = nil;
+    _pasteViewIsVisible = NO;
 }
 
 - (void)updatePasteIndicator {

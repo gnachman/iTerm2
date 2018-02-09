@@ -574,6 +574,9 @@ static const double kFloatingPointTolerance = 0.00001;
     return NO;
 }
 
+- (void)pasteHelperPasteViewVisibilityDidChange { 
+}
+
 #pragma mark - iTermWarningHandler
 
 - (NSModalResponse)warningWouldShowAlert:(NSAlert *)alert identifier:(NSString *)identifier {

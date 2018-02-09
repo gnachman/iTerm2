@@ -37,12 +37,16 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 // Is shell integration installed?
 - (BOOL)pasteHelperCanWaitForPrompt;
 
+// Paste view did appear/disappear
+- (void)pasteHelperPasteViewVisibilityDidChange;
+
 @end
 
 @interface iTermPasteHelper : NSObject
 
 @property(nonatomic, assign) id<iTermPasteHelperDelegate> delegate;
 @property(nonatomic, readonly) BOOL isPasting;
+@property(nonatomic, readonly) BOOL pasteViewIsVisible;
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 

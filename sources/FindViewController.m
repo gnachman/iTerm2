@@ -339,6 +339,8 @@ const CGFloat kEdgeWidth = 3;
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         [[self view] setHidden:YES];
         [[[[self view] window] contentView] setNeedsDisplay:YES];
+        _isVisible = NO;
+        [self.delegate findViewControllerVisibilityDidChange:self];
     }];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     [[[self view] animator] setFrame:[self collapsedFrame]];
@@ -373,6 +375,10 @@ const CGFloat kEdgeWidth = 3;
         [self restoreState];
         findBarTextField_.stringValue = state_.string;
     }
+
+    _isVisible = YES;
+    [self.delegate findViewControllerVisibilityDidChange:self];
+
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
