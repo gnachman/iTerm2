@@ -583,10 +583,10 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 - (void)instantDidChange:(NSButton *)checkbox {
     NSNumber *newValue = checkbox.state == NSOnState ? @(YES) : @(NO);
     NSInteger row = [_tableView rowForView:checkbox];
-    
+
     // If a text field is editing, make it save its contents before we get the trigger dictionary.
     [_tableView reloadData];
-    
+
     NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
     if (row < 0 || row >= triggerDicts.count) {
         return;
@@ -603,7 +603,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
         return;
     }
     NSInteger indexOfSelectedAction = [sender indexOfSelectedItem];
-    
+
     // If a text field is being edited, end it and update the trigger dictionary before we fetch it.
     [_tableView reloadData];
 

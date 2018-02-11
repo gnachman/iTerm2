@@ -35,19 +35,19 @@
     assert(index1 != index2);
     assert(index1 != NSNotFound);
     assert(index2 != NSNotFound);
-    
+
     NSRect frame1 = subview1.frame;
     NSRect frame2 = subview2.frame;
-    
+
     NSView *filler1 = [[[NSView alloc] initWithFrame:subview1.frame] autorelease];
     NSView *filler2 = [[[NSView alloc] initWithFrame:subview2.frame] autorelease];
-    
+
     [self replaceSubview:subview1 with:filler1];
     [self replaceSubview:subview2 with:filler2];
-    
+
     subview1.frame = frame2;
     subview2.frame = frame1;
-    
+
     [self replaceSubview:filler1 with:subview2];
     [self replaceSubview:filler2 with:subview1];
 }

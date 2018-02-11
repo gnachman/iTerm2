@@ -912,7 +912,7 @@ static const int kMaxScreenRows = 4096;
             case 1337:  // iTerm2 extension
                 [delegate_ terminalSendReport:[self.output reportiTerm2Version]];
                 break;
-                
+
             case 0: // Response from VT100 -- Ready, No malfuctions detected
             default:
                 break;
@@ -2770,7 +2770,7 @@ static const int kMaxScreenRows = 4096;
     // cut off anything after newline since it wouldn't be visible anyway.
     NSCharacterSet *newlinesCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
     NSRange newlineRange = [unsafeTitle rangeOfCharacterFromSet:newlinesCharacterSet];
-    
+
     if (newlineRange.location != NSNotFound) {
         return [unsafeTitle substringToIndex:newlineRange.location];
     } else if (unsafeTitle.length > 256) {

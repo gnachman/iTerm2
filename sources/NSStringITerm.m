@@ -606,11 +606,11 @@ int decode_utf8_char(const unsigned char *datap,
     } else if (charsTakenFromPrefixPtr) {
         *charsTakenFromPrefixPtr = offset;
     }
-    
+
     if (lastBadCharRange.location != NSNotFound) {
         end = lastBadCharRange.location;
     }
-    
+
     return [self substringWithRange:NSMakeRange(start, end - start)];
 }
 
@@ -713,7 +713,7 @@ int decode_utf8_char(const unsigned char *datap,
             }
         }
     } while (found);
-    
+
     return s;
 }
 
@@ -1011,21 +1011,21 @@ int decode_utf8_char(const unsigned char *datap,
     float fontSize;
     char utf8FontName[128];
     NSFont *aFont;
-    
+
     if ([self length] == 0) {
         return ([NSFont userFixedPitchFontOfSize:0.0]);
     }
-    
+
     sscanf([self UTF8String], "%127s %g", utf8FontName, &fontSize);
     // The sscanf man page is unclear whether it will always null terminate when the length hits the
     // maximum field width, so ensure it is null terminated.
     utf8FontName[127] = '\0';
-    
+
     aFont = [NSFont fontWithName:[NSString stringWithFormat:@"%s", utf8FontName] size:fontSize];
     if (aFont == nil) {
         return ([NSFont userFixedPitchFontOfSize:0.0]);
     }
-    
+
     return aFont;
 }
 
@@ -1077,7 +1077,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         gHFSPlusComposed = CreateTECConverterForUTF8Variants(kUnicodeHFSPlusCompVariant);
         gHFSPlusDecomposed = CreateTECConverterForUTF8Variants(kUnicodeHFSPlusDecompVariant);
     });
-    
+
     size_t in_len = sizeof(unichar) * [self length];
     size_t out_len;
     unichar *in = malloc(in_len);
@@ -1097,7 +1097,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         free(in);
         return self;
     }
-    
+
     if (TECConvertText(precompose ? gHFSPlusComposed : gHFSPlusDecomposed,
                        (TextPtr)in,
                        in_len,
@@ -1110,7 +1110,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         int numCharsOut = out_len / sizeof(unichar);
         ret = [NSString stringWithCharacters:out length:numCharsOut];
     }
-    
+
     free(in);
     free(out);
 
@@ -1146,13 +1146,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     if (self.length == 0 || self.length == 3 || self.length > 4) {
         return @"";
     }
-    
+
     unsigned int value;
     NSScanner *scanner = [NSScanner scannerWithString:self];
     if (![scanner scanHexInt:&value]) {
         return @"";
     }
-    
+
     unichar c = value;
     return [NSString stringWithCharacters:&c length:1];
 }
@@ -1207,7 +1207,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
            @"^(\")": @(kSpecialCharacterDoubleQuote),
            @"^(<C-([A-Za-z])>)": @(kSpecialCharacterControlKey),
            @"^(<M-([A-Za-z])>)": @(kSpecialCharacterMetaKey) };
-           
+
 
     NSMutableString *result = [NSMutableString string];
     __block int haveAppendedUpToIndex = 0;
@@ -1233,49 +1233,49 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                     case kSpecialCharacterOneDigitOctal:
                         [result appendString:[capture[2] octalCharacter]];
                         break;
-                        
+
                     case kSpecialCharacterFourDigitUnicode:
                     case kSpecialCharacterTwoDigitHex:
                     case kSpecialCharacterOneDigitHex:
                         [result appendString:[capture[2] hexCharacter]];
                         break;
-                        
+
                     case kSpecialCharacterBackspace:
                         [result appendFormat:@"%c", 0x7f];
                         break;
-                        
+
                     case kSpecialCharacterEscape:
                         [result appendFormat:@"%c", 27];
                         break;
-                        
+
                     case kSpecialCharacterFormFeed:
                         [result appendFormat:@"%c", 12];
                         break;
-                        
+
                     case kSpecialCharacterNewline:
                         [result appendString:@"\n"];
                         break;
-                        
+
                     case kSpecialCharacterReturn:
                         [result appendString:@"\r"];
                         break;
-                        
+
                     case kSpecialCharacterTab:
                         [result appendString:@"\t"];
                         break;
-                        
+
                     case kSpecialCharacterBackslash:
                         [result appendString:@"\\"];
                         break;
-                        
+
                     case kSpecialCharacterDoubleQuote:
                         [result appendString:@"\""];
                         break;
-                        
+
                     case kSpecialCharacterControlKey:
                         [result appendString:[capture[2] controlCharacter]];
                         break;
-                        
+
                     case kSpecialCharacterMetaKey:
                         [result appendString:[capture[2] metaCharacter]];
                         break;
@@ -1289,7 +1289,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         }
         index = [self indexOfSubstring:@"\\" fromIndex:index];
     }  // while searching for backslashes
-    
+
     index = self.length;
     [result appendString:[self substringWithRange:NSMakeRange(haveAppendedUpToIndex,
                                                               index - haveAppendedUpToIndex)]];
@@ -1613,7 +1613,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 // http://www.cse.yorku.ca/~oz/hash.html
 - (NSUInteger)hashWithDJB2 {
     NSUInteger hash = 5381;
-    
+
     for (NSUInteger i = 0; i < self.length; i++) {
         unichar c = [self characterAtIndex:i];
         hash = (hash * 33) ^ c;

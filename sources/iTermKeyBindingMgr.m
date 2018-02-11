@@ -595,7 +595,7 @@ exit:
 
 + (NSEventModifierFlags)modifiersForKeyCode:(int)keyCode modifiers:(NSEventModifierFlags)keyMods {
     NSEventModifierFlags theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
-    
+
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
@@ -616,7 +616,7 @@ exit:
                  keyMappings:(NSDictionary *)keyMappings
 {
     NSString *keyString = [self identifierForCharacterIgnoringModifiers:keyCode modifiers:keyMods];
-    
+
     NSDictionary *theKeyMapping;
     int retCode = -1;
 

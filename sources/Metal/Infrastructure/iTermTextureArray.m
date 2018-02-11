@@ -43,7 +43,7 @@
         textureDescriptor.arrayLength = 1;
 
         _atlasSize = CGSizeMake(textureDescriptor.width, textureDescriptor.height);
-        
+
         _texture = [device newTextureWithDescriptor:textureDescriptor];
         _texture.label = @"iTermTextureArray";
         [iTermTexture setBytesPerRow:_atlasSize.width * 4

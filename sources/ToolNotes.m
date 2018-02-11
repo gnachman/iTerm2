@@ -54,7 +54,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [[textView_ textContainer] setContainerSize:NSMakeSize(contentSize.width, FLT_MAX)];
         [[textView_ textContainer] setWidthTracksTextView:YES];
         [textView_ setDelegate:self];
-        
+
         // Migrate notes to the new location. Prior to 3.0 (and its preceding betas in the 2.9 series)
         // it was in App Support/iTerm, not App Support/iTerm2.
         static dispatch_once_t onceToken;
@@ -74,9 +74,9 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         textView_.smartInsertDeleteEnabled = NO;
 
         [scrollview setDocumentView:textView_];
-                
+
         [self addSubview:scrollview];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(setText:)
                                                      name:kToolNotesSetTextNotification
@@ -100,7 +100,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 - (NSString *)filename {
     return [NSString stringWithFormat:@"%@/notes.rtfd", [filemanager_ applicationSupportDirectory]];
 }
-         
+
 - (void)textDidChange:(NSNotification *)aNotification
 {
     // Avoid saving huge files because of the slowdown it would cause.

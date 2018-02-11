@@ -49,19 +49,19 @@
     switch ([alert runModal]) {
         case NSAlertFirstButtonReturn:
             break;
-            
+
         case NSAlertSecondButtonReturn: {
             NSWindowController<iTermWindowController> * term = [[aSession delegate] realParentWindow];
             [[term window] makeKeyAndOrderFront:nil];
             [aSession.delegate sessionSelectContainingTab];
             [aSession.delegate setActiveSession:aSession];
             break;
-            
+
         case NSAlertThirdButtonReturn:
             disabled_ = YES;
             break;
         }
-            
+
         default:
             break;
     }

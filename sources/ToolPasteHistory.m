@@ -68,7 +68,7 @@ static const CGFloat kMargin = 4;
 
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
-        
+
         pasteHistory_ = [PasteboardHistory sharedInstance];
 
         [[NSNotificationCenter defaultCenter] addObserver:self

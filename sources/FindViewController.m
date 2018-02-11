@@ -151,7 +151,7 @@ const CGFloat kEdgeWidth = 3;
 
     const CGFloat maximumWidth = cellFrame.size.width - 1.0;
     NSRect blueRect = NSMakeRect(0, 0, maximumWidth * [self fraction] + kEdgeWidth, cellFrame.size.height);
-    
+
     const CGFloat alpha = 0.3 * _alphaMultiplier;
     [[NSColor colorWithCalibratedRed:0.6
                                green:0.6

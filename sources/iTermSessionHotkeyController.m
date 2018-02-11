@@ -143,7 +143,7 @@
 
 - (void)setShortcut:(iTermShortcut *)shortcut forSession:(id<iTermHotKeyNavigableSession>)session {
     [self removeSession:session];
-    
+
     if (shortcut) {
         iTermSessionHotkeyRegistration *registration = [self registrationForShortcut:shortcut];
         if (!registration) {

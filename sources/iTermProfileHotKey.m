@@ -129,7 +129,7 @@ static NSString *const kArrangement = @"Arrangement";
     // existing window controller, we assert that it's nil. This complicates
     // internal calls, unfortunately, but better to catch the bugs.
     assert(!_windowController.weaklyReferencedObject);
-    
+
     [_windowController release];
     _windowController = [windowController.weakSelf retain];
     if (!_windowController.weaklyReferencedObject) {
@@ -211,19 +211,19 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
             return NSMakePoint(rect.origin.x, NSMaxY(screen.visibleFrame));
-            
+
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
             return NSMakePoint(NSMinX(screen.visibleFrameIgnoringHiddenDock), rect.origin.y);
-            
+
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
             return NSMakePoint(NSMaxX(screen.visibleFrameIgnoringHiddenDock), rect.origin.y);
-            
+
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             return NSMakePoint(rect.origin.x, NSMinY(screen.visibleFrameIgnoringHiddenDock) - NSHeight(rect));
-            
+
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             return [self frameByMovingFrame:rect fromScreen:self.windowController.window.screen toScreen:screen].origin;
@@ -331,22 +331,22 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_TOP_PARTIAL:
             return kAnimationDirectionDown;
             break;
-            
+
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
             return kAnimationDirectionRight;
             break;
-            
+
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
             return kAnimationDirectionLeft;
             break;
-            
+
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             return kAnimationDirectionUp;
             break;
-            
+
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
@@ -397,14 +397,14 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_BOTTOM_PARTIAL:
                 [self rollInAnimatingInDirection:[self animateInDirectionForWindowType:self.windowController.windowType]];
                 break;
-                
+
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
                 [self moveToPreferredScreen];
                 [self fadeIn];
                 break;
-                
+
             case WINDOW_TYPE_LION_FULL_SCREEN:
                 assert(false);
         }
@@ -445,13 +445,13 @@ static NSString *const kArrangement = @"Arrangement";
                 [self rollOutAnimatingInDirection:outDireciton];
                 break;
             }
-                
+
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
                 [self fadeOut];
                 break;
-                
+
             case WINDOW_TYPE_LION_FULL_SCREEN:
                 assert(false);
         }
@@ -718,7 +718,7 @@ static NSString *const kArrangement = @"Arrangement";
     DLog(@"Call orderOut: on terminal %@", self.windowController);
     [self.windowController.window orderOut:self];
     DLog(@"Returned from orderOut:. Set _rollingOut=NO");
-    
+
     // This must be done after orderOut: so autoHideHotKeyWindowsExcept: will know to throw out the
     // previous state.
     _rollingOut = NO;
@@ -774,7 +774,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url {
     DLog(@"showHotKeyWindow: %@", self);
-    
+
     if (self.windowController.window.alphaValue == 1 && self.windowController.window.isVisible) {
         // This path is taken when you use a session hotkey to navigate to an already-open hotkey window.
         [self showAlreadyVisibleHotKeyWindow];

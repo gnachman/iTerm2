@@ -849,7 +849,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
     textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
     textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
-    
+
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
 
@@ -935,7 +935,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             repeatingRows:count];
         }];
     }
-    
+
     // Tell the text state that it's done getting row data.
     if (!_textRenderer.rendererDisabled) {
         [textState willDraw];

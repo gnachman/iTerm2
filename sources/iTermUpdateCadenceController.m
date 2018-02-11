@@ -36,7 +36,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     // This is the experimental GCD version of the update timer that seems to have more regular refreshes.
     dispatch_source_t _gcdUpdateTimer;
     NSTimeInterval _cadence;
-    
+
     BOOL _deferredCadenceChange;
 
     iTermThroughputEstimator *_throughputEstimator;

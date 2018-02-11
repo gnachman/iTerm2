@@ -80,7 +80,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSRect frame = frameWithGradient;
     frame.origin.x += iTermTimestampGradientWidth;
     frame.size.width -= iTermTimestampGradientWidth;
-    
+
     iTermTimestampRow *row = _rows[index];
     NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:0 maxX:NSMaxX(frame)];
     stringFrame.origin.y += frame.origin.y;

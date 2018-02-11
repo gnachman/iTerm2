@@ -31,7 +31,7 @@
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
     [terminal.parser putStreamData:histData.bytes
                             length:histData.length];
-    
+
     CVector vector;
     CVectorCreate(&vector, 100);
     [terminal.parser addParsedTokensToVector:&vector];
@@ -43,7 +43,7 @@
         if (!string && token->type == VT100_ASCIISTRING) {
             string = [token stringForAsciiData];
         }
-        
+
         if (string) {
             // Allocate double space in case they're all double-width characters.
             screenChars = malloc(sizeof(screen_char_t) * 2 * string.length);

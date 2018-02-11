@@ -104,7 +104,7 @@ NS_ASSUME_NONNULL_BEGIN
     id<MTLBuffer> alphaBuffer = [_alphaBufferPool requestBufferFromContext:tState.poolContext
                                                                  withBytes:&alpha
                                                             checkIfChanged:YES];
-    
+
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:renderEncoder
                           numberOfVertices:6

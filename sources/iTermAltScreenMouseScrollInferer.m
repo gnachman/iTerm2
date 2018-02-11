@@ -53,7 +53,7 @@ typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInfererState) {
 
         case iTermAltScreenMouseScrollInfererStateInitial:
             break;
-            
+
         case iTermAltScreenMouseScrollInfererStateScrolledDown: {
             unichar arrowKey = [self arrowKeyInEvent:theEvent];
             if (arrowKey == NSDownArrowFunctionKey || arrowKey == NSUpArrowFunctionKey) {
@@ -65,7 +65,7 @@ typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInfererState) {
             }
             break;
         }
-            
+
         case iTermAltScreenMouseScrollInfererStateScrolledUp:
             if ([self arrowKeyInEvent:theEvent] == NSUpArrowFunctionKey) {
                 // User scrolled up + was frustrated + pressed up arrow key.

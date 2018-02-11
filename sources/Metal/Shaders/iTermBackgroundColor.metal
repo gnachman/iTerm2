@@ -27,13 +27,13 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  perInstanceUniforms[iid].offset.xy +
                                  offset[0]);
     float2 viewportSize = float2(*viewportSizePointer);
-    
+
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
-    
+
     out.color = perInstanceUniforms[iid].color;
-    
+
     return out;
 }
 

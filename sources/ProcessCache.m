@@ -140,7 +140,7 @@ NSString *PID_INFO_NAME = @"name";
         *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
                          kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
     }
-    
+
     if (kp.kp_proc.p_comm[0]) {
         return [NSString stringWithUTF8String:kp.kp_proc.p_comm];
     } else {
@@ -154,7 +154,7 @@ NSString *PID_INFO_NAME = @"name";
     if (numBytes <= 0) {
         return nil;
     }
-    
+
     // Put all the pids of running jobs in the pids array.
     int* pids = (int*) malloc(numBytes);
     numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
@@ -162,16 +162,16 @@ NSString *PID_INFO_NAME = @"name";
         free(pids);
         return nil;
     }
-    
+
     int numPids = numBytes / sizeof(int);
 
     NSMutableArray *pidsArray = [NSMutableArray array];
     for (int i = 0; i < numPids; ++i) {
         [pidsArray addObject:[NSNumber numberWithInt:pids[i]]];
     }
-    
+
     free(pids);
-    
+
     return pidsArray;
 }
 
@@ -227,7 +227,7 @@ NSString *PID_INFO_NAME = @"name";
 {
     NSArray *allPids = [ProcessCache allPids];
     NSMutableDictionary *parentage = [NSMutableDictionary dictionary];
-    
+
     // parentage maps ppid -> {pid, pid, ...}
     for (NSNumber *n in allPids) {
         pid_t parentPid = [ProcessCache ppidForPid:[n intValue]];
@@ -241,7 +241,7 @@ NSString *PID_INFO_NAME = @"name";
             [children addObject:n];
         }
     }
-    
+
     // Return the transitive closure of children of thePid.
     NSMutableSet *closure = [NSMutableSet set];
     NSNumber *n = [NSNumber numberWithInt:thePid];

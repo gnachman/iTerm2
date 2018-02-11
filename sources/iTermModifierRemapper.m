@@ -87,7 +87,7 @@
     DLog(@"Begin remapping modifiers");
     [self.keyDown setRemappingDelegate:self];
     [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:self];
-    
+
     if (![_keyDown isEnabled]) {
         DLog(@"The event tap is NOT enabled");
         [self requestAccessibilityPermission];
@@ -180,7 +180,7 @@
     unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     unsigned int modflag = [cocoaEvent modifierFlags];
     NSString *keyBindingText;
-    
+
     const int boundAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                        modifiers:modflag
                                                             text:&keyBindingText

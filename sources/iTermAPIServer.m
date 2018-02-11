@@ -303,7 +303,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [self sendResponse:response onConnection:transactionRequest.connection];
             break;
         }
-        
+
         [self dispatchRequest:transactionRequest.request
                    connection:transactionRequest.connection];
     }

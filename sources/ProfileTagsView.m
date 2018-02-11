@@ -29,7 +29,7 @@ static const CGFloat kRowHeight = 21;
         _scrollView.hasVerticalScroller = YES;
         _scrollView.hasHorizontalScroller = NO;
         [self addSubview:_scrollView];
-        
+
         NSSize tableViewSize =
             [NSScrollView contentSizeForFrameSize:_scrollView.frame.size
                           horizontalScrollerClass:nil
@@ -64,7 +64,7 @@ static const CGFloat kRowHeight = 21;
         _tableView.headerView = _headerView;
         [_tagsColumn.headerCell setStringValue:@"Tag Name"];
         _tagsColumn.width = [_tagsColumn.headerCell cellSize].width;
-        
+
         [_tableView sizeLastColumnToFit];
         _scrollView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
 
@@ -145,7 +145,7 @@ static const CGFloat kRowHeight = 21;
     NSMutableString *string = [NSMutableString string];
     unichar chars[] = { 0xa0, 0xa0 };
     NSString *space = [NSString stringWithCharacters:chars length:sizeof(chars) / sizeof(*chars)];
-    
+
     for (int i = 0; i < level; i++) {
         [string appendString:space];
     }

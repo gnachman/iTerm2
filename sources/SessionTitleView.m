@@ -126,7 +126,7 @@ static const CGFloat kButtonSize = 17;
     double g = [color greenComponent];
     double b = [color blueComponent];
     double alpha = 1 - dimmingAmount;
-    
+
     // Biases the input color by 1-alpha toward gray of (basis, basis, basis).
     double basis = 0.15;
 

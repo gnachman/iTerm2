@@ -202,7 +202,7 @@
     // it tries to dereference the deleted cell. There doesn't seem to be an
     // API that explicitly ends editing.
     [_boundHostsTableView reloadData];
-    
+
     NSMutableArray *temp = [[[self boundHosts] mutableCopy] autorelease];
     [temp removeObjectAtIndex:rowIndex];
     [self setObject:temp forKey:KEY_BOUND_HOSTS];
@@ -248,7 +248,7 @@
     NSMutableArray *temp = [[hosts mutableCopy] autorelease];
     temp[rowIndex] = anObject;
     [self setObject:temp forKey:KEY_BOUND_HOSTS];
-    
+
     Profile *dupProfile = nil;
     NSArray *boundHosts = nil;
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
@@ -283,7 +283,7 @@
             case kiTermWarningSelection1:
                 [self removeBoundHostOnRow:rowIndex];
                 break;
-                
+
             default:
                 break;
         }

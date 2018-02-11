@@ -88,7 +88,7 @@ static iTermController *gSharedInstance;
     dispatch_once(&onceToken, ^{
         gSharedInstance = [[iTermController alloc] init];
     });
-    
+
     return gSharedInstance;
 }
 
@@ -127,7 +127,7 @@ static iTermController *gSharedInstance;
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
-        
+
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(workspaceWillPowerOff:)
                                                                    name:NSWorkspaceWillPowerOffNotification
@@ -598,7 +598,7 @@ static iTermController *gSharedInstance;
     if (_arrangeHorizontallyPendingFullScreenTransitions) {
         return;
     }
-    
+
     DLog(@"Actually arranging");
 
     // For each screen, find the terminals in it and arrange them. This way
@@ -781,10 +781,10 @@ static iTermController *gSharedInstance;
     switch (selection) {
         case kiTermWarningSelection0:
             return YES;
-            
+
         case kiTermWarningSelection1:
             return NO;
-            
+
         default:
             return YES;
     }
@@ -963,7 +963,7 @@ static iTermController *gSharedInstance;
                                                               withProfile:profile
                                                                      show:NO];
     [profileHotKey setAllowsStateRestoration:NO];
-    
+
     [self addTerminalWindow:term];
     return term;
 }
@@ -1075,12 +1075,12 @@ static iTermController *gSharedInstance;
     DLog(@"makeKey: %@", @(makeKey));
     DLog(@"canActivate: %@", @(canActivate));
     DLog(@"command: %@", command);
-    
+
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
     const BOOL isHotkey = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
-    
+
     aDict = bookmarkData;
     if (aDict == nil) {
         aDict = [self defaultBookmark];

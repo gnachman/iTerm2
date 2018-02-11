@@ -157,7 +157,7 @@ enum {
     // draw the menu label
     NSMutableDictionary *attributes = [NSMutableDictionary dictionary];
     attributes[NSFontAttributeName] = [NSFont menuFontOfSize:kMenuFontSize];
-    
+
     NSMenu *rootMenu = self.enclosingMenuItem.menu;
     while (rootMenu.supermenu) {
         rootMenu = rootMenu.supermenu;

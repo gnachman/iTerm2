@@ -24,7 +24,7 @@ typedef struct {
 
 // NOTE: This does not compare the ranges.
 NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
-                                             iTermBackgroundColorRun *b) {    
+                                             iTermBackgroundColorRun *b) {
     return (a->bgColor == b->bgColor &&
             a->bgGreen == b->bgGreen &&
             a->bgBlue == b->bgBlue &&

@@ -36,7 +36,7 @@ enum
     DirectoryLocationErrorNoPathFound,
     DirectoryLocationErrorFileExistsAtLocation
 };
-    
+
 NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 @implementation NSFileManager (iTerm)
@@ -70,13 +70,13 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         }
         return nil;
     }
-    
+
     // Only the first one returned is interesting. Append subdirectory if needed.
     NSString *resolvedPath = paths[0];
     if (appendComponent) {
         resolvedPath = [resolvedPath stringByAppendingPathComponent:appendComponent];
     }
-    
+
     // Create if needed.
     NSError *error = nil;
     BOOL success = [self createDirectoryAtPath:resolvedPath
@@ -89,7 +89,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         }
         return nil;
     }
-    
+
     if (errorOut) {
         *errorOut = nil;
     }
@@ -175,7 +175,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
             return path;
         }
     }
-    
+
     return nil;
 }
 
@@ -189,7 +189,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     if ([[dir stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
         return NO;
     }
-    
+
     NSString *filename = [NSString stringWithFormat:@"%@/.testwritable.%d", dir, (int)getpid()];
     NSError *error = nil;
     [@"test" writeToFile:filename

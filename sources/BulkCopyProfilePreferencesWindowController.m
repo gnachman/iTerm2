@@ -77,18 +77,18 @@ typedef enum {
         NSBeep();
         return;
     }
-    
+
     NSSet* destGuids = [_copyTo selectedGuids];
     for (NSString* destGuid in destGuids) {
         if ([destGuid isEqualToString:_sourceGuid]) {
             continue;
         }
-        
+
         if (![profileModel bookmarkWithGuid:destGuid]) {
             NSLog(@"Selected profile %@ doesn't exist", destGuid);
             continue;
         }
-        
+
         if ([_copyColors state] == NSOnState) {
             [self copyAttributes:BulkCopyColors fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
@@ -135,12 +135,12 @@ typedef enum {
    fromProfileWithGuid:(NSString*)guid
      toProfileWithGuid:(NSString*)destGuid {
     ProfileModel *profileModel = [ProfileModel sharedInstance];
-    
+
     Profile* dest = [profileModel bookmarkWithGuid:destGuid];
     Profile* src = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] initWithDictionary:dest] autorelease];
     NSArray *keys = nil;
-    
+
     switch (attributes) {
         case BulkCopyColors:
             keys = _keysForColors;
@@ -167,7 +167,7 @@ typedef enum {
             NSLog(@"Unexpected copy attribute %d", (int)attributes);
             return;
     }
-    
+
     for (NSString *theKey in keys) {
         id srcValue = [src objectForKey:theKey];
         if (srcValue) {
@@ -176,7 +176,7 @@ typedef enum {
             [newDict removeObjectForKey:theKey];
         }
     }
-    
+
     [profileModel setBookmark:newDict withGuid:[dest objectForKey:KEY_GUID]];
 }
 

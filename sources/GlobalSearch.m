@@ -324,7 +324,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                      yRadius:10];
     [dropShadow set];
     [thePath fill];
-    
+
     [[NSColor windowBackgroundColor] set];
     [thePath fill];
 }
@@ -388,19 +388,19 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSRect viewFrame = [[self view] frame];
     const NSRect origViewFrame = viewFrame;
     double dh = viewFrame.size.height;
-    
+
     int n = [combinedResults_ count];
-    
+
     double newTableHeight = 1 + [[tableView_ headerView] frame].size.height + n * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
     if (n == 0) {
         newTableHeight = 0;
     }
-    viewFrame.size.height = [tableView_ frame].origin.y + newTableHeight + 70; 
+    viewFrame.size.height = [tableView_ frame].origin.y + newTableHeight + 70;
     const double maxViewHeight = [[self view] frame].origin.y + [[self view] frame].size.height - 2 * GLOBAL_SEARCH_MARGIN;
     viewFrame.size.height = MIN(maxViewHeight, viewFrame.size.height);
     dh -= viewFrame.size.height;
     viewFrame.origin.y += dh;
-    
+
     if (!NSEqualRects(viewFrame, [[self view] frame])) {
         [[self view] setFrame:viewFrame];
         [delegate_ globalSearchViewDidResize:origViewFrame];
@@ -419,7 +419,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
             [searches_ removeObjectAtIndex:i];
         }
     }
-    
+
     for (int i = [combinedResults_ count] - 1; i >= 0; i--) {
         if ([searches_ indexOfObjectIdenticalTo:[[combinedResults_ objectAtIndex:i] instance]] == NSNotFound) {
             [combinedResults_ removeObjectAtIndex:i];
@@ -474,11 +474,11 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         [searches_ removeObjectAtIndex:0];
         int newResults = [inst doSearch];
         if ([inst more]) {
-            [searches_ addObject:inst]; 
+            [searches_ addObject:inst];
         }
         [self _addLastResultsToTable:newResults fromInstance:inst];
         [inst release];
-        
+
         NSDate* now = [NSDate date];
         if ([now timeIntervalSinceDate:begin] > kMaxTime) {
             break;
@@ -492,7 +492,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                                 selector:@selector(_continueSearch)
                                                 userInfo:nil
                                                  repeats:NO];
-    }        
+    }
 }
 
 - (void)_clearSearches
@@ -532,13 +532,13 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     if (field != searchField_) {
         return;
     }
-    
+
     [self _clearSearches];
     NSString* findString = [searchField_ stringValue];
     if ([findString length] == 0) {
         [combinedResults_ removeAllObjects];
         [self _resizeView];
-        [tableView_ reloadData];        
+        [tableView_ reloadData];
         return;
     }
     int i = 0;
@@ -619,11 +619,11 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                     [NSFont boldSystemFontOfSize:size], NSFontAttributeName,
                                     textColor, NSForegroundColorAttributeName,
                                     nil];
-    
+
     NSString* findString = [theResult findString];
     assert(findString);
     NSMutableString* contextTail = [NSMutableString stringWithString:[theResult context]];
-    
+
     NSAttributedString* matchStr = [[[NSAttributedString alloc] initWithString:findString attributes:boldAttributes] autorelease];
     CGFloat matchLen = [matchStr size].width;
     CGFloat maxPrefixWidth = (maxWidth - matchLen) / 2;
@@ -655,7 +655,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                                                           attributes:plainAttributes] autorelease];
             // Append the first plain part only if it doesn't take more than
             // half the space remaining after including the findString.
-            if ([as length] == 0 && 
+            if ([as length] == 0 &&
                 [substr size].width > maxPrefixWidth) {
                 substr = [self _attributedSubstringOf:substr
                                          narrowerThan:maxPrefixWidth
@@ -669,8 +669,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         }
         [contextTail deleteCharactersInRange:NSMakeRange(0, end)];
     }
-    
-    return [self _attributedSubstringOf:as 
+
+    return [self _attributedSubstringOf:as
                            narrowerThan:maxWidth
                                wantHead:YES];
 }
@@ -689,12 +689,12 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
     GlobalSearchResult* theResult = [combinedResults_ objectAtIndex:rowIndex];
-    
+
     switch ([[aTableColumn identifier] intValue]) {
         case 0:
             // Tab name
             return [self _tabNameForResult:theResult];
-            
+
         case 1:
             // Snippet
             return [self _snippetForResult:theResult isSelected:[aTableView selectedRow]==rowIndex maxWidth:[aTableColumn width]];

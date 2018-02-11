@@ -42,7 +42,7 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
             [iTermCommandHistoryCommandUseMO commandHistoryCommandUseFromDeprecatedSerialization:serializedCommandUse
                                                                                        inContext:context];
         assert(useManagedObject);
-        
+
         useManagedObject.entry = managedObject;
         useManagedObject.command = managedObject.command;
         [managedObject addUsesObject:useManagedObject];
@@ -106,7 +106,7 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
     } else if (self.numberOfUses.integerValue > otherUses) {
         return NSOrderedAscending;
     }
-    
+
     NSTimeInterval otherLastUsed = other.timeOfLastUse.doubleValue;
     if (self.timeOfLastUse.doubleValue < otherLastUsed) {
         return NSOrderedDescending;

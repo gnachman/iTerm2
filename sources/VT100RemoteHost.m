@@ -69,7 +69,7 @@ static NSString *gLocalHostName;
     return self;
 }
 
-- (void)dealloc {   
+- (void)dealloc {
     [_hostname release];
     [_username release];
     [super dealloc];

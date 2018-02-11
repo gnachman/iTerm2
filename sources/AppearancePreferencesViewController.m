@@ -79,7 +79,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     // Disable transparency in fullscreen by default.
     IBOutlet NSButton *_disableFullscreenTransparency;
-    
+
     // Draw line under title bar when the tab bar is not visible
     IBOutlet NSButton *_enableDivisionView;
 
@@ -235,7 +235,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                            key:kPreferenceKeyDisableFullscreenTransparencyByDefault
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
-    
+
     info = [self defineControl:_enableDivisionView
                            key:kPreferenceKeyEnableDivisionView
                           type:kPreferenceInfoTypeCheckbox];

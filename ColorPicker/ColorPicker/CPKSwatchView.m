@@ -20,7 +20,7 @@
     rect.origin.y += 0.5;
     rect.size.width -= 1;
     rect.size.height -= 1;
-    
+
     NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:rect
                                                          xRadius:self.cornerRadius
                                                          yRadius:self.cornerRadius];
@@ -32,7 +32,7 @@
         NSRect offset = [self convertRect:self.bounds toView:nil];
         [[NSGraphicsContext currentContext] setPatternPhase:offset.origin];
         NSRectFill(rect);
-        
+
         [self.color set];
         NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
     }
@@ -41,7 +41,7 @@
 
     [self.borderColor set];
     [path stroke];
-    
+
     if (!self.color) {
         path = [NSBezierPath bezierPath];
         [path moveToPoint:NSMakePoint(NSMaxX(rect), NSMinY(rect))];

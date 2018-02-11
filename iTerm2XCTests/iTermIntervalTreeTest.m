@@ -73,7 +73,7 @@ static Interval *MakeInterval(long long location, long long length) {
 - (void)testOneEntry {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(100, 50)];
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 100)
                             equal:@[]];
     [self assertEntriesInInterval:MakeInterval(150, 1000)
@@ -94,11 +94,11 @@ static Interval *MakeInterval(long long location, long long length) {
     [self assertEntriesInInterval:MakeInterval(10, 1) equal:@[obj1_]];
     [self assertEntriesInInterval:MakeInterval(10, 2) equal:@[obj1_]];
     [self assertEntriesInInterval:MakeInterval(11, 1) equal:@[obj1_]];
-    
+
     [self assertEntriesInInterval:MakeInterval(20, 1) equal:@[obj2_]];
     [self assertEntriesInInterval:MakeInterval(20, 2) equal:@[obj2_]];
     [self assertEntriesInInterval:MakeInterval(21, 1) equal:@[obj2_]];
-    
+
     [self assertEntriesInInterval:MakeInterval(10, 12) equal:@[obj1_, obj2_]];
     [self assertEntriesInInterval:MakeInterval(10, 11) equal:@[obj1_, obj2_]];
     [self assertEntriesInInterval:MakeInterval(10, 10) equal:@[obj1_]];
@@ -122,7 +122,7 @@ static Interval *MakeInterval(long long location, long long length) {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(5, 10)];
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 5) equal:@[]];
     [self assertEntriesInInterval:MakeInterval(0, 30) equal:@[obj1_, obj2_]];
     [self assertEntriesInInterval:MakeInterval(0, 10) equal:@[obj2_]];
@@ -137,7 +137,7 @@ static Interval *MakeInterval(long long location, long long length) {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(10, 5)];
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 10) equal:@[]];
     [self assertEntriesInInterval:MakeInterval(10, 1) equal:@[obj1_, obj2_]];
     [self assertEntriesInInterval:MakeInterval(10, 10) equal:@[obj1_, obj2_]];
@@ -151,7 +151,7 @@ static Interval *MakeInterval(long long location, long long length) {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(12, 5)];
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 10) equal:@[]];
     [self assertEntriesInInterval:MakeInterval(0, 100) equal:@[obj1_, obj2_]];
     [self assertEntriesInInterval:MakeInterval(0, 12) equal:@[obj1_]];
@@ -168,7 +168,7 @@ static Interval *MakeInterval(long long location, long long length) {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(15, 5)];
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 10) equal:@[]];
     [self assertEntriesInInterval:MakeInterval(0, 11) equal:@[obj1_]];
     [self assertEntriesInInterval:MakeInterval(0, 16) equal:@[obj1_, obj2_]];
@@ -183,7 +183,7 @@ static Interval *MakeInterval(long long location, long long length) {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(15, 10)];
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 10) equal:@[]];
     [self assertEntriesInInterval:MakeInterval(0, 11) equal:@[obj1_]];
     [self assertEntriesInInterval:MakeInterval(0, 20) equal:@[obj1_, obj2_]];
@@ -199,7 +199,7 @@ static Interval *MakeInterval(long long location, long long length) {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];  // [10, 20)
     [tree_ addObject:obj2_ withInterval:MakeInterval(5, 20)];   // [5, 25)
-    
+
     [self assertEntriesInInterval:MakeInterval(0, 5) equal:@[]];
     [self assertEntriesInInterval:MakeInterval(0, 10) equal:@[obj2_]];
     [self assertEntriesInInterval:MakeInterval(0, 15) equal:@[obj1_, obj2_]];
@@ -217,7 +217,7 @@ static Interval *MakeInterval(long long location, long long length) {
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(8, 10)];
     [tree_ addObject:obj3_ withInterval:MakeInterval(9, 10)];
-    
+
 }
 
 - (void)testWithSkew {
@@ -225,7 +225,7 @@ static Interval *MakeInterval(long long location, long long length) {
     [tree_ addObject:obj1_ withInterval:MakeInterval(10, 10)];
     [tree_ addObject:obj2_ withInterval:MakeInterval(12, 10)];
     [tree_ addObject:obj3_ withInterval:MakeInterval(11, 10)];
-    
+
 }
 
 - (Interval *)randomInterval {
@@ -274,7 +274,7 @@ static Interval *MakeInterval(long long location, long long length) {
             XCTAssert(tree_.count == entries.count);
             [tree_ sanityCheck];
         }
-        
+
         XCTAssert(((id<IntervalTreeObject>)[tree_ objectsWithLargestLimit][0]).entry.interval.limit == objectWithLargestLimit.entry.interval.limit);
         XCTAssert(((id<IntervalTreeObject>)[tree_ objectsWithSmallestLimit][0]).entry.interval.limit == objectWithSmallestLimit.entry.interval.limit);
         XCTAssert([tree_ objectsWithLargestLimitBefore:objectWithSmallestLimit.entry.interval.limit] == nil);
@@ -321,7 +321,7 @@ static Interval *MakeInterval(long long location, long long length) {
                 XCTAssert([actualObjects containsObject:expected]);
             }
         }
-        
+
         const int kNumberToDelete = N / 5;
         for (int i = 0; i < kNumberToDelete; i++) {
             int index = rand_r(&seed_) % entries.count;
@@ -331,7 +331,7 @@ static Interval *MakeInterval(long long location, long long length) {
             XCTAssert(tree_.count == entries.count);
             [tree_ sanityCheck];
         }
-        
+
         for (Interval *interval in intervalsToTest) {
             NSArray *actualObjects = [tree_ objectsInInterval:interval];
             NSMutableArray *expectedObjects = [NSMutableArray array];

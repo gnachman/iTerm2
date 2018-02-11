@@ -8,7 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "Trigger.h"
 
-@interface AlertTrigger : Trigger 
+@interface AlertTrigger : Trigger
 
 + (NSString *)title;
 - (BOOL)takesParameter;

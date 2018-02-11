@@ -69,10 +69,10 @@
     [layoutManager addTextContainer:textContainer];
     [textStorage addLayoutManager:layoutManager];
     [layoutManager setHyphenationFactor:0.0];
-    
+
     // Force layout.
     [layoutManager glyphRangeForTextContainer:textContainer];
-    
+
     // Don't count space added for insertion point.
     CGFloat height =
         [layoutManager usedRectForTextContainer:textContainer].size.height;

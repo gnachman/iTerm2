@@ -15,7 +15,7 @@
 
 - (BOOL)textFieldIsFirstResponder {
     BOOL inFocus = NO;
-    
+
     // If the textfield's widow's first responder is a text view and
     // the default editor for the text field exists and
     // the textfield is the textfield's window's first responder's delegate

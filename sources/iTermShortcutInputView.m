@@ -55,7 +55,7 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor clearColor] set];
     NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
-    
+
     BOOL isFirstResponder = ([self.window firstResponder] == self);
 
     NSColor *outerLineColor;
@@ -104,7 +104,7 @@
         }
     }
 
-    
+
     [[NSGraphicsContext currentContext] setShouldAntialias:NO];
     [outerLineColor set];
     NSRect frame = self.bounds;
@@ -112,7 +112,7 @@
     frame.size.height -= 1;
     frame.origin.x += 0.5;
     frame.origin.y += 0.5;
-    
+
     frame.size.width -= 0.5;
     frame.size.height -= 0.5;
     NSBezierPath *path = [NSBezierPath bezierPathWithRect:frame];
@@ -135,7 +135,7 @@
     frame.size.height -= 0.5;
     NSRectFillUsingOperation(frame, NSCompositeSourceOver);
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
-    
+
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.alignment = NSTextAlignmentCenter;
     NSDictionary<NSString *, id> *attributes = @{ NSForegroundColorAttributeName: textColor,
@@ -197,7 +197,7 @@
 - (void)addClearButton {
     NSSize size = self.bounds.size;
     NSSize buttonSize = [[NSImage imageNamed:@"Erase"] size];
-    
+
     _clearButton = [[NSButton alloc] initWithFrame:NSMakeRect(size.width - buttonSize.width - 2,
                                                               (size.height - buttonSize.height) / 2.0,
                                                               buttonSize.width,
@@ -209,7 +209,7 @@
     self.autoresizesSubviews = YES;
     _clearButton.autoresizingMask = (NSViewMinXMargin);
     [self addSubview:_clearButton];
-    
+
     self.enabled = YES;
 }
 

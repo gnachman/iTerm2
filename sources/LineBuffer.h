@@ -8,7 +8,7 @@
  **
  **  Project: iTerm
  **
- **  Description: Implements a buffer of lines. It can hold a large number 
+ **  Description: Implements a buffer of lines. It can hold a large number
  **   of lines and can quickly format them to a fixed width.
  **
  **  This program is free software; you can redistribute it and/or modify
@@ -114,7 +114,7 @@
 // Get the number of buffer lines at a given width.
 - (int)numLinesWithWidth:(int)width;
 
-// Save the cursor position. Call this just before appending the line the cursor is in. 
+// Save the cursor position. Call this just before appending the line the cursor is in.
 // x gives the offset from the start of the next line appended. The cursor position is
 // invalidated if dropExcessLinesWithWidth is called.
 - (void)setCursor:(int)x;

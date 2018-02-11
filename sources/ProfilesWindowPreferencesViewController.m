@@ -74,16 +74,16 @@
         _blurRadius.enabled = haveTransparency;
         _useBlur.enabled = haveTransparency;
     };
-    
+
     info = [self defineControl:_useBlur
                            key:KEY_BLUR
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { _blurRadius.enabled = (_useBlur.state == NSOnState); };
-    
+
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
-    
+
     [self defineControl:_backgroundImageTiled
                     key:KEY_BACKGROUND_IMAGE_TILED
                    type:kPreferenceInfoTypeCheckbox];
@@ -91,7 +91,7 @@
     [self defineControl:_blendAmount
                     key:KEY_BLEND
                    type:kPreferenceInfoTypeSlider];
-    
+
     info = [self defineControl:_columnsField
                            key:KEY_COLUMNS
                           type:kPreferenceInfoTypeIntegerTextField];
@@ -101,21 +101,21 @@
                            key:KEY_ROWS
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
-    
+
     [self defineControl:_hideAfterOpening
                     key:KEY_HIDE_AFTER_OPENING
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_windowStyle
                     key:KEY_WINDOW_TYPE
                    type:kPreferenceInfoTypePopup];
-    
+
     [self defineControl:_screen
                     key:KEY_SCREEN
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self screenDidChange]; }
                  update:^BOOL{ [self updateScreen]; return YES; }];
-    
+
     info = [self defineControl:_space
                            key:KEY_SPACE
                           type:kPreferenceInfoTypePopup];
@@ -124,7 +124,7 @@
             [self maybeWarnAboutSpaces];
         }
     };
-    
+
     info = [self defineControl:_syncTitle
                            key:KEY_SYNC_TITLE
                           type:kPreferenceInfoTypeCheckbox];
@@ -154,7 +154,7 @@
     for (id view in viewsToDisable) {
         [view setEnabled:NO];
     }
-    
+
     NSArray *labelsToDisable = @[ _screenLabel,
                                   _columnsLabel,
                                   _rowsLabel,
