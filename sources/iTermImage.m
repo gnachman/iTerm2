@@ -156,7 +156,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
         DLog(@"json root of class %@", [dict class]);
         return nil;
     }
-    
+
     self = [self init];
     if (self) {
         NSArray *delays = dict[@"delays"];
@@ -164,7 +164,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             DLog(@"delays of class %@", [delays class]);
             return nil;
         }
-        
+
         NSArray *size = dict[@"size"];
         if (![size isKindOfClass:[NSArray class]]) {
             DLog(@"size of class %@", [size class]);
@@ -180,19 +180,19 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             DLog(@"imageData of class %@", [imageData class]);
             return nil;
         }
-        
+
         if (delays.count != 0 && delays.count != imageData.count) {
             DLog(@"delays.count=%@, imageData.count=%@", @(delays.count), @(imageData.count));
             return nil;
         }
-        
+
         _size = NSMakeSize([size[0] doubleValue], [size[1] doubleValue]);
         if (_size.width <= 0 || _size.width >= kMaxDimension ||
             _size.height <= 0 || _size.height >= kMaxDimension) {
             DLog(@"Bogus size %@", NSStringFromSize(_size));
             return nil;
         }
-        
+
         for (id delay in delays) {
             if (![delay isKindOfClass:[NSNumber class]]) {
                 DLog(@"Bogus delay of class %@", [delay class]);
@@ -200,7 +200,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             }
             [_delays addObject:delay];
         }
-        
+
         for (NSString *imageString in imageData) {
             if (![imageString isKindOfClass:[NSString class]]) {
                 DLog(@"Bogus image string of class %@", [imageString class]);
@@ -211,12 +211,12 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
                 DLog(@"Could not decode base64 encoded image string");
                 return nil;
             }
-            
+
             if (data.length < _size.width * _size.height * 4) {
                 DLog(@"data too small %@ < %@", @(data.length), @(_size.width * _size.height * 4));
                 return nil;
             }
-            
+
             NSImage *image = [NSImage imageWithRawData:data
                                                   size:_size
                                          bitsPerSample:8

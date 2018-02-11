@@ -198,7 +198,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 }
                 break;
             }
-                
+
             case kPreferenceInfoTypeUnsignedIntegerTextField:
                 [self applyUnsignedIntegerConstraints:info];
                 [self setUnsignedInteger:[sender separatorTolerantUnsignedIntegerValue] forKey:info.key];
@@ -223,7 +223,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 assert([sender selectedTag]>=0);
                 [self setUnsignedInteger:[sender selectedTag] forKey:info.key];
                 break;
-                
+
             case kPreferenceInfoTypeSlider:
                 [self setFloat:[sender doubleValue] forKey:info.key];
                 break;
@@ -442,7 +442,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (NSUInteger)unsignedIntegerForString:(NSString *)s inRange:(NSRange)range {
     NSString *i = [s stringWithOnlyDigits];
-    
+
     NSUInteger val = 0;
     if ([i length]) {
         val = [i iterm_unsignedIntegerValue];
@@ -514,7 +514,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             case kPreferenceInfoTypeUnsignedIntegerPopup:
             case kPreferenceInfoTypeUnsignedIntegerTextField:
                 break;
-                
+
             case kPreferenceInfoTypeDoubleTextField:
                 // Replace the control with its canonical value. Only floating point text fields can
                 // temporarily take illegal values, which are tolerated until editing ends.

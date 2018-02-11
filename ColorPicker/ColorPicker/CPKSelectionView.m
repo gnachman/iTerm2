@@ -120,9 +120,9 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
 - (void)createSubviews {
     [self createModeButton];
-    
+
     [self createSlidersWithColor:_selectedColor];
-    
+
     __weak __typeof(self) weakSelf = self;
     self.gradientView =
     [[CPKGradientView alloc] initWithFrame:NSZeroRect
@@ -130,7 +130,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                      block:^(NSColor *newColor) {
                                          [weakSelf setColorFromGradient:newColor];
                                      }];
-    
+
     self.colorComponentSliderView =
         [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
                                                      color:_selectedColor
@@ -138,7 +138,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                                      block:^(CGFloat newValue) {
                                                          [weakSelf setSliderValue:newValue];
                                                      }];
-    
+
     if (_alphaAllowed) {
         self.alphaSliderView = [[CPKAlphaSliderView alloc] initWithFrame:NSZeroRect
                                                                    alpha:_selectedColor.alphaComponent
@@ -147,9 +147,9 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                                                        [weakSelf setAlpha:newAlpha];
                                                                    }];
     }
-    
+
     self.gradientView.selectedColor = _selectedColor;
-    
+
     NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
     self.hslRgbTextFieldSwitch = [[NSButton alloc] initWithFrame:NSZeroRect];
     self.hslRgbTextFieldSwitch.bordered = NO;
@@ -158,10 +158,10 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.hslRgbTextFieldSwitch.target = self;
     self.hslRgbTextFieldSwitch.action = @selector(toggleHslRgbTextFields:);
     self.hslRgbTextFieldSwitch.toolTip = @"Switch between RGB and HSB values.";
-    
+
     [self createTextFieldsIncludingAlpha:_alphaAllowed];
     [self updateTextFieldsForColor:_selectedColor];
-    
+
     self.subviews = @[ self.modeButton,
                        self.hsbSliders,
                        self.rgbSliders,
@@ -187,30 +187,30 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.modeButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect];
     [self.modeButton setTarget:self];
     [self.modeButton setAction:@selector(modeDidChange:)];
-    
+
     [self.modeButton addItemWithTitle:@"HSB with Hue Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithHueSliderTag];
     [self.modeButton addItemWithTitle:@"HSB with Brightness Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithBrightnessSliderTag];
     [self.modeButton addItemWithTitle:@"HSB with Saturation Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithSaturationSliderTag];
-    
+
     [self.modeButton.menu addItem:[NSMenuItem separatorItem]];
-    
+
     [self.modeButton addItemWithTitle:@"RGB with Red Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithRedSliderTag];
     [self.modeButton addItemWithTitle:@"RGB with Green Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithGreenSliderTag];
     [self.modeButton addItemWithTitle:@"RGB with Blue Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithBlueSliderTag];
-    
+
     [self.modeButton.menu addItem:[NSMenuItem separatorItem]];
-    
+
     [self.modeButton addItemWithTitle:@"HSB Sliders"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBSliders];
     [self.modeButton addItemWithTitle:@"RGB Sliders"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBSliders];
-    
+
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kCPKSelectionViewPreferredModeKey]) {
         [self.modeButton selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:kCPKSelectionViewPreferredModeKey]];
     }
@@ -301,11 +301,11 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         self.alphaTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
         self.alphaTextField.delegate = self;
     }
-    
+
     // Create text field containers
     self.rgbTextFields = [[CPKFlippedView alloc] initWithFrame:NSZeroRect];
     self.hsbTextFields = [[CPKFlippedView alloc] initWithFrame:NSZeroRect];
-    
+
     // Create HSB text fields
     self.brightnessTextField =[[NSTextField alloc] initWithFrame:NSZeroRect];
     self.brightnessTextField.delegate = self;
@@ -327,9 +327,9 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.redTextField.delegate = self;
 
     self.hexTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-    
+
     self.hexTextField.delegate = self;
-    
+
     self.hsbTextFields.subviews = @[ self.hueTextField,
                                      self.brightnessTextField,
                                      self.saturationTextField ];
@@ -363,18 +363,18 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     frame = self.modeButton.frame;
     frame.size.width = NSWidth(frameRect) - kRightMargin - kLeftMargin;
     self.modeButton.frame = frame;
-    
+
     frame = NSMakeRect(kLeftMargin,
                        NSMaxY(self.modeButton.frame) + kMarginBetweenPopupButtonAndGradient,
                        NSWidth(frameRect) - kRightMargin - kLeftMargin,
                        kGradientHeight);
     self.gradientView.frame = frame;
-    
+
     frame = NSMakeRect(kLeftMargin,
                        NSMaxY(self.gradientView.frame) + kMarginBetweenGradientAndColorComponentSlider,
                        NSWidth(frameRect) - kRightMargin - kLeftMargin,
                        kColorComponentSliderHeight);
-    
+
     self.colorComponentSliderView.frame = frame;
 
     [self layoutSliders];
@@ -429,7 +429,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     frame.origin.y += kColorComponentSliderHeight;
     frame.size.height = labelHeight;
     self.redLabel.frame = frame;
-    
+
     frame = NSMakeRect(0,
                        NSMaxY(frame) + kMarginBetweenComponentSliders,
                        NSWidth(frameRect) - kRightMargin - kLeftMargin,
@@ -516,7 +516,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                 break;
         }
     }
-    
+
     // Lay out text field containers
     const CGFloat textFieldsContainerWidth = kColorTextFieldWidth * 3 + kMarginBetweenTextFields * 2;
     self.rgbTextFields.frame = NSMakeRect(x - textFieldsContainerWidth,
@@ -524,7 +524,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                           textFieldsContainerWidth,
                                           0);
     self.hsbTextFields.frame = self.rgbTextFields.frame;
-    
+
     // Lay out HSB text fields
     x = textFieldsContainerWidth;
     self.brightnessTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
@@ -571,7 +571,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                              kLeftMargin -
                                              kMarginBetweenTextFields,
                                          0);
-    
+
     [self layoutHeightOfTextField:self.redTextField];
     [self layoutHeightOfTextField:self.greenTextField];
     [self layoutHeightOfTextField:self.blueTextField];
@@ -814,7 +814,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         self.redSliderView.color = selectedColor;
         self.greenSliderView.color = selectedColor;
         self.blueSliderView.color = selectedColor;
-        
+
         self.hueSliderView.color = selectedColor;
         self.saturationSliderView.color = selectedColor;
         self.brightnessSliderView.color = selectedColor;
@@ -846,7 +846,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         [NSString stringWithFormat:@"%d", (int)round(color.saturationComponent * 255)];
     self.brightnessTextField.stringValue =
         [NSString stringWithFormat:@"%d", (int)round(color.brightnessComponent * 255)];
-    
+
     if (self.alphaAllowed) {
         self.alphaTextField.stringValue =
             [NSString stringWithFormat:@"%d",(int)round(color.alphaComponent * 255)];
@@ -963,7 +963,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 - (void)modeDidChange:(id)sender {
     [[NSUserDefaults standardUserDefaults] setInteger:self.modeButton.selectedTag
                                                forKey:kCPKSelectionViewPreferredModeKey];
-    
+
     switch ((CPKRGBViewMode) self.modeButton.selectedTag) {
         case kCPKRGBViewModeHSBWithHueSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeHue;

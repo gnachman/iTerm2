@@ -100,7 +100,7 @@
                                token:token];
     } else {
         NSCParameterAssert(datalen > 0);
-        
+
         switch (*datap) {
             case VT100CC_NULL:
                 token->type = VT100_SKIP;
@@ -123,7 +123,7 @@
                                          encoding:encoding];
                 }
                 break;
-                
+
             default:
                 token->type = *datap;
                 *rmlen = 1;

@@ -119,7 +119,7 @@ static const NSInteger kUnicodeVersion = 9;
     [fakeDefaults setFakeObject:extraWordCharacters forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     _lines = @[ line ];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    
+
     [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
@@ -138,7 +138,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 - (void)testSmartSelectionRulesPlistParseable {
     NSArray *rules = [SmartSelectionController defaultRules];
-    XCTAssertTrue(rules.count > 0, @"No default smart selection rules"); 
+    XCTAssertTrue(rules.count > 0, @"No default smart selection rules");
 }
 
 // Ensures double-width characters are handled properly.
@@ -289,7 +289,7 @@ static const NSInteger kUnicodeVersion = 9;
 - (void)testContentInRange_RemoveTabFillers {
     NSString *line = @"a\uf001\uf001\tb";
     NSMutableData *data = [NSMutableData dataWithLength:(line.length + 1) * sizeof(screen_char_t)];
-    
+
     screen_char_t color = { 0 };
     int len = 0;
     StringToScreenChars(line,
@@ -329,7 +329,7 @@ static const NSInteger kUnicodeVersion = 9;
 - (void)testContentInRange_ConvertOrphanTabFillersToSpaces {
     NSString *line = @"ab\uf001\uf001c";
     NSMutableData *data = [NSMutableData dataWithLength:(line.length + 1) * sizeof(screen_char_t)];
-    
+
     screen_char_t color = { 0 };
     int len = 0;
     StringToScreenChars(line,
@@ -551,7 +551,7 @@ static const NSInteger kUnicodeVersion = 9;
                             kUnicodeVersion);
         _buffer[len].code = EOL_SOFT;
     }
-    
+
     return _buffer;
 }
 

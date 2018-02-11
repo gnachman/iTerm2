@@ -530,7 +530,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     NSArray *lines = [pasteEvent.string componentsSeparatedByRegex:@"(?:\r\n)|(?:\r)|(?:\n)"];
     NSString *theTitle;
     NSMutableArray<iTermWarningAction *> *actions = [NSMutableArray array];
-    
+
     __block BOOL result = YES;
     iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:@"Cancel"
                                                                       block:^(iTermWarningSelection selection) { result = NO; }];
@@ -544,7 +544,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                                      [pasteEvent.string stringByTrimmingTrailingCharactersFromCharacterSet:newlines];
                                                  result = YES;
                                              }];
-    
+
     [actions addObject:paste];
     [actions addObject:cancel];
     NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
@@ -574,7 +574,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     }
     // Issue 5115
     [iTermWarning unsilenceIdentifier:identifier ifSelectionEquals:[actions indexOfObjectIdenticalTo:cancel]];
-    
+
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = theTitle;
     warning.warningActions = actions;

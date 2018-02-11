@@ -68,7 +68,7 @@ enum {
     if (appURLs) {
         CFRelease(appURLs);
     }
-    
+
     if (count > 0) {
         if ([bundleId isEqualToString:kSublimeText2Identifier] ||
             [bundleId isEqualToString:kSublimeText3Identifier]) {
@@ -225,14 +225,14 @@ enum {
             [caveat_ setStringValue:@"When you activate Semantic History on a filename, the associated app loads the file."];
             hideCaveat = NO;
             break;
-            
+
         case 2:
             [[text_ cell] setPlaceholderString:@"Enter URL."];
             [caveat_ setStringValue:@"When you activate Semantic History on a filename, the browser opens a URL.\nUse \\1 for the filename you clicked on and \\2 for the line number."];
             hideCaveat = NO;
             hideText = NO;
             break;
-            
+
         case 3:
             hideEditors = NO;
             [caveat_ setStringValue:@"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps."];

@@ -16,15 +16,15 @@
               token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding {
     int c1, c2;
-    
+
     NSCParameterAssert(datap[0] == VT100CC_ESC);
     NSCParameterAssert(datalen > 1);
-    
+
     c1 = (datalen >= 2 ? datap[1]: -1);
     c2 = (datalen >= 3 ? datap[2]: -1);
     // A third parameter could be available but isn't currently used.
     // c3 = (datalen >= 4 ? datap[3]: -1);
-    
+
     switch (c1) {
         case 27: // esc: two esc's in a row. Ignore the first one.
             result->type = VT100_NOTSUPPORT;
@@ -58,22 +58,22 @@
                 *rmlen = 3;
             }
             break;
-            
+
         case '=':
             result->type = VT100CSI_DECKPAM;
             *rmlen = 2;
             break;
-            
+
         case '>':
             result->type = VT100CSI_DECKPNM;
             *rmlen = 2;
             break;
-            
+
         case '<':
             result->type = STRICT_ANSI_MODE;
             *rmlen = 2;
             break;
-            
+
         case '(':
             if (c2 < 0) {
                 result->type = VT100_WAIT;
@@ -110,47 +110,47 @@
                 *rmlen = 3;
             }
             break;
-            
+
         case '8':
             result->type = VT100CSI_DECRC;
             *rmlen = 2;
             break;
-            
+
         case '7':
             result->type = VT100CSI_DECSC;
             *rmlen = 2;
             break;
-            
+
         case 'D':
             result->type = VT100CSI_IND;
             *rmlen = 2;
             break;
-            
+
         case 'E':
             result->type = VT100CSI_NEL;
             *rmlen = 2;
             break;
-            
+
         case 'H':
             result->type = VT100CSI_HTS;
             *rmlen = 2;
             break;
-            
+
         case 'M':
             result->type = VT100CSI_RI;
             *rmlen = 2;
             break;
-            
+
         case 'Z':
             result->type = VT100CSI_DECID;
             *rmlen = 2;
             break;
-            
+
         case 'c':
             result->type = VT100CSI_RIS;
             *rmlen = 2;
             break;
-            
+
         case 'k':
             // The screen term uses <esc>k<title><cr|esc\> to set the title.
             if (datalen > 0) {
@@ -219,7 +219,7 @@
                 result->type = VT100_WAIT;
             }
             break;
-            
+
         case ' ':
             if (c2 < 0) {
                 result->type = VT100_WAIT;
@@ -240,7 +240,7 @@
                 }
             }
             break;
-            
+
         default:
             result->type = VT100_NOTSUPPORT;
             *rmlen = 2;

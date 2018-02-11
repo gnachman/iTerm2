@@ -219,16 +219,16 @@ static NSTimeInterval kDefaultTime = 10000000;
                                                             onHost:remoteHost];
             NSArray *expectedEntries = dictionary[key];
             XCTAssertEqual(expectedEntries.count, actualEntries.count);
-            
+
             for (NSInteger i = 0; i < expectedEntries.count; i++) {
                 NSDictionary *expectedEntry = expectedEntries[i];
                 iTermCommandHistoryEntryMO *actualEntry = actualEntries[i];
-                
+
                 XCTAssertEqualObjects(actualEntry.command, expectedEntry[@"command"]);
                 XCTAssertEqualObjects(actualEntry.numberOfUses, expectedEntry[@"uses"]);
                 XCTAssertEqualObjects(actualEntry.timeOfLastUse, expectedEntry[@"last used"]);
                 XCTAssertEqual(actualEntry.uses.count, [expectedEntry[@"use times"] count]);
-                
+
                 NSOrderedSet<iTermCommandHistoryCommandUseMO *> *actualUses = actualEntry.uses;
                 for (NSInteger j = 0; j < actualUses.count; j++) {
                     iTermCommandHistoryCommandUseMO *actualUse = actualUses[j];
@@ -274,10 +274,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray *entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 0);
-    
+
     VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
     [historyController addCommand:@"command1"
                            onHost:remoteHost
@@ -285,7 +285,7 @@ static NSTimeInterval kDefaultTime = 10000000;
                          withMark:mark];
     entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 1);
-    
+
     iTermCommandHistoryEntryMO *entry = entries[0];
     XCTAssertEqualObjects([entry command], @"command1");
     XCTAssertEqualObjects([entry numberOfUses], @1);
@@ -293,7 +293,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual([entry.uses count], 1);
     XCTAssertEqualObjects([entry.remoteHost hostname], remoteHost.hostname);
     XCTAssertEqualObjects([entry.remoteHost username], remoteHost.username);
-    
+
     iTermCommandHistoryCommandUseMO *use = entry.uses[0];
     XCTAssertEqualObjects(use.markGuid, mark.guid);
     XCTAssertEqualObjects(use.directory, @"/directory1");
@@ -313,10 +313,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray *entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 0);
-    
+
     VT100ScreenMark *mark1 = [[[VT100ScreenMark alloc] init] autorelease];
     [historyController addCommand:@"command1"
                            onHost:remoteHost
@@ -342,7 +342,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual([entry.uses count], 2);
     XCTAssertEqualObjects([entry.remoteHost hostname], remoteHost.hostname);
     XCTAssertEqualObjects([entry.remoteHost username], remoteHost.username);
-    
+
     // Check first use
     iTermCommandHistoryCommandUseMO *use = entry.uses[0];
     XCTAssertEqualObjects(use.markGuid, mark1.guid);
@@ -351,7 +351,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqualObjects(use.command, @"command1");
     XCTAssertNil(use.code);
     XCTAssertEqualObjects(use.entry, entry);
-    
+
     // Check second use
     use = entry.uses[1];
     XCTAssertEqualObjects(use.markGuid, mark2.guid);
@@ -371,10 +371,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray *entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 0);
-    
+
     VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
     [historyController addCommand:@"command1"
                            onHost:remoteHost
@@ -382,7 +382,7 @@ static NSTimeInterval kDefaultTime = 10000000;
                          withMark:mark];
     entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 1);
-    
+
     iTermCommandHistoryEntryMO *entry = entries[0];
     iTermCommandHistoryCommandUseMO *use = entry.uses[0];
     XCTAssertEqualObjects(use.markGuid, mark.guid);
@@ -391,11 +391,11 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqualObjects(use.command, @"command1");
     XCTAssertNil(use.code);
     XCTAssertEqualObjects(use.entry, entry);
-    
+
     [historyController setStatusOfCommandAtMark:mark onHost:remoteHost to:123];
     entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 1);
-    
+
     entry = entries[0];
     use = entry.uses[0];
     XCTAssertEqualObjects(use.markGuid, mark.guid);
@@ -417,7 +417,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray *entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 0);
 
@@ -471,7 +471,7 @@ static NSTimeInterval kDefaultTime = 10000000;
         }
     }
     XCTAssert(found);
-    
+
     uses = [historyController autocompleteSuggestionsWithPartialCommand:@"a" onHost:remoteHost];
     XCTAssertEqual(uses.count, 3);
     uses = [historyController autocompleteSuggestionsWithPartialCommand:@"b" onHost:remoteHost];
@@ -485,7 +485,7 @@ static NSTimeInterval kDefaultTime = 10000000;
         [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
-    
+
     [historyController addCommand:@"command"
                            onHost:remoteHost
                       inDirectory:@"directory"
@@ -498,7 +498,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     iTermShellHistoryControllerForTesting *historyController =
         [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
                                                                                          shouldSaveToDisk:YES] autorelease];
-    
+
     // Add command for first host
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
@@ -507,7 +507,7 @@ static NSTimeInterval kDefaultTime = 10000000;
                            onHost:remoteHost
                       inDirectory:@"directory"
                          withMark:[[[VT100ScreenMark alloc] init] autorelease]];
-    
+
     // Add command for second host
     VT100RemoteHost *remoteHost2 = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost2.username = @"user2";
@@ -516,15 +516,15 @@ static NSTimeInterval kDefaultTime = 10000000;
                            onHost:remoteHost2
                       inDirectory:@"directory"
                          withMark:[[[VT100ScreenMark alloc] init] autorelease]];
-    
+
     // Ensure both are present.
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost2]);
-    
+
     // Erase first host.
     [historyController eraseCommandHistoryForHost:remoteHost];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
-    
+
     // Make sure first host's data is gone but second host's remains.
     XCTAssertEqual([[historyController commandUsesForHost:remoteHost] count], 0);
     XCTAssert([historyController haveCommandsForHost:remoteHost2]);
@@ -549,7 +549,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     [historyController eraseCommandHistory:YES directories:NO];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     XCTAssertEqual([[historyController commandUsesForHost:remoteHost] count], 0);
-    
+
     historyController = [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
 }
@@ -576,10 +576,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray *entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 0);
-    
+
     VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
     [historyController addCommand:@"command1"
                            onHost:remoteHost
@@ -597,7 +597,7 @@ static NSTimeInterval kDefaultTime = 10000000;
                            onHost:remoteHost
                       inDirectory:@"/directory3"
                          withMark:[[[VT100ScreenMark alloc] init] autorelease]];
-    
+
     iTermCommandHistoryCommandUseMO *use = [historyController commandUseWithMarkGuid:mark.guid
                                                                               onHost:remoteHost];
     XCTAssertEqualObjects(use.directory, @"/directory2");
@@ -617,14 +617,14 @@ static NSTimeInterval kDefaultTime = 10000000;
         [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
                                                                                          shouldSaveToDisk:YES] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
-    
+
     // Just old enough to be removed
     historyController.currentTime = kDefaultTime - (60 * 60 * 24 * 90 + 1);
     [historyController addCommand:@"command1"
                            onHost:remoteHost
                       inDirectory:@"directory"
                          withMark:[[[VT100ScreenMark alloc] init] autorelease]];
-    
+
     // Should stay
     historyController.currentTime = kDefaultTime;
     [historyController addCommand:@"command2"
@@ -853,7 +853,7 @@ static NSTimeInterval kDefaultTime = 10000000;
                       inDirectory:@"directory"
                          withMark:[[[VT100ScreenMark alloc] init] autorelease]];
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
-    
+
     historyController =
         [[[iTermShellHistoryControllerWithRAMStoreForTesting alloc] initWithGuid:_guid] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
@@ -952,7 +952,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray<iTermRecentDirectoryMO *> *directories =
         [historyController directoriesSortedByScoreOnHost:remoteHost];
     XCTAssertEqual(directories.count, 0);
@@ -960,7 +960,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     [historyController recordUseOfPath:@"/test/path" onHost:remoteHost isChange:YES];
     directories = [historyController directoriesSortedByScoreOnHost:remoteHost];
     XCTAssertEqual(directories.count, 1);
-    
+
     iTermRecentDirectoryMO *directory = directories[0];
     XCTAssertEqualObjects(directory.path, @"/test/path");
     XCTAssertEqualObjects(directory.useCount, @1);
@@ -977,7 +977,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     NSArray<iTermRecentDirectoryMO *> *directories =
         [historyController directoriesSortedByScoreOnHost:remoteHost];
     XCTAssertEqual(directories.count, 0);
@@ -991,7 +991,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
     directories = [historyController directoriesSortedByScoreOnHost:remoteHost];
     XCTAssertEqual(directories.count, 1);
-    
+
     iTermRecentDirectoryMO *directory = directories[0];
     XCTAssertEqualObjects(directory.path, @"/test/path");
     XCTAssertEqualObjects(directory.useCount, @2);
@@ -1008,7 +1008,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
     remoteHost.hostname = @"host1";
-    
+
     [historyController recordUseOfPath:@"/test/path" onHost:remoteHost isChange:YES];
 
     NSArray<iTermRecentDirectoryMO *> *directories =

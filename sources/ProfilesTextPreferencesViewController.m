@@ -169,7 +169,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                             return YES;
                         }];
 
-    
+
     [self defineControl:_horizontalSpacing
                     key:KEY_HORIZONTAL_SPACING
                    type:kPreferenceInfoTypeSlider];

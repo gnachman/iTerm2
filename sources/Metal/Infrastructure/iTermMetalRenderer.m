@@ -392,7 +392,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     if (!texture) {
         texture = [_device newTextureWithDescriptor:textureDescriptor];
     }
-    
+
     MTLRegion region = MTLRegionMake2D(0, 0, width, height);
     [texture replaceRegion:region mipmapLevel:0 withBytes:rawData bytesPerRow:bytesPerRow];
 

@@ -304,10 +304,10 @@ static const CGFloat kBottomPadding = 3;
     const NSTimeInterval duration = 0.75;
     // Alpha counts from 0 to 1.
     float alpha = 1.0 - MIN(MAX(0, (duration - elapsed) / duration), 1);
-    
+
     // Square alpha so it spends more time in the highlighted end of the range.
     alpha = alpha * alpha;
-    
+
     NSColor *defaultBg = [self.noteView defaultBackgroundColor];
     CGFloat highlightComponents[] = { 0.9, 0.8, 0 };
     CGFloat components[3] = {

@@ -405,19 +405,19 @@
         // Contains a slash but does not start with it.
         return YES;
     }
-    
+
     NSString *ipRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
     if ([s rangeOfRegex:ipRegex].location != NSNotFound) {
         // IP addresses as dotted quad
         return YES;
     }
-    
+
     NSString *hostnameRegex = @"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
     if ([s rangeOfRegex:hostnameRegex].location != NSNotFound) {
         // A hostname with at least two components.
         return YES;
     }
-    
+
     return NO;
 }
 

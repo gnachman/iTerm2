@@ -54,7 +54,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{ [self updateOptionKeySendsForControl:_rightOptionKeySends]; return YES; }];
-    
+
     [self defineControl:_applicationKeypadAllowed
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
                    type:kPreferenceInfoTypeCheckbox];
@@ -72,7 +72,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     info.observer = ^() {
         _configureHotKey.enabled = _hasHotkey.state == NSOnState;
     };
-    
+
     [self updateDeleteSendsCtrlH];
     [_keyMappingViewController hideAddTouchBarItem];
 }
@@ -114,12 +114,12 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     model.floats = [self boolForKey:KEY_HOTKEY_FLOAT];
     model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
     [model setAlternateShortcutDictionaries:(id)[self objectForKey:KEY_HOTKEY_ALTERNATE_SHORTCUTS]];
-    
+
     iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
     panel.descriptorsInUseByOtherProfiles =
         [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:self.delegate.profilePreferencesCurrentProfile];
     panel.model = model;
-    
+
     [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSModalResponseOK) {
             [self setObjectsFromDictionary:model.dictionaryValue];
@@ -250,7 +250,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                 return;
             }
         }
-        
+
         [iTermKeyBindingMgr setMappingAtIndex:index
                                        forKey:keyCombo
                                        action:action
@@ -270,7 +270,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     isTouchBarItem:(BOOL)isTouchBarItem {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
-    
+
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
     if (isTouchBarItem) {
         [iTermKeyBindingMgr removeTouchBarItemWithKey:keyCombo inMutableProfile:dict];
@@ -278,7 +278,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
         NSUInteger index =
             [[iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile] indexOfObject:keyCombo];
         assert(index != NSNotFound);
-        
+
         [iTermKeyBindingMgr removeMappingAtIndex:index inBookmark:dict];
     }
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
@@ -297,9 +297,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
   loadPresetsNamed:(NSString *)presetName {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
-    
+
     NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
-    
+
     [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:dict];
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];

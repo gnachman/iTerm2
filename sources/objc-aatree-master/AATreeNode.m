@@ -17,7 +17,7 @@
 		self.key = aKey;
 		self.level = 1;
 	}
-	
+
 	return self;
 }
 
@@ -39,7 +39,7 @@
 }
 
 - (void) addKeyToArray:(NSMutableArray *)anArray {
-	
+
 	[left addKeyToArray:anArray];
 	[anArray addObject:[[key copy] autorelease]];
 	[right addKeyToArray:anArray];
@@ -47,7 +47,7 @@
 
 
 - (id) copyWithZone:(NSZone *)zone {
-	
+
 	AATreeNode *copy = [[AATreeNode alloc] initWithData:data boundToKey:key];
 	copy.left = [[left copy] autorelease];
 	copy.right = [[right copy] autorelease];
@@ -59,12 +59,12 @@
 - (void) printWithIndent:(int)indent {
 
 	if (right) [right printWithIndent:(indent+1)];
-	
+
 	NSMutableString *pre = [[NSMutableString alloc] init];
 	for (int i=0; i<indent; i++) [pre appendString:@"   "];
 	NSLog(@"%@%@-%@(%i)", pre, key, data, level);
 	[pre release];
-	
+
 	if (left) [left printWithIndent:(indent+1)];
 }
 

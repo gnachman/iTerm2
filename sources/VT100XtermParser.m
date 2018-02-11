@@ -336,7 +336,7 @@ typedef enum {
                     }
                 }
                 return;
-                
+
             case kXtermParserOutOfDataState:
                 if (data.length && multitokenHeaderEmitted) {
                     [self emitIncidentalForMultitokenBodyInVector:incidentals

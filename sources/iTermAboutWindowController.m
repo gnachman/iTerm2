@@ -87,13 +87,13 @@
     [_patronsTextView setAlignment:NSLeftTextAlignment
                          range:NSMakeRange(0, [[_patronsTextView textStorage] length])];
     _patronsTextView.horizontallyResizable = NO;
-    
+
     NSRect rect = _patronsTextView.enclosingScrollView.frame;
     [_patronsTextView sizeToFit];
     CGFloat diff = _patronsTextView.frame.size.height - rect.size.height;
     rect.size.height = _patronsTextView.frame.size.height;
     _patronsTextView.enclosingScrollView.frame = rect;
-    
+
     rect = self.window.frame;
     rect.size.height += diff;
     [self.window setFrame:rect display:YES animate:animate];

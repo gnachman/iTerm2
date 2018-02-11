@@ -217,7 +217,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         }
         DLog(@"Set haveSetNeedsDisplay=YES");
         _haveSetNeedsDisplay = YES;
-        
+
         // Ensure that the screen gets redrawn with alpha = 0.
         if (_fullScreenAlpha == 0) {
             DLog(@"Reset fullScreenFlashStartTime");

@@ -92,7 +92,7 @@ static NSString *const kStackKey = @"Profile Stack";
                path:(nullable NSString *)path {
     APSLog(@"APS: hostname=%@, username=%@, path=%@", hostname, username, path);
     BOOL sticky = NO;
-    
+
     Profile *currentProfile = [_delegate automaticProfileSwitcherCurrentProfile];
     double scoreForCurrentProfile = [self highestScoreForProfile:currentProfile
                                                         hostname:hostname
@@ -130,11 +130,11 @@ static NSString *const kStackKey = @"Profile Stack";
         if (highestScoringProfile && ![highestScoringProfile isEqualToProfile:currentProfile]) {
             APSLog(@"Switching to %@", highestScoringProfile[KEY_NAME]);
             [self pushCurrentProfileIfNeeded];
-            
+
             iTermSavedProfile *newSavedProfile = [[[iTermSavedProfile alloc] init] autorelease];
             newSavedProfile.originalProfile = highestScoringProfile;
             [_delegate automaticProfileSwitcherLoadProfile:newSavedProfile];
-            
+
             if (sticky) {
                 DLog(@"Found a sticky rule so clearing the stack and pushing the new profile");
                 [_profileStack removeAllObjects];
@@ -194,7 +194,7 @@ static NSString *const kStackKey = @"Profile Stack";
             ruleToProfileMap[rule] = profile;
         }
     }
-    
+
     // Find the best-matching rule.
     double bestScore = 0;
     Profile *bestProfile = nil;

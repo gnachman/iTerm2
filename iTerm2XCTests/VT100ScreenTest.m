@@ -892,10 +892,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return nil;
 }
 
-- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *,NSString *> *)parameters payload:(NSString *)payload { 
+- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *,NSString *> *)parameters payload:(NSString *)payload {
 }
 
-- (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID { 
+- (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
 }
 
 
@@ -4089,14 +4089,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testRemoteHostOnTrailingEmptyLineNotLostDuringResize {
     // Append some text, then a newline, then set a remote host, then resize. Ensure the
     // remote host is still there.
-    
+
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     [self appendLines:@[ @"Hi" ] toScreen:screen];
-    
+
     [screen terminalSetRemoteHost:@"example.com"];
     [screen setSize:VT100GridSizeMake(6, 4)];
     VT100RemoteHost *remoteHost = [screen remoteHostOnLine:2];
-    
+
     XCTAssertEqualObjects([remoteHost hostname], @"example.com");
 }
 
@@ -4262,7 +4262,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
  // >t not supported (Set one or more features of the title modes)
  // SP t not supported (Set warning-bell volume (DECSWBV, VT520))
  { 0, 0, 'u', ANSICSI_RCP, -1, -1 },
- 
+
  { 1, XTERMCC_DEICONIFY },
  { 2, XTERMCC_ICONIFY },
  { 3, XTERMCC_WINDOWPOS },

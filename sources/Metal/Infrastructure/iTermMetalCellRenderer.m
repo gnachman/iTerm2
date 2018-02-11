@@ -117,7 +117,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                           commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState *transientState =
     [super createTransientStateForConfiguration:configuration commandBuffer:commandBuffer];
-    
+
     iTermMetalCellRendererTransientState *tState = transientState;
     tState.piuElementSize = _piuElementSize;
 

@@ -184,12 +184,12 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
                frames:(NSRect*)frames
           screenFrame:(NSRect)screenFrame
 {
-    /*NSLog(@"**computeLayout with screen frame %lf,%lf %lfx%lf", 
+    /*NSLog(@"**computeLayout with screen frame %lf,%lf %lfx%lf",
           screenFrame.origin.x,
           screenFrame.origin.y,
           screenFrame.size.width,
           screenFrame.size.height);
-      */    
+      */
     float n = [images count];
     int rows = 1, cols = 1;
     const float aspectRatio = screenFrame.size.width / screenFrame.size.height;
@@ -217,7 +217,7 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
                 }
             }
         } while (isinf(waste));
-        
+
     } else {
         [self _optimalGridSize:&cols
                         rows_p:&rows
@@ -227,7 +227,7 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
                              n:n
           maxWindowsToOptimize:maxWindowsToOptimize];
     }
-    
+
     [self _sortFrames:frames n:[images count]];
     for (int i = 0; i < n; i++) {
         //NSLog(@"After sorting frame %d is at %@", i, FormatRect(frames[i]));
@@ -426,7 +426,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     return availableSpace;
 }
 
-- (void)_toggleOn { 
+- (void)_toggleOn {
     // Hide all open hotkey windows
     [[iTermHotKeyController sharedInstance] fastHideAllHotKeyWindows];
 
@@ -481,7 +481,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     [window_ setContentView:view_];
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
     [window_ setOpaque:NO];
-    
+
     // Note: we used to tell the hotkey window it's not a hotkey window before making this window
     // key but I can't see why.
     [window_ makeKeyAndOrderFront:self];

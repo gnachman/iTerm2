@@ -141,7 +141,7 @@ static NSString *sPreviousVersion;
     // Force antialiasing to be allowed on small font sizes
     [userDefaults setInteger:1 forKey:@"AppleAntiAliasingThreshold"];
     [userDefaults setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
-    
+
     // Turn off high sierra's native tabs
     [userDefaults setObject:@"manual" forKey:@"AppleWindowTabbingMode"];
 
@@ -337,7 +337,7 @@ static NSString *sPreviousVersion;
         case kPreferenceInfoTypeColorWell:
             return [defaultValue isKindOfClass:[NSDictionary class]];
     }
-    
+
     return NO;
 }
 
@@ -387,7 +387,7 @@ static NSString *sPreviousVersion;
     id before = nil;
     if (observers) {
         before = [self objectForKey:key];
-        
+
         // nil out observers if there is no change.
         if (before && object && [before isEqual:object]) {
             observers = nil;
@@ -486,10 +486,10 @@ static NSString *sPreviousVersion;
     switch (tag) {
         case kPreferencesModifierTagEitherCommand:
             return NSCommandKeyMask;
-            
+
         case kPreferencesModifierTagCommandAndOption:
             return NSCommandKeyMask | NSAlternateKeyMask;
-            
+
         case kPreferencesModifierTagEitherOption:
             return NSAlternateKeyMask;
 

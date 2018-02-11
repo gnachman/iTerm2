@@ -101,7 +101,7 @@
     // If we were called because a window closed, make sure we're up to date (there's a race where
     // GlobalSearch's notification may be run before ours).
     [[iTermExpose sharedInstance] recomputeIndices:nil];
-    
+
     if ([search_ numResults] > 0 &&
         [[search_ view] frame].size.height <= prevSearchHeight_) {
         return;
@@ -112,7 +112,7 @@
     } else {
         prevSearchHeight_ = [[search_ view] frame].size.height;
     }
-    
+
     NSMutableArray* images = [NSMutableArray arrayWithCapacity:[[grid_ subviews] count]];
     // fill the array up with images in the wrong order just to make it large
     // enough.
@@ -141,7 +141,7 @@
             //NSLog(@"Place %@ at index %d", [tabView label], [tabView index]);
         }
     }
-    
+
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
     NSScreen* theScreen = [iTermExposeGridView exposeScreen];
     NSRect screenFrame = [theScreen visibleFrame];
@@ -151,7 +151,7 @@
         screenFrame.size.width -= [self searchFrame].size.width;
     }
     [[iTermExpose sharedInstance] computeLayout:images frames:frames screenFrame:screenFrame];
-    
+
     NSRect* permutedFrames = (NSRect*)calloc([images count], sizeof(NSRect));
     for (i = 0; i < [images count]; i++) {
         //NSLog(@"Move frame at %d to %d", [[permutation objectAtIndex:i] intValue], i);

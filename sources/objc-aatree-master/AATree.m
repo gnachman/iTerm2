@@ -124,7 +124,7 @@
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 - (id) initWithKeyComparator:(NSComparator)aKeyComparator {
-	
+
 	if (self = [super init]) {
 		keyComparator = [aKeyComparator copy];
 		pthread_rwlock_init(&rwLock, NULL);
@@ -134,20 +134,20 @@
 
 
 - (id) init {
-	
+
 	@throw [NSException exceptionWithName:@"MethodNotAllowedException" reason:@"Initialize an AATree with the 'initWithKeyComparator:' method." userInfo:nil];
 }
 
 
 - (id) copyWithZone:(NSZone *)zone {
-	
+
 	AATree *copy = [[AATree alloc] initWithKeyComparator:keyComparator];
-	
+
 	[self __lockForReading];
 	copy.root = [[root copy] autorelease];
 	copy.count = count;
 	[self __unlock];
-	
+
 	return copy;
 }
 
@@ -160,52 +160,52 @@
 }
 
 - (NSUInteger) count {
-    
+
 	return count;
 }
 
 
 
 - (NSEnumerator *) keyEnumerator {
-	
+
 	NSMutableArray *keys = [NSMutableArray arrayWithCapacity:count];
-    
+
 	[self __lockForReading];
 	[root addKeyToArray:keys];
 	[self __unlock];
-    
+
 	return [keys objectEnumerator];
 }
 
 
 - (id) objectClosestToKey:(id)aKey {
-	
+
 	[self __lockForReading];
 	id object = [self __nodeClosestToKey:aKey atRoot:root].data;
 	[self __unlock];
-	
+
 	return object;
 }
 
 
 - (id) objectForKey:(id)aKey {
-	
+
 	[self __lockForReading];
 	id data = [self __nodeAtKey:aKey].data;
 	[self __unlock];
-    
+
 	return data;
 }
 
 
 - (void) print {
-	
+
 	[root printWithIndent:0];
 }
 
 
 - (void) removeObjectForKey:(id)aKey {
-    
+
 	[self __lockForWriting];
     changedNodes = [[NSMutableSet alloc] init];
     AATreeNode *prevRoot = self.root;
@@ -228,11 +228,11 @@
 
 
 - (void) setObject:(id)anObject forKey:(id)aKey {
-    
+
 	NSParameterAssert(anObject);
 	NSParameterAssert(aKey);
 	NSAssert([aKey conformsToProtocol:@protocol(NSCopying)], @"The supplied key does not conform to the NSCopying protocol.");
-	
+
 	[self __lockForWriting];
     changedNodes = [[NSMutableSet alloc] init];
 	AATreeNode *newNode = [[[AATreeNode alloc] initWithData:anObject boundToKey:[[aKey copy] autorelease]] autorelease];
@@ -260,10 +260,10 @@
 
 - (NSArray *)pathFromNode:(AATreeNode *)node {
     NSMutableArray *parents = [NSMutableArray array];
-    
+
     // Begin at the root of the tree.
     AATreeNode *current = root;
-    
+
     // While still at a node, check whether we have found the correct node or
     // travel left or right.
     while (current) {
@@ -273,7 +273,7 @@
         else if (compareResult == NSOrderedAscending) current = current.left;
         else current = current.right;
     }
-    
+
     // Nothing found, return nil.
     return nil;
 }
@@ -295,25 +295,25 @@
 @synthesize keyComparator;
 
 - (AATreeNode *) __deleteNodeAtKey:(id)aKey atRoot:(AATreeNode *)aRoot {
-    
+
 	if (aRoot) {
-		
+
 		// If we found the correct node, remove it.
 		NSComparisonResult compareResult = keyComparator(aKey, aRoot.key);
 		if (compareResult == NSOrderedSame) {
-			
+
 			// Check whether we are at an easy to remove node (zero to one children) or
 			// a more difficult node.
 			if (aRoot.left && aRoot.right) {
-				
+
 				// Get the in-order predecessor (heir).
 				AATreeNode *heir = aRoot.left;
 				while (heir.right) heir = heir.right;
-                
+
 				// Replace the data.
 				aRoot.key = heir.key;
 				aRoot.data = heir.data;
-				
+
 				// Delete the in-order predecessor (heir).
 				aRoot.left = [self __deleteNodeAtKey:aRoot.key atRoot:aRoot.left];
                 [changedNodes addObject:aRoot];
@@ -327,9 +327,9 @@
                 aRoot.deleted = YES;
 				aRoot = aRoot.right; // which could be nil.
 			}
-			
+
 			count--;
-            
+
             // Otherwise, travel left or right.
 		} else if (compareResult == NSOrderedAscending) {
             AATreeNode *prevLeft = aRoot.left;
@@ -346,19 +346,19 @@
                 [changedNodes addObject:prevRight];
             }
 		}
-		
+
 		// Check whether the levels or the children are not more than one
 		// lower than the current.
 		if (aRoot.left.level < aRoot.level - 1 || aRoot.right.level < aRoot.level - 1) {
-			
+
 			// Decrease the level by one.
 			aRoot.level--;
-			
+
 			// Decrease the right child's level also, when it is higher than its parent.
 			if (aRoot.right.level > aRoot.level) {
                 aRoot.right.level = aRoot.level;
             }
-			
+
             AATreeNode *prevRoot = aRoot;
 			aRoot = [self __skew:aRoot];
             if (aRoot != prevRoot) {
@@ -373,19 +373,19 @@
             }
 		}
 	}
-	
+
 	return aRoot;
 }
 
 
 - (AATreeNode *) __insertNode:(AATreeNode *)aNode atRoot:(AATreeNode *)aRoot {
-    
+
 	// If the root is not nil, we have not reached an empty child of a leaf node.
 	if (aRoot) {
-		
+
 		// Decide which way to travel through the tree.
 		NSComparisonResult compareResult = keyComparator(aNode.key, aRoot.key);
-		
+
 		// If the key of the new node is equal to the current root, just replace the data.
 		if (compareResult == NSOrderedSame)	{
 			aRoot.data = aNode.data;
@@ -401,7 +401,7 @@
                 [changedNodes addObject:aRoot];
                 [changedNodes addObject:aRoot.right];
             }
-			
+
 			// After the node has been added, skew and split the (possibly new) root.
 			// Because of the recursive nature of this function, all parents of the
 			// new node will get skewed and split, all the way up to the root of the tree.
@@ -418,34 +418,34 @@
                 [changedNodes addObject:prevRoot];
             }
 		}
-		
+
         // Otherwise, insert the node.
 	} else {
 		aRoot = aNode;
 		count++;
 	}
-	
+
 	return aRoot;
 }
 
 
 - (void) __lockForReading {
-	
+
 	pthread_rwlock_rdlock(&rwLock);
 }
 
 
 - (void) __lockForWriting {
-	
+
 	pthread_rwlock_wrlock(&rwLock);
 }
 
 
 - (AATreeNode *) __nodeAtKey:(id)aKey {
-	
+
 	// Begin at the root of the tree.
 	AATreeNode *current = root;
-	
+
 	// While still at a node, check whether we have found the correct node or
 	// travel left or right.
 	while (current) {
@@ -454,41 +454,41 @@
 		else if (compareResult == NSOrderedAscending) current = current.left;
 		else current = current.right;
 	}
-	
+
 	// Nothing found, return nil.
 	return nil;
 }
 
 
 - (AATreeNode *) __nodeClosestToKey:(id)aKey atRoot:(AATreeNode *)aRoot {
-    
+
 	// Start with no result.
 	AATreeNode *result = nil;
-	
+
 	// If we are still at a node, compare it to the specified key.
 	if (aRoot) {
 		NSComparisonResult compareResult = keyComparator(aKey, aRoot.key);
-		
+
 		// If the keys are equal, we have found an exact match and we are done.
 		if (compareResult == NSOrderedSame)	result = aRoot;
-		
+
 		// Otherwise, travel left or right until a leaf node is surpassed.
 		else if (compareResult == NSOrderedAscending) result = [self __nodeClosestToKey:aKey atRoot:aRoot.left];
 		else result = [self __nodeClosestToKey:aKey atRoot:aRoot.right];
-        
+
 		// If no result has been found lower in the tree, test whether this node
 		// is the closest.
 		if (!result && compareResult == NSOrderedDescending) result = aRoot;
 	}
-	
+
 	return result;
 }
 
 
 - (AATreeNode *) __skew:(AATreeNode *)aRoot {
-    
+
 	if (aRoot) {
-		
+
 		// Check for a logical horizontal left link.
 		if (aRoot.left.level == aRoot.level) {
 			// Perform a right rotation.
@@ -501,13 +501,13 @@
 		aRoot.right = [self __skew:aRoot.right];
         [changedNodes addObject:aRoot];
 	}
-	
+
 	return aRoot;
 }
 
 
 - (AATreeNode *) __split:(AATreeNode *)aRoot {
-	
+
 	// Check for a consecutive logical horizontal right link.
 	if (aRoot && aRoot.right.right.level == aRoot.level) {
 		// Perform a left rotation.
@@ -515,21 +515,21 @@
 		aRoot = aRoot.right;
 		save.right = aRoot.left;
 		aRoot.left = save;
-		
+
 		// Increase the level of the new root.
 		aRoot.level++;
-        
+
 		// Split the right side of the new root.
 		aRoot.right = [self __split:aRoot.right];
         [changedNodes addObject:aRoot];
 	}
-	
+
 	return aRoot;
 }
 
 
 - (void) __unlock {
-	
+
 	pthread_rwlock_unlock(&rwLock);
 }
 

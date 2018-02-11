@@ -44,7 +44,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
             // Iterate over old style url handlers (which stored bookmark by index)
             // and add guid->urlkey to urlHandlersByGuid.
             tempDict = [userDefaults objectForKey:kOldStyleUrlHandlersUserDefaultsKey];
-            
+
             for (id key in tempDict) {
                 int theIndex = [[tempDict objectForKey:key] intValue];
                 if (theIndex >= 0 &&
@@ -94,7 +94,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
         [alert addButtonWithTitle:@"Cancel"];
         set = ([alert runModal] == NSAlertFirstButtonReturn);
     }
-    
+
     if (set) {
         _urlHandlersByGuid[scheme] = guid;
         LSSetDefaultHandlerForURLScheme((CFStringRef)scheme,
@@ -213,7 +213,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     BOOL result = [iTermBundleId isEqualToString:(NSString *)handler];
     CFRelease(handler);
     return result;
-    
+
 }
 
 - (void)setDefaultTerminal:(NSString *)bundleId {

@@ -66,7 +66,7 @@ NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) {
     }
     uint64_t end;
     NSTimeInterval elapsed;
-    
+
     end = mach_absolute_time();
     elapsed = end - timer->start;
 
@@ -148,7 +148,7 @@ void iTermPreciseTimerStatsRecord(iTermPreciseTimerStats *stats, NSTimeInterval 
         return;
     }
     stats->totalEventCount += eventCount;
-    
+
     // Welford's online variance algorithm, adopted from:
     // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Higher-order_statistics
     stats->n += 1;

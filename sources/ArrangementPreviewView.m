@@ -26,7 +26,7 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor lightGrayColor] set];
     NSRectFill(dirtyRect);
-    
+
     NSArray *screens = [NSScreen screens];
     CGFloat xMax = 0, yMax = 0;
     CGFloat xMin = 0, yMin = 0;
@@ -39,7 +39,7 @@
         xMin = MIN(xMin, frame.origin.x);
         yMin = MIN(yMin, frame.origin.y);
     }
-    
+
     double xScale = [self frame].size.width / (xMax - xMin);
     double yScale = [self frame].size.height / (yMax - yMin);
     double scale = MIN(xScale, yScale);
@@ -56,17 +56,17 @@
                                  frame.size.height * scale);
         [[NSColor blackColor] set];
         NSFrameRect(rect);
-        
+
         rect.origin.x++;
         rect.origin.y++;
         rect.size.width -= 2;
         rect.size.height -= 2;
         [[NSColor colorWithCalibratedRed:0.270 green:0.545 blue:0.811 alpha:1] set];
         NSRectFill(rect);
-        
+
         [screenFrames addObject:[NSValue valueWithRect:rect]];
     }
-    
+
     for (NSDictionary* terminalArrangement in arrangement_) {
         [PseudoTerminal drawArrangementPreview:terminalArrangement screenFrames:screenFrames];
     }

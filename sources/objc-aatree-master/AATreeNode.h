@@ -23,7 +23,7 @@
  * @param aDataObject		The data to include in the node.
  * @param aKey				The key the node is bound to.
  * @result					An initialized node.
- */ 
+ */
 - (id) initWithData:(id)aDataObject boundToKey:(id)aKey;
 
 

@@ -286,7 +286,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (void)windowDidLoad {
     // We shouldn't use setFrameAutosaveName: because this window controller controls two windows
-    // with different frames (besides, I tried it and it doesn't work here for some reason). 
+    // with different frames (besides, I tried it and it doesn't work here for some reason).
     [self.window setFrameUsingName:self.nameForFrame force:NO];
 }
 

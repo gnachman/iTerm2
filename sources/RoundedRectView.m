@@ -17,7 +17,7 @@
         color_ = [[[NSColor darkGrayColor] colorWithAlphaComponent:0.8] retain];
         borderColor_ = [[NSColor whiteColor] retain];
     }
-    
+
     return self;
 }
 

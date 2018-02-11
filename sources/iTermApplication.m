@@ -7,7 +7,7 @@
  **
  **  Project: iTerm
  **
- **  Description: overrides sendEvent: so that key mappings with command mask  
+ **  Description: overrides sendEvent: so that key mappings with command mask
  **               are handled properly.
  **
  **  This program is free software; you can redistribute it and/or modify

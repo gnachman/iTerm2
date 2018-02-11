@@ -32,7 +32,7 @@
             line = @"";
         }
     }
-    
+
     NSScanner *scanner = [[[NSScanner alloc] initWithString:line] autorelease];
     NSString *mountpoint = nil;
     NSString *map = nil;
@@ -88,7 +88,7 @@
         // The actual character set for this file doesn't seem to be defined. This is my guess.
         NSString *string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
         NSArray<NSString *> *lines = [string componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-        
+
         for (NSString *line in lines) {
             iTermAutoMasterEntry *entry = [iTermAutoMasterEntry entryWithLine:line];
             if (entry) {

@@ -36,7 +36,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             delay = number.doubleValue;
         }
     }
-    
+
     return delay;
 }
 
@@ -76,7 +76,7 @@ int main(int argc, const char * argv[]) {
             }
         }
         serializableImage.size = imageSize;
-        
+
         BOOL isGIF = NO;
         if (count > 1) {
             syslog(LOG_DEBUG, "multiple frames found");
@@ -110,7 +110,7 @@ int main(int argc, const char * argv[]) {
                         break;
                     }
                     totalSize += bytes;
-                    
+
                     [serializableImage.images addObject:image];
                     CFRelease(imageRef);
                     NSTimeInterval delay = DelayInGifProperties(frameProperties[i]);
@@ -123,7 +123,7 @@ int main(int argc, const char * argv[]) {
             syslog(LOG_DEBUG, "adding decoded image");
             [serializableImage.images addObject:image];
         }
-        
+
         syslog(LOG_DEBUG, "converting json");
         NSData *jsonValue = [serializableImage jsonValue];
         syslog(LOG_DEBUG, "writing data out");

@@ -95,7 +95,7 @@
     theCopy->start_ = start_;
     theCopy->bound_ = bound_;
     theCopy->timestamp_ = timestamp_;
-    
+
     return theCopy;
 }
 

@@ -60,7 +60,7 @@
         case iTermBoxDrawingCodeHeavyVertical:  // ┃
             components = @"c1c7 e1e7";
             break;
-            
+
         case iTermBoxDrawingCodeLightTripleDashHorizontal:  // ┄
         case iTermBoxDrawingCodeHeavyTripleDashHorizontal:  // ┅
         case iTermBoxDrawingCodeLightTripleDashVertical:  // ┆
@@ -70,7 +70,7 @@
         case iTermBoxDrawingCodeLightQuadrupleDashVertical:  // ┊
         case iTermBoxDrawingCodeHeavyQuadrupleDashVertical:  // ┋
             return nil;
-            
+
         case iTermBoxDrawingCodeLightDownAndRight:  // ┌
             components = @"g4d4 d4d7";
             break;
@@ -269,7 +269,7 @@
         case iTermBoxDrawingCodeLightDoubleDashVertical:  // ╎
         case iTermBoxDrawingCodeHeavyDoubleDashVertical:  // ╏
             return nil;
-            
+
         case iTermBoxDrawingCodeDoubleHorizontal:  // ═
             components = @"a2g2 a6g6";
             break;
@@ -415,14 +415,14 @@
             components = @"c1c4 e1e4 d4d7";
             break;
     }
-    
+
     if (!components) {
         return nil;
     }
-    
+
     CGFloat horizontalCenter = cellSize.width / 2.0;
     CGFloat verticalCenter = cellSize.height / 2.0;
-    
+
     const char *bytes = [components UTF8String];
     NSBezierPath *path = [NSBezierPath bezierPath];
     [path setLineWidth:scale];
@@ -469,13 +469,13 @@
         } else {
             [path lineToPoint:NSMakePoint(xs[x2], ys[y2])];
         }
-        
+
         i++;
-        
+
         lastX = x2;
         lastY = y2;
     }
-    
+
     return @[ path ];
 }
 

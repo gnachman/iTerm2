@@ -42,10 +42,10 @@
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
             return [NSString stringWithFormat:@"Last week"];
-   
+
         }
         return [NSString stringWithFormat:@"%d weeks ago", diff];
-    }   
+    }
 }
 
 + (NSString *)compactDateDifferenceStringFromDate:(NSDate *)date
@@ -80,10 +80,10 @@
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
             return [NSString stringWithFormat:@"1 week"];
-            
+
         }
         return [NSString stringWithFormat:@"%d wks", diff];
-    }   
+    }
 }
 
 @end

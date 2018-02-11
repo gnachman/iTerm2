@@ -14,7 +14,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 @implementation TmuxWindowsTable {
     NSMutableArray *model_;
     NSMutableArray *filteredModel_;
-    
+
     IBOutlet NSTableView *tableView_;
     IBOutlet NSButton *addWindowButton_;
     IBOutlet NSButton *removeWindowButton_;
@@ -248,12 +248,12 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     NSMutableArray *result = [NSMutableArray array];
     NSIndexSet *anIndexSet = [tableView_ selectedRowIndexes];
     NSUInteger i = [anIndexSet firstIndex];
-    
+
     while (i != NSNotFound) {
         [result addObject:[[[self filteredModel] objectAtIndex:i] objectAtIndex:0]];
         i = [anIndexSet indexGreaterThanIndex:i];
     }
-    
+
     return result;
 }
 
@@ -280,7 +280,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 - (BOOL)nameMatchesFilter:(NSString *)name
 {
     NSString *needle = [searchField_ stringValue];
-    
+
     return (!needle.length ||
             [name rangeOfString:needle
                         options:(NSCaseInsensitiveSearch |

@@ -482,7 +482,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 rightChunk = afterChunks[j];
             }
             [right appendString:rightChunk];
-            
+
             NSString *possiblePath = [left stringByAppendingString:right];
             NSString *trimmedPath = possiblePath;
             if (trimWhitespace) {

@@ -10,7 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 {
     int blurFilter;
     double blurRadius_;
-    
+
     // If set, then windowWillShowInitial is not invoked.
     BOOL _layoutDone;
 
@@ -200,7 +200,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray<NSValue *> *frames = [windows mapWithBlock:^id(NSWindow *window) {
         return [NSValue valueWithRect:window.frame];
     }];
-    
+
     double lowestCost = INFINITY;
     NSRect bestFrame = self.frame;
     const CGFloat widthToScan = screenRect.size.width - self.frame.size.width;
@@ -220,7 +220,7 @@ ITERM_WEAKLY_REFERENCEABLE
             CGFloat distanceFromScreenCenter = sqrt(pow(proposedCenter.x - screenCenter.x, 2) +
                                                     pow(proposedCenter.y - screenCenter.y, 2)) / maxDistance;
             const CGFloat cost = [self sumOfIntersectingAreaOfRect:proposedRect withRects:frames] + distanceFromScreenCenter;
-            
+
             if (cost < lowestCost) {
                 lowestCost = cost;
                 bestFrame = proposedRect;
@@ -373,7 +373,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
-    
+
     _totalOcclusionCacheTime = [NSDate timeIntervalSinceReferenceDate];
     _cachedTotalOcclusion = totalOcclusion;
     return totalOcclusion;

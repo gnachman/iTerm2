@@ -128,7 +128,7 @@
     const CGPoint offset = CGPointMake(self.margins.left, self.margins.top);
     const CGFloat height = self.configuration.viewportSize.y;
     const CGFloat bottom = self.margins.top;
-    
+
     [_runs enumerateObjectsUsingBlock:^(iTermMetalImageRun * _Nonnull run, NSUInteger idx, BOOL * _Nonnull stop) {
         id key = [self keyForRun:run];
         id<MTLTexture> texture = _textures[key];

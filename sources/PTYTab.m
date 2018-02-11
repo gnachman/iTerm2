@@ -183,7 +183,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // This tab broadcasts to all its sessions?
     BOOL broadcasting_;
-    
+
     // Currently dragging a split pane in a tab that's also a tmux tab?
     BOOL _isDraggingSplitInTmuxTab;
 
@@ -613,7 +613,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (changed) {
         [[self realParentWindow] tabActiveSessionDidChange];
     }
-    
+
     [[self realParentWindow] updateTabColors];
     [self recheckBlur];
 
@@ -1777,7 +1777,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             haveFoundLock = YES;
         }
     }
-    
+
     DLog(@"Size is %@", NSStringFromSize(size));
     return size;
 }
@@ -2053,7 +2053,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [sv setFrame:frame];
         }
     }
-    return (isVertical ? 
+    return (isVertical ?
             NSMakeSize(offset - dividerThickness, maxAgainstGrain) :
             NSMakeSize(maxAgainstGrain, offset - dividerThickness));
 }
@@ -2751,7 +2751,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSSize size;
 
     DLog(@"recursiveSetSizesInTmuxParseTree for node:\n%@", parseTree);
-    
+
     BOOL isVertical = NO;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
         case kLeafLayoutNode:
@@ -2977,7 +2977,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
 
-    
+
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->parseTree_ = [parseTree retain];
 
@@ -3075,7 +3075,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                             borderType:session.view.scrollview.borderType
                                                            controlSize:NSRegularControlSize
                                                          scrollerStyle:session.view.scrollview.scrollerStyle];
-            
+
             int chars = forHeight ? (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height :
                                     (contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
@@ -3125,7 +3125,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // dividers as 1).
 - (NSSize)tmuxSize {
     DLog(@"Compute size in characters of the window that fits this tab's contents");
-    
+
     // The current size of the sessions in this tab in characters
     // ** BUG **
     // This rounds off fractional parts. We really need to know the maximum capacity, and fractional parts can add up to more than one whole char.
@@ -3583,7 +3583,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     [[root_ window] makeFirstResponder:[activeSession_ textview]];
     [realParentWindow_ invalidateRestorableState];
-    
+
     for (SessionView *sessionView in self.sessionViews) {
         // I don't know why, but this doesn't get called automatically and so focus follows mouse
         // breaks. Issue 4810.
@@ -3758,19 +3758,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [session2 isTmuxGateway]) {
         return;
     }
-    
+
     DLog(@"Before swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
 
     PTYTab *session1Tab = (PTYTab *)session1.delegate;
     PTYTab *session2Tab = (PTYTab *)session2.delegate;
-    
+
     PTYSplitView *session1Superview = (PTYSplitView *)session1.view.superview;
     NSUInteger session1Index = [[session1Superview subviews] indexOfObject:session1.view];
     PTYSplitView *session2Superview = (PTYSplitView *)session2.view.superview;
     NSUInteger session2Index = [[session2Superview subviews] indexOfObject:session2.view];
-    
+
     session1Superview.delegate = nil;
     session2Superview.delegate = nil;
     if (session1Superview == session2Superview) {
@@ -3786,7 +3786,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     session1Superview.delegate = session1Tab;
     session2Superview.delegate = session2Tab;
-    
+
     session1.delegate = session2Tab;
     session2.delegate = session1Tab;
 
@@ -3804,10 +3804,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
               [aTab fitSessionToCurrentViewSize:aSession];
           }
     }
-    
+
     [session1Tab fitSessionToCurrentViewSize:session1];
     [session2Tab fitSessionToCurrentViewSize:session1];
-    
+
     DLog(@"After swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
@@ -3818,7 +3818,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [session1Tab.viewToSessionMap removeObjectForKey:session1.view];
     [session2Tab.viewToSessionMap removeObjectForKey:session2.view];
 
-    
+
     [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 }
@@ -4614,7 +4614,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             if (session.isIdle &&
                 [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
                 // Idle after new output
-                
+
                 // See if a notification should be posted.
                 if (!session.havePostedIdleNotification && [session shouldPostGrowlNotification]) {
                     NSString *theDescription =

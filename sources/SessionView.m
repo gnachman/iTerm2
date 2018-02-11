@@ -80,7 +80,7 @@ static NSDate* lastResizeDate_;
 
     BOOL _showTitle;
     SessionTitleView *_title;
-    
+
     BOOL _inAddSubview;
 
     NSView *_hoverURLView;
@@ -120,7 +120,7 @@ static NSDate* lastResizeDate_;
         NSRect aRect = [self frame];
         [_findView setFrameOrigin:NSMakePoint(aRect.size.width - [[_findView view] frame].size.width - 30,
                                                      aRect.size.height - [[_findView view] frame].size.height)];
-        
+
         // Assign a globally unique view ID.
         _viewId = nextViewId++;
 
@@ -716,7 +716,7 @@ static NSDate* lastResizeDate_;
     VT100GridSize gridSize = [_delegate sessionViewGridSize];
     DLog(@"Compute smallest frame that contains a grid of size %@ with cell size %@",
          VT100GridSizeDescription(gridSize), NSStringFromSize(cellSize));
-    
+
     NSSize dim = NSMakeSize(gridSize.width, gridSize.height);
     NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermAdvancedSettingsModel terminalMargin] * 2,
                                   cellSize.height * dim.height + [iTermAdvancedSettingsModel terminalVMargin] * 2);
@@ -783,7 +783,7 @@ static NSDate* lastResizeDate_;
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
     NSRect rect = NSMakeRect(0, proposedSize.height - size.height, size.width, size.height);
     [self scrollview].frame = rect;
-    
+
     rect.origin = NSZeroPoint;
     rect.size.width = _scrollview.contentSize.width;
     rect.size.height = [_delegate sessionViewDesiredHeightOfDocumentView];
@@ -848,10 +848,10 @@ static NSDate* lastResizeDate_;
     NSRect rect = _currentAnnouncement.view.frame;
     rect.size.width = self.frame.size.width;
     _currentAnnouncement.view.frame = rect;
-    
+
     // Make it change its height
     [(iTermAnnouncementView *)_currentAnnouncement.view sizeToFit];
-    
+
     // Fix the origin
     rect = _currentAnnouncement.view.frame;
     rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height;

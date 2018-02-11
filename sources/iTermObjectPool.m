@@ -56,7 +56,7 @@ typedef struct {
     int count;
     int allocated;
     int freed;
-    
+
     // The queue is used as a mutual exclusion lock.
     // http://www.fieryrobot.com/blog/2010/09/01/synchronization-using-grand-central-dispatch/
     dispatch_queue_t queue;
@@ -113,7 +113,7 @@ typedef struct {
 
 - (iTermPooledObject *)pooledObject {
     int startIndex = OSAtomicIncrement32(&_counter) % _numCollections;
-    
+
     for (int j = startIndex; j < startIndex + _numCollections; j++) {
         int collectionIndex = j % _numCollections;
         ObjectCollection *collection = _collections[collectionIndex];
@@ -133,7 +133,7 @@ typedef struct {
     dispatch_sync(collection->queue, ^{
         collection->allocated++;
     });
-    
+
     // The analyzer complains here but it's actually correct because the pool implicitly owns the object.
     return [[_class alloc] initWithPool:self collectionNumber:startIndex];
 }

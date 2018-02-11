@@ -84,7 +84,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
                                        kNormalPrecision: @1.0,
                                        kHighPrecision: @1000.0,
                                        kVeryHighPrecision: @1000000.0 };
-                                       
+
     NSString *precision = rule[kPrecisionKey];
     return [precisionValues[precision] doubleValue];
 }

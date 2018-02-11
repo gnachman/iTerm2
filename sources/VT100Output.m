@@ -24,13 +24,13 @@ typedef enum {
     MOUSE_BUTTON_SHIFT_FLAG = 4,
     MOUSE_BUTTON_META_FLAG = 8,
     MOUSE_BUTTON_CTRL_FLAG = 16,
-    
+
     // scroll flag
     MOUSE_BUTTON_SCROLL_FLAG = 64,  // this is a scroll event
-    
+
     // for SGR 1006 style, internal use only
     MOUSE_BUTTON_SGR_RELEASE_FLAG = 128  // mouse button was released
-    
+
 } MouseButtonModifierFlag;
 
 #define ESC  0x1b
@@ -141,7 +141,7 @@ typedef enum {
             key_dc, key_ic,
             key_help,
         };
-        
+
         for (int i = 0; i < TERMINFO_KEYS; i ++) {
             if (_keyStrings[i]) {
                 free(_keyStrings[i]);
@@ -294,7 +294,7 @@ typedef enum {
 {
     char str[256];
     int len;
-    
+
     if (no <= 5) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
@@ -346,7 +346,7 @@ typedef enum {
                         str[0] = 0;
                     else
                         str[0] = 0;
-    
+
     len = strlen(str);
     return [NSData dataWithBytes:str length:len];
 }
@@ -354,7 +354,7 @@ typedef enum {
 - (NSData*)keypadData:(unichar)unicode keystr:(NSString*)keystr
 {
     NSData *theData = nil;
-    
+
     // numeric keypad mode
     if (!self.keypadMode) {
         return ([keystr dataUsingEncoding:NSUTF8StringEncoding]);
@@ -416,7 +416,7 @@ typedef enum {
             theData = [keystr dataUsingEncoding:NSUTF8StringEncoding];
             break;
     }
-    
+
     return (theData);
 }
 
@@ -456,7 +456,7 @@ typedef enum {
 
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
     int cb;
-    
+
     cb = button;
     if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP) {
         // convert x11 scroll button number to terminal button code
@@ -474,13 +474,13 @@ typedef enum {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
-    
+
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
     int cb;
-    
+
     if (self.mouseFormat == MOUSE_FORMAT_SGR) {
         // for SGR 1006 mode
         cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
@@ -491,7 +491,7 @@ typedef enum {
         // 0=MB1 pressed, 1=MB2 pressed, 2=MB3 pressed, 3=release.
         cb = 3;
     }
-    
+
     if (modflag & NSControlKeyMask) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
@@ -502,13 +502,13 @@ typedef enum {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
-    
+
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
     int cb;
-    
+
     if (button == MOUSE_BUTTON_NONE) {
         cb = button;
     } else {
@@ -527,7 +527,7 @@ typedef enum {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:(32 + cb) atX:(coord.x + 1) Y:(coord.y + 1)];
-    
+
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
@@ -542,9 +542,9 @@ typedef enum {
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q
 {
     char buf[64];
-    
+
     snprintf(buf, sizeof(buf), q?REPORT_POSITION_Q:REPORT_POSITION, y, x);
-    
+
     return [NSData dataWithBytes:buf length:strlen(buf)];
 }
 
@@ -636,7 +636,7 @@ typedef enum {
         }
         int *modValues = _optionIsMetaForSpecialKeys ? metaModifierValues : altModifierValues;
         mod = modValues[theIndex];
-        
+
         if (mod) {
             sprintf(buf, cursorMod, mod);
             theSuffix = [NSData dataWithBytes:buf length:strlen(buf)];

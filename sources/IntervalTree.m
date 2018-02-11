@@ -407,7 +407,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (![toVisit containsObject:node]) {
         return;
     }
-    
+
     [toVisit removeObject:node];
     long long max = [value maxLimit];
     if (node.left) {
@@ -458,7 +458,7 @@ static NSString *const kIntervalLengthKey = @"Length";
         // The whole subtree has intervals that end before the requested |interval|.
         return;
     }
-    
+
     Interval *nodeInterval = [nodeValue spanningInterval];
     if ([nodeInterval intersects:interval]) {
         // An entry at this node could possibly intersect the desired interval.
@@ -553,7 +553,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (node.left) {
         objectsFromLeft = [self objectsWithSmallestLimitFromNode:node.left];
     }
-    
+
     Interval *nodeInterval = nil;
     NSMutableArray *myObjects = [NSMutableArray array];
     // Set nodeInterval to the best interval in this node's value.
@@ -570,14 +570,14 @@ static NSString *const kIntervalLengthKey = @"Length";
             [myObjects addObject:entry.object];
         }
     }
-    
+
     NSArray *objectsFromRight = nil;
     id<IntervalTreeObject> leftValue = objectsFromLeft[0];
     if (node.right &&
         (!objectsFromLeft.count || nodeInterval.location < leftValue.entry.interval.limit)) {
         objectsFromRight = [self objectsWithSmallestLimitFromNode:node.right];
     }
-    
+
     id<IntervalTreeObject> rightValue = objectsFromRight[0];
     long long selfLimit = LLONG_MAX, leftLimit = LLONG_MAX, rightLimit = LLONG_MAX;
     if (nodeInterval) {
@@ -682,20 +682,20 @@ static NSString *const kIntervalLengthKey = @"Length";
             [myObjects addObject:entry.object];
         }
     }
-    
-    
+
+
     NSArray *leftObjects = nil;
     NSArray *rightObjects = nil;
-    
+
     IntervalTreeValue *leftValue = (IntervalTreeValue *)node.left.data;
     IntervalTreeValue *rightValue = (IntervalTreeValue *)node.right.data;
-    
+
     if (node.left && leftValue.maxLimitAtSubtree > bound) {
         leftObjects = [self objectsWithSmallestLimitAfter:bound fromNode:node.left];
     }
-    
+
     long long thisLocation = [node.key longLongValue];
-    
+
     // ignore right subtree if node's location > left subtree's smallest limit and left subtree's
     // smallest limit < bound (because every interval in the right subtree will have a limit larger
     // than this node's location, and the left subtree has an interval that ends before that
@@ -710,7 +710,7 @@ static NSString *const kIntervalLengthKey = @"Length";
         !thisNodesLocationIsAfterLeftSubtreesSmallestLimitAfterBound) {
         rightObjects = [self objectsWithSmallestLimitAfter:bound fromNode:node.right];
     }
-    
+
     id<IntervalTreeObject> bestRight = rightObjects[0];
     long long selfLimit = LLONG_MAX, leftLimit = LLONG_MAX, rightLimit = LLONG_MAX;
     if (nodeInterval) {
@@ -743,7 +743,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     }
     Interval *nodeInterval = nil;
     long long thisLocation = [node.key longLongValue];
-    
+
     // Set nodeInterval to the best interval in this node's value.
     IntervalTreeValue *nodeValue = (IntervalTreeValue *)node.data;
     NSMutableArray *myObjects = nil;
@@ -762,7 +762,7 @@ static NSString *const kIntervalLengthKey = @"Length";
             [myObjects addObject:entry.object];
         }
     }
-    
+
     NSArray *leftObjects = nil;
     NSArray *rightObjects = nil;
     IntervalTreeValue *leftValue = (IntervalTreeValue *)node.left.data;
@@ -809,7 +809,7 @@ static NSString *const kIntervalLengthKey = @"Length";
         myLimit = nodeInterval.limit;
     }
     long long bestLimit = MAX(MAX(leftLimit, rightLimit), myLimit);
-    
+
     NSMutableArray *result = [NSMutableArray array];
     if (myLimit == bestLimit) {
         [result addObjectsFromArray:myObjects];
@@ -894,7 +894,7 @@ static NSString *const kIntervalLengthKey = @"Length";
         assert(entry.interval.location == location);
         assert(entry.interval.limit <= value.maxLimitAtSubtree);
     }
-    
+
     if (node.left) {
         [self sanityCheckAtNode:node.left];
     }

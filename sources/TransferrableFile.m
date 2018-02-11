@@ -124,7 +124,7 @@
                 case kTransferrableFileStatusCancelling:
                 case kTransferrableFileStatusCancelled:
                     break;
-                    
+
                 case kTransferrableFileStatusFinishedSuccessfully:
                     [[iTermGrowlDelegate sharedInstance] growlNotify:
                         [NSString stringWithFormat:@"%@ of “%@” finished!",

@@ -99,7 +99,7 @@ const NSUInteger kAllModifiers = (NSControlKeyMask |
     if ([delegate conformsToProtocol:@protocol(PSMTabViewDelegate)]) {
         [delegate tabView:self willRemoveTabViewItem:aTabViewItem];
     }
-    
+
     [_tabViewItemsInMRUOrder removeObject:aTabViewItem];
 
     // remove the item

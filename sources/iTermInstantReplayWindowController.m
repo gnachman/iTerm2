@@ -23,7 +23,7 @@ static const float kAlphaValue = 0.9;
 }
 
 - (void)updateTrackingAreas {
-    
+
     if ([self window]) {
         if (_trackingArea) {
             [self removeTrackingArea:_trackingArea];
@@ -188,7 +188,7 @@ static const float kAlphaValue = 0.9;
         newX = sf.origin.x;
     }
     [_currentTimeLabel setFrameOrigin:NSMakePoint(newX, f.origin.y)];
-    
+
     [self.window.contentView setNeedsDisplay:YES];
 }
 

@@ -52,7 +52,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (NSString *)tmuxNewWindowCommandInSession:(NSString *)session
                          recyclingSupported:(BOOL)recyclingSupported {
     NSArray *args = @[ @"new-window", @"-PF '#{window_id}'" ];
-    
+
     if (session) {
         NSString *targetSessionArg = [NSString stringWithFormat:@"\"%@:+\"", [session stringByEscapingQuotes]];
         NSArray *insertionArguments = @[ @"-a",
@@ -624,7 +624,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (NSEqualSizes(size, lastSize_)) {
         return NO;
     }
-    
+
     DLog(@"Looks like the window resize is legit. Change client size to %@", NSStringFromSize(size));
     [self setClientSize:size];
     return YES;

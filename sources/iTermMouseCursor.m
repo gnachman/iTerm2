@@ -89,7 +89,7 @@ enum {
                 _hasImage = YES;
             }
             break;
-            
+
         case iTermMouseCursorTypeIBeam:
             if ([iTermAdvancedSettingsModel useSystemCursorWhenPossible]) {
                 self = [super init];
@@ -104,14 +104,14 @@ enum {
                 }
             }
             break;
-            
+
         case iTermMouseCursorTypeNorthwestSoutheastArrow:
             self = [super init];
             if (self) {
                 _type = kResizeNorthwestSoutheastCursor;
             }
             break;
-            
+
         case iTermMouseCursorTypeArrow:
             self = [super init];
             if (self) {
@@ -132,5 +132,5 @@ enum {
         return _type;
     }
 }
-    
+
 @end

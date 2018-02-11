@@ -80,7 +80,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)awakeFromNib {
     PreferenceInfo *info;
-    
+
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
@@ -105,17 +105,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self setShortcutValueToSelectedItem]; }
                  update:^BOOL { [self updateShortcutTitles]; return YES; }];
-    
+
     [self defineControl:_tagsTokenField
                     key:KEY_TAGS
                    type:kPreferenceInfoTypeTokenField];
-    
+
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self commandTypeDidChange]; }
                  update:^BOOL { [self updateCommandType]; return YES; }];
-    
+
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
                           type:kPreferenceInfoTypeStringTextField];
@@ -126,13 +126,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_sendTextAtStart
                     key:KEY_INITIAL_TEXT
                    type:kPreferenceInfoTypeStringTextField];
-    
+
     [self defineControl:_initialDirectoryType
                     key:KEY_CUSTOM_DIRECTORY
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self directoryTypeDidChange]; }
                  update:^BOOL { [self updateDirectoryType]; return YES; }];
-    
+
     [self defineControl:_customDirectory
                     key:KEY_WORKING_DIRECTORY
                    type:kPreferenceInfoTypeStringTextField];
@@ -246,7 +246,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
         [_urlSchemes setTitle:@"Select URL Schemes…"];
     }
-    
+
     [[_urlSchemes menu] setAutoenablesItems:YES];
     [[_urlSchemes menu] setDelegate:self];
 }
@@ -280,21 +280,21 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         case kInitialDirectoryTypeCustomTag:
             value = kProfilePreferenceInitialDirectoryCustomValue;
             break;
-            
+
         case kInitialDirectoryTypeRecycleTag:
             value = kProfilePreferenceInitialDirectoryRecycleValue;
             break;
-            
+
         case kInitialDirectoryTypeAdvancedTag:
             value = kProfilePreferenceInitialDirectoryAdvancedValue;
             break;
-            
+
         case kInitialDirectoryTypeHomeTag:
         default:
             value = kProfilePreferenceInitialDirectoryHomeValue;
             break;
     }
-    
+
     [self setString:value forKey:KEY_CUSTOM_DIRECTORY];
     [self updateEditAdvancedConfigButton];
 }
@@ -344,7 +344,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSString* shortcut = [self shortcutKeyForTag:[[_profileShortcut selectedItem] tag]];
     if (shortcut) {
         Profile *currentProfile = [self.delegate profilePreferencesCurrentProfile];
-        
+
         // If any profile has this shortcut, clear its shortcut.
         NSMutableArray *guidsOfProfilesToModify = [NSMutableArray array];
         for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
@@ -355,7 +355,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                 [guidsOfProfilesToModify addObject:profile[KEY_GUID]];
             }
         }
-        
+
         if (guidsOfProfilesToModify.count) {
             for (NSString *guid in guidsOfProfilesToModify) {
                 Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
@@ -406,7 +406,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
         [item setTitle:theKey];
     }
-    
+
     // Add bookmark names to shortcuts that are bound.
     ProfileModel *profileModel = [ProfileModel sharedInstance];
     for (Profile *profile in [profileModel bookmarks]) {
@@ -420,7 +420,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             [item setTitle:newTitle];
         }
     }
-    
+
     NSString *theString = [self stringForKey:KEY_SHORTCUT];
     [_profileShortcut selectItemWithTag:[self shortcutTagForKey:theString]];
     [_profileShortcut sizeToFit];

@@ -50,7 +50,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         self.autoresizesSubviews = YES;
         _leftTabBarPreferredWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
         [self setLeftTabBarWidthFromPreferredWidth];
-        
+
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
         self.tabView.drawsBackground = !_useMetal;
@@ -432,7 +432,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 }
                 self.tabView.frame = tabViewFrame;
                 [self updateDivisionView];
-                
+
                 const CGFloat dragHandleWidth = 3;
                 NSRect leftTabBarDragHandleFrame = NSMakeRect(NSMaxX(self.tabBarControl.frame) - dragHandleWidth,
                                                               0,
@@ -465,7 +465,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
     [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
     self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
-    
+
     DLog(@"repositionWidgets - redraw view");
     // Note: this used to call setNeedsDisplay on each session in the current tab.
     [self setNeedsDisplay:YES];

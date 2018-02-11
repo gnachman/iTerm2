@@ -25,7 +25,7 @@
     predecessor.absolutePosition = absolutePosition_;
     predecessor.yOffset = yOffset_;
     predecessor.extendsToEndOfLine = extendsToEndOfLine_;
-    
+
     if (extendsToEndOfLine_) {
         predecessor.extendsToEndOfLine = NO;
     } else if (yOffset_ > 0) {
@@ -33,7 +33,7 @@
     } else if (absolutePosition_ > 0) {
         predecessor.absolutePosition = absolutePosition_ - 1;
     }
-    
+
     return predecessor;
 }
 

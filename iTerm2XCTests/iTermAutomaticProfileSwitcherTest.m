@@ -202,17 +202,17 @@
     _profile = [self profileAllPaths];
     _allProfiles = @[ [self profileAllPaths],
                       [self profilePathDir1AndSubs] ];
-    
+
     [_aps setHostname:@"iterm2.com"
              username:@"george"
                  path:@"/"];
     XCTAssert([_profile isEqualToProfile:[self profileAllPaths]]);
-    
+
     [_aps setHostname:@"iterm2.com"
              username:@"george"
                  path:@"/dir1/foo"];
     XCTAssert([_profile isEqualToProfile:[self profilePathDir1AndSubs]]);
-    
+
     [_aps setHostname:@"iterm2.com"
              username:@"george"
                  path:@"/dir1/foo/temp"];
@@ -276,8 +276,8 @@
         [[[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self savedState:state] autorelease];
     XCTAssertEqualObjects(state, aps2.savedState);
     XCTAssertEqualObjects(_aps.profileStackString, aps2.profileStackString);
-    
-    
+
+
     // Check that the stack is good.
     _profile = [self profileHostIterm];
     _allProfiles = @[ [self profileHostIterm],
@@ -288,13 +288,13 @@
                  path:@"bogus path"];
     // stack is now: iterm2.com, george@iterm2.com
     XCTAssert([_profile isEqualToProfile:[self profileUserGeorgeHostIterm]]);
-    
+
     [aps2 setHostname:@"iterm2.com"
              username:@"george"
                  path:@"/home"];
     // stack is now: iterm2.com, george@iterm2.com, george@iterm2.com:/home
     XCTAssert([_profile isEqualToProfile:[self profileUserGeorgeHostItermPathHome]]);
-    
+
     // Pop one level
     [aps2 setHostname:@"iterm2.com" username:@"george" path:@"asdf"];
     // stack is now: iterm2.com, george@iterm2.com

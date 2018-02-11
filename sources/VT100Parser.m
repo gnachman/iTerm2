@@ -66,7 +66,7 @@
         token->type = VT100CC_NULL;
         _streamOffset = 0;
         _currentStreamLength = 0;
-        
+
         if (_totalStreamLength >= kDefaultStreamSize * 2) {
             // We are done with this stream. Get rid of it and allocate a new one
             // to avoid allowing this to grow too big.
@@ -141,7 +141,7 @@
         }
         length = rmlen;
 
-        
+
         if (rmlen > 0) {
             NSParameterAssert(_currentStreamLength >= _streamOffset + rmlen);
             // mark our current position in the stream
@@ -149,7 +149,7 @@
             assert(_streamOffset >= 0);
         }
     }
-    
+
     token->savingData = _saveData;
     if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
         if (_saveData) {
@@ -158,7 +158,7 @@
         if (token->type == VT100_ASCIISTRING) {
             [token setAsciiBytes:(char *)position length:length];
         }
-        
+
         if (gDebugLogging) {
             NSString *prefix = _controlParser.hookDescription;
             if (prefix) {

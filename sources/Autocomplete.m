@@ -23,45 +23,45 @@ const int kMaxResultContextWords = 4;
 {
     // Table view that displays choices.
     IBOutlet NSTableView* table_;
-    
+
     // Word before cursor.
     NSMutableString* prefix_;
-    
+
     // Is there whitespace before the cursor? If so, strip whitespace from before candidates.
     BOOL whitespaceBeforeCursor_;
-    
+
     // Words before the word at the cursor.
     NSMutableArray* context_;
-    
+
     // x,y coords where prefix occurred.
     int startX_;
     long long startY_;  // absolute coord
-    
+
     // Context for searches while populating unfilteredModel.
     FindContext *findContext_;
-    
+
     // Timer for doing asynch seraches for prefix.
     NSTimer* populateTimer_;
-    
+
     // Cursor location to begin next search.
     int x_;
     long long y_;  // absolute coord
-    
+
     // Number of matches found so far
     int matchCount_;
-    
+
     // Text from previous autocompletes that were followed by -[more];
     NSMutableString* moreText_;
-    
+
     // Previous state from calls to -[more] so that -[less] can go back in time.
     NSMutableArray* stack_;
-    
+
     // SearchResults from doing a find operation
     NSMutableArray* findResults_;
-    
+
     // Result of previous search
     BOOL more_;
-    
+
     // Character set for word separators
     NSCharacterSet *wordSeparatorCharacterSet_;
 }
@@ -281,7 +281,7 @@ const int kMaxResultContextWords = 4;
     if (joiningPrefixLength == 0) {
         score /= 2;
     }
-    
+
     AcLog(@"Final score is %lf", score);
     return score;
 }
@@ -307,7 +307,7 @@ const int kMaxResultContextWords = 4;
                                  resultContext:@[]
                            joiningPrefixLength:[prefix_ length]
                                           word:word];
-        PopupEntry* e = [PopupEntry entryWithString:word 
+        PopupEntry* e = [PopupEntry entryWithString:word
                                               score:score];
         if (whitespaceBeforeCursor_) {
             [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
@@ -481,7 +481,7 @@ const int kMaxResultContextWords = 4;
 
         findContext_.hasWrapped = YES;
         AcLog(@"Continue search...");
-        
+
         NSDate* cs = [NSDate date];
         if ([findResults_ count] == 0) {
             assert(more_);
@@ -705,14 +705,14 @@ const int kMaxResultContextWords = 4;
                                  resultContext:context_  // Maximize similarity because the whole prompt is in our favor
                            joiningPrefixLength:[prefix_ length]
                                           word:command];
-        
+
         // Boost the score for more uses of the command
         score *= sqrt(entry.numberOfUses.integerValue);
-        
+
         // Divide the score by sqrt(the number of days since last use).
         NSTimeInterval timeSinceLastUse = now - entry.timeOfLastUse.doubleValue;
         score /= MAX(1, sqrt(timeSinceLastUse / (24 * 60 * 60.0)));
-        
+
         score = MIN(10, score);  // Limit score of commands so really relevant context has a chance.
         PopupEntry* e = [PopupEntry entryWithString:command
                                               score:score];

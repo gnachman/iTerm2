@@ -115,7 +115,7 @@
         configuration.applicationNameForUserAgent = @"iTerm2";
     }
     ITERM_IGNORE_PARTIAL_END
-    
+
     WKPreferences *prefs = [[[NSClassFromString(@"WKPreferences") alloc] init] autorelease];
     prefs.javaEnabled = NO;
     prefs.javaScriptEnabled = YES;

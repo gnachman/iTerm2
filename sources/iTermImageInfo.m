@@ -92,10 +92,10 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         }
         return;
     }
-    
+
     [_dictionary release];
     _dictionary = nil;
-    
+
     DLog(@"Queueing load of %@", self.uniqueIdentifier);
     void (^block)(void) = ^{
         // This is a slow operation that blocks for a long time.

@@ -143,7 +143,7 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
             // One of the dynamic profiles has the default guid.
             [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
         }
-        
+
         [[iTermHotKeyMigrationHelper sharedInstance] migrateSingleHotkeyToMulti];
         [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }

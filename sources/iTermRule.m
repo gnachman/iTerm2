@@ -136,7 +136,7 @@
         if (![pathForGlob hasSuffix:@"/"]) {
             pathForGlob = [pathForGlob stringByAppendingString:@"/"];
         }
-        
+
         NSRange wildcardPos = [self.path rangeOfString:@"*"];
         if (wildcardPos.location == NSNotFound && [path isEqualToString:self.path]) {
             score += kPathExactMatchScore;

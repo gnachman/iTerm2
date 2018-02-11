@@ -139,7 +139,7 @@ const CGFloat rightMargin = 5;
                                      topY,
                                      self.bounds.size.width - rightMargin,
                                      textHeight);
-    
+
     [_filename drawInRect:filenameRect
            withAttributes:filenameAttributes];
 
@@ -149,7 +149,7 @@ const CGFloat rightMargin = 5;
                                        self.bounds.size.width - rightMargin,
                                        smallTextHeight);
     [_subheading drawInRect:subheadingRect withAttributes:smallGrayAttributes];
-    
+
     // Draw status label
     if (_statusMessage) {
         [_statusMessage drawInRect:NSMakeRect(leftMargin,
@@ -158,7 +158,7 @@ const CGFloat rightMargin = 5;
                                               smallTextHeight)
                     withAttributes:smallGrayAttributes];
     }
-    
+
     // Draw size
     [sizeString drawInRect:NSMakeRect(0,
                                       bottomY,

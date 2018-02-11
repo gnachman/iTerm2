@@ -40,14 +40,14 @@
     _usernameHostname = [iTermRule ruleWithString:@"username@hostname"];
     _usernameHostnamePath = [iTermRule ruleWithString:@"username@hostname:/path"];
     _usernamePath = [iTermRule ruleWithString:@"username@*:/path"];
-  
+
     _usernameWildcardStartPath = [iTermRule ruleWithString:@"username@*hostname:/path"];
     _usernameWildcardEndPath = [iTermRule ruleWithString:@"username@hostname*:/path"];
     _usernameWildcardStartEndPath = [iTermRule ruleWithString:@"username@*hostname*:/path"];
     _usernameWildcardMiddlePath = [iTermRule ruleWithString:@"username@host*name:/path"];
     _usernameWildcardAllPath = [iTermRule ruleWithString:@"username@*host*name*:/path"];
     _usernameWildcardActualPath = [iTermRule ruleWithString:@"username@service*.*.hostname.com:/path"];
-  
+
     _hostnamePath = [iTermRule ruleWithString:@"hostname:/path"];
     _path = [iTermRule ruleWithString:@"/path"];
     _malformed1 = [iTermRule ruleWithString:@"/foo:bar@baz"];
@@ -259,7 +259,7 @@
 - (void)testSticky {
     iTermRule *nonStickyRule = [iTermRule ruleWithString:@"hostname"];
     iTermRule *stickyRule = [iTermRule ruleWithString:@"!hostname"];
-    
+
     XCTAssertFalse(nonStickyRule.isSticky);
     XCTAssertTrue(stickyRule.isSticky);
 }

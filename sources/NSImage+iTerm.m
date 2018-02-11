@@ -225,7 +225,7 @@
              fraction:1.0];
     [ctx flushGraphics];
     [NSGraphicsContext restoreGraphicsState];
-    
+
     return [rep autorelease];
 }
 
