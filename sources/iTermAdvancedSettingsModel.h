@@ -203,5 +203,6 @@
 + (BOOL)useMetal;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)tabsWrapAround;
++ (BOOL)middleClickClosesTab;
 
 @end

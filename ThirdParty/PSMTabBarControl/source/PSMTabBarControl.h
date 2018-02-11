@@ -118,7 +118,7 @@ extern const NSInteger kPSMStartResizeAnimation;
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 - (void)setModifier:(int)mask;
 - (void)fillPath:(NSBezierPath*)path;
-- (void)closeTab:(id)identifier;
+- (void)tabView:(NSTabView *)tabView closeTab:(id)identifier;
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 
 @end

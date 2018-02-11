@@ -91,6 +91,7 @@ DEFINE_FLOAT(tabFlashAnimationDuration, 0.25, @"Tabs: Animation duration for fad
 DEFINE_BOOL(allowDragOfTabIntoNewWindow, YES, @"Tabs: Allow a tab to be dragged and dropped outside any existing tab bar to create a new window.");
 DEFINE_INT(minimumTabDragDistance, 10, @"Tabs: How far must the mouse move before a tab drag is initiated?\nYou must restart iTerm2 after changing this setting for it to take effect.");
 DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, @"Tabs: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
+DEFINE_BOOL(middleClickClosesTab, YES, @"Tabs: Should middle-click on a tab in the tab bar close the tab?");
 
 #pragma mark Mouse
 DEFINE_STRING(alternateMouseScrollStringForUp, @"",

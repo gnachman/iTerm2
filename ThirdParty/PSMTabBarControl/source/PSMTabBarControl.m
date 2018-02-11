@@ -1566,8 +1566,8 @@ const NSInteger kPSMStartResizeAnimation = 0;
         }
     }
 
-    if ([[self delegate] respondsToSelector:@selector(closeTab:)]) {
-        [[self delegate] closeTab:[item identifier]];
+    if ([[self delegate] respondsToSelector:@selector(tabView:closeTab:)]) {
+        [[self delegate] tabView:[self tabView] closeTab:[item identifier]];
     }
 }
 

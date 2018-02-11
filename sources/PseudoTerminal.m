@@ -4095,6 +4095,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // NSTabView
+- (void)tabView:(NSTabView *)tabView closeTab:(id)identifier {
+    if ([iTermAdvancedSettingsModel middleClickClosesTab]) {
+        [self closeTab:identifier];
+    }
+}
+
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
     if (![[self currentSession] exited]) {
