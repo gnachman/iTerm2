@@ -135,8 +135,8 @@ DEFINE_FLOAT(underlineCursorOffset, 0, @"Terminal: Vertical offset for underline
 DEFINE_BOOL(preventEscapeSequenceFromClearingHistory, NO, @"Terminal: Prevent CSI 3 J from clearing scrollback history?\nThis is also known as thethe terminfo E3 capability.");
 DEFINE_FLOAT(verticalBarCursorWidth, 1, @"Terminal: Width of vertical bar cursor.");
 DEFINE_BOOL(acceptOSC7, YES, @"Terminal: Accept OSC 7 to set username, hostname, and path.");
-DEFINE_BOOL(detectPasswordInput, YES, @"Experimental Features: Show key at cursor at password prompt?");
-
+DEFINE_BOOL(detectPasswordInput, YES, @"Terminal: Show key at cursor at password prompt?");
+DEFINE_BOOL(tabsWrapAround, NO, @"Terminal: Tabs wrap around to the next line.\nThis is useful for preserving tabs for later copying to the pasteboard. It breaks backward compatibility and may cause layout problems with programs that don’t expect this behavior.");
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation.\nWarning: reducing this value may cause problems if you have multiple displays.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"Hotkey: If the only window is a hotkey window, then clicking the dock icon shows or hides it.");

@@ -202,5 +202,6 @@
 + (BOOL)showBlockBoundaries;
 + (BOOL)useMetal;
 + (BOOL)showMetalFPSmeter;
++ (BOOL)tabsWrapAround;
 
 @end
