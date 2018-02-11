@@ -255,7 +255,7 @@ DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01530456, @"Pasteboard: Delay in sec
 DEFINE_INT(slowPasteBytesPerCall, 16, @"Pasteboard: Number of bytes to paste in each chunk when pasting slowly.");
 DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Pasteboard: Delay in seconds between chunks when pasting slowly");
 DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on selection includes color and font style.");
-DEFINE_INT(pasteHistoryMaxOptions, 20, @"Pasteboard: Number of entires to save in Paste History.\n.");
+DEFINE_INT(pasteHistoryMaxOptions, 20, @"Pasteboard: Number of entries to save in Paste History.\n.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, @"Pasteboard: Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, @"Pasteboard: Pressing a key will remove the selection.");
 DEFINE_SETTABLE_BOOL(promptForPasteWhenNotAtPrompt, PromptForPasteWhenNotAtPrompt, NO, @"Pasteboard: Warn before pasting when not at shell prompt?");
