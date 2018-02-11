@@ -14,6 +14,26 @@
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
+@interface NSColor (HSP)
+@property (nonatomic, readonly) CGFloat it_hspBrightness;
+@end
+
+@implementation NSColor (HSP)
+
+// http://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
+// http://alienryderflex.com/hsp.html
+- (CGFloat)it_hspBrightness {
+    NSColor *safeColor = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    const CGFloat r = safeColor.redComponent;
+    const CGFloat g = safeColor.greenComponent;
+    const CGFloat b = safeColor.blueComponent;
+    return sqrt(r * r * .241 +
+                g * g * .691 +
+                b * b * .068);
+}
+
+@end
+
 @interface NSAttributedString(PSM)
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
 @end
@@ -351,20 +371,31 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
-    if (cell.state == NSOnState || [self anyTabHasColor]) {
-        if (!cell.tabColor) {
-            return [self textColorDefaultSelected:YES];
-        } else if ([cell.tabColor brightnessComponent] > 0.2) {
-            textColor = [NSColor blackColor];
-        } else {
-            // dark tab
-            textColor = [NSColor whiteColor];
-        }
+    const BOOL selected = (cell.state == NSOnState);
+    if ([self anyTabHasColor]) {
+        CGFloat cellBrightness = [self tabColorBrightness:cell];
+        if (selected) {
+            // Select cell when any cell has a tab color
+            if (cellBrightness > 0.5) {
+                // bright tab
+                textColor = [NSColor blackColor];
+            } else {
+                // dark tab
+                textColor = [NSColor whiteColor];
+            }
+        } else
+            // Non-selected cell when any cell has a tab color
+            if (cellBrightness > 0.5) {
+                // Light tab
+                return [NSColor colorWithWhite:0.4 alpha:1];
+            } else {
+                // Dark tab
+                return [NSColor colorWithWhite:0.6 alpha:1];
+            }
     } else {
-        if (cell.tabColor && [self tabColorBrightness:cell] > 0.5) {
-            // This is hard to read when the app is inactive and there's a dark
-            // theme and dark themes give windows dark backgrounds by default.
-            textColor = [NSColor colorWithWhite:0.4 alpha:1];
+        // No cell has a tab color
+        if (selected) {
+            return [self textColorDefaultSelected:YES];
         } else {
             textColor = [self textColorDefaultSelected:NO];
         }
@@ -451,6 +482,50 @@
     NSRectFill(NSMakeRect(x, NSMinY(rect) + 1, 1, rect.size.height - 2));
 }
 
+- (NSColor *)cellBackgroundColorForTabColor:(NSColor *)tabColor
+                                    selected:(BOOL)selected {
+    // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
+    CGFloat alpha;
+    if ([_tabBar.window isKeyWindow]) {
+        if (selected) {
+            alpha = 1;
+        } else {
+            alpha = 0.4;
+        }
+    } else {
+        if (selected) {
+            alpha = 0.6;
+        } else {
+            alpha = 0.3;
+        }
+    }
+    CGFloat components[4];
+    [tabColor getComponents:components];
+    for (int i = 0; i < 3; i++) {
+        components[i] = components[i] * alpha + 0.5 * (1 - alpha);
+    }
+    NSColor *color = [NSColor colorWithColorSpace:tabColor.colorSpace components:components count:4];
+    return color;
+}
+
+- (NSColor *)effectiveBackgroundColorForTabWithTabColor:(NSColor *)tabColor
+                                               selected:(BOOL)selected
+                                        highlightAmount:(CGFloat)highlightAmount {
+    NSColor *base = [[self backgroundColorSelected:selected highlightAmount:highlightAmount] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    if (tabColor) {
+        NSColor *overcoat = [[self cellBackgroundColorForTabColor:tabColor selected:selected] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+        const CGFloat a = overcoat.alphaComponent;
+        const CGFloat q = 1-a;
+        CGFloat r = q * base.redComponent + a * overcoat.redComponent;
+        CGFloat g = q * base.greenComponent + a * overcoat.greenComponent;
+        CGFloat b = q * base.blueComponent + a * overcoat.blueComponent;
+        CGFloat components[4] = { r, g, b, 1 };
+        return [NSColor colorWithColorSpace:tabColor.colorSpace components:components count:4];
+    } else {
+        return base;
+    }
+}
+
 - (void)drawCellBackgroundAndFrameHorizontallyOriented:(BOOL)horizontal
                                                 inRect:(NSRect)cellFrame
                                               selected:(BOOL)selected
@@ -461,28 +536,7 @@
     NSRectFill(cellFrame);
 
     if (tabColor) {
-        // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
-        CGFloat alpha;
-        if ([_tabBar.window isKeyWindow]) {
-            if (selected) {
-                alpha = 1;
-            } else {
-                alpha = 0.4;
-            }
-        } else {
-            if (selected) {
-                alpha = 0.6;
-            } else {
-                alpha = 0.3;
-            }
-        }
-        CGFloat components[4];
-        [tabColor getComponents:components];
-        for (int i = 0; i < 3; i++) {
-            components[i] = components[i] * alpha + 0.5 * (1 - alpha);
-        }
-        NSColor *color = [NSColor colorWithColorSpace:tabColor.colorSpace components:components count:4];
-
+        NSColor *color = [self cellBackgroundColorForTabColor:tabColor selected:selected];
         // Alpha the inactive tab's colors a bit to make it clear which tab is active.
         [color set];
         NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
@@ -559,15 +613,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
-    if (!cell.tabColor) {
-        return 0.7;
-    }
-    NSColor *tabColor = cell.tabColor;
-    NSColor *safeColor = [tabColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-    CGFloat brightness = PerceivedBrightness([safeColor redComponent],
-                                             [safeColor greenComponent],
-                                             [safeColor blueComponent]);
-    return brightness;
+    return [[self effectiveBackgroundColorForTabWithTabColor:cell.tabColor
+                                                    selected:(cell.state == NSOnState)
+                                             highlightAmount:0] it_hspBrightness];
 }
 
 - (BOOL)anyTabHasColor {
@@ -584,7 +632,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
         NSColor *outerColor;
         NSColor *innerColor;
-        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.7 : 0.5;
+        const CGFloat alpha = [_tabBar.window isKeyWindow] ? 0.5 : 0.3;
         if (brightness > 0.5) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];
             innerColor = [NSColor colorWithWhite:0 alpha:alpha];
