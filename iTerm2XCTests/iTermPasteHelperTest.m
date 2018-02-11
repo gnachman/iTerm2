@@ -574,7 +574,7 @@ static const double kFloatingPointTolerance = 0.00001;
     return NO;
 }
 
-- (void)pasteHelperPasteViewVisibilityDidChange { 
+- (void)pasteHelperPasteViewVisibilityDidChange {
 }
 
 #pragma mark - iTermWarningHandler

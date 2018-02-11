@@ -61,7 +61,7 @@
     self.willChange = nil;
     self.onUpdate = nil;
     self.customSettingChangedHandler = nil;
-    self.controlTextDidEndEditing = nil;    
+    self.controlTextDidEndEditing = nil;
 }
 
 #pragma mark - Notifications

@@ -46,7 +46,7 @@
     if (!_previouslyActiveAppPID) {
         return NO;
     }
-    
+
     NSRunningApplication *app =
         [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
 
@@ -82,7 +82,7 @@
     if (![NSApp isActive]) {
         return -1;
     }
-    
+
     __block NSInteger result = -1;
     [[[iTermController sharedInstance] terminals] enumerateObjectsUsingBlock:^(PseudoTerminal *_Nonnull term,
                                                                                NSUInteger idx,
@@ -91,7 +91,7 @@
             result = idx;
         }
     }];
-    
+
     return result;
 }
 

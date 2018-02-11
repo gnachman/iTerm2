@@ -217,7 +217,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 - (void)updateWithQuery:(NSString *)queryString {
     id<iTermOpenQuicklyCommand> command = [self commandForQuery:[queryString lowercaseString]];
-    
+
     iTermMinimumSubsequenceMatcher *matcher =
         [[[iTermMinimumSubsequenceMatcher alloc] initWithQuery:command.text] autorelease];
 
@@ -226,7 +226,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     if ([queryString isEqualToString:@"/"]) {
         [self addTipsToItems:items];
     }
-    
+
     if ([command supportsSessionLocation]) {
         [self addSessionLocationToItems:items withMatcher:matcher];
     }
@@ -242,7 +242,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     if ([command supportsOpenArrangement]) {
         [self addOpenArrangementToItems:items withMatcher:matcher];
     }
-    
+
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
                                                    iTermOpenQuicklyItem *obj2) {

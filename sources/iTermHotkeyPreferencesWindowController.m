@@ -27,12 +27,12 @@
     IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
     IBOutlet NSButton *_animate;
     IBOutlet NSButton *_floats;
-    
+
     // Radio buttons
     IBOutlet NSButton *_doNotShowOnDockClick;
     IBOutlet NSButton *_alwaysShowOnDockClick;
     IBOutlet NSButton *_showIfNoWindowsOpenOnDockClick;
-    
+
     IBOutlet NSButton *_editAdditionalButton;
     IBOutlet NSButton *_removeAdditional;
     IBOutlet NSPanel *_editAdditionalWindow;
@@ -114,11 +114,11 @@
         case iTermHotKeyDockPreferenceDoNotShow:
             _doNotShowOnDockClick.state = NSOnState;
             break;
-            
+
         case iTermHotKeyDockPreferenceAlwaysShow:
             _alwaysShowOnDockClick.state = NSOnState;
             break;
-            
+
         case iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen:
             _showIfNoWindowsOpenOnDockClick.state = NSOnState;
             break;
@@ -148,7 +148,7 @@
     } else {
         _model.dockPreference = iTermHotKeyDockPreferenceDoNotShow;
     }
-    
+
     [self modelDidChange];
 }
 

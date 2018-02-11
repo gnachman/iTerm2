@@ -46,7 +46,7 @@
         NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
         [guidsOfProfileHotKeys removeObject:guid];
         const BOOL hasHotKey = [iTermProfilePreferences boolForKey:KEY_HAS_HOTKEY inProfile:profile];
-        
+
         // Unregister. If the key has changed, we'll re-register. If the profile no longer has a hotkey
         // it will stay unregistered.
         if (hasHotKey && !_guidToHotKeyMap[guid]) {
@@ -57,7 +57,7 @@
             [self updateRegistrationForProfile:profile];
         }
     }
-    
+
     for (NSString *guid in guidsOfProfileHotKeys) {
         [self unregisterHotKeysForProfileWithGuid:guid];
     }
@@ -68,7 +68,7 @@
 - (void)registerHotKeysForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
     DLog(@"Register hotkey for guid %@ (%@)", guid, profile[KEY_NAME]);
-    
+
     BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
     NSArray<iTermShortcut *> *shortcuts = [iTermShortcut shortcutsForProfile:profile];
@@ -83,7 +83,7 @@
             DLog(@"Double-tap of modifier IS enabled");
         }
     }
-    
+
     iTermProfileHotKey *hotKey =
         [[[iTermProfileHotKey alloc] initWithShortcuts:shortcuts
                                  hasModifierActivation:hasModifierActivation

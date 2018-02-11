@@ -152,7 +152,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 // remapping keys when the user has switched users with fast user switching.
 - (BOOL)userIsActive {
     CFDictionaryRef sessionInfoDict;
-    
+
     sessionInfoDict = CGSessionCopyCurrentDictionary();
     if (sessionInfoDict) {
         NSNumber *userIsActiveNumber = CFDictionaryGetValue(sessionInfoDict,

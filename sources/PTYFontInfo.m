@@ -137,7 +137,7 @@
 - (void)setFont:(NSFont *)font {
     [font_ autorelease];
     font_ = [font retain];
-    
+
     _ligatureLevel = font.it_ligatureLevel;
     _hasDefaultLigatures = font.it_defaultLigatures;
 
@@ -177,7 +177,7 @@
     NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
     NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
     [textStorage addLayoutManager:layoutManager];
-    
+
     NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];
     return [[layoutManager typesetter] baselineOffsetInLayoutManager:layoutManager
                                                           glyphIndex:glyphIndex] / -2.0;
@@ -194,7 +194,7 @@
     NSInteger minimumAcceptableWeight = weight + 4;
     DLog(@"Looking for a bold version of %@, whose weight is %@", font, @(weight));
     NSFont *lastFont = font;
-    
+
     // Sometimes the heavier version of a font is oblique (issue 4442). So
     // check the traits to make sure nothing significant changes.
     const NSFontTraitMask kImmutableTraits = (NSItalicFontMask |

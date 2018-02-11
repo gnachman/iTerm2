@@ -36,12 +36,12 @@
         DLog(@"Have already migrated hotkey prefs");
         return;
     }
-    
+
     DLog(@"Migrating hotkey prefs…");
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow_Deprecated]) {
         DLog(@"Legacy preferences have a dedicated window");
-        
+
         NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid_Deprecated];
         // There is something to migrate
         Profile *profile = guid ? [[ProfileModel sharedInstance] bookmarkWithGuid:guid] : nil;
@@ -61,7 +61,7 @@
                 [[iTermDynamicProfileManager sharedInstance] reloadDynamicProfiles];
             }
         }
-        
+
         // Erase the legacy prefs so the keystroke doesn't show up as the global app toggle.
         [iTermPreferences setBool:NO forKey:kPreferenceKeyHotkeyEnabled];
         [iTermPreferences setInt:0 forKey:kPreferenceKeyHotKeyCode];
@@ -102,14 +102,14 @@
 - (void)migrateDynamicProfileHotKeySettings:(Profile *)profile {
     DLog(@"Have a dynamic profile to migrate");
     NSString *title = [NSString stringWithFormat:@"Your hotkey window‘s profile is a dynamic profile named “%@.” It needs to be updated for this version of iTerm2 because hotkey settings are now stored in the profile.", profile[KEY_NAME]];
-    
+
     NSArray *actions;
     NSData *replacementFile = [self modifiedDynamicProfileFileWithNewHotKeySettingsFromProfile:profile];
-    
+
     iTermWarningSelection update = kItermWarningSelectionError;
     iTermWarningSelection show = kItermWarningSelectionError;
     iTermWarningSelection remove = kItermWarningSelectionError;
-    
+
     if (replacementFile) {
         update = kiTermWarningSelection0;
         show = kiTermWarningSelection1;
@@ -120,7 +120,7 @@
         remove = kiTermWarningSelection1;
         actions = @[ @"Show Me What to Add", @"Remove Hotkey" ];
     }
-    
+
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:title
                                                                  actions:actions
                                                                accessory:nil
@@ -171,7 +171,7 @@
                 case kCFNumberFloat64Type:
                     type = @"real";
                     break;
-                    
+
                 default:
                     type = @"integer";
                     break;
@@ -228,7 +228,7 @@
         [modifiedProfile setValuesForKeysWithDictionary:[self hotkeyDictionary]];
         NSMutableArray<Profile *> *modifiedProfilesArray = [[profiles mutableCopy] autorelease];
         modifiedProfilesArray[index] = modifiedProfile;
-        
+
         NSDictionary *dict = [[iTermDynamicProfileManager sharedInstance] dictionaryForProfiles:modifiedProfilesArray];
         switch (fileType) {
             case kDynamicProfileFileTypeJSON: {
@@ -239,7 +239,7 @@
                 }
                 return data;
             }
-                
+
             case kDynamicProfileFileTypePropertyList:
                 return [dict propertyListData];
         }
@@ -253,7 +253,7 @@
     NSString *characters = character ? [NSString stringWithFormat:@"%C", character] : @"";
     NSEventModifierFlags modifiers = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyHotkeyModifiers];
     BOOL autohides = [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides_Deprecated];
-    
+
     // We use deprecated methods to do the migration.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -261,7 +261,7 @@
     BOOL dockIconTogglesWindow = [iTermAdvancedSettingsModel dockIconTogglesWindow];
 #pragma clang diagnostic pop
     iTermHotKeyDockPreference dockAction = dockIconTogglesWindow ? iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen : iTermHotKeyDockPreferenceDoNotShow;
-    
+
     NSDictionary *newSettings = @{ KEY_HAS_HOTKEY: @YES,
                                    KEY_HOTKEY_KEY_CODE: @(keyCode),
                                    KEY_HOTKEY_CHARACTERS: characters,

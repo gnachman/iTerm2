@@ -131,7 +131,7 @@
                          selector:(SEL)selector
                          userData:(NSDictionary *)userData {
     DLog(@"Register %@ from\n%@", shortcut, [NSThread callStackSymbols]);
-    
+
     EventHotKeyRef eventHotKey = NULL;
 
     const UInt32 carbonModifiers = [NSEvent carbonModifiersForCocoaModifiers:shortcut.modifiers];
@@ -182,12 +182,12 @@
 
 - (EventHotKeyID)nextHotKeyID {
     static const OSType iTermCarbonHotKeyControllerSignature = 'ITRM';
-    
+
     EventHotKeyID keyID = {
         .signature = iTermCarbonHotKeyControllerSignature,
         .id = ++_nextHotKeyID
     };
-    
+
     return keyID;
 }
 
@@ -199,7 +199,7 @@
             [result addObject:hotkey];
         }
     }
-    
+
     return result;
 }
 
@@ -241,7 +241,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
 
     NSArray<iTermHotKey *> *hotkeys = [self hotKeysWithID:hotKeyID];
     DLog(@"You pressed a hotkey. The registered events for this are:\n%@", hotkeys);
-    
+
     NSWindow *keyWindow = [NSApp keyWindow];
     NSResponder *firstResponder = [keyWindow firstResponder];
     if ([NSApp isActive] &&

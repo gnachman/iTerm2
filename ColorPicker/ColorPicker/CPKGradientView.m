@@ -39,7 +39,7 @@
                              self.bounds.size.width - 1,
                              NSHeight(self.bounds) - 1);
     NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:rect xRadius:2 yRadius:2];
-    
+
     [NSGraphicsContext saveGraphicsState];
     [path addClip];
 
@@ -181,7 +181,7 @@
     NSPoint pointInView = [self convertPoint:point fromView:nil];
     self.selectedX = [self xValueAtPoint:pointInView];
     self.selectedY = [self yValueAtPoint:pointInView];
-    
+
     self.hue = self.selectedColor.hueComponent;
     self.saturation = self.selectedColor.saturationComponent;
     self.brightness = self.selectedColor.brightnessComponent;
@@ -227,7 +227,7 @@
     self.red = selectedColor.redComponent;
     self.green = selectedColor.greenComponent;
     self.blue = selectedColor.blueComponent;
-    
+
     self.indicatorView.frame = self.indicatorFrame;
 }
 

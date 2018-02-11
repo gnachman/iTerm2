@@ -207,14 +207,14 @@ do { \
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    
+
     [grid markCharDirty:YES at:VT100GridCoordMake(3,1) updateTimestamp:NO];
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    
+
     [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
@@ -235,14 +235,14 @@ do { \
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    
+
     [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    
+
     [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
     XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
     XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
@@ -2547,7 +2547,7 @@ do { \
     const unichar kCombiningAcuteAccent = 0x301;
     const unichar kCombiningCedilla = 0x327;
     const unichar kCombiningEnclosingCircle = 0x20dd;
-    
+
     VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
     XCTAssert([grid addCombiningChar:kCombiningEnclosingCircle
                           toCoord:VT100GridCoordMake(0, 0)]);

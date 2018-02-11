@@ -107,7 +107,7 @@
         [command setScriptErrorNumber:1];
         [command setScriptErrorString:@"No name given"];
     }
-    
+
     return self.variables[name];
 }
 

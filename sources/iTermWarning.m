@@ -150,7 +150,7 @@ static BOOL gShowingWarning;
             block(selection);
         }
     }
-    
+
     return selection;
 }
 
@@ -288,13 +288,13 @@ static BOOL gShowingWarning;
     if ([userDefaults boolForKey:theKey]) {
         return YES;
     }
-    
+
     theKey = [self temporarySilenceKeyForIdentifier:identifier];
     NSTimeInterval date = [userDefaults doubleForKey:theKey];
     if (date > [NSDate timeIntervalSinceReferenceDate]) {
         return YES;
     }
-    
+
     return NO;
 }
 

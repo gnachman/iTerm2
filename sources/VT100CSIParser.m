@@ -183,7 +183,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                         return NO;
                     }
                 }
-                
+
                 if (isSub && param->count > 0) {
                     // This implementation is not really well aligned with the spec. In ECMA-48
                     // section 5.4, the format of a CSI code is described. The parameter string,
@@ -207,13 +207,13 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     // increment the parameter count
                     param->count++;
                 }
-                
+
                 // set the numeric parameter flag
                 readNumericParameter = YES;
-                
+
                 break;
             }
-                
+
             case ';':
                 // If we got an implied (blank) parameter, increment the parameter count again
                 if (param->count < VT100CSIPARAM_MAX && readNumericParameter == NO) {
@@ -221,12 +221,12 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 }
                 // reset the parameter flag
                 readNumericParameter = NO;
-                
+
                 if (!AdvanceAndEatControlChars(context, incidentals)) {
                     return NO;
                 }
                 break;
-                
+
             case ':':
                 // 2013/1/10 H. Saito
                 // TODO: Now colon separator(":") used in SGR sequence by few terminals
@@ -257,7 +257,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     return NO;
                 }
                 break;
-                
+
             default:
                 // '<', '=', '>', or '?'
                 *unrecognized = YES;
@@ -639,7 +639,7 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
         default:
             result->type = VT100_NOTSUPPORT;
             break;
-            
+
     }
 }
 

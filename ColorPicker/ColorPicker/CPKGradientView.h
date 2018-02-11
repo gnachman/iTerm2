@@ -9,7 +9,7 @@ typedef NS_ENUM(NSInteger, CPKGradientViewType) {
     kCPKGradientViewTypeBlueRed,
 };
 
-/** 
+/**
  * A view showing a 2-d gradient with saturation across the X axis and brightness across the Y
  * axis.
  */

@@ -19,7 +19,7 @@
  * Adds a point and an associated object to the tree.
  *
  * @param object The associated object
- * @param key An array of NSNumber objects. Must have exactly as many elements as the tree has 
+ * @param key An array of NSNumber objects. Must have exactly as many elements as the tree has
  *   dimensions.
  */
 - (void)addObject:(id)object forKey:(NSArray *)key;

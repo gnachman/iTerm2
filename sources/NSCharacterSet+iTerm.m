@@ -504,7 +504,7 @@
         [sFullWidth8 addCharactersInRange:NSMakeRange(0x1f250, 0x1f251 - 0x1f250 + 1)];
         [sFullWidth8 addCharactersInRange:NSMakeRange(0x20000, 0x2fffd - 0x20000 + 1)];
         [sFullWidth8 addCharactersInRange:NSMakeRange(0x30000, 0x3fffd - 0x30000 + 1)];
-        
+
         sFullWidth9 = [[NSMutableCharacterSet alloc] init];
         [sFullWidth9 addCharactersInRange:NSMakeRange(0x1100, 0x115f - 0x1100 + 1)];
         [sFullWidth9 addCharactersInRange:NSMakeRange(0x231a, 0x231b - 0x231a + 1)];
@@ -936,7 +936,7 @@
         [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b58, 1)];
         [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b59, 1)];
         [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xfffd, 1)];
-        
+
         sAmbiguousWidth9 = [[NSMutableCharacterSet alloc] init];
         [sAmbiguousWidth9 addCharactersInRange:NSMakeRange(0xa7, 0xa8 - 0xa7 + 1)];
         [sAmbiguousWidth9 addCharactersInRange:NSMakeRange(0xad, 0xae - 0xad + 1)];
@@ -1119,7 +1119,7 @@
         [sAmbiguousWidth9 addCharactersInRange:NSMakeRange(0x273d, 1)];
         [sAmbiguousWidth9 addCharactersInRange:NSMakeRange(0xfffd, 1)];
     });
-    
+
     if (version >= 9) {
         return sAmbiguousWidth9;
     } else {

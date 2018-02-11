@@ -191,12 +191,12 @@
 
 - (void)showSystemColorPicker {
     static const CGFloat kMarginBetweenAccessoryViews = 4;
-    
+
     NSColorPanel *colorPanel = [NSColorPanel sharedColorPanel];
-    
+
     // Add an accessory view to use ColorPicker.
     NSView *container = [[NSView alloc] init];
-    
+
     NSImage *image = [self cpk_imageNamed:@"ActiveEscapeHatch"];
     NSRect frame;
     const CGFloat kBottomMargin = 8;
@@ -208,7 +208,7 @@
     button.imagePosition = NSImageOnly;
     [button setTarget:self];
     [button setAction:@selector(useColorPicker:)];
-    
+
     [container addSubview:button];
 
     if (self.noColorAllowed) {
@@ -222,10 +222,10 @@
         [button setAction:@selector(noColorChosenInSystemColorPicker:)];
         [container addSubview:button];
     }
-    
+
     container.frame = NSMakeRect(0, 0, NSMaxX(button.frame), NSMaxY(button.frame) + kBottomMargin);
     colorPanel.accessoryView = container;
-    
+
     [colorPanel setTarget:self];
     [colorPanel setAction:@selector(colorPanelColorDidChange:)];
     [colorPanel orderFront:nil];
@@ -334,7 +334,7 @@
     if (_view) {
         return;
     }
-    
+
     // This makes target/action work on older OS versions.
     [self setCell:[[NSActionCell alloc] init]];
     _continuous = YES;

@@ -93,7 +93,7 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     va_start(args, value);
     NSString *s = [[[NSString alloc] initWithFormat:value arguments:args] autorelease];
     va_end(args);
-    
+
     NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
 
     [gDebugLogLock lock];

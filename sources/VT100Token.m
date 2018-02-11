@@ -47,19 +47,19 @@ static iTermObjectPool *gPool;
         free(_csi);
         _csi = NULL;
     }
-    
+
     [_string release];
     _string = nil;
-    
+
     [_kvpKey release];
     _kvpKey = nil;
-    
+
     [_kvpValue release];
     _kvpValue = nil;
-    
+
     [_savedData release];
     _savedData = nil;
-    
+
     if (_asciiData.buffer != _asciiData.staticBuffer) {
         free(_asciiData.buffer);
     }
@@ -70,7 +70,7 @@ static iTermObjectPool *gPool;
     _asciiData.buffer = NULL;
     _asciiData.length = 0;
     _asciiData.screenChars = NULL;
-    
+
     type = 0;
     code = 0;
 }
@@ -263,7 +263,7 @@ static iTermObjectPool *gPool;
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {
     assert(_asciiData.buffer == NULL);
-    
+
     _asciiData.length = length;
     if (length > sizeof(_asciiData.staticBuffer)) {
         _asciiData.buffer = malloc(length);
@@ -271,7 +271,7 @@ static iTermObjectPool *gPool;
         _asciiData.buffer = _asciiData.staticBuffer;
     }
     memcpy(_asciiData.buffer, bytes, length);
-    
+
     [self preInitializeScreenChars];
 }
 

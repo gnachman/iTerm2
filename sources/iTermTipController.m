@@ -81,7 +81,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
                    dispatch_get_main_queue(),
                    ^{
                        [self tryToShowTip];
-                       
+
                        [[NSNotificationCenter defaultCenter] addObserver:self
                                                                 selector:@selector(applicationDidBecomeActive:)
                                                                     name:NSApplicationDidBecomeActiveNotification

@@ -151,12 +151,12 @@ static const int kDragThreshold = 3;
     double _charWidth;
 
     // NSTextInputClient support
-    
+
     // When an event is passed to -handleEvent, it may get dispatched to -insertText:replacementRange:
     // or -doCommandBySelector:. If one of these methods processes the input by sending it to the
     // delegate then this will be set to YES to prevent it from being handled twice.
     BOOL _keyPressHandled;
-    
+
     // This is used by the experimental feature guarded by [iTermAdvancedSettingsModel experimentalKeyHandling].
     // Indicates if marked text existed before invoking -handleEvent: for a keypress. If the
     // input method handles the keypress and causes the IME to finish then the keypress must not
@@ -249,7 +249,7 @@ static const int kDragThreshold = 3;
     NSPoint _mouseLocationToRefuseFirstResponderAt;
 
     iTermNSKeyBindingEmulator *_keyBindingEmulator;
-    
+
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
     iTermAltScreenMouseScrollInferer *_altScreenMouseScrollInferer;
 
@@ -349,7 +349,7 @@ static const int kDragThreshold = 3;
 
         _badgeLabel = [[iTermBadgeLabel alloc] init];
         _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] init];
-        
+
         _altScreenMouseScrollInferer = [[iTermAltScreenMouseScrollInferer alloc] init];
         _altScreenMouseScrollInferer.delegate = self;
         [self refuseFirstResponderAtCurrentMouseLocation];
@@ -1167,7 +1167,7 @@ static const int kDragThreshold = 3;
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
-    
+
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
@@ -1184,7 +1184,7 @@ static const int kDragThreshold = 3;
 
     [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
     [_drawingHelper drawTimestamps];
-    
+
     // Not sure why this is needed, but for some reason this view draws over its subviews.
     for (NSView *subview in [self subviews]) {
         [subview setNeedsDisplay:YES];
@@ -1874,11 +1874,11 @@ static const int kDragThreshold = 3;
     CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
     CPSStealKeyFocusFunction *stealKeyFocus = GetCPSStealKeyFocusFunction();
     CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
-    
+
     if (!getCurrentProcess || !stealKeyFocus || !releaseKeyFocus) {
         return NO;
     }
-    
+
     CPSProcessSerNum psn;
     if (getCurrentProcess(&psn) == noErr) {
         OSErr err = stealKeyFocus(&psn);
@@ -1886,7 +1886,7 @@ static const int kDragThreshold = 3;
         // CPSStealKeyFocus appears to succeed even when it returns an error. See issue 4113.
         return YES;
     }
-    
+
     return NO;
 }
 
@@ -1894,7 +1894,7 @@ static const int kDragThreshold = 3;
 - (void)releaseKeyFocus {
     CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
     CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
-    
+
     if (!getCurrentProcess || !releaseKeyFocus) {
         return;
     }
@@ -3814,7 +3814,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             DLog(@"Skipping rule with no actions:\n%@", rule);
             continue;
         }
-        
+
         DLog(@"Evaluating rule:\n%@", rule);
         NSString *regex = [SmartSelectionController regexInRule:rule];
         for (int i = 0; i <= textWindow.length; i++) {
@@ -4292,7 +4292,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             assert(false);
             break;
-            
+
         case kPTYTextViewSelectionEndpointEnd:
             switch (direction) {
                 case kPTYTextViewSelectionExtensionDirectionUp:
@@ -5198,7 +5198,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [gCurrentKeyEventTextView doCommandBySelector:aSelector];
         return;
     }
-    
+
     if ([iTermAdvancedSettingsModel experimentalKeyHandling]) {
         // Pass the event to the delegate since doCommandBySelector was called instead of
         // insertText:replacementRange:, unless an IME is in use. An example of when this gets called
@@ -5681,7 +5681,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!_highlightedRows) {
         _highlightedRows = [[NSMutableArray alloc] init];
     }
-    
+
     iTermHighlightedRow *entry = [[iTermHighlightedRow alloc] initWithAbsoluteLineNumber:_dataSource.totalScrollbackOverflow + line
                                                                                  success:!hasErrorCode];
     [_highlightedRows addObject:entry];
@@ -7279,7 +7279,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (VT100GridCoordRange)accessibilityHelperSelectedRange {
     iTermSubSelection *sub = _selection.allSubSelections.lastObject;
-    
+
     if (!sub) {
         return [self accessibilityRangeOfCursor];
     }

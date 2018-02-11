@@ -86,12 +86,12 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
     sigemptyset(&signals);
     sigaddset(&signals, SIGPIPE);
     sigprocmask(SIG_UNBLOCK, &signals, NULL);
-    
+
     // Make sure all other file descriptors are closed.
     for (int j = numFileDescriptorsToPreserve; j < dtablesize; j++) {
         close(j);
     }
-    
+
     char *args[] = {
         "sandbox-exec",
         "-p",
@@ -136,13 +136,13 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
         close(writeFD);
         writeFD = -1;
     }
-    
+
     NSData *data = nil;
     if (ok) {
         data = [self readDecompressedImageFromFileDescriptor:readFD];
         ok = data != nil;
     }
-    
+
     if (writeFD != -1) {
         close(writeFD);
     }
@@ -151,7 +151,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
         kill(pid, SIGKILL);
     }
     [self reapProcessID:pid];
-    
+
     return data;
 }
 
@@ -196,7 +196,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
         XLog(@"Failed to create a pipe: %s", strerror(errno));
         return nil;
     }
-    
+
     int compressedImageFDs[2] = { 0, 0 };
     if (pipe(compressedImageFDs)) {
         XLog(@"Failed to create a pipe: %s", strerror(errno));
@@ -217,7 +217,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
             // error
             NSLog(@"Fork failed: %s", strerror(errno));
             return nil;
-            
+
         case 0:
             // child
             close(jsonFDs[0]);
@@ -225,7 +225,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
             ExecImageDecoder(utf8Executable, sandbox, jsonFDs[1], compressedImageFDs[0], dtablesize);
             exit(1);
             return nil;
-            
+
         default: {
             // parent
 

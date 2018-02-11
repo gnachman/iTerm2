@@ -28,7 +28,7 @@
 
 - (void)dealloc {
     [_savedRemotePrefs release];
-    [super dealloc]; 
+    [super dealloc];
 }
 
 - (BOOL)shouldLoadRemotePrefs {
@@ -175,9 +175,9 @@
             return;
         }
     }
-    
+
     [[NSUserDefaults standardUserDefaults] synchronize];
-    
+
     NSString *folder = [self expandedCustomFolderOrURL];
     if ([folder stringIsUrlLike]) {
         NSString *informativeText =
@@ -190,13 +190,13 @@
         [alert runModal];
         return;
     }
-    
+
     NSString *filename = [self prefsFilenameWithBaseDir:folder];
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    
+
     // Copy fails if the destination exists.
     [fileManager removeItemAtPath:filename error:nil];
-    
+
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *myDict =
     [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];

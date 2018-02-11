@@ -34,7 +34,7 @@
 
 - (NSData *)dataForFirstFile {
     NSString *bestType = [self availableTypeFromArray:@[ NSFilenamesPboardType ]];
-    
+
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [self propertyListForType:NSFilenamesPboardType];
         if (filenames.count > 0) {

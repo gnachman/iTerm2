@@ -164,10 +164,10 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         NSString *joinedNames = [names componentsJoinedWithOxfordComma];
         NSString *namesSentence = nil;
         NSArray *actions = @[ @"OK", @"Cancel"];
-        
+
         iTermWarningSelection cancel = kiTermWarningSelection1;
         iTermWarningSelection edit = kItermWarningSelectionError;
-        
+
         if (profileHotKeys.count == 1) {
             namesSentence = [NSString stringWithFormat:@"You already have a Profile with a Hotkey Window named %@", joinedNames];
             actions = @[ @"OK", @"Configure Existing Profile", @"Cancel"];
@@ -177,7 +177,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             namesSentence = [NSString stringWithFormat:@"You already have Profiles with Hotkey Windows named %@", joinedNames];
         }
         namesSentence = [namesSentence stringByInsertingTerminalPunctuation:@"."];
-        
+
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@", namesSentence]
                                                                      actions:actions
                                                                    accessory:nil
@@ -327,7 +327,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     unsigned int keyCode = [event keyCode];
 
     [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
-    
+
     if (!event) {
         BOOL wasEnabled = [self boolForKey:kPreferenceKeyHotkeyEnabled];
         [self setBool:NO forKey:kPreferenceKeyHotkeyEnabled];

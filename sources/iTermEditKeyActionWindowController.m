@@ -158,7 +158,7 @@
         _touchBarLabel.hidden = YES;
         _shortcutField.hidden = NO;
     }
-    
+
     switch (tag) {
         case KEY_ACTION_HEX_CODE:
             [_parameter setHidden:NO];
@@ -397,7 +397,7 @@
     }
     if (animated) {
         [self retain];
-        
+
         [self.window retain];  // Ignore analyzer warning on this line (autorelaesed in block)
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.window setFrame:rect display:YES animate:YES];
@@ -430,7 +430,7 @@
     if (![[menu title] isEqualToString:@"Window"]) {
         return NO;
     }
-    
+
     return ([item.title isMatchedByRegex:@"^\\d+\\. " ]);
 }
 
@@ -490,7 +490,7 @@
             return;
         }
     }
-    
+
     self.action = [[_actionPopup selectedItem] tag];
 
     switch (self.action) {

@@ -322,7 +322,7 @@
 // This makes ^N and ^P work.
 - (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector {
     BOOL result = NO;
-    
+
     if (commandSelector == @selector(moveUp:) || commandSelector == @selector(moveDown:)) {
         NSInteger row = [_table selectedRow];
         if (row < 0) {

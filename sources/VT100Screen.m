@@ -145,7 +145,7 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _wraparoundMode;
     BOOL _ansi;
     BOOL _insert;
-    
+
     BOOL _shellIntegrationInstalled;
 
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
@@ -645,7 +645,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
     DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
-    
+
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
     if (wasShowingAltScreen) {
@@ -3991,7 +3991,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         }
         shell = params[@"shell"];
     }
-    
+
     NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
         @{ @"tcsh": @2,
            @"bash": @5,
@@ -4172,7 +4172,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         return;
     }
     NSInteger key = [keyNumber integerValue];
-    
+
     [delegate_ screenSetColor:color forKey:key];
 }
 

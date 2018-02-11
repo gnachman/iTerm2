@@ -17,12 +17,12 @@
 
 - (void)testObjectsOfClasses {
     NSArray *objects = @[ [NSNull null], @0, [[[NSObject alloc] init] autorelease], @1 ];
-    
+
     NSArray *numbers = [objects objectsOfClasses:@[ [NSNumber class] ]];
     XCTAssertEqual(numbers.count, 2);
     XCTAssertTrue([numbers containsObject:@0]);
     XCTAssertTrue([numbers containsObject:@1]);
-    
+
     NSArray *numbersAndNull = [objects objectsOfClasses:@[ [NSNumber class], [NSNull class] ]];
     XCTAssertEqual(numbersAndNull.count, 3);
     XCTAssertTrue([numbersAndNull containsObject:@0]);
@@ -34,18 +34,18 @@
     NSDictionary *attributes1 = @{ NSForegroundColorAttributeName: [NSColor whiteColor] };
     NSDictionary *attributes2 = @{ NSForegroundColorAttributeName: [NSColor blackColor] };
     NSDictionary *joinAttributes = @{ NSForegroundColorAttributeName: [NSColor redColor] };
-    
+
     NSAttributedString *string1 = [[[NSAttributedString alloc] initWithString:@"one" attributes:attributes1] autorelease];
     NSAttributedString *string2 = [[[NSAttributedString alloc] initWithString:@"two" attributes:attributes2] autorelease];
     NSAttributedString *joiner = [[[NSAttributedString alloc] initWithString:@"," attributes:joinAttributes] autorelease];
-    
+
     NSArray *array = @[ string1, string2 ];
     NSAttributedString *joined = [array attributedComponentsJoinedByAttributedString:joiner];
     NSMutableAttributedString *expected = [[[NSMutableAttributedString alloc] init] autorelease];
     [expected appendAttributedString:string1];
     [expected appendAttributedString:joiner];
     [expected appendAttributedString:string2];
-    
+
     XCTAssertEqualObjects(expected, joined);
 }
 
@@ -71,9 +71,9 @@
     NSArray *empty = @[];
     NSArray *oneElement = @[ @1 ];
     NSArray *twoElements = @[ @1, @2 ];
-    
+
     XCTAssertFalse([empty containsObjectBesides:@1]);
-    
+
     XCTAssertFalse([oneElement containsObjectBesides:@1]);
     XCTAssertTrue([oneElement containsObjectBesides:@2]);
 

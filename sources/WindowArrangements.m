@@ -75,11 +75,11 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     NSMutableDictionary *arrangements = [NSMutableDictionary dictionaryWithDictionary:[WindowArrangements arrangements]];
     [arrangements setObject:arrangement forKey:name];
     [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
-    
+
     if ([WindowArrangements count] == 1) {
         [WindowArrangements makeDefaultArrangement:name];
     }
-    
+
     [WindowArrangements postChangeNotification];
 }
 
@@ -97,7 +97,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     } else {
         [previewView_ setArrangement:nil];
     }
-    
+
     [previewView_ setNeedsDisplay:YES];
 }
 
@@ -225,7 +225,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
         return;
     }
     [WindowArrangements makeDefaultArrangement:[self nameAtIndex:rowid]];
-    
+
     [tableView_ reloadData];
 }
 
@@ -254,7 +254,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     [[NSUserDefaults standardUserDefaults] setObject:temp forKey:WINDOW_ARRANGEMENTS];
 
     [self setDefaultIfNeededAtRow:rowid];
-    
+
     [tableView_ reloadData];
     [WindowArrangements postChangeNotification];
 }

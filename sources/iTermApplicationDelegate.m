@@ -312,7 +312,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                            initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
     [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
-    
+
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
     }
@@ -903,7 +903,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
     // is under the cursor make it first responder.
     NSPoint mouseLocation = [NSEvent mouseLocation];
-    if (!NSEqualPoints(mouseLocation, _savedMouseLocation) && 
+    if (!NSEqualPoints(mouseLocation, _savedMouseLocation) &&
         [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         NSRect mouseRect = {
             .origin = [NSEvent mouseLocation],
@@ -927,7 +927,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             }
         }
     }
-    
+
     [self hideStuckToolTips];
     iTermPreciseTimerClearLogs();
 }
@@ -1095,7 +1095,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                        action:@selector(showAndOrderFrontRegardlessPrefWindow:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
-    
+
     item = [[[NSMenuItem alloc] initWithTitle:@"Bring All Windows to Front"
                                        action:@selector(arrangeInFront:)
                                 keyEquivalent:@""] autorelease];
@@ -1296,7 +1296,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     if ([NSBundle it_isNightlyBuild]) {
         return;
     }
-    
+
     const BOOL inBeta = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
     if (!inBeta) {
         return;
@@ -1413,7 +1413,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     // LaunchBar: https://twitter.com/launchbar/status/620975715278790657?cn=cmVwbHk%3D&refsrc=email
     // Pathfinder: https://twitter.com/gnachman/status/659409608642007041
     // Tower: Filed a bug. Tracking with issue 4722 on my side
-    
+
     // This is disabled because it looks like everyone is there or almost there. I can remove this
     // code soon.
 //#define SHOW_INCOMPATIBILITY_WARNING_AT_STARTUP
@@ -1500,7 +1500,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                               upgradeAvailable:NO];
         found = YES;
     }
-    
+
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutIncompatibleSoftware];
     return found;
 }

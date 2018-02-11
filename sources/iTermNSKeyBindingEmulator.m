@@ -57,7 +57,7 @@ static struct {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
                                                          NSUserDomainMask,
                                                          YES);
-    
+
     if (![paths count]) {
         AppendPinnedDebugLogMessage(@"NSKeyBindingEmulator", @"Failed to find library directory.");
         return;
@@ -346,7 +346,7 @@ static struct {
         [_savedEvents removeAllObjects];
         return NO;
     }
-    
+
     NSArray *theArray = (NSArray *)obj;
     BOOL result = ([theArray[0] isEqualToString:@"insertText:"]);
     if (!result) {

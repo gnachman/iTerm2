@@ -108,7 +108,7 @@
 // Also clamps the cursor's x position to be valid.
 - (void)moveCursorDown:(int)n;
 
-// Move cursor up one line. 
+// Move cursor up one line.
 // Scroll the screen or a region of the screen up by one line. If lineBuffer is set, a line scrolled
 // off the top will be moved into the line buffer. If a scroll region is present, the lineBuffer is
 // only added to if useScrollbackWithRegion is set.

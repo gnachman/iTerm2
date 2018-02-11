@@ -685,7 +685,7 @@ int gMigrated;
         dict[KEY_NAME] = [[origProfile[KEY_NAME] copy] autorelease];
     }
     dict[KEY_GUID] = [[origGuid copy] autorelease];
-    
+
     // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
     // the new profile.
     dict[KEY_ORIGINAL_GUID] = [[bookmark[KEY_GUID] copy] autorelease];
@@ -863,7 +863,7 @@ int gMigrated;
         [menu insertItem:newItem atIndex:pos];
         submenu = [newItem submenu];
     }
-    
+
     if (parts.count > 1) {
         NSArray *tail = [parts subarrayWithRange:NSMakeRange(1, parts.count - 1)];
         NSString *suffix = [tail componentsJoinedByString:@"/"];
@@ -1070,7 +1070,7 @@ int gMigrated;
                 }
                 if ([submenu numberOfItems] == 0) {
                     [[[item parentItem] submenu] removeItem:item];
-                    
+
                     // Remove "open all" (not at first level)
                     if ([ProfileModel menuHasOpenAll:submenu] && submenu.numberOfItems <= 5) {
                         [menu removeItemAtIndex:[menu numberOfItems] - 1];

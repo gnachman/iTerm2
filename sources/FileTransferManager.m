@@ -65,7 +65,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
             [controllersToRemove addObject:controller];
         }
     }
-    
+
     for (TransferrableFileMenuItemViewController *controller in controllersToRemove) {
         [_viewControllers removeObject:controller];
     }
@@ -93,7 +93,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         AXValueGetValue(temp, kAXValueCGPointType, &position);
         CFRelease(temp);
         CFRelease(menuElement);
-        
+
         NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(point.x,
                                                                             point.y,
                                                                             image.size.width,
@@ -156,14 +156,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     if (error) {
         return NULL;
     }
-    
+
 	CFIndex count = -1;
 	error = AXUIElementGetAttributeValueCount(menuBar, kAXChildrenAttribute, &count);
     if (error) {
         CFRelease(menuBar);
         return NULL;
     }
-    
+
 	NSArray *children = nil;
     // Despite what the name would suggest, the children array and its contents don't seen to need
     // too be released by us.
@@ -176,7 +176,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         CFRelease(menuBar);
         return NULL;
     }
-    
+
     for (id child in children) {
         AXUIElementRef element = (AXUIElementRef)child;
         id title;
@@ -192,7 +192,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
             return element;
         }
     }
-    
+
     return NULL;
 }
 
@@ -255,7 +255,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [item setEnabled:YES];
     [item setTarget:controller];
     [item setAction:@selector(itemSelected:)];
-    
+
     NSMenu *submenu = [[[NSMenu alloc] init] autorelease];
     NSMenuItem *subItem = [[[NSMenuItem alloc] initWithTitle:@"Stop"
                                                       action:@selector(stop:)
@@ -263,7 +263,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [subItem setTarget:controller];
     [submenu addItem:subItem];
     controller.stopSubItem = subItem;
-    
+
     if (transferrableFile.isDownloading) {
         subItem = [[[NSMenuItem alloc] initWithTitle:@"Show in Finder"
                                               action:@selector(showInFinder:)
@@ -272,7 +272,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         [submenu addItem:subItem];
         controller.showInFinderSubItem = subItem;
     }
-    
+
     subItem = [[[NSMenuItem alloc] initWithTitle:@"Remove from List"
                                           action:@selector(removeFromList:)
                                    keyEquivalent:@""] autorelease];
@@ -297,7 +297,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     controller.openSubItem = subItem;
 
     item.submenu = submenu;
-    
+
     [controller update];
     return item;
 }

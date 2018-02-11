@@ -47,7 +47,7 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
     OSSpinLockLock(&lock);
     id theObject = [_object retain];
     OSSpinLockUnlock(&lock);
-    
+
     NSString *description = [NSString stringWithFormat:@"<%@: %p weak ref to %@>",
                              NSStringFromClass([self class]), self, theObject];
     [theObject release];

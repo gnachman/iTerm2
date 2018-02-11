@@ -18,24 +18,24 @@
 @implementation iTermPopupWindowController {
     // Subclass-owned tableview.
     NSTableView* tableView_;
-    
+
     // Results currently being displayed.
     PopupModel* model_;
-    
+
     // All candidate results, including those not matching filter. Subclass-owend.
     PopupModel* unfilteredModel_;
-    
+
     // Timer to set clearFilterOnNextKeyDown_.
     NSTimer* timer_;
-    
+
     // If set, then next time a key is pressed erase substring_ before appending.
     BOOL clearFilterOnNextKeyDown_;
     // What the user has typed so far to filter result set.
     NSMutableString* substring_;
-    
+
     // If true then window is above cursor.
     BOOL onTop_;
-    
+
     // Set to true when the user changes the selected row.
     BOOL haveChangedSelection_;
     // String that the user has selected.

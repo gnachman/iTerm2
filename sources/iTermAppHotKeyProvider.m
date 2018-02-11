@@ -39,7 +39,7 @@
         NSUInteger code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
         unichar character = [iTermPreferences intForKey:kPreferenceKeyHotkeyCharacter];
         NSString *characters = [NSString stringWithFormat:@"%C", character];
-        
+
         iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:code
                                                                 modifiers:modifiers
                                                                characters:characters
@@ -47,7 +47,7 @@
         self.appHotKey = [[[iTermAppHotKey alloc] initWithShortcuts:@[ shortcut ]
                                               hasModifierActivation:NO
                                                  modifierActivation:0] autorelease];
-        
+
         [[iTermHotKeyController sharedInstance] addHotKey:self.appHotKey];
     } else {
         self.appHotKey = nil;

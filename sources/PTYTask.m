@@ -109,7 +109,7 @@ setup_tty_param(struct termios* term,
     BOOL _paused;
 
     int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
-    
+
     VT100GridSize _desiredSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
@@ -497,7 +497,7 @@ static int MyForkPty(int *amaster,
     DLog(@"Environment is\n%@", env);
     char **newEnviron = [self environWithOverrides:env];
     int deadMansPipe[2] = { 0, 0 };
-    
+
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     pid_t pid;
@@ -560,7 +560,7 @@ static int MyForkPty(int *amaster,
         // Now fork. This variant of forkpty passes through the master, slave,
         // and serverConnectionFd to the child job.
         pipe(deadMansPipe);
-        
+
         // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
         iTermFileDescriptorServerLog("Calling MyForkPty");
         pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win, serverConnectionFd, deadMansPipe[1]);
@@ -607,7 +607,7 @@ static int MyForkPty(int *amaster,
         // Error
         DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
-        
+
         for (int j = 0; newEnviron[j]; j++) {
             free(newEnviron[j]);
         }
@@ -637,7 +637,7 @@ static int MyForkPty(int *amaster,
             // copy in serverConnection.
             close(fd);
             fd = -1;
-            
+
             // The serverConnection has the wrong server PID because the connection was made prior
             // to fork(). Update serverConnection with the real server PID.
             serverConnection.serverPid = pid;
@@ -893,7 +893,7 @@ static int MyForkPty(int *amaster,
 - (void)setTerminalSizeToDesiredSize {
     DLog(@"Set size of %@ to %@", _delegate, VT100GridSizeDescription(_desiredSize));
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
-    
+
     struct winsize winsize;
     ioctl(fd, TIOCGWINSZ, &winsize);
     if (winsize.ws_col != _desiredSize.width || winsize.ws_row != _desiredSize.height) {

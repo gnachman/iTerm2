@@ -109,7 +109,7 @@ NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChang
 
         _actionButtons = [[NSMutableArray alloc] init];
         self.autoresizesSubviews = YES;
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowAppearanceDidChange:)
                                                      name:iTermWindowAppearanceDidChange

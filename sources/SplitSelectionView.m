@@ -105,8 +105,8 @@
     } while ([attributedString size].width > frame.size.width ||
              [attributedString size].height > frame.size.height ||
              rect.size.height + rect.origin.y > frame.origin.y + frame.size.height);
-                                                                                          
-    
+
+
     NSShadow *theShadow = [[[NSShadow  alloc] init] autorelease];
     [theShadow setShadowOffset:NSMakeSize(0, 0)];
     [theShadow setShadowBlurRadius:4.0];
@@ -120,7 +120,7 @@
     if (cancelOnly_) {
         [[NSColor colorWithCalibratedRed:0 green:0.5 blue:0 alpha:1] set];
         NSRectFill(dirtyRect);
-        
+
         NSString *theMessage;
         if (_isMove) {
             theMessage = @"Select a destination pane";
@@ -137,7 +137,7 @@
                 highlightRect = NSZeroRect;
                 clearRect = rect;
                 break;
-                
+
             case kSouthHalf:
                 NSDivideRect([self frame], &highlightRect, &clearRect, rect.size.height / 2, NSMinYEdge);
                 break;
@@ -153,13 +153,13 @@
             case kEastHalf:
                 NSDivideRect([self frame], &highlightRect, &clearRect, rect.size.width / 2, NSMaxXEdge);
                 break;
-                
+
             case kFullPane:
                 highlightRect = [self frame];
                 clearRect = NSZeroRect;
                 break;
         }
-        
+
         [[NSColor colorWithCalibratedRed:0.5 green:0 blue:0 alpha:1] set];
         NSRectFill(highlightRect);
 
@@ -231,7 +231,7 @@
         scores[numPossibilities] = (self.frame.size.height - point.y) / self.frame.size.height;
         possibilities[numPossibilities++] = kNorthHalf;
     }
-    
+
     CGFloat minScore = INFINITY;
     int bestIndex = 0;
     for (int i = 0; i < numPossibilities; i++) {

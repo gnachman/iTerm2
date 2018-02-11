@@ -21,7 +21,7 @@ static void DecodeUTF8Bytes(unsigned char *datap,
     int len = datalen;
     int utf8DecodeResult;
     int theChar = 0;
-    
+
     while (true) {
         utf8DecodeResult = decode_utf8_char(p, len, &theChar);
         // Stop on error or end of stream.
@@ -37,7 +37,7 @@ static void DecodeUTF8Bytes(unsigned char *datap,
         p += utf8DecodeResult;
         len -= utf8DecodeResult;
     }
-    
+
     if (p > datap) {
         // If some characters were successfully decoded, just return them
         // and ignore the error or end of stream for now.
@@ -63,8 +63,8 @@ static void DecodeEUCCNBytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
-    
+
+
     while (len > 0) {
         if (iseuccn(*p) && len > 1) {
             if ((*(p+1) >= 0x40 &&
@@ -98,7 +98,7 @@ static void DecodeBIG5Bytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     while (len > 0) {
         if (isbig5(*p) && len > 1) {
             if ((*(p+1) >= 0x40 &&
@@ -132,7 +132,7 @@ static void DecodeEUCJPBytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     while (len > 0) {
         if  (len > 1 && *p == 0x8e) {
             p += 2;
@@ -164,7 +164,7 @@ static void DecodeSJISBytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     while (len > 0) {
         if (issjiskanji(*p) && len > 1) {
             p += 2;
@@ -176,7 +176,7 @@ static void DecodeSJISBytes(unsigned char *datap,
             break;
         }
     }
-    
+
     if (len == datalen) {
         *rmlen = 0;
         token->type = VT100_WAIT;
@@ -193,7 +193,7 @@ static void DecodeEUCKRBytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     while (len > 0) {
         if (iseuckr(*p) && len > 1) {
             p += 2;
@@ -218,7 +218,7 @@ static void DecodeCP949Bytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     while (len > 0) {
         if (iscp949(*p) && len > 1) {
             p += 2;
@@ -243,7 +243,7 @@ static void DecodeOtherBytes(unsigned char *datap,
 {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     while (len > 0) {
         if (*p >= 0x80) {
             p++;
@@ -286,7 +286,7 @@ static void DecodeASCIIBytes(unsigned char *datap,
                              VT100Token *token) {
     unsigned char *p = datap;
     int len = datalen;
-    
+
     // I tried the ideas mentioned here:
     // http://stackoverflow.com/questions/22218605/is-this-function-a-good-candidate-for-simd-on-intel
     // (using 8-bytes-at-a-time bit twiddling and SIMD)
@@ -344,7 +344,7 @@ void ParseString(unsigned char *datap,
     } else {
         DecodeOtherBytes(datap, datalen, rmlen, result);
     }
-    
+
     if (result->type == VT100_INVALID_SEQUENCE) {
         // Output only one replacement symbol, even if rmlen is higher.
         DLog(@"Parsed an invalid sequence of length %d for encoding %@: %.*s", *rmlen, @(encoding), datalen, datap);

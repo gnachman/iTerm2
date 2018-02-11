@@ -647,7 +647,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 
 - (int)getNumLinesWithWrapWidth:(int)width {
     ITBetaAssert(width > 0, @"Bogus value of width: %d", width);
-    
+
     if (width == cached_numlines_width) {
         return cached_numlines;
     }

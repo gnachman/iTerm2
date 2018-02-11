@@ -50,7 +50,7 @@
                            key:KEY_SCROLLBACK_LINES
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 10 * 1000 * 1000);
-    
+
     info = [self defineControl:_unlimitedScrollback
                            key:KEY_UNLIMITED_SCROLLBACK
                           type:kPreferenceInfoTypeCheckbox];
@@ -67,11 +67,11 @@
     [self defineControl:_scrollbackWithStatusBar
                     key:KEY_SCROLLBACK_WITH_STATUS_BAR
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_scrollbackInAlternateScreen
                     key:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self populateEncodings];
     info = [self defineControl:_characterEncoding
                            key:KEY_CHARACTER_ENCODING
@@ -81,7 +81,7 @@
         [_characterEncoding selectItemWithTag:tag];
         return YES;
     };
-    
+
     // It's a combobox, but we can safely treat it as a string text field.
     [self defineControl:_terminalType
                     key:KEY_TERMINAL_TYPE
@@ -90,34 +90,34 @@
     [self defineControl:_answerBackString
                     key:KEY_ANSWERBACK_STRING
                    type:kPreferenceInfoTypeStringTextField];
-    
+
     info = [self defineControl:_xtermMouseReporting
                            key:KEY_XTERM_MOUSE_REPORTING
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         [_xtermMouseReportingAllowMouseWheel setEnabled:[self boolForKey:KEY_XTERM_MOUSE_REPORTING]];
     };
-    
+
     [self defineControl:_xtermMouseReportingAllowMouseWheel
                     key:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_allowTitleReporting
                     key:KEY_ALLOW_TITLE_REPORTING
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_allowTitleSetting
                     key:KEY_ALLOW_TITLE_SETTING
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_disablePrinting
                     key:KEY_DISABLE_PRINTING
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_disableAltScreen
                     key:KEY_DISABLE_SMCUP_RMCUP
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_disableWindowResizing
                     key:KEY_DISABLE_WINDOW_RESIZING
                    type:kPreferenceInfoTypeCheckbox];
@@ -125,7 +125,7 @@
     [self defineControl:_silenceBell
                     key:KEY_SILENCE_BELL
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     info = [self defineControl:_postNotifications
                            key:KEY_BOOKMARK_GROWL_NOTIFICATIONS
                           type:kPreferenceInfoTypeCheckbox];
@@ -153,11 +153,11 @@
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_bellIconInTabs
                     key:KEY_VISUAL_BELL
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_setLocaleVars
                     key:KEY_SET_LOCALE_VARS
                    type:kPreferenceInfoTypeCheckbox];
@@ -192,7 +192,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 - (NSArray *)sortedEncodings {
     NSStringEncoding const *encodingPtr;
     NSMutableArray *encodings = [NSMutableArray array];
-    
+
     for (encodingPtr = [NSString availableStringEncodings]; *encodingPtr; ++encodingPtr) {
         [encodings addObject:@(*encodingPtr)];
     }

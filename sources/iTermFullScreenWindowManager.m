@@ -135,16 +135,16 @@
 
 - (void)makeWindowEnterFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window {
     DLog(@"Make window enter full screen: %@", window);
-    
+
     if ([self haveTransitionWithWindow:window removeIfEntering:YES]) {
         return;
     }
-    
+
     if (window.isFullScreen) {
         DLog(@"Window is already full screen");
         return;
     }
-    
+
     [self enqueueWindow:window.weakSelf enter:YES];
 }
 
@@ -154,12 +154,12 @@
     if ([self haveTransitionWithWindow:window removeIfEntering:NO]) {
         return;
     }
-    
+
     if (!window.isFullScreen) {
         DLog(@"Window is not fullscreen");
         return;
     }
-    
+
     [self enqueueWindow:window.weakSelf enter:NO];
 }
 

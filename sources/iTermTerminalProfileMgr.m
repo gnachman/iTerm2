@@ -39,7 +39,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	{
 		singleInstance = [[iTermTerminalProfileMgr alloc] init];
 	}
-	
+
 	return (singleInstance);
 }
 
@@ -73,7 +73,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	NSMutableDictionary *mappingDict;
 	NSString *profileName;
 	NSDictionary *sourceDict;
-	
+
 	// recursively copy the dictionary to ensure mutability
 	if(aDict != nil)
 	{
@@ -84,23 +84,23 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 			mappingDict = [[NSMutableDictionary alloc] initWithDictionary: sourceDict];
 			[profiles setObject: mappingDict forKey: profileName];
 			[mappingDict release];
-		}		
+		}
 	}
     else  // if we don't have any profile, create a default profile
 	{
 		NSMutableDictionary *aProfile;
 		NSString *defaultName;
-		
+
 		defaultName = NSLocalizedStringFromTableInBundle(@"Default",@"iTerm", [NSBundle bundleForClass: [self class]],
 														 @"Terminal Profiles");
-		
-		
+
+
 		aProfile = [[NSMutableDictionary alloc] init];
 		[profiles setObject: aProfile forKey: defaultName];
 		[aProfile release];
-		
+
 		[aProfile setObject: @"Yes" forKey: @"Default Profile"];
-		
+
 		[self setType: @"xterm" forProfile: defaultName];
 		[self setEncoding: NSUTF8StringEncoding forProfile: defaultName];
 		[self setScrollbackLines: 1000 forProfile: defaultName];
@@ -110,7 +110,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 		[self setDoubleWidth: YES forProfile: defaultName];
 		[self setSendIdleChar: NO forProfile: defaultName];
 		[self setIdleChar: 0 forProfile: defaultName];
-	
+
 	}
 }
 
@@ -119,7 +119,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	NSDictionary *aProfile;
 	NSEnumerator *keyEnumerator;
 	NSString *aKey, *aProfileName;
-	
+
 	keyEnumerator = [profiles keyEnumerator];
 	aProfileName = nil;
 	while ((aKey = [keyEnumerator nextObject]))
@@ -131,14 +131,14 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 			break;
 		}
 	}
-	
+
 	return (aProfileName);
 }
 
 - (void) addProfileWithName: (NSString *) newProfile copyProfile: (NSString *) sourceProfile
 {
 	NSMutableDictionary *aMutableDict, *aProfile;
-	
+
 	if([sourceProfile length] > 0 && [newProfile length] > 0)
 	{
 		aProfile = [profiles objectForKey: sourceProfile];
@@ -151,10 +151,10 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 
 - (void) deleteProfileWithName: (NSString *) profileName
 {
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	[self updateBookmarkProfile: profileName with:@"Default"];
 	[profiles removeObjectForKey: profileName];
 }
@@ -162,12 +162,12 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 - (BOOL) isDefaultProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return (NO);
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	return ([[aProfile objectForKey: @"Default Profile"] isEqualToString: @"Yes"]);
 }
 
@@ -182,58 +182,58 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (nil);
-		
-	return ([aProfile objectForKey: @"Term Type"]);	
+
+	return ([aProfile objectForKey: @"Term Type"]);
 }
 
 - (void) setType: (NSString *) type forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0 || [type length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: type forKey: @"Term Type"];	
+
+	[aProfile setObject: type forKey: @"Term Type"];
 }
 
 - (NSStringEncoding) encodingForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
 	NSNumber *encoding;
-	
+
 	if([profileName length] <= 0)
 		return (NSUTF8StringEncoding);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (NSUTF8StringEncoding);
-	
+
 	encoding = [aProfile objectForKey: @"Encoding"];
 	if(encoding == nil)
 		return (NSUTF8StringEncoding);
-	
-	return ([encoding unsignedIntValue]);	
-	
+
+	return ([encoding unsignedIntValue]);
+
 }
 
 - (void) setEncoding: (NSStringEncoding) encoding forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithUnsignedInt: (unsigned int) encoding] forKey: @"Encoding"];	
+
+	[aProfile setObject: [NSNumber numberWithUnsignedInt: (unsigned int) encoding] forKey: @"Encoding"];
 }
 
 
@@ -253,22 +253,22 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	if(lines == nil)
 	return (0);
 
-	return ([lines unsignedIntValue]);	
+	return ([lines unsignedIntValue]);
 }
 
 - (void) setScrollbackLines: (int) lines forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithInt: (lines < 0 ? -1 : lines)] forKey: @"Scrollback"];	
+
+	[aProfile setObject: [NSNumber numberWithInt: (lines < 0 ? -1 : lines)] forKey: @"Scrollback"];
 }
 
 
@@ -276,102 +276,102 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 {
 	NSDictionary *aProfile;
 	NSNumber *silent;
-	
+
 	if([profileName length] <= 0)
 		return (NO);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (NO);
-	
+
 	silent = [aProfile objectForKey: @"Silence Bell"];
 	if(silent == nil)
 		return (NO);
-	
-	return ([silent boolValue]);	
+
+	return ([silent boolValue]);
 }
 
 - (void) setSilenceBell: (BOOL) silent forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: silent] forKey: @"Silence Bell"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: silent] forKey: @"Silence Bell"];
 }
 
 - (BOOL) showBellForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
 	NSNumber *showBell;
-	
+
 	if([profileName length] <= 0)
 		return (NO);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (NO);
-	
+
 	showBell = [aProfile objectForKey: @"Show Bell"];
 	if(showBell == nil)
 		return (YES);
-	
-	return ([showBell boolValue]);	
+
+	return ([showBell boolValue]);
 }
 
 - (void) setShowBell: (BOOL) showBell forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: showBell] forKey: @"Show Bell"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: showBell] forKey: @"Show Bell"];
 }
 
 - (BOOL) growlForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
 	NSNumber *growl;
-	
+
 	if([profileName length] <= 0)
 		return (NO);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (NO);
-	
+
 	growl = [aProfile objectForKey: @"Growl"];
 	if(growl == nil)
 		return (YES);
-	
-	return ([growl boolValue]);	
+
+	return ([growl boolValue]);
 }
 
 - (void) setGrowl: (BOOL) growl forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: growl] forKey: @"Growl"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: growl] forKey: @"Growl"];
 }
 
 
@@ -379,34 +379,34 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 {
 	NSDictionary *aProfile;
 	NSNumber *blink;
-	
+
 	if([profileName length] <= 0)
 		return (YES);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (YES);
-	
+
 	blink = [aProfile objectForKey: @"Blink"];
 	if(blink == nil)
 		return (YES);
-	
-	return ([blink boolValue]);	
+
+	return ([blink boolValue]);
 }
 
 - (void) setBlinkCursor: (BOOL) blink forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: blink] forKey: @"Blink"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: blink] forKey: @"Blink"];
 }
 
 
@@ -414,37 +414,37 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 {
 	NSDictionary *aProfile;
 	NSNumber *shouldClose;
-	
+
 	if ([profileName length] <= 0) {
 		return (YES);
     }
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if (aProfile == nil) {
 		return (YES);
     }
-	
+
 	shouldClose = [aProfile objectForKey: @"Auto shouldClose"];
 	if (shouldClose == nil) {
 		return (YES);
     }
-	
-	return ([shouldClose boolValue]);	
+
+	return ([shouldClose boolValue]);
 }
 
 - (void) setCloseOnSessionEnd: (BOOL) shouldClose forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if ([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: shouldClose] forKey: @"Auto Close"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: shouldClose] forKey: @"Auto Close"];
 }
 
 
@@ -452,34 +452,34 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 {
 	NSDictionary *aProfile;
 	NSNumber *doubleWidth;
-	
+
 	if([profileName length] <= 0)
 		return (YES);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (YES);
-	
+
 	doubleWidth = [aProfile objectForKey: @"Double Width"];
 	if(doubleWidth == nil)
 		return (YES);
-	
-	return ([doubleWidth boolValue]);	
+
+	return ([doubleWidth boolValue]);
 }
 
 - (void) setDoubleWidth: (BOOL) doubleWidth forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: doubleWidth] forKey: @"Double Width"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: doubleWidth] forKey: @"Double Width"];
 }
 
 
@@ -487,34 +487,34 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 {
 	NSDictionary *aProfile;
 	NSNumber *send;
-	
+
 	if([profileName length] <= 0)
 		return (YES);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (YES);
-	
+
 	send = [aProfile objectForKey: @"Send Idle Char"];
 	if(send == nil)
 		return (YES);
-	
-	return ([send boolValue]);	
+
+	return ([send boolValue]);
 }
 
 - (void) setSendIdleChar: (BOOL) send forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: send] forKey: @"Send Idle Char"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: send] forKey: @"Send Idle Char"];
 }
 
 
@@ -522,136 +522,136 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 {
 	NSDictionary *aProfile;
 	NSNumber *idleChar;
-	
+
 	if([profileName length] <= 0)
 		return (0);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (0);
-	
+
 	idleChar = [aProfile objectForKey: @"Idle Char"];
 	if(idleChar == nil)
 		return (0);
-	
-	return ([idleChar unsignedIntValue]);	
+
+	return ([idleChar unsignedIntValue]);
 }
 
 - (void) setIdleChar: (char) idle forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithChar: idle] forKey: @"Idle Char"];	
+
+	[aProfile setObject: [NSNumber numberWithChar: idle] forKey: @"Idle Char"];
 }
 
 - (BOOL) xtermMouseReportingForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
 	NSNumber *xtermMouseReporting;
-	
+
 	if([profileName length] <= 0)
 		return (YES);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (YES);
-	
+
 	xtermMouseReporting = [aProfile objectForKey: @"Xterm Mouse Reporting"];
 	if(xtermMouseReporting == nil)
 		return (YES);
-	
-	return ([xtermMouseReporting boolValue]);	
+
+	return ([xtermMouseReporting boolValue]);
 }
 
 - (void) setXtermMouseReporting: (BOOL) xtermMouseReporting forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: xtermMouseReporting] forKey: @"Xterm Mouse Reporting"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: xtermMouseReporting] forKey: @"Xterm Mouse Reporting"];
 }
 
 - (BOOL) appendTitleForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
 	NSNumber *appendTitle;
-	
+
 	if([profileName length] <= 0)
 		return (YES);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (NO);
-	
+
 	appendTitle = [aProfile objectForKey: @"Append Title"];
 	if(appendTitle == nil)
 		return (NO);
-	
-	return ([appendTitle boolValue]);	
+
+	return ([appendTitle boolValue]);
 }
 
 - (void) setAppendTitle: (BOOL) appendTitle forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: appendTitle] forKey: @"Append Title"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: appendTitle] forKey: @"Append Title"];
 }
 
 - (BOOL) noResizingForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
 	NSNumber *noResizing;
-	
+
 	if([profileName length] <= 0)
 		return (NO);
-	
+
 	aProfile = [profiles objectForKey: profileName];
 	if(aProfile == nil)
 		return (NO);
-	
+
 	noResizing = [aProfile objectForKey: @"No Resizing"];
 	if(noResizing == nil)
 		return (NO);
-	
-	return ([noResizing boolValue]);	
+
+	return ([noResizing boolValue]);
 }
 
 - (void) setNoResizing: (BOOL) noResizing forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
-	
+
 	if([profileName length] <= 0)
 		return;
-	
+
 	aProfile = [profiles objectForKey: profileName];
-	
+
 	if(aProfile == nil)
 		return;
-	
-	[aProfile setObject: [NSNumber numberWithBool: noResizing] forKey: @"No Resizing"];	
+
+	[aProfile setObject: [NSNumber numberWithBool: noResizing] forKey: @"No Resizing"];
 }
 
 - (void) updateBookmarkNode: (TreeNode *)node forProfile: (NSString*) oldProfile with:(NSString*)newProfile
@@ -660,7 +660,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	TreeNode *child;
 	NSDictionary *aDict;
 	int n = [node numberOfChildren];
-	
+
 	for (i=0;i<n;i++) {
 		child = [node childAtIndex:i];
 		if ([child isLeaf]) {
@@ -681,9 +681,9 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 - (void) updateBookmarkProfile: (NSString*) oldProfile with:(NSString*)newProfile
 {
 	[self updateBookmarkNode: [[ITAddressBookMgr sharedInstance] rootNode] forProfile: oldProfile with:newProfile];
-	
+
 	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
+	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
 }
 
 

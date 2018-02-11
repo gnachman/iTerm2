@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (!queryParameter.length) {
         return self;
     }
-    
+
     NSURL *urlWithoutFragment = [self URLByRemovingFragment];
     NSString *fragment;
     if (self.fragment) {
@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         fragment = @"";
     }
-    
+
     NSString *separator;
     if (self.query) {
         if (self.query.length > 0) {
@@ -47,10 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         separator = @"?";
     }
-    
+
     NSArray *components = @[ urlWithoutFragment.absoluteString, separator, queryParameter, fragment ];
     NSString *string = [components componentsJoinedByString:@""];
-    
+
     return [NSURL URLWithString:string];
 }
 

@@ -105,7 +105,7 @@ static const CGFloat kInnerMargin = 5;
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:terminal];
-    }    
+    }
 }
 
 - (void)toolProfilesNewWindow:(id)sender
@@ -114,7 +114,7 @@ static const CGFloat kInnerMargin = 5;
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:nil];
-    }    
+    }
 }
 
 - (void)toolProfilesNewHorizontalSplit:(id)sender
@@ -122,7 +122,7 @@ static const CGFloat kInnerMargin = 5;
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
         [terminal splitVertically:NO withBookmarkGuid:guid];
-    }    
+    }
 }
 
 - (void)toolProfilesNewVerticalSplit:(id)sender

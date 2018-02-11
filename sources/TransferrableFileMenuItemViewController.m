@@ -40,7 +40,7 @@ static const CGFloat kCollapsedHeight = 51;
     [_showInFinderSubItem release];
     [_removeFromListSubItem release];
     [_openSubItem release];
-    
+
     [super dealloc];
 }
 
@@ -100,7 +100,7 @@ static const CGFloat kCollapsedHeight = 51;
             view.statusMessage = @"Starting…";
             [self collapse];
             break;
-            
+
         case kTransferrableFileStatusTransferring:
             [self expand];
             [view.progressIndicator setHidden:[_transferrableFile fileSize] < 0];
@@ -111,23 +111,23 @@ static const CGFloat kCollapsedHeight = 51;
             }
             [self showMenu];
             break;
-            
+
         case kTransferrableFileStatusFinishedSuccessfully:
             [self collapse];
             view.statusMessage = @"Finished";
             break;
-            
+
         case kTransferrableFileStatusFinishedWithError:
             [self collapse];
             view.statusMessage = @"Failed";
             [self showMenu];
             break;
-            
+
         case kTransferrableFileStatusCancelling:
             [self expand];
             view.statusMessage = @"Cancelling…";
             break;
-            
+
         case kTransferrableFileStatusCancelled:
             [self collapse];
             view.statusMessage = @"Cancelled";

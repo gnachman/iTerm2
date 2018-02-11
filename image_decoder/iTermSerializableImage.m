@@ -49,7 +49,7 @@
     NSInteger bytesPerRow = size.width * 4;
     NSUInteger storageNeeded = bytesPerRow * size.height;
     [data setLength:storageNeeded];
-    
+
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate((void *)data.bytes,
                                                  size.width,
@@ -62,7 +62,7 @@
     if (!context) {
         return NULL;
     }
-    
+
     return context;
 }
 

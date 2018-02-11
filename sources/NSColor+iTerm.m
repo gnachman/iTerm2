@@ -100,19 +100,19 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
      a constant t (target perceived brightness)
      find a vector X such that F(X)=t
      and X lies on a straight line between c and e
-     
+
      Define a parametric vector x(p) = [x1(p), x2(p), x3(p)]:
      x1(p) = p*e1 + (1-p)*c1
      x2(p) = p*e2 + (1-p)*c2
      x3(p) = p*e3 + (1-p)*c3
-     
+
      when p=0, x=c
      when p=1, x=e
-     
+
      the line formed by x(p) from p=0 to p=1 is the line from c to e.
-     
+
      Our goal: find the value of p where f(x(p))=t
-     
+
      We know that:
      [x1(p)]
      f(X) = AX = [a1 a2 a3] [x2(p)] = a1x1(p) + a2x2(p) + a3x3(p)
@@ -125,7 +125,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
      t = p*(a2*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3) + a1*c1 + a2*c2 + a3*c3
      t - (a1*c1 + a2*c2 + a3*c3) = p*(a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
      p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
-     
+
      The PerceivedBrightness() function is a dot product between the a vector and its input, so the
      previous equation is equivalent to:
      p = (t - PerceivedBrightness(c1, c2, c3) / PerceivedBrightness(e1-c1, e2-c2, e3-c3)
@@ -133,7 +133,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     const CGFloat c1 = r;
     const CGFloat c2 = g;
     const CGFloat c3 = b;
-    
+
     CGFloat k;
     if (PerceivedBrightness(r, g, b) < t) {
         k = 1;
@@ -143,7 +143,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     const CGFloat e1 = k;
     const CGFloat e2 = k;
     const CGFloat e3 = k;
-    
+
     CGFloat p = ((t - PerceivedBrightness(c1, c2, c3)) /
                  (PerceivedBrightness(e1 - c1, e2 - c2, e3 - c3)));
     // p can be out of range for e.g., division by 0.
@@ -250,7 +250,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     double alpha = [self alphaComponent];
     // This algorithm limits the dynamic range of colors as well as brightening
     // them. Both attributes change in proportion to the dimmingAmount.
-    
+
     // Find a linear interpolation between kCenter and the requested color component
     // in proportion to 1- dimmingAmount.
     return [NSColor colorWithCalibratedRed:(1 - dimmingAmount) * r + dimmingAmount * grayLevel

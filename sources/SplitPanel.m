@@ -36,7 +36,7 @@
         [parent.window endSheet:splitPanel.window];
         [panel orderOut:nil];
         [splitPanel close];
-        
+
         return splitPanel.guid;
     } else {
         return nil;

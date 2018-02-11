@@ -19,14 +19,14 @@ iTermHighlightRowVertexShader(uint vertexID [[ vertex_id ]],
                               constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                               constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]]) {
     iTermHighlightRowVertexFunctionOutput out;
-    
+
     float2 pixelSpacePosition = vertexArray[vertexID].position.xy;
     float2 viewportSize = float2(*viewportSizePointer);
-    
+
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
-    
+
     return out;
 }
 

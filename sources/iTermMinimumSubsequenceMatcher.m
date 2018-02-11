@@ -192,7 +192,7 @@
     if (!_indexes) {
         return nil;
     }
-    
+
     return [self indexSetForIndexes:[self bestIndexes]];
 }
 

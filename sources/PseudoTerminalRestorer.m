@@ -153,7 +153,7 @@ static BOOL gWaitingForFullScreen;
                                withObject:nil
                                afterDelay:0];
                     break;
-                    
+
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
                 case WINDOW_TYPE_NORMAL:

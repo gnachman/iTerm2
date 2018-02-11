@@ -178,7 +178,7 @@
         otherChild = curr.leftChild;
     }
     DebugLog(@"returned from recursion. At node %@", curr);
-    
+
     // If the candidate hypersphere crosses this splitting plane, look on the
     // other side of the plane by examining the other subtree.
     if (fabs(curr_i - a_i) < self.bestDistance) {

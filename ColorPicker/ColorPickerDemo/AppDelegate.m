@@ -35,7 +35,7 @@
     self.continuousColorWell.noColorAllowed = YES;
     self.continuousColorWell.target = self;
     self.continuousColorWell.action = @selector(colorDidChange:);
-    
+
     // This opens the popover from the left side even though the well is on the right.
     NSRect frame = NSMakeRect([self.window.contentView frame].size.width - 50, 0, 50, 25);
     CustomWell *customWell = [[CustomWell alloc] initWithFrame:frame];

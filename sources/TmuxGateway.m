@@ -54,7 +54,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
     BOOL detachSent_;
     BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
     NSMutableString *strayMessages_;
-    
+
     // When we get the first %begin-%{end,error} we notify the delegate. Until that happens, this is
     // set to NO.
     BOOL _initialized;
@@ -564,7 +564,7 @@ error:
     if (!codePoints.count) {
         return;
     }
-    
+
     if (![self serverAcceptsSurrogatePairs]) {
         NSString *string = [self firstSupplementaryPlaneCharacterInArray:codePoints];
         if (string) {
@@ -572,7 +572,7 @@ error:
             return;
         }
     }
-    
+
     // Send multiple small send-keys commands because commands longer than 1024 bytes crash tmux 1.8.
     NSMutableArray *commands = [NSMutableArray array];
     const NSUInteger stride = 80;

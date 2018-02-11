@@ -82,7 +82,7 @@ ITERM_WEAKLY_REFERENCEABLE
     XCTAssertEqual(weakReference.weaklyReferencedObject, object);
     [object release];
     [pool drain];
-    
+
     XCTAssertEqual(weakReference.weaklyReferencedObject, nil);
 }
 
@@ -171,13 +171,13 @@ ITERM_WEAKLY_REFERENCEABLE
     dispatch_group_t startGroup = dispatch_group_create();
     dispatch_group_t raceGroup = dispatch_group_create();
     dispatch_group_t doneGroup = dispatch_group_create();
-    
+
     for (int i = 0; i < 1000; i++) {
         iTermWeaklyReferenceableObject *object = [[iTermWeaklyReferenceableObject alloc] init];
         iTermWeakReference *ref = [[iTermWeakReference alloc] initWithObject:object];
 
         dispatch_group_enter(startGroup);
-        
+
         NSValue *objectValue = [NSValue valueWithNonretainedObject:object];
         dispatch_group_async(doneGroup, q1, ^{
             dispatch_group_wait(startGroup, DISPATCH_TIME_FOREVER);
@@ -192,14 +192,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
         // Give everyone time to wait...
         usleep(1000);
-        
+
         // Fire the startign pistol
         dispatch_group_leave(startGroup);
-        
+
         // Wait for the blocks to finish running.
         dispatch_group_wait(doneGroup, DISPATCH_TIME_FOREVER);
     }
-    
+
     dispatch_release(q1);
     dispatch_release(q2);
     dispatch_release(startGroup);
@@ -233,7 +233,7 @@ ITERM_WEAKLY_REFERENCEABLE
   @autoreleasepool {
     iTerm2FakeObject *weakRef = [fakeObject weakSelf];
 
-    // NSValue used to keep the block from 
+    // NSValue used to keep the block from
     NSValue *weakRefValue = [NSValue valueWithNonretainedObject:weakRef];
 
     // Proper function pointers let us call the impl without warnings.
