@@ -294,7 +294,12 @@ DEFINE_BOOL(supportREPCode, NO, @"Experimental Features: Enable support for REP 
 #endif
 
 DEFINE_BOOL(showBlockBoundaries, NO, @"Debugging: Show line buffer block boundaries (issue 6207)");
-DEFINE_BOOL(useMetal, NO, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
+#if BETA
+#define ADVANCED_SETTINGS_MODEL_USE_METAL YES
+#else
+#define ADVANCED_SETTINGS_MODEL_USE_METAL NO
+#endif
+DEFINE_BOOL(useMetal, ADVANCED_SETTINGS_MODEL_USE_METAL, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
 DEFINE_BOOL(showMetalFPSmeter, NO, @"Experimental Features: Show FPS meter\nRequires Metal renderer");
 
 @end
