@@ -8,6 +8,7 @@ if ls /tmp/failed-* 1> /dev/null 2>&1; then
   export PATH=$PATH:$PWD/tests
   cd /tmp
   source /tmp/diffs > diffs.txt
-  tar cvfz - failed-*.png diffs.txt accept.sh | base64 -b 80
+  tar cvfz travis-fail-$TRAVIS_JOB_NUMBER.tgz failed-*.png diffs.txt accept.sh
+  tools/dropbox_uploader.sh upload travis-fail-$TRAVIS_JOB_NUMBER.tgz 
 fi
 
