@@ -714,8 +714,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p %dx%d>",
-               [self class], self, [_screen width], [_screen height]];
+    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@>",
+               [self class], self, [_screen width], [_screen height], @(self.useMetal)];
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
