@@ -180,6 +180,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
     p = [p stringByReplacingEscapedChar:'r' withString:@"\r"];
     p = [p stringByReplacingEscapedChar:'t' withString:@"\t"];
+    p = [p stringByReplacingEscapedChar:'\\' withString:@"\\"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
     return p;
 }
