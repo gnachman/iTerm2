@@ -45,6 +45,8 @@
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 
+unsigned short iTermBogusVirtualKeyCode = 0xffff;
+
 @interface iTermApplication()
 @property(nonatomic, retain) NSStatusItem *statusBarItem;
 @end
@@ -98,6 +100,9 @@
 
 - (BOOL)routeEventToShortcutInputView:(NSEvent *)event {
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if (event.keyCode == iTermBogusVirtualKeyCode) {
+        return YES;
+    }
     if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
         iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)firstResponder;
         if (shortcutView) {
