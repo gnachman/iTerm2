@@ -36,6 +36,8 @@ static NSString *const iTermTouchBarIdentifierAutocomplete = @"iTermTouchBarIden
 static NSString *const iTermTouchBarFunctionKeysScrollView  = @"iTermTouchBarFunctionKeysScrollView";
 static NSString *const iTermTouchBarIdentifierStatus = @"iTermTouchBarIdentifierStatus";
 
+static const int iTermTouchBarNumberOfFunctionKeys = 24;
+
 ITERM_IGNORE_PARTIAL_BEGIN
 
 @implementation PseudoTerminal (TouchBar)
@@ -202,7 +204,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     documentView.translatesAutoresizingMaskIntoConstraints = NO;
     scrollView.documentView = documentView;
     NSButton *previous = nil;
-    for (NSInteger n = 1; n <= 20; n++) {
+    for (NSInteger n = 1; n <= iTermTouchBarNumberOfFunctionKeys; n++) {
         NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
         iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:label target:self action:@selector(functionKeyTouchBarItemSelected:)];
         button.tag = n;
@@ -496,12 +498,12 @@ ITERM_IGNORE_PARTIAL_BEGIN
 }
 
 - (void)sendFunctionKeyToCurrentSession:(NSInteger)number {
-    if (number < 1 || number > 20) {
+    if (number < 1 || number > iTermTouchBarNumberOfFunctionKeys) {
         return;
     }
 
     NSEvent *currentEvent = [NSApp currentEvent];
-    unsigned short keyCodes[] = {
+    unsigned short keyCodes[iTermTouchBarNumberOfFunctionKeys] = {
         kVK_F1,
         kVK_F2,
         kVK_F3,
@@ -522,6 +524,11 @@ ITERM_IGNORE_PARTIAL_BEGIN
         kVK_F18,
         kVK_F19,
         kVK_F20,
+        // There is no virtual keycode for these function keys, but it doesn't matter for our purposes.
+        iTermBogusVirtualKeyCode,  // F21
+        iTermBogusVirtualKeyCode,  // F22
+        iTermBogusVirtualKeyCode,  // F23
+        iTermBogusVirtualKeyCode   // F24
     };
     NSString *chars = [NSString stringWithFormat:@"%C", (unichar)(NSF1FunctionKey + number - 1)];
     NSPoint screenPoint = [NSEvent mouseLocation];
