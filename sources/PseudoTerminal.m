@@ -88,6 +88,7 @@
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
 #include "iTermFileDescriptorClient.h"
+#import "iTerm2Shared-Swift.h"
 #import <QuartzCore/QuartzCore.h>
 #include <unistd.h>
 
@@ -497,6 +498,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    int sum = [[[iTermHelloSwift alloc] init] addFirst:1 second:2];
+    NSLog(@"sum=%d", sum);
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
