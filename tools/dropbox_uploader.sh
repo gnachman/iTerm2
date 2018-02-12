@@ -1567,18 +1567,25 @@ fi
 #### START  ####
 ################
 
+echo "There are $# args. They are: $*"
 COMMAND=${*:$OPTIND:1}
+echo "Command is $COMMAND"
 ARG1=${*:$OPTIND+1:1}
+echo "Arg1 is $ARG1"
 ARG2=${*:$OPTIND+2:1}
+echo "Arg2 is $ARG2"
+echo "Optind is $OPTIND"
 
 let argnum=$#-$OPTIND
 
+echo "Trying to handle commad <<$COMMAND>>"
 #CHECKING PARAMS VALUES
 case $COMMAND in
 
     upload)
 
         if [[ $argnum -lt 2 ]]; then
+	    echo "upload: Have $argnum args but need at least 2"
             usage
         fi
 
