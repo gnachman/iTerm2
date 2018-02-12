@@ -202,7 +202,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     documentView.translatesAutoresizingMaskIntoConstraints = NO;
     scrollView.documentView = documentView;
     NSButton *previous = nil;
-    for (NSInteger n = 1; n <= 20; n++) {
+    for (NSInteger n = 1; n <= 24; n++) {
         NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
         iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:label target:self action:@selector(functionKeyTouchBarItemSelected:)];
         button.tag = n;
@@ -496,7 +496,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
 }
 
 - (void)sendFunctionKeyToCurrentSession:(NSInteger)number {
-    if (number < 1 || number > 20) {
+    if (number < 1 || number > 24) {
         return;
     }
 
@@ -522,6 +522,10 @@ ITERM_IGNORE_PARTIAL_BEGIN
         kVK_F18,
         kVK_F19,
         kVK_F20,
+        NSF21FunctionKey,
+        NSF22FunctionKey,
+        NSF23FunctionKey,
+        NSF24FunctionKey,
     };
     NSString *chars = [NSString stringWithFormat:@"%C", (unichar)(NSF1FunctionKey + number - 1)];
     NSPoint screenPoint = [NSEvent mouseLocation];
