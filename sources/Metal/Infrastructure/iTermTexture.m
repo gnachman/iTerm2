@@ -34,5 +34,10 @@ const char *iTermTextureMetadataKey = "iTermTextureMetadataKey";
     return [[[self metadataForTexture:texture] objectForKey:@"rawDataSize"] intValue];
 }
 
++ (void)setMetadataObject:(id)object forKey:(id)key onTexture:(id<MTLTexture>)texture {
+    NSMutableDictionary *dict = [[self metadataForTexture:texture] mutableCopy] ?: [NSMutableDictionary dictionary];
+    dict[key] = object;
+    [self attachMetadata:dict toTexture:texture];
+}
 
 @end

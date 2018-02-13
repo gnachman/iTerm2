@@ -8,8 +8,11 @@
 #import "iTermImageRenderer.h"
 
 #import "iTermImageInfo.h"
+#import "iTermTexture.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
+
+static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTermImageRendererTextureMetadataKeyImageMissing";
 
 @implementation iTermMetalImageRun
 
@@ -80,6 +83,14 @@
     }
     [_runs addObject:imageRun];
     id key = [self keyForRun:imageRun];
+    id<MTLTexture> texture = _textures[key];
+
+    // Check if the image got loaded asynchronously. This happens when decoding an image takes a while.
+    if ([iTermTexture metadataForTexture:texture][iTermImageRendererTextureMetadataKeyImageMissing] &&
+        imageRun.imageInfo.ready) {
+        [_textures removeObjectForKey:key];
+    }
+
     if (_textures[key] == nil) {
         _textures[key] = [self newTextureForImageRun:imageRun];
     } else if (imageRun.imageInfo) {
@@ -120,6 +131,9 @@
         }
     }
     id<MTLTexture> texture = [_cellRenderer textureFromImage:image context:self.poolContext];
+    if (missing) {
+        [iTermTexture setMetadataObject:@YES forKey:iTermImageRendererTextureMetadataKeyImageMissing onTexture:texture];
+    }
     return texture;
 }
 

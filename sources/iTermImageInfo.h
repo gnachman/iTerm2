@@ -59,6 +59,9 @@ extern NSString *const iTermImageDidLoad;
 // Is this a broken image?
 @property(nonatomic) BOOL broken;
 
+// Is there an image yet? one might be coming later
+@property (nonatomic, readonly) BOOL ready;
+
 // Used to create a new instance for a new image. This may remain an empty container until
 // -setImageFromImage: is called.
 - (instancetype)initWithCode:(unichar)code;
