@@ -238,8 +238,12 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     return [self.animatedImage frameForTimestamp:timestamp];
 }
 
+- (BOOL)ready {
+    return (self.image || self.animatedImage);
+
+}
 - (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp {
-    if (!self.image && !self.animatedImage) {
+    if (!self.ready) {
         return nil;
     }
     if (!_embeddedImages) {
