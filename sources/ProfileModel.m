@@ -765,13 +765,13 @@ int gMigrated;
 }
 
 - (void)postChangeNotification {
-    DLog(@"Post bookmark changed notification");
     if (postChanges_) {
         DLog(@"Posting notification");
         // NOTE: if userInfo is ever changed update -postNotification:, which
         // has code that coalesces userinfos for this notification.
         [self postNotificationName:kReloadAddressBookNotification object:nil userInfo:@{ @"array": journal_ }];
     }
+    DLog(@"Clear profile model journal");
     [journal_ release];
     journal_ = [[NSMutableArray alloc] init];
 }

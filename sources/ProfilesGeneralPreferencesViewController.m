@@ -8,6 +8,7 @@
 
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "AdvancedWorkingDirectoryWindowController.h"
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
@@ -482,6 +483,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     } else {
         _profileNameChangePending = YES;
         if (!_timer) {
+            DLog(@"Session name changed. Setting a timer for 0.75 seconds");
             _timer = [NSTimer scheduledTimerWithTimeInterval:0.75
                                                       target:self
                                                     selector:@selector(postUpdateSessionNameNotification:)
@@ -494,14 +496,19 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 #pragma mark - Notifications
 
 - (void)postUpdateSessionNameNotification:(NSNotification *)notification {
+    DLog(@"The 0.75 second timer has run. Posting update session name notification");
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
 }
 
 - (void)updateProfileName {
     if (_profileNameChangePending) {
+        DLog(@"updateProfileName called. This session's guid is %@. The new name is %@", [self objectForKey:KEY_GUID], _profileNameFieldForEditCurrentSession);
         [self settingChanged:_profileNameFieldForEditCurrentSession];
         _profileNameChangePending = NO;
+    } else {
+        DLog(@"No change was pending");
     }
 }
 
 @end
+

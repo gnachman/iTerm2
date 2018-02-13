@@ -7491,14 +7491,18 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)reloadBookmarks
 {
+    DLog(@"-[PseudoTerminal reloadBookmarks]");
     for (PTYSession* session in [self allSessions]) {
+        DLog(@"Reload profile in %@", session);
         Profile *oldBookmark = [session profile];
         NSString* oldName = [[[oldBookmark objectForKey:KEY_NAME] copy] autorelease];
         NSString* guid = [oldBookmark objectForKey:KEY_GUID];
         if ([session reloadProfile]) {
+            DLog(@"reloadProfile returned YES for %@", session);
             [[self tabForSession:session] recheckBlur];
             NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
+                DLog(@"The profile's name %@ does not match the old name %@ so update it", profile[KEY_NAME], oldName);
                 // Set name, which overrides any session-set icon name.
                 [session setName:[profile objectForKey:KEY_NAME]];
                 // set default name, which will appear as a prefix if the session changes the name.
@@ -7511,7 +7515,9 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
+    DLog(@"Done messing with all the sessions");
     if (self.isHotKeyWindow) {
+        DLog(@"Hey this is a hotkey window. Mess with it");
         iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
         Profile *profile = profileHotKey.profile;
         if (profile) {
@@ -7526,6 +7532,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     [self updateTouchBarIfNeeded:NO];
+    DLog(@"reloadBookmarks finished");
 }
 
 // Called when the parameter panel should close.

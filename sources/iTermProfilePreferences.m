@@ -7,6 +7,8 @@
 //
 
 #import "iTermProfilePreferences.h"
+
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
 #import "NSColor+iTerm.h"
@@ -347,6 +349,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
            forKey:(NSString *)key
         inProfile:(Profile *)profile
             model:(ProfileModel *)model {
+    DLog(@"A setting with key %@ was changed in profile name=%@ guid=%@. The new value is %@. Posting kReloadAllProfiles notification", key, profile[KEY_NAME], profile[KEY_GUID], object);
     [model setObject:object forKey:key inBookmark:profile];
     [model flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles

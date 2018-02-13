@@ -714,8 +714,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@>",
-               [self class], self, [_screen width], [_screen height], @(self.useMetal)];
+    return [NSString stringWithFormat:@"<%@: %p bookmarkName=%@ profile.name=%@ profile.guid=%@ profile.original_guid=%@ size=%dx%d metal=%@>",
+               [self class], self,
+            _bookmarkName, _profile[KEY_NAME], _profile[KEY_GUID], _profile[KEY_ORIGINAL_GUID],
+            [_screen width], [_screen height], @(self.useMetal)];
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
@@ -967,7 +969,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
                          forObjectType:(iTermObjectType)objectType {
-    DLog(@"Restoring session from arrangement");
+    DLog(@"Restoring session from arrangement (contents elided):\n%@", [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS]);
     PTYSession* aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
@@ -3193,10 +3195,13 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     NSDictionary *updatedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
     if (!updatedProfile) {
+        DLog(@"update profile is nil");
         return;
     }
     if (!_isDivorced) {
+        DLog(@"Not divorced when shared profile changed. Call setPreferencesFromAddressBookEntry: guid=%@ name=%@", updatedProfile[KEY_GUID], updatedProfile[KEY_NAME]);
         [self setPreferencesFromAddressBookEntry:updatedProfile];
+        DLog(@"Not divorced when shared profile changed. Call setProfile: guid=%@ name=%@", updatedProfile[KEY_GUID], updatedProfile[KEY_NAME]);
         [self setProfile:updatedProfile];
         return;
     }
@@ -3212,6 +3217,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSObject *currentValue = _profile[key];
         if ([_overriddenFields containsObject:key]) {
             if ([originalValue isEqual:currentValue]) {
+                DLog(@"Field %@ is no longer overridden. Both values equal %@", key, originalValue);
                 [noLongerOverriddenFields addObject:key];
             }
         } else {
@@ -3236,9 +3242,15 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"After shared profile change overridden keys are: %@", _overriddenFields);
 
     // Update saved state.
+    DLog(@"Set bookmark in sessions instance guid=%@ name=%@", temp[KEY_GUID], temp[KEY_NAME]);
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
+
+    DLog(@"setPreferencesFromAddressBookEntry guid=%@ name=%@", temp[KEY_GUID], temp[KEY_NAME]);
     [self setPreferencesFromAddressBookEntry:temp];
+
+    DLog(@"setProfile guid=%@ name=%@", temp[KEY_GUID], temp[KEY_NAME]);
     [self setProfile:temp];
+
     [self sanityCheck];
 }
 
@@ -3248,9 +3260,11 @@ ITERM_WEAKLY_REFERENCEABLE
     // The real fix to this is to get rid of sessionsInstance altogether and make PTYSession hold the
     // only reference to the divorced profile, but that is too big a project to take on right now.
     if (_isDivorced) {
+        DLog(@"Sanity check running for %@", self);
         NSDictionary *sessionsProfile =
                 [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
         if (!sessionsProfile && _profile) {
+            DLog(@"Have no sessions profile but I do have a profile. Adding my profile guid=%@ to the sessions instance", _profile[KEY_GUID]);
             [[ProfileModel sessionsInstance] addBookmark:_profile];
         }
     }
@@ -3258,6 +3272,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionProfileDidChange
 {
+    DLog(@"Session profile did change\n%@", [NSThread callStackSymbols]);
     if (!_isDivorced) {
         return;
     }
@@ -3316,6 +3331,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
+    DLog(@"setPreferencesFromAddressBookEntry guid=%@ name=%@", aePrefs[KEY_GUID], aePrefs[KEY_NAME]);
     int i;
     NSDictionary *aDict = aePrefs;
 
@@ -3327,6 +3343,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if ([self isTmuxClient] && ![_profile[KEY_NAME] isEqualToString:aePrefs[KEY_NAME]]) {
+        DLog(@"tmux title is out of sync");
         _tmuxTitleOutOfSync = YES;
     }
 
@@ -3523,6 +3540,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)formattedName:(NSString*)base {
+    DLog(@"Figuring out the name of %@ with bookmarkName=%@ jobname=%@", self, _bookmarkName, self.jobName);
+    return [self reallyFormattedName:base];
+}
+
+- (NSString *)reallyFormattedName:(NSString*)base {
     if ([self isTmuxGateway]) {
         return [NSString stringWithFormat:@"[↣ %@ %@]", base, _tmuxController.clientName];
     }
@@ -3609,6 +3631,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setName:(NSString *)theName {
+    DLog(@"%@: setName:%@\n%@", self, theName, [NSThread callStackSymbols]);
     [_view setTitle:theName];
     if (!_bookmarkName) {
         self.bookmarkName = theName;
@@ -3997,7 +4020,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
-    DLog(@"Set profile to one with guid %@", newProfile[KEY_GUID]);
+    DLog(@"%@: Set profile to one with guid %@ name=%@", self, newProfile[KEY_GUID], newProfile[KEY_NAME]);
+    DLog(@"%@", [NSThread callStackSymbols]);
     NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
@@ -4008,13 +4032,16 @@ ITERM_WEAKLY_REFERENCEABLE
     if (originalGuid) {
         // This code path is taken when changing an existing session's profile.
         // See bug 2632.
+        DLog(@"I have an original guid of %@", originalGuid);
         Profile *possibleOriginalProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid];
         if (possibleOriginalProfile) {
+            DLog(@"Setting original profile to one with guid %@ name %@", originalGuid, possibleOriginalProfile[KEY_NAME]);
             [_originalProfile autorelease];
             _originalProfile = [possibleOriginalProfile copy];
         }
     }
     if (!_originalProfile) {
+        DLog(@"There's no original profile. Set it to a copy of newProfile guid=%@ name=%@", mutableProfile[KEY_GUID], mutableProfile[KEY_NAME]);
         // This is normally taken when a new session is being created.
         _originalProfile = [NSDictionary dictionaryWithDictionary:mutableProfile];
         [_originalProfile retain];
@@ -4538,6 +4565,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString*)divorceAddressBookEntryFromPreferences
 {
+    DLog(@"Session %@ getting a divorce", self);
+    DLog(@"%@", [NSThread callStackSymbols]);
     Profile* bookmark = [self profile];
     NSString* guid = [bookmark objectForKey:KEY_GUID];
     if (_isDivorced && [[ProfileModel sessionsInstance] bookmarkWithGuid:guid]) {
@@ -4556,6 +4585,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!existingOriginalGuid ||
         ![[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid] ||
         ![existingOriginalGuid isEqualToString:_originalProfile[KEY_GUID]]) {
+        DLog(@"The profile doesn't have an original guid (%@) OR no shared profile has that guid (%p) OR that original guid is unequal the one in my original profile %@",
+             existingOriginalGuid,
+             [[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid],
+             _originalProfile[KEY_GUID]);
         // The bookmark doesn't already have a valid original GUID.
         bookmark = [[ProfileModel sessionsInstance] setObject:guid
                                                         forKey:KEY_ORIGINAL_GUID
@@ -4568,6 +4601,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[ProfileModel sessionsInstance] setObject:guid
                                         forKey:KEY_GUID
                                     inBookmark:bookmark];
+    DLog(@"Set overridden fields to guid and original guid");
     [_overriddenFields removeAllObjects];
     [_overriddenFields addObjectsFromArray:@[ KEY_GUID, KEY_ORIGINAL_GUID] ];
     [self setProfile:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
