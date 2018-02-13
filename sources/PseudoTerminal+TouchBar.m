@@ -501,7 +501,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     }
 
     NSEvent *currentEvent = [NSApp currentEvent];
-    unsigned short keyCodes[] = {
+    unsigned short keyCodes[24] = {
         kVK_F1,
         kVK_F2,
         kVK_F3,
@@ -522,11 +522,10 @@ ITERM_IGNORE_PARTIAL_BEGIN
         kVK_F18,
         kVK_F19,
         kVK_F20,
-        NSF21FunctionKey,
-        NSF22FunctionKey,
-        NSF23FunctionKey,
-        NSF24FunctionKey,
     };
+    for (int i = 20; i < 24; i++) {
+        keyCodes[i] = iTermBogusVirtualKeyCode;
+    }
     NSString *chars = [NSString stringWithFormat:@"%C", (unichar)(NSF1FunctionKey + number - 1)];
     NSPoint screenPoint = [NSEvent mouseLocation];
     NSEvent *event = [NSEvent keyEventWithType:NSKeyDown
