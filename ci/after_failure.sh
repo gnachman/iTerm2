@@ -10,6 +10,6 @@ if ls /tmp/failed-* 1> /dev/null 2>&1; then
   cd /tmp
   source /tmp/diffs > diffs.txt
   tar cvfz travis-fail-$TRAVIS_JOB_NUMBER.tgz failed-*.png diffs.txt accept.sh
-  $IT2BASE/tools/dropbox_uploader.sh upload travis-fail-$TRAVIS_JOB_NUMBER.tgz 
+  $IT2BASE/tools/dropbox_uploader.sh upload travis-fail-$TRAVIS_JOB_NUMBER.tgz  travis-fail-$TRAVIS_JOB_NUMBER.tgz 
 fi
 

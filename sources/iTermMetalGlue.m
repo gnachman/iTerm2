@@ -939,6 +939,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 previousImageCode = line[x].code;
                 iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
                 previousImageCoord = GetPositionOfImageInChar(line[x]);
+                run.code = line[x].code;
                 run.startingCoordInImage = previousImageCoord;
                 run.startingCoordOnScreen = VT100GridCoordMake(x, row);
                 run.length = 1;
