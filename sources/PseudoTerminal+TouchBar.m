@@ -523,6 +523,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         kVK_F19,
         kVK_F20,
     };
+    // There is no virtual keycode for these function keys, but it doesn't matter for our purposes.
     for (int i = 20; i < 24; i++) {
         keyCodes[i] = iTermBogusVirtualKeyCode;
     }
