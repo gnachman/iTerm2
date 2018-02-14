@@ -9,6 +9,11 @@
 #import "LineBufferHelpers.h"
 
 @implementation ResultRange
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p [%@...%@]>", NSStringFromClass(self.class), self, @(position), @(position + length - 1)];
+}
+
 @end
 
 @implementation XYRange
