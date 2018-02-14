@@ -15,5 +15,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 + (int)bytesPerRowForForTexture:(id<MTLTexture>)texture;
 + (int)rawDataSizeForTexture:(id<MTLTexture>)texture;
 + (NSDictionary *)metadataForTexture:(id<MTLTexture>)texture;
++ (void)setMetadataObject:(id)object forKey:(id)key onTexture:(id<MTLTexture>)texture;
 
 @end
