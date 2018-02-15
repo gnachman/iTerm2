@@ -1191,21 +1191,22 @@ static int Search(NSString* needle,
             }
             tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
                                       mode, &tempResultLength, haystack, charHaystack, deltas, 0);
-
-            limit = tempPosition + tempResultLength - 1;
-            // find i so that i-deltas[i] == limit
-            while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
-                --numUnichars;
-            }
-            NSRange range = NSMakeRange(tempPosition, tempResultLength);
-            if (tempPosition != -1 &&
-                tempPosition <= skip &&
-                !NSEqualRanges(NSIntersectionRange(range, previousRange), range)) {
-                previousRange = range;
-                ResultRange* r = [[[ResultRange alloc] init] autorelease];
-                r->position = tempPosition;
-                r->length = tempResultLength;
-                [results addObject:r];
+            if (tempPosition != -1) {
+                limit = tempPosition + tempResultLength - 1;
+                // find i so that i-deltas[i] == limit
+                while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
+                    --numUnichars;
+                }
+                NSRange range = NSMakeRange(tempPosition, tempResultLength);
+                if (tempPosition != -1 &&
+                    tempPosition <= skip &&
+                    !NSEqualRanges(NSIntersectionRange(range, previousRange), range)) {
+                    previousRange = range;
+                    ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                    r->position = tempPosition;
+                    r->length = tempResultLength;
+                    [results addObject:r];
+                }
             }
         } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
         free(deltas);
