@@ -4230,6 +4230,7 @@ unicode 10 is hardcoded now
                         <outlet property="nextKeyView" destination="5747" id="5752"/>
                     </connections>
                 </button>
+<!--
                 <button id="5747">
                     <rect key="frame" x="356" y="381" width="253" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4252,6 +4253,7 @@ unicode 10 is hardcoded now
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="JJB-g8-hTr"/>
                     </connections>
                 </button>
+-->
                 <button id="4757">
                     <rect key="frame" x="18" y="280" width="269" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>

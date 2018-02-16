@@ -77,11 +77,13 @@ enum {
     // Copy to clipboard on selection
     IBOutlet NSButton *_selectionCopiesText;
 
+/*
     // Copy includes trailing newline
     IBOutlet NSButton *_copyLastNewline;
 
     // Allow clipboard access by terminal applications
     IBOutlet NSButton *_allowClipboardAccessFromTerminal;
+*/
 
     // Characters considered part of word
     IBOutlet NSTextField *_wordChars;
@@ -252,6 +254,7 @@ enum {
                     key:kPreferenceKeySelectionCopiesText
                    type:kPreferenceInfoTypeCheckbox];
 
+/*
     [self defineControl:_copyLastNewline
                     key:kPreferenceKeyCopyLastNewline
                    type:kPreferenceInfoTypeCheckbox];
@@ -259,6 +262,7 @@ enum {
     [self defineControl:_allowClipboardAccessFromTerminal
                     key:kPreferenceKeyAllowClipboardAccessFromTerminal
                    type:kPreferenceInfoTypeCheckbox];
+*/
 
     [self defineControl:_wordChars
                     key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
