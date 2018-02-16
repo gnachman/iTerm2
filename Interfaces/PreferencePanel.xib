@@ -4310,6 +4310,7 @@ unicode 10 is hardcoded now
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="oP4-Nh-ypZ"/>
                     </connections>
                 </button>
+<!--
                 <button id="5319">
                     <rect key="frame" x="356" y="191" width="189" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4323,6 +4324,7 @@ unicode 10 is hardcoded now
                         <outlet property="nextKeyView" destination="6337" id="age-Bh-isX"/>
                     </connections>
                 </button>
+-->
                 <button id="6366">
                     <rect key="frame" x="356" y="84" width="398" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>

@@ -3077,7 +3077,8 @@ return NO;
 
 - (BOOL)lionFullScreen
 {
-    return lionFullScreen_;
+  // LION FULL SCREEN SUCKS; so we hardcode settings here
+    return NO; // lionFullScreen_;
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
@@ -3456,8 +3457,7 @@ return NO;
 
 - (void)delayedEnterFullscreen
 {
-    if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
-        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+    if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN && NO) { // [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
             // when doing a lion resume, the window may be toggled immediately

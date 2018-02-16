@@ -899,7 +899,7 @@ static iTermController *gSharedInstance;
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-            [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+            NO) { // [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             return windowType;
