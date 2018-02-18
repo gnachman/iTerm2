@@ -1035,16 +1035,22 @@ static int CoreSearch(NSString *needle,
         if (!regexError && range.location != NSNotFound) {
             if (hasSuffix && range.location + range.length == [sandwich length]) {
                 // match includes $
-                --range.length;
-                if (range.length == 0) {
+                if (range.length > 0) {
+                    --range.length;
+                }
+                if (range.length == 0 && range.location > 0) {
                     // matched only on $
                     --range.location;
                 }
             }
             if (hasPrefix && range.location == 0) {
-                --range.length;
+                if (range.length > 0) {
+                    --range.length;
+                }
             } else if (hasPrefix) {
-                --range.location;
+                if (range.location > 0) {
+                    --range.location;
+                }
             }
         }
         if (range.length <= 0) {
