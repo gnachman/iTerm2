@@ -1,15 +1,8 @@
 #import <Cocoa/Cocoa.h>
 
+#import "iTermCursorType.h"
 #import "iTermSmartCursorColor.h"
 #import "ScreenChar.h"
-
-typedef NS_ENUM(NSInteger, ITermCursorType) {
-    CURSOR_UNDERLINE,
-    CURSOR_VERTICAL,
-    CURSOR_BOX,
-
-    CURSOR_DEFAULT = -1  // Use the default cursor type for a profile. Internally used for DECSTR.
-};
 
 @protocol iTermCursorDelegate <iTermSmartCursorColorDelegate>
 

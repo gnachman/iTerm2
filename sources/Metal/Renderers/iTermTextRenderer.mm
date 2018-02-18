@@ -8,7 +8,6 @@ extern "C" {
 #import "iTermMetalCellRenderer.h"
 
 #import "GlyphKey.h"
-#import "iTermASCIITexture.h"
 #import "iTermCharacterParts.h"
 #import "iTermGlyphEntry.h"
 #import "iTermMetalBufferPool.h"
@@ -63,7 +62,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 @implementation iTermTextRenderer {
     iTermMetalCellRenderer *_cellRenderer;
     id<MTLBuffer> _models;
-    iTermASCIITextureGroup *_asciiTextureGroup;
 
     iTermTexturePageCollectionSharedPointer *_texturePageCollectionSharedPointer;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
@@ -201,7 +199,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     }
 
     tState.device = _cellRenderer.device;
-    tState.asciiTextureGroup = _asciiTextureGroup;
     tState.texturePageCollectionSharedPointer = _texturePageCollectionSharedPointer;
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
 }
@@ -242,8 +239,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     // out from under my cache.
     [poolContext relinquishOwnershipOfBuffer:entry.quad];
     [_quadCache addObject:entry];
-    // It's useful to hold a quad for ascii and one for non-ascii.
-    if (_quadCache.count > 2) {
+    if (_quadCache.count > 1) {
         [_quadCache removeObjectAtIndex:0];
     }
 
@@ -339,18 +335,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                                          textures:textures];
         }];
     }];
-}
-
-- (void)setASCIICellSize:(CGSize)cellSize
-      creationIdentifier:(id)creationIdentifier
-                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation {
-    iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithCellSize:cellSize
-                                                                                    device:_cellRenderer.device
-                                                                        creationIdentifier:(id)creationIdentifier
-                                                                                  creation:creation];
-    if (![replacement isEqual:_asciiTextureGroup]) {
-        _asciiTextureGroup = replacement;
-    }
 }
 
 #pragma mark - iTermMetalDebugInfoFormatter

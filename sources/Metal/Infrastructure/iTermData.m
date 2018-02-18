@@ -33,6 +33,10 @@
     _length = length;
 }
 
+- (const void *)bytes {
+    return _mutableBytes;
+}
+
 @end
 
 

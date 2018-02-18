@@ -13,6 +13,10 @@
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
+#if __cplusplus
+extern "C" {
+#endif
+
 @class iTermColorMap;
 @class iTermFindOnPageHelper;
 @class iTermSelection;
@@ -359,3 +363,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
         return NO;
     }
 }
+
+#if __cplusplus
+}
+#endif

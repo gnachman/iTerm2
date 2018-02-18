@@ -59,11 +59,572 @@ typedef struct {
 } iTermBackgroundColorKey;
 
 static vector_float4 VectorForColor(NSColor *color) {
-    return (vector_float4) { color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent };
+    return simd_make_float4(color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent);
 }
 
 static NSColor *ColorForVector(vector_float4 v) {
     return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
+}
+
+static inline BOOL CanTakeASCIIFastPath(const screen_char_t &c) {
+    return (c.code <= iTermASCIITextureMaximumCharacter &&
+            c.code >= iTermASCIITextureMinimumCharacter &&
+            !c.complexChar);
+}
+
+static const BOOL BackgroundKeysEqual(const iTermBackgroundColorKey &a,
+                                      const iTermBackgroundColorKey &b) {
+    return (a.bgColor == b.bgColor &&
+            a.bgGreen == b.bgGreen &&
+            a.bgBlue == b.bgBlue &&
+            a.bgColorMode == b.bgColorMode &&
+            a.selected == b.selected &&
+            a.isMatch == b.isMatch &&
+            a.image == b.image);
+}
+
+static vector_float4 ExtendBackgroundKey(iTermMetalBackgroundColorRLE *backgroundRLE,
+                                         int *rles) {
+    const int previousRLE = *rles - 1;
+    vector_float4 backgroundColor = backgroundRLE[previousRLE].color;
+    backgroundRLE[previousRLE].count++;
+    return backgroundColor;
+}
+
+static vector_float4 SelectionColorForCurrentFocus(const BOOL &isFrontTextView,
+                                                   const vector_float4 &unfocusedSelectionColor,
+                                                   iTermColorMap *colorMap) {
+    if (isFrontTextView) {
+        return VectorForColor([colorMap processedBackgroundColorForBackgroundColor:[colorMap colorForKey:kColorMapSelection]]);
+    } else {
+        return unfocusedSelectionColor;
+    }
+}
+
+iTermColorMapKey ColorMapKey(const int &code,
+                             const int &green,
+                             const int &blue,
+                             const ColorMode &theMode,
+                             const BOOL &isBold,
+                             const BOOL &isBackground,
+                             const BOOL &useBrightBold) {
+    int theIndex = code;
+    BOOL isBackgroundForDefault = isBackground;
+    switch (theMode) {
+        case ColorModeAlternate:
+            switch (theIndex) {
+                case ALTSEM_SELECTED:
+                    if (isBackground) {
+                        return kColorMapSelection;
+                    } else {
+                        return kColorMapSelectedText;
+                    }
+                case ALTSEM_CURSOR:
+                    if (isBackground) {
+                        return kColorMapCursor;
+                    } else {
+                        return kColorMapCursorText;
+                    }
+                case ALTSEM_REVERSED_DEFAULT:
+                    isBackgroundForDefault = !isBackgroundForDefault;
+                    // Fall through.
+                case ALTSEM_DEFAULT:
+                    if (isBackgroundForDefault) {
+                        return kColorMapBackground;
+                    } else {
+                        if (isBold && useBrightBold) {
+                            return kColorMapBold;
+                        } else {
+                            return kColorMapForeground;
+                        }
+                    }
+            }
+            break;
+        case ColorMode24bit:
+            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
+        case ColorModeNormal:
+            // Render bold text as bright. The spec (ECMA-48) describes the intense
+            // display setting (esc[1m) as "bold or bright". We make it a
+            // preference.
+            if (isBold &&
+                useBrightBold &&
+                (theIndex < 8) &&
+                !isBackground) { // Only colors 0-7 can be made "bright".
+                theIndex |= 8;  // set "bright" bit.
+            }
+            return kColorMap8bitBase + (theIndex & 0xff);
+
+        case ColorModeInvalid:
+            return kColorMapInvalid;
+    }
+    assert(ok);  // code was bogus
+    return kColorMapInvalid;
+}
+
+static vector_float4 GetColor(const int &code,
+                              const int &green,
+                              const int &blue,
+                              const ColorMode &theMode,
+                              const BOOL &isBold,
+                              const BOOL &isFaint,
+                              const BOOL &isBackground,
+                              const BOOL &useBrightBold,
+                              iTermColorMap *colorMap) {
+    iTermColorMapKey key = ColorMapKey(code, green, blue, theMode, isBold, isBackground, useBrightBold);
+    if (isBackground) {
+        return VectorForColor([colorMap colorForKey:key]);
+    } else {
+        vector_float4 color = VectorForColor([colorMap colorForKey:key]);
+        if (isFaint) {
+            color.w = 0.5;
+        }
+        return color;
+    }
+}
+
+static vector_float4 UnprocessedColorForBackgroundColorKey(const iTermBackgroundColorKey *colorKey,
+                                                           const CGFloat &transparencyAlpha,
+                                                           const BOOL &isFrontTextView,
+                                                           const BOOL &transparencyAffectsOnlyDefaultBackgroundColor,
+                                                           const BOOL &reverseVideo,
+                                                           const vector_float4 &unfocusedSelectionColor,
+                                                           iTermColorMap *colorMap,
+                                                           const BOOL &useBrightBold) {
+    CGFloat alpha = transparencyAlpha;
+    vector_float4 color = { 0, 0, 0, 0 };
+    if (colorKey->selected) {
+        color = SelectionColorForCurrentFocus(isFrontTextView, unfocusedSelectionColor, colorMap);
+        if (transparencyAffectsOnlyDefaultBackgroundColor) {
+            alpha = 1;
+        }
+    } else if (colorKey->image) {
+        // Recurse to get the default background color
+        iTermBackgroundColorKey temp = {
+            .bgColor = ALTSEM_DEFAULT,
+            .bgGreen = 0,
+            .bgBlue = 0,
+            .bgColorMode = ColorModeAlternate,
+            .selected = NO,
+            .isMatch = NO,
+            .image = NO
+        };
+        return UnprocessedColorForBackgroundColorKey(&temp,
+                                                     transparencyAlpha,
+                                                     isFrontTextView,
+                                                     transparencyAffectsOnlyDefaultBackgroundColor,
+                                                     reverseVideo,
+                                                     unfocusedSelectionColor,
+                                                     colorMap,
+                                                     useBrightBold);
+    } else if (colorKey->isMatch) {
+        color = (vector_float4){ 1, 1, 0, 1 };
+    } else {
+        const BOOL defaultBackground = (colorKey->bgColor == ALTSEM_DEFAULT &&
+                                        colorKey->bgColorMode == ColorModeAlternate);
+        // When set in preferences, applies alpha only to the defaultBackground
+        // color, useful for keeping Powerline segments opacity(background)
+        // consistent with their seperator glyphs opacity(foreground).
+        if (transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
+            alpha = 1;
+        }
+        if (reverseVideo && defaultBackground) {
+            // Reverse video is only applied to default background-
+            // color chars.
+            color = GetColor(ALTSEM_DEFAULT,
+                             0,
+                             0,
+                             ColorModeAlternate,
+                             NO,
+                             NO,
+                             NO,
+                             useBrightBold,
+                             colorMap);
+        } else {
+            // Use the regular background color.
+            color = GetColor(colorKey->bgColor,
+                             colorKey->bgGreen,
+                             colorKey->bgBlue,
+                             colorKey->bgColorMode,
+                             NO,
+                             NO,
+                             YES,
+                             useBrightBold,
+                             colorMap);
+        }
+    }
+    color.w = alpha;
+    return color;
+}
+
+static vector_float4 BeginNewBackgroundColorRun(const iTermBackgroundColorKey& backgroundKey,
+                                                iTermMetalBackgroundColorRLE *backgroundRLE,
+                                                const int &x,
+                                                iTermColorMap *colorMap,
+                                                const CGFloat &transparencyAlpha,
+                                                const BOOL &isFrontTextView,
+                                                const BOOL &transparencyAffectsOnlyDefaultBackgroundColor,
+                                                const vector_float4 &unfocusedSelectionColor,
+                                                const BOOL &useBrightBold,
+                                                const BOOL &backgroundImageBlending,
+                                                const BOOL &hasBackgroundImage,
+                                                const BOOL &reverseVideo,
+                                                int *rlesPtr) {
+    const int rles = *rlesPtr;
+    vector_float4 unprocessed = UnprocessedColorForBackgroundColorKey(&backgroundKey,
+                                                                      transparencyAlpha,
+                                                                      isFrontTextView,
+                                                                      transparencyAffectsOnlyDefaultBackgroundColor,
+                                                                      reverseVideo,
+                                                                      unfocusedSelectionColor,
+                                                                      colorMap,
+                                                                      useBrightBold);
+
+    // The unprocessed color is needed for minimum contrast computation for text color.
+    backgroundRLE[rles].color = [colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
+    backgroundRLE[rles].origin = x;
+    backgroundRLE[rles].count = 1;
+    if (hasBackgroundImage) {
+        // This is kind of ugly but it simplifies things a lot to do it
+        // here. The alpha value for background colors should be 1
+        // except when there's a background image, in which case the
+        // default background color gets a user-defined alpha value.
+        const BOOL isDefaultBackgroundColor = (backgroundKey.bgColorMode == ColorModeAlternate &&
+                                               backgroundKey.bgColor == ALTSEM_DEFAULT &&
+                                               !backgroundKey.selected &&
+                                               !backgroundKey.isMatch);
+        backgroundRLE[rles].color.w = isDefaultBackgroundColor ? (1 - backgroundImageBlending) : 1;
+    }
+    (*rlesPtr)++;
+    return backgroundRLE[rles].color;
+}
+
+static void LoadColorKey(const BOOL &findMatch,
+                         const BOOL &inUnderlinedRange,
+                         const BOOL &selected,
+                         const screen_char_t &c,
+                         const vector_float4 &backgroundColor,
+                         iTermTextColorKey *currentColorKey) {
+    currentColorKey->isMatch = findMatch;
+    currentColorKey->inUnderlinedRange = inUnderlinedRange;
+    currentColorKey->selected = selected;
+    currentColorKey->foregroundColor = c.foregroundColor;
+    currentColorKey->fgGreen = c.fgGreen;
+    currentColorKey->fgBlue = c.fgBlue;
+    currentColorKey->bold = c.bold;
+    currentColorKey->faint = c.faint;
+    currentColorKey->background = backgroundColor;
+}
+
+static BOOL ColorKeysEqual(const iTermTextColorKey *a, const iTermTextColorKey *b) {
+    return (a->isMatch == b->isMatch &&
+            a->inUnderlinedRange == b->inUnderlinedRange &&
+            a->selected == b->selected &&
+            a->foregroundColor == b->foregroundColor &&
+            a->fgGreen == b->fgGreen &&
+            a->fgBlue == b->fgBlue &&
+            a->bold == b->bold &&
+            a->faint == b->faint &&
+            simd_equal(a->background, b->background));
+}
+
+static vector_float4 TextColor(const screen_char_t *c,
+                               const vector_float4 &backgroundColor,
+                               const BOOL &selected,
+                               const BOOL &findMatch,
+                               const BOOL &inUnderlinedRange,
+                               const int &index,
+                               iTermColorMap *colorMap,
+                               const BOOL &reverseVideo,
+                               const BOOL &useBrightBold,
+                               vector_float4 *lastUnprocessedColorPtr,
+                               vector_float4 *previousForegroundColorPtr,
+                               BOOL *havePreviousForegroundColorPtr,
+                               BOOL *havePreviousCharacterAttributesPtr,
+                               screen_char_t *previousCharacterAttributesPtr) {
+    vector_float4 rawColor = { 0, 0, 0, 0 };
+    const BOOL needsProcessing = (colorMap.minimumContrast > 0.001 ||
+                                  colorMap.dimmingAmount > 0.001 ||
+                                  colorMap.mutingAmount > 0.001 ||
+                                  c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
+
+
+    if (findMatch) {
+        // Black-on-yellow search result.
+        rawColor = (vector_float4){ 0, 0, 0, 1 };
+        *havePreviousCharacterAttributesPtr = NO;
+    } else if (inUnderlinedRange) {
+        // Blue link text.
+        rawColor = VectorForColor([colorMap colorForKey:kColorMapLink]);
+        *havePreviousCharacterAttributesPtr = NO;
+    } else if (selected) {
+        // Selected text.
+        rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText]);
+        *havePreviousCharacterAttributesPtr = NO;
+    } else if (reverseVideo &&
+               ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
+                (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
+                   // Reverse video is on. Either is cursor or has default foreground color. Use
+                   // background color.
+                   rawColor = VectorForColor([colorMap colorForKey:kColorMapBackground]);
+                   *havePreviousCharacterAttributesPtr = NO;
+               } else if (!*havePreviousCharacterAttributesPtr ||
+                          c->foregroundColor != previousCharacterAttributesPtr->foregroundColor ||
+                          c->fgGreen != previousCharacterAttributesPtr->fgGreen ||
+                          c->fgBlue != previousCharacterAttributesPtr->fgBlue ||
+                          c->foregroundColorMode != previousCharacterAttributesPtr->foregroundColorMode ||
+                          c->bold != previousCharacterAttributesPtr->bold ||
+                          c->faint != previousCharacterAttributesPtr->faint ||
+                          !*havePreviousForegroundColorPtr) {
+                   // "Normal" case for uncached text color. Recompute the unprocessed color from the character.
+                   *previousCharacterAttributesPtr = *c;
+                   *havePreviousCharacterAttributesPtr = YES;
+                   rawColor = GetColor(c->foregroundColor,
+                                       c->fgGreen,
+                                       c->fgBlue,
+                                       static_cast<const ColorMode>(c->foregroundColorMode),
+                                       c->bold,
+                                       c->faint,
+                                       NO,
+                                       useBrightBold,
+                                       colorMap);
+               } else {
+                   // Foreground attributes are just like the last character. There is a cached foreground color.
+                   if (needsProcessing) {
+                       // Process the text color for the current background color, which has changed since
+                       // the last cell.
+                       rawColor = *lastUnprocessedColorPtr;
+                   } else {
+                       // Text color is unchanged. Either it's independent of the background color or the
+                       // background color has not changed.
+                       return *previousForegroundColorPtr;
+                   }
+               }
+
+    *lastUnprocessedColorPtr = rawColor;
+
+    vector_float4 result;
+    if (needsProcessing) {
+        result = VectorForColor([colorMap processedTextColorForTextColor:ColorForVector(rawColor)
+                                                     overBackgroundColor:ColorForVector(backgroundColor)]);
+    } else {
+        result = rawColor;
+    }
+    *previousForegroundColorPtr = result;
+    *havePreviousForegroundColorPtr = YES;
+    return result;
+}
+
+static void LoadAttributes(vector_float4 backgroundColor,
+                           const BOOL &annotated,
+                           iTermTextColorKey *currentColorKey,
+                           iTermTextColorKey *previousColorKey,
+                           iTermMetalGlyphAttributes *attributes,
+                           int x,
+                           const screen_char_t &c,
+                           const BOOL &selected,
+                           const BOOL &findMatch,
+                           const BOOL &inUnderlinedRange,
+                           iTermColorMap *colorMap,
+                           const BOOL &reverseVideo,
+                           const BOOL &useBrightBold,
+                           vector_float4 *lastUnprocessedColorPtr,
+                           vector_float4 *previousForegroundColorPtr,
+                           BOOL *havePreviousForegroundColorPtr,
+                           BOOL *havePreviousCharacterAttributesPtr,
+                           screen_char_t *previousCharacterAttributesPtr) {
+    attributes[x].backgroundColor = backgroundColor;
+    attributes[x].backgroundColor.w = 1;
+    attributes[x].annotation = annotated;
+    if (x > 0 && ColorKeysEqual(currentColorKey, previousColorKey)) {
+        attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
+    } else {
+        vector_float4 textColor = TextColor(&c,
+                                            backgroundColor,
+                                            selected,
+                                            findMatch,
+                                            inUnderlinedRange && !annotated,
+                                            x,
+                                            colorMap,
+                                            reverseVideo,
+                                            useBrightBold,
+                                            lastUnprocessedColorPtr,
+                                            previousForegroundColorPtr,
+                                            havePreviousForegroundColorPtr,
+                                            havePreviousCharacterAttributesPtr,
+                                            previousCharacterAttributesPtr);
+        attributes[x].foregroundColor = textColor;
+        attributes[x].foregroundColor.w = 1;
+    }
+    if (annotated) {
+        attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+    } else if (c.underline || inUnderlinedRange) {
+        if (c.urlCode) {
+            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
+        } else {
+            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+        }
+    } else if (c.urlCode) {
+        attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
+    } else {
+        attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+    }
+}
+
+static void HandleImage(const screen_char_t &c,
+                        const int &x,
+                        const int &row,
+                        NSMutableArray<iTermMetalImageRun *> *imageRuns,
+                        int *previousImageCodePtr,
+                        VT100GridCoord *previousImageCoordPtr,
+                        iTermMetalGlyphKey *glyphKey) {
+    if (c.code == *previousImageCodePtr &&
+        c.foregroundColor == previousImageCoordPtr->x + 1 &&
+        c.backgroundColor == previousImageCoordPtr->y) {
+        imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
+        previousImageCoordPtr->x++;
+    } else {
+        *previousImageCodePtr = c.code;
+        iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
+        *previousImageCoordPtr = GetPositionOfImageInChar(c);
+        run.code = c.code;
+        run.startingCoordInImage = *previousImageCoordPtr;
+        run.startingCoordOnScreen = VT100GridCoordMake(x, row);
+        run.length = 1;
+        run.imageInfo = GetImageInfo(c.code);
+        [imageRuns addObject:run];
+    }
+    glyphKey->drawable = NO;
+}
+
+static BOOL UseThinStrokesWithAttributes(const iTermMetalGlyphAttributes *attributes,
+                                         const iTermThinStrokesSetting &thinStrokes,
+                                         const BOOL &isRetina) {
+    switch (thinStrokes) {
+        case iTermThinStrokesSettingAlways:
+            return YES;
+
+        case iTermThinStrokesSettingDarkBackgroundsOnly:
+            break;
+
+        case iTermThinStrokesSettingNever:
+            return NO;
+
+        case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
+            if (!isRetina) {
+                return NO;
+            }
+            break;
+
+        case iTermThinStrokesSettingRetinaOnly:
+            return isRetina;
+    }
+
+    const float backgroundBrightness = SIMDPerceivedBrightness(attributes->backgroundColor);
+    const float foregroundBrightness = SIMDPerceivedBrightness(attributes->foregroundColor);
+    return backgroundBrightness < foregroundBrightness;
+}
+
+static void HandleGlyph(const screen_char_t &c,
+                        int x,
+                        const iTermThinStrokesSetting &thinStrokes,
+                        const BOOL &isRetina,
+                        const iTermMetalGlyphAttributes attributes,
+                        int *lastDrawableGlyphPtr,
+                        iTermMetalGlyphKey *glyphKey) {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *boxCharacterSet;
+    dispatch_once(&onceToken, ^{
+        boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths];
+    });
+    *lastDrawableGlyphPtr = x;
+    glyphKey->code = c.code;
+    glyphKey->isComplex = c.complexChar;
+    glyphKey->boxDrawing = !c.complexChar && [boxCharacterSet characterIsMember:c.code];
+    glyphKey->thinStrokes = UseThinStrokesWithAttributes(&attributes,
+                                                         thinStrokes,
+                                                         isRetina);
+
+    const int boldBit = c.bold ? (1 << 0) : 0;
+    const int italicBit = c.italic ? (1 << 1) : 0;
+    glyphKey->typeface = (boldBit | italicBit);
+    glyphKey->drawable = YES;
+}
+
+static void ChangeBoxCursorTextColor(iTermMetalCursorInfo *cursorInfo,
+                                     iTermMetalGlyphAttributes *attributes,
+                                     const BOOL &reverseVideo,
+                                     const BOOL &useBrightBold,
+                                     iTermColorMap *colorMap,
+                                     const int &width) {
+    vector_float4 cursorTextColor;
+    if (cursorInfo.shouldDrawText) {
+        cursorTextColor = cursorInfo.textColor;
+    } else if (reverseVideo) {
+        cursorTextColor = VectorForColor([colorMap colorForKey:kColorMapBackground]);
+    } else {
+        cursorTextColor = GetColor(ALTSEM_CURSOR,
+                                   0,
+                                   0,
+                                   ColorModeAlternate,
+                                   NO,
+                                   NO,
+                                   NO,
+                                   useBrightBold,
+                                   colorMap);
+    }
+    if (cursorInfo.coord.x < width) {
+        attributes[cursorInfo.coord.x].foregroundColor = cursorTextColor;
+        attributes[cursorInfo.coord.x].foregroundColor.w = 1;
+    }
+}
+
+static vector_float4 HandleBackgroundColor(const screen_char_t &c,
+                                           const int &x,
+                                           const BOOL &selected,
+                                           const BOOL &findMatch,
+                                           iTermColorMap *colorMap,
+                                           const CGFloat &transparencyAlpha,
+                                           const BOOL &isFrontTextView,
+                                           const BOOL &transparencyAffectsOnlyDefaultBackgroundColor,
+                                           const vector_float4 &unfocusedSelectionColor,
+                                           const BOOL &useBrightBold,
+                                           const CGFloat &backgroundImageBlending,
+                                           const BOOL &hasBackgroundImage,
+                                           const BOOL &reverseVideo,
+                                           iTermMetalBackgroundColorRLE *backgroundRLE,
+                                           iTermBackgroundColorKey *lastBackgroundKeyPtr,
+                                           int *rlesPtr) {
+    // Background colors
+    iTermBackgroundColorKey backgroundKey = {
+        .bgColor = c.backgroundColor,
+        .bgGreen = c.bgGreen,
+        .bgBlue = c.bgBlue,
+        .bgColorMode = static_cast<ColorMode>(c.backgroundColorMode),
+        .selected = selected,
+        .isMatch = findMatch,
+        .image = static_cast<BOOL>(c.image)
+    };
+
+    vector_float4 backgroundColor;
+    if (x > 0 && BackgroundKeysEqual(backgroundKey, *lastBackgroundKeyPtr)) {
+        backgroundColor = ExtendBackgroundKey(backgroundRLE, rlesPtr);
+    } else {
+        backgroundColor = BeginNewBackgroundColorRun(backgroundKey,
+                                                     backgroundRLE,
+                                                     x,
+                                                     colorMap,
+                                                     transparencyAlpha,
+                                                     isFrontTextView,
+                                                     transparencyAffectsOnlyDefaultBackgroundColor,
+                                                     unfocusedSelectionColor,
+                                                     useBrightBold,
+                                                     backgroundImageBlending,
+                                                     hasBackgroundImage,
+                                                     reverseVideo,
+                                                     rlesPtr);
+    }
+    *lastBackgroundKeyPtr = backgroundKey;
+    return backgroundColor;
 }
 
 @interface iTermMetalGlue()
@@ -368,7 +929,7 @@ static NSColor *ColorForVector(vector_float4 v) {
             [_dates addObject:[textView drawingHelperTimestampForLine:i]];
         }
         iTermData *data = [iTermData dataOfLength:rowSize];
-        screen_char_t *myBuffer = data.mutableBytes;
+        screen_char_t *myBuffer = static_cast<screen_char_t *>(data.mutableBytes);
         screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
         if (line != myBuffer) {
             memcpy(myBuffer, line, rowSize);
@@ -594,6 +1155,10 @@ static NSColor *ColorForVector(vector_float4 v) {
                                              textView.indicatorsHelper.fullScreenAlpha);
 }
 
+- (iTermData *)lineAtIndex:(NSUInteger)index {
+    return _lines[index];
+}
+
 - (void)copyMarkedText:(NSString *)str
         cursorLocation:(int)cursorLocation
                     to:(VT100GridCoord)startCoord
@@ -800,7 +1365,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
                      date:(out NSDate **)datePtr {
-    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths];
     if (_timestampsEnabled) {
         *datePtr = _dates[row];
     }
@@ -817,7 +1381,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     VT100GridCoord previousImageCoord;
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
 
-    *markStylePtr = [_markStyles[row] intValue];
+    *markStylePtr = static_cast<iTermMarkStyle>([_markStyles[row] intValue]);
     int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
         BOOL selected = [selectedIndexes containsIndex:x];
@@ -828,101 +1392,51 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         const BOOL annotated = [annotatedIndexes containsIndex:x];
         const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange) || annotated;
 
-        // Background colors
-        iTermBackgroundColorKey backgroundKey = {
-            .bgColor = line[x].backgroundColor,
-            .bgGreen = line[x].bgGreen,
-            .bgBlue = line[x].bgBlue,
-            .bgColorMode = line[x].backgroundColorMode,
-            .selected = selected,
-            .isMatch = findMatch,
-            .image = line[x].image
-        };
-
-        vector_float4 backgroundColor;
-        if (x > 0 &&
-            backgroundKey.bgColor == lastBackgroundKey.bgColor &&
-            backgroundKey.bgGreen == lastBackgroundKey.bgGreen &&
-            backgroundKey.bgBlue == lastBackgroundKey.bgBlue &&
-            backgroundKey.bgColorMode == lastBackgroundKey.bgColorMode &&
-            backgroundKey.selected == lastBackgroundKey.selected &&
-            backgroundKey.isMatch == lastBackgroundKey.isMatch &&
-            backgroundKey.image == lastBackgroundKey.image) {
-
-            const int previousRLE = rles - 1;
-            backgroundColor = backgroundRLE[previousRLE].color;
-            backgroundRLE[previousRLE].count++;
-        } else {
-            vector_float4 unprocessed = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
-            // The unprocessed color is needed for minimum contrast computation for text color.
-            backgroundRLE[rles].color = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
-            backgroundRLE[rles].origin = x;
-            backgroundRLE[rles].count = 1;
-            if (_backgroundImage) {
-                // This is kind of ugly but it simplifies things a lot to do it
-                // here. The alpha value for background colors should be 1
-                // except when there's a background image, in which case the
-                // default background color gets a user-defined alpha value.
-                const BOOL isDefaultBackgroundColor = (backgroundKey.bgColorMode == ColorModeAlternate &&
-                                                       backgroundKey.bgColor == ALTSEM_DEFAULT &&
-                                                       !selected &&
-                                                       !findMatch);
-                backgroundRLE[rles].color.w = isDefaultBackgroundColor ? (1 - _backgroundImageBlending) : 1;
-            }
-            backgroundColor = backgroundRLE[rles].color;
-            rles++;
-        }
-        lastBackgroundKey = backgroundKey;
-        attributes[x].backgroundColor = backgroundColor;
-        attributes[x].backgroundColor.w = 1;
-        attributes[x].annotation = annotated;
+        vector_float4 backgroundColor = HandleBackgroundColor(line[x],
+                                                              x,
+                                                              selected,
+                                                              findMatch,
+                                                              _colorMap,
+                                                              _transparencyAlpha,
+                                                              _isFrontTextView,
+                                                              _transparencyAffectsOnlyDefaultBackgroundColor,
+                                                              _unfocusedSelectionColor,
+                                                              _useBrightBold,
+                                                              _backgroundImageBlending,
+                                                              _backgroundImage != nil,
+                                                              _reverseVideo,
+                                                              backgroundRLE,
+                                                              &lastBackgroundKey,
+                                                              &rles);
 
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
-        currentColorKey->isMatch = findMatch;
-        currentColorKey->inUnderlinedRange = inUnderlinedRange;
-        currentColorKey->selected = selected;
-        currentColorKey->foregroundColor = line[x].foregroundColor;
-        currentColorKey->fgGreen = line[x].fgGreen;
-        currentColorKey->fgBlue = line[x].fgBlue;
-        currentColorKey->bold = line[x].bold;
-        currentColorKey->faint = line[x].faint;
-        currentColorKey->background = backgroundColor;
-        if (x > 0 &&
-            currentColorKey->isMatch == previousColorKey->isMatch &&
-            currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
-            currentColorKey->selected == previousColorKey->selected &&
-            currentColorKey->foregroundColor == previousColorKey->foregroundColor &&
-            currentColorKey->fgGreen == previousColorKey->fgGreen &&
-            currentColorKey->fgBlue == previousColorKey->fgBlue &&
-            currentColorKey->bold == previousColorKey->bold &&
-            currentColorKey->faint == previousColorKey->faint &&
-            simd_equal(currentColorKey->background, previousColorKey->background)) {
-            attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
-        } else {
-            vector_float4 textColor = [self textColorForCharacter:&line[x]
-                                                             line:row
-                                                  backgroundColor:backgroundColor
-                                                         selected:selected
-                                                        findMatch:findMatch
-                                                inUnderlinedRange:inUnderlinedRange && !annotated
-                                                            index:x];
-            attributes[x].foregroundColor = textColor;
-            attributes[x].foregroundColor.w = 1;
-        }
-        if (annotated) {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-        } else if (line[x].underline || inUnderlinedRange) {
-            if (line[x].urlCode) {
-                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
-            } else {
-                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-            }
-        } else if (line[x].urlCode) {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
-        } else {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-        }
+        LoadColorKey(findMatch,
+                     inUnderlinedRange,
+                     selected,
+                     line[x],
+                     backgroundColor,
+                     currentColorKey);
+
+        // Figure out foreground color, background color, and underline style.
+        LoadAttributes(backgroundColor,
+                       annotated,
+                       currentColorKey,
+                       previousColorKey,
+                       attributes,
+                       x,
+                       line[x],
+                       selected,
+                       findMatch,
+                       inUnderlinedRange,
+                       _colorMap,
+                       _reverseVideo,
+                       _useBrightBold,
+                       &_lastUnprocessedColor,
+                       &_previousForegroundColor,
+                       &_havePreviousForegroundColor,
+                       &_havePreviousCharacterAttributes,
+                       &_previousCharacterAttributes);
 
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;
@@ -930,37 +1444,26 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         previousColorKey = temp;
 
         if (line[x].image) {
-            if (line[x].code == previousImageCode &&
-                line[x].foregroundColor == previousImageCoord.x + 1 &&
-                line[x].backgroundColor == previousImageCoord.y) {
-                imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
-                previousImageCoord.x++;
-            } else {
-                previousImageCode = line[x].code;
-                iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
-                previousImageCoord = GetPositionOfImageInChar(line[x]);
-                run.code = line[x].code;
-                run.startingCoordInImage = previousImageCoord;
-                run.startingCoordOnScreen = VT100GridCoordMake(x, row);
-                run.length = 1;
-                run.imageInfo = GetImageInfo(line[x].code);
-                [imageRuns addObject:run];
-            }
+            HandleImage(line[x],
+                        x,
+                        row,
+                        imageRuns,
+                        &previousImageCode,
+                        &previousImageCoord,
+                        &glyphKeys[x]);
+        } else if (CanTakeASCIIFastPath(line[x])) {
             glyphKeys[x].drawable = NO;
         } else if (annotated || iTermTextDrawingHelperIsCharacterDrawable(&line[x],
                                                                           line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
                                                                           _blinkingItemsVisible,
                                                                           _blinkAllowed)) {
-            lastDrawableGlyph = x;
-            glyphKeys[x].code = line[x].code;
-            glyphKeys[x].isComplex = line[x].complexChar;
-            glyphKeys[x].boxDrawing = !line[x].complexChar && [boxCharacterSet characterIsMember:line[x].code];
-            glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
-
-            const int boldBit = line[x].bold ? (1 << 0) : 0;
-            const int italicBit = line[x].italic ? (1 << 1) : 0;
-            glyphKeys[x].typeface = (boldBit | italicBit);
-            glyphKeys[x].drawable = YES;
+            HandleGlyph(line[x],
+                        x,
+                        _thinStrokes,
+                        _isRetina,
+                        attributes[x],
+                        &lastDrawableGlyph,
+                        &glyphKeys[x]);
         } else {
             glyphKeys[x].drawable = NO;
         }
@@ -973,119 +1476,32 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         _cursorInfo.type == CURSOR_BOX &&
         _cursorInfo.cursorVisible &&
         !_cursorInfo.frameOnly) {
-        vector_float4 cursorTextColor;
-        if (_cursorInfo.shouldDrawText) {
-            cursorTextColor = _cursorInfo.textColor;
-        } else if (_reverseVideo) {
-            cursorTextColor = VectorForColor([_colorMap colorForKey:kColorMapBackground]);
-        } else {
-            cursorTextColor = [self colorForCode:ALTSEM_CURSOR
-                                           green:0
-                                            blue:0
-                                       colorMode:ColorModeAlternate
-                                            bold:NO
-                                           faint:NO
-                                    isBackground:NO];
-        }
-        if (_cursorInfo.coord.x < width) {
-            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
-            attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
-        }
+        ChangeBoxCursorTextColor(_cursorInfo,
+                                 attributes,
+                                 _reverseVideo,
+                                 _useBrightBold,
+                                 _colorMap,
+                                 width);
     }
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
-    switch (_thinStrokes) {
-        case iTermThinStrokesSettingAlways:
-            return YES;
-
-        case iTermThinStrokesSettingDarkBackgroundsOnly:
-            break;
-
-        case iTermThinStrokesSettingNever:
-            return NO;
-
-        case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
-            if (!_isRetina) {
-                return NO;
-            }
-            break;
-
-        case iTermThinStrokesSettingRetinaOnly:
-            return _isRetina;
-    }
-
-    const float backgroundBrightness = SIMDPerceivedBrightness(attributes->backgroundColor);
-    const float foregroundBrightness = SIMDPerceivedBrightness(attributes->foregroundColor);
-    return backgroundBrightness < foregroundBrightness;
+    return UseThinStrokesWithAttributes(attributes, _thinStrokes, _isRetina);
 }
 
 - (vector_float4)selectionColorForCurrentFocus {
-    if (_isFrontTextView) {
-        return VectorForColor([_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]]);
-    } else {
-        return _unfocusedSelectionColor;
-    }
+    return SelectionColorForCurrentFocus(_isFrontTextView, _unfocusedSelectionColor, _colorMap);
 }
 
 - (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey {
-    vector_float4 color = { 0, 0, 0, 0 };
-    CGFloat alpha = _transparencyAlpha;
-    if (colorKey->selected) {
-        color = [self selectionColorForCurrentFocus];
-        if (_transparencyAffectsOnlyDefaultBackgroundColor) {
-            alpha = 1;
-        }
-    } else if (colorKey->image) {
-        // Recurse to get the default background color
-        iTermBackgroundColorKey temp = {
-            .bgColor = ALTSEM_DEFAULT,
-            .bgGreen = 0,
-            .bgBlue = 0,
-            .bgColorMode = ColorModeAlternate,
-            .selected = NO,
-            .isMatch = NO,
-            .image = NO
-        };
-        return [self unprocessedColorForBackgroundColorKey:&temp];
-    } else if (colorKey->isMatch) {
-        color = (vector_float4){ 1, 1, 0, 1 };
-    } else {
-        const BOOL defaultBackground = (colorKey->bgColor == ALTSEM_DEFAULT &&
-                                        colorKey->bgColorMode == ColorModeAlternate);
-        // When set in preferences, applies alpha only to the defaultBackground
-        // color, useful for keeping Powerline segments opacity(background)
-        // consistent with their seperator glyphs opacity(foreground).
-        if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
-            alpha = 1;
-        }
-        if (_reverseVideo && defaultBackground) {
-            // Reverse video is only applied to default background-
-            // color chars.
-            color = [self colorForCode:ALTSEM_DEFAULT
-                                 green:0
-                                  blue:0
-                             colorMode:ColorModeAlternate
-                                  bold:NO
-                                 faint:NO
-                          isBackground:NO];
-        } else {
-            // Use the regular background color.
-            color = [self colorForCode:colorKey->bgColor
-                                 green:colorKey->bgGreen
-                                  blue:colorKey->bgBlue
-                             colorMode:colorKey->bgColorMode
-                                  bold:NO
-                                 faint:NO
-                          isBackground:YES];
-        }
-
-//        if (defaultBackground && _hasBackgroundImage) {
-//            alpha = 1 - _blend;
-//        }
-    }
-    color.w = alpha;
-    return color;
+    return UnprocessedColorForBackgroundColorKey(colorKey,
+                                                 _transparencyAlpha,
+                                                 _isFrontTextView,
+                                                 _transparencyAffectsOnlyDefaultBackgroundColor,
+                                                 _reverseVideo,
+                                                 _unfocusedSelectionColor,
+                                                 _colorMap,
+                                                 _useBrightBold);
 }
 
 - (vector_float4)colorForCode:(int)theIndex
@@ -1095,21 +1511,15 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                          bold:(BOOL)isBold
                         faint:(BOOL)isFaint
                  isBackground:(BOOL)isBackground {
-    iTermColorMapKey key = [self colorMapKeyForCode:theIndex
-                                              green:green
-                                               blue:blue
-                                          colorMode:theMode
-                                               bold:isBold
-                                       isBackground:isBackground];
-    if (isBackground) {
-        return VectorForColor([_colorMap colorForKey:key]);
-    } else {
-        vector_float4 color = VectorForColor([_colorMap colorForKey:key]);
-        if (isFaint) {
-            color.w = 0.5;
-        }
-        return color;
-    }
+    return GetColor(theIndex,
+                    green,
+                    blue,
+                    theMode,
+                    isBold,
+                    isFaint,
+                    isBackground,
+                    _useBrightBold,
+                    _colorMap);
 }
 
 - (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
@@ -1118,56 +1528,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                              colorMode:(ColorMode)theMode
                                   bold:(BOOL)isBold
                           isBackground:(BOOL)isBackground {
-    BOOL isBackgroundForDefault = isBackground;
-    switch (theMode) {
-        case ColorModeAlternate:
-            switch (theIndex) {
-                case ALTSEM_SELECTED:
-                    if (isBackground) {
-                        return kColorMapSelection;
-                    } else {
-                        return kColorMapSelectedText;
-                    }
-                case ALTSEM_CURSOR:
-                    if (isBackground) {
-                        return kColorMapCursor;
-                    } else {
-                        return kColorMapCursorText;
-                    }
-                case ALTSEM_REVERSED_DEFAULT:
-                    isBackgroundForDefault = !isBackgroundForDefault;
-                    // Fall through.
-                case ALTSEM_DEFAULT:
-                    if (isBackgroundForDefault) {
-                        return kColorMapBackground;
-                    } else {
-                        if (isBold && _useBrightBold) {
-                            return kColorMapBold;
-                        } else {
-                            return kColorMapForeground;
-                        }
-                    }
-            }
-            break;
-        case ColorMode24bit:
-            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
-        case ColorModeNormal:
-            // Render bold text as bright. The spec (ECMA-48) describes the intense
-            // display setting (esc[1m) as "bold or bright". We make it a
-            // preference.
-            if (isBold &&
-                _useBrightBold &&
-                (theIndex < 8) &&
-                !isBackground) { // Only colors 0-7 can be made "bright".
-                theIndex |= 8;  // set "bright" bit.
-            }
-            return kColorMap8bitBase + (theIndex & 0xff);
-
-        case ColorModeInvalid:
-            return kColorMapInvalid;
-    }
-    NSAssert(ok, @"Bogus color mode %d", (int)theMode);
-    return kColorMapInvalid;
+    return ColorMapKey(theIndex, green, blue, theMode, isBold, isBackground, _useBrightBold);
 }
 
 - (id)metalASCIICreationIdentifier {
@@ -1245,76 +1606,24 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                              findMatch:(BOOL)findMatch
                      inUnderlinedRange:(BOOL)inUnderlinedRange
                                  index:(int)index {
-    vector_float4 rawColor = { 0, 0, 0, 0 };
-    iTermColorMap *colorMap = _colorMap;
-    const BOOL needsProcessing = (colorMap.minimumContrast > 0.001 ||
-                                  colorMap.dimmingAmount > 0.001 ||
-                                  colorMap.mutingAmount > 0.001 ||
-                                  c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
-
-
-    if (findMatch) {
-        // Black-on-yellow search result.
-        rawColor = (vector_float4){ 0, 0, 0, 1 };
-        _havePreviousCharacterAttributes = NO;
-    } else if (inUnderlinedRange) {
-        // Blue link text.
-        rawColor = VectorForColor([_colorMap colorForKey:kColorMapLink]);
-        _havePreviousCharacterAttributes = NO;
-    } else if (selected) {
-        // Selected text.
-        rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText]);
-        _havePreviousCharacterAttributes = NO;
-    } else if (_reverseVideo &&
-               ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
-                (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
-           // Reverse video is on. Either is cursor or has default foreground color. Use
-           // background color.
-           rawColor = VectorForColor([colorMap colorForKey:kColorMapBackground]);
-           _havePreviousCharacterAttributes = NO;
-    } else if (!_havePreviousCharacterAttributes ||
-               c->foregroundColor != _previousCharacterAttributes.foregroundColor ||
-               c->fgGreen != _previousCharacterAttributes.fgGreen ||
-               c->fgBlue != _previousCharacterAttributes.fgBlue ||
-               c->foregroundColorMode != _previousCharacterAttributes.foregroundColorMode ||
-               c->bold != _previousCharacterAttributes.bold ||
-               c->faint != _previousCharacterAttributes.faint ||
-               !_havePreviousForegroundColor) {
-        // "Normal" case for uncached text color. Recompute the unprocessed color from the character.
-        _previousCharacterAttributes = *c;
-        _havePreviousCharacterAttributes = YES;
-        rawColor = [self colorForCode:c->foregroundColor
-                                green:c->fgGreen
-                                 blue:c->fgBlue
-                            colorMode:c->foregroundColorMode
-                                 bold:c->bold
-                                faint:c->faint
-                         isBackground:NO];
-    } else {
-        // Foreground attributes are just like the last character. There is a cached foreground color.
-        if (needsProcessing) {
-            // Process the text color for the current background color, which has changed since
-            // the last cell.
-            rawColor = _lastUnprocessedColor;
-        } else {
-            // Text color is unchanged. Either it's independent of the background color or the
-            // background color has not changed.
-            return _previousForegroundColor;
-        }
-    }
-
-    _lastUnprocessedColor = rawColor;
-
-    vector_float4 result;
-    if (needsProcessing) {
-        result = VectorForColor([_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
-                                                      overBackgroundColor:ColorForVector(backgroundColor)]);
-    } else {
-        result = rawColor;
-    }
-    _previousForegroundColor = result;
-    _havePreviousForegroundColor = YES;
-    return result;
+    vector_float4 dummy;
+    BOOL havePreviousFG = NO;
+    BOOL havePreviousAttr = NO;
+    screen_char_t previousChar;
+    return TextColor(c,
+                     backgroundColor,
+                     selected,
+                     findMatch,
+                     inUnderlinedRange,
+                     index,
+                     _colorMap,
+                     _reverseVideo,
+                     _useBrightBold,
+                     &dummy,
+                     &dummy,
+                     &havePreviousFG,
+                     &havePreviousAttr,
+                     &previousChar);
 }
 
 - (NSColor *)backgroundColorForCursor {
@@ -1383,7 +1692,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         color = [self colorForCode:screenChar.backgroundColor
                              green:screenChar.bgGreen
                               blue:screenChar.bgBlue
-                         colorMode:screenChar.backgroundColorMode
+                         colorMode:static_cast<ColorMode>(screenChar.backgroundColorMode)
                               bold:screenChar.bold
                              faint:screenChar.faint
                       isBackground:isBackground];
@@ -1391,7 +1700,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         color = [self colorForCode:screenChar.foregroundColor
                              green:screenChar.fgGreen
                               blue:screenChar.fgBlue
-                         colorMode:screenChar.foregroundColorMode
+                         colorMode:static_cast<ColorMode>(screenChar.foregroundColorMode)
                               bold:screenChar.bold
                              faint:screenChar.faint
                       isBackground:isBackground];

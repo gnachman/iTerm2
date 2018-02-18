@@ -5,6 +5,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermASCIITextRenderer.h"
 #import "iTermASCIITexture.h"
 #import "iTermBackgroundImageRenderer.h"
 #import "iTermBackgroundColorRenderer.h"
@@ -68,6 +69,7 @@
     iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
+    iTermASCIITextRenderer *_asciiTextRenderer;
     iTermTextRenderer *_textRenderer;
     iTermMarkRenderer *_markRenderer;
     iTermBadgeRenderer *_badgeRenderer;
@@ -127,6 +129,7 @@
         _startTime = [NSDate timeIntervalSinceReferenceDate];
         _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:mtkView.device];
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:mtkView.device];
+        _asciiTextRenderer = [[iTermASCIITextRenderer alloc] initWithDevice:mtkView.device];
         _textRenderer = [[iTermTextRenderer alloc] initWithDevice:mtkView.device];
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:mtkView.device];
         _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:mtkView.device];
@@ -432,6 +435,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     for (int y = 0; y < frameData.gridSize.height; y++) {
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
+        rowData.line = [frameData.perFrameState lineAtIndex:y];
         rowData.y = y;
         rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * _columns];
         rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * _columns];
@@ -476,7 +480,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
-    [self updateTextRendererForFrameData:frameData];
+    [self updateASCIITextRendererForFrameData:frameData];
     [self updateBackgroundImageRendererForFrameData:frameData];
     [self updateCopyBackgroundRendererForFrameData:frameData];
     [self updateBadgeRendererForFrameData:frameData];
@@ -606,6 +610,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
     }
 
+    [self drawCellRenderer:_asciiTextRenderer
+                 frameData:frameData
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawASCIIText]];
+
     [self drawCellRenderer:_textRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
@@ -646,38 +654,39 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 #pragma mark - Update Renderers
 
-- (void)updateTextRendererForFrameData:(iTermMetalFrameData *)frameData {
-    if (_textRenderer.rendererDisabled) {
+- (void)updateASCIITextRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_asciiTextRenderer.rendererDisabled) {
         return;
     }
+
     __weak __typeof(self) weakSelf = self;
     CGSize cellSize = _cellSize;
     CGFloat scale = _scale;
     __weak iTermMetalFrameData *weakFrameData = frameData;
-    [_textRenderer setASCIICellSize:_cellSize
-                 creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
-                           creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
-                               __typeof(self) strongSelf = weakSelf;
-                               iTermMetalFrameData *strongFrameData = weakFrameData;
-                               if (strongSelf && strongFrameData) {
-                                   static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
-                                   iTermMetalGlyphKey glyphKey = {
-                                       .code = c,
-                                       .isComplex = NO,
-                                       .boxDrawing = NO,
-                                       .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
-                                       .drawable = YES,
-                                       .typeface = (attributes & typefaceMask),
-                                   };
-                                   BOOL emoji = NO;
-                                   return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKey
-                                                                                           size:cellSize
-                                                                                          scale:scale
-                                                                                          emoji:&emoji];
-                               } else {
-                                   return nil;
-                               }
-                           }];
+    [_asciiTextRenderer setASCIICellSize:_cellSize
+                      creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
+                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
+                                    __typeof(self) strongSelf = weakSelf;
+                                    iTermMetalFrameData *strongFrameData = weakFrameData;
+                                    if (strongSelf && strongFrameData) {
+                                        static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
+                                        iTermMetalGlyphKey glyphKey = {
+                                            .code = c,
+                                            .isComplex = NO,
+                                            .boxDrawing = NO,
+                                            .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
+                                            .drawable = YES,
+                                            .typeface = (attributes & typefaceMask),
+                                        };
+                                        BOOL emoji = NO;
+                                        return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKey
+                                                                                                size:cellSize
+                                                                                               scale:scale
+                                                                                               emoji:&emoji];
+                                    } else {
+                                        return nil;
+                                    }
+                                }];
 }
 
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -830,13 +839,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)populateTextAndBackgroundRenderersTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    if (_textRenderer.rendererDisabled && _backgroundColorRenderer.rendererDisabled) {
+    if (_asciiTextRenderer.rendererDisabled &&
+        _textRenderer.rendererDisabled &&
+        _backgroundColorRenderer.rendererDisabled) {
         return;
     }
 
     // Update the text renderer's transient state with current glyphs and colors.
     CGFloat scale = frameData.scale;
     iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_textRenderer];
+    iTermASCIITextRendererTransientState *asciiState = [frameData transientStateForRenderer:_asciiTextRenderer];
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
@@ -846,9 +858,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
     [frameData.perFrameState metalGetUnderlineDescriptorsForASCII:&asciiUnderlineDescriptor
                                                          nonASCII:&nonAsciiUnderlineDescriptor];
-    textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
     textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
     textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
+
+    asciiState.underlineDescriptor = asciiUnderlineDescriptor;
+    asciiState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
@@ -908,6 +922,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                                                     scale:scale
                                                                                     emoji:emoji];
                                }];
+        }
+
+        if (!_asciiTextRenderer.rendererDisabled) {
+            assert(rowData.line);
+            [asciiState addLineData:rowData.line];
         }
     }];
     if (!_backgroundColorRenderer.rendererDisabled) {
@@ -1432,6 +1451,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (NSArray<id<iTermMetalCellRenderer>> *)cellRenderers {
     return @[ _marginRenderer,
+              _asciiTextRenderer,
               _textRenderer,
               _backgroundColorRenderer,
               _markRenderer,

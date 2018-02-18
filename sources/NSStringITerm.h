@@ -38,6 +38,7 @@
 // be parsed properly but we need to render something there.
 #define UNICODE_REPLACEMENT_CHAR 0xfffd
 
+#if !__cplusplus
 // Examine the leading UTF-8 sequence in a char array and check that it
 // is properly encoded. Computes the number of bytes to use for the
 // first code point. Returns the first code point, if it exists, in *result.
@@ -50,6 +51,7 @@
 int decode_utf8_char(const unsigned char * restrict datap,
                      int datalen,
                      int * restrict result);
+#endif
 
 @interface NSString (iTerm)
 

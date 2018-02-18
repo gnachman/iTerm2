@@ -8,12 +8,11 @@ NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRenderer : NSObject<iTermMetalCellRenderer>
 
+// Generic model used for blending in gpu
++ (NSData *)subpixelModelData;
+
 - (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
-
-- (void)setASCIICellSize:(CGSize)cellSize
-      creationIdentifier:(id)creationIdentifier
-                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation;
 
 @end
 

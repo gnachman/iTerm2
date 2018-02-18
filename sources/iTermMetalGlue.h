@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "iTermMetalDriver.h"
+#import "iTermMetalDriverDataSource.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -4,18 +4,31 @@
 #include <simd/simd.h>
 
 typedef enum iTermVertexInputIndex {
-    iTermVertexInputIndexVertices,
-    iTermVertexInputIndexViewportSize,
-    iTermVertexInputIndexPerInstanceUniforms,
-    iTermVertexInputIndexOffset,
-    iTermVertexInputIndexCursorDescription,
+    iTermVertexInputIndexVertices = 0,
+    iTermVertexInputIndexViewportSize = 1,
+    iTermVertexInputIndexPerInstanceUniforms = 2,
+    iTermVertexInputIndexOffset = 3,
+    iTermVertexInputIndexCursorDescription = 4,
+    iTermVertexInputIndexASCIITextConfiguration = 5,
+    iTermVertexInputIndexASCIITextRowInfo = 6  // iTermASCIIRowInfo
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
     iTermTextureIndexPrimary = 0,
 
     // A texture containing the background we're drawing over.
-    iTermTextureIndexBackground = 1
+    iTermTextureIndexBackground = 1,
+
+    // Texture atlases used by the ASCII renderer
+    iTermTextureIndexPlain = 2,
+    iTermTextureIndexBold = 3,
+    iTermTextureIndexItalic = 4,
+    iTermTextureIndexBoldItalic = 5,
+    iTermTextureIndexThin = 6,
+    iTermTextureIndexThinBold = 7,
+    iTermTextureIndexThinItalic = 8,
+    iTermTextureIndexThinBoldItalic = 9,
+
 } iTermTextureIndex;
 
 typedef enum {
@@ -102,5 +115,16 @@ typedef struct {
     float underlineThickness;  // Thickness of underline in pixels
     float scale;  // 2 for retina, 1 for non retina
 } iTermTextureDimensions;
+
+typedef struct {
+    vector_float2 cellSize;
+    vector_uint2 gridSize;
+    float scale;
+    vector_float2 atlasSize;
+} iTermASCIITextConfiguration;
+
+typedef struct {
+    int row;
+} iTermASCIIRowInfo;
 
 #endif
