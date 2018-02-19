@@ -10,7 +10,13 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexOffset = 3,
     iTermVertexInputIndexCursorDescription = 4,
     iTermVertexInputIndexASCIITextConfiguration = 5,
-    iTermVertexInputIndexASCIITextRowInfo = 6  // iTermASCIIRowInfo
+    iTermVertexInputIndexASCIITextRowInfo = 6,  // iTermASCIIRowInfo
+    iTermVertexInputIndexColorMap = 7,  // data with serialized iTermColorMap
+    iTermVertexInputSelectedIndices = 8,  // data is an array of bits giving selected indices
+    iTermVertexInputFindMatchIndices = 9,  // data is an array of bits giving find-match indices to highlight
+    iTermVertexInputMarkedIndices = 10,  // data is an array of bits giving marked text locations
+    iTermVertexInputUnderlinedIndices = 11,  // data is an array of bits giving underlined range locations
+    iTermVertexInputAnnotatedIndices = 12,  // data in array of bits giving annotation locations
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -121,6 +127,20 @@ typedef struct {
     vector_uint2 gridSize;
     float scale;
     vector_float2 atlasSize;
+
+    float minimumContrast;
+    float dimmingAmount;
+    float mutingAmount;
+    bool reverseVideo;
+
+    bool useBrightBold;
+
+    float transparencyAlpha;
+    bool transparencyAffectsOnlyDefaultBackgroundColor;
+    vector_float4 unfocusedSelectionColor;  // see PTYTextView colorMap:didChangeColorForKey:
+    bool isFrontTextView;
+    bool dimOnlyText;
+    vector_float4 asciiUnderlineColor;
 } iTermASCIITextConfiguration;
 
 typedef struct {

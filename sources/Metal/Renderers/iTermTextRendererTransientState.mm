@@ -31,10 +31,6 @@ typedef struct {
 // text color component, background color component
 typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
 
-static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
-    return simd_make_uint2(size.width, size.height);
-}
-
 @implementation iTermTextRendererTransientState {
     // Data's bytes contains a C array of iTermMetalBackgroundColorRLE with background colors.
     NSMutableArray<iTermData *> *_backgroundColorRLEDataArray;

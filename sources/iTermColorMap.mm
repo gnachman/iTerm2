@@ -9,39 +9,17 @@
 #import "iTermColorMap.h"
 #import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #include <unordered_map>
 #import <simd/simd.h>
 
-const int kColorMapForeground = 0;
-const int kColorMapBackground = 1;
-const int kColorMapBold = 2;
-const int kColorMapSelection = 3;
-const int kColorMapSelectedText = 4;
-const int kColorMapCursor = 5;
-const int kColorMapCursorText = 6;
-const int kColorMapInvalid = 7;
-const int kColorMapLink = 8;
-const int kColorMapUnderline = 9;
-// This value plus 0...255 are accepted.
-const int kColorMap8bitBase = 10;
-// This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
-const int kColorMap24bitBase = kColorMap8bitBase + 256;
-
-const int kColorMapAnsiBlack = kColorMap8bitBase + 0;
-const int kColorMapAnsiRed = kColorMap8bitBase + 1;
-const int kColorMapAnsiGreen = kColorMap8bitBase + 2;
-const int kColorMapAnsiYellow = kColorMap8bitBase + 3;
-const int kColorMapAnsiBlue = kColorMap8bitBase + 4;
-const int kColorMapAnsiMagenta = kColorMap8bitBase + 5;
-const int kColorMapAnsiCyan = kColorMap8bitBase + 6;
-const int kColorMapAnsiWhite = kColorMap8bitBase + 7;
-const int kColorMapAnsiBrightModifier = 8;
 
 @interface iTermColorMap ()
 @property(nonatomic, retain) NSMutableDictionary *map;
 @end
 
 @implementation iTermColorMap {
+    // Cached values
     double _backgroundBrightness;
     CGFloat _backgroundRed;
     CGFloat _backgroundGreen;
@@ -57,12 +35,13 @@ const int kColorMapAnsiBrightModifier = 8;
     NSColor *_lastBackgroundColor;
 
     std::unordered_map<int, vector_float4> *_fastMap;
+    NSMutableData *_serializedData;
 }
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green
                              blue:(int)blue {
-    return kColorMap24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
+    return static_cast<iTermColorMapKey>(kColorMap24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff));
 }
 
 - (instancetype)init {
@@ -126,7 +105,8 @@ const int kColorMapAnsiBrightModifier = 8;
         (float)components[2],
         (float)components[3]
    };
-
+    _generation++;
+    _serializedData = nil;
     [_delegate colorMap:self didChangeColorForKey:theKey];
 }
 
@@ -512,6 +492,21 @@ const int kColorMapAnsiBrightModifier = 8;
     other->_fastMap = new std::unordered_map<int, vector_float4>(*_fastMap);
 
     return other;
+}
+
+- (NSData *)serializedData {
+    if (!_serializedData) {
+        _serializedData = [NSMutableData uninitializedDataWithLength:kColorMap24bitBase * 3];
+        unsigned char *bytes = static_cast<unsigned char *>(_serializedData.mutableBytes);
+        for (int i = 0, o = 0; i < kColorMap24bitBase; i++, o += 4) {
+            const vector_float4 &color = (*_fastMap)[i];
+            bytes[o + 0] = color.x;
+            bytes[o + 1] = color.y;
+            bytes[o + 2] = color.z;
+            bytes[o + 3] = color.w;
+        }
+    }
+    return _serializedData;
 }
 
 @end

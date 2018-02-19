@@ -9,6 +9,7 @@
 
 #import "iTermData.h"
 #import "iTermMarkRenderer.h"
+#import "iTermASCIITextRenderer.h"
 
 @class iTermMetalImageRun;
 
@@ -25,9 +26,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // iTermMetalBackgroundColorRLE
 @property (nonatomic, strong) iTermData *backgroundColorRLEData;
 
-// screen_char_t
-@property (nonatomic, strong) iTermData *line;
-
 @property (nonatomic) int numberOfBackgroundRLEs;
 
 // Number of elements in preceding arrays to use.
@@ -39,6 +37,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) NSDate *date;
 
 @property (nonatomic, readonly) NSMutableArray<iTermMetalImageRun *> *imageRuns;
+
+@property (nonatomic, strong) iTermASCIIRow *asciiRow;
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder;
 

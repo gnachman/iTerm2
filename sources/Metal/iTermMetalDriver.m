@@ -57,6 +57,36 @@
     _markedRange.end = end;
 }
 
+- (NSRange)markedRangeOnLine:(int)y width:(int)width {
+    if (y >= _markedRange.start.y &&
+        y <= _markedRange.end.y) {
+        // This line contains at least part of the marked range
+        if (y == _markedRange.start.y) {
+            // Makred range starts on this line
+            if (y == _markedRange.end.y) {
+                // Marked range starts and ends on this line.
+                return NSMakeRange(_markedRange.start.x,
+                                                _markedRange.end.x - _markedRange.start.x);
+            } else {
+                // Marked line begins on this line and ends later
+                return NSMakeRange(_markedRange.start.x,
+                                                width - _markedRange.start.x);
+            }
+        } else {
+            // Marked range started on a prior line
+            if (y == _markedRange.end.y) {
+                // Marked range ends on this line
+                return NSMakeRange(0, _markedRange.end.x);
+            } else {
+                // Marked range ends on a later line
+                return NSMakeRange(0, width);
+            }
+        }
+    }
+
+    return NSMakeRange(NSNotFound, 0);
+}
+
 @end
 
 @interface iTermMetalDriver()
@@ -435,11 +465,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     for (int y = 0; y < frameData.gridSize.height; y++) {
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
-        rowData.line = [frameData.perFrameState lineAtIndex:y];
         rowData.y = y;
         rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * _columns];
         rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * _columns];
         rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
+        rowData.asciiRow = [frameData.perFrameState asciiRowAtIndex:y];
+        iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
+        rowData.asciiRow.markedRange = imeInfo ? [imeInfo markedRangeOnLine:rowData.y width:frameData.gridSize.width] : NSMakeRange(NSNotFound, 0);
+
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
@@ -687,6 +720,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                         return nil;
                                     }
                                 }];
+    _asciiTextRenderer.colorMap = frameData.perFrameState.colorMap;
 }
 
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -870,33 +904,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
 
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRange markedRangeOnLine = NSMakeRange(NSNotFound, 0);
-        if (imeInfo &&
-            rowData.y >= imeInfo.markedRange.start.y &&
-            rowData.y <= imeInfo.markedRange.end.y) {
-            // This line contains at least part of the marked range
-            if (rowData.y == imeInfo.markedRange.start.y) {
-                // Makred range starts on this line
-                if (rowData.y == imeInfo.markedRange.end.y) {
-                    // Marked range starts and ends on this line.
-                    markedRangeOnLine = NSMakeRange(imeInfo.markedRange.start.x,
-                                                    imeInfo.markedRange.end.x - imeInfo.markedRange.start.x);
-                } else {
-                    // Marked line begins on this line and ends later
-                    markedRangeOnLine = NSMakeRange(imeInfo.markedRange.start.x,
-                                                    frameData.gridSize.width - imeInfo.markedRange.start.x);
-                }
-            } else {
-                // Marked range started on a prior line
-                if (rowData.y == imeInfo.markedRange.end.y) {
-                    // Marked range ends on this line
-                    markedRangeOnLine = NSMakeRange(0, imeInfo.markedRange.end.x);
-                } else {
-                    // Marked range ends on a later line
-                    markedRangeOnLine = NSMakeRange(0, frameData.gridSize.width);
-                }
-            }
-        }
+        NSRange markedRangeOnLine = imeInfo ? [imeInfo markedRangeOnLine:rowData.y width:frameData.gridSize.width] : NSMakeRange(NSNotFound, 0);
 
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
@@ -925,8 +933,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 
         if (!_asciiTextRenderer.rendererDisabled) {
-            assert(rowData.line);
-            [asciiState addLineData:rowData.line];
+            [asciiState addRow:rowData.asciiRow];
         }
     }];
     if (!_backgroundColorRenderer.rendererDisabled) {

@@ -16,18 +16,30 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermASCIIRow : NSObject
+@property (nonatomic, strong) iTermData *screenChars;
+@property (nonatomic, strong) NSIndexSet *selectedIndices;
+@property (nonatomic, strong) NSData *findMatches;
+@property (nonatomic) NSRange markedRange;
+@property (nonatomic) NSRange underlinedRange;
+@property (nonatomic, strong) NSIndexSet *annotatedIndices;
+@end
+
+NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITextRendererTransientState : iTermMetalCellRendererTransientState
 
 @property (nonatomic) iTermMetalUnderlineDescriptor underlineDescriptor;
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 
 // screen_char_t array
-- (void)addLineData:(iTermData *)data;
+- (void)addRow:(iTermASCIIRow *)row;
 
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITextRenderer : NSObject<iTermMetalCellRenderer>
+
+@property (nonatomic, strong) NSData *colorMap;
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

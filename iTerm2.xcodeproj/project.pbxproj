@@ -3512,6 +3512,7 @@
 		A6561A1B2039F3A800C36D66 /* iTermScreenChar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScreenChar.h; sourceTree = "<group>"; };
 		A6561A1E2039FCC200C36D66 /* iTermTextShared.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermTextShared.metal; path = Metal/Shaders/iTermTextShared.metal; sourceTree = "<group>"; };
 		A6561A222039FD8D00C36D66 /* iTermTextShared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextShared.h; path = Metal/Shaders/iTermTextShared.h; sourceTree = "<group>"; };
+		A6561A25203B492A00C36D66 /* iTermColorMapKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermColorMapKey.h; sourceTree = "<group>"; };
 		A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "usr/lib/libaprutil-1.tbd"; sourceTree = SDKROOT; };
 		A656E9671F8C994200158128 /* iTermMetalGlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalGlyphKey.h; sourceTree = "<group>"; };
 		A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermSubpixelModelBuilder.mm; path = Metal/Infrastructure/iTermSubpixelModelBuilder.mm; sourceTree = "<group>"; };
@@ -4770,6 +4771,7 @@
 				A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */,
 				A6561A162039E73800C36D66 /* iTermCursorType.h */,
 				A6561A1B2039F3A800C36D66 /* iTermScreenChar.h */,
+				A6561A25203B492A00C36D66 /* iTermColorMapKey.h */,
 			);
 			name = Headers;
 			path = sources/;

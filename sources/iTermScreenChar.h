@@ -120,3 +120,9 @@ typedef struct screen_char_t
     unsigned short urlCode;
 } screen_char_t;
 
+typedef enum {
+    ColorModeAlternate = 0,  // ALTSEM_XXX values
+    ColorModeNormal = 1,  // kiTermScreenCharAnsiColor values
+    ColorMode24bit = 2,
+    ColorModeInvalid = 3
+} ColorMode;

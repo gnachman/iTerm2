@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermASCIITextRenderer.h"
 #import "iTermCursorType.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
@@ -71,6 +72,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSColor *timestampsBackgroundColor;
 @property (nonatomic, readonly) NSColor *timestampsTextColor;
 @property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
+@property (nonatomic, readonly) NSData *colorMap;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
@@ -105,7 +107,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)metalEnumerateHighlightedRows:(void (^)(vector_float3 color, NSTimeInterval age, int row))block;
 
-- (iTermData *)lineAtIndex:(NSUInteger)index;
+- (iTermASCIIRow *)asciiRowAtIndex:(NSUInteger)index;
+- (void)getConfiguration:(iTermASCIITextConfiguration *)configurationPtr;
 
 @end
 

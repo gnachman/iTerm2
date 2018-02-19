@@ -9,47 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #include <simd/vector_types.h>
 
-// This would be an enum except lldb doesn't handle enums very well.
-// (lldb) po [_colorMap colorForKey:kColorMapBackground]
-// error: use of undeclared identifier 'kColorMapBackground'
-// error: 1 errors parsing expression
-// TODO: When this is fixed, change it into an enum.
-
-typedef int iTermColorMapKey;
-
-// Logical colors
-extern const int kColorMapForeground;
-extern const int kColorMapBackground;
-extern const int kColorMapBold;
-extern const int kColorMapLink;
-extern const int kColorMapSelection;
-extern const int kColorMapSelectedText;
-extern const int kColorMapCursor;
-extern const int kColorMapCursorText;
-extern const int kColorMapInvalid;
-extern const int kColorMapUnderline;
-
-// This value plus 0...255 are accepted. The ANSI colors below followed by their bright
-// variants make the first 16 entries of the 256-color space.
-extern const int kColorMap8bitBase;
-
-// The 8 basic ANSI colors, which are within the 8-bit color range. These are
-// the dark versions unless you add the bright modifier (add, don't OR).
-// These are the first colors in the 8-bit range starting at kColorMap8bitBase.
-extern const int kColorMapAnsiBlack;
-extern const int kColorMapAnsiRed;
-extern const int kColorMapAnsiGreen;
-extern const int kColorMapAnsiYellow;
-extern const int kColorMapAnsiBlue;
-extern const int kColorMapAnsiMagenta;
-extern const int kColorMapAnsiCyan;
-extern const int kColorMapAnsiWhite;
-
-// This can be added to the Ansi colors above to make them brighter.
-extern const int kColorMapAnsiBrightModifier;
-
-// This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
-extern const int kColorMap24bitBase;
+#import "iTermColorMapKey.h"
 
 @class iTermColorMap;
 
@@ -75,6 +35,8 @@ extern const int kColorMap24bitBase;
 @property(nonatomic, assign) double mutingAmount;
 @property(nonatomic, assign) id<iTermColorMapDelegate> delegate;
 @property(nonatomic, assign) double minimumContrast;
+@property(nonatomic, readonly) NSInteger generation;
+@property(nonatomic, readonly) NSData *serializedData;
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green

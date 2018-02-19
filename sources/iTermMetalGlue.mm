@@ -152,7 +152,7 @@ iTermColorMapKey ColorMapKey(const int &code,
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.
             }
-            return kColorMap8bitBase + (theIndex & 0xff);
+            return static_cast<iTermColorMapKey>(kColorMap8bitBase + (theIndex & 0xff));
 
         case ColorModeInvalid:
             return kColorMapInvalid;
@@ -703,6 +703,7 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
     NSArray<iTermHighlightedRow *> *_highlightedRows;
     NSTimeInterval _startTime;
+    NSData *_serializedColorMap;
 }
 
 @property (nonatomic, readonly) BOOL isAnimating;
@@ -887,6 +888,7 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                              textView:(PTYTextView *)textView {
+    _serializedColorMap = textView.colorMap.serializedData;  // Do this before copying so it can cache the serialized data which changes infrequently.
     _colorMap = [textView.colorMap copy];
     _asciiFont = textView.primaryFont;
     _nonAsciiFont = textView.secondaryFont;
@@ -1155,8 +1157,35 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
                                              textView.indicatorsHelper.fullScreenAlpha);
 }
 
-- (iTermData *)lineAtIndex:(NSUInteger)index {
-    return _lines[index];
+- (iTermASCIIRow *)asciiRowAtIndex:(NSUInteger)index {
+    iTermASCIIRow *row = [[iTermASCIIRow alloc] init];
+
+    row.screenChars = _lines[index];
+    row.selectedIndices = _selectedIndexes[index];
+    row.findMatches = _matches[@(index)];
+    // marked range is set by the caller because it's a PITA to do so here.
+    // TODO: Fix that.
+    row.underlinedRange = _underlinedRanges[@(index)].rangeValue;
+    row.annotatedIndices = _rowToAnnotationRanges[@(index)];
+
+    return row;
+}
+
+- (void)getConfiguration:(iTermASCIITextConfiguration *)configurationPtr {
+    configurationPtr->cellSize = simd_make_float2(_cellSize.width, _cellSize.height);
+    configurationPtr->gridSize = simd_make_uint2(_gridSize.width, _gridSize.height);
+    configurationPtr->scale = _scale;
+    configurationPtr->minimumContrast = _colorMap.minimumContrast;
+    configurationPtr->dimmingAmount = _colorMap.dimmingAmount;
+    configurationPtr->mutingAmount = _colorMap.mutingAmount;
+    configurationPtr->reverseVideo = _reverseVideo;
+    configurationPtr->useBrightBold = _useBrightBold;
+    configurationPtr->transparencyAlpha = _transparencyAlpha;
+    configurationPtr->transparencyAffectsOnlyDefaultBackgroundColor = _transparencyAffectsOnlyDefaultBackgroundColor;
+    configurationPtr->unfocusedSelectionColor = _unfocusedSelectionColor;
+    configurationPtr->isFrontTextView = _isFrontTextView;
+    configurationPtr->dimOnlyText = _colorMap.dimOnlyText;
+    configurationPtr->asciiUnderlineColor = _asciiUnderlineDescriptor.color;
 }
 
 - (void)copyMarkedText:(NSString *)str
@@ -1595,6 +1624,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                     nonASCII:(out iTermMetalUnderlineDescriptor *)nonAscii {
     *ascii = _asciiUnderlineDescriptor;
     *nonAscii = _nonAsciiUnderlineDescriptor;
+}
+
+- (NSData *)colorMap {
+    return _serializedColorMap;
 }
 
 #pragma mark - Color
