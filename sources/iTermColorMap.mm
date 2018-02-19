@@ -496,7 +496,7 @@
 
 - (NSData *)serializedData {
     if (!_serializedData) {
-        _serializedData = [NSMutableData uninitializedDataWithLength:kColorMap24bitBase * 3];
+        _serializedData = [NSMutableData uninitializedDataWithLength:kColorMap24bitBase * 4];
         unsigned char *bytes = static_cast<unsigned char *>(_serializedData.mutableBytes);
         for (int i = 0, o = 0; i < kColorMap24bitBase; i++, o += 4) {
             const vector_float4 &color = (*_fastMap)[i];

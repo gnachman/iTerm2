@@ -138,7 +138,12 @@
 }
 
 - (id<MTLBuffer>)bitArrayForData:(NSData *)data {
-    return [_bitmapPool requestBufferFromContext:self.poolContext size:data.length bytes:data.bytes];
+    // It'd be nice to not pass a buffer if it doesn't have any data, but Metal makes that annoyingly hard.
+    if (!data) {
+        return [self bitArrayForIndexSet:[NSIndexSet indexSet]];
+    } else {
+        return [_bitmapPool requestBufferFromContext:self.poolContext size:data.length bytes:data.bytes];
+    }
 }
 
 - (id<MTLBuffer>)bitArrayForRange:(NSRange)range {
