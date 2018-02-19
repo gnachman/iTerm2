@@ -102,6 +102,7 @@ static NSInteger gNextFrameDataNumber;
     NSTimeInterval _creation;
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
     iTermCellRenderConfiguration *_cellConfiguration;
+    id<MTLBuffer> _debugBuffer;
 }
 
 - (instancetype)initWithView:(MTKView *)view {
@@ -132,6 +133,13 @@ static NSInteger gNextFrameDataNumber;
             @(_frameNumber),
             @(gNextFrameDataNumber),
             self.status];
+}
+
+- (id<MTLBuffer>)debugBuffer {
+    if (!_debugBuffer) {
+        _debugBuffer = [_device newBufferWithLength:sizeof(iTermMetalDebugBuffer) options:MTLResourceStorageModeShared];
+    }
+    return _debugBuffer;
 }
 
 - (void)setRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
@@ -227,6 +235,10 @@ static NSInteger gNextFrameDataNumber;
         assert(!self.intermediateRenderPassDescriptor);
 
         self.intermediateRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Intermediate Texture"];
+        iTermMetalDebugBuffer *debug = (iTermMetalDebugBuffer *)_debugBuffer.contents;
+        if (debug->offset) {
+            NSLog(@"%s", debug->storage);
+        }
 
         [_debugInfo setIntermediateRenderPassDescriptor:self.intermediateRenderPassDescriptor];
     }];

@@ -106,6 +106,7 @@
         (float)components[3]
    };
     _generation++;
+    [_serializedData autorelease];
     _serializedData = nil;
     [_delegate colorMap:self didChangeColorForKey:theKey];
 }
@@ -496,14 +497,14 @@
 
 - (NSData *)serializedData {
     if (!_serializedData) {
-        _serializedData = [NSMutableData uninitializedDataWithLength:kColorMap24bitBase * 4];
+        _serializedData = [[NSMutableData uninitializedDataWithLength:kColorMap24bitBase * 4] retain];
         unsigned char *bytes = static_cast<unsigned char *>(_serializedData.mutableBytes);
         for (int i = 0, o = 0; i < kColorMap24bitBase; i++, o += 4) {
             const vector_float4 &color = (*_fastMap)[i];
-            bytes[o + 0] = color.x;
-            bytes[o + 1] = color.y;
-            bytes[o + 2] = color.z;
-            bytes[o + 3] = color.w;
+            bytes[o + 0] = color.x * 255;
+            bytes[o + 1] = color.y * 255;
+            bytes[o + 2] = color.z * 255;
+            bytes[o + 3] = color.w * 255;
         }
     }
     return _serializedData;

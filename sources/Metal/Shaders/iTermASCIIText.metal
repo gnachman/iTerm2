@@ -9,12 +9,11 @@
 #include <simd/simd.h>
 
 using namespace metal;
-
-#import "iTermShaderTypes.h"
-#import "iTermTextShared.h"
-
 typedef unsigned short unichar;
 
+#import "iTermMetalLogging.h"
+#import "iTermShaderTypes.h"
+#import "iTermTextShared.h"
 #import "iTermColorMapKey.h"
 #import "iTermScreenChar.h"
 
@@ -31,7 +30,95 @@ typedef struct {
     int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
     float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
     float scale;  // 2 for retina, 1 for non-retina
+    bool bold;
+    bool italic;
+    bool thin;
 } iTermASCIITextVertexFunctionOutput;
+
+unichar SCCode(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return (p[1] << 8) | p[0];
+}
+
+unsigned int SCForegroundColor(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return p[2];
+}
+
+unsigned int SCForegroundGreen(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return p[3];
+}
+
+unsigned int SCForegroundBlue(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return p[4];
+}
+
+unsigned int SCBackgroundColor(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return p[5];
+}
+
+unsigned int SCBackgroundGreen(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return p[6];
+}
+
+unsigned int SCBackgroundBlue(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return p[7];
+}
+
+ColorMode SCForegroundMode(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return static_cast<ColorMode>(p[8] & 3);
+}
+
+ColorMode SCBackgroundMode(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return static_cast<ColorMode>((p[8] >> 2) & 3);
+}
+
+bool SCComplex(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[8] & 16);
+}
+
+bool SCBold(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[8] & 32);
+}
+
+bool SCFaint(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[8] & 64);
+}
+
+bool SCItalic(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[8] & 128);
+}
+
+bool SCBlink(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[9] & 1);
+}
+
+bool SCUnderline(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[9] & 2);
+}
+
+bool SCImage(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return !!(p[9] & 4);
+}
+
+unsigned short SCURLCode(device screen_char_t *c) {
+    device unsigned char *p = (device unsigned char *)c;
+    return (p[11] << 8) | p[10];
+}
 
 float2 PixelSpaceOrigin(int x, int y, device iTermASCIITextConfiguration *config) {
     return float2(x,
@@ -119,7 +206,7 @@ vector_float4 ColorMapLookup(device unsigned char *colorMap,
                              ((rgb >> 0) & 0xff) / 255.0,
                              1);
     } else {
-        const int i = key * 4;
+        int i = key * 4;
         return vector_float4(colorMap[i] / 255.0,
                              colorMap[i + 1] / 255.0,
                              colorMap[i + 2] / 255.0,
@@ -136,6 +223,7 @@ vector_float4 GetColor(const int code,
                        const bool isBackground,
                        const bool useBrightBold,
                        device unsigned char *colorMap) {
+    // bold is correct here and return color is respected
     iTermColorMapKey key = ColorMapKey(code, green, blue, theMode, isBold, isBackground, useBrightBold);
     if (isBackground) {
         return ColorMapLookup(colorMap, key);
@@ -158,7 +246,7 @@ float4 ProcessBackgroundColor(float4 unprocessed,
                               device iTermASCIITextConfiguration *config) {
     float4 defaultBackgroundColor = ColorMapLookup(colorMap, kColorMapBackground);
     float4 muted = mix(unprocessed, defaultBackgroundColor, config->mutingAmount);
-    float4 gray;
+    float4 gray = float4(0.5, 0.5, 0.5, 1);
     bool shouldDim = !config->dimOnlyText && config->dimmingAmount > 0;
     if (config->dimOnlyText) {
         vector_float4 diff = abs(unprocessed - defaultBackgroundColor);
@@ -212,8 +300,8 @@ float4 UnprocessedBackgroundColor(device screen_char_t *c,
     } else if (isFindMatch) {
         color = float4(1, 1, 0, 1);
     } else {
-        const bool defaultBackground = (c->backgroundColor == ALTSEM_DEFAULT &&
-                                        c->backgroundColorMode == ColorModeAlternate);
+        const bool defaultBackground = (SCBackgroundColor(c) == ALTSEM_DEFAULT &&
+                                        SCBackgroundMode(c) == ColorModeAlternate);
         // When set in preferences, applies alpha only to the defaultBackground
         // color, useful for keeping Powerline segments opacity(background)
         // consistent with their seperator glyphs opacity(foreground).
@@ -234,10 +322,10 @@ float4 UnprocessedBackgroundColor(device screen_char_t *c,
                              colorMap);
         } else {
             // Use the regular background color.
-            color = GetColor(c->backgroundColor,
-                             c->bgGreen,
-                             c->bgBlue,
-                             static_cast<ColorMode>(c->backgroundColorMode),
+            color = GetColor(SCBackgroundColor(c),
+                             SCBackgroundGreen(c),
+                             SCBackgroundBlue(c),
+                             SCBackgroundMode(c),
                              false,
                              false,
                              true,
@@ -264,7 +352,7 @@ float4 BackgroundColor(device screen_char_t *c,
                                   config);
 }
 
-float4 UnderlineColor(device screen_char_t *c,
+float4 UnderlineColor(device screen_char_t *c,  // TODO: Unused param
                       device iTermASCIITextConfiguration *config,
                       float4 textColor,
                       bool annotated,
@@ -289,13 +377,13 @@ int UnderlineStyle(device screen_char_t *c,
                    bool inUnderlinedRange) {
     if (annotated) {
         return iTermMetalGlyphAttributesUnderlineSingle;
-    } else if (c->underline || inUnderlinedRange) {
-        if (c->urlCode) {
+    } else if (SCUnderline(c) || inUnderlinedRange) {
+        if (SCURLCode(c)) {
             return iTermMetalGlyphAttributesUnderlineDouble;
         } else {
             return iTermMetalGlyphAttributesUnderlineSingle;
         }
-    } else if (c->urlCode) {
+    } else if (SCURLCode(c)) {
         return iTermMetalGlyphAttributesUnderlineDashedSingle;
     } else {
         return iTermMetalGlyphAttributesUnderlineNone;
@@ -332,7 +420,7 @@ vector_float4 ApplyMinimumContrast(vector_float4 textColor,
         return textColor;
     }
 
-    float error = brightnessDiff;
+    float error = fabs(brightnessDiff - minimumContrast);
     float targetBrightness = textBrightness;
     if (textBrightness < backgroundBrightness) {
         targetBrightness -= error;
@@ -368,21 +456,24 @@ vector_float4 ProcessTextColor(vector_float4 textColor,
     vector_float4 contrastingColor = ApplyMinimumContrast(textColor, backgroundColor, config->minimumContrast);
     vector_float4 defaultBackgroundColor = ColorMapLookup(colorMap, kColorMapBackground);
     vector_float4 mutedColor = mix(contrastingColor, defaultBackgroundColor, config->mutingAmount);
-    vector_float4 gray;
+    float grayLevel;
     if (config->dimOnlyText) {
-        gray = PerceivedBrightness(defaultBackgroundColor.xyz);
+        grayLevel = PerceivedBrightness(defaultBackgroundColor.xyz);
     } else {
-        gray = float4(0.5, 0.5, 0.5, 0.5);
+        grayLevel = 0.5;
     }
-
-    vector_float4 dimmed = mix(mutedColor, gray, config->dimmingAmount);
-    vector_float4 result = mix(backgroundColor, dimmed, textColor.w);
-    result.w = dimmed.w;
+    vector_float3 gray = float3(grayLevel,
+                                grayLevel,
+                                grayLevel);
+    vector_float3 dimmed = mix(mutedColor.xyz, gray, config->dimmingAmount);
+    vector_float4 result;
+    result.xyz = mix(backgroundColor.xyz, dimmed, textColor.w);
+    result.w = 1;
     return result;
 }
 
 // NOTE! IF YOU CHANGE THIS ALSO UPDATE CODE IN iTermMetalGlue.mm and iTermTextDrawingHelper.mm!
-vector_float4 TextColor(device screen_char_t &c,
+vector_float4 TextColor(device screen_char_t *c,
                         device unsigned char *selectedIndices,
                         device unsigned char *findMatchIndices,
                         device iTermASCIITextConfiguration *config,
@@ -397,8 +488,7 @@ vector_float4 TextColor(device screen_char_t &c,
     const bool needsProcessing = (config->minimumContrast > 0.001 ||
                                   config->dimmingAmount > 0.001 ||
                                   config->mutingAmount > 0.001 ||
-                                  c.faint);  // faint implies alpha<1 and is faster than getting the alpha component
-
+                                  SCFaint(c));  // faint implies alpha<1 and is faster than getting the alpha component
 
     if (findMatch) {
         // Black-on-yellow search result.
@@ -409,19 +499,19 @@ vector_float4 TextColor(device screen_char_t &c,
     } else if (selected) {
         // Selected text.
         rawColor = ColorMapLookup(colorMap, kColorMapSelectedText);
-    } else if (config->reverseVideo && ((c.foregroundColor == ALTSEM_DEFAULT && c.foregroundColorMode == ColorModeAlternate) ||
-                                        (c.foregroundColor == ALTSEM_CURSOR && c.foregroundColorMode == ColorModeAlternate))) {
+    } else if (config->reverseVideo && ((SCForegroundColor(c) == ALTSEM_DEFAULT && SCForegroundMode(c) == ColorModeAlternate) ||
+                                        (SCForegroundColor(c) == ALTSEM_CURSOR && SCForegroundMode(c) == ColorModeAlternate))) {
         // Reverse video is on. Either is cursor or has default foreground color. Use
         // background color.
         rawColor = ColorMapLookup(colorMap, kColorMapBackground);
     } else {
         // "Normal" case. Recompute the unprocessed color from the character.
-        rawColor = GetColor(c.foregroundColor,
-                            c.fgGreen,
-                            c.fgBlue,
-                            static_cast<const ColorMode>(c.foregroundColorMode),
-                            c.bold,
-                            c.faint,
+        rawColor = GetColor(SCForegroundColor(c),
+                            SCForegroundGreen(c),
+                            SCForegroundBlue(c),
+                            SCForegroundMode(c),
+                            SCBold(c),
+                            SCFaint(c),
                             false,
                             config->useBrightBold,
                             colorMap);
@@ -432,6 +522,34 @@ vector_float4 TextColor(device screen_char_t &c,
     } else {
         return rawColor;
     }
+}
+
+bool UseThinStrokes(device iTermASCIITextConfiguration *config,
+                    float4 backgroundColor,
+                    float4 textColor) {
+    switch (config->thinStrokesSetting) {
+        case iTermThinStrokesSettingAlways:
+            return true;
+
+        case iTermThinStrokesSettingDarkBackgroundsOnly:
+            break;
+
+        case iTermThinStrokesSettingNever:
+            return false;
+
+        case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
+            if (config->scale < 2) {
+                return false;
+            }
+            break;
+
+        case iTermThinStrokesSettingRetinaOnly:
+            return (config->scale >= 2);
+    }
+
+    const float backgroundBrightness = PerceivedBrightness(backgroundColor.xyz);
+    const float foregroundBrightness = PerceivedBrightness(textColor.xyz);
+    return backgroundBrightness < foregroundBrightness;
 }
 
 vertex iTermASCIITextVertexFunctionOutput
@@ -448,12 +566,13 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
                            device unsigned char *findMatchIndices [[ buffer(iTermVertexInputFindMatchIndices) ]],
                            device unsigned char *annotatedIndices [[ buffer(iTermVertexInputAnnotatedIndices) ]],
                            device unsigned char *markedIndices [[ buffer(iTermVertexInputMarkedIndices) ]],
-                           device unsigned char *underlinedIndices [[ buffer(iTermVertexInputUnderlinedIndices) ]]) {
+                           device unsigned char *underlinedIndices [[ buffer(iTermVertexInputUnderlinedIndices) ]],
+                           device iTermMetalDebugBuffer *debugBuffer [[ buffer(iTermVertexInputDebugBuffer) ]]) {
     iTermASCIITextVertexFunctionOutput out;
-    if (line[x].complexChar ||
-        line[x].image ||
-        line[x].code < ' ' ||
-        line[x].code > 126) {
+    if (SCComplex(&line[x]) ||
+        SCImage(&line[x]) ||
+        SCCode(&line[x]) < ' ' ||
+        SCCode(&line[x]) > 126) {
         out.discard = true;
         return out;
     } else {
@@ -468,7 +587,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
 
-    out.textureOffset = NormalizedTextureOffset(line[x].code,
+    out.textureOffset = NormalizedTextureOffset(SCCode(&line[x]),
                                                 config->cellSize,
                                                 config->atlasSize);
 
@@ -489,8 +608,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
                                           colorMap,
                                           selected,
                                           findMatch);
-
-    out.textColor = TextColor(line[x],
+    out.textColor = TextColor(&line[x],
                               selectedIndices,
                               findMatchIndices,
                               config,
@@ -512,7 +630,54 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.cellOffset = CellOffset(x, config->gridSize, config->cellSize, *offset);
     out.viewportSize = viewportSize;
     out.scale = config->scale;
+
+    out.bold = SCBold(&line[x]);
+    out.thin = UseThinStrokes(config, out.backgroundColor, out.textColor);
+    out.italic = SCItalic(&line[x]);
+
     return out;
+}
+
+texture2d<half> GetTexture(bool bold,
+                           bool italic,
+                           bool thin,
+                           texture2d<half> plainTexture,
+                           texture2d<half> boldTexture,
+                           texture2d<half> italicTexture,
+                           texture2d<half> boldItalicTexture,
+                           texture2d<half> thinTexture,
+                           texture2d<half> thinBoldTexture,
+                           texture2d<half> thinItalicTexture,
+                           texture2d<half> thinBoldItalicTexture) {
+    if (bold) {
+        if (italic) {
+            if (thin) {
+                return thinBoldItalicTexture;
+            } else {
+                return boldItalicTexture;
+            }
+        } else {
+            if (thin) {
+                return thinBoldTexture;
+            } else {
+                return boldTexture;
+            }
+        }
+    } else {
+        if (italic) {
+            if (thin) {
+                return thinItalicTexture;
+            } else {
+                return italicTexture;
+            }
+        } else {
+            if (thin) {
+                return thinTexture;
+            } else {
+                return plainTexture;
+            }
+        }
+    }
 }
 
 fragment float4
@@ -530,16 +695,26 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
-        return float4(0, 0, 0, 0);
     }
-    texture2d<half> &texture = plainTexture;
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
-
+    texture2d<half> texture = GetTexture(in.bold,
+                                         in.italic,
+                                         in.thin,
+                                         plainTexture,
+                                         boldTexture,
+                                         italicTexture,
+                                         boldItalicTexture,
+                                         thinTexture,
+                                         thinBoldTexture,
+                                         thinItalicTexture,
+                                         thinBoldItalicTexture);
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
     // TODO: You can't always sample the drawable
-    const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
+//    const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
+#warning TODO: Support sampling from drawable when needed
+    const float4 backgroundColor = in.backgroundColor;
 
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // No text in this pixel
@@ -564,7 +739,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
             }
         }
         discard_fragment();
+    } else {
+        return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
     }
-
-    return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
 }

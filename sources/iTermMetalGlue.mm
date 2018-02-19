@@ -1186,6 +1186,7 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
     configurationPtr->isFrontTextView = _isFrontTextView;
     configurationPtr->dimOnlyText = _colorMap.dimOnlyText;
     configurationPtr->asciiUnderlineColor = _asciiUnderlineDescriptor.color;
+    configurationPtr->thinStrokesSetting = _thinStrokes;
 }
 
 - (void)copyMarkedText:(NSString *)str

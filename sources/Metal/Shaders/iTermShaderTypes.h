@@ -2,6 +2,7 @@
 #define ShaderTypes_h
 
 #include <simd/simd.h>
+#import "iTermThinStrokes.h"
 
 typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexVertices = 0,
@@ -17,6 +18,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputMarkedIndices = 10,  // data is an array of bits giving marked text locations
     iTermVertexInputUnderlinedIndices = 11,  // data is an array of bits giving underlined range locations
     iTermVertexInputAnnotatedIndices = 12,  // data in array of bits giving annotation locations
+    iTermVertexInputDebugBuffer = 13,  // iTermMetalDebugBuffer
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -123,11 +125,13 @@ typedef struct {
 } iTermTextureDimensions;
 
 typedef struct {
+    // These do not need to be initialized by the data source.
     vector_float2 cellSize;
     vector_uint2 gridSize;
     float scale;
     vector_float2 atlasSize;
 
+    // Everything below this line needs to be initialized by the data source.
     float minimumContrast;
     float dimmingAmount;
     float mutingAmount;
@@ -141,10 +145,18 @@ typedef struct {
     bool isFrontTextView;
     bool dimOnlyText;
     vector_float4 asciiUnderlineColor;
+    iTermThinStrokesSetting thinStrokesSetting;
 } iTermASCIITextConfiguration;
 
 typedef struct {
+    char storage[1024];
+    int offset;
+    int capacity;
+} iTermMetalDebugBuffer;
+
+typedef struct {
     int row;
+    int debugX;
 } iTermASCIIRowInfo;
 
 #endif

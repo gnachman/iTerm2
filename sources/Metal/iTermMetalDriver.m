@@ -897,6 +897,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     asciiState.underlineDescriptor = asciiUnderlineDescriptor;
     asciiState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+    iTermASCIITextConfiguration asciiConfig;
+    [frameData.perFrameState getConfiguration:&asciiConfig];
+    asciiState.asciiConfig = asciiConfig;
+    asciiState.debugBuffer = frameData.debugBuffer;
+    asciiState.debugCoord = VT100GridCoordMake(0, 0);
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];

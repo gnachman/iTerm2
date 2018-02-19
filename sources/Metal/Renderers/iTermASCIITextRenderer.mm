@@ -102,14 +102,14 @@
 
 - (id<MTLBuffer>)configurationBuffer {
     iTermCellRenderConfiguration *cellConfig = self.cellConfiguration;
-    iTermASCIITextConfiguration configuration = {
-        .cellSize = simd_make_float2(cellConfig.cellSize.width,
-                                     cellConfig.cellSize.height),
-        .gridSize = simd_make_uint2(cellConfig.gridSize.width,
-                                    cellConfig.gridSize.height),
-        .scale = static_cast<float>(cellConfig.scale),
-        .atlasSize = _asciiTextureGroup.atlasSize
-    };
+    iTermASCIITextConfiguration configuration = self.asciiConfig;
+    configuration.cellSize = simd_make_float2(cellConfig.cellSize.width,
+                                              cellConfig.cellSize.height);
+    configuration.gridSize = simd_make_uint2(cellConfig.gridSize.width,
+                                             cellConfig.gridSize.height);
+    configuration.scale = static_cast<float>(cellConfig.scale);
+    configuration.atlasSize = _asciiTextureGroup.atlasSize;
+
     return [_configPool requestBufferFromContext:self.poolContext
                                        withBytes:&configuration
                                   checkIfChanged:YES];
@@ -292,25 +292,27 @@
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                                  @(iTermVertexInputIndexPerInstanceUniforms): screenChars,
                                                  @(iTermVertexInputIndexOffset): tState.offsetBuffer,
-                                                 @(iTermVertexInputIndexASCIITextRowInfo): [self rowInfoBufferForLine:line],
+                                                 @(iTermVertexInputIndexASCIITextRowInfo): [self rowInfoBufferForLine:line tState:tState],
                                                  @(iTermVertexInputIndexASCIITextConfiguration): tState.configurationBuffer,
                                                  @(iTermVertexInputIndexColorMap): colorMapBuffer,
                                                  @(iTermVertexInputSelectedIndices): [tState bitArrayForIndexSet:row.selectedIndices],
                                                  @(iTermVertexInputFindMatchIndices): [tState bitArrayForData:row.findMatches],
                                                  @(iTermVertexInputMarkedIndices): [tState bitArrayForRange:row.markedRange],
                                                  @(iTermVertexInputUnderlinedIndices): [tState bitArrayForRange:row.underlinedRange],
-                                                 @(iTermVertexInputAnnotatedIndices): [tState bitArrayForIndexSet:row.annotatedIndices] }
+                                                 @(iTermVertexInputAnnotatedIndices): [tState bitArrayForIndexSet:row.annotatedIndices],
+                                                 @(iTermVertexInputDebugBuffer): tState.debugBuffer }
                               fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): _models,
                                                  @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
                                      textures:textures];
     }];
 }
 
-- (id<MTLBuffer>)rowInfoBufferForLine:(int)line {
+- (id<MTLBuffer>)rowInfoBufferForLine:(int)line tState:(iTermASCIITextRendererTransientState *)tState {
     id<MTLBuffer> rowInfoBuffer = _rowInfos[@(line)];
     if (!rowInfoBuffer) {
         iTermASCIIRowInfo rowInfo = {
-            .row = line
+            .row = line,
+            .debugX = (line == tState.debugCoord.y) ? tState.debugCoord.x : -1
         };
         rowInfoBuffer = [_cellRenderer.device newBufferWithBytes:&rowInfo
                                                           length:sizeof(rowInfo)

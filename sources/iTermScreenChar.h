@@ -60,7 +60,7 @@ typedef struct screen_char_t
     //   DWC_SKIP, TAB_FILLER, BOGUS_CHAR, or DWC_RIGHT: See comments above.
     // In the WIDTH+1 position on a line, this takes the value of EOL_HARD,
     //  EOL_SOFT, or EOL_DWC. See the comments for those constants.
-    unichar code;
+    unichar code;  // 0,1
 
     // With normal background semantics:
     //   The lower 9 bits have the same semantics for foreground and background
@@ -79,45 +79,45 @@ typedef struct screen_char_t
     //   foreground/backgroundColor gives red component and fg/bgGreen, fg/bgBlue
     //     give the rest of the color's components
     // For images, foregroundColor doubles as the x index.
-    unsigned int foregroundColor : 8;
-    unsigned int fgGreen : 8;
-    unsigned int fgBlue  : 8;
+    unsigned int foregroundColor : 8;  // 2
+    unsigned int fgGreen : 8;  // 3
+    unsigned int fgBlue  : 8;  // 4
 
     // For images, backgroundColor doubles as the y index.
-    unsigned int backgroundColor : 8;
-    unsigned int bgGreen : 8;
-    unsigned int bgBlue  : 8;
+    unsigned int backgroundColor : 8;  // 5
+    unsigned int bgGreen : 8;  // 6
+    unsigned int bgBlue  : 8;  // 7
 
     // These determine the interpretation of foreground/backgroundColor.
-    unsigned int foregroundColorMode : 2;
-    unsigned int backgroundColorMode : 2;
+    unsigned int foregroundColorMode : 2;  // 8:0,8:1
+    unsigned int backgroundColorMode : 2;  // 8:2,8:3
 
     // If set, the 'code' field does not give a utf-16 value but is intead a
     // key into a string table of more complex chars (combined, surrogate pairs,
     // etc.). Valid 'code' values for a complex char are in [1, 0xefff] and will
     // be recycled as needed.
-    unsigned int complexChar : 1;
+    unsigned int complexChar : 1;  // 8:4
 
     // Various bits affecting text appearance. The bold flag here is semantic
     // and may be rendered as some combination of font choice and color
     // intensity.
-    unsigned int bold : 1;
-    unsigned int faint : 1;
-    unsigned int italic : 1;
-    unsigned int blink : 1;
-    unsigned int underline : 1;
+    unsigned int bold : 1;  // 8:5
+    unsigned int faint : 1;  // 8:6
+    unsigned int italic : 1;  // 8:7
+    unsigned int blink : 1;  // 9:0
+    unsigned int underline : 1;  // 9:1
 
     // Is this actually an image? Changes the semantics of code,
     // foregroundColor, and backgroundColor (see notes above).
-    unsigned int image : 1;
+    unsigned int image : 1;  // 9:2
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 5;
+    unsigned int unused : 5;  // 9:3,...,9:7
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
-    unsigned short urlCode;
+    unsigned short urlCode;  // 10,11
 } screen_char_t;
 
 typedef enum {

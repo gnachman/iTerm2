@@ -132,6 +132,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
+@property (nonatomic, readonly) id<MTLBuffer> debugBuffer;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;

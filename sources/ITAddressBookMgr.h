@@ -29,6 +29,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
+#import "iTermThinStrokes.h"
 #import "ProfileModel.h"
 #import "FutureMethods.h"
 
@@ -269,15 +270,6 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,
   iTermTabObject,
   iTermPaneObject,
-};
-
-// Type for KEY_THIN_STROKES
-typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
-    iTermThinStrokesSettingNever = 0,
-    iTermThinStrokesSettingRetinaDarkBackgroundsOnly = 1,
-    iTermThinStrokesSettingDarkBackgroundsOnly = 2,
-    iTermThinStrokesSettingAlways = 3,
-    iTermThinStrokesSettingRetinaOnly = 4,
 };
 
 typedef NS_ENUM(NSUInteger, iTermHotKeyDockPreference) {
