@@ -325,9 +325,9 @@
         _lastBackgroundColorVector = processed;
         [_lastBackgroundColor autorelease];
         CGFloat components[4] = { processed.x, processed.y, processed.z, processed.w };
-        _lastBackgroundColor = [NSColor colorWithColorSpace:backgroundColor.colorSpace
-                                                 components:components
-                                                      count:4];
+        _lastBackgroundColor = [[NSColor colorWithColorSpace:backgroundColor.colorSpace
+                                                  components:components
+                                                       count:4] retain];
     }
     return _lastBackgroundColor;
 }
