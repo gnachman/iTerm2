@@ -5,7 +5,13 @@
 //  Created by George Nachman on 2/19/18.
 //
 
-typedef enum {
+#ifdef __METAL_VERSION__
+#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
+#else
+#import <Foundation/Foundation.h>
+#endif
+
+typedef NS_ENUM(int, iTermColorMapKey) {
     kColorMapForeground = 0,
     kColorMapBackground = 1,
     kColorMapBold = 2,
@@ -30,6 +36,4 @@ typedef enum {
     kColorMapAnsiCyan = kColorMap8bitBase + 6,
     kColorMapAnsiWhite = kColorMap8bitBase + 7,
     kColorMapAnsiBrightModifier = 8,
-} iTermColorMapKey;
-
-
+};

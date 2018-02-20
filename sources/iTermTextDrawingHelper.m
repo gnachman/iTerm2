@@ -521,51 +521,29 @@ typedef struct iTermTextColorContext {
 }
 
 - (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run {
-    NSColor *color;
-    CGFloat alpha = _transparencyAlpha;
-    if (run->selected) {
-        color = [self selectionColorForCurrentFocus];
-        if (_transparencyAffectsOnlyDefaultBackgroundColor) {
-            alpha = 1;
-        }
-    } else if (run->isMatch) {
-        color = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
-    } else {
-        const BOOL defaultBackground = (run->bgColor == ALTSEM_DEFAULT &&
-                                        run->bgColorMode == ColorModeAlternate);
-        // When set in preferences, applies alpha only to the defaultBackground
-        // color, useful for keeping Powerline segments opacity(background)
-        // consistent with their seperator glyphs opacity(foreground).
-        if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
-            alpha = 1;
-        }
-        if (_reverseVideo && defaultBackground) {
-            // Reverse video is only applied to default background-
-            // color chars.
-            color = [_delegate drawingHelperColorForCode:ALTSEM_DEFAULT
-                                                   green:0
-                                                    blue:0
-                                               colorMode:ColorModeAlternate
-                                                    bold:NO
-                                                   faint:NO
-                                            isBackground:NO];
-        } else {
-            // Use the regular background color.
-            color = [_delegate drawingHelperColorForCode:run->bgColor
-                                                   green:run->bgGreen
-                                                    blue:run->bgBlue
-                                               colorMode:run->bgColorMode
-                                                    bold:NO
-                                                   faint:NO
-                                            isBackground:YES];
-        }
-
-        if (defaultBackground && _hasBackgroundImage) {
-            alpha = 1 - _blend;
-        }
-    }
-
-    return [color colorWithAlphaComponent:alpha];
+    screen_char_t c = {
+        .backgroundColor = run->bgColor,
+        .bgGreen = run->bgGreen,
+        .bgBlue = run->bgBlue,
+        .backgroundColorMode = run->bgColorMode,
+    };
+    vector_float4 color = UnprocessedBackgroundColor(&c,
+                                                     _colorMap,
+                                                     _transparencyAlpha,
+                                                     _transparencyAffectsOnlyDefaultBackgroundColor,
+                                                     _reverseVideo,
+                                                     _useBrightBold,
+                                                     _isFrontTextView,
+                                                     _colorMap.mutingAmount,
+                                                     _colorMap.dimOnlyText,
+                                                     _colorMap.dimmingAmount,
+                                                     _hasBackgroundImage,
+                                                     _blend,
+                                                     run->selected,
+                                                     run->isMatch,
+                                                     _unfocusedSelectionColor.vector);
+#warning Make sure this is right vis a vis color spaces
+    return [NSColor colorWithRed:color.x green:color.y blue:color.z alpha:color.w];
 }
 
 - (void)drawExcessAtLine:(int)line {
@@ -2011,27 +1989,10 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 - (BOOL)useThinStrokesAgainstBackgroundColor:(NSColor *)backgroundColor
                              foregroundColor:(CGColorRef)foregroundColor {
     const CGFloat *components = CGColorGetComponents(foregroundColor);
-
-    switch (self.thinStrokes) {
-        case iTermThinStrokesSettingAlways:
-            return YES;
-
-        case iTermThinStrokesSettingDarkBackgroundsOnly:
-            break;
-
-        case iTermThinStrokesSettingNever:
-            return NO;
-
-        case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
-            if (!_isRetina) {
-                return NO;
-            }
-            break;
-
-        case iTermThinStrokesSettingRetinaOnly:
-            return _isRetina;
-    }
-    return [backgroundColor brightnessComponent] < PerceivedBrightness(components[0], components[1], components[2]);
+    return UseThinStrokes(self.thinStrokes,
+                          _isRetina,
+                          backgroundColor.vector,
+                          simd_make_float4(components[0], components[1], components[2], components[3]));
 }
 
 - (CGFloat)yOriginForUnderlineGivenFontXHeight:(CGFloat)xHeight yOffset:(CGFloat)yOffset {
@@ -2662,6 +2623,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (NSColor *)selectionColorForCurrentFocus {
+    // NOTE: This should match SelectionColorForCurrentFocus()
     if (_isFrontTextView) {
         return [_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]];
     } else {

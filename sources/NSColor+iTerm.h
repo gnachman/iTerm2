@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <simd/simd.h>
+#import "iTermSharedColor.h"
 
 // Keys of -dictionaryValue. Use -[NSDictionary colorVaue] to convert to color.
 extern NSString *const kEncodedColorDictionaryRedComponent;
@@ -77,5 +78,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
 - (NSString *)hexString;
 + (instancetype)colorFromHexString:(NSString *)hexString;
+
+- (vector_float4)vector;
 
 @end

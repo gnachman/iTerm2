@@ -8,6 +8,8 @@
 
 #import "NSColor+iTerm.h"
 #import "DebugLogging.h"
+#import "iTermSharedColor.h"
+#import <simd/simd.h>
 
 // Constants for converting RGB to luma.
 static const double kRedComponentBrightness = 0.30;
@@ -91,68 +93,12 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                  blue:(CGFloat)b
                 alpha:(CGFloat)a
   perceivedBrightness:(CGFloat)t {
-    /*
-     Given:
-     a vector c [c1, c2, c3] (the starting color)
-     a vector e [e1, e2, e3] (an extreme color we are moving to, normally black or white)
-     a vector A [a1, a2, a3] (the perceived brightness transform)
-     a linear function f(Y)=AY (perceived brightness for color Y)
-     a constant t (target perceived brightness)
-     find a vector X such that F(X)=t
-     and X lies on a straight line between c and e
-
-     Define a parametric vector x(p) = [x1(p), x2(p), x3(p)]:
-     x1(p) = p*e1 + (1-p)*c1
-     x2(p) = p*e2 + (1-p)*c2
-     x3(p) = p*e3 + (1-p)*c3
-
-     when p=0, x=c
-     when p=1, x=e
-
-     the line formed by x(p) from p=0 to p=1 is the line from c to e.
-
-     Our goal: find the value of p where f(x(p))=t
-
-     We know that:
-     [x1(p)]
-     f(X) = AX = [a1 a2 a3] [x2(p)] = a1x1(p) + a2x2(p) + a3x3(p)
-     [x3(p)]
-     Expand and solve for p:
-     t = a1*(p*e1 + (1-p)*c1) + a2*(p*e2 + (1-p)*c2) + a3*(p*e3 + (1-p)*c3)
-     t = a1*(p*e1 + c1 - p*c1) + a2*(p*e2 + c2 - p*c2) + a3*(p*e3 + c3 - p*c3)
-     t = a1*p*e1 + a1*c1 - a1*p*c1 + a2*p*e2 + a2*c2 - a2*p*c2 + a3*p*e3 + a3*c3 - a3*p*c3
-     t = a1*p*e1 - a1*p*c1 + a2*p*e2 - a2*p*c2 + a3*p*e3 - a3*p*c3 + a1*c1 + a2*c2 + a3*c3
-     t = p*(a2*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3) + a1*c1 + a2*c2 + a3*c3
-     t - (a1*c1 + a2*c2 + a3*c3) = p*(a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
-     p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
-
-     The PerceivedBrightness() function is a dot product between the a vector and its input, so the
-     previous equation is equivalent to:
-     p = (t - PerceivedBrightness(c1, c2, c3) / PerceivedBrightness(e1-c1, e2-c2, e3-c3)
-     */
-    const CGFloat c1 = r;
-    const CGFloat c2 = g;
-    const CGFloat c3 = b;
-
-    CGFloat k;
-    if (PerceivedBrightness(r, g, b) < t) {
-        k = 1;
-    } else {
-        k = 0;
-    }
-    const CGFloat e1 = k;
-    const CGFloat e2 = k;
-    const CGFloat e3 = k;
-
-    CGFloat p = ((t - PerceivedBrightness(c1, c2, c3)) /
-                 (PerceivedBrightness(e1 - c1, e2 - c2, e3 - c3)));
-    // p can be out of range for e.g., division by 0.
-    p = MIN(1, MAX(0, p));
-
-    result[0] = p * e1 + (1 - p) * c1;
-    result[1] = p * e2 + (1 - p) * c2;
-    result[2] = p * e3 + (1 - p) * c3;
-    result[3] = a;
+    vector_float4 c = simd_make_float4(r, g, b, a);
+    vector_float4 x = ForceBrightness(c, t);
+    result[0] = x.x;
+    result[1] = x.y;
+    result[2] = x.z;
+    result[3] = x.w;
 }
 
 + (NSColor *)colorForAnsi256ColorIndex:(int)index {
@@ -180,56 +126,19 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         forComponents:(CGFloat *)mainComponents
   withContrastAgainstComponents:(CGFloat *)otherComponents
                 minimumContrast:(CGFloat)minimumContrast {
-    const double r = mainComponents[0];
-    const double g = mainComponents[1];
-    const double b = mainComponents[2];
-    const double a = mainComponents[3];
-
-    const double or = otherComponents[0];
-    const double og = otherComponents[1];
-    const double ob = otherComponents[2];
-
-    double mainBrightness = PerceivedBrightness(r, g, b);
-    double otherBrightness = PerceivedBrightness(or, og, ob);
-    CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
-
-    if (brightnessDiff < minimumContrast) {
-        CGFloat error = fabs(brightnessDiff - minimumContrast);
-        CGFloat targetBrightness = mainBrightness;
-        if (mainBrightness < otherBrightness) {
-            // To increase contrast, return a color that's dimmer than mainComponents
-            targetBrightness -= error;
-            if (targetBrightness < 0) {
-                const double alternative = otherBrightness + minimumContrast;
-                const double baseContrast = otherBrightness;
-                const double altContrast = MIN(alternative, 1) - otherBrightness;
-                if (altContrast > baseContrast) {
-                    targetBrightness = alternative;
-                }
-            }
-        } else {
-            // To increase contrast, return a color that's brighter than mainComponents
-            targetBrightness += error;
-            if (targetBrightness > 1) {
-                const double alternative = otherBrightness - minimumContrast;
-                const double baseContrast = 1 - otherBrightness;
-                const double altContrast = otherBrightness - MAX(alternative, 0);
-                if (altContrast > baseContrast) {
-                    targetBrightness = alternative;
-                }
-            }
-        }
-        targetBrightness = MIN(MAX(0, targetBrightness), 1);
-
-        [self getComponents:result
-            forColorWithRed:r
-                      green:g
-                       blue:b
-                      alpha:a
-        perceivedBrightness:targetBrightness];
-    } else {
-        memmove(result, mainComponents, sizeof(CGFloat) * 4);
-    }
+    vector_float4 text = simd_make_float4(mainComponents[0],
+                                          mainComponents[1],
+                                          mainComponents[2],
+                                          mainComponents[3]);
+    vector_float4 background = simd_make_float4(otherComponents[0],
+                                                otherComponents[1],
+                                                otherComponents[2],
+                                                1);
+    vector_float4 x = ApplyMinimumContrast(text, background, minimumContrast);
+    result[0] = x.x;
+    result[1] = x.y;
+    result[2] = x.z;
+    result[3] = x.w;
 }
 
 - (int)nearestIndexIntoAnsi256ColorTable {
@@ -319,4 +228,12 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [NSColor colorWithSRGBRed:red/255.0 green:green/255.0 blue:blue/255.0 alpha:1];
 }
 
+- (vector_float4)vector {
+    CGFloat components[4];
+    [self getComponents:components];
+    return simd_make_float4(components[0],
+                            components[1],
+                            components[2],
+                            components[3]);
+}
 @end

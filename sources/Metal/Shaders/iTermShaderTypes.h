@@ -4,6 +4,12 @@
 #include <simd/simd.h>
 #import "iTermThinStrokes.h"
 
+#ifdef __METAL_VERSION__
+#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
+#else
+#import <Foundation/Foundation.h>
+#endif
+
 typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexVertices = 0,
     iTermVertexInputIndexViewportSize = 1,
@@ -39,13 +45,13 @@ typedef enum iTermTextureIndex {
 
 } iTermTextureIndex;
 
-typedef enum {
+typedef NS_ENUM(int, iTermFragmentBufferIndex) {
     iTermFragmentBufferIndexMarginColor = 0,  // Points at a single float4
     iTermFragmentBufferIndexColorModels = 1, // Array of 256-byte color tables
     iTermFragmentInputIndexTextureDimensions = 2,  // Points at iTermTextureDimensions
     iTermFragmentBufferIndexIndicatorAlpha = 3, // Points at a single float giving alpha value
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
-} iTermFragmentBufferIndex;
+};
 
 typedef enum {
     iTermMetalGlyphAttributesUnderlineNone = 0,
@@ -146,6 +152,7 @@ typedef struct {
     bool dimOnlyText;
     vector_float4 asciiUnderlineColor;
     iTermThinStrokesSetting thinStrokesSetting;
+    bool hasBackgroundImage;
 } iTermASCIITextConfiguration;
 
 typedef struct {
