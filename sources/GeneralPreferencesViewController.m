@@ -172,19 +172,17 @@ enum {
     [self defineControl:_promptOnQuit
                     key:kPreferenceKeyPromptOnQuit
                    type:kPreferenceInfoTypeCheckbox];
-
+#if 0
     info = [self defineControl:_irMemory
                            key:kPreferenceKeyInstantReplayMemoryMegabytes
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 1000);
-
     info = [self defineControl:_savePasteHistory
                            key:kPreferenceKeySavePasteAndCommandHistory
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() {
         [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
     };
-
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles
                             type:kPreferenceInfoTypeCheckbox];
@@ -196,7 +194,7 @@ enum {
     [self defineControl:_checkTestRelease
                     key:kPreferenceKeyCheckForTestReleases
                    type:kPreferenceInfoTypeCheckbox];
-
+#endif
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_loadPrefsFromCustomFolder
                            key:kPreferenceKeyLoadPrefsFromCustomFolder

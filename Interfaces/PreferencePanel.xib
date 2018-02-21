@@ -1262,12 +1262,8 @@ DQ
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_autoSaveOnQuit" destination="tYA-B3-SU5" id="9Yr-NX-xsX"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
-                <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
-                <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_customFolderTextFieldCell" destination="5617" id="67L-rS-bTT"/>
-                <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
-                <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
@@ -1279,7 +1275,6 @@ DQ
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>
                 <outlet property="_pushToCustomFolder" destination="5620" id="o2m-78-Wc6"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
-                <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
                 <outlet property="_tmuxDashboardLimit" destination="6345" id="MSF-0U-l1k"/>
@@ -4233,7 +4228,6 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="Z1z-jh-KSh"/>
                         <outlet property="delegate" destination="9Se-ld-UJa" id="jAd-ra-P03"/>
-                        <outlet property="nextKeyView" destination="5051" id="5195"/>
                     </connections>
                 </textField>
                 <button toolTip="&quot;Zoom&quot; is the green button, except on OS 10.10 where you must hold Option while pressing the green button." id="4540">
@@ -4291,103 +4285,6 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button id="5048">
-                    <rect key="frame" x="18" y="127" width="287" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Check for updates automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5066">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="SDz-wA-BhL"/>
-                        <outlet property="nextKeyView" destination="5049" id="5197"/>
-                    </connections>
-                </button>
-                <button id="5049">
-                    <rect key="frame" x="18" y="107" width="229" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Prompt for test-release updates" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5065">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="jqK-dm-ssy"/>
-                    </connections>
-                </button>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5050">
-                    <rect key="frame" x="18" y="171" width="60" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Services" id="5064">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5072">
-                    <rect key="frame" x="18" y="247" width="129" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Magic" id="5073">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button id="5051">
-                    <rect key="frame" x="18" y="147" width="207" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Add Bonjour hosts to Profiles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5063">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="eVv-Yn-zdl"/>
-                        <outlet property="nextKeyView" destination="5048" id="uHG-f2-Hoi"/>
-                    </connections>
-                </button>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5053">
-                    <rect key="frame" x="18" y="225" width="130" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Instant Replay uses " id="5061">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5054">
-                    <rect key="frame" x="197" y="225" width="99" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="MB per session" id="5060">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5055">
-                    <rect key="frame" x="146" y="223" width="46" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5058">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="CpN-rd-m6D"/>
-                        <outlet property="delegate" destination="9Se-ld-UJa" id="RvR-Z3-Ajw"/>
-                        <outlet property="nextKeyView" destination="5056" id="5188"/>
-                    </connections>
-                </textField>
-                <button id="5056">
-                    <rect key="frame" x="18" y="204" width="312" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Save copy/paste and command history to disk" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5057">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="EhX-hk-oZL"/>
-                        <outlet property="nextKeyView" destination="1988" id="5189"/>
-                    </connections>
-                </button>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5610">
                     <rect key="frame" x="18" y="71" width="83" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
