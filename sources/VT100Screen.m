@@ -2435,13 +2435,13 @@ return;
     } else {
         [self linefeed];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalCursorLeft:(int)n
 {
     [currentGrid_ moveCursorLeft:n];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
@@ -2449,13 +2449,13 @@ return;
     if (toStart) {
         [currentGrid_ moveCursorToLeftMargin];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalCursorRight:(int)n
 {
     [currentGrid_ moveCursorRight:n];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart{
@@ -2463,13 +2463,13 @@ return;
     if (toStart) {
         [currentGrid_ moveCursorToLeftMargin];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalMoveCursorToX:(int)x y:(int)y
 {
     [self cursorToX:x Y:y];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (BOOL)terminalShouldSendReport
@@ -2579,7 +2579,7 @@ return;
                                                  currentGrid_.size.width);
     [currentGrid_ setCharsInRun:theRun
                          toChar:0];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 
 }
 
@@ -2605,7 +2605,7 @@ return;
                                                  currentGrid_.size.width);
     [currentGrid_ setCharsInRun:theRun
                          toChar:0];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalSetTabStopAtCursor {
@@ -2620,7 +2620,7 @@ return;
     } else {
         [currentGrid_ moveCursorToLeftMargin];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalReverseIndex {
@@ -2633,11 +2633,11 @@ return;
     } else {
         currentGrid_.cursorY = MAX(0, currentGrid_.cursorY - 1);
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt {
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
     if (preservePrompt) {
         [self clearAndResetScreenPreservingCursorLine];
     } else {
@@ -2713,19 +2713,19 @@ return;
             while (![self haveTabStopAt:currentGrid_.cursorX] && currentGrid_.cursorX > 0) {
                 currentGrid_.cursorX = currentGrid_.cursorX - 1;
             }
-            [delegate_ screenTriggerableChangeDidOccur];
+            // [delegate_ screenTriggerableChangeDidOccur];
         }
     }
 }
 
 - (void)terminalSetCursorX:(int)x {
     [self cursorToX:x];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalSetCursorY:(int)y {
     [self cursorToY:y];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalEraseCharactersAfterCursor:(int)j {
@@ -2739,7 +2739,7 @@ return;
                                 to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
                             toChar:[currentGrid_ defaultChar]];
         // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
-        [delegate_ screenTriggerableChangeDidOccur];
+        // [delegate_ screenTriggerableChangeDidOccur];
     }
 }
 
@@ -2841,13 +2841,13 @@ return;
         [currentGrid_ scrollRect:VT100GridRectMake(left, top, width, height)
                           downBy:n
                        softBreak:NO];
-        [delegate_ screenTriggerableChangeDidOccur];
+        // [delegate_ screenTriggerableChangeDidOccur];
     }
 }
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
     [currentGrid_ deleteChars:n startingAt:currentGrid_.cursor];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalDeleteLinesAtCursor:(int)n {
@@ -2868,7 +2868,7 @@ return;
                                                    currentGrid_.bottomMargin - currentGrid_.cursorY + 1)
                           downBy:-n
                        softBreak:NO];
-        [delegate_ screenTriggerableChangeDidOccur];
+        // [delegate_ screenTriggerableChangeDidOccur];
     }
 }
 
@@ -2943,7 +2943,7 @@ return;
                                                useScrollbackWithRegion:_appendToScrollbackWithStatusBar
                                                              softBreak:NO]];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)terminalScrollDown:(int)n {
@@ -2951,7 +2951,7 @@ return;
     [currentGrid_ scrollRect:[currentGrid_ scrollRegionRect]
                       downBy:MIN(currentGrid_.size.height, n)
                    softBreak:NO];
-    [delegate_ screenTriggerableChangeDidOccur];
+    // [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (BOOL)terminalWindowIsMiniaturized {

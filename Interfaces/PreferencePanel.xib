@@ -3876,24 +3876,6 @@ DQ
             <rect key="frame" x="0.0" y="0.0" width="559" height="617"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5778">
-                    <rect key="frame" x="14" y="600" width="62" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Triggers" id="5779">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5789">
-                    <rect key="frame" x="14" y="558" width="526" height="34"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response." id="5790">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5837">
                     <rect key="frame" x="14" y="479" width="108" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3958,17 +3940,6 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="editSmartSelection:" target="Qvt-kg-svI" id="95P-a1-2IX"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" id="5914">
-                    <rect key="frame" x="11" y="523" width="96" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Edit" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5915">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="editTriggers:" target="Qvt-kg-svI" id="QBE-J7-Oir"/>
                     </connections>
                 </button>
                 <box verticalHuggingPriority="750" boxType="separator" id="5928">
