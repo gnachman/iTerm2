@@ -68,9 +68,9 @@
 
 - (void)reloadDynamicProfiles {
     [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
-        [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
+        //[ITAddressBookMgr performBlockWithCoalescedNotifications:^{
             [self reallyReloadDynamicProfiles];
-        }];
+        //}];
     }];
 }
 

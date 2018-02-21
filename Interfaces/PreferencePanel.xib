@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13196" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13771" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13196"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13771"/>
         <capability name="box content view" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -763,7 +762,7 @@ Gw
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
-                                        <tableColumn width="350" minWidth="40" maxWidth="1000" id="5785">
+                                        <tableColumn identifier="" width="350" minWidth="40" maxWidth="1000" id="5785">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Regular Expression">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -776,7 +775,7 @@ Gw
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="162.6953125" minWidth="40" maxWidth="1000" id="5786">
+                                        <tableColumn identifier="" width="162.6953125" minWidth="40" maxWidth="1000" id="5786">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -789,7 +788,7 @@ Gw
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="195.59765625" minWidth="40" maxWidth="1000" id="5816">
+                                        <tableColumn identifier="" width="195.59765625" minWidth="40" maxWidth="1000" id="5816">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Parameters">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -802,7 +801,7 @@ Gw
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="41" minWidth="10" maxWidth="3.4028234663852886e+38" id="4jW-vz-58j">
+                                        <tableColumn identifier="" width="41" minWidth="10" maxWidth="3.4028234663852886e+38" id="4jW-vz-58j">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Instant">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -914,7 +913,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -923,7 +922,7 @@ DQ
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
-                                        <tableColumn width="198" minWidth="10" maxWidth="3.4028234663852886e+38" id="5901">
+                                        <tableColumn identifier="" width="198" minWidth="10" maxWidth="3.4028234663852886e+38" id="5901">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Notes">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -936,7 +935,7 @@ DQ
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="468" minWidth="40" maxWidth="1000" id="5850">
+                                        <tableColumn identifier="" width="468" minWidth="40" maxWidth="1000" id="5850">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Regular Expression">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -949,7 +948,7 @@ DQ
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="88" minWidth="40" maxWidth="1000" id="5848">
+                                        <tableColumn identifier="" width="88" minWidth="40" maxWidth="1000" id="5848">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Precision">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -1128,7 +1127,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -1137,7 +1136,7 @@ DQ
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
-                                        <tableColumn width="167.40625" minWidth="40" maxWidth="1000" id="6285">
+                                        <tableColumn identifier="" width="167.40625" minWidth="40" maxWidth="1000" id="6285">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Title">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -1150,7 +1149,7 @@ DQ
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="170.1953125" minWidth="40" maxWidth="1000" id="6286">
+                                        <tableColumn identifier="" width="170.1953125" minWidth="40" maxWidth="1000" id="6286">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -1171,7 +1170,7 @@ DQ
                                             </popUpButtonCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="186.48828125" minWidth="10" maxWidth="3.4028234663852886e+38" id="6289">
+                                        <tableColumn identifier="" width="186.48828125" minWidth="10" maxWidth="3.4028234663852886e+38" id="6289">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Parameter">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -1260,18 +1259,15 @@ DQ
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
                 <outlet property="_adjustWindowForFontSizeChange" destination="6377" id="8Ci-Ia-xoQ"/>
-                <outlet property="_allowClipboardAccessFromTerminal" destination="6383" id="u1Z-Xo-qFM"/>
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_autoSaveOnQuit" destination="tYA-B3-SU5" id="9Yr-NX-xsX"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
-                <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_customFolderTextFieldCell" destination="5617" id="67L-rS-bTT"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
-                <outlet property="_lionStyleFullscreen" destination="5319" id="1Ja-r1-AWt"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
@@ -2532,10 +2528,9 @@ DQ
                                 <outlet property="nextKeyView" destination="5126" id="5253"/>
                             </connections>
                         </button>
-                        <button misplaced="YES" id="6Fq-pl-5nd">
+                        <button toolTip="If you turn this on, optional ligatures in this font will be enabled. It forces Therm to use a slower text rendering algorithm." misplaced="YES" id="6Fq-pl-5nd">
                             <rect key="frame" x="-2" y="1" width="106" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <string key="toolTip">If you turn this on, optional ligatures in this font will be enabled. It forces Therm to use a slower text rendering algorithm.</string>
                             <buttonCell key="cell" type="check" title="Use Ligatures" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="XXg-RS-7af">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
@@ -2598,10 +2593,9 @@ DQ
                         <action selector="settingChanged:" target="lhd-u6-xr5" id="aVZ-El-bBQ"/>
                     </connections>
                 </popUpButton>
-                <button misplaced="YES" id="mlk-a6-xcL">
+                <button toolTip="If you turn this on, optional ligatures in this font will be enabled. It forces Therm to use a slower text rendering algorithm." misplaced="YES" id="mlk-a6-xcL">
                     <rect key="frame" x="18" y="123" width="106" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">If you turn this on, optional ligatures in this font will be enabled. It forces Therm to use a slower text rendering algorithm.</string>
                     <buttonCell key="cell" type="check" title="Use Ligatures" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="EEt-Fl-Kf8">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -2684,11 +2678,6 @@ DQ
                         <outlet property="nextKeyView" destination="4765" id="5254"/>
                     </connections>
                 </button>
-<!--
-
-unicode 10 is hardcoded now
--->
-
                 <button misplaced="YES" id="jlZ-SF-XtE">
                     <rect key="frame" x="324" y="234" width="207" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3454,7 +3443,7 @@ unicode 10 is hardcoded now
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="511" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="511" height="95"/>
@@ -3463,7 +3452,7 @@ unicode 10 is hardcoded now
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="508" minWidth="40" maxWidth="1000" id="5664">
+                                    <tableColumn identifier="" width="508" minWidth="40" maxWidth="1000" id="5664">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4054,7 +4043,7 @@ unicode 10 is hardcoded now
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -4063,7 +4052,7 @@ unicode 10 is hardcoded now
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="516" minWidth="40" maxWidth="1000" id="7MV-bw-rSc">
+                                    <tableColumn identifier="" width="516" minWidth="40" maxWidth="1000" id="7MV-bw-rSc">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -4227,33 +4216,8 @@ unicode 10 is hardcoded now
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="t0W-Hn-05Q"/>
-                        <outlet property="nextKeyView" destination="5747" id="5752"/>
                     </connections>
                 </button>
-<!--
-                <button id="5747">
-                    <rect key="frame" x="356" y="381" width="253" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Copied text includes trailing newline" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5748">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="GEe-gf-ALm"/>
-                    </connections>
-                </button>
-                <button toolTip="Clipboard access via an escape code poses a security risk if running untrusted applications." id="6383">
-                    <rect key="frame" x="356" y="361" width="310" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Applications in terminal may access clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="JJB-g8-hTr"/>
-                    </connections>
-                </button>
--->
                 <button id="4757">
                     <rect key="frame" x="18" y="280" width="269" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4312,21 +4276,6 @@ unicode 10 is hardcoded now
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="oP4-Nh-ypZ"/>
                     </connections>
                 </button>
-<!--
-                <button id="5319">
-                    <rect key="frame" x="356" y="191" width="189" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Native full screen windows animate into their own desktop. Non-native full screen windows quickly expand to fill the window's screen.</string>
-                    <buttonCell key="cell" type="check" title="Native full screen windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5320">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="fot-6n-Z9m"/>
-                        <outlet property="nextKeyView" destination="6337" id="age-Bh-isX"/>
-                    </connections>
-                </button>
--->
                 <button id="6366">
                     <rect key="frame" x="356" y="84" width="398" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4907,7 +4856,7 @@ unicode 10 is hardcoded now
                 <button id="6051">
                     <rect key="frame" x="18" y="95" width="275" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="off" inset="2" id="6052">
+                    <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6052">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -5024,7 +4973,7 @@ unicode 10 is hardcoded now
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="-263" y="1211"/>
+            <point key="canvasLocation" x="-313" y="1500"/>
         </customView>
         <customView misplaced="YES" id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="932" height="420"/>
@@ -5452,7 +5401,7 @@ unicode 10 is hardcoded now
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn editable="NO" width="47" minWidth="40" maxWidth="1000" id="5564">
+                                    <tableColumn identifier="" editable="NO" width="47" minWidth="40" maxWidth="1000" id="5564">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Default">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -5465,7 +5414,7 @@ unicode 10 is hardcoded now
                                         </textFieldCell>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                     </tableColumn>
-                                    <tableColumn editable="NO" width="185" minWidth="40" maxWidth="1000" id="5565">
+                                    <tableColumn identifier="" editable="NO" width="185" minWidth="40" maxWidth="1000" id="5565">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Name">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -5564,7 +5513,7 @@ unicode 10 is hardcoded now
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn width="284" minWidth="40" maxWidth="1000" id="6095">
+                                    <tableColumn identifier="" width="284" minWidth="40" maxWidth="1000" id="6095">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Mouse Button/Trackpad Gesture">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -5577,7 +5526,7 @@ unicode 10 is hardcoded now
                                         </textFieldCell>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                     </tableColumn>
-                                    <tableColumn width="559" minWidth="10" maxWidth="3.4028234663852886e+38" id="6099">
+                                    <tableColumn identifier="" width="559" minWidth="10" maxWidth="3.4028234663852886e+38" id="6099">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Action">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -5750,7 +5699,7 @@ unicode 10 is hardcoded now
                                 <color key="backgroundColor" name="_sourceListBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn editable="NO" width="595" minWidth="40" maxWidth="1000" id="wQ6-7Q-vbc">
+                                    <tableColumn identifier="" editable="NO" width="595" minWidth="40" maxWidth="1000" id="wQ6-7Q-vbc">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Setting">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -5763,7 +5712,7 @@ unicode 10 is hardcoded now
                                         </textFieldCell>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                     </tableColumn>
-                                    <tableColumn width="349" minWidth="40" maxWidth="1000" id="FSW-rl-pkB">
+                                    <tableColumn identifier="" width="349" minWidth="40" maxWidth="1000" id="FSW-rl-pkB">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Value">
                                             <font key="font" metaFont="smallSystem"/>
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
