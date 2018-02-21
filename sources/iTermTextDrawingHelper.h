@@ -329,6 +329,9 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
                                                          BOOL blinkingItemsVisible,
                                                          BOOL blinkAllowed) {
     const unichar code = c->code;
+    if (c->image) {
+        return YES;
+    }
     if (!c->complexChar) {
         if (code == DWC_RIGHT ||
             code == DWC_SKIP ||
