@@ -303,6 +303,7 @@ static iTermController *gSharedInstance;
     } else {
         [self launchBookmark:nil inTerminal:_frontTerminalWindowController];
     }
+
 }
 
 - (NSArray<PseudoTerminal *> *)terminalsSortedByNumber {

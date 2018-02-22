@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16E195" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13771" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="12121"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13771"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -21,13 +21,6 @@
                                     <action selector="showAbout:" target="201" id="509"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="Check For Updates…" identifier="Check For Updates…" id="880">
-                                <connections>
-                                    <action selector="checkForUpdates:" target="879" id="881"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="198">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -39,61 +32,12 @@
                             <menuItem isSeparatorItem="YES" id="199">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-<!--
-                            <menuItem title="Show Tip of the Day" identifier="Show Tip of the Day" id="ft3-BP-igZ">
-                                <connections>
-                                    <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Check for Incompatible Software" identifier="Check for Incompatible Software" id="SsR-0r-ksL">
-                                <connections>
-                                    <action selector="checkForIncompatibleSoftware:" target="201" id="0ur-zZ-jKd"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Toggle Debug Logging" enabled="NO" identifier="Toggle Debug Logging" id="950">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="debugLogging:" target="-1" id="951"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="143">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Services" id="131">
-                                <menu key="submenu" title="Services" systemMenu="services" id="130"/>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="144">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Hide Therm" keyEquivalent="h" identifier="Hide Therm" id="134">
-                                <connections>
-                                    <action selector="hide:" target="-2" id="152"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Hide Others" keyEquivalent="h" identifier="Hide Others" id="145">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="hideOtherApplications:" target="-2" id="146"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Show All" identifier="Show All" id="150">
-                                <connections>
-                                    <action selector="unhideAllApplications:" target="-2" id="153"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="149">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
--->
                             <menuItem title="Secure Keyboard Entry" keyEquivalent="s" identifier="Secure Keyboard Entry" id="1174">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="toggleSecureInput:" target="201" id="1175"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem isSeparatorItem="YES" id="1176"/>
--->
                             <menuItem title="Make Therm Default Term" keyEquivalent="\" identifier="Make Therm Default Term" id="1470">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" command="YES"/>
                                 <connections>
@@ -106,14 +50,6 @@
                                     <action selector="unmakeDefaultTerminal:" target="201" id="1475"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="Install Shell Integration" alternate="YES" identifier="Install Shell Integration" id="rHN-nq-xah">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="installShellIntegration:" target="-1" id="QBH-7C-wWV"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="1469"/>
                             <menuItem title="Quit Therm" keyEquivalent="q" identifier="Quit Therm" id="136">
                                 <connections>
@@ -126,34 +62,18 @@
                 <menuItem title="Shell" id="83">
                     <menu key="submenu" title="Shell" id="81">
                         <items>
-                            <menuItem title="New Window" alternate="YES" keyEquivalent="n" identifier="New Window" id="872">
-                                <connections>
-                                    <action selector="newWindow:" target="201" id="873"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="New Tab" keyEquivalent="t" identifier="New Tab" id="867">
                                 <connections>
                                     <action selector="newSession:" target="201" id="871"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="New Tab with Current Profile" keyEquivalent="T" identifier="New Tab with Current Profile" id="1302">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                            <menuItem title="New Window" alternate="YES" keyEquivalent="n" identifier="New Window" id="872">
                                 <connections>
-                                    <action selector="newSessionWithSameProfile:" target="201" id="1304"/>
+                                    <action selector="newWindow:" target="201" id="873"/>
                                 </connections>
                             </menuItem>
--->
+                            <menuItem title="New Fullscreen" keyEquivalent="N" id="AiA-EI-vm2"/>
                             <menuItem isSeparatorItem="YES" id="1199"/>
-<!--
-                            <menuItem title="Duplicate Tab" identifier="Duplicate Tab" id="Heo-Xb-RKN">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="duplicateTab:" target="-1" id="DcR-B7-VKj"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="w1g-nK-kOV"/>
--->
                             <menuItem title="Split Vertically" keyEquivalent="d" identifier="Split Vertically" id="1200">
                                 <connections>
                                     <action selector="splitVertically:" target="-1" id="1202"/>
@@ -164,20 +84,6 @@
                                     <action selector="splitHorizontally:" target="-1" id="1203"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="Split Horizontally…" keyEquivalent="H" identifier="Split Horizontally…" id="1289">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openSplitHorizontallySheet:" target="-1" id="1293"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Split Vertically…" keyEquivalent="V" identifier="Split Vertically…" id="1291">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openSplitVerticallySheet:" target="-1" id="1294"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="632">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -283,9 +189,6 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1439"/>
-<!--
-                            <menuItem title="Page Setup..." keyEquivalent="P" identifier="Page Setup..." id="685">
--->
                             <menuItem title="Page Setup..." identifier="Page Setup..." id="685">
                                 <connections>
                                     <action selector="runPageLayout:" target="-1" id="691"/>
@@ -294,26 +197,17 @@ DQ
                             <menuItem title="Print" id="822">
                                 <menu key="submenu" title="Print" id="824">
                                     <items>
-<!--
-                                        <menuItem title="Screen" keyEquivalent="p" identifier="Print.Screen" id="823">
--->
                                         <menuItem title="Screen" identifier="Print.Screen" id="823">
                                             <connections>
                                                 <action selector="print:" target="-1" id="827"/>
                                             </connections>
                                         </menuItem>
-<!--
-                                        <menuItem title="Selection" tag="1" keyEquivalent="p" identifier="Print.Selection" id="825">
--->
                                         <menuItem title="Selection" tag="1" identifier="Print.Selection" id="825">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="print:" target="-1" id="828"/>
                                             </connections>
                                         </menuItem>
-<!--
-                                        <menuItem title="Buffer" tag="2" keyEquivalent="P" identifier="Print.Buffer" id="826">
--->
                                         <menuItem title="Buffer" tag="2" identifier="Print.Buffer" id="826">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
@@ -485,7 +379,6 @@ DQ
                                                 <action selector="toggleFindPanel:" target="-1" id="766"/>
                                             </connections>
                                         </menuItem>
-<!-- this was before g and G -->
                                         <menuItem title="Find Next" keyEquivalent="P" identifier="Find.Find Next" id="761">
                                             <connections>
                                                 <action selector="findNext:" target="-1" id="767"/>
@@ -501,13 +394,6 @@ DQ
                                                 <action selector="findWithSelection:" target="-1" id="769"/>
                                             </connections>
                                         </menuItem>
-<!--
-                                        <menuItem title="Jump to Selection" keyEquivalent="j" identifier="Find.Jump to Selection" id="764">
-                                            <connections>
-                                                <action selector="jumpToSelection:" target="-1" id="770"/>
-                                            </connections>
-                                        </menuItem>
--->
                                         <menuItem isSeparatorItem="YES" id="PJB-Pw-4PO">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
@@ -540,13 +426,6 @@ DQ
                                         <menuItem isSeparatorItem="YES" id="Pvx-sU-bPM">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
-<!--
-                                        <menuItem title="Jump to Mark" keyEquivalent="J" identifier="Marks and Annotations.Jump to Mark" id="1245">
-                                            <connections>
-                                                <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
-                                            </connections>
-                                        </menuItem>
--->
                                         <menuItem title="Previous Mark/Annotation" keyEquivalent="" identifier="Marks and Annotations.Previous Mark or Annotation" id="sZa-7I-YDa">
                                             <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                             <connections>
@@ -609,13 +488,6 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
-<!--
-                            <menuItem title="Clear Buffer" keyEquivalent="k" identifier="Clear Buffer" id="217">
-                                <connections>
-                                    <action selector="clearBuffer:" target="-1" id="220"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem title="Clear Scrollback Buffer" keyEquivalent="l" identifier="Clear Scrollback Buffer" id="755">
                                 <connections>
                                     <action selector="clearScrollbackBuffer:" target="-1" id="756"/>
@@ -627,13 +499,6 @@ DQ
                 <menuItem title="View" id="802">
                     <menu key="submenu" title="View" id="803">
                         <items>
-<!--
-                            <menuItem title="Show Tabs in Fullscreen" keyEquivalent="T" identifier="Show Tabs in Fullscreen" id="1257">
-                                <connections>
-                                    <action selector="toggleFullScreenTabBar:" target="-1" id="1259"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem title="Toggle Full Screen" identifier="Toggle Full Screen" id="914">
                                 <string key="keyEquivalent" base64-UTF8="YES">
 DQ
@@ -642,13 +507,6 @@ DQ
                                     <action selector="toggleFullScreenMode:" target="-1" id="1256"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="Use Transparency" keyEquivalent="u" identifier="Use Transparency" id="1228">
-                                <connections>
-                                    <action selector="toggleUseTransparency:" target="201" id="1229"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="806">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -684,13 +542,6 @@ Gw
                                     <action selector="toggleCursorGuide:" target="-1" id="Vxk-ww-Ugb"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="Show Timestamps" keyEquivalent="E" identifier="Show Timestamps" id="TnF-kz-Lf0">
-                                <connections>
-                                    <action selector="toggleShowTimestamps:" target="-1" id="oGg-h2-Ex7"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem title="Show Annotations" keyEquivalent="\" identifier="Show Annotations" id="pAu-j3-wEC">
                                 <connections>
                                     <action selector="showHideNotes:" target="-1" id="bWx-ZS-6aE"/>
@@ -702,19 +553,6 @@ Gw
                                     <action selector="toggleAutoCommandHistory:" target="-1" id="asy-Rr-9Eu"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem isSeparatorItem="YES" id="gzL-UV-S2y">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Open Quickly" keyEquivalent="O" identifier="Open Quickly" id="Knm-gZ-dFc">
-                                <connections>
-                                    <action selector="openQuickly:" target="201" id="B7o-gt-d3A"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="VKC-UO-5Cj">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
--->
                             <menuItem title="Maximize Active Pane" identifier="Maximize Active Pane" id="1233">
                                 <string key="keyEquivalent" base64-UTF8="YES">
 DQ
@@ -748,166 +586,9 @@ DQ
                                     <action selector="smallerFont:" target="201" id="809"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem isSeparatorItem="YES" id="915">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Start Instant Replay" keyEquivalent="b" identifier="Start Instant Replay" id="976">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="irPrev:" target="-1" id="982"/>
-                                </connections>
-                            </menuItem>
--->
                         </items>
                     </menu>
                 </menuItem>
-<!--
-                <menuItem title="Session" id="ZGW-Bo-6S6">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Session" id="3Ow-tu-l1x">
-                        <items>
-                            <menuItem title="Edit Session…" keyEquivalent="i" identifier="Edit Session…" id="954">
-                                <connections>
-                                    <action selector="editCurrentSession:" target="201" id="955"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="w7i-MX-J2b">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Run Coprocess…" keyEquivalent="r" identifier="Run Coprocess…" id="1305">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="runCoprocess:" target="-1" id="1320"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Stop Coprocess" keyEquivalent="R" identifier="Stop Coprocess" id="1321">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="stopCoprocess:" target="-1" id="1325"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="xtQ-dE-5vt">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Restart Session" identifier="Restart Session" id="Jvo-Bw-UNg">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="restartSession:" target="-1" id="zO6-It-s2w"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="ibp-nX-yTw">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Open Autocomplete…" keyEquivalent=";" identifier="Open Autocomplete…" id="1144">
-                                <connections>
-                                    <action selector="openAutocomplete:" target="-1" id="1146"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Open Command History…" keyEquivalent=";" identifier="Open Command History…" id="MXE-be-qxv">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openCommandHistory:" target="-1" id="XHr-bn-Hbc"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Open Recent Directories…" keyEquivalent="/" identifier="Open Recent Directories…" id="7X6-Am-EEB">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openDirectories:" target="-1" id="U0c-KD-2xF"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Open Paste History…" keyEquivalent="H" identifier="Open Paste History…" id="1142">
-                                <connections>
-                                    <action selector="openPasteHistory:" target="-1" id="1143"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="908">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Reset" keyEquivalent="r" identifier="Reset" id="907">
-                                <connections>
-                                    <action selector="reset:" target="-1" id="909"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Reset Character Set" identifier="Reset Character Set" id="1500">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="resetCharset:" target="-1" id="1502"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="Sq7-yQ-kOu">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Log" id="227">
-                                <menu key="submenu" title="Log" autoenablesItems="NO" id="228">
-                                    <items>
-                                        <menuItem title="Start" identifier="Log.Start" id="229">
-                                            <connections>
-                                                <action selector="logStart:" target="-1" id="231"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Stop" identifier="Log.Stop" id="230">
-                                            <connections>
-                                                <action selector="logStop:" target="-1" id="232"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>
-                            <menuItem title="Bury Session" keyEquivalent="B" identifier="Bury Session" id="m8k-FC-JBb">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="bury:" target="-1" id="jki-EJ-MEs"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Buried Sessions" id="Weo-nd-iLL">
-                                <menu key="submenu" title="Buried Sessions" autoenablesItems="NO" id="PTu-aD-qbz"/>
-                            </menuItem>
-                        </items>
-                    </menu>
-                </menuItem>
-                <menuItem title="Profiles" id="591">
-                    <menu key="submenu" title="Profiles" id="592">
-                        <items>
-                            <menuItem title="Open Profiles…" keyEquivalent="o" identifier="Open Profiles…" id="952">
-                                <connections>
-                                    <action selector="showBookmarkWindow:" target="201" id="953"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="868">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Press Option for New Window" identifier="Press Option for New Window" id="875"/>
-                            <menuItem title="Open In New Window" alternate="YES" identifier="Open In New Window" id="878">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="877">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                        </items>
-                    </menu>
-                </menuItem>
-                <menuItem title="Toolbelt" id="1295">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Toolbelt" id="1296">
-                        <items>
-                            <menuItem title="Show Toolbelt" keyEquivalent="B" identifier="Show Toolbelt" id="1297">
-                                <connections>
-                                    <action selector="toggleToolbeltVisibility:" target="-1" id="v3c-uP-c8Q"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Set Default Width" identifier="Set Default Width" id="81r-Vc-nVm">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="setDefaultToolbeltWidth:" target="-1" id="QNN-Mh-iac"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1298"/>
-                        </items>
-                    </menu>
-                </menuItem>
--->
                 <menuItem title="Window" id="19">
                     <menu key="submenu" title="Window" systemMenu="window" id="24">
                         <items>
@@ -935,9 +616,6 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                             <menuItem title="Toggle Foreground" keyEquivalent="F" identifier="Toggle ForeGround" id="12312">
-<!--
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
--->
                                 <connections>
                                     <action selector="toggleForeground:" target="201" id="12323"/>
                                 </connections>
@@ -1020,25 +698,21 @@ DQ
                                 <menu key="submenu" title="Resize Split Pane" id="nnc-o3-t2j">
                                     <items>
                                         <menuItem title="Move Divider Up" keyEquivalent="K" identifier="Resize Split Pane.Move Divider Up" id="2Jk-GR-zCt">
-                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerUp:" target="-1" id="smA-wj-JIK"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Move Divider Down" keyEquivalent="J" identifier="Resize Split Pane.Move Divider Down" id="Qpv-Ie-1sh">
-                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerDown:" target="-1" id="NVB-Pj-Xdg"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Move Divider Left" keyEquivalent="H" identifier="Resize Split Pane.Move Divider Left" id="avG-JI-rjO">
-                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerLeft:" target="-1" id="0Jq-7S-KVC"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Move Divider Right" keyEquivalent="L" identifier="Resize Split Pane.Move Divider Right" id="t6w-8j-r4m">
-                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="movePaneDividerRight:" target="-1" id="0Bz-xh-KL2"/>
                                             </connections>
@@ -1112,14 +786,6 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-<!--
-                            <menuItem title="Password Manager" keyEquivalent="f" identifier="Password Manager" id="5">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openPasswordManager:" target="201" id="wbL-5o-kEN"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -1161,29 +827,17 @@ DQ
         </menu>
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
-                <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
-                <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
-                <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="closeTab" destination="635" id="795"/>
                 <outlet property="closeWindow" destination="598" id="796"/>
-                <outlet property="irPrev" destination="976" id="980"/>
-                <outlet property="logStart" destination="229" id="793"/>
-                <outlet property="logStop" destination="230" id="794"/>
                 <outlet property="maximizePane" destination="1233" id="1237"/>
                 <outlet property="selectTab" destination="847" id="863"/>
                 <outlet property="sendInputNormally" destination="1268" id="1276"/>
                 <outlet property="sendInputToAllPanes" destination="1266" id="1279"/>
                 <outlet property="sendInputToAllSessions" destination="1264" id="1278"/>
-                <outlet property="showFullScreenTabs" destination="1257" id="1260"/>
-                <outlet property="toolbeltMenu" destination="1296" id="1299"/>
-                <outlet property="useTransparency" destination="1228" id="1230"/>
                 <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
                 <outlet property="windowArrangements_" destination="1280" id="1285"/>
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
-<!--
-        <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
--->
     </objects>
 </document>
