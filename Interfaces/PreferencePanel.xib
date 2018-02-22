@@ -913,7 +913,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -1127,7 +1127,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -1489,14 +1489,12 @@ DQ
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_openToolbelt" destination="hmf-ta-TMb" id="nOK-vG-n8c"/>
-                <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_rowsLabel" destination="4913" id="JG6-6Y-B6a"/>
                 <outlet property="_screen" destination="4917" id="h9y-lf-09F"/>
                 <outlet property="_screenLabel" destination="4919" id="tHd-7A-AVt"/>
                 <outlet property="_space" destination="4921" id="eYi-dz-bDx"/>
                 <outlet property="_spaceLabel" destination="4920" id="hZ0-FW-sxK"/>
-                <outlet property="_syncTitle" destination="5008" id="4VH-Th-Xwf"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_transparencyAffectsOnlyDefaultBackgroundColor" destination="fwj-4Y-nja" id="caf-eb-abe"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
@@ -2840,7 +2838,6 @@ DQ
                     </popUpButtonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="cwq-Sh-GKV"/>
-                        <outlet property="nextKeyView" destination="5008" id="5262"/>
                     </connections>
                 </popUpButton>
                 <button id="4973">
@@ -2972,39 +2969,6 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="5366">
                         <font key="font" metaFont="miniSystem"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button id="6416">
-                    <rect key="frame" x="295" y="18" width="246" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Open in a new window, never in a tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6417">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="VYD-F1-fDI"/>
-                        <outlet property="nextKeyView" destination="fwj-4Y-nja" id="u8P-d1-x0a"/>
-                    </connections>
-                </button>
-                <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="5008">
-                    <rect key="frame" x="15" y="18" width="219" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Preserve profile name in tab title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5009">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="5jm-v3-jaw"/>
-                        <outlet property="nextKeyView" destination="6416" id="5hh-n9-L6w"/>
-                    </connections>
-                </button>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5012">
-                    <rect key="frame" x="15" y="42" width="105" height="20"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Miscellaneous" id="5013">
-                        <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3813,7 +3777,6 @@ DQ
                             </buttonCell>
                             <connections>
                                 <action selector="settingChanged:" target="kOZ-HN-eXg" id="Lz7-Yf-9xL"/>
-                                <outlet property="nextKeyView" destination="6416" id="hN5-ci-YVf"/>
                             </connections>
                         </button>
                         <button verticalHuggingPriority="750" id="buI-gb-hoX">
@@ -4009,7 +3972,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>

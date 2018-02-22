@@ -125,6 +125,7 @@
         }
     };
     
+#if 0
     info = [self defineControl:_syncTitle
                            key:KEY_SYNC_TITLE
                           type:kPreferenceInfoTypeCheckbox];
@@ -133,6 +134,7 @@
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
+#endif
 
     [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
                     key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
