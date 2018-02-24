@@ -776,6 +776,10 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)drawTimestamps {
+    if (!self.showTimestamps) {
+        return;
+    }
+
     [self updateCachedMetrics];
 
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
