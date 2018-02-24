@@ -41,10 +41,14 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
-@interface iTermMetalRendererTransientState : NSObject
+@interface iTermMetalGenericTransientState : NSObject
+@property (nonatomic, readonly) iTermMetalBufferPoolContext *poolContext;
+@end
+
+NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermMetalRendererTransientState : iTermMetalGenericTransientState
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
-@property (nonatomic, readonly) iTermMetalBufferPoolContext *poolContext;
 @property (nonatomic, weak) iTermMetalDebugInfo *debugInfo;
 @property (nonatomic, strong) NSImage *renderedOutputForDebugging;
 @property (nonatomic) NSUInteger sequenceNumber;
@@ -135,5 +139,38 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                                                       commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
+
+NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermMetalComputerTransientState : iTermMetalGenericTransientState
+@property (nonatomic, strong) id<MTLComputePipelineState> computePipelineState;
+@end
+
+NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermMetalComputer : NSObject
+
+- (nullable instancetype)initWithDevice:(id<MTLDevice>)device;
+@property (nonatomic, readonly) id<MTLDevice> device;
+@property (nonatomic, readonly) Class transientStateClass;
+
+// You don't need to assign to this unless you're doing something fancy.
+@property (nonatomic, readonly) id<MTLComputePipelineState> computePipelineState;
+
+- (nullable instancetype)initWithDevice:(id<MTLDevice>)device
+                    computeFunctionName:(NSString *)computeFunctionName
+                    transientStateClass:(Class)transientStateClass;
+
+- (instancetype)init NS_UNAVAILABLE;
+
+- (__kindof iTermMetalComputerTransientState *)createTransientStateWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer;
+
+- (void)executeComputePassWithTransientState:(iTermMetalComputerTransientState *)tState
+                              computeEncoder:(id <MTLComputeCommandEncoder>)computeEncoder
+                                    textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures
+                                     buffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)buffers
+                             threadgroupSize:(MTLSize)threadgroupSize
+                            threadgroupCount:(MTLSize)threadgroupCount;
+
+@end
+
 
 NS_ASSUME_NONNULL_END

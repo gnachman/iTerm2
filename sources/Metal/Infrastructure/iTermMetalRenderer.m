@@ -71,13 +71,24 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 @property (nonatomic, readwrite) CGFloat scale;
 @end
 
+@implementation iTermMetalGenericTransientState
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _poolContext = [[iTermMetalBufferPoolContext alloc] init];
+    }
+    return self;
+}
+
+@end
+
 @implementation iTermMetalRendererTransientState
 
 - (instancetype)initWithConfiguration:(iTermRenderConfiguration *)configuration {
     self = [super init];
     if (self) {
         _configuration = configuration;
-        _poolContext = [[iTermMetalBufferPoolContext alloc] init];
         iTermPreciseTimerStats *stats = self.stats;
         for (int i = 0; i < self.numberOfStats; i++) {
             iTermPreciseTimerStatsInit(&stats[i], [self nameForStat:i].UTF8String);
@@ -126,6 +137,9 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                 error:NULL];
 }
 
+@end
+
+@implementation iTermMetalComputerTransientState
 @end
 
 @implementation iTermMetalRenderer {
@@ -468,3 +482,77 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 @end
+
+@implementation iTermMetalComputer {
+    NSString *_computeFunctionName;
+    NSMutableDictionary<NSDictionary *, id<MTLComputePipelineState>> *_pipelineStates;
+}
+
+- (instancetype)initWithDevice:(id<MTLDevice>)device {
+    self = [super init];
+    if (self) {
+        _device = device;
+    }
+    return self;
+}
+
+- (nullable instancetype)initWithDevice:(id<MTLDevice>)device
+                    computeFunctionName:(NSString *)computeFunctionName
+                    transientStateClass:(Class)transientStateClass {
+    self = [super init];
+    if (self) {
+        _device = device;
+        _computeFunctionName = [computeFunctionName copy];
+        _transientStateClass = transientStateClass;
+        _pipelineStates = [NSMutableDictionary dictionary];
+    }
+    return self;
+}
+
+- (id<MTLComputePipelineState>)computePipelineState {
+    NSDictionary *key = [self keyForPipelineState];
+    if (_pipelineStates[key] == nil) {
+        static id<MTLLibrary> defaultLibrary;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            defaultLibrary = [_device newDefaultLibrary];
+        });
+        id <MTLFunction> kernelFunction = [defaultLibrary newFunctionWithName:_computeFunctionName];
+        ITDebugAssert(kernelFunction);
+        NSError *error = nil;
+        _pipelineStates[key] = [_device newComputePipelineStateWithFunction:kernelFunction error:&error];
+        ITDebugAssert(error == nil);
+    }
+    return _pipelineStates[key];
+}
+
+- (NSDictionary *)keyForPipelineState {
+    // At the time of writing only the fragment function is mutable. If other inputs to the pipeline
+    // state descriptor become mutable, add them here.
+    return @{ @"compute function": _computeFunctionName ?: @"" };
+}
+
+- (__kindof iTermMetalComputerTransientState *)createTransientStateWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    iTermMetalComputerTransientState *tState = [[self.transientStateClass alloc] init];
+    tState.computePipelineState = [self computePipelineState];
+    return tState;
+}
+
+- (void)executeComputePassWithTransientState:(iTermMetalComputerTransientState *)tState
+                              computeEncoder:(id <MTLComputeCommandEncoder>)computeEncoder
+                                    textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures
+                                     buffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)buffers
+                             threadgroupSize:(MTLSize)threadgroupSize
+                            threadgroupCount:(MTLSize)threadgroupCount {
+    [computeEncoder setComputePipelineState:self.computePipelineState];
+    [textures enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull indexNumber, id<MTLTexture> _Nonnull texture, BOOL * _Nonnull stop) {
+        [computeEncoder setTexture:texture atIndex:indexNumber.unsignedIntegerValue];
+    }];
+    [buffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull indexNumber, id<MTLBuffer> _Nonnull buffer, BOOL * _Nonnull stop) {
+        [computeEncoder setBuffer:buffer offset:0 atIndex:indexNumber.unsignedIntegerValue];
+    }];
+    [computeEncoder dispatchThreadgroups:threadgroupSize threadsPerThreadgroup:threadgroupCount];
+}
+
+@end
+

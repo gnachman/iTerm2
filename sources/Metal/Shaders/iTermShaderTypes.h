@@ -16,7 +16,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexPerInstanceUniforms = 2,
     iTermVertexInputIndexOffset = 3,
     iTermVertexInputIndexCursorDescription = 4,
-    iTermVertexInputIndexASCIITextConfiguration = 5,
+    iTermVertexInputIndexASCIITextConfiguration = 5,  // iTermASCIITextConfiguration
     iTermVertexInputIndexASCIITextRowInfo = 6,  // iTermASCIIRowInfo
     iTermVertexInputIndexColorMap = 7,  // data with serialized iTermColorMap
     iTermVertexInputSelectedIndices = 8,  // data is an array of bits giving selected indices
@@ -44,6 +44,12 @@ typedef enum iTermTextureIndex {
     iTermTextureIndexThinBoldItalic = 9,
 
 } iTermTextureIndex;
+
+typedef NS_ENUM(int, iTermComputeIndex) {
+    iTermComputeIndexScreenChars = 0,  // screen_char_t *
+    iTermComputeIndexColors = 1,  // iTermCellColors *
+    iTermComputeIndexColorsConfig = 2,  // iTermColorsConfig
+};
 
 typedef NS_ENUM(int, iTermFragmentBufferIndex) {
     iTermFragmentBufferIndexMarginColor = 0,  // Points at a single float4
@@ -131,13 +137,7 @@ typedef struct {
 } iTermTextureDimensions;
 
 typedef struct {
-    // These do not need to be initialized by the data source.
-    vector_float2 cellSize;
-    vector_uint2 gridSize;
-    float scale;
-    vector_float2 atlasSize;
-
-    // Everything below this line needs to be initialized by the data source.
+    vector_uint2 gridSize;  // Does not include EOL marker
     float minimumContrast;
     float dimmingAmount;
     float mutingAmount;
@@ -150,9 +150,18 @@ typedef struct {
     vector_float4 unfocusedSelectionColor;  // see PTYTextView colorMap:didChangeColorForKey:
     bool isFrontTextView;
     bool dimOnlyText;
+#warning TODO: This should also handle non-ascii
     vector_float4 asciiUnderlineColor;
     iTermThinStrokesSetting thinStrokesSetting;
     bool hasBackgroundImage;
+} iTermColorsConfiguration;
+
+typedef struct {
+    vector_uint2 gridSize;
+    vector_float2 cellSize;
+    float scale;
+    vector_float2 atlasSize;
+    int width;  // grid width, not inclusive of EOL marker
 } iTermASCIITextConfiguration;
 
 typedef struct {
@@ -165,5 +174,14 @@ typedef struct {
     int row;
     int debugX;
 } iTermASCIIRowInfo;
+
+typedef struct {
+    bool discard;
+    vector_float4 textColor;
+    vector_float4 backgroundColor;
+    vector_float4 underlineColor;
+    iTermMetalGlyphAttributesUnderline underlineStyle;
+    bool useThinStrokes;
+} iTermCellColors;
 
 #endif

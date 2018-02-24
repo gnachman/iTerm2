@@ -31,9 +31,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic) iTermMetalUnderlineDescriptor underlineDescriptor;
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
-@property (nonatomic, strong) id<MTLBuffer> debugBuffer;
 @property (nonatomic) VT100GridCoord debugCoord;
-@property (nonatomic) iTermASCIITextConfiguration asciiConfig;
 
 // screen_char_t array
 - (void)addRow:(iTermASCIIRow *)row;
@@ -42,8 +40,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITextRenderer : NSObject<iTermMetalCellRenderer>
-
-@property (nonatomic, strong) NSData *colorMap;
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

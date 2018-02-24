@@ -11,6 +11,7 @@
 #import "iTermBackgroundColorRenderer.h"
 #import "iTermBadgeRenderer.h"
 #import "iTermBroadcastStripesRenderer.h"
+#import "iTermColorComputer.h"
 #import "iTermCopyBackgroundRenderer.h"
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
@@ -117,6 +118,7 @@
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
     iTermImageRenderer *_imageRenderer;
+    iTermColorComputer *_colorComputer;
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
@@ -178,6 +180,7 @@
         _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:mtkView.device];
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
+        _colorComputer = [[iTermColorComputer alloc] initWithDevice:mtkView.device];
 
         _commandQueue = [mtkView.device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -530,6 +533,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     [commandBuffer enqueue];
     commandBuffer.label = @"Draw Terminal";
+
+    // Renderers
     for (id<iTermMetalRenderer> renderer in self.nonCellRenderers) {
         if (renderer.rendererDisabled) {
             continue;
@@ -546,6 +551,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }];
     };
 
+    // Cell renderers
     for (id<iTermMetalCellRenderer> renderer in self.cellRenderers) {
         if (renderer.rendererDisabled) {
             continue;
@@ -560,6 +566,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             }
         }];
     };
+
+    // Computers
+#warning support stats for computers
+    __kindof iTermMetalComputerTransientState * _Nonnull tState =
+        [_colorComputer createTransientStateWithCommandBuffer:commandBuffer];
+    if (tState) {
+        [frameData setTransientState:tState forComputer:_colorComputer];
+#warning support debug info for computers
+//            [frameData.debugInfo addTransientState:tState];
+    }
 }
 
 // Called when all renderers have transient state
@@ -625,6 +641,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  enequeueDrawCallsForFrameData");
+    frameData.computeEncoder = [commandBuffer computeCommandEncoder];
+    [_colorComputer executeComputePassWithTransientState:[frameData transientStateForComputer:_colorComputer]
+                                          computeEncoder:frameData.computeEncoder];
+    [frameData.computeEncoder endEncoding];
 
     frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
                                                             frameData:frameData
@@ -692,6 +712,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
 
+    _colorComputer.colorMap = frameData.perFrameState.colorMap;
+    iTermColorsConfiguration config;
+    [frameData.perFrameState getConfiguration:&config];
+    _colorComputer.config = config;
+
     __weak __typeof(self) weakSelf = self;
     CGSize cellSize = _cellSize;
     CGFloat scale = _scale;
@@ -720,7 +745,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                         return nil;
                                     }
                                 }];
-    _asciiTextRenderer.colorMap = frameData.perFrameState.colorMap;
 }
 
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -873,6 +897,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)populateTextAndBackgroundRenderersTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermColorComputerTransientState *colorState = [frameData transientStateForComputer:_colorComputer];
+    assert(colorState);
+    colorState.lines = frameData.perFrameState.concatenatedLines;
+    colorState.selectedIndices = frameData.perFrameState.selectedIndices;
+    colorState.findMatches = frameData.perFrameState.findMatches;
+    colorState.annotatedIndices = frameData.perFrameState.annotatedIndices;
+    colorState.markedIndices = frameData.perFrameState.markedIndices;
+    colorState.underlinedIndices = frameData.perFrameState.underlinedIndices;
+
     if (_asciiTextRenderer.rendererDisabled &&
         _textRenderer.rendererDisabled &&
         _backgroundColorRenderer.rendererDisabled) {
@@ -897,10 +930,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     asciiState.underlineDescriptor = asciiUnderlineDescriptor;
     asciiState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
-    iTermASCIITextConfiguration asciiConfig;
-    [frameData.perFrameState getConfiguration:&asciiConfig];
-    asciiState.asciiConfig = asciiConfig;
-    asciiState.debugBuffer = frameData.debugBuffer;
+#warning TODO: Ascii still needs some config, but it's small
     asciiState.debugCoord = VT100GridCoordMake(0, 0);
 
     CGSize cellSize = textState.cellConfiguration.cellSize;

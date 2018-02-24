@@ -19,10 +19,7 @@
 @interface iTermASCIITextRendererTransientState()
 @property (nonatomic, readonly) NSArray<iTermASCIIRow *> *rows;
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;
-@property (nonatomic, readonly) id<MTLBuffer> configurationBuffer;
 @property (nonatomic, strong) iTermMetalBufferPool *configPool;
-@property (nonatomic, strong) NSData *colorMap;
-@property (nonatomic, strong) iTermMetalMixedSizeBufferPool *bitmapPool;
 @end
 
 @implementation iTermASCIITextRendererTransientState {
@@ -100,21 +97,6 @@
             error:NULL];
 }
 
-- (id<MTLBuffer>)configurationBuffer {
-    iTermCellRenderConfiguration *cellConfig = self.cellConfiguration;
-    iTermASCIITextConfiguration configuration = self.asciiConfig;
-    configuration.cellSize = simd_make_float2(cellConfig.cellSize.width,
-                                              cellConfig.cellSize.height);
-    configuration.gridSize = simd_make_uint2(cellConfig.gridSize.width,
-                                             cellConfig.gridSize.height);
-    configuration.scale = static_cast<float>(cellConfig.scale);
-    configuration.atlasSize = _asciiTextureGroup.atlasSize;
-
-    return [_configPool requestBufferFromContext:self.poolContext
-                                       withBytes:&configuration
-                                  checkIfChanged:YES];
-}
-
 - (void)addRow:(iTermASCIIRow *)row {
     if (!_rows) {
         _rows = [NSMutableArray array];
@@ -155,11 +137,8 @@
 @implementation iTermASCIITextRenderer {
     iTermMetalCellRenderer *_cellRenderer;
     iTermMetalMixedSizeBufferPool *_screenCharPool;
-    iTermMetalBufferPool *_configurationPool;
     iTermASCIITextureGroup *_asciiTextureGroup;
     iTermMetalBufferPool *_dimensionsPool;
-    iTermMetalMixedSizeBufferPool *_colorMapPool;
-    iTermMetalMixedSizeBufferPool *_bitmapPool;
     NSMutableDictionary<NSNumber *, id<MTLBuffer>> *_rowInfos;
     id<MTLBuffer> _models;
 }
@@ -179,13 +158,6 @@
                                                                        capacity:maxRows * (iTermMetalDriverMaximumNumberOfFramesInFlight + 1)
                                                                            name:@"ASCII PIU lines"];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
-        _configurationPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermASCIITextConfiguration)];
-        _colorMapPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                     capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
-                                                                         name:@"Serialized Color Maps"];
-        _bitmapPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                   capacity:maxRows * (iTermMetalDriverMaximumNumberOfFramesInFlight + 1)
-                                                                       name:@"Bit fields"];
         _rowInfos = [NSMutableDictionary dictionary];
 
         // Use a generic color model for blending. No need to use a buffer pool here because this is only
@@ -222,8 +194,6 @@
     tState.vertexBuffer.label = @"Vertices";
     tState.asciiTextureGroup = _asciiTextureGroup;
     tState.configPool = _configurationPool;
-    tState.colorMap = _colorMap;
-    tState.bitmapPool = _bitmapPool;
 }
 
 - (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
@@ -278,9 +248,6 @@
     tState.vertexBuffer = [_cellRenderer.device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
 // END SHITTY SLOW CODE
 
-    id<MTLBuffer> colorMapBuffer = [_colorMapPool requestBufferFromContext:tState.poolContext
-                                                                      size:tState.colorMap.length
-                                                                     bytes:tState.colorMap.bytes];
     [tState enumerateDraws:^(iTermASCIIRow *row, int line) {
         id<MTLBuffer> screenChars = [_screenCharPool requestBufferFromContext:tState.poolContext
                                                                          size:row.screenChars.length
@@ -294,7 +261,6 @@
                                                  @(iTermVertexInputIndexOffset): tState.offsetBuffer,
                                                  @(iTermVertexInputIndexASCIITextRowInfo): [self rowInfoBufferForLine:line tState:tState],
                                                  @(iTermVertexInputIndexASCIITextConfiguration): tState.configurationBuffer,
-                                                 @(iTermVertexInputIndexColorMap): colorMapBuffer,
                                                  @(iTermVertexInputSelectedIndices): [tState bitArrayForIndexSet:row.selectedIndices],
                                                  @(iTermVertexInputFindMatchIndices): [tState bitArrayForData:row.findMatches],
                                                  @(iTermVertexInputMarkedIndices): [tState bitArrayForRange:row.markedRange],

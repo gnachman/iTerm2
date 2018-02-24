@@ -9,7 +9,6 @@
 #include <simd/simd.h>
 
 using namespace metal;
-typedef unsigned short unichar;
 
 #import "iTermMetalLogging.h"
 #import "iTermMetalScreenCharAccessors.h"
@@ -65,13 +64,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
                            unsigned int x [[instance_id]],
                            device iTermASCIITextConfiguration *config [[ buffer(iTermVertexInputIndexASCIITextConfiguration) ]],
                            device iTermASCIIRowInfo *rowInfo [[ buffer(iTermVertexInputIndexASCIITextRowInfo) ]],
-                           device unsigned char *colorMap [[ buffer(iTermVertexInputIndexColorMap) ]],
-                           device unsigned char *selectedIndices [[ buffer(iTermVertexInputSelectedIndices) ]],
-                           device unsigned char *findMatchIndices [[ buffer(iTermVertexInputFindMatchIndices) ]],
-                           device unsigned char *annotatedIndices [[ buffer(iTermVertexInputAnnotatedIndices) ]],
-                           device unsigned char *markedIndices [[ buffer(iTermVertexInputMarkedIndices) ]],
-                           device unsigned char *underlinedIndices [[ buffer(iTermVertexInputUnderlinedIndices) ]],
-                           device iTermMetalDebugBuffer *debugBuffer [[ buffer(iTermVertexInputDebugBuffer) ]]) {
+                           device iTermCellColors *colors) {
     iTermASCIITextVertexFunctionOutput out;
     if (SCComplex(&line[x]) ||
         SCImage(&line[x]) ||
@@ -100,55 +93,19 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
-    const int mask = 1 << (x & 7);
-    const bool selected = !!(selectedIndices[x / 8] & mask);
-    const bool findMatch = !!(findMatchIndices[x / 8] & mask);
-    const bool annotated = !!(annotatedIndices[x / 8] & mask);
-    const bool marked = !!(markedIndices[x / 8] & mask);
-    const bool inUnderlinedRange = !!(underlinedIndices[x / 8] & mask);
+    const int i = x + rowInfo->row * (config->width + 1);  // add one for EOL marker
+    
+    out.backgroundColor = colors[i].backgroundColor;
+    out.textColor = colors[i].textColor;
+    out.underlineStyle = colors[i].underlineStyle;
+    out.underlineColor = colors[i].underlineColor;
 
-    out.backgroundColor = BackgroundColor(&line[x],
-                                          config->transparencyAlpha,
-                                          config->transparencyAffectsOnlyDefaultBackgroundColor,
-                                          config->reverseVideo,
-                                          config->useBrightBold,
-                                          config->isFrontTextView,
-                                          config->mutingAmount,
-                                          config->dimOnlyText,
-                                          config->dimmingAmount,
-                                          config->hasBackgroundImage,
-                                          config->unfocusedSelectionColor,
-                                          colorMap,
-                                          selected,
-                                          findMatch);
-    out.textColor = TextColor(&line[x],
-                              config->minimumContrast,
-                              config->dimmingAmount,
-                              config->mutingAmount,
-                              config->dimOnlyText,
-                              config->reverseVideo,
-                              config->useBrightBold,
-                              colorMap,
-                              out.backgroundColor,
-                              selected,
-                              findMatch,
-                              inUnderlinedRange && !annotated);
-    out.underlineStyle = UnderlineStyle(&line[x], annotated, inUnderlinedRange);
-    if (out.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-        out.underlineColor = UnderlineColor(config->asciiUnderlineColor,
-                                            out.textColor,
-                                            annotated,
-                                            marked);
-    }
     out.cellOffset = CellOffset(x, config->gridSize, config->cellSize, *offset);
     out.viewportSize = viewportSize;
     out.scale = config->scale;
 
     out.bold = SCBold(&line[x]);
-    out.thin = UseThinStrokes(config->thinStrokesSetting,
-                              config->scale > 1,
-                              out.backgroundColor,
-                              out.textColor);
+    out.thin = colors[i].useThinStrokes;
     out.italic = SCItalic(&line[x]);
 
     return out;

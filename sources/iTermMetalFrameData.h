@@ -102,6 +102,7 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState;
 @class iTermMetalBufferPoolContext;
+@class iTermMetalComputerTransientState;
 @class iTermMetalDebugInfo;
 @class iTermMetalRendererTransientState;
 @class iTermMetalRowData;
@@ -132,6 +133,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
+@property (nonatomic, strong) id<MTLComputeCommandEncoder> computeEncoder;
 @property (nonatomic, readonly) id<MTLBuffer> debugBuffer;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
@@ -159,7 +161,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                 owner:(NSString *)owner;
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
+- (__kindof iTermMetalComputerTransientState *)transientStateForComputer:(NSObject *)computer;
+
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;
+- (void)setTransientState:(iTermMetalComputerTransientState *)tState forComputer:(NSObject *)computer;
+
 - (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label;
 
 @end

@@ -1418,6 +1418,11 @@
 		A6561A1C2039F71D00C36D66 /* iTermScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = A6561A1B2039F3A800C36D66 /* iTermScreenChar.h */; };
 		A6561A1D2039F72300C36D66 /* iTermScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = A6561A1B2039F3A800C36D66 /* iTermScreenChar.h */; };
 		A6561A242039FE7400C36D66 /* iTermASCIITextRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6561A122038FC7700C36D66 /* iTermASCIITextRenderer.mm */; };
+		A65685762041DFE00018E37F /* iTermColorComputer.h in Headers */ = {isa = PBXBuildFile; fileRef = A65685742041DFE00018E37F /* iTermColorComputer.h */; };
+		A65685772041DFE00018E37F /* iTermColorComputer.m in Sources */ = {isa = PBXBuildFile; fileRef = A65685752041DFE00018E37F /* iTermColorComputer.m */; };
+		A65685792041F26F0018E37F /* iTermColorComputer.metal in Sources */ = {isa = PBXBuildFile; fileRef = A65685782041F26F0018E37F /* iTermColorComputer.metal */; };
+		A656857A2041F26F0018E37F /* iTermColorComputer.metal in Sources */ = {isa = PBXBuildFile; fileRef = A65685782041F26F0018E37F /* iTermColorComputer.metal */; };
+		A656857B2041F26F0018E37F /* iTermColorComputer.metal in Sources */ = {isa = PBXBuildFile; fileRef = A65685782041F26F0018E37F /* iTermColorComputer.metal */; };
 		A656AE4C1DBBE1CE00CE8448 /* libaprutil-1.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */; };
 		A656E9951F99C5FB00158128 /* iTermSubpixelModelBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */; };
 		A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */; };
@@ -3511,6 +3516,9 @@
 		A6561A25203B492A00C36D66 /* iTermColorMapKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermColorMapKey.h; sourceTree = "<group>"; };
 		A6561A26203B610800C36D66 /* iTermMetalLogging.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermMetalLogging.metal; path = Metal/Shaders/iTermMetalLogging.metal; sourceTree = "<group>"; };
 		A6561A2A203B67B100C36D66 /* iTermMetalLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalLogging.h; path = Metal/Shaders/iTermMetalLogging.h; sourceTree = "<group>"; };
+		A65685742041DFE00018E37F /* iTermColorComputer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermColorComputer.h; path = Metal/Renderers/iTermColorComputer.h; sourceTree = "<group>"; };
+		A65685752041DFE00018E37F /* iTermColorComputer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermColorComputer.m; path = Metal/Renderers/iTermColorComputer.m; sourceTree = "<group>"; };
+		A65685782041F26F0018E37F /* iTermColorComputer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermColorComputer.metal; path = Metal/Shaders/iTermColorComputer.metal; sourceTree = "<group>"; };
 		A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "usr/lib/libaprutil-1.tbd"; sourceTree = SDKROOT; };
 		A656E9671F8C994200158128 /* iTermMetalGlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalGlyphKey.h; sourceTree = "<group>"; };
 		A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermSubpixelModelBuilder.mm; path = Metal/Infrastructure/iTermSubpixelModelBuilder.mm; sourceTree = "<group>"; };
@@ -5693,6 +5701,9 @@
 				A68400BB1FF98101008D3EE2 /* iTermTimestampsRenderer.m */,
 				A6561A112038FC7700C36D66 /* iTermASCIITextRenderer.h */,
 				A6561A122038FC7700C36D66 /* iTermASCIITextRenderer.mm */,
+				A65685742041DFE00018E37F /* iTermColorComputer.h */,
+				A65685752041DFE00018E37F /* iTermColorComputer.m */,
+				A65685782041F26F0018E37F /* iTermColorComputer.metal */,
 			);
 			name = Renderers;
 			sourceTree = "<group>";
@@ -7356,6 +7367,7 @@
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
 				A667193D1DCE36C3000CE608 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
+				A65685762041DFE00018E37F /* iTermColorComputer.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
 				A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */,
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
@@ -8862,6 +8874,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A654373A203B8C200040F74A /* iTermCursorRenderer.metal in Sources */,
+				A656857B2041F26F0018E37F /* iTermColorComputer.metal in Sources */,
 				A6543738203B8C200040F74A /* iTermBroadcastStripes.metal in Sources */,
 				A6543744203B8C200040F74A /* iTermASCIIText.metal in Sources */,
 				A6C763CF1B45C53B00E3C992 /* main.m in Sources */,
@@ -8889,6 +8902,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6561A192039ED6900C36D66 /* iTermASCIIText.metal in Sources */,
+				A656857A2041F26F0018E37F /* iTermColorComputer.metal in Sources */,
 				A68AC8F61F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
@@ -8911,6 +8925,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6543725203B8C1F0040F74A /* iTermCursorRenderer.metal in Sources */,
+				A65685792041F26F0018E37F /* iTermColorComputer.metal in Sources */,
 				A6543723203B8C1F0040F74A /* iTermBroadcastStripes.metal in Sources */,
 				A654372F203B8C1F0040F74A /* iTermASCIIText.metal in Sources */,
 				A6C763CE1B45C53A00E3C992 /* main.m in Sources */,
@@ -8947,6 +8962,7 @@
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
 				A6543750203BFB840040F74A /* iTermSharedColorImpl.mm in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
+				A65685772041DFE00018E37F /* iTermColorComputer.m in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */,

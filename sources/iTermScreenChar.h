@@ -5,6 +5,10 @@
 //  Created by George Nachman on 2/18/18.
 //
 
+#ifdef __METAL_VERSION__
+typedef unsigned short unichar;
+#endif
+
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
 // and not selectable. It is not copied into the clipboard. A line ending in this

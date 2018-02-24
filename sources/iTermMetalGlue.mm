@@ -32,6 +32,9 @@
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 
+// Set the `index`th bit in an unsigned char array, `array`.
+#define ITERM_SET_BIT(array, index) (array[index / 8] |= (1 << (index & 7)))
+
 NS_ASSUME_NONNULL_BEGIN
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
@@ -482,6 +485,7 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
     NSTimeInterval _startTime;
     NSData *_serializedColorMap;
     BOOL _hasBackgroundImage;
+    iTermData *_concatenatedLines;
 }
 
 @property (nonatomic, readonly) BOOL isAnimating;
@@ -702,14 +706,23 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
                           textView:(PTYTextView *)textView
                             screen:(VT100Screen *)screen {
     const int width = _visibleRange.end.x - _visibleRange.start.x;
+    const int height = _visibleRange.end.y - _visibleRange.start.y;
     const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
     const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
+
+    // newBufferWithBytesNoCopy: wants a page-aligned pointer.
+    _concatenatedLines = [iTermData pageAlignedUninitializeDataOfLength:(width + 1) * height * sizeof(screen_char_t)];
     const size_t rowSize = sizeof(screen_char_t) * (width + 1);
-    for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++) {
+    NSUInteger offset = 0;
+    const NSUInteger stride = (width + 1) * sizeof(screen_char_t);
+    unsigned char *concatenatedBytes = static_cast<unsigned char *>(_concatenatedLines.mutableBytes);
+
+    for (int i = _visibleRange.start.y; i < _visibleRange.end.y; i++, offset += stride) {
         if (_timestampsEnabled) {
             [_dates addObject:[textView drawingHelperTimestampForLine:i]];
         }
-        iTermData *data = [iTermData dataOfLength:rowSize];
+        iTermData *data = [iTermData unownedDataWithBytes:concatenatedBytes + offset
+                                                   length:stride];
         screen_char_t *myBuffer = static_cast<screen_char_t *>(data.mutableBytes);
         screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
         if (line != myBuffer) {
@@ -950,10 +963,8 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
     return row;
 }
 
-- (void)getConfiguration:(iTermASCIITextConfiguration *)configurationPtr {
-    configurationPtr->cellSize = simd_make_float2(_cellSize.width, _cellSize.height);
+- (void)getConfiguration:(iTermColorsConfiguration *)configurationPtr {
     configurationPtr->gridSize = simd_make_uint2(_gridSize.width, _gridSize.height);
-    configurationPtr->scale = _scale;
     configurationPtr->minimumContrast = _colorMap.minimumContrast;
     configurationPtr->dimmingAmount = _colorMap.dimmingAmount;
     configurationPtr->mutingAmount = _colorMap.mutingAmount;
@@ -1458,6 +1469,92 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         color = [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
     }
     return [_colorMap colorByDimmingTextColor:color];
+}
+
+- (iTermData *)dataForIndexSetArray:(NSArray<NSIndexSet *> *)indexSetArray {
+    int stride = (_gridSize.width + 8) / 8;
+    iTermData *data = [iTermData dataOfLength:stride * _gridSize.height];
+    bzero(data.mutableBytes, data.length);
+    [indexSetArray enumerateObjectsUsingBlock:^(NSIndexSet * _Nonnull indexSet, NSUInteger y, BOOL * _Nonnull stop) {
+        unsigned char *line = data.mutableBytes + y * stride;
+        [indexSet enumerateIndexesUsingBlock:^(NSUInteger x, BOOL * _Nonnull stop) {
+            ITERM_SET_BIT(line, x);
+        }];
+    }];
+    return data;
+}
+
+- (iTermData *)dataForIndexSetDictionary:(NSDictionary<NSNumber *, NSIndexSet *> *)indexSetDictionary {
+    int stride = (_gridSize.width + 8) / 8;
+    iTermData *data = [iTermData dataOfLength:stride * _gridSize.height];
+    bzero(data.mutableBytes, data.length);
+    [indexSetDictionary enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull yNumber, NSIndexSet * _Nonnull indexSet, BOOL * _Nonnull stop) {
+        unsigned char *line = data.mutableBytes + yNumber.integerValue * stride;
+        [indexSet enumerateIndexesUsingBlock:^(NSUInteger x, BOOL * _Nonnull stop) {
+            ITERM_SET_BIT(line, x);
+        }];
+    }];
+    return data;
+}
+
+- (iTermData *)dataForDataDictionary:(NSDictionary<NSNumber *, NSData *> *)dataDictionary {
+    int stride = (_gridSize.width + 8) / 8;
+    iTermData *data = [iTermData dataOfLength:stride * _gridSize.height];
+    bzero(data.mutableBytes, data.length);
+    [dataDictionary enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull yNumber, NSData * _Nonnull source, BOOL * _Nonnull stop) {
+        ITBetaAssert(source.length == stride, @"Length/stride mismatch");
+        unsigned char *line = data.mutableBytes + yNumber.integerValue * stride;
+        memmove(line, source.bytes, source.length);
+    }];
+    return data;
+}
+
+- (iTermData *)dataForRangeDictionary:(NSDictionary<NSNumber *, NSValue *> *)rangeDictionary {
+    int stride = (_gridSize.width + 8) / 8;
+    iTermData *data = [iTermData dataOfLength:stride * _gridSize.height];
+    bzero(data.mutableBytes, data.length);
+    [rangeDictionary enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull yNumber, NSValue * _Nonnull rangeValue, BOOL * _Nonnull stop) {
+        unsigned char *line = data.mutableBytes + yNumber.integerValue * stride;
+        NSRange range = rangeValue.rangeValue;
+        for (NSUInteger i = 0; i < range.length; i++) {
+            ITERM_SET_BIT(line, i + range.location);
+        }
+    }];
+    return data;
+}
+
+- (iTermData *)concatenatedLines {
+    return _concatenatedLines;
+}
+
+- (iTermData *)selectedIndices {
+    return [self dataForIndexSetArray:_selectedIndexes];
+}
+
+- (iTermData *)findMatches {
+    return [self dataForDataDictionary:_matches];
+}
+
+- (iTermData *)annotatedIndices {
+    return [self dataForIndexSetDictionary:_rowToAnnotationRanges];
+}
+
+- (iTermData *)markedIndices {
+    iTermData *data = [iTermData dataOfLength:(_gridSize.width + 1) * _gridSize.height];
+    bzero(data.mutableBytes, data.length);
+    int offset = 0;
+    for (int i = 0; i < _gridSize.height; i++) {
+        NSRange range = _imeInfo ? [_imeInfo markedRangeOnLine:i width:_gridSize.width] : NSMakeRange(NSNotFound, 0);
+        unsigned char *line = data.mutableBytes + offset;
+        for (NSInteger i = 0; i < range.length; i++) {
+            ITERM_SET_BIT(line, i + range.location);
+        }
+    }
+    return data;
+}
+
+- (iTermData *)underlinedIndices {
+    return [self dataForRangeDictionary:_underlinedRanges];
 }
 
 #pragma mark - Box Drawing

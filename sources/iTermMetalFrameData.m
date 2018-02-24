@@ -94,7 +94,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 static NSInteger gNextFrameDataNumber;
 
 @interface iTermMetalFrameData()
-@property (readonly, strong) NSMutableDictionary<NSString *, __kindof iTermMetalRendererTransientState *> *transientStates;
+// Values are __kindof iTermMetalRendererTransientState or __kindof iTermMetalComputeTransientState
+@property (readonly, strong) NSMutableDictionary<NSString *, id> *transientStates;
 @property (atomic, strong, readwrite) MTKView *view;
 @end
 
@@ -292,8 +293,16 @@ static NSInteger gNextFrameDataNumber;
     return self.transientStates[NSStringFromClass([renderer class])];
 }
 
+- (__kindof iTermMetalComputerTransientState *)transientStateForComputer:(NSObject *)computer {
+    return self.transientStates[NSStringFromClass([computer class])];
+}
+
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer {
     self.transientStates[NSStringFromClass([renderer class])] = tState;
+}
+
+- (void)setTransientState:(iTermMetalComputerTransientState *)tState forComputer:(NSObject *)computer {
+    self.transientStates[NSStringFromClass([computer class])] = tState;
 }
 
 - (void)mergeHistogram:(iTermHistogram *)histogramToMerge name:(NSString *)name {

@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermASCIITextRenderer.h"
+#import "iTermColorComputer.h"
 #import "iTermCursorType.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
@@ -49,6 +50,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setRangeStart:(VT100GridCoord)start;
 - (void)setRangeEnd:(VT100GridCoord)end;
+- (NSRange)markedRangeOnLine:(int)y width:(int)width;
 
 @end
 
@@ -73,6 +75,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSColor *timestampsTextColor;
 @property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
 @property (nonatomic, readonly) NSData *colorMap;
+@property (nonatomic, readonly) iTermData *concatenatedLines;
+@property (nonatomic, readonly) iTermData *selectedIndices;
+@property (nonatomic, readonly) iTermData *findMatches;
+@property (nonatomic, readonly) iTermData *annotatedIndices;
+@property (nonatomic, readonly) iTermData *markedIndices;
+@property (nonatomic, readonly) iTermData *underlinedIndices;
 
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
@@ -108,7 +116,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)metalEnumerateHighlightedRows:(void (^)(vector_float3 color, NSTimeInterval age, int row))block;
 
 - (iTermASCIIRow *)asciiRowAtIndex:(NSUInteger)index;
-- (void)getConfiguration:(iTermASCIITextConfiguration *)configurationPtr;
+- (void)getConfiguration:(iTermColorsConfiguration *)configurationPtr;
 
 @end
 
