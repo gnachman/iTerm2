@@ -6,6 +6,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermPowerManager.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
@@ -351,6 +352,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
                                                  name:kUpdateLabelsNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateUseMetal)
+                                                 name:iTermPowerManagerStateDidChange
                                                object:nil];
 }
 
@@ -4711,11 +4716,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+// Note this is a notification handler
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
-    const BOOL allowed = !resizing && [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+    const BOOL connectedToPower = [[iTermPowerManager sharedInstance] connectedToPower];
+    const BOOL connectionToPowerRequired = [iTermAdvancedSettingsModel disableMetalWhenUnplugged];
+    const BOOL powerOK = (!connectionToPowerRequired || connectedToPower);
+    const BOOL allSessionsAllowMetal = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
     }];
+    const BOOL allowed = (!resizing &&
+                          powerOK &&
+                          allSessionsAllowMetal);
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
     const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);
