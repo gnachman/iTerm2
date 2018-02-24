@@ -34,8 +34,6 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
-#import <IOKit/ps/IOPowerSources.h>
-
 @implementation iTermMetalCursorInfo
 @end
 
@@ -231,36 +229,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-- (BOOL)connectedToPower {
-    static CFTimeInterval timeRemaining;
-    static NSTimeInterval lastUpdate;
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-
-    @synchronized(self) {
-        if (now - lastUpdate > 5) {
-            timeRemaining = IOPSGetTimeRemainingEstimate();
-            lastUpdate = now;
-            if (timeRemaining == kIOPSTimeRemainingUnlimited) {
-                DLog(@"Connected to power");
-            } else {
-                DLog(@"On battery");
-            }
-        }
-    }
-
-    if (timeRemaining == kIOPSTimeRemainingUnlimited) {
-        return YES;
-    } else {
-        return NO;
-    }
-}
-
 - (int)maximumNumberOfFramesInFlight {
-    if ([self connectedToPower]) {
-        return iTermMetalDriverMaximumNumberOfFramesInFlight;
-    } else {
-        return 1;
-    }
+    return iTermMetalDriverMaximumNumberOfFramesInFlight;
 }
 
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {

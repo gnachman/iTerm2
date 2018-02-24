@@ -1188,6 +1188,8 @@
 		1DFA9D6418F37160008ADC98 /* iTermEditKeyActionWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */; };
 		1DFA9D7018F3A30F008ADC98 /* PointerPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
+		5337A315203E065300024BEA /* iTermPowerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5337A313203E065300024BEA /* iTermPowerManager.h */; };
+		5337A316203E065300024BEA /* iTermPowerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337A314203E065300024BEA /* iTermPowerManager.m */; };
 		534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690231C94FE8000B7E4E9 /* overflowImage.png */; };
 		534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690271C94FF0000B7E4E9 /* overflowImagePressed.png */; };
 		5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */; };
@@ -3189,6 +3191,8 @@
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; tabWidth = 4; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
+		5337A313203E065300024BEA /* iTermPowerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPowerManager.h; sourceTree = "<group>"; };
+		5337A314203E065300024BEA /* iTermPowerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPowerManager.m; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
 		534690271C94FF0000B7E4E9 /* overflowImagePressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImagePressed.png; sourceTree = "<group>"; };
 		534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImagePressed@2x.png"; sourceTree = "<group>"; };
@@ -6129,6 +6133,8 @@
 				A68400B71FF97138008D3EE2 /* iTermTimestampDrawHelper.m */,
 				A6DBC0432005DC2B00F1466D /* iTermTuple.h */,
 				A6DBC0442005DC2B00F1466D /* iTermTuple.m */,
+				5337A313203E065300024BEA /* iTermPowerManager.h */,
+				5337A314203E065300024BEA /* iTermPowerManager.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -7252,6 +7258,7 @@
 				A66719131DCE36C3000CE608 /* iTermPreviousState.h in Headers */,
 				A66719141DCE36C3000CE608 /* iTermAutoMasterParser.h in Headers */,
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
+				5337A315203E065300024BEA /* iTermPowerManager.h in Headers */,
 				A6588829201F06ED006F48DB /* iTermTexture.h in Headers */,
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
@@ -8954,6 +8961,7 @@
 				A67960D61F81FCBB008A42BC /* iTermMarkRenderer.m in Sources */,
 				A6588826201E41A5006F48DB /* iTermMetalDebugInfo.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
+				5337A316203E065300024BEA /* iTermPowerManager.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
