@@ -6,6 +6,7 @@
 //
 
 #import "iTermScreenChar.h"
+#import "iTermColorMapKey.h"
 
 #ifdef __METAL_VERSION__
 

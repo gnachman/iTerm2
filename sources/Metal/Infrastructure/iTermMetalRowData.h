@@ -20,14 +20,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // iTermMetalGlyphKey
 @property (nonatomic, strong) iTermData *keysData;
 
-// iTermMetalGlyphAttributes
-@property (nonatomic, strong) iTermData *attributesData;
-
-// iTermMetalBackgroundColorRLE
-@property (nonatomic, strong) iTermData *backgroundColorRLEData;
-
-@property (nonatomic) int numberOfBackgroundRLEs;
-
 // Number of elements in preceding arrays to use.
 @property (nonatomic) int numberOfDrawableGlyphs;
 

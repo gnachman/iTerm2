@@ -47,7 +47,7 @@
             return nil;
         }
 
-        data->_mutableBytes = bytes;
+        data->_mutableBytes = (unsigned char *)bytes;
         data->_length = length;
         data->_originalLength = length;
         data->_allocatedCapacity = adjustedLength;

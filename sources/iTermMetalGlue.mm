@@ -40,244 +40,13 @@ NS_ASSUME_NONNULL_BEGIN
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
-typedef struct {
-    unsigned int isMatch : 1;
-    unsigned int inUnderlinedRange : 1;
-    unsigned int selected : 1;
-    unsigned int foregroundColor : 8;
-    unsigned int fgGreen : 8;
-    unsigned int fgBlue  : 8;
-    unsigned int bold : 1;
-    unsigned int faint : 1;
-    vector_float4 background;
-} iTermTextColorKey;
-
-typedef struct {
-    unsigned int bgColor;
-    unsigned int bgGreen;
-    unsigned int bgBlue;
-    ColorMode bgColorMode;
-    BOOL selected;
-    BOOL isMatch;
-    BOOL image;
-} iTermBackgroundColorKey;
-
 static vector_float4 VectorForColor(NSColor *color) {
     return simd_make_float4(color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent);
 }
 
-static NSColor *ColorForVector(vector_float4 v) {
-    return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
-}
-
 static inline BOOL CanTakeASCIIFastPath(const screen_char_t &c) {
     return (c.code <= iTermASCIITextureMaximumCharacter &&
-            c.code >= iTermASCIITextureMinimumCharacter &&
             !c.complexChar);
-}
-
-static const BOOL BackgroundKeysEqual(const iTermBackgroundColorKey &a,
-                                      const iTermBackgroundColorKey &b) {
-    return (a.bgColor == b.bgColor &&
-            a.bgGreen == b.bgGreen &&
-            a.bgBlue == b.bgBlue &&
-            a.bgColorMode == b.bgColorMode &&
-            a.selected == b.selected &&
-            a.isMatch == b.isMatch &&
-            a.image == b.image);
-}
-
-static vector_float4 ExtendBackgroundKey(iTermMetalBackgroundColorRLE *backgroundRLE,
-                                         int *rles) {
-    const int previousRLE = *rles - 1;
-    vector_float4 backgroundColor = backgroundRLE[previousRLE].color;
-    backgroundRLE[previousRLE].count++;
-    return backgroundColor;
-}
-
-static vector_float4 UnprocessedColorForBackgroundColorKey(const iTermBackgroundColorKey *colorKey,
-                                                           const CGFloat &transparencyAlpha,
-                                                           const BOOL &isFrontTextView,
-                                                           const BOOL &transparencyAffectsOnlyDefaultBackgroundColor,
-                                                           const BOOL &reverseVideo,
-                                                           const vector_float4 &unfocusedSelectionColor,
-                                                           iTermColorMap *colorMap,
-                                                           const BOOL &useBrightBold,
-                                                           const BOOL &hasBackgroundImage) {
-    screen_char_t c = {
-        .backgroundColor = colorKey->bgColor,
-        .bgGreen = colorKey->bgGreen,
-        .bgBlue = colorKey->bgBlue,
-        .backgroundColorMode = colorKey->bgColorMode,
-    };
-    if (colorKey->image) {
-        // Recurse to get the default background color
-        iTermBackgroundColorKey temp = {
-            .bgColor = ALTSEM_DEFAULT,
-            .bgGreen = 0,
-            .bgBlue = 0,
-            .bgColorMode = ColorModeAlternate,
-            .selected = NO,
-            .isMatch = NO,
-            .image = NO
-        };
-        return UnprocessedColorForBackgroundColorKey(&temp,
-                                                     transparencyAlpha,
-                                                     isFrontTextView,
-                                                     transparencyAffectsOnlyDefaultBackgroundColor,
-                                                     reverseVideo,
-                                                     unfocusedSelectionColor,
-                                                     colorMap,
-                                                     useBrightBold,
-                                                     hasBackgroundImage);
-    } else {
-        return UnprocessedBackgroundColor(&c,
-                                          colorMap,
-                                          transparencyAlpha,
-                                          transparencyAffectsOnlyDefaultBackgroundColor,
-                                          reverseVideo,
-                                          useBrightBold,
-                                          isFrontTextView,
-                                          colorMap.mutingAmount,
-                                          colorMap.dimOnlyText,
-                                          colorMap.dimmingAmount,
-                                          hasBackgroundImage,
-                                          0,
-                                          colorKey->selected,
-                                          colorKey->isMatch,
-                                          unfocusedSelectionColor);
-    }
-}
-
-static vector_float4 BeginNewBackgroundColorRun(const iTermBackgroundColorKey& backgroundKey,
-                                                iTermMetalBackgroundColorRLE *backgroundRLE,
-                                                const int &x,
-                                                iTermColorMap *colorMap,
-                                                const CGFloat &transparencyAlpha,
-                                                const BOOL &isFrontTextView,
-                                                const BOOL &transparencyAffectsOnlyDefaultBackgroundColor,
-                                                const vector_float4 &unfocusedSelectionColor,
-                                                const BOOL &useBrightBold,
-                                                const BOOL &backgroundImageBlending,
-                                                const BOOL &hasBackgroundImage,
-                                                const BOOL &reverseVideo,
-                                                int *rlesPtr) {
-    const int rles = *rlesPtr;
-    vector_float4 unprocessed = UnprocessedColorForBackgroundColorKey(&backgroundKey,
-                                                                      transparencyAlpha,
-                                                                      isFrontTextView,
-                                                                      transparencyAffectsOnlyDefaultBackgroundColor,
-                                                                      reverseVideo,
-                                                                      unfocusedSelectionColor,
-                                                                      colorMap,
-                                                                      useBrightBold,
-                                                                      hasBackgroundImage);
-
-    // The unprocessed color is needed for minimum contrast computation for text color.
-    backgroundRLE[rles].color = [colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
-    backgroundRLE[rles].origin = x;
-    backgroundRLE[rles].count = 1;
-    if (hasBackgroundImage) {
-        // This is kind of ugly but it simplifies things a lot to do it
-        // here. The alpha value for background colors should be 1
-        // except when there's a background image, in which case the
-        // default background color gets a user-defined alpha value.
-        const BOOL isDefaultBackgroundColor = (backgroundKey.bgColorMode == ColorModeAlternate &&
-                                               backgroundKey.bgColor == ALTSEM_DEFAULT &&
-                                               !backgroundKey.selected &&
-                                               !backgroundKey.isMatch);
-        backgroundRLE[rles].color.w = isDefaultBackgroundColor ? (1 - backgroundImageBlending) : 1;
-    }
-    (*rlesPtr)++;
-    return backgroundRLE[rles].color;
-}
-
-static void LoadColorKey(const BOOL &findMatch,
-                         const BOOL &inUnderlinedRange,
-                         const BOOL &selected,
-                         const screen_char_t &c,
-                         const vector_float4 &backgroundColor,
-                         iTermTextColorKey *currentColorKey) {
-    currentColorKey->isMatch = findMatch;
-    currentColorKey->inUnderlinedRange = inUnderlinedRange;
-    currentColorKey->selected = selected;
-    currentColorKey->foregroundColor = c.foregroundColor;
-    currentColorKey->fgGreen = c.fgGreen;
-    currentColorKey->fgBlue = c.fgBlue;
-    currentColorKey->bold = c.bold;
-    currentColorKey->faint = c.faint;
-    currentColorKey->background = backgroundColor;
-}
-
-static BOOL ColorKeysEqual(const iTermTextColorKey *a, const iTermTextColorKey *b) {
-    return (a->isMatch == b->isMatch &&
-            a->inUnderlinedRange == b->inUnderlinedRange &&
-            a->selected == b->selected &&
-            a->foregroundColor == b->foregroundColor &&
-            a->fgGreen == b->fgGreen &&
-            a->fgBlue == b->fgBlue &&
-            a->bold == b->bold &&
-            a->faint == b->faint &&
-            simd_equal(a->background, b->background));
-}
-
-static void LoadAttributes(vector_float4 backgroundColor,
-                           const BOOL &annotated,
-                           iTermTextColorKey *currentColorKey,
-                           iTermTextColorKey *previousColorKey,
-                           iTermMetalGlyphAttributes *attributes,
-                           int x,
-                           screen_char_t &c,
-                           const BOOL &selected,
-                           const BOOL &findMatch,
-                           const BOOL &inUnderlinedRange,
-                           iTermColorMap *colorMap,
-                           const BOOL &reverseVideo,
-                           const BOOL &useBrightBold,
-                           vector_float4 *lastUnprocessedColorPtr,
-                           vector_float4 *previousForegroundColorPtr,
-                           BOOL *havePreviousForegroundColorPtr,
-                           BOOL *havePreviousCharacterAttributesPtr,
-                           screen_char_t *previousCharacterAttributesPtr) {
-    attributes[x].backgroundColor = backgroundColor;
-    attributes[x].backgroundColor.w = 1;
-    attributes[x].annotation = annotated;
-    if (x > 0 && ColorKeysEqual(currentColorKey, previousColorKey)) {
-        attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
-    } else {
-        vector_float4 textColor = TextColor(&c,
-                                            colorMap.minimumContrast,
-                                            colorMap.dimmingAmount,
-                                            colorMap.mutingAmount,
-                                            colorMap.dimOnlyText,
-                                            reverseVideo,
-                                            useBrightBold,
-                                            colorMap,
-                                            backgroundColor,
-                                            selected,
-                                            findMatch,
-                                            inUnderlinedRange && !annotated,
-                                            lastUnprocessedColorPtr,
-                                            previousForegroundColorPtr,
-                                            havePreviousForegroundColorPtr,
-                                            havePreviousCharacterAttributesPtr,
-                                            previousCharacterAttributesPtr);
-        attributes[x].foregroundColor = textColor;
-        attributes[x].foregroundColor.w = 1;
-    }
-    if (annotated) {
-        attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-    } else if (c.underline || inUnderlinedRange) {
-        if (c.urlCode) {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
-        } else {
-            attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-        }
-    } else if (c.urlCode) {
-        attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
-    } else {
-        attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-    }
 }
 
 static void HandleImage(const screen_char_t &c,
@@ -310,7 +79,6 @@ static void HandleGlyph(const screen_char_t &c,
                         int x,
                         const iTermThinStrokesSetting &thinStrokes,
                         const BOOL &isRetina,
-                        const iTermMetalGlyphAttributes attributes,
                         int *lastDrawableGlyphPtr,
                         iTermMetalGlyphKey *glyphKey) {
     static dispatch_once_t onceToken;
@@ -322,89 +90,12 @@ static void HandleGlyph(const screen_char_t &c,
     glyphKey->code = c.code;
     glyphKey->isComplex = c.complexChar;
     glyphKey->boxDrawing = !c.complexChar && [boxCharacterSet characterIsMember:c.code];
-    glyphKey->thinStrokes = UseThinStrokes(thinStrokes, isRetina, attributes.backgroundColor, attributes.foregroundColor);
+    glyphKey->thinStrokes = false;
 
     const int boldBit = c.bold ? (1 << 0) : 0;
     const int italicBit = c.italic ? (1 << 1) : 0;
     glyphKey->typeface = (boldBit | italicBit);
     glyphKey->drawable = YES;
-}
-
-static void ChangeBoxCursorTextColor(iTermMetalCursorInfo *cursorInfo,
-                                     iTermMetalGlyphAttributes *attributes,
-                                     const BOOL &reverseVideo,
-                                     const BOOL &useBrightBold,
-                                     iTermColorMap *colorMap,
-                                     const int &width) {
-    vector_float4 cursorTextColor;
-    if (cursorInfo.shouldDrawText) {
-        cursorTextColor = cursorInfo.textColor;
-    } else if (reverseVideo) {
-        cursorTextColor = VectorForColor([colorMap colorForKey:kColorMapBackground]);
-    } else {
-        cursorTextColor = iTermGetColor(ALTSEM_CURSOR,
-                                        0,
-                                        0,
-                                        ColorModeAlternate,
-                                        NO,
-                                        NO,
-                                        NO,
-                                        useBrightBold,
-                                        colorMap);
-    }
-    if (cursorInfo.coord.x < width) {
-        attributes[cursorInfo.coord.x].foregroundColor = cursorTextColor;
-        attributes[cursorInfo.coord.x].foregroundColor.w = 1;
-    }
-}
-
-static vector_float4 HandleBackgroundColor(const screen_char_t &c,
-                                           const int &x,
-                                           const BOOL &selected,
-                                           const BOOL &findMatch,
-                                           iTermColorMap *colorMap,
-                                           const CGFloat &transparencyAlpha,
-                                           const BOOL &isFrontTextView,
-                                           const BOOL &transparencyAffectsOnlyDefaultBackgroundColor,
-                                           const vector_float4 &unfocusedSelectionColor,
-                                           const BOOL &useBrightBold,
-                                           const CGFloat &backgroundImageBlending,
-                                           const BOOL &hasBackgroundImage,
-                                           const BOOL &reverseVideo,
-                                           iTermMetalBackgroundColorRLE *backgroundRLE,
-                                           iTermBackgroundColorKey *lastBackgroundKeyPtr,
-                                           int *rlesPtr) {
-    // Background colors
-    iTermBackgroundColorKey backgroundKey = {
-        .bgColor = c.backgroundColor,
-        .bgGreen = c.bgGreen,
-        .bgBlue = c.bgBlue,
-        .bgColorMode = static_cast<ColorMode>(c.backgroundColorMode),
-        .selected = selected,
-        .isMatch = findMatch,
-        .image = static_cast<BOOL>(c.image)
-    };
-
-    vector_float4 backgroundColor;
-    if (x > 0 && BackgroundKeysEqual(backgroundKey, *lastBackgroundKeyPtr)) {
-        backgroundColor = ExtendBackgroundKey(backgroundRLE, rlesPtr);
-    } else {
-        backgroundColor = BeginNewBackgroundColorRun(backgroundKey,
-                                                     backgroundRLE,
-                                                     x,
-                                                     colorMap,
-                                                     transparencyAlpha,
-                                                     isFrontTextView,
-                                                     transparencyAffectsOnlyDefaultBackgroundColor,
-                                                     unfocusedSelectionColor,
-                                                     useBrightBold,
-                                                     backgroundImageBlending,
-                                                     hasBackgroundImage,
-                                                     reverseVideo,
-                                                     rlesPtr);
-    }
-    *lastBackgroundKeyPtr = backgroundKey;
-    return backgroundColor;
 }
 
 @interface iTermMetalGlue()
@@ -416,8 +107,7 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
 @end
 
 @interface iTermMetalPerFrameState : NSObject<
-    iTermMetalDriverDataSourcePerFrameState,
-    iTermSmartCursorColorDelegate> {
+    iTermMetalDriverDataSourcePerFrameState> {
     BOOL _havePreviousCharacterAttributes;
     screen_char_t _previousCharacterAttributes;
     vector_float4 _lastUnprocessedColor;
@@ -723,7 +413,7 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
         }
         iTermData *data = [iTermData unownedDataWithBytes:concatenatedBytes + offset
                                                    length:stride];
-        screen_char_t *myBuffer = static_cast<screen_char_t *>(data.mutableBytes);
+        screen_char_t *myBuffer = reinterpret_cast<screen_char_t *>(data.mutableBytes);
         screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
         if (line != myBuffer) {
             memcpy(myBuffer, line, rowSize);
@@ -787,52 +477,13 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
         lineWithCursor < _visibleRange.end.y) {
         _cursorInfo.cursorVisible = YES;
         _cursorInfo.type = drawingHelper.cursorType;
-        _cursorInfo.cursorColor = [self backgroundColorForCursor];
         if (_cursorInfo.type == CURSOR_BOX) {
             _cursorInfo.shouldDrawText = YES;
-            const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].mutableBytes;
-            screen_char_t screenChar = line[_cursorInfo.coord.x];
             const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
-
-            iTermSmartCursorColor *smartCursorColor = nil;
-            if (drawingHelper.useSmartCursorColor) {
-                smartCursorColor = [[iTermSmartCursorColor alloc] init];
-                smartCursorColor.delegate = self;
-            }
 
             if (!focused) {
                 _cursorInfo.shouldDrawText = NO;
                 _cursorInfo.frameOnly = YES;
-            } else if (smartCursorColor) {
-                _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
-                                                           wantBackground:YES
-                                                                    muted:NO];
-                _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
-                NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
-                                                            green:_cursorInfo.textColor.y
-                                                             blue:_cursorInfo.textColor.z
-                                                            alpha:_cursorInfo.textColor.w];
-                NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
-                                                                 regularTextColor:regularTextColor
-                                                             smartBackgroundColor:_cursorInfo.cursorColor];
-                CGFloat components[4];
-                [smartTextColor getComponents:components];
-                _cursorInfo.textColor = simd_make_float4(components[0],
-                                                         components[1],
-                                                         components[2],
-                                                         components[3]);
-            } else {
-                if (_reverseVideo) {
-                    _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
-                } else {
-                    _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
-                                                         green:0
-                                                          blue:0
-                                                     colorMode:ColorModeAlternate
-                                                          bold:NO
-                                                         faint:NO
-                                                  isBackground:NO];
-                }
             }
         }
     } else {
@@ -951,19 +602,12 @@ static vector_float4 HandleBackgroundColor(const screen_char_t &c,
 
 - (iTermASCIIRow *)asciiRowAtIndex:(NSUInteger)index {
     iTermASCIIRow *row = [[iTermASCIIRow alloc] init];
-
     row.screenChars = _lines[index];
-    row.selectedIndices = _selectedIndexes[index];
-    row.findMatches = _matches[@(index)];
-    // marked range is set by the caller because it's a PITA to do so here.
-    // TODO: Fix that.
-    row.underlinedRange = _underlinedRanges[@(index)].rangeValue;
-    row.annotatedIndices = _rowToAnnotationRanges[@(index)];
-
     return row;
 }
 
 - (void)getConfiguration:(iTermColorsConfiguration *)configurationPtr {
+    configurationPtr->scale = _scale;
     configurationPtr->gridSize = simd_make_uint2(_gridSize.width, _gridSize.height);
     configurationPtr->minimumContrast = _colorMap.minimumContrast;
     configurationPtr->dimmingAmount = _colorMap.dimmingAmount;
@@ -1177,10 +821,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 // Private queue
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
-               attributes:(iTermMetalGlyphAttributes *)attributes
                 imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
-               background:(iTermMetalBackgroundColorRLE *)backgroundRLE
-                 rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
                       row:(int)row
                     width:(int)width
@@ -1190,80 +831,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         *datePtr = _dates[row];
     }
     screen_char_t *line = (screen_char_t *)_lines[row].mutableBytes;
-    NSIndexSet *selectedIndexes = _selectedIndexes[row];
-    NSData *findMatches = _matches[@(row)];
-    iTermTextColorKey keys[2];
-    iTermTextColorKey *currentColorKey = &keys[0];
-    iTermTextColorKey *previousColorKey = &keys[1];
-    iTermBackgroundColorKey lastBackgroundKey;
-    NSRange underlinedRange = [_underlinedRanges[@(row)] rangeValue];
-    int rles = 0;
     int previousImageCode = -1;
     VT100GridCoord previousImageCoord;
-    NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
 
     *markStylePtr = static_cast<iTermMarkStyle>([_markStyles[row] intValue]);
     int lastDrawableGlyph = -1;
+    NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
     for (int x = 0; x < width; x++) {
-        BOOL selected = [selectedIndexes containsIndex:x];
-        BOOL findMatch = NO;
-        if (findMatches && !selected) {
-            findMatch = CheckFindMatchAtIndex(findMatches, x);
-        }
-        const BOOL annotated = [annotatedIndexes containsIndex:x];
-        const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange) || annotated;
-
-        vector_float4 backgroundColor = HandleBackgroundColor(line[x],
-                                                              x,
-                                                              selected,
-                                                              findMatch,
-                                                              _colorMap,
-                                                              _transparencyAlpha,
-                                                              _isFrontTextView,
-                                                              _transparencyAffectsOnlyDefaultBackgroundColor,
-                                                              _unfocusedSelectionColor,
-                                                              _useBrightBold,
-                                                              _backgroundImageBlending,
-                                                              _backgroundImage != nil,
-                                                              _reverseVideo,
-                                                              backgroundRLE,
-                                                              &lastBackgroundKey,
-                                                              &rles);
-
-        // Foreground colors
-        // Build up a compact key describing all the inputs to a text color
-        LoadColorKey(findMatch,
-                     inUnderlinedRange,
-                     selected,
-                     line[x],
-                     backgroundColor,
-                     currentColorKey);
-
-        // Figure out foreground color, background color, and underline style.
-        LoadAttributes(backgroundColor,
-                       annotated,
-                       currentColorKey,
-                       previousColorKey,
-                       attributes,
-                       x,
-                       line[x],
-                       selected,
-                       findMatch,
-                       inUnderlinedRange,
-                       _colorMap,
-                       _reverseVideo,
-                       _useBrightBold,
-                       &_lastUnprocessedColor,
-                       &_previousForegroundColor,
-                       &_havePreviousForegroundColor,
-                       &_havePreviousCharacterAttributes,
-                       &_previousCharacterAttributes);
-
-        // Swap current and previous
-        iTermTextColorKey *temp = currentColorKey;
-        currentColorKey = previousColorKey;
-        previousColorKey = temp;
-
         if (line[x].image) {
             HandleImage(line[x],
                         x,
@@ -1274,88 +848,22 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                         &glyphKeys[x]);
         } else if (CanTakeASCIIFastPath(line[x])) {
             glyphKeys[x].drawable = NO;
-        } else if (annotated || iTermTextDrawingHelperIsCharacterDrawable(&line[x],
-                                                                          line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
-                                                                          _blinkingItemsVisible,
-                                                                          _blinkAllowed)) {
+        } else if ([annotatedIndexes containsIndex:x] ||
+                   iTermTextDrawingHelperIsCharacterDrawable(&line[x],
+                                                             line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
+                                                             _blinkingItemsVisible,
+                                                             _blinkAllowed)) {
             HandleGlyph(line[x],
                         x,
                         _thinStrokes,
                         _isRetina,
-                        attributes[x],
                         &lastDrawableGlyph,
                         &glyphKeys[x]);
         } else {
             glyphKeys[x].drawable = NO;
         }
     }
-    *rleCount = rles;
     *drawableGlyphsPtr = lastDrawableGlyph + 1;
-
-    // Tweak the text color for the cell that has a box cursor.
-    if (row == _cursorInfo.coord.y &&
-        _cursorInfo.type == CURSOR_BOX &&
-        _cursorInfo.cursorVisible &&
-        !_cursorInfo.frameOnly) {
-        ChangeBoxCursorTextColor(_cursorInfo,
-                                 attributes,
-                                 _reverseVideo,
-                                 _useBrightBold,
-                                 _colorMap,
-                                 width);
-    }
-}
-
-- (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
-    return UseThinStrokes(_thinStrokes, _isRetina, attributes->backgroundColor, attributes->foregroundColor);
-}
-
-- (vector_float4)selectionColorForCurrentFocus {
-    return SelectionColorForCurrentFocus(_isFrontTextView,
-                                         _colorMap.mutingAmount,
-                                         _colorMap.dimOnlyText,
-                                         _colorMap.dimmingAmount,
-                                         _unfocusedSelectionColor,
-                                         _colorMap);
-}
-
-- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey {
-    return UnprocessedColorForBackgroundColorKey(colorKey,
-                                                 _transparencyAlpha,
-                                                 _isFrontTextView,
-                                                 _transparencyAffectsOnlyDefaultBackgroundColor,
-                                                 _reverseVideo,
-                                                 _unfocusedSelectionColor,
-                                                 _colorMap,
-                                                 _useBrightBold,
-                                                 _hasBackgroundImage);
-}
-
-- (vector_float4)colorForCode:(int)theIndex
-                        green:(int)green
-                         blue:(int)blue
-                    colorMode:(ColorMode)theMode
-                         bold:(BOOL)isBold
-                        faint:(BOOL)isFaint
-                 isBackground:(BOOL)isBackground {
-    return iTermGetColor(theIndex,
-                         green,
-                         blue,
-                         theMode,
-                         isBold,
-                         isFaint,
-                         isBackground,
-                         _useBrightBold,
-                         _colorMap);
-}
-
-- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
-                                 green:(int)green
-                                  blue:(int)blue
-                             colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold
-                          isBackground:(BOOL)isBackground {
-    return ColorMapKey(theIndex, green, blue, theMode, isBold, isBackground, _useBrightBold);
 }
 
 - (id)metalASCIICreationIdentifier {
@@ -1429,37 +937,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 #pragma mark - Color
-
-- (vector_float4)textColorForCharacter:(screen_char_t *)c
-                                  line:(int)line
-                       backgroundColor:(vector_float4)backgroundColor
-                              selected:(BOOL)selected
-                             findMatch:(BOOL)findMatch
-                     inUnderlinedRange:(BOOL)inUnderlinedRange
-                                 index:(int)index {
-#warning TODO: Caching! Or remove the caching code!
-    vector_float4 dummy;
-    BOOL havePreviousFG = NO;
-    BOOL havePreviousAttr = NO;
-    screen_char_t previousChar;
-    return TextColor(c,
-                     _colorMap.minimumContrast,
-                     _colorMap.dimmingAmount,
-                     _colorMap.mutingAmount,
-                     _colorMap.dimOnlyText,
-                     _reverseVideo,
-                     _useBrightBold,
-                     _colorMap,
-                     backgroundColor,
-                     selected,
-                     findMatch,
-                     inUnderlinedRange,
-                     &dummy,
-                     &dummy,
-                     &havePreviousFG,
-                     &havePreviousAttr,
-                     &previousChar);
-}
 
 - (NSColor *)backgroundColorForCursor {
     NSColor *color;
@@ -1599,64 +1076,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                          return nil;
                                                      }
                                                  }];
-}
-
-- (vector_float4)fastCursorColorForCharacter:(screen_char_t)screenChar
-                              wantBackground:(BOOL)wantBackgroundColor
-                                       muted:(BOOL)muted {
-    BOOL isBackground = [iTermTextDrawingHelper cursorUsesBackgroundColorForScreenChar:screenChar
-                                                                        wantBackground:wantBackgroundColor
-                                                                          reverseVideo:_reverseVideo];
-
-    vector_float4 color;
-    if (wantBackgroundColor) {
-        color = [self colorForCode:screenChar.backgroundColor
-                             green:screenChar.bgGreen
-                              blue:screenChar.bgBlue
-                         colorMode:static_cast<ColorMode>(screenChar.backgroundColorMode)
-                              bold:screenChar.bold
-                             faint:screenChar.faint
-                      isBackground:isBackground];
-    } else {
-        color = [self colorForCode:screenChar.foregroundColor
-                             green:screenChar.fgGreen
-                              blue:screenChar.fgBlue
-                         colorMode:static_cast<ColorMode>(screenChar.foregroundColorMode)
-                              bold:screenChar.bold
-                             faint:screenChar.faint
-                      isBackground:isBackground];
-    }
-    if (muted) {
-        color = [_colorMap fastColorByMutingColor:color];
-    }
-    return color;
-}
-
-- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
-                      wantBackground:(BOOL)wantBackgroundColor
-                               muted:(BOOL)muted {
-    vector_float4 v = [self fastCursorColorForCharacter:screenChar wantBackground:wantBackgroundColor muted:muted];
-    return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
-}
-
-- (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color {
-    return [_colorMap colorByDimmingTextColor:color];
-}
-
-- (NSColor *)cursorWhiteColor {
-    NSColor *whiteColor = [NSColor colorWithCalibratedRed:1
-                                                    green:1
-                                                     blue:1
-                                                    alpha:1];
-    return [_colorMap colorByDimmingTextColor:whiteColor];
-}
-
-- (NSColor *)cursorBlackColor {
-    NSColor *blackColor = [NSColor colorWithCalibratedRed:0
-                                                    green:0
-                                                     blue:0
-                                                    alpha:1];
-    return [_colorMap colorByDimmingTextColor:blackColor];
 }
 
 #pragma mark - Cursor Logic

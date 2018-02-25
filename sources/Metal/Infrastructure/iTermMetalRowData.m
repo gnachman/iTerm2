@@ -23,12 +23,10 @@
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
     NSString *info = [NSString stringWithFormat:
                       @"y=%@\n"
-                      @"numberOfBackgroundRLEs=%@\n"
                       @"numberOfDrawableGlyphs=%@\n"
                       @"markStyle=%@\n"
                       @"date=%@\n",
                       @(self.y),
-                      @(self.numberOfBackgroundRLEs),
                       @(self.numberOfDrawableGlyphs),
                       @(self.markStyle),
                       self.date];
@@ -42,25 +40,6 @@
             [glyphKeysString appendFormat:@"%4d: %@\n", i, glyphKey];
         }
         [glyphKeysString writeToURL:[folder URLByAppendingPathComponent:@"GlyphKeys.txt"] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
-    }
-
-    @autoreleasepool {
-        NSMutableString *attributesString = [NSMutableString string];
-        iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)_attributesData.mutableBytes;
-        for (int i = 0; i < _attributesData.length / sizeof(iTermMetalGlyphAttributes); i++) {
-            NSString *attribute = iTermMetalGlyphAttributesDescription(&attributes[i]);
-            [attributesString appendFormat:@"%4d: %@\n", i, attribute];
-        }
-        [attributesString writeToURL:[folder URLByAppendingPathComponent:@"Attributes.txt"] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
-    }
-
-    @autoreleasepool {
-        NSMutableString *bgColorsString = [NSMutableString string];
-        iTermMetalBackgroundColorRLE *bg = (iTermMetalBackgroundColorRLE *)_backgroundColorRLEData.mutableBytes;
-        for (int i = 0; i < _numberOfBackgroundRLEs; i++) {
-            [bgColorsString appendFormat:@"%@\n", iTermMetalBackgroundColorRLEDescription(&bg[i])];
-        }
-        [bgColorsString writeToURL:[folder URLByAppendingPathComponent:@"BackgroundColors.txt"] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
     }
 }
 

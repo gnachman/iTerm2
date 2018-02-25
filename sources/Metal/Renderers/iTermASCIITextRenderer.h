@@ -18,12 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIIRow : NSObject
 @property (nonatomic, strong) iTermData *screenChars;
-@property (nonatomic, strong) NSIndexSet *selectedIndices;
-@property (nonatomic, strong) NSData *findMatches;
-@property (nonatomic) NSRange markedRange;
-@property (nonatomic) NSRange underlinedRange;
-@property (nonatomic, strong) NSIndexSet *annotatedIndices;
-
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -32,6 +26,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) iTermMetalUnderlineDescriptor underlineDescriptor;
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 @property (nonatomic) VT100GridCoord debugCoord;
+@property (nonatomic, strong) id<MTLBuffer> colorsBuffer;  // iTermCellColors, to be populated by iTermColorComputer
 
 // screen_char_t array
 - (void)addRow:(iTermASCIIRow *)row;

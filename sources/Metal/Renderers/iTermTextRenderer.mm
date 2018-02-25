@@ -71,7 +71,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     iTermMetalBufferPool *_verticesPool;
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalMixedSizeBufferPool *_piuPool;
-    iTermMetalMixedSizeBufferPool *_subpixelModelPool;
 }
 
 + (NSData *)subpixelModelData {
@@ -99,17 +98,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 }
 
 - (id<MTLBuffer>)subpixelModelsForState:(iTermTextRendererTransientState *)tState {
-    if (tState.colorModels) {
-        if (tState.colorModels.length == 0) {
-            // Blank screen, emoji-only screen, etc. The buffer won't get accessed but it can't be nil.
-            return [_emptyBuffers requestBufferFromContext:tState.poolContext];
-        }
-        // Return a color model with exactly the fg/bg combos on screen.
-        return [_subpixelModelPool requestBufferFromContext:tState.poolContext
-                                                       size:tState.colorModels.length
-                                                      bytes:tState.colorModels.bytes];
-    }
-
     // Use a generic color model for blending. No need to use a buffer pool here because this is only
     // created once.
     if (_models == nil) {
@@ -148,10 +136,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                 capacity:(maxInstances / capacity) * iTermMetalDriverMaximumNumberOfFramesInFlight
                                                                     name:@"text PIU"];
-
-        _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                          capacity:512
-                                                                              name:@"subpixel PIU"];
     }
     return self;
 }
@@ -170,7 +154,11 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
     // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
     // blends using the output of the preceding passes.
-    _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
+    
+//    _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
+
+#warning TODO: Build a cache of solid color models to use when possible.
+    _cellRenderer.fragmentFunctionName = @"iTermTextFragmentShaderWithBlending";
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
@@ -329,6 +317,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                                      numberOfPIUs:instances
                                     vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
                                                      @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
+                                                     @(iTermVertexInputCellColors): tState.colorsBuffer,
                                                      @(iTermVertexInputIndexOffset): tState.offsetBuffer }
                                   fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
                                                      @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }

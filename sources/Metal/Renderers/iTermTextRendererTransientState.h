@@ -22,13 +22,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 @property (nonatomic) iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
 @property (nonatomic) vector_float4 defaultBackgroundColor;
+@property (nonatomic, strong) id<MTLBuffer> colorsBuffer;  // iTermCellColors, to be populated by iTermColorComputer
 
 
 - (void)setGlyphKeysData:(iTermData *)glyphKeysData
                    count:(int)count
-          attributesData:(iTermData *)attributesData
                      row:(int)row
-  backgroundColorRLEData:(iTermData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
        markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;

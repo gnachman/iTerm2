@@ -53,6 +53,17 @@ typedef unsigned short unichar;
 // foreground for background (reverse video).
 #define ALTSEM_REVERSED_DEFAULT 3
 
+#define SIZEOF_SCREEN_CHAR_T 12
+
+#ifdef __METAL_VERSION__
+
+// The stupid metal compiler doesn't pack structs the same as the C compiler. ARGH
+typedef struct screen_char_t {
+    unsigned char spam[SIZEOF_SCREEN_CHAR_T];
+} screen_char_t;
+
+#else
+
 typedef struct screen_char_t
 {
     // Normally, 'code' gives a utf-16 code point. If 'complexChar' is set then
@@ -123,6 +134,8 @@ typedef struct screen_char_t
     // If the current text is part of a hypertext link, this gives an index into the URL store.
     unsigned short urlCode;  // 10,11
 } screen_char_t;
+
+#endif
 
 typedef enum {
     ColorModeAlternate = 0,  // ALTSEM_XXX values

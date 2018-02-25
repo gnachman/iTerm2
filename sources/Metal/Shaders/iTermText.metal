@@ -7,6 +7,7 @@ using namespace metal;
 #import "iTermTextShared.h"
 
 typedef struct {
+    bool discard;
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
@@ -28,8 +29,14 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
                       constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                       constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                       device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                      device iTermCellColors *cellColors [[ buffer(iTermVertexInputCellColors) ]],
                       unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutput out;
+    const int i = perInstanceUniforms[iid].cellIndex;
+    out.discard = cellColors[i].useThinStrokes != perInstanceUniforms[iid].thinStrokes;
+    if (out.discard) {
+        return out;
+    }
 
     // pixelSpacePosition is in pixels
     float2 pixelSpacePosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy + offset[0];
@@ -42,15 +49,15 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
     out.textureOffset = perInstanceUniforms[iid].textureOffset;
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
-    out.textColor = perInstanceUniforms[iid].textColor;
-    out.backgroundColor = perInstanceUniforms[iid].backgroundColor;
     out.recolor = perInstanceUniforms[iid].remapColors;
-    out.colorModelIndex = perInstanceUniforms[iid].colorModelIndex;
     out.viewportSize = viewportSize;
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
-    out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
-    out.underlineColor = perInstanceUniforms[iid].underlineColor;
+
+    out.textColor = cellColors[i].textColor;
+    out.backgroundColor = cellColors[i].backgroundColor;
+    out.underlineColor = cellColors[i].underlineColor;
+    out.underlineStyle = cellColors[i].underlineStyle;
 
     return out;
 }
@@ -64,6 +71,10 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                        texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                        constant unsigned char *colorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                        constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
+    if (in.discard) {
+        discard_fragment();
+        return float4(0, 0, 0, 0);
+    }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
@@ -139,6 +150,10 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                     texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
                                     constant unsigned char *colorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                     constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
+    if (in.discard) {
+        discard_fragment();
+        return float4(0, 0, 0, 0);
+    }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 

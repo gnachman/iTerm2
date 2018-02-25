@@ -5,12 +5,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundColorRendererTransientState : iTermMetalCellRendererTransientState
-
-- (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
-               count:(size_t)count
-                 row:(int)row
-       repeatingRows:(int)repeatingRows;
-
+@property (nonatomic, strong) id<MTLBuffer> colorsBuffer;  // iTermCellColors, to be populated by iTermColorComputer
 @end
 
 @interface iTermBackgroundColorRenderer : NSObject<iTermMetalCellRenderer>

@@ -41,14 +41,24 @@ float2 PixelSpaceOrigin(int x, int y, device iTermASCIITextConfiguration *config
                   config->gridSize.y - y - 1) * config->cellSize;
 }
 
-float2 NormalizedTextureOffset(unichar code, float2 cellSize, float2 atlasSize) {
+int CodeIndex(unichar code) {
+    // Something spooky is going on. If I don't test code, it fails. The test doesn't matter, as
+    // long as it isn't compiled out. This demands more investigation.
+    if (code >= 32) {
+        return 1 + (static_cast<int>(code) - 32) * 3;
+    } else {
+        return 0;
+    }
+}
+
+float2 NormalizedTextureOffset(int i, float2 cellSize, float2 atlasSize) {
     float2 normalizeCoefficient = cellSize / atlasSize;
     int stride = static_cast<int>(atlasSize.x) / static_cast<int>(cellSize.x);
-    const int i = 1 + (code - 32) * 3;
     return float2(i % stride,
                   i / stride) * normalizeCoefficient;
 }
 
+// i is CodeIndex(screen_char_t.code).
 float2 CellOffset(int i, uint2 gridSize, float2 cellSize, float2 offset) {
     float2 coord = float2(i % gridSize.x,
                           gridSize.y - 1 - i / gridSize.y);
@@ -64,12 +74,11 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
                            unsigned int x [[instance_id]],
                            device iTermASCIITextConfiguration *config [[ buffer(iTermVertexInputIndexASCIITextConfiguration) ]],
                            device iTermASCIIRowInfo *rowInfo [[ buffer(iTermVertexInputIndexASCIITextRowInfo) ]],
-                           device iTermCellColors *colors) {
+                           device iTermCellColors *colors [[ buffer(iTermVertexInputCellColors) ]]) {
     iTermASCIITextVertexFunctionOutput out;
-    if (SCComplex(&line[x]) ||
-        SCImage(&line[x]) ||
-        SCCode(&line[x]) < ' ' ||
-        SCCode(&line[x]) > 126) {
+
+    const int i = x + rowInfo->row * (config->gridSize.x + 1);  // add one for EOL marker
+    if (colors[i].nonascii) {
         out.discard = true;
         return out;
     } else {
@@ -84,17 +93,15 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
 
-    out.textureOffset = NormalizedTextureOffset(SCCode(&line[x]),
+    const unichar code = SCCode(&line[x]);
+    out.textureOffset = NormalizedTextureOffset(CodeIndex(code),
                                                 config->cellSize,
                                                 config->atlasSize);
-
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + out.textureOffset;
 
     out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
-    const int i = x + rowInfo->row * (config->width + 1);  // add one for EOL marker
-    
     out.backgroundColor = colors[i].backgroundColor;
     out.textColor = colors[i].textColor;
     out.underlineStyle = colors[i].underlineStyle;

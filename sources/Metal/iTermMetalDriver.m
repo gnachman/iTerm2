@@ -470,30 +470,20 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [frameData.rows addObject:rowData];
         rowData.y = y;
         rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * _columns];
-        rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * _columns];
-        rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
         rowData.asciiRow = [frameData.perFrameState asciiRowAtIndex:y];
-        iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
-        rowData.asciiRow.markedRange = imeInfo ? [imeInfo markedRangeOnLine:rowData.y width:frameData.gridSize.width] : NSMakeRange(NSNotFound, 0);
 
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
-        int rles = 0;
         iTermMarkStyle markStyle;
         NSDate *date;
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
-                                        attributes:rowData.attributesData.mutableBytes
                                          imageRuns:rowData.imageRuns
-                                        background:rowData.backgroundColorRLEData.mutableBytes
-                                          rleCount:&rles
                                          markStyle:&markStyle
                                                row:y
                                              width:_columns
                                     drawableGlyphs:&drawableGlyphs
                                               date:&date];
-        rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
-        rowData.numberOfBackgroundRLEs = rles;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
         rowData.markStyle = markStyle;
 
@@ -834,13 +824,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         cursorInfo.coord.y >= 0 &&
         cursorInfo.coord.y < frameData.gridSize.height &&
         cursorInfo.coord.x < frameData.gridSize.width) {
-        iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
-        iTermMetalGlyphAttributes *glyphAttributes = (iTermMetalGlyphAttributes *)rowWithCursor.attributesData.mutableBytes;
-        glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
-        glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_make_float4(cursorInfo.cursorColor.redComponent,
-                                                                               cursorInfo.cursorColor.greenComponent,
-                                                                               cursorInfo.cursorColor.blueComponent,
-                                                                               1);
+#warning TODO: have the CPU compute these colors
+//        iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
+//        glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
+//        glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_make_float4(cursorInfo.cursorColor.redComponent,
+//                                                                               cursorInfo.cursorColor.greenComponent,
+//                                                                               cursorInfo.cursorColor.blueComponent,
+//                                                                               1);
     }
 
     if (cursorInfo.copyMode) {
@@ -848,32 +838,33 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         tState.selecting = cursorInfo.copyModeCursorSelecting;
         tState.coord = cursorInfo.copyModeCursorCoord;
     } else if (cursorInfo.cursorVisible) {
-        switch (cursorInfo.type) {
-            case CURSOR_UNDERLINE: {
-                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
-                tState.coord = cursorInfo.coord;
-                tState.color = cursorInfo.cursorColor;
-                break;
-            }
-            case CURSOR_BOX: {
-                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
-                tState.coord = cursorInfo.coord;
-                tState.color = cursorInfo.cursorColor;
-
-                tState = [frameData transientStateForRenderer:_frameCursorRenderer];
-                tState.coord = cursorInfo.coord;
-                tState.color = cursorInfo.cursorColor;
-                break;
-            }
-            case CURSOR_VERTICAL: {
-                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
-                tState.coord = cursorInfo.coord;
-                tState.color = cursorInfo.cursorColor;
-                break;
-            }
-            case CURSOR_DEFAULT:
-                break;
-        }
+#warning TODO: Redo cursor in all-gpu code
+//        switch (cursorInfo.type) {
+//            case CURSOR_UNDERLINE: {
+//                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
+//                tState.coord = cursorInfo.coord;
+//                tState.color = cursorInfo.cursorColor;
+//                break;
+//            }
+//            case CURSOR_BOX: {
+//                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
+//                tState.coord = cursorInfo.coord;
+//                tState.color = cursorInfo.cursorColor;
+//
+//                tState = [frameData transientStateForRenderer:_frameCursorRenderer];
+//                tState.coord = cursorInfo.coord;
+//                tState.color = cursorInfo.cursorColor;
+//                break;
+//            }
+//            case CURSOR_VERTICAL: {
+//                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
+//                tState.coord = cursorInfo.coord;
+//                tState.color = cursorInfo.cursorColor;
+//                break;
+//            }
+//            case CURSOR_DEFAULT:
+//                break;
+//        }
     }
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
@@ -919,6 +910,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+    textState.colorsBuffer = colorState.outputBuffer;
 
     // Configure underlines
     iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
@@ -930,13 +922,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     asciiState.underlineDescriptor = asciiUnderlineDescriptor;
     asciiState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
-#warning TODO: Ascii still needs some config, but it's small
     asciiState.debugCoord = VT100GridCoordMake(0, 0);
+    asciiState.colorsBuffer = colorState.outputBuffer;
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
+    backgroundState.colorsBuffer = colorState.outputBuffer;
 
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange markedRangeOnLine = imeInfo ? [imeInfo markedRangeOnLine:rowData.y width:frameData.gridSize.width] : NSMakeRange(NSNotFound, 0);
@@ -945,7 +938,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
             [self writeFPSMeterIntoGlyphKeys:glyphKeys
                                        count:rowData.numberOfDrawableGlyphs
-                                  attributes:(iTermMetalGlyphAttributes *)rowData.attributesData.mutableBytes
                                        width:frameData.gridSize.width
                                  frameNumber:frameData.frameNumber];
             rowData.numberOfDrawableGlyphs = frameData.gridSize.width;
@@ -954,9 +946,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         if (!_textRenderer.rendererDisabled) {
             [textState setGlyphKeysData:rowData.keysData
                                   count:rowData.numberOfDrawableGlyphs
-                         attributesData:rowData.attributesData
                                     row:rowData.y
-                 backgroundColorRLEData:rowData.backgroundColorRLEData
                       markedRangeOnLine:markedRangeOnLine
                                 context:textState.poolContext
                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
@@ -971,31 +961,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             [asciiState addRow:rowData.asciiRow];
         }
     }];
-    if (!_backgroundColorRenderer.rendererDisabled) {
-        BOOL (^comparator)(iTermMetalRowData *obj1, iTermMetalRowData *obj2) = ^BOOL(iTermMetalRowData *obj1, iTermMetalRowData *obj2) {
-            const NSUInteger count = obj1.numberOfBackgroundRLEs;
-            if (count != obj2.numberOfBackgroundRLEs) {
-                return NO;
-            }
-            const iTermMetalBackgroundColorRLE *array1 = (const iTermMetalBackgroundColorRLE *)obj1.backgroundColorRLEData.mutableBytes;
-            const iTermMetalBackgroundColorRLE *array2 = (const iTermMetalBackgroundColorRLE *)obj2.backgroundColorRLEData.mutableBytes;
-            for (int i = 0; i < count; i++) {
-                if (array1[i].color.x != array2[i].color.x ||
-                    array1[i].color.y != array2[i].color.y ||
-                    array1[i].color.z != array2[i].color.z ||
-                    array1[i].count != array2[i].count) {
-                    return NO;
-                }
-            }
-            return YES;
-        };
-        [frameData.rows enumerateCoalescedObjectsWithComparator:comparator block:^(iTermMetalRowData *rowData, NSUInteger count) {
-            [backgroundState setColorRLEs:(const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.mutableBytes
-                                    count:rowData.numberOfBackgroundRLEs
-                                      row:rowData.y
-                            repeatingRows:count];
-        }];
-    }
 
     // Tell the text state that it's done getting row data.
     if (!_textRenderer.rendererDisabled) {
@@ -1005,7 +970,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)writeFPSMeterIntoGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                              count:(int)count
-                        attributes:(iTermMetalGlyphAttributes *)attributes
                              width:(int)width
                        frameNumber:(NSInteger)frameNumber {
     const size_t fpsMeterSize = MAX(0, MIN(80, width));
@@ -1032,11 +996,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             glyphKeys[o].thinStrokes = NO;
             glyphKeys[o].drawable = YES;
             glyphKeys[o].typeface = iTermMetalGlyphKeyTypefaceRegular;
-
-            attributes[o].backgroundColor = simd_make_float4(0.0, 0.0, 0.0, 1.0);
-            attributes[o].foregroundColor = simd_make_float4(1.0, 0.0, 1.0, 1.0);
-            attributes[o].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-            attributes[o].annotation = NO;
         }
     }
 }

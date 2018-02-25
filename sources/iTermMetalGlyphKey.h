@@ -28,14 +28,6 @@ typedef struct {
     iTermMetalGlyphKeyTypeface typeface : iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded;
 } iTermMetalGlyphKey;
 
-// Features of a cell that do not affect which texture is selected as source material.
-typedef struct {
-    vector_float4 foregroundColor;
-    vector_float4 backgroundColor;
-    iTermMetalGlyphAttributesUnderline underlineStyle : 2;
-    BOOL annotation;  // affects underline color
-} iTermMetalGlyphAttributes;
-
 NS_INLINE NSString *iTermMetalGlyphKeyDescription(iTermMetalGlyphKey *key) {
     if (!key->drawable) {
         return @"not drawable";
@@ -66,25 +58,3 @@ NS_INLINE NSString *iTermStringFromColorVectorFloat4(vector_float4 v) {
     return [NSString stringWithFormat:@"(%0.2f, %0.2f, %0.2f, %0.2f)", v.x, v.y, v.z, v.w];
 }
 
-NS_INLINE NSString *iTermMetalGlyphAttributesDescription(iTermMetalGlyphAttributes *attrs) {
-    NSString *underline;
-    switch (attrs->underlineStyle) {
-        case iTermMetalGlyphAttributesUnderlineNone:
-            underline = @"none";
-            break;
-        case iTermMetalGlyphAttributesUnderlineDouble:
-            underline = @"DOUBLE";
-            break;
-        case iTermMetalGlyphAttributesUnderlineSingle:
-            underline = @"SINGLE";
-            break;
-        case iTermMetalGlyphAttributesUnderlineDashedSingle:
-            underline=@"DASHED SINGLE";
-            break;
-    }
-    return [NSString stringWithFormat:@"fg=%@ bg=%@ underline=%@ annotation=%@",
-            iTermStringFromColorVectorFloat4(attrs->foregroundColor),
-            iTermStringFromColorVectorFloat4(attrs->backgroundColor),
-            underline,
-            attrs->annotation ? @"YES" : @"NO"];
-}

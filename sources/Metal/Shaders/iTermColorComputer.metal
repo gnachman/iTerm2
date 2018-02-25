@@ -10,6 +10,7 @@ using namespace metal;
 
 #import "iTermMetalScreenCharAccessors.h"
 #import "iTermShaderTypes.h"
+#import "iTermSharedColor.h"
 
 kernel void
 iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInputIndexColorMap) ]],
@@ -24,26 +25,24 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
                          device iTermCellColors *colorsOut [[ buffer(iTermComputeIndexColors) ]],  // OUTPUT
                          uint2 gid [[thread_position_in_grid]]) {
     // Bounds check
-    const int width = config->gridSize.x;
+    const unsigned int width = config->gridSize.x;
     if (gid.x >= width ||
         gid.y >= config->gridSize.y) {
         return;
     }
 
-    const int i = gid.x * gid.y;
+    const int x = gid.x;
+    const int i = x + (config->gridSize.x + 1) * gid.y;
 
-    const int offset = gid.y * width;
+    const int offset = gid.y * (width + 1);
     device screen_char_t *line = line_ALL + offset;
 
-    if (SCComplex(&line[x]) ||
-        SCImage(&line[x]) ||
-        SCCode(&line[x]) < ' ' ||
-        SCCode(&line[x]) > 126) {
-        colorsOut[i].discard = true;
-        return;
-    } else {
-        colorsOut[i].discard = false;
-    }
+#if ENABLE_DEBUG_COLOR_COMPUTER
+    colorsOut[i].coord = gid;
+    colorsOut[i].index = i;
+#endif
+
+    colorsOut[i].nonascii = SCComplex(&line[x]) || SCCode(&line[x]) > 126 || SCCode(&line[x]) < ' ' || SCImage(&line[x]);
 
     // Get pointers to this line in the various bit fields.
     device unsigned char *selectedIndices = selectedIndices_ALL + offset;
@@ -81,15 +80,15 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
                                               config->reverseVideo,
                                               config->useBrightBold,
                                               colorMap,
-                                              out.backgroundColor,
+                                              backgroundColor,
                                               selected,
                                               findMatch,
                                               inUnderlinedRange && !annotated);
     const iTermMetalGlyphAttributesUnderline underlineStyle = UnderlineStyle(&line[x], annotated, inUnderlinedRange);
     const bool useThinStrokes = UseThinStrokes(config->thinStrokesSetting,
                                                config->scale > 1,
-                                               out.backgroundColor,
-                                               out.textColor);
+                                               backgroundColor,
+                                               textColor);
 
     // Assign values to output.
     if (underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {

@@ -25,6 +25,8 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputUnderlinedIndices = 11,  // data is an array of bits giving underlined range locations
     iTermVertexInputAnnotatedIndices = 12,  // data in array of bits giving annotation locations
     iTermVertexInputDebugBuffer = 13,  // iTermMetalDebugBuffer
+    iTermVertexInputCellColors = 14,  // iTermCellColors
+    iTermVertexInputBackgroundColorConfiguration = 15,  // iTermBackgroundColorConfiguration
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -84,21 +86,13 @@ typedef struct iTermTextPIU {
     // Offset of source texture
     vector_float2 textureOffset;
 
-    // Values in 0-1. These will be composited over what's already rendered.
-    vector_float4 backgroundColor;
-    vector_float4 textColor;
+    // Index into colors array
+    int cellIndex;
 
     // This is true for text and false for emoji.
     bool remapColors;
 
-    // Passed through to the solid background color fragment shader.
-    vector_int3 colorModelIndex;
-
-    // What kind of underline to draw. The offset is provided in iTermTextureDimensions.
-    iTermMetalGlyphAttributesUnderline underlineStyle;
-
-    // Color for underline, if one is to be drawn
-    vector_float4 underlineColor;
+    bool thinStrokes;
 } iTermTextPIU;
 
 typedef struct {
@@ -111,17 +105,9 @@ typedef struct {
 
 typedef struct {
     // Offset from vertex
-    vector_float2 offset;
-
-    // Number of cells occupied (stretches to the right)
-    unsigned short runLength;
-
-    // Number of rows occupied (stretches down)
-    unsigned short numRows;
-
-    // Background color
-    vector_float4 color;
-} iTermBackgroundColorPIU;
+    vector_float2 cellSize;
+    vector_uint2 gridSize;
+} iTermBackgroundColorConfiguration;
 
 typedef struct {
     vector_float4 color;
@@ -138,6 +124,7 @@ typedef struct {
 
 typedef struct {
     vector_uint2 gridSize;  // Does not include EOL marker
+    float scale;
     float minimumContrast;
     float dimmingAmount;
     float mutingAmount;
@@ -157,11 +144,10 @@ typedef struct {
 } iTermColorsConfiguration;
 
 typedef struct {
-    vector_uint2 gridSize;
+    vector_uint2 gridSize;  // does not include EOL marker
     vector_float2 cellSize;
     float scale;
     vector_float2 atlasSize;
-    int width;  // grid width, not inclusive of EOL marker
 } iTermASCIITextConfiguration;
 
 typedef struct {
@@ -175,8 +161,16 @@ typedef struct {
     int debugX;
 } iTermASCIIRowInfo;
 
+#define ENABLE_DEBUG_COLOR_COMPUTER 0
+
 typedef struct {
-    bool discard;
+#if ENABLE_DEBUG_COLOR_COMPUTER
+    // for debugging only
+    vector_uint2 coord;
+    int index;
+#endif
+
+    bool nonascii;
     vector_float4 textColor;
     vector_float4 backgroundColor;
     vector_float4 underlineColor;
