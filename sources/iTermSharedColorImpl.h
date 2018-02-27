@@ -36,8 +36,8 @@ using namespace std;
 
 iTermColorMapKey TrueColorKey(int red, int green, int blue) {
     return static_cast<iTermColorMapKey>(kColorMap24bitBase +
-                                         ((red & 0xff) << 16) +
-                                         ((green & 0xff) << 8) +
+                                         ((red & 0xff) << 16) |
+                                         ((green & 0xff) << 8) |
                                          (blue & 0xff));
 }
 
@@ -80,9 +80,9 @@ iTermColorMapKey ColorMapKey(const int code,
             }
         }
         break;
-        case ColorMode24bit:
+    case ColorMode24bit:
         return TrueColorKey(theIndex, green, blue);
-        case ColorModeNormal:
+    case ColorModeNormal:
         // Render bold text as bright. The spec (ECMA-48) describes the intense
         // display setting (esc[1m) as "bold or bright". We make it a
         // preference.
@@ -94,14 +94,14 @@ iTermColorMapKey ColorMapKey(const int code,
         }
         return static_cast<iTermColorMapKey>(kColorMap8bitBase + (theIndex & 0xff));
 
-        case ColorModeInvalid:
+    case ColorModeInvalid:
         return kColorMapInvalid;
     }
     return kColorMapInvalid;
 }
 
 #ifdef __METAL_VERSION__
-static vector_float4 ColorMapLookup(COMPAT_COLORMAP *colorMap,
+vector_float4 ColorMapLookup(COMPAT_COLORMAP *colorMap,
                                     iTermColorMapKey key) {
     if (key >= kColorMap24bitBase) {
         // Decode a true-color key

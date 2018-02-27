@@ -808,6 +808,27 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
 }
 
+// Use 24-bit color to set the text and background color of a cell.
+- (void)setTextColor:(vector_float4)textColor
+     backgroundColor:(vector_float4)backgroundColor
+             atCoord:(VT100GridCoord)coord
+               lines:(screen_char_t *)lines
+            gridSize:(VT100GridSize)gridSize {
+    if (coord.x < 0 || coord.y < 0 || coord.x >= gridSize.width || coord.y >= gridSize.height) {
+        return;
+    }
+    screen_char_t *c = &lines[coord.x + coord.y * (gridSize.width + 1)];
+    c->foregroundColorMode = ColorMode24bit;
+    c->foregroundColor = textColor.x * 255;
+    c->fgGreen = textColor.y * 255;
+    c->fgBlue = textColor.z * 255;
+
+    c->backgroundColorMode = ColorMode24bit;
+    c->backgroundColor = backgroundColor.x * 255;
+    c->bgGreen = backgroundColor.y * 255;
+    c->bgBlue = backgroundColor.z * 255;
+}
+
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (_underlineCursorRenderer.rendererDisabled &&
         _barCursorRenderer.rendererDisabled &&
@@ -824,13 +845,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         cursorInfo.coord.y >= 0 &&
         cursorInfo.coord.y < frameData.gridSize.height &&
         cursorInfo.coord.x < frameData.gridSize.width) {
-#warning TODO: have the CPU compute these colors
-//        iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
-//        glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
-//        glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_make_float4(cursorInfo.cursorColor.redComponent,
-//                                                                               cursorInfo.cursorColor.greenComponent,
-//                                                                               cursorInfo.cursorColor.blueComponent,
-//                                                                               1);
+        [self setTextColor:cursorInfo.textColor
+           backgroundColor:simd_make_float4(cursorInfo.cursorColor.redComponent,
+                                            cursorInfo.cursorColor.greenComponent,
+                                            cursorInfo.cursorColor.blueComponent,
+                                            1)
+                   atCoord:cursorInfo.coord
+                     lines:(screen_char_t *)frameData.perFrameState.concatenatedLines.mutableBytes
+                  gridSize:frameData.gridSize];
     }
 
     if (cursorInfo.copyMode) {
@@ -838,33 +860,32 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         tState.selecting = cursorInfo.copyModeCursorSelecting;
         tState.coord = cursorInfo.copyModeCursorCoord;
     } else if (cursorInfo.cursorVisible) {
-#warning TODO: Redo cursor in all-gpu code
-//        switch (cursorInfo.type) {
-//            case CURSOR_UNDERLINE: {
-//                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
-//                tState.coord = cursorInfo.coord;
-//                tState.color = cursorInfo.cursorColor;
-//                break;
-//            }
-//            case CURSOR_BOX: {
-//                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
-//                tState.coord = cursorInfo.coord;
-//                tState.color = cursorInfo.cursorColor;
-//
-//                tState = [frameData transientStateForRenderer:_frameCursorRenderer];
-//                tState.coord = cursorInfo.coord;
-//                tState.color = cursorInfo.cursorColor;
-//                break;
-//            }
-//            case CURSOR_VERTICAL: {
-//                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
-//                tState.coord = cursorInfo.coord;
-//                tState.color = cursorInfo.cursorColor;
-//                break;
-//            }
-//            case CURSOR_DEFAULT:
-//                break;
-//        }
+        switch (cursorInfo.type) {
+            case CURSOR_UNDERLINE: {
+                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+                break;
+            }
+            case CURSOR_BOX: {
+                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+
+                tState = [frameData transientStateForRenderer:_frameCursorRenderer];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+                break;
+            }
+            case CURSOR_VERTICAL: {
+                iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
+                tState.coord = cursorInfo.coord;
+                tState.color = cursorInfo.cursorColor;
+                break;
+            }
+            case CURSOR_DEFAULT:
+                break;
+        }
     }
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
@@ -1431,6 +1452,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         // Unlock indices and free up the stage texture.
         iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_textRenderer];
         [textState didComplete];
+    }
+
+    const char *debugOutput = [[frameData transientStateForComputer:_colorComputer] debugOutput];
+    if (debugOutput[0]) {
+        ELog(@"Debug output from color computer: %s", debugOutput);
     }
 
     DLog(@"  Recording final stats");

@@ -225,8 +225,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (BOOL)rendererDisabled {
-#warning TODO: Fix cursor renderers
-    return YES;
+    return NO;
 }
 
 - (iTermMetalFrameDataStat)createTransientStateStat {

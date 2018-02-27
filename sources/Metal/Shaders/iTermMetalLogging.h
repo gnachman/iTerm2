@@ -15,13 +15,15 @@ namespace MetalLogging {
     void LogStringInt(bool enabled,
                       device iTermMetalDebugBuffer *buffer,
                       constant char *message,
-                      constant int *values,
-                      int count);
+                      int value);
 
     void LogStringFloat(bool enabled,
                         device iTermMetalDebugBuffer *buffer,
                         constant char *message,
-                        constant float *values,
-                        int count);
+                        float value);
+    void LogStringFloat4(bool enabled,
+                        device iTermMetalDebugBuffer *buffer,
+                        constant char *message,
+                        float4 value);
 }
 

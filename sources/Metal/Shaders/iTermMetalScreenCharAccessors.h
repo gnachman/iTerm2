@@ -12,6 +12,11 @@
 // This abomination of a file exists because Metal doesn't seem to pack structs the same as
 // Objective-C, leading to insanity.#ifdef __METAL_VERSION__
 
+inline device screen_char_t *SCIndex(device screen_char_t *line, int index) {
+    device unsigned char *p = (device unsigned char *)line;
+    return reinterpret_cast<device screen_char_t *>(p + index * SIZEOF_SCREEN_CHAR_T);
+}
+
 inline unichar SCCode(device screen_char_t *c) {
     device unsigned char *p = (device unsigned char *)c;
     return (p[1] << 8) | p[0];

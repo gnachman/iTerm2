@@ -59,16 +59,32 @@ namespace {
         }
     }
 
-    void AppendInt(device iTermMetalDebugBuffer *buffer,
-                   int value,
-                   int reserve) {
+    void AppendIntDecimal(device iTermMetalDebugBuffer *buffer,
+                          int value,
+                          int reserve) {
         if (value < 0) {
             AppendChar(buffer, '-', reserve);
-            AppendInt(buffer, -value, reserve);
+            AppendIntDecimal(buffer, -value, reserve);
         } else {
             int start = buffer->offset;
             AppendNonNegativeIntReversed(buffer, value, reserve);
             ReverseChars(buffer, start, buffer->offset - start);
+        }
+    }
+
+    // Hex
+    void AppendInt(device iTermMetalDebugBuffer *buffer,
+                   int valueIn,
+                   int reserve) {
+        int value = valueIn;
+        for (int j = 0; j < 8; j++) {
+            int nibble = (value >> 28) & 0x0f;
+            if (nibble < 10) {
+                AppendChar(buffer, '0' + nibble, reserve);
+            } else {
+                AppendChar(buffer, 'a' + nibble - 10, reserve);
+            }
+            value <<= 4;
         }
     }
 
@@ -143,16 +159,13 @@ namespace MetalLogging {
     void LogStringInt(bool enabled,
                       device iTermMetalDebugBuffer *buffer,
                       constant char *message,
-                      constant int *values,
-                      int count) {
+                      int value) {
         if (!enabled) {
             return;
         }
         AppendString(buffer, message, 2);
-        for (int i = 0; i < count; i++) {
-            AppendChar(buffer, ' ', 2);
-            AppendInt(buffer, values[i], 2);
-        }
+        AppendChar(buffer, ' ', 2);
+        AppendInt(buffer, value, 2);
         AppendChar(buffer, '\n', 1);
         NullTerminate(buffer);
     }
@@ -160,16 +173,35 @@ namespace MetalLogging {
     void LogStringFloat(bool enabled,
                         device iTermMetalDebugBuffer *buffer,
                         constant char *message,
-                        constant float *values,
-                        int count) {
+                        float value) {
         if (!enabled) {
             return;
         }
         AppendString(buffer, message, 2);
-        for (int i = 0; i < count; i++) {
-            AppendChar(buffer, ' ', 2);
-            AppendFloat(buffer, values[i], 2);
+        AppendFloat(buffer, value, 2);
+
+        AppendChar(buffer, '\n', 1);
+        NullTerminate(buffer);
+    }
+
+    void LogStringFloat4(bool enabled,
+                        device iTermMetalDebugBuffer *buffer,
+                        constant char *message,
+                        float4 value) {
+        if (!enabled) {
+            return;
         }
+        AppendString(buffer, message, 2);
+        AppendString(buffer, "(", 2);
+        AppendFloat(buffer, value.x, 2);
+        AppendString(buffer, ",", 2);
+        AppendFloat(buffer, value.y, 2);
+        AppendString(buffer, ",", 2);
+        AppendFloat(buffer, value.z, 2);
+        AppendString(buffer, ",", 2);
+        AppendFloat(buffer, value.w, 2);
+        AppendString(buffer, ")", 2);
+
         AppendChar(buffer, '\n', 1);
         NullTerminate(buffer);
     }

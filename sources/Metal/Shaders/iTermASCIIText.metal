@@ -93,7 +93,8 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
 
-    const unichar code = SCCode(&line[x]);
+    device screen_char_t *sct = SCIndex(line, x);
+    const unichar code = SCCode(sct);
     out.textureOffset = NormalizedTextureOffset(CodeIndex(code),
                                                 config->cellSize,
                                                 config->atlasSize);
@@ -111,9 +112,9 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.viewportSize = viewportSize;
     out.scale = config->scale;
 
-    out.bold = SCBold(&line[x]);
+    out.bold = SCBold(sct);
     out.thin = colors[i].useThinStrokes;
-    out.italic = SCItalic(&line[x]);
+    out.italic = SCItalic(sct);
 
     return out;
 }

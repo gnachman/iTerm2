@@ -11,10 +11,11 @@ using namespace metal;
 #import "iTermMetalScreenCharAccessors.h"
 #import "iTermShaderTypes.h"
 #import "iTermSharedColor.h"
+#import "iTermMetalLogging.h"
 
 kernel void
 iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInputIndexColorMap) ]],
-                         device screen_char_t *line_ALL [[ buffer(iTermComputeIndexScreenChars) ]],
+                         device unsigned char *line_ALL [[ buffer(iTermComputeIndexScreenChars) ]],
                          device unsigned char *selectedIndices_ALL [[ buffer(iTermVertexInputSelectedIndices) ]],
                          device unsigned char *findMatchIndices_ALL [[ buffer(iTermVertexInputFindMatchIndices) ]],
                          device unsigned char *annotatedIndices_ALL [[ buffer(iTermVertexInputAnnotatedIndices) ]],
@@ -35,14 +36,18 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
     const int i = x + (config->gridSize.x + 1) * gid.y;
 
     const int offset = gid.y * (width + 1);
-    device screen_char_t *line = line_ALL + offset;
+    device screen_char_t *line = line_ALL + offset * SIZEOF_SCREEN_CHAR_T;
+    device screen_char_t *sct = SCIndex(line, x);
 
 #if ENABLE_DEBUG_COLOR_COMPUTER
     colorsOut[i].coord = gid;
     colorsOut[i].index = i;
 #endif
 
-    colorsOut[i].nonascii = SCComplex(&line[x]) || SCCode(&line[x]) > 126 || SCCode(&line[x]) < ' ' || SCImage(&line[x]);
+    colorsOut[i].nonascii = (SCComplex(sct) ||
+                             SCCode(sct) > 126 ||
+                             SCCode(sct) < ' ' ||
+                             SCImage(sct));
 
     // Get pointers to this line in the various bit fields.
     device unsigned char *selectedIndices = selectedIndices_ALL + offset;
@@ -58,7 +63,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
     const bool marked = !!(markedIndices[i / 8] & mask);
     const bool inUnderlinedRange = !!(underlinedIndices[i / 8] & mask);
 
-    const vector_float4 backgroundColor = BackgroundColor(&line[x],
+    const vector_float4 backgroundColor = BackgroundColor(sct,
                                                           config->transparencyAlpha,
                                                           config->transparencyAffectsOnlyDefaultBackgroundColor,
                                                           config->reverseVideo,
@@ -72,7 +77,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
                                                           colorMap,
                                                           selected,
                                                           findMatch);
-    const vector_float4 textColor = TextColor(&line[x],
+    const vector_float4 textColor = TextColor(sct,
                                               config->minimumContrast,
                                               config->dimmingAmount,
                                               config->mutingAmount,
@@ -84,7 +89,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
                                               selected,
                                               findMatch,
                                               inUnderlinedRange && !annotated);
-    const iTermMetalGlyphAttributesUnderline underlineStyle = UnderlineStyle(&line[x], annotated, inUnderlinedRange);
+    const iTermMetalGlyphAttributesUnderline underlineStyle = UnderlineStyle(sct, annotated, inUnderlinedRange);
     const bool useThinStrokes = UseThinStrokes(config->thinStrokesSetting,
                                                config->scale > 1,
                                                backgroundColor,
@@ -102,25 +107,3 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
     colorsOut[i].underlineStyle = underlineStyle;
     colorsOut[i].useThinStrokes = useThinStrokes;
 }
-
-
-
-/*
-kernel void
-HelloWorld(device screen_char_t *line [[ buffer(iTermComputeIndexScreenChars) ]],
-           device iTermCellColors *colorsOut [[ buffer(iTermComputeIndexColors) ]],
-           constant iTermColorsConfig *config [[ buffer(iTermComputeIndexColorsConfig) ]],
-           uint2 gid [[thread_position_in_grid]]) {
-    // Bounds check
-    if (gid.x >= config->gridSize.x ||
-        gid.y >= config->gridSize.y) {
-        return;
-    }
-
-    const int outputIndex = gid.x * gid.y;
-    colorsOut[outputIndex].textColor = float4(0, 0.5, 0.75, 1);
-    colorsOut[outputIndex].backgroundColor = float4(gid.x, gid.y, 0, 1);
-}
-
-
-*/

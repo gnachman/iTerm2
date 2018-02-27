@@ -20,7 +20,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) iTermData *annotatedIndices;
 @property (nonatomic, strong) iTermData *markedIndices;
 @property (nonatomic, strong) iTermData *underlinedIndices;
-
+@property (nonatomic, readonly) const char *debugOutput;
 @property (nonatomic, readonly) id<MTLBuffer> outputBuffer;  // iTermCellColors
 @end
 

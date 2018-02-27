@@ -164,6 +164,11 @@ vector_float4 ApplyMinimumContrast(vector_float4 textColor,
 vector_float4 ForceBrightness(vector_float4 c,
                               float t);
 
+#ifdef __METAL_VERSION__
+vector_float4 ColorMapLookup(COMPAT_COLORMAP *colorMap,
+                             iTermColorMapKey key);
+#endif
+
 #ifdef ITERM_TERMINATE_EXTERN_C
 }
 #endif

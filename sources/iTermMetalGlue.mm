@@ -44,6 +44,10 @@ static vector_float4 VectorForColor(NSColor *color) {
     return simd_make_float4(color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent);
 }
 
+static NSColor *ColorForVector(vector_float4 v) {
+    return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
+}
+
 static inline BOOL CanTakeASCIIFastPath(const screen_char_t &c) {
     return (c.code <= iTermASCIITextureMaximumCharacter &&
             !c.complexChar);
@@ -107,7 +111,8 @@ static void HandleGlyph(const screen_char_t &c,
 @end
 
 @interface iTermMetalPerFrameState : NSObject<
-    iTermMetalDriverDataSourcePerFrameState> {
+    iTermMetalDriverDataSourcePerFrameState,
+    iTermSmartCursorColorDelegate> {
     BOOL _havePreviousCharacterAttributes;
     screen_char_t _previousCharacterAttributes;
     vector_float4 _lastUnprocessedColor;
@@ -477,13 +482,52 @@ static void HandleGlyph(const screen_char_t &c,
         lineWithCursor < _visibleRange.end.y) {
         _cursorInfo.cursorVisible = YES;
         _cursorInfo.type = drawingHelper.cursorType;
+        _cursorInfo.cursorColor = [self backgroundColorForCursor];
         if (_cursorInfo.type == CURSOR_BOX) {
             _cursorInfo.shouldDrawText = YES;
+            const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].mutableBytes;
+            screen_char_t screenChar = line[_cursorInfo.coord.x];
             const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
+
+            iTermSmartCursorColor *smartCursorColor = nil;
+            if (drawingHelper.useSmartCursorColor) {
+                smartCursorColor = [[iTermSmartCursorColor alloc] init];
+                smartCursorColor.delegate = self;
+            }
 
             if (!focused) {
                 _cursorInfo.shouldDrawText = NO;
                 _cursorInfo.frameOnly = YES;
+            } else if (smartCursorColor) {
+                _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
+                                                           wantBackground:YES
+                                                                    muted:NO];
+                _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
+                NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
+                                                            green:_cursorInfo.textColor.y
+                                                             blue:_cursorInfo.textColor.z
+                                                            alpha:_cursorInfo.textColor.w];
+                NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
+                                                                 regularTextColor:regularTextColor
+                                                             smartBackgroundColor:_cursorInfo.cursorColor];
+                CGFloat components[4];
+                [smartTextColor getComponents:components];
+                _cursorInfo.textColor = simd_make_float4(components[0],
+                                                         components[1],
+                                                         components[2],
+                                                         components[3]);
+            } else {
+                if (_reverseVideo) {
+                    _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
+                } else {
+                    _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
+                                                         green:0
+                                                          blue:0
+                                                     colorMode:ColorModeAlternate
+                                                          bold:NO
+                                                         faint:NO
+                                                  isBackground:NO];
+                }
             }
         }
     } else {
@@ -866,6 +910,88 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     *drawableGlyphsPtr = lastDrawableGlyph + 1;
 }
 
+- (vector_float4)colorForCode:(int)theIndex
+                        green:(int)green
+                         blue:(int)blue
+                    colorMode:(ColorMode)theMode
+                         bold:(BOOL)isBold
+                        faint:(BOOL)isFaint
+                 isBackground:(BOOL)isBackground {
+    iTermColorMapKey key = [self colorMapKeyForCode:theIndex
+                                              green:green
+                                               blue:blue
+                                          colorMode:theMode
+                                               bold:isBold
+                                       isBackground:isBackground];
+    if (isBackground) {
+        return VectorForColor([_colorMap colorForKey:key]);
+    } else {
+        vector_float4 color = VectorForColor([_colorMap colorForKey:key]);
+        if (isFaint) {
+            color.w = 0.5;
+        }
+        return color;
+    }
+}
+
+- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold
+                          isBackground:(BOOL)isBackground {
+    BOOL isBackgroundForDefault = isBackground;
+    switch (theMode) {
+        case ColorModeAlternate:
+            switch (theIndex) {
+                case ALTSEM_SELECTED:
+                    if (isBackground) {
+                        return kColorMapSelection;
+                    } else {
+                        return kColorMapSelectedText;
+                    }
+                case ALTSEM_CURSOR:
+                    if (isBackground) {
+                        return kColorMapCursor;
+                    } else {
+                        return kColorMapCursorText;
+                    }
+                case ALTSEM_REVERSED_DEFAULT:
+                    isBackgroundForDefault = !isBackgroundForDefault;
+                    // Fall through.
+                case ALTSEM_DEFAULT:
+                    if (isBackgroundForDefault) {
+                        return kColorMapBackground;
+                    } else {
+                        if (isBold && _useBrightBold) {
+                            return kColorMapBold;
+                        } else {
+                            return kColorMapForeground;
+                        }
+                    }
+            }
+            break;
+        case ColorMode24bit:
+            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
+        case ColorModeNormal:
+            // Render bold text as bright. The spec (ECMA-48) describes the intense
+            // display setting (esc[1m) as "bold or bright". We make it a
+            // preference.
+            if (isBold &&
+                _useBrightBold &&
+                (theIndex < 8) &&
+                !isBackground) { // Only colors 0-7 can be made "bright".
+                theIndex |= 8;  // set "bright" bit.
+            }
+            return static_cast<iTermColorMapKey>(kColorMap8bitBase + (theIndex & 0xff));
+
+        case ColorModeInvalid:
+            return kColorMapInvalid;
+    }
+    NSAssert(ok, @"Bogus color mode %d", (int)theMode);
+    return kColorMapInvalid;
+}
+
 - (id)metalASCIICreationIdentifier {
     return @{ @"font": _asciiFont.font ?: [NSNull null],
               @"boldFont": _asciiFont.boldVersion ?: [NSNull null],
@@ -934,6 +1060,85 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (NSData *)colorMap {
     return _serializedColorMap;
+}
+
+- (vector_float4)textColorForCharacter:(screen_char_t *)c
+                                  line:(int)line
+                       backgroundColor:(vector_float4)backgroundColor
+                              selected:(BOOL)selected
+                             findMatch:(BOOL)findMatch
+                     inUnderlinedRange:(BOOL)inUnderlinedRange
+                                 index:(int)index {
+    vector_float4 rawColor = { 0, 0, 0, 0 };
+    iTermColorMap *colorMap = _colorMap;
+    const BOOL needsProcessing = (colorMap.minimumContrast > 0.001 ||
+                                  colorMap.dimmingAmount > 0.001 ||
+                                  colorMap.mutingAmount > 0.001 ||
+                                  c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
+
+
+    if (findMatch) {
+        // Black-on-yellow search result.
+        rawColor = (vector_float4){ 0, 0, 0, 1 };
+        _havePreviousCharacterAttributes = NO;
+    } else if (inUnderlinedRange) {
+        // Blue link text.
+        rawColor = VectorForColor([_colorMap colorForKey:kColorMapLink]);
+        _havePreviousCharacterAttributes = NO;
+    } else if (selected) {
+        // Selected text.
+        rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText]);
+        _havePreviousCharacterAttributes = NO;
+    } else if (_reverseVideo &&
+               ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
+                (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
+           // Reverse video is on. Either is cursor or has default foreground color. Use
+           // background color.
+           rawColor = VectorForColor([colorMap colorForKey:kColorMapBackground]);
+           _havePreviousCharacterAttributes = NO;
+    } else if (!_havePreviousCharacterAttributes ||
+               c->foregroundColor != _previousCharacterAttributes.foregroundColor ||
+               c->fgGreen != _previousCharacterAttributes.fgGreen ||
+               c->fgBlue != _previousCharacterAttributes.fgBlue ||
+               c->foregroundColorMode != _previousCharacterAttributes.foregroundColorMode ||
+               c->bold != _previousCharacterAttributes.bold ||
+               c->faint != _previousCharacterAttributes.faint ||
+               !_havePreviousForegroundColor) {
+        // "Normal" case for uncached text color. Recompute the unprocessed color from the character.
+        _previousCharacterAttributes = *c;
+        _havePreviousCharacterAttributes = YES;
+        rawColor = [self colorForCode:c->foregroundColor
+                                green:c->fgGreen
+                                 blue:c->fgBlue
+                            colorMode:static_cast<ColorMode>(c->foregroundColorMode)
+                                 bold:c->bold
+                                faint:c->faint
+                         isBackground:NO];
+    } else {
+        // Foreground attributes are just like the last character. There is a cached foreground color.
+        if (needsProcessing) {
+            // Process the text color for the current background color, which has changed since
+            // the last cell.
+            rawColor = _lastUnprocessedColor;
+        } else {
+            // Text color is unchanged. Either it's independent of the background color or the
+            // background color has not changed.
+            return _previousForegroundColor;
+        }
+    }
+
+    _lastUnprocessedColor = rawColor;
+
+    vector_float4 result;
+    if (needsProcessing) {
+        result = VectorForColor([_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
+                                                      overBackgroundColor:ColorForVector(backgroundColor)]);
+    } else {
+        result = rawColor;
+    }
+    _previousForegroundColor = result;
+    _havePreviousForegroundColor = YES;
+    return result;
 }
 
 #pragma mark - Color
@@ -1076,6 +1281,64 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                          return nil;
                                                      }
                                                  }];
+}
+
+- (vector_float4)fastCursorColorForCharacter:(screen_char_t)screenChar
+                              wantBackground:(BOOL)wantBackgroundColor
+                                       muted:(BOOL)muted {
+    BOOL isBackground = [iTermTextDrawingHelper cursorUsesBackgroundColorForScreenChar:screenChar
+                                                                        wantBackground:wantBackgroundColor
+                                                                          reverseVideo:_reverseVideo];
+
+    vector_float4 color;
+    if (wantBackgroundColor) {
+        color = [self colorForCode:screenChar.backgroundColor
+                             green:screenChar.bgGreen
+                              blue:screenChar.bgBlue
+                         colorMode:static_cast<ColorMode>(screenChar.backgroundColorMode)
+                              bold:screenChar.bold
+                             faint:screenChar.faint
+                      isBackground:isBackground];
+    } else {
+        color = [self colorForCode:screenChar.foregroundColor
+                             green:screenChar.fgGreen
+                              blue:screenChar.fgBlue
+                         colorMode:static_cast<ColorMode>(screenChar.foregroundColorMode)
+                              bold:screenChar.bold
+                             faint:screenChar.faint
+                      isBackground:isBackground];
+    }
+    if (muted) {
+        color = [_colorMap fastColorByMutingColor:color];
+    }
+    return color;
+}
+
+- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
+                      wantBackground:(BOOL)wantBackgroundColor
+                               muted:(BOOL)muted {
+    vector_float4 v = [self fastCursorColorForCharacter:screenChar wantBackground:wantBackgroundColor muted:muted];
+    return [NSColor colorWithRed:v.x green:v.y blue:v.z alpha:v.w];
+}
+
+- (NSColor *)cursorColorByDimmingSmartColor:(NSColor *)color {
+    return [_colorMap colorByDimmingTextColor:color];
+}
+
+- (NSColor *)cursorWhiteColor {
+    NSColor *whiteColor = [NSColor colorWithCalibratedRed:1
+                                                    green:1
+                                                     blue:1
+                                                    alpha:1];
+    return [_colorMap colorByDimmingTextColor:whiteColor];
+}
+
+- (NSColor *)cursorBlackColor {
+    NSColor *blackColor = [NSColor colorWithCalibratedRed:0
+                                                    green:0
+                                                     blue:0
+                                                    alpha:1];
+    return [_colorMap colorByDimmingTextColor:blackColor];
 }
 
 #pragma mark - Cursor Logic

@@ -57,10 +57,9 @@ typedef unsigned short unichar;
 
 #ifdef __METAL_VERSION__
 
-// The stupid metal compiler doesn't pack structs the same as the C compiler. ARGH
-typedef struct screen_char_t {
-    unsigned char spam[SIZEOF_SCREEN_CHAR_T];
-} screen_char_t;
+// The stupid metal compiler doesn't pack structs the same as the C compiler. And if you pass a
+// struct with an array of unsigned chars it gets all confused and produces broken code.
+typedef void screen_char_t;
 
 #else
 

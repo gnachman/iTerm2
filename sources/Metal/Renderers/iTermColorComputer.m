@@ -32,6 +32,11 @@
                            checkIfChanged:YES];
 }
 
+- (const char *)debugOutput {
+    iTermMetalDebugBuffer *buffer = (iTermMetalDebugBuffer *)self.debugBuffer.contents;
+    return buffer->storage;
+}
+
 @end
 
 @implementation iTermColorComputer {
@@ -76,7 +81,14 @@
 - (void)initializeTransientState:(iTermColorComputerTransientState *)tState {
     tState.colorMap = _colorMap;
     tState.config = _config;
-    tState.debugBuffer = [_debugBufferPool requestBufferFromContext:tState.poolContext];
+    iTermMetalDebugBuffer debugBuffer = {
+        .offset = 0,
+        .capacity = 1024
+    };
+    memset(debugBuffer.storage, 0, 1024);
+    tState.debugBuffer = [_debugBufferPool requestBufferFromContext:tState.poolContext
+                                                          withBytes:&debugBuffer
+                                                     checkIfChanged:YES];
 #warning TODO: Make the mode private
     tState.outputBuffer = [_outputPool requestBufferFromContext:tState.poolContext
                                                            size:(_config.gridSize.x + 1) * _config.gridSize.y * sizeof(iTermCellColors)];
