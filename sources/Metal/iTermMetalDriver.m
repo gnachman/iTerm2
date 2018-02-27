@@ -952,18 +952,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
     backgroundState.colorsBuffer = colorState.outputBuffer;
 
+    if ([iTermAdvancedSettingsModel showMetalFPSmeter]) {
+        [self writeFPSMeterIntoConcatenatedLines:(screen_char_t *)colorState.lines.mutableBytes
+                                        gridSize:frameData.gridSize
+                                     frameNumber:frameData.frameNumber];
+    }
+
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange markedRangeOnLine = imeInfo ? [imeInfo markedRangeOnLine:rowData.y width:frameData.gridSize.width] : NSMakeRange(NSNotFound, 0);
 
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
-        if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
-            [self writeFPSMeterIntoGlyphKeys:glyphKeys
-                                       count:rowData.numberOfDrawableGlyphs
-                                       width:frameData.gridSize.width
-                                 frameNumber:frameData.frameNumber];
-            rowData.numberOfDrawableGlyphs = frameData.gridSize.width;
-        }
-
         if (!_textRenderer.rendererDisabled) {
             [textState setGlyphKeysData:rowData.keysData
                                   count:rowData.numberOfDrawableGlyphs
@@ -989,11 +987,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-- (void)writeFPSMeterIntoGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
-                             count:(int)count
-                             width:(int)width
-                       frameNumber:(NSInteger)frameNumber {
-    const size_t fpsMeterSize = MAX(0, MIN(80, width));
+- (void)writeFPSMeterIntoConcatenatedLines:(screen_char_t *)lines
+                                  gridSize:(VT100GridSize)gridSize
+                               frameNumber:(NSInteger)frameNumber {
+    const size_t fpsMeterSize = MAX(0, MIN(80, gridSize.width));
     if (fpsMeterSize > 1) {
         const double period = [_fpsMovingAverage value];
         double fps = 1.0 / period;
@@ -1006,17 +1003,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  " [Frame %d: %d fps] ",
                  (int)frameNumber,
                  (int)round(fps));
-        int o = MAX(0, width - strlen(frame));
-        for (int i = count; i < o; i++) {
-            glyphKeys[o].drawable = NO;
-        }
+        int o = MAX(0, gridSize.width - strlen(frame));
         for (int i = 0; frame[i]; i++, o++) {
-            glyphKeys[o].code = frame[i];
-            glyphKeys[o].isComplex = NO;
-            glyphKeys[o].boxDrawing = NO;
-            glyphKeys[o].thinStrokes = NO;
-            glyphKeys[o].drawable = YES;
-            glyphKeys[o].typeface = iTermMetalGlyphKeyTypefaceRegular;
+            [self setTextColor:simd_make_float4(1, 0, 1, 1)
+               backgroundColor:simd_make_float4(0.1, 0.1, 0.1, 1)
+                       atCoord:VT100GridCoordMake(o, 0)
+                         lines:lines
+                      gridSize:gridSize];
+            lines[o].code = frame[i];
         }
     }
 }
