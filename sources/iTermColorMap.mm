@@ -84,8 +84,6 @@
     if (theColor == _map[@(theKey)])
         return;
 
-    CGFloat components[4];
-    [theColor getComponents:components];
     if (theKey == kColorMapBackground) {
         _backgroundRed = [theColor redComponent];
         _backgroundGreen = [theColor greenComponent];
@@ -93,6 +91,8 @@
     }
 
     theColor = [theColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    CGFloat components[4];
+    [theColor getComponents:components];
 
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];
