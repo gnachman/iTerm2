@@ -78,8 +78,7 @@ static const NSInteger kUnicodeVersion = 9;
 }
 
 // Append a block
-- (LineBlock*) _addBlockOfSize: (int) size
-{
+- (LineBlock*)_addBlockOfSize:(int)size {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [blocks addObject:block];
@@ -303,7 +302,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 #endif
     if ([blocks count] == 0) {
-        [self _addBlockOfSize: block_size];
+        [self _addBlockOfSize:block_size];
     }
 
     LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
@@ -353,9 +352,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // allocate a new buffer that is large enough to hold this line.
             [block shrinkToFit];
             if (length + prefix_len > block_size) {
-                block = [self _addBlockOfSize: length + prefix_len];
+                block = [self _addBlockOfSize:length + prefix_len];
             } else {
-                block = [self _addBlockOfSize: block_size];
+                block = [self _addBlockOfSize:block_size];
             }
         }
 

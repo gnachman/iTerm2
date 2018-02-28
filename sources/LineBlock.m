@@ -338,6 +338,12 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
     if (length > free_space) {
         return NO;
     }
+    // A line block could hold up to maxint empty lines but that makes
+    // -dictionary return a very large serialized state.
+    static const int iTermLineBlockMaxLines = 10000;
+    if (cll_entries >= iTermLineBlockMaxLines) {
+        return NO;
+    }
     memcpy(raw_buffer + space_used, buffer, sizeof(screen_char_t) * length);
     // There's an edge case here. In the else clause, the line buffer looks like this originally:
     //   |xxxx| EOL_SOFT
