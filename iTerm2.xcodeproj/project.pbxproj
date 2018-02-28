@@ -1419,7 +1419,7 @@
 		A6561A1D2039F72300C36D66 /* iTermScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = A6561A1B2039F3A800C36D66 /* iTermScreenChar.h */; };
 		A6561A242039FE7400C36D66 /* iTermASCIITextRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6561A122038FC7700C36D66 /* iTermASCIITextRenderer.mm */; };
 		A65685762041DFE00018E37F /* iTermColorComputer.h in Headers */ = {isa = PBXBuildFile; fileRef = A65685742041DFE00018E37F /* iTermColorComputer.h */; };
-		A65685772041DFE00018E37F /* iTermColorComputer.m in Sources */ = {isa = PBXBuildFile; fileRef = A65685752041DFE00018E37F /* iTermColorComputer.m */; };
+		A65685772041DFE00018E37F /* iTermColorComputer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A65685752041DFE00018E37F /* iTermColorComputer.mm */; };
 		A65685792041F26F0018E37F /* iTermColorComputer.metal in Sources */ = {isa = PBXBuildFile; fileRef = A65685782041F26F0018E37F /* iTermColorComputer.metal */; };
 		A656857A2041F26F0018E37F /* iTermColorComputer.metal in Sources */ = {isa = PBXBuildFile; fileRef = A65685782041F26F0018E37F /* iTermColorComputer.metal */; };
 		A656857B2041F26F0018E37F /* iTermColorComputer.metal in Sources */ = {isa = PBXBuildFile; fileRef = A65685782041F26F0018E37F /* iTermColorComputer.metal */; };
@@ -3517,7 +3517,7 @@
 		A6561A26203B610800C36D66 /* iTermMetalLogging.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermMetalLogging.metal; path = Metal/Shaders/iTermMetalLogging.metal; sourceTree = "<group>"; };
 		A6561A2A203B67B100C36D66 /* iTermMetalLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalLogging.h; path = Metal/Shaders/iTermMetalLogging.h; sourceTree = "<group>"; };
 		A65685742041DFE00018E37F /* iTermColorComputer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermColorComputer.h; path = Metal/Renderers/iTermColorComputer.h; sourceTree = "<group>"; };
-		A65685752041DFE00018E37F /* iTermColorComputer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermColorComputer.m; path = Metal/Renderers/iTermColorComputer.m; sourceTree = "<group>"; };
+		A65685752041DFE00018E37F /* iTermColorComputer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermColorComputer.mm; path = Metal/Renderers/iTermColorComputer.mm; sourceTree = "<group>"; };
 		A65685782041F26F0018E37F /* iTermColorComputer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermColorComputer.metal; path = Metal/Shaders/iTermColorComputer.metal; sourceTree = "<group>"; };
 		A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "usr/lib/libaprutil-1.tbd"; sourceTree = SDKROOT; };
 		A656E9671F8C994200158128 /* iTermMetalGlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalGlyphKey.h; sourceTree = "<group>"; };
@@ -5702,7 +5702,7 @@
 				A6561A112038FC7700C36D66 /* iTermASCIITextRenderer.h */,
 				A6561A122038FC7700C36D66 /* iTermASCIITextRenderer.mm */,
 				A65685742041DFE00018E37F /* iTermColorComputer.h */,
-				A65685752041DFE00018E37F /* iTermColorComputer.m */,
+				A65685752041DFE00018E37F /* iTermColorComputer.mm */,
 				A65685782041F26F0018E37F /* iTermColorComputer.metal */,
 			);
 			name = Renderers;
@@ -8962,7 +8962,7 @@
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
 				A6543750203BFB840040F74A /* iTermSharedColorImpl.mm in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
-				A65685772041DFE00018E37F /* iTermColorComputer.m in Sources */,
+				A65685772041DFE00018E37F /* iTermColorComputer.mm in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */,

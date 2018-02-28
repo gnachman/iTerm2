@@ -30,6 +30,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)addSliceWithImage:(NSImage *)image;
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage;
 - (void)setSlice:(NSUInteger)slice withBitmap:(iTermCharacterBitmap *)bitmap;
+// Clears with opaque white
+- (void)clearSlice:(NSUInteger)slice;
 
 - (void)copyTextureAtIndex:(NSInteger)index
                    toArray:(iTermTextureArray *)destination

@@ -32,6 +32,7 @@
                            checkIfChanged:YES];
 }
 
+
 - (const char *)debugOutput {
     iTermMetalDebugBuffer *buffer = (iTermMetalDebugBuffer *)self.debugBuffer.contents;
     return buffer->storage;
@@ -83,9 +84,9 @@
     tState.config = _config;
     iTermMetalDebugBuffer debugBuffer = {
         .offset = 0,
-        .capacity = 1024
+        .capacity = METAL_DEBUG_BUFFER_SIZE
     };
-    memset(debugBuffer.storage, 0, 1024);
+    memset(debugBuffer.storage, 0, METAL_DEBUG_BUFFER_SIZE);
     tState.debugBuffer = [_debugBufferPool requestBufferFromContext:tState.poolContext
                                                           withBytes:&debugBuffer
                                                      checkIfChanged:YES];
@@ -100,7 +101,6 @@
     iTermData *lines = tState.lines;
     assert(lines);
     assert(lines.length > 0);
-    assert(lines > 0);
     id<MTLBuffer> screenCharsBuffer = [_computer.device newBufferWithBytesNoCopy:lines.mutableBytes
                                                                           length:lines.allocatedCapacity
                                                                          options:MTLResourceStorageModeShared
@@ -126,6 +126,7 @@
     id<MTLBuffer> underlinedIndices = [_bitmapPool requestBufferFromContext:tState.poolContext
                                                                        size:tState.underlinedIndices.length
                                                                       bytes:tState.underlinedIndices.bytes];
+#warning DNS
     id<MTLBuffer> configBuffer = [tState configurationBufferWithPool:_configurationPool];
 
     NSDictionary<NSNumber *, id<MTLBuffer>> *buffers =

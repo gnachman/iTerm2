@@ -73,6 +73,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
                                                           config->dimOnlyText,
                                                           config->dimmingAmount,
                                                           config->hasBackgroundImage,
+                                                          config->blend,
                                                           config->unfocusedSelectionColor,
                                                           colorMap,
                                                           selected,

@@ -27,6 +27,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputDebugBuffer = 13,  // iTermMetalDebugBuffer
     iTermVertexInputCellColors = 14,  // iTermCellColors
     iTermVertexInputBackgroundColorConfiguration = 15,  // iTermBackgroundColorConfiguration
+    iTermVertexInputMask = 16,  // int (0=evens, 1=odds)
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -129,9 +130,8 @@ typedef struct {
     float dimmingAmount;
     float mutingAmount;
     bool reverseVideo;
-
     bool useBrightBold;
-
+    float blend;
     float transparencyAlpha;
     bool transparencyAffectsOnlyDefaultBackgroundColor;
     vector_float4 unfocusedSelectionColor;  // see PTYTextView colorMap:didChangeColorForKey:
@@ -150,8 +150,9 @@ typedef struct {
     vector_float2 atlasSize;
 } iTermASCIITextConfiguration;
 
+#define METAL_DEBUG_BUFFER_SIZE 10240
 typedef struct {
-    char storage[1024];
+    char storage[METAL_DEBUG_BUFFER_SIZE];
     int offset;
     int capacity;
 } iTermMetalDebugBuffer;

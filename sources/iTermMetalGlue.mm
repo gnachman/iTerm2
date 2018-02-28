@@ -666,6 +666,7 @@ static void HandleGlyph(const screen_char_t &c,
     configurationPtr->asciiUnderlineColor = _asciiUnderlineDescriptor.color;
     configurationPtr->thinStrokesSetting = _thinStrokes;
     configurationPtr->hasBackgroundImage = _hasBackgroundImage;
+    configurationPtr->blend = _backgroundImageBlending;
 }
 
 - (void)copyMarkedText:(NSString *)str

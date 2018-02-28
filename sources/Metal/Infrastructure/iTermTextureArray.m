@@ -14,6 +14,11 @@
     CGFloat pixelsNeeded = unitSize.width * unitSize.height * (double)length;
     CGFloat minimumEdgeLength = ceil(sqrt(pixelsNeeded));
     NSInteger cellsPerRow = MAX(1, ceil(minimumEdgeLength / unitSize.width));
+
+    // To make it easy to render overwide characters always have a multiple of 3 cells per row.
+    while (cellsPerRow % 3) {
+        ++cellsPerRow;
+    }
     if (cellsPerRowOut) {
         *cellsPerRowOut = cellsPerRow;
     }
@@ -91,6 +96,21 @@
 
 - (BOOL)setSlice:(NSUInteger)slice withContentsOfFile:(NSString *)path {
     return [self setSlice:slice withImage:[[NSImage alloc] initWithContentsOfFile:path]];
+}
+
+- (void)clearSlice:(NSUInteger)slice {
+    MTLOrigin origin = [self offsetForIndex:slice];
+    MTLRegion region = MTLRegionMake2D(origin.x, origin.y, _width, _height);
+    const NSUInteger bytesPerRow = region.size.width * 4;
+    const NSUInteger bytesPerImage = bytesPerRow * region.size.height;
+    NSMutableData *temp = [NSMutableData dataWithLength:bytesPerImage];
+    memset(temp.mutableBytes, 0xff, bytesPerImage);
+    [_texture replaceRegion:region
+                mipmapLevel:0
+                      slice:0
+                  withBytes:temp.bytes
+                bytesPerRow:bytesPerRow
+              bytesPerImage:bytesPerImage];
 }
 
 - (void)setSlice:(NSUInteger)slice withBitmap:(iTermCharacterBitmap *)bitmap {

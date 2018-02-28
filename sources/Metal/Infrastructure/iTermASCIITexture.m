@@ -43,16 +43,21 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                 _parts[i] |= iTermASCIITexturePartsLeft;
                 [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetLeft)
                               withBitmap:left];
+            } else {
+                [_textureArray clearSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetLeft)];
             }
             if (right) {
                 _parts[i] |= iTermASCIITexturePartsRight;
                 [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetRight)
                               withBitmap:right];
+            } else {
+                [_textureArray clearSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetRight)];
             }
             if (center) {
                 [_textureArray setSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetCenter)
                               withBitmap:center];
             } else {
+                [_textureArray clearSlice:iTermASCIITextureIndexOfCode(i, iTermASCIITextureOffsetCenter)];
                 ELog(@"Couldn't produce image for ascii %d", i);
             }
         }

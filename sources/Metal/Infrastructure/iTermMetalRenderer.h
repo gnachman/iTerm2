@@ -138,6 +138,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                       commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
+- (id<MTLRenderPipelineState>)pipelineStateForKey:(NSString *)key;
+
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

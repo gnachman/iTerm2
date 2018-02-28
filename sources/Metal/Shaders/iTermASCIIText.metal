@@ -33,6 +33,8 @@ typedef struct {
     bool bold;
     bool italic;
     bool thin;
+#warning DNS
+    bool even;
 } iTermASCIITextVertexFunctionOutput;
 
 
@@ -74,15 +76,35 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
                            unsigned int x [[instance_id]],
                            device iTermASCIITextConfiguration *config [[ buffer(iTermVertexInputIndexASCIITextConfiguration) ]],
                            device iTermASCIIRowInfo *rowInfo [[ buffer(iTermVertexInputIndexASCIITextRowInfo) ]],
-                           device iTermCellColors *colors [[ buffer(iTermVertexInputCellColors) ]]) {
+                           device iTermCellColors *colors [[ buffer(iTermVertexInputCellColors) ]],
+                           device int *mask [[ buffer(iTermVertexInputMask) ]]) {
     iTermASCIITextVertexFunctionOutput out;
 
     const int i = x + rowInfo->row * (config->gridSize.x + 1);  // add one for EOL marker
     if (colors[i].nonascii) {
         out.discard = true;
+        out.clipSpacePosition = float4(0,0,0,0);
         return out;
     } else {
         out.discard = false;
+    }
+
+    if (*mask) {
+        out.even = false;
+        // want odds
+        if ((x & 1) == 0) {
+            out.discard = true;
+            out.clipSpacePosition = float4(0,0,0,0);
+            return out;
+        }
+    } else {
+        out.even = true;
+        // want evens
+        if ((x & 1) == 1) {
+            out.discard = true;
+            out.clipSpacePosition = float4(0,0,0,0);
+            return out;
+        }
     }
 
     // pixelSpacePosition is in pixels
@@ -101,6 +123,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + out.textureOffset;
 
     out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
+#warning DNS
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
     out.backgroundColor = colors[i].backgroundColor;
@@ -176,6 +199,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
+        return float4(0,0,0,0);
     }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
@@ -193,9 +217,18 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
     // TODO: You can't always sample the drawable
-//    const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
-#warning TODO: Support sampling from drawable when needed
-    const float4 backgroundColor = in.backgroundColor;
+    const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
+#warning TODO: Support NOT sampling from drawable when needed
+//    const float4 backgroundColor = in.backgroundColor;
+#warning DNS
+//    // Evens return red, odds returns sampled background color
+//    if (!in.even) {
+//        float4 temp = backgroundColor;
+//        temp.w = 1;
+//        return temp;
+//    } else {
+//        return float4(1,0,0,1);
+//    }
 
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // No text in this pixel
@@ -219,9 +252,11 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                            weight);
             }
         }
-        discard_fragment();
+//        discard_fragment();
+#warning DNS
         return float4(0, 0, 0, 0);
     } else {
+#warning DNS
         return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
     }
 }

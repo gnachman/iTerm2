@@ -183,7 +183,10 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 - (id<MTLRenderPipelineState>)pipelineState {
-    NSDictionary *key = [self keyForPipelineState];
+    return [self pipelineStateForKey:[self keyForPipelineState]];
+}
+
+- (id<MTLRenderPipelineState>)pipelineStateForKey:(NSString *)key {
     if (_pipelineStates[key] == nil) {
         static id<MTLLibrary> defaultLibrary;
         static dispatch_once_t onceToken;

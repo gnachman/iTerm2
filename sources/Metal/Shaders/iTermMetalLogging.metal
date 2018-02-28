@@ -170,6 +170,22 @@ namespace MetalLogging {
         NullTerminate(buffer);
     }
 
+    void LogStringInt2(bool enabled,
+                       device iTermMetalDebugBuffer *buffer,
+                       constant char *message,
+                       int2 value) {
+        if (!enabled) {
+            return;
+        }
+        AppendString(buffer, message, 2);
+        AppendChar(buffer, ' ', 2);
+        AppendInt(buffer, value.x, 2);
+        AppendChar(buffer, ',', 2);
+        AppendInt(buffer, value.y, 2);
+        AppendChar(buffer, '\n', 1);
+        NullTerminate(buffer);
+    }
+
     void LogStringFloat(bool enabled,
                         device iTermMetalDebugBuffer *buffer,
                         constant char *message,

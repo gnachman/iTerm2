@@ -13,7 +13,8 @@
 #import <Foundation/Foundation.h>
 #endif
 
-typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
+// NOTE: This cannot be NSInteger because its size varies between CPU and GPU
+typedef NS_ENUM(int, iTermThinStrokesSetting) {
     iTermThinStrokesSettingNever = 0,
     iTermThinStrokesSettingRetinaDarkBackgroundsOnly = 1,
     iTermThinStrokesSettingDarkBackgroundsOnly = 2,

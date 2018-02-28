@@ -236,11 +236,12 @@ static NSInteger gNextFrameDataNumber;
         assert(!self.intermediateRenderPassDescriptor);
 
         self.intermediateRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Intermediate Texture"];
-        iTermMetalDebugBuffer *debug = (iTermMetalDebugBuffer *)_debugBuffer.contents;
-        if (debug->offset) {
-            NSLog(@"%s", debug->storage);
+        if (_debugBuffer) {
+            iTermMetalDebugBuffer *debug = (iTermMetalDebugBuffer *)_debugBuffer.contents;
+            if (debug->offset) {
+                NSLog(@"%s", debug->storage);
+            }
         }
-
         [_debugInfo setIntermediateRenderPassDescriptor:self.intermediateRenderPassDescriptor];
     }];
 }

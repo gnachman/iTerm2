@@ -16,6 +16,10 @@ namespace MetalLogging {
                       device iTermMetalDebugBuffer *buffer,
                       constant char *message,
                       int value);
+    void LogStringInt2(bool enabled,
+                      device iTermMetalDebugBuffer *buffer,
+                      constant char *message,
+                      int2 value);
 
     void LogStringFloat(bool enabled,
                         device iTermMetalDebugBuffer *buffer,

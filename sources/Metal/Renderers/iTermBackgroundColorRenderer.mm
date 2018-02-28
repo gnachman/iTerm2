@@ -78,7 +78,7 @@
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:config.gridSize.x * config.gridSize.y
+                             numberOfPIUs:(config.gridSize.x + 1) * config.gridSize.y
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputBackgroundColorConfiguration): configBuffer,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer,

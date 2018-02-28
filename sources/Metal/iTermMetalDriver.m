@@ -492,6 +492,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
+    return YES;
+#warning TODO: Maybe don't always?
     if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetTiled:NULL]) {
         return YES;
     }
@@ -628,6 +630,25 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+- (void)copyIntermediateToDrawableForFrameData:(iTermMetalFrameData *)frameData {
+    if (frameData.intermediateRenderPassDescriptor) {
+        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture ofBlock:^{
+            [frameData.renderEncoder endEncoding];
+        }];
+    }
+
+    // If we're using an intermediate render pass, copy from it to the view for final steps.
+    if (frameData.intermediateRenderPassDescriptor) {
+        frameData.currentPass = frameData.currentPass + 1;
+        frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:frameData.commandBuffer
+                                                                frameData:frameData
+                                                                     pass:frameData.currentPass];
+        [self drawRenderer:_copyBackgroundRenderer
+                 frameData:frameData
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
+    }
+}
+
 - (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  enequeueDrawCallsForFrameData");
@@ -642,17 +663,29 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     [self drawContentBehindTextWithFrameData:frameData];
 
-    // If we're using an intermediate render pass, copy from it to the view for final steps.
-    if (frameData.intermediateRenderPassDescriptor) {
-        frameData.currentPass = frameData.currentPass + 1;
-        frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                                                frameData:frameData
-                                                                     pass:frameData.currentPass];
-        [self drawRenderer:_copyBackgroundRenderer
-                 frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
-    }
+    iTermASCIITextRendererTransientState *asciiState = [frameData transientStateForRenderer:_asciiTextRenderer];
+    __weak __typeof(self) weakSelf = self;
+    asciiState.blitBlock = ^id<MTLRenderCommandEncoder>(id<MTLTexture>  _Nonnull source, id<MTLTexture>  _Nonnull dest) {
+        [frameData.renderEncoder endEncoding];
 
+        id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
+        blitter.label = [NSString stringWithFormat:@"Intermediate>Temp Blitter"];
+        [blitter copyFromTexture:source
+                     sourceSlice:0
+                     sourceLevel:0
+                    sourceOrigin:MTLOriginMake(0, 0, 0)
+                      sourceSize:MTLSizeMake(source.width, source.height, 1)
+                       toTexture:dest
+                destinationSlice:0
+                destinationLevel:0
+               destinationOrigin:MTLOriginMake(0, 0, 0)];
+        [blitter endEncoding];
+
+        frameData.renderEncoder = [weakSelf newRenderEncoderFromCommandBuffer:commandBuffer
+                                                                    frameData:frameData
+                                                                         pass:frameData.currentPass];
+        return frameData.renderEncoder;
+    };
     [self drawCellRenderer:_asciiTextRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawASCIIText]];
@@ -660,6 +693,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self drawCellRenderer:_textRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
+
+    [self copyIntermediateToDrawableForFrameData:frameData];
 
     [self drawCellRenderer:_imageRenderer
                  frameData:frameData
@@ -1291,12 +1326,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                   stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBadge]];
 
     [self drawCursorBeforeTextWithFrameData:frameData];
-
-    if (frameData.intermediateRenderPassDescriptor) {
-        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture ofBlock:^{
-            [frameData.renderEncoder endEncoding];
-        }];
-    }
 }
 
 // This is horribly slow but it's only for debug capturing a frame.
